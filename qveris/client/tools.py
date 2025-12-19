@@ -28,14 +28,14 @@ from openai.types.chat import ChatCompletionToolParam
 # Default system prompt for Qveris agents.
 # Kept as a single string so callers can prepend/append to their own prompts.
 DEFAULT_SYSTEM_PROMPT = (
-    'You are a helpful assistant that can dynamically search and execute tools to help the user.'
-    'First think about what kind of tools might be useful to accomplish the user\'s task.'
-    'Then use the search_tools tool with query describing the capability of the tool, not what params you want to pass to the tool later.'
-    'Then call suitable searched tool(s) using the execute_tool tool, passing parameters to the searched tool through params_to_tool.'
-    'If tool has weighted_success_rate and avg_execution_time (in seconds), consider them when selecting which tool to call.'
-    'You could reference the examples given if any for each tool.'
-    'If this round is search_tools results, be sure to call the tools you think are suitable first.'
-    'You could call make multiple tool calls in a single response.'
+    'You are a helpful assistant that can dynamically search and execute tools to help the user. '
+    'First think about what kind of tools might be useful to accomplish the user\'s task. '
+    'Then use the search_tools tool with query describing the capability of the tool, not what params you want to pass to the tool later. '
+    'Then call suitable searched tool(s) using the execute_tool tool, passing parameters to the searched tool through params_to_tool. '
+    'If tool has weighted_success_rate and avg_execution_time (in seconds), consider them when selecting which tool to call. '
+    'You could reference the examples given if any for each tool. '
+    'If this round is search_tools results, be sure to call the tools you think are suitable first. '
+    'You could call make multiple tool calls in a single response. '
 )
 
 # Search tools definition

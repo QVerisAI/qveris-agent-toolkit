@@ -1,8 +1,6 @@
 # Qveris Python SDK
 
-Empower LLM agents with **Qveris**: dynamically search for thousands of live tools (APIs, data sources, automations) and execute them in a tight agent loop.
-
-- Website: `https://qveris.ai`
+Empower LLM agents with [**Qveris**](https://qveris.ai): dynamically search for thousands of live tools (APIs, data sources, automations) and execute them in a tight agent loop.
 
 ## What Qveris is
 
@@ -27,7 +25,7 @@ pip install qveris
 
 Set the following environment variables (or pass them via `QverisConfig` / provider configs):
 
-- `QVERIS_API_KEY`: Your Qveris API key.
+- `QVERIS_API_KEY`: Your Qveris API key. (Get it from [Qveris](https://qveris.ai))
 - `OPENAI_API_KEY`: Your OpenAI (or OpenAI-compatible) provider API key.
 - `OPENAI_BASE_URL`: Base URL for OpenAI-compatible providers (e.g. OpenAI, OpenRouter etc).
 
