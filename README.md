@@ -1,10 +1,10 @@
-# Qveris Python SDK
+# QVeris Python SDK
 
-Empower LLM agents with [**Qveris**](https://qveris.ai): dynamically search for thousands of live tools (APIs, data sources, automations) and execute them in a tight agent loop.
+Empower LLM agents with [**QVeris**](https://qveris.ai): dynamically search for thousands of live tools (APIs, data sources, automations) and execute them in a tight agent loop.
 
-## What Qveris is
+## What QVeris is
 
-Qveris provides a **tool search + tool execution** layer for agents:
+QVeris provides a **tool search + tool execution** layer for agents:
 
 - **search**: the agent can call `search_tools` with a natural-language capability query (e.g. “stock price”, “web search”, “send email”).
 - **execute**: after selecting a tool from search results, the agent calls `execute_tool` with the tool id + parameters.
@@ -19,7 +19,7 @@ The `qveris.Agent` wraps this into a loop that:
 
 Set the following environment variables (or pass them via `QverisConfig` / provider configs):
 
-- `QVERIS_API_KEY`: Your Qveris API key. (Get it from [Qveris](https://qveris.ai))
+- `QVERIS_API_KEY`: Your QVeris API key. (Get it from [QVeris](https://qveris.ai))
 - `OPENAI_API_KEY`: Your OpenAI (or OpenAI-compatible) provider API key.
 - `OPENAI_BASE_URL`: Base URL for OpenAI-compatible providers (e.g. OpenAI, OpenRouter etc).
 
@@ -61,7 +61,7 @@ This repo includes two example scripts that show different integration styles:
 
 ## Integration patterns
 
-Qveris supports several ways to integrate, depending on how much control you want over events and UI.
+QVeris supports several ways to integrate, depending on how much control you want over events and UI.
 
 ### (a) Built-in streaming agent
 
@@ -85,13 +85,13 @@ If you only need the final assistant text (no tool-calls), use:
 final_text = await agent.run_to_completion(messages)
 ```
 
-### (d) Bring your own agent loop (use Qveris client + tool definitions directly)
+### (d) Bring your own agent loop (use QVeris client + tool definitions directly)
 
 If you already have an agent framework (or want full control), you can directly use:
 
 - `qveris.client.tools.SEARCH_TOOL_DEF` / `EXECUTE_TOOL_DEF` to expose tool schemas to your LLM
 - `qveris.client.tools.DEFAULT_SYSTEM_PROMPT` as a starting system prompt
-- `qveris.client.api.QverisClient` to handle Qveris tool calls
+- `qveris.client.api.QverisClient` to handle QVeris tool calls
 
 Your loop is responsible for:
 

@@ -5,11 +5,11 @@ build-backend = "hatchling.build"
 [project]
 name = "qveris"
 version = "0.1.0"
-description = "Official Python SDK for Qveris - Build LLM Agents with Search & Execute capabilities"
+description = "Official Python SDK for QVeris - Build LLM Agents with Search & Execute capabilities"
 requires-python = ">=3.8"
 license = "MIT"
 authors = [
-    { name = "Qveris Team", email = "contact@qveris.ai" },
+    { name = "QVeris Team", email = "contact@qveris.ai" },
 ]
 dependencies = [
     "httpx>=0.25.0",
