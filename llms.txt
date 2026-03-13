@@ -37,9 +37,8 @@
 - $19 = 10,000 credits (never expire)
 
 ## Install
-- Agent install protocol: https://qveris.ai/skill/instruct.md
-- Multi-environment setup: https://github.com/QVerisAI/QVerisAI/blob/main/SETUP.md
-- MCP/client skill definition: https://github.com/QVerisAI/QVerisAI/blob/main/skills/qveris/SKILL.md
+- OpenClaw users: https://qveris.ai/skill/instruct.md (official skill: skills/openclaw/qveris-official/SKILL.md)
+- Cursor/Claude Code/OpenCode users: https://github.com/QVerisAI/QVerisAI/blob/main/SETUP.md (uses skill: skills/qveris/SKILL.md)
 
 ## API docs
 - MCP Server: https://github.com/QVerisAI/QVerisAI/blob/main/docs/mcp-server.md
