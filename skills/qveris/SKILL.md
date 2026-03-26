@@ -81,4 +81,12 @@ print(result)  # {"data": {"temperature": 15.5, "humidity": 72}}
 | `parameters` | object | Tool-specific input parameters |
 | `max_response_size` | number | Max response bytes (default 20480) |
 
-**Response fields:** `execution_id`, `result.data`, `success`, `error_message`, `elapsed_time_ms`
+**Response Fields**
+
+| Field             | Type    | Description                                                 |
+|-------------------|---------|-------------------------------------------------------------|
+| `execution_id`    | string  | Unique ID for the execution.                                |
+| `result`          | object  | Contains the tool's output, typically under a `data` key.   |
+| `success`         | boolean | `true` if the call succeeded, `false` otherwise.            |
+| `error_message`   | string  | Details of the error if `success` is `false`.               |
+| `elapsed_time_ms` | number  | Execution time in milliseconds.                             |
