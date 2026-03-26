@@ -1,70 +1,92 @@
 ---
-name: QVeris
-description: Find third-party APIs and connect to them in code to assist users in various fields such as finance, economics, healthcare, sports, scientific research, and more
+name: qveris
+description: "Search for and execute third-party API tools via the QVeris MCP server, then generate production code that calls the QVeris REST API for tasks like fetching weather data, stock prices, or public datasets. Use when the user needs to find an external API, integrate a web service, connect to a third-party REST endpoint, or retrieve data from an external source."
 ---
 
-Whenever an external functionality is needed, do the following steps:
+When external functionality is needed, follow this two-phase workflow:
 
-1. **FIND A QVERISAI's TOOL**: You can use the qveris MCP server to find API tools to assist users. Firstly, consider which tools may be useful for completing user tasks. Then, use the search_tools tool and enter a query that describes the tool's functionality, rather than the parameters you will pass to the tool later. Limit the number of results to 10 if no special requirements. Next, you should use the Execute_tool to try out a suitable search tool and pass parameters to the search tool through params_to_tool. You can refer to the examples provided by each tool (if any). You can call multiple searches in a single response. The previous steps of interaction between search_tool and executioner_tool can help you find available tools.
-2. **CALL QVERISAI's TOOL**: Once you find a suitable tool, you can use the qveris execute rest API described below to write code that calls the tool to meet user needs. Notice that you should not use the tool call's result from first step, you will generate real product code for user, and use the api key in the mcp server's config in the code. The generated code no longer requires a search interface call, and you can directly use the tool of MCP's choice. You can set request's timeout to 5 seconds, and you should handle the error returns of the REST API correctly.
+## Phase 1: Discover Tools via MCP
 
-# QVeris API Documentation
+1. Identify what tool capability the user needs
+2. Call `search_tools` with a **functionality description** (not parameter names) — limit results to 10
+3. Call `execute_tool` to test a candidate, passing parameters via `params_to_tool`
+4. Repeat or broaden the search if no suitable tool is found
 
-## Authentication
+## Phase 2: Generate Production Code
 
-All API requests require authentication via Bearer token in the
-`Authorization` header.
+Once a suitable tool is identified, generate code that calls the QVeris REST API directly. Do **not** reuse the MCP tool-call result — produce standalone code the user can run.
 
-``` http
-Authorization: Bearer YOUR_API_KEY
+- Read the API key from the MCP server config (`QVERIS_API_KEY`)
+- Set a 5-second request timeout
+- Handle errors by checking the `success` field and `error_message`
+- **Verify** the response structure matches expectations before delivering to the user; if the call fails (invalid key, rate limit, tool not found), report the error and suggest corrective action
+
+### Example: Fetch Weather Data
+
+```python
+import requests
+
+API_KEY = "<QVERIS_API_KEY from MCP config>"
+BASE_URL = "https://qveris.ai/api/v1"
+
+def execute_tool(tool_id: str, search_id: str, params: dict) -> dict:
+    """Execute a QVeris tool and return the result."""
+    resp = requests.post(
+        f"{BASE_URL}/tools/execute",
+        params={"tool_id": tool_id},
+        headers={"Authorization": f"Bearer {API_KEY}"},
+        json={
+            "search_id": search_id,
+            "session_id": "",
+            "parameters": params,
+            "max_response_size": 20480,
+        },
+        timeout=5,
+    )
+    resp.raise_for_status()
+    try:
+        data = resp.json()
+    except requests.exceptions.JSONDecodeError:
+        raise RuntimeError("Failed to decode API response as JSON.")
+
+    if not data.get("success"):
+        raise RuntimeError(f"QVeris error: {data.get('error_message', 'Unknown error')}")
+
+    result = data.get("result")
+    if result is None:
+        raise RuntimeError("API response is missing the 'result' field.")
+    return result
+
+# Usage
+result = execute_tool(
+    tool_id="openweathermap_current_weather",
+    search_id="<search_id from Phase 1>",
+    params={"city": "London", "units": "metric"},
+)
+print(result)  # {"data": {"temperature": 15.5, "humidity": 72}}
 ```
 
-## Base URL
+### API Reference
 
-``` text
-https://qveris.ai/api/v1
-```
+**Base URL:** `https://qveris.ai/api/v1`
 
-## API Endpoints
+**Authentication:** `Authorization: Bearer YOUR_API_KEY`
 
-### 1. Execute Tool
+**POST** `/tools/execute?tool_id={tool_id}`
 
-Execute a tool with specified parameters.
+| Field | Type | Description |
+|-------|------|-------------|
+| `search_id` | string | ID returned by `search_tools` |
+| `session_id` | string | Optional session identifier |
+| `parameters` | object | Tool-specific input parameters |
+| `max_response_size` | number | Max response bytes (default 20480) |
 
-#### Endpoint
+**Response Fields**
 
-``` http
-POST /tools/execute?tool_id={tool_id}
-```
-
-#### Example Request Body
-
-``` json
-{
-  "search_id": "string",
-  "session_id": "string",
-  "parameters": {
-    "city": "London",
-    "units": "metric"
-  },
-  "max_response_size": 20480
-}
-```
-
-#### Example Response (200 OK)
-
-``` json
-{
-  "execution_id": "string",
-  "result": {
-    "data": {
-      "temperature": 15.5,
-      "humidity": 72
-    }
-  },
-  "success": true,
-  "error_message": null,
-  "elapsed_time_ms": 847
-}
-```
-
+| Field             | Type    | Description                                                 |
+|-------------------|---------|-------------------------------------------------------------|
+| `execution_id`    | string  | Unique ID for the execution.                                |
+| `result`          | object  | Contains the tool's output, typically under a `data` key.   |
+| `success`         | boolean | `true` if the call succeeded, `false` otherwise.            |
+| `error_message`   | string  | Details of the error if `success` is `false`.               |
+| `elapsed_time_ms` | number  | Execution time in milliseconds.                             |
