@@ -1,95 +1,92 @@
 ---
-name: QVeris
-description: Discover and call 10,000+ capabilities (APIs, data sources, automations) across finance, weather, search, docs, healthcare, sports, and more
+name: qveris
+description: "Search for and execute third-party API tools via the QVeris MCP server, then generate production code that calls the QVeris REST API for tasks like fetching weather data, stock prices, or public datasets. Use when the user needs to find an external API, integrate a web service, connect to a third-party REST endpoint, or retrieve data from an external source."
 ---
 
-Whenever an external functionality is needed, do the following steps:
+When external functionality is needed, follow this two-phase workflow:
 
-1. **DISCOVER**: Use the qveris MCP server to discover capabilities. Consider which capabilities may help the user's task. Then use the `search_tools` tool with a query describing the capability, not the parameters you will pass later. Limit results to 10 unless specified otherwise. Shortlist one or more candidate `tool_id`s from the results.
-2. **INSPECT**: Before choosing a capability, inspect shortlisted `tool_id`s when you need fuller details about parameters, examples, success rate, or latency. Use the `POST /tools/by-ids` endpoint documented below, especially when multiple candidates match or the parameter contract is unclear.
-3. **CALL IN CODE**: Once you select a suitable capability, use the qveris execute REST API described below to write code that calls it. Do not use the MCP tool call result directly — generate real production code for the user, using the API key from the MCP server config. The generated code should call the selected capability directly, optionally using `/tools/by-ids` first if you need to validate details before execution. Set request timeout to 5 seconds and handle error returns correctly.
+## Phase 1: Discover Tools via MCP
 
-# QVeris API Documentation
+1. Identify what tool capability the user needs
+2. Call `search_tools` with a **functionality description** (not parameter names) — limit results to 10
+3. Call `execute_tool` to test a candidate, passing parameters via `params_to_tool`
+4. Repeat or broaden the search if no suitable tool is found
 
-## Authentication
+## Phase 2: Generate Production Code
 
-All API requests require authentication via Bearer token in the
-`Authorization` header.
+Once a suitable tool is identified, generate code that calls the QVeris REST API directly. Do **not** reuse the MCP tool-call result — produce standalone code the user can run.
 
-``` http
-Authorization: Bearer YOUR_API_KEY
+- Read the API key from the MCP server config (`QVERIS_API_KEY`)
+- Set a 5-second request timeout
+- Handle errors by checking the `success` field and `error_message`
+- **Verify** the response structure matches expectations before delivering to the user; if the call fails (invalid key, rate limit, tool not found), report the error and suggest corrective action
+
+### Example: Fetch Weather Data
+
+```python
+import requests
+
+API_KEY = "<QVERIS_API_KEY from MCP config>"
+BASE_URL = "https://qveris.ai/api/v1"
+
+def execute_tool(tool_id: str, search_id: str, params: dict) -> dict:
+    """Execute a QVeris tool and return the result."""
+    resp = requests.post(
+        f"{BASE_URL}/tools/execute",
+        params={"tool_id": tool_id},
+        headers={"Authorization": f"Bearer {API_KEY}"},
+        json={
+            "search_id": search_id,
+            "session_id": "",
+            "parameters": params,
+            "max_response_size": 20480,
+        },
+        timeout=5,
+    )
+    resp.raise_for_status()
+    try:
+        data = resp.json()
+    except requests.exceptions.JSONDecodeError:
+        raise RuntimeError("Failed to decode API response as JSON.")
+
+    if not data.get("success"):
+        raise RuntimeError(f"QVeris error: {data.get('error_message', 'Unknown error')}")
+
+    result = data.get("result")
+    if result is None:
+        raise RuntimeError("API response is missing the 'result' field.")
+    return result
+
+# Usage
+result = execute_tool(
+    tool_id="openweathermap_current_weather",
+    search_id="<search_id from Phase 1>",
+    params={"city": "London", "units": "metric"},
+)
+print(result)  # {"data": {"temperature": 15.5, "humidity": 72}}
 ```
 
-## Base URL
+### API Reference
 
-``` text
-https://qveris.ai/api/v1
-```
+**Base URL:** `https://qveris.ai/api/v1`
 
-## API Endpoints
+**Authentication:** `Authorization: Bearer YOUR_API_KEY`
 
-### 1. Inspect — Get Tool Details
+**POST** `/tools/execute?tool_id={tool_id}`
 
-Get detailed information about specific tools by their IDs, including parameters, success rate, and latency.
+| Field | Type | Description |
+|-------|------|-------------|
+| `search_id` | string | ID returned by `search_tools` |
+| `session_id` | string | Optional session identifier |
+| `parameters` | object | Tool-specific input parameters |
+| `max_response_size` | number | Max response bytes (default 20480) |
 
-#### Endpoint
+**Response Fields**
 
-``` http
-POST /tools/by-ids
-```
-
-#### Example Request Body
-
-``` json
-{
-  "tool_ids": ["openweathermap.weather.execute.v1"],
-  "search_id": "string",
-  "session_id": "string"
-}
-```
-
-#### Example Response (200 OK)
-
-Same schema as the `/search` response — returns full tool details including params, examples, and stats.
-
-### 2. Execute Tool
-
-Execute a tool with specified parameters.
-
-#### Endpoint
-
-``` http
-POST /tools/execute?tool_id={tool_id}
-```
-
-#### Example Request Body
-
-``` json
-{
-  "search_id": "string",
-  "session_id": "string",
-  "parameters": {
-    "city": "London",
-    "units": "metric"
-  },
-  "max_response_size": 20480
-}
-```
-
-#### Example Response (200 OK)
-
-``` json
-{
-  "execution_id": "string",
-  "result": {
-    "data": {
-      "temperature": 15.5,
-      "humidity": 72
-    }
-  },
-  "success": true,
-  "error_message": null,
-  "elapsed_time_ms": 847
-}
-```
-
+| Field             | Type    | Description                                                 |
+|-------------------|---------|-------------------------------------------------------------|
+| `execution_id`    | string  | Unique ID for the execution.                                |
+| `result`          | object  | Contains the tool's output, typically under a `data` key.   |
+| `success`         | boolean | `true` if the call succeeded, `false` otherwise.            |
+| `error_message`   | string  | Details of the error if `success` is `false`.               |
+| `elapsed_time_ms` | number  | Execution time in milliseconds.                             |
