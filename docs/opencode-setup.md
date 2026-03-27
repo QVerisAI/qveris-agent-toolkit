@@ -44,9 +44,9 @@ If you already have an `opencode.json` file, merge the `mcp.qveris` section into
 
 ## 2. Skills Configuration
 
-Download the QVeris skill from the GitHub repository:
+Download the QVeris MCP/client skill from the GitHub repository:
 
-**Repository:** https://github.com/QVerisAI/QVerisAI/tree/main/skills
+**Repository:** https://github.com/QVerisAI/QVerisAI/tree/main/skills/qveris
 
 **Mac/Linux:**
 ```bash

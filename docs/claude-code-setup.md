@@ -31,9 +31,9 @@ claude mcp remove qveris # Remove a server
 
 ## 2. Skills Configuration
 
-Download the skills from the GitHub repository:
+Download the QVeris MCP/client skill from the GitHub repository:
 
-**Repository:** https://github.com/QVerisAI/QVerisAI/tree/main/skills
+**Repository:** https://github.com/QVerisAI/QVerisAI/tree/main/skills/qveris
 
 **Mac:**
 ```bash

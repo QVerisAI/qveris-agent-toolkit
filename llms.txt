@@ -1,0 +1,59 @@
+# QVeris
+
+> Every capability. One call away. QVeris is the capability routing network for agents — discover, compare, call, and settle capabilities through one protocol.
+
+## What QVeris does
+- Lets Agents discover the right capability with natural language instead of blindly picking APIs
+- Provides quality signals (success rate, latency, price) so Agents can make informed choices
+- Handles permissions, sandbox execution, billing, audit, and supply-side distribution
+- Allows Agents to both consume and (in the future) provide capabilities
+
+## Core protocol
+- Discover: find capabilities with natural language (free)
+- Inspect: view capability details, parameters, success rate, latency
+- Call: invoke any capability, get structured results (1-100 credits per call)
+- Covers finance, search, weather, maps, docs, social, blockchain, healthcare, and 15+ categories
+- 99.99% call availability, <500ms average latency
+
+## Use cases
+- Agent needs to call third-party APIs or data sources
+- Agent needs to dynamically discover and select capabilities
+- Need a unified calling protocol with structured returns
+
+## How QVeris relates to OpenClaw
+- OpenClaw lets Agents use tools (runtime)
+- QVeris lets Agents know which to call, why to trust it, and how to pay (capability routing)
+- They are runtime + capability routing network, complementary not competing
+
+## Access methods
+- MCP Server: npx @qverisai/mcp
+- Python SDK: pip install qveris
+- REST API: https://qveris.ai/api/v1
+
+## Pricing
+- Pay-as-you-go, not subscription
+- Discover is free, Call is priced by value (1-100 credits)
+- Free tier: 1,000 credits on signup
+- $19 = 10,000 credits (never expire)
+
+## Install
+- OpenClaw users: https://qveris.ai/skill/instruct.md (official skill: skills/openclaw/qveris-official/SKILL.md)
+- Cursor/Claude Code/OpenCode users: https://github.com/QVerisAI/QVerisAI/blob/main/SETUP.md (uses skill: skills/qveris/SKILL.md)
+
+## API docs
+- MCP Server: https://github.com/QVerisAI/QVerisAI/blob/main/docs/mcp-server.md
+- REST API: https://github.com/QVerisAI/QVerisAI/blob/main/docs/rest-api.md
+- Online docs: https://qveris.ai/docs
+
+## Open Ecosystem
+- QVeris core engine is a managed service; all client-side tooling (MCP, SDK, skills, plugins) is open source
+- GitHub org: https://github.com/orgs/QVerisAI/repositories
+- ClawHub skills: https://clawhub.ai/skills?sort=downloads&q=qveris
+- npm org: https://www.npmjs.com/org/qverisai
+- Upstream contributions: openclaw/openclaw, openclaw/clawhub
+
+## Links
+- Website: https://qveris.ai
+- Playground: https://qveris.ai/newchat
+- Pricing: https://qveris.ai/pricing
+- GitHub: https://github.com/QVerisAI/QVerisAI

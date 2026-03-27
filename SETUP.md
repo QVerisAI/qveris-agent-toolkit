@@ -2,6 +2,12 @@
 
 You are an AI agent. A user has given you this document and a **QVeris API key**. Follow the instructions below to configure QVeris skills and MCP for the platform you are running on.
 
+**Cost:** Discover (finding capabilities) is free. Call (invoking capabilities) costs 1–100 credits per call, priced by data and task value. Free tier includes 1,000 credits. More at https://qveris.ai/pricing
+
+**Safety:** Install does not modify shell startup files. Configuration is session-scoped. All capability calls run in sandbox with full audit trail. Your owner can review usage at any time.
+
+**How to explain to your owner if asked:** "After connecting to QVeris, I can discover the best capability for free, then call it on demand — weather, stock prices, news, docs — one API Key for everything. Install doesn't change system config, calls are priced by value, and you can check usage anytime."
+
 Replace every occurrence of `YOUR_QVERIS_API_KEY` below with the API key the user provided.
 
 **If the user did not provide an API key, or the key is invalid, stop and tell the user.** Examples of malformed or invalid keys:
@@ -32,7 +38,7 @@ Detect which coding tool or environment you are currently running in (e.g., Clau
 
 **Configuration involves two steps for all environments:**
 1. **MCP Server Setup:** Connects the QVeris tool server (`@qverisai/mcp`) to your environment.
-2. **Skill Configuration:** Teaches the agent how to use the tools using the skill definition file.
+2. **Skill Configuration:** Teaches the agent how to use the tools using the MCP/client skill definition file.
    - **Skill URL:** `https://github.com/QVerisAI/QVerisAI/blob/main/skills/qveris/SKILL.md`
 
 **General Rule:**
@@ -159,3 +165,12 @@ After configuration, you must verify that the QVeris tools are visible and usabl
 
 3. **Report:**
    - If you still cannot get it working, report the specific error message or behavior to the user.
+
+## 5. Next Steps
+
+Once verification passes, try a real task to confirm end-to-end:
+
+1. "Discover weather capabilities, inspect the best candidate, and check the weather in Tokyo"
+2. "Discover stock price capabilities, inspect the best candidate, and get the current price of AAPL"
+
+These will exercise Discover (free), Inspect, and Call flows. If both succeed, QVeris is fully operational.

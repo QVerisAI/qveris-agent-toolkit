@@ -18,16 +18,16 @@ You can also tell your coding agents to set it up for you. Simply provide them w
 Configure this for me <THE_URL_TO_CONFIGURATION_GUIDE>. The API key is <YOUR_API_KEY>
 ```
 
-Intelligent models like Claude Sonnet 4.5 could finish the setup and resolve the issues automatically.
+Most capable coding agents can finish the setup and resolve issues automatically.
 
 ### Example
 
 For Claude Code:
 ```
-Configure this for me https://github.com/QVerisAI/QVerisAI/blob/main/CLAUDE_CODE_CONFIGURATION_GUIDE.md. The API key is sk-xxxxxxxxxxxxx
+Configure this for me https://github.com/QVerisAI/QVerisAI/blob/main/docs/claude-code-setup.md. The API key is sk-xxxxxxxxxxxxx
 ```
 
 For OpenCode:
 ```
-Configure this for me https://github.com/QVerisAI/QVerisAI/blob/main/OPENCODE_CONFIGURATION_GUIDE.md. The API key is sk-xxxxxxxxxxxxx
+Configure this for me https://github.com/QVerisAI/QVerisAI/blob/main/docs/opencode-setup.md. The API key is sk-xxxxxxxxxxxxx
 ```

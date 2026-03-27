@@ -1,0 +1,8 @@
+.DS_Store
+.cursor/
+
+# Internal strategy docs (not for public repo)
+01-github-optimization.md
+02-website-redesign.md
+03-seo-optimization.md
+04-brand-messaging-final.md

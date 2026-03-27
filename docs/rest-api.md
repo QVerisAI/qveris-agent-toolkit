@@ -1,6 +1,14 @@
-# QVeris API Documentation
+# QVeris REST API Documentation
 
-Version: 0.1.9  
+Version: 0.1.9
+
+QVeris exposes three core actions via REST API:
+
+| Protocol action | API endpoint | Description |
+|----------------|-------------|-------------|
+| **Discover** | `POST /search` | Find capabilities with natural language (free) |
+| **Inspect** | `POST /tools/by-ids` | Get capability details by ID |
+| **Call** | `POST /tools/execute` | Invoke a capability (1–100 credits) |
 
 ## Authentication
 
@@ -22,9 +30,9 @@ All endpoints described in this document are relative to this base URL.
 
 ## API Endpoints
 
-### 1. Search Tools
+### 1. Discover — Search Tools
 
-Search for tools based on natural language queries.
+Search for capabilities based on natural language queries. This is the Discover action and is **free**.
 
 #### Endpoint
 
@@ -100,7 +108,7 @@ Status Code: 200 OK
       }
     }
   ],
-  "elapsed_time_ms": 245.6,
+  "elapsed_time_ms": 245.6
 }
 ```
 
@@ -129,9 +137,52 @@ Status Code: 200 OK
 
 ---
 
-### 2. Execute Tool
+### 2. Inspect — Get Tools by ID
 
-Execute a tool with specified parameters.
+Get detailed descriptions of capabilities based on tool_id. This is the Inspect action.
+
+#### Endpoint
+
+```
+POST /tools/by-ids
+```
+
+#### Request Headers
+
+| Header | Required | Description |
+| --- | --- | --- |
+| Authorization | Yes | Bearer token for authentication |
+| Content-Type | Yes | Must be application/json |
+
+#### Request Body
+
+```json
+{
+  "tool_ids": ["string1", "string2", "..."],
+  "search_id": "string",
+  "session_id": "string"
+}
+```
+
+#### Parameters
+
+| Field | Type | Required | Description | Default | Range |
+| --- | --- | --- | --- | --- | --- |
+| tool_ids | list of strings | Yes | Ids of tools to query | - | - |
+| session_id | string | No | Same id corresponds to the same user session | - | - |
+| search_id | string | No | Id for the search that returned the tool(s). | - | - |
+
+#### Response
+
+Status Code: 200 OK
+
+Same schema as the response of `/search`
+
+---
+
+### 3. Call — Execute Tool
+
+Invoke a capability with specified parameters. This is the Call action and costs **1–100 credits** per call, priced by data and task value.
 
 #### Endpoint
 
@@ -267,49 +318,6 @@ If the tool generates data longer than max_response_size bytes, result will have
 
 ---
 
-### 3. Get Tools by ID
-
-Get descriptions of tools based on tool_id
-
-#### Endpoint
-
-```
-POST /tools/by-ids
-```
-
-#### Request Headers
-
-| Header | Required | Description |
-| --- | --- | --- |
-| Authorization | Yes | Bearer token for authentication |
-| Content-Type | Yes | Must be application/json |
-
-#### Request Body
-
-```json
-{
-  "tool_ids": ["string1", "string2", ...],
-  "search_id": "string",
-  "session_id": "string"
-}
-```
-
-#### Parameters
-
-| Field | Type | Required | Description | Default | Range |
-| --- | --- | --- | --- | --- | --- |
-| tool_ids | list of strings | Yes | Ids of tools to query | - | - |
-| session_id | string | No | Same id corresponds to the same user session | - | - |
-| search_id | string | No | Id for the search that returned the tool(s). | - | - |
-
-#### Response
-
-Status Code: 200 OK
-
-Same schema as the response of /search
-
----
-
 ## Data Models
 
 ### Tool Parameter Schema
@@ -385,7 +393,7 @@ export async function executeTool(
   return response.data
 }
 
-export const searchEngineApi = {
+export const qverisApi = {
   searchTools,
   executeTool,
 }
@@ -395,7 +403,7 @@ async function executeTool(name: string, args: Record<string, unknown>) {
   console.log(`[Tool] Executing ${name} with:`, args)
 
   if (name === 'search_tools') {
-    const result = await searchEngineApi.searchTools(
+    const result = await qverisApi.searchTools(
       args.query as string,
       args.session_id as string,
       20
@@ -416,7 +424,7 @@ async function executeTool(name: string, args: Record<string, unknown>) {
       )
     }
 
-    const result = await searchEngineApi.executeTool(
+    const result = await qverisApi.executeTool(
       args.tool_id as string,
       args.search_id as string,
       args.session_id as string,
@@ -495,7 +503,7 @@ You can then use below system prompt and start testing! Have fun exploring!
 ```javascript
 {
   role: 'system',
-  content: 'You are a helpful assistant that can dynamically search and execute tools to help the user. First think about what kind of tools might be useful to accomplish the user\'s task. Then use the search_tools tool with query describing the capability of the tool, not what params you want to pass to the tool later. Then call suitable searched tool(s) using the execute_tool tool, passing parameters to the searched tool through params_to_tool. If tool has weighted_success_rate and avg_execution_time (in seconds), consider them when selecting which tool to call. You could reference the examples given if any for each tool. You could call make multiple tool calls in a single response.',
+  content: 'You are a helpful assistant that can dynamically discover and call capabilities to help the user. First think about what kind of capabilities might be useful to accomplish the user\'s task. Then use the search_tools tool with a query describing the capability, not the specific parameters you will pass later. Then call suitable capabilities using the execute_tool tool, passing parameters through params_to_tool. If a capability has success_rate and avg_execution_time (in seconds), consider them when selecting which to call. You can reference the examples given for each capability. You can make multiple tool calls in a single response.',
 }
 
 ```
