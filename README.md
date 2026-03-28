@@ -194,7 +194,7 @@ QVeris's core routing engine runs as a managed service. We actively support the 
 |------------|-------------|
 | [QVerisAI/QVerisAI](https://github.com/QVerisAI/QVerisAI) | Core repo — skills, docs, llms.txt |
 | [QVerisAI/sdk-python](https://github.com/QVerisAI/sdk-python) | Python SDK |
-| [QVerisAI/QVerisBot](https://github.com/QVerisAI/QVerisBot) | MCP Server |
+| [@qverisai/mcp (npm)](https://www.npmjs.com/package/@qverisai/mcp) | MCP Server |
 | [QVerisAI/open-qveris-skills](https://github.com/QVerisAI/open-qveris-skills) | Community skills |
 
 Full list: [github.com/orgs/QVerisAI/repositories](https://github.com/orgs/QVerisAI/repositories)
