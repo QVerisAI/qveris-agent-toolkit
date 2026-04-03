@@ -9,10 +9,25 @@ import { generateSnippet } from "../output/codegen.mjs";
 import { CliError } from "../errors/handler.mjs";
 import { bold, dim, cyan } from "../output/colors.mjs";
 
+// Smart max_response_size defaults:
+//   --max-size N   → user explicit override (highest priority)
+//   --json         → 20480 (agent/LLM scenario, matches MCP server)
+//   non-TTY        → 20480 (piped/scripted, likely agent)
+//   TTY            → 4096  (human terminal, auto-truncate large results)
+const MAX_SIZE_TTY = 4096;
+const MAX_SIZE_AGENT = 20480;
+
+function resolveMaxSize(flags) {
+  if (flags.maxSize !== undefined) return parseInt(flags.maxSize, 10);
+  if (flags.json) return MAX_SIZE_AGENT;
+  if (!process.stdout.isTTY) return MAX_SIZE_AGENT;
+  return MAX_SIZE_TTY;
+}
+
 export async function runCall(idOrIndex, flags) {
   const apiKey = resolveApiKey(flags.apiKey);
   const timeoutMs = (parseInt(flags.timeout, 10) || 60) * 1000;
-  const maxSize = parseInt(flags.maxSize, 10) || 102400;
+  const maxSize = resolveMaxSize(flags);
 
   const resolved = resolveToolId(idOrIndex);
   const toolId = resolved.toolId;

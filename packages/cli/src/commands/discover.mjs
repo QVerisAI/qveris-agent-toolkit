@@ -23,11 +23,17 @@ export async function runDiscover(query, flags) {
 
     spinner.stop();
 
+    // Store richer session data for index resolution
     const tools = result.results ?? [];
     writeSession({
       discoveryId: result.search_id,
       query,
-      results: tools.map((t, i) => ({ index: i + 1, tool_id: t.tool_id, name: t.name })),
+      results: tools.map((t, i) => ({
+        index: i + 1,
+        tool_id: t.tool_id,
+        name: t.name,
+        provider_name: t.provider_name,
+      })),
     });
 
     if (flags.json) {

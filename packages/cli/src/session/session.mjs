@@ -41,6 +41,7 @@ export function resolveToolId(idOrIndex) {
 
   return {
     toolId: session.results[index].tool_id,
+    name: session.results[index].name,
     discoveryId: session.discoveryId,
     fromSession: true,
   };

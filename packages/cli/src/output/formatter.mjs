@@ -1,9 +1,12 @@
 import { bold, cyan, dim, green, yellow, red } from "./colors.mjs";
 
 // ── discover ──────────────────────────────────────────────────────────
+
 export function formatDiscoverResult(result) {
   const tools = result.results ?? [];
   const total = result.total ?? tools.length;
+  const searchTime = result.elapsed_time_ms;
+  const remaining = result.remaining_credits;
   const lines = [];
 
   if (tools.length === 0) {
@@ -12,104 +15,229 @@ export function formatDiscoverResult(result) {
   }
 
   lines.push(`Found ${bold(String(total))} capabilities matching your query`);
+  lines.push("");
 
   for (let i = 0; i < tools.length; i++) {
     const t = tools[i];
-    const id = t.tool_id ?? t.name ?? "N/A";
-    lines.push(`${dim(String(i + 1) + ".")} ${cyan(id)}`);
+    const name = t.name ?? "N/A";
+    const toolId = t.tool_id ?? "";
+    const desc = stringifyDesc(t.description);
+    const provider = t.provider_name ?? "";
+    const categories = Array.isArray(t.categories) ? t.categories.join(", ") : "";
+    const region = t.region ?? "global";
+    const stats = t.stats ?? {};
+
+    // Relevance score
+    const score = t.final_score;
+    const scoreStr = typeof score === "number" ? `${(score * 100).toFixed(0)}%` : "";
+
+    // Quality metrics
+    let successRate = stats.success_rate;
+    successRate = typeof successRate === "number" ? `${(successRate * 100).toFixed(1)}%` : "N/A";
+    let avgTime = stats.avg_execution_time_ms;
+    avgTime = typeof avgTime === "number" ? `~${Math.round(avgTime)}ms` : "N/A";
+    const cost = stats.cost ?? "?";
+
+    // Verified indicator
+    const verified = t.has_last_execution ? green(" \u2713") : "";
+
+    // Line 1: index + name + provider
+    const providerPart = provider ? `  ${dim("by")} ${provider}` : "";
+    lines.push(`${bold(String(i + 1) + ".")} ${cyan(name)}${providerPart}${verified}`);
+
+    // Line 2: tool_id
+    lines.push(`   ${dim(toolId)}`);
+
+    // Line 3: description (truncated)
+    if (desc) {
+      lines.push(`   ${desc.length > 100 ? desc.slice(0, 100) + "..." : desc}`);
+    }
+
+    // Line 4: metrics row
+    const metricParts = [];
+    if (scoreStr) metricParts.push(`relevance: ${bold(scoreStr)}`);
+    metricParts.push(`success: ${green(successRate)}`);
+    metricParts.push(`latency: ${avgTime}`);
+    metricParts.push(`cost: ${yellow(String(cost))} cr`);
+    if (region !== "global") metricParts.push(`region: ${region}`);
+    lines.push(`   ${dim(metricParts.join("  \u00b7  "))}`);
+
+    // Line 5: categories (if present)
+    if (categories) {
+      lines.push(`   ${dim("tags:")} ${dim(categories)}`);
+    }
+
+    lines.push("");
   }
+
+  // Footer
+  const footerParts = [`Discovery ID: ${result.search_id ?? "N/A"}`];
+  if (typeof searchTime === "number") footerParts.push(`${Math.round(searchTime)}ms`);
+  if (typeof remaining === "number") footerParts.push(`${remaining} credits remaining`);
+  lines.push(dim(footerParts.join("  \u00b7  ")));
 
   return lines.join("\n");
 }
 
 // ── inspect ───────────────────────────────────────────────────────────
+
 export function formatInspectResult(tools) {
   const list = Array.isArray(tools) ? tools : tools?.results ?? tools?.tools ?? [tools];
-  const lines = [];
-
-  for (const t of list) {
-    const stats = t.stats ?? {};
-
-    let avgTime = stats.avg_execution_time_ms;
-    avgTime = typeof avgTime === "number" ? `~${Math.round(avgTime)}ms` : "N/A";
-
-    let successRate = stats.success_rate;
-    successRate = typeof successRate === "number" ? `${(successRate * 100).toFixed(1)}%` : "N/A";
-
-    const cost = stats.cost ?? "?";
-
-    lines.push(`latency: ${bold(avgTime)}  \u00b7  success rate: ${green(successRate)}  \u00b7  cost: ${yellow(String(cost))} credits`);
-  }
-
-  return lines.join("\n");
-}
-
-// ── inspect (verbose, for --verbose or future use) ────────────────────
-export function formatInspectResultVerbose(tools) {
-  const list = Array.isArray(tools) ? tools : tools?.results ?? tools?.tools ?? [tools];
+  const remaining = tools?.remaining_credits;
   const lines = [];
 
   for (const t of list) {
     const name = t.name ?? t.tool_id ?? "N/A";
+    const toolId = t.tool_id ?? "";
     const desc = stringifyDesc(t.description);
-    const stats = t.stats ?? {};
     const provider = t.provider_name ?? "";
+    const providerDesc = stringifyDesc(t.provider_description);
+    const categories = Array.isArray(t.categories) ? t.categories.join(", ") : "";
+    const region = t.region ?? "global";
+    const docsUrl = t.docs_url ?? "";
+    const stats = t.stats ?? {};
 
-    let avgTime = stats.avg_execution_time_ms;
-    avgTime = typeof avgTime === "number" ? `~${Math.round(avgTime)}ms` : "N/A";
     let successRate = stats.success_rate;
     successRate = typeof successRate === "number" ? `${(successRate * 100).toFixed(1)}%` : "N/A";
+    let avgTime = stats.avg_execution_time_ms;
+    avgTime = typeof avgTime === "number" ? `~${Math.round(avgTime)}ms` : "N/A";
     const cost = stats.cost ?? "?";
 
+    // Header
     lines.push(bold(cyan(name)));
+    if (toolId && toolId !== name) lines.push(dim(toolId));
     if (desc) lines.push(desc);
-    if (provider) lines.push(dim(`Provider: ${provider}`));
-    lines.push(`latency: ${bold(avgTime)}  \u00b7  success rate: ${green(successRate)}  \u00b7  cost: ${yellow(String(cost))} credits`);
+    lines.push("");
 
+    // Metadata table
+    if (provider) {
+      const pLine = providerDesc ? `${provider}  ${dim("— " + providerDesc)}` : provider;
+      lines.push(`  Provider:   ${pLine}`);
+    }
+    if (categories) lines.push(`  Categories: ${categories}`);
+    lines.push(`  Region:     ${region}`);
+    lines.push(`  Latency:    ${bold(avgTime)}`);
+    lines.push(`  Success:    ${green(successRate)}`);
+    lines.push(`  Cost:       ${yellow(String(cost))} credits`);
+    if (t.has_last_execution) lines.push(`  Verified:   ${green("\u2713 has execution history")}`);
+    if (docsUrl) lines.push(`  Docs:       ${cyan(docsUrl)}`);
+
+    // Parameters
     const params = t.params ?? [];
     if (params.length > 0) {
       lines.push("");
-      lines.push(bold("Parameters:"));
+      lines.push(bold("  Parameters:"));
       for (const p of params) {
-        const req = p.required ? "required" : dim("optional");
-        const pDesc = p.description ? `  ${dim(stringifyDesc(p.description))}` : "";
-        lines.push(`  ${cyan(p.name)}  ${dim(p.type ?? "string")}  ${req}${pDesc}`);
+        const req = p.required ? bold("required") : dim("optional");
+        const pType = dim(p.type ?? "string");
+        const pDesc = p.description ? stringifyDesc(p.description) : "";
+        lines.push(`    ${cyan(p.name)}  ${pType}  ${req}`);
+        if (pDesc) lines.push(`      ${dim(pDesc)}`);
+        if (Array.isArray(p.enum) && p.enum.length > 0) {
+          lines.push(`      ${dim("values:")} ${p.enum.map((v) => yellow(JSON.stringify(v))).join(", ")}`);
+        }
       }
     }
 
+    // Example
     const examples = t.examples ?? {};
     if (examples.sample_parameters) {
-      lines.push(`${dim("Example:")} ${JSON.stringify(examples.sample_parameters)}`);
+      lines.push("");
+      lines.push(bold("  Example:"));
+      lines.push(`    ${JSON.stringify(examples.sample_parameters)}`);
     }
+
+    // Last execution record
+    if (t.last_execution_record && typeof t.last_execution_record === "object") {
+      const rec = t.last_execution_record;
+      lines.push("");
+      lines.push(dim("  Last execution:"));
+      if (rec.success !== undefined) lines.push(`    Status: ${rec.success ? green("success") : red("failed")}`);
+      if (rec.execution_time) lines.push(`    Time: ${rec.execution_time}`);
+      if (rec.error_message) lines.push(`    Error: ${red(rec.error_message)}`);
+    }
+  }
+
+  // Footer
+  if (typeof remaining === "number") {
+    lines.push("");
+    lines.push(dim(`${remaining} credits remaining`));
   }
 
   return lines.join("\n");
 }
 
 // ── call ──────────────────────────────────────────────────────────────
+
 export function formatCallResult(result) {
   const success = result.success ?? false;
+  const execTimeRaw = result.execution_time ?? result.elapsed_time_ms;
+  const cost = result.cost ?? result.credits_used ?? 0;
+  const remaining = result.remaining_credits;
+  const executionId = result.execution_id;
+  const toolId = result.tool_id;
   const lines = [];
 
+  // Status line
   if (success) {
-    lines.push(`${green("\u2713")} ${bold("success")}`);
+    let timePart = "";
+    if (typeof execTimeRaw === "number") {
+      const ms = execTimeRaw < 10 ? Math.round(execTimeRaw * 1000) : Math.round(execTimeRaw);
+      timePart = `${ms}ms`;
+    }
+    const parts = [`${green("\u2713")} ${bold("success")}`];
+    if (timePart) parts.push(dim(timePart));
+    if (cost) parts.push(`${yellow(String(cost))} credits`);
+    if (typeof remaining === "number") parts.push(dim(`(${remaining} remaining)`));
+    lines.push(parts.join("  \u00b7  "));
   } else {
     lines.push(`${red("\u2718")} ${bold("failed")}`);
     const errMsg = result.error_message ?? "Unknown error";
     lines.push(red(errMsg));
   }
 
+  // Execution metadata
+  const metaParts = [];
+  if (toolId) metaParts.push(`tool: ${toolId}`);
+  if (executionId) metaParts.push(`id: ${executionId}`);
+  if (metaParts.length > 0) lines.push(dim(metaParts.join("  \u00b7  ")));
+
+  // Result data
   const data = result.result ?? {};
   const fullContentUrl = typeof data.full_content_file_url === "string" ? data.full_content_file_url : null;
 
   if (fullContentUrl) {
-    lines.push(`${dim("Response truncated. Full content:")} ${cyan(fullContentUrl)}`);
-    const { truncated_content, full_content_file_url, ...displayData } = data;
-    if (Object.keys(displayData).length > 0) {
-      lines.push(JSON.stringify(displayData, null, 2));
+    // ── Truncated result ──
+    const msg = data.message;
+    if (msg) lines.push(`\n${yellow(msg)}`);
+
+    lines.push(`\n${bold("Full content (valid 120 min):")}`);
+    lines.push(`  ${cyan(fullContentUrl)}`);
+    lines.push(`  ${dim("Download:")} curl -o result.json '${fullContentUrl}'`);
+
+    // Schema: compact one-line summary of the data structure
+    if (data.content_schema) {
+      lines.push(`\n${bold("Schema:")}`);
+      lines.push(formatSchema(data.content_schema, "  "));
     }
+
+    // Truncated content preview
+    if (data.truncated_content) {
+      lines.push(`\n${bold("Preview:")}`);
+      const raw = typeof data.truncated_content === "string"
+        ? data.truncated_content
+        : JSON.stringify(data.truncated_content, null, 2);
+      const previewLines = raw.slice(0, 800).split("\n").slice(0, 15);
+      for (const l of previewLines) lines.push(dim(`  ${l}`));
+      if (raw.length > 800) lines.push(dim("  ..."));
+      lines.push(`\n${dim("Use --max-size -1 for full output, or download the file above.")}`);
+    }
+  } else if (data.data !== undefined) {
+    // Standard result with data field
+    lines.push(`\n${JSON.stringify(data.data, null, 2)}`);
   } else if (Object.keys(data).length > 0) {
-    lines.push(JSON.stringify(data, null, 2));
+    // Fallback: raw result object
+    lines.push(`\n${JSON.stringify(data, null, 2)}`);
   }
 
   return lines.join("\n");
@@ -117,11 +245,35 @@ export function formatCallResult(result) {
 
 // ── helpers ───────────────────────────────────────────────────────────
 
+/** Format a JSON Schema into a compact readable tree. */
+function formatSchema(schema, indent = "") {
+  if (!schema || typeof schema !== "object") return `${indent}${dim("(unknown)")}`;
+  const lines = [];
+  if (schema.type === "object" && schema.properties) {
+    for (const [key, val] of Object.entries(schema.properties)) {
+      const type = val.type ?? "any";
+      if (type === "array" && val.items?.properties) {
+        lines.push(`${indent}${cyan(key)}: ${dim(type + " of")}`);
+        lines.push(formatSchema(val.items, indent + "  "));
+      } else if (type === "object" && val.properties) {
+        lines.push(`${indent}${cyan(key)}: ${dim(type)}`);
+        lines.push(formatSchema(val, indent + "  "));
+      } else {
+        lines.push(`${indent}${cyan(key)}: ${dim(type)}`);
+      }
+    }
+  } else {
+    lines.push(`${indent}${dim(schema.type ?? "any")}`);
+  }
+  return lines.join("\n");
+}
+
 /** Handle description that may be a string, i18n object {en: "...", zh: "..."}, or other. */
 function stringifyDesc(desc) {
+  if (!desc) return "";
   if (typeof desc === "string") return desc;
-  if (desc && typeof desc === "object") {
+  if (typeof desc === "object") {
     return desc.en || desc.zh || desc["zh-CN"] || Object.values(desc).find((v) => typeof v === "string") || "";
   }
-  return String(desc ?? "");
+  return String(desc);
 }

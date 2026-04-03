@@ -1,6 +1,6 @@
 import { resolve } from "../config/resolve.mjs";
 
-export function generateSnippet(lang, { toolId, discoveryId, parameters, maxResponseSize = 102400 }) {
+export function generateSnippet(lang, { toolId, discoveryId, parameters, maxResponseSize = 20480 }) {
   const baseUrl = resolve("base_url").value;
 
   switch (lang) {

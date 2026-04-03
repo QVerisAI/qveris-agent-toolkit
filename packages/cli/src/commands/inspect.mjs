@@ -1,7 +1,7 @@
 import { resolveApiKey } from "../client/auth.mjs";
 import { inspectToolsByIds } from "../client/api.mjs";
 import { resolveToolId, getSessionDiscoveryId } from "../session/session.mjs";
-import { formatInspectResult, formatInspectResultVerbose } from "../output/formatter.mjs";
+import { formatInspectResult } from "../output/formatter.mjs";
 import { outputJson } from "../output/json.mjs";
 import { createSpinner } from "../output/spinner.mjs";
 
@@ -38,8 +38,7 @@ export async function runInspect(idsOrIndexes, flags) {
     if (flags.json) {
       outputJson(result);
     } else {
-      const fmt = flags.verbose ? formatInspectResultVerbose : formatInspectResult;
-      console.log(fmt(result));
+      console.log(formatInspectResult(result));
     }
   } catch (err) {
     spinner.stop();
