@@ -1,4 +1,4 @@
-import { readSession } from "../session/session.mjs";
+import { readSession, writeSession } from "../session/session.mjs";
 import { bold, dim, cyan } from "../output/colors.mjs";
 import { outputJson } from "../output/json.mjs";
 
@@ -15,15 +15,8 @@ export async function runHistory(flags) {
   }
 
   if (flags.clear) {
-    const { writeFileSync } = await import("node:fs");
-    const { join } = await import("node:path");
-    const { homedir } = await import("node:os");
-    const xdg = process.env.XDG_CONFIG_HOME;
-    const base = xdg || join(homedir(), ".config");
-    try {
-      writeFileSync(join(base, "qveris", ".session.json"), "{}");
-      console.log("  Session cleared.");
-    } catch {}
+    writeSession({});
+    console.log("  Session cleared.");
     return;
   }
 

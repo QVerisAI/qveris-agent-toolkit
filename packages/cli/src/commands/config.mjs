@@ -32,7 +32,15 @@ function configSet(key, value, flags) {
     process.exitCode = 2;
     return;
   }
-  const parsed = key.endsWith("limit") || key.endsWith("size") ? parseInt(value, 10) : value;
+  let parsed = value;
+  if (key.endsWith("limit") || key.endsWith("size")) {
+    parsed = parseInt(value, 10);
+    if (isNaN(parsed)) {
+      console.error(`  Error: ${key} must be a valid integer.`);
+      process.exitCode = 2;
+      return;
+    }
+  }
   setConfigValue(key, parsed);
   if (flags.json) {
     outputJson({ key, value: parsed });

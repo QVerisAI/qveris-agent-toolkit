@@ -44,14 +44,12 @@ ok "npm $(npm -v)"
 # ── 3. Install @qverisai/cli globally ────────────────────────────────
 info "Installing @qverisai/cli..."
 
-npm install -g @qverisai/cli 2>&1 | while IFS= read -r line; do
+if ! npm install -g @qverisai/cli 2>&1 | while IFS= read -r line; do
   # suppress verbose npm output, show only errors
   case "$line" in
     *ERR*|*error*|*Error*) echo "  $line" ;;
   esac
-done
-
-if [ $? -ne 0 ] 2>/dev/null; then
+done; then
   # If global install fails (permissions), try with --prefix
   warn "Global install failed, trying user-local install..."
   NPM_DIR="${HOME}/.npm-global"
@@ -99,7 +97,7 @@ else
   esac
 
   # Add to PATH in shell rc if not already there
-  if [ -n "$SHELL_RC" ] && ! grep -q "$BIN_DIR" "$SHELL_RC" 2>/dev/null; then
+  if [ -n "$SHELL_RC" ] && ! grep -Fq "$BIN_DIR" "$SHELL_RC" 2>/dev/null; then
     echo "" >> "$SHELL_RC"
     echo "# QVeris CLI" >> "$SHELL_RC"
     if [[ "$SHELL_RC" == *"fish"* ]]; then
