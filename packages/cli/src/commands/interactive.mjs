@@ -4,7 +4,7 @@ import { discoverTools, inspectToolsByIds, callTool } from "../client/api.mjs";
 import { resolveParams } from "../utils/params.mjs";
 import { formatDiscoverResult, formatInspectResult, formatCallResult } from "../output/formatter.mjs";
 import { generateSnippet } from "../output/codegen.mjs";
-import { bold, dim, cyan, green } from "../output/colors.mjs";
+import { bold, dim, cyan } from "../output/colors.mjs";
 import { handleError } from "../errors/handler.mjs";
 
 export async function runInteractive(flags) {

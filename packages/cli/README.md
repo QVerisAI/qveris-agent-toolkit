@@ -115,7 +115,7 @@ qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
 |---------|-------------|
 | `qveris interactive` | Launch REPL mode (discover/inspect/call/codegen in one session) |
 | `qveris doctor` | Self-check: Node.js version, API key, connectivity |
-| `qveris config list` | View all settings with sources |
+| `qveris config <subcommand>` | Manage CLI settings (set, get, list, reset, path) |
 | `qveris completions <shell>` | Generate shell completions (bash/zsh/fish) |
 
 ## Usage

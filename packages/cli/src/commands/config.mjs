@@ -1,6 +1,5 @@
-import { getConfigPath, getConfigValue, setConfigValue, writeConfig, readConfig } from "../config/store.mjs";
+import { getConfigPath, getConfigValue, setConfigValue, writeConfig } from "../config/store.mjs";
 import { resolveAll } from "../config/resolve.mjs";
-import { DEFAULTS } from "../config/defaults.mjs";
 import { bold, dim, cyan } from "../output/colors.mjs";
 import { outputJson } from "../output/json.mjs";
 

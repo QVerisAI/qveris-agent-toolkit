@@ -55,7 +55,9 @@ done; then
   NPM_DIR="${HOME}/.npm-global"
   mkdir -p "$NPM_DIR"
   npm config set prefix "$NPM_DIR" 2>/dev/null || true
-  npm install -g @qverisai/cli --prefix "$NPM_DIR" 2>&1 | grep -i err || true
+  if ! npm_output=$(npm install -g @qverisai/cli --prefix "$NPM_DIR" 2>&1); then
+    echo "$npm_output" | grep -i err
+  fi
 fi
 
 # ── 4. Verify installation ───────────────────────────────────────────

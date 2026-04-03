@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
 import { homedir } from "node:os";
 
 const SESSION_TTL_MS = 30 * 60 * 1000;
@@ -23,7 +23,7 @@ export function readSession() {
 }
 
 export function writeSession(data) {
-  const dir = join(sessionPath(), "..");
+  const dir = dirname(sessionPath());
   mkdirSync(dir, { recursive: true });
   writeFileSync(sessionPath(), JSON.stringify({ ...data, timestamp: Date.now() }, null, 2) + "\n");
 }

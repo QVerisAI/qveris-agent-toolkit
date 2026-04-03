@@ -90,4 +90,3 @@ export async function callTool({
   });
 }
 
-export { getBaseUrl };
