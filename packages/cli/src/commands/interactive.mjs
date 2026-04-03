@@ -40,7 +40,7 @@ export async function runInteractive(flags) {
       switch (cmd) {
         case "discover":
         case "search": {
-          const query = rest.join(" ").replace(/^"|"$/g, "");
+          const query = rest.join(" ");
           if (!query) { console.log("  Usage: discover <query>"); break; }
           const result = await discoverTools({ apiKey, baseUrl, query, limit: 5, timeoutMs: 30000 });
           state.discoveryId = result.search_id;
