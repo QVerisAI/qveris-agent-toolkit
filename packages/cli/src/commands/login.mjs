@@ -1,7 +1,8 @@
 import { createInterface } from "node:readline";
 import { execFile } from "node:child_process";
 import { platform } from "node:os";
-import { setConfigValue, deleteConfigValue, getConfigValue } from "../config/store.mjs";
+import { resolve } from "../config/resolve.mjs";
+import { setConfigValue, deleteConfigValue } from "../config/store.mjs";
 import { discoverTools } from "../client/api.mjs";
 import { bold, green, red, dim, cyan } from "../output/colors.mjs";
 
@@ -16,16 +17,16 @@ function openBrowser(url) {
 
 /**
  * Masked input prompt using raw mode.
- * Handles Backspace, Ctrl+C, paste, and echoes * per character.
+ * Handles Backspace, Ctrl+C, paste (multi-char chunks), and echoes * per character.
  */
 function prompt(question) {
-  return new Promise((resolve, reject) => {
+  return new Promise((pResolve, pReject) => {
     process.stderr.write(question);
 
     // Fallback for non-TTY (piped input): read without masking
     if (!process.stdin.isTTY) {
       const rl = createInterface({ input: process.stdin, output: process.stderr });
-      rl.question("", (answer) => { rl.close(); resolve(answer.trim()); });
+      rl.question("", (answer) => { rl.close(); pResolve(answer.trim()); });
       return;
     }
 
@@ -45,35 +46,36 @@ function prompt(question) {
     process.stdin.resume();
     process.stdin.setEncoding("utf-8");
 
-    const onData = (key) => {
-      // Ctrl+C
-      if (key === "\x03") {
-        cleanup();
-        process.removeListener("exit", onExit);
-        process.stderr.write("\n");
-        reject(new Error("Aborted"));
-        return;
-      }
-      // Enter
-      if (key === "\r" || key === "\n") {
-        cleanup();
-        process.removeListener("exit", onExit);
-        process.stderr.write("\n");
-        resolve(buf.trim());
-        return;
-      }
-      // Backspace / Delete
-      if (key === "\x7f" || key === "\b") {
-        if (buf.length > 0) {
-          buf = buf.slice(0, -1);
-          process.stderr.write("\b \b"); // erase last *
+    // Process each character in the chunk individually to handle paste correctly
+    const onData = (chunk) => {
+      for (const char of chunk) {
+        // Ctrl+C
+        if (char === "\x03") {
+          cleanup();
+          process.removeListener("exit", onExit);
+          process.stderr.write("\n");
+          pReject(new Error("Aborted"));
+          return;
         }
-        return;
-      }
-      // Paste or regular character(s) — mask each char individually
-      for (const ch of key) {
-        if (ch.charCodeAt(0) >= 32) { // printable
-          buf += ch;
+        // Enter
+        if (char === "\r" || char === "\n") {
+          cleanup();
+          process.removeListener("exit", onExit);
+          process.stderr.write("\n");
+          pResolve(buf.trim());
+          return;
+        }
+        // Backspace / Delete
+        if (char === "\x7f" || char === "\b") {
+          if (buf.length > 0) {
+            buf = buf.slice(0, -1);
+            process.stderr.write("\b \b");
+          }
+          continue;
+        }
+        // Printable character
+        if (char.charCodeAt(0) >= 32) {
+          buf += char;
           process.stderr.write("*");
         }
       }
@@ -134,7 +136,7 @@ export async function runLogout() {
 }
 
 export async function runWhoami(flags) {
-  const key = flags.apiKey || process.env.QVERIS_API_KEY || getConfigValue("api_key");
+  const { value: key, source } = resolve("api_key", flags.apiKey);
 
   if (!key) {
     console.log(`\n  Not authenticated. Run ${cyan("qveris login")} to set your API key.`);
@@ -143,7 +145,6 @@ export async function runWhoami(flags) {
   }
 
   const masked = key.slice(0, 6) + "..." + key.slice(-4);
-  const source = flags.apiKey ? "flag" : process.env.QVERIS_API_KEY ? "env" : "config";
 
   process.stderr.write(`  Validating...`);
 
