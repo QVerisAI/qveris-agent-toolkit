@@ -407,7 +407,7 @@ Model improvement is a tailwind for QVeris, not a headwind.
 - **Website:** https://qveris.ai (Global) / https://qveris.cn (China)
 - **GitHub:** https://github.com/QVerisAI/QVerisAI
 - **Get API Key:** https://qveris.ai/account?page=api-keys (Global) / https://qveris.cn/account?page=api-keys (China) — free, 1,000 credits on signup
-- **Playground:** https://qveris.ai/newchat (test capabilities in browser)
+- **Playground:** https://qveris.ai/playground (test capabilities in browser)
 - **Pricing:** https://qveris.ai/pricing
 
 ### Documentation
@@ -415,7 +415,7 @@ Model improvement is a tailwind for QVeris, not a headwind.
 - **Getting Started:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/getting-started.md
 - **MCP Server:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/mcp-server.md
 - **REST API:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/rest-api.md
-- **Setup Guide:** https://github.com/QVerisAI/QVerisAI/blob/main/SETUP.md
+- **Setup Guide:** https://github.com/QVerisAI/QVerisAI/blob/main/agent/SETUP.md
 - **Claude Code Setup:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/claude-code-setup.md
 - **OpenCode Setup:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/opencode-setup.md
 - **IDE/CLI Setup:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/ide-cli-setup.md

@@ -231,7 +231,7 @@ QVeris actively contributes to the broader Agent ecosystem:
 - 🐦 **X (Twitter)**: [x.com/QVerisAI](https://x.com/QVerisAI)
 - 💼 **LinkedIn**: [linkedin.com/company/qveris](https://www.linkedin.com/company/qveris)
 - 📚 **Docs**: [qveris.ai/docs](https://qveris.ai/docs)
-- 🧪 **Playground**: [qveris.ai/newchat](https://qveris.ai/newchat)
+- 🧪 **Playground**: [qveris.ai/playground](https://qveris.ai/playground)
 
 ---
 

@@ -230,7 +230,7 @@ QVeris 团队同时向 Agent 上游生态持续贡献代码：
 - 🐦 **X (Twitter)**：[x.com/QVerisAI](https://x.com/QVerisAI)
 - 💼 **LinkedIn**：[linkedin.com/company/qveris](https://www.linkedin.com/company/qveris)
 - 📚 **文档**：[qveris.ai/docs](https://qveris.ai/docs)
-- 🧪 **Playground**：[qveris.ai/newchat](https://qveris.ai/newchat)
+- 🧪 **Playground**：[qveris.ai/playground](https://qveris.ai/playground)
 
 ---
 
