@@ -18,7 +18,11 @@ const MAX_SIZE_TTY = 4096;
 const MAX_SIZE_AGENT = 20480;
 
 function resolveMaxSize(flags) {
-  if (flags.maxSize !== undefined) return parseInt(flags.maxSize, 10);
+  if (flags.maxSize !== undefined) {
+    const parsed = parseInt(flags.maxSize, 10);
+    if (isNaN(parsed)) throw new CliError("API_ERROR", "Invalid --max-size: must be an integer");
+    return parsed;
+  }
   if (flags.json) return MAX_SIZE_AGENT;
   if (!process.stdout.isTTY) return MAX_SIZE_AGENT;
   return MAX_SIZE_TTY;

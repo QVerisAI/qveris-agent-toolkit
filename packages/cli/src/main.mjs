@@ -106,6 +106,16 @@ export async function main(argv) {
   }
 }
 
+// Boolean short flags: -j, -v, -V, -h
+const SHORT_BOOLS = { j: "json", v: "verbose", V: "version", h: "help" };
+
+// --key=value long flag mapping (flag name -> flags property)
+const VALUE_FLAGS = {
+  "api-key": "apiKey", "base-url": "baseUrl", timeout: "timeout",
+  limit: "limit", "discovery-id": "discoveryId", params: "params",
+  "max-size": "maxSize", codegen: "codegen", token: "token",
+};
+
 function takeNext(args, i, flag) {
   const next = args[i + 1];
   if (next === undefined || next.startsWith("--")) {
@@ -120,7 +130,29 @@ function extractGlobalFlags(args) {
   const flags = { _positional: [] };
 
   for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
+    let arg = args[i];
+
+    // Handle --key=value syntax
+    if (arg.startsWith("--") && arg.includes("=")) {
+      const eqIdx = arg.indexOf("=");
+      const key = arg.slice(2, eqIdx);
+      const val = arg.slice(eqIdx + 1);
+      if (VALUE_FLAGS[key]) { flags[VALUE_FLAGS[key]] = val; continue; }
+      // Boolean flags with =value (unusual but handle gracefully)
+      if (key === "json") { flags.json = true; continue; }
+    }
+
+    // Handle combined short flags: -jv → -j + -v
+    if (arg.startsWith("-") && !arg.startsWith("--") && arg.length > 2) {
+      const chars = arg.slice(1);
+      let allBool = true;
+      for (const ch of chars) { if (!SHORT_BOOLS[ch]) { allBool = false; break; } }
+      if (allBool) {
+        for (const ch of chars) flags[SHORT_BOOLS[ch]] = true;
+        continue;
+      }
+    }
+
     switch (arg) {
       case "--json": case "-j":
         flags.json = true; break;

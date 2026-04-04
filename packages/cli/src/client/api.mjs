@@ -29,7 +29,7 @@ async function requestJson(path, { method = "POST", query = {}, body, timeoutMs 
 
     if (!response.ok) {
       const status = response.status;
-      const rawText = await response.text();
+      const rawText = (await response.text()).slice(0, 8192);
       let errorDetail, jsonBody;
       try {
         jsonBody = JSON.parse(rawText);
