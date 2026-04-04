@@ -215,7 +215,7 @@ openweathermap.weather.current.v1
     city  string  required
     ...
 
-qveris> call 1 {"city": "London"}
+qveris> call 1 '{"city": "London"}'
 ✓ success  ·  200ms  ·  2 credits
 { "temp": 18.5, ... }
 
