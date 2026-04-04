@@ -14,23 +14,63 @@ function openBrowser(url) {
   execFile(cmd, args, () => {});
 }
 
+/**
+ * Masked input prompt using raw mode.
+ * Handles Backspace, Ctrl+C, paste, and echoes * per character.
+ */
 function prompt(question) {
-  const rl = createInterface({ input: process.stdin, output: process.stderr });
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     process.stderr.write(question);
-    // Mask input — replace each character with * to prevent key from showing on screen
-    const oldWrite = rl.output.write;
-    rl.output.write = (data) => {
-      if (data === "\n" || data === "\r" || data === "\r\n") return oldWrite.call(rl.output, data);
-      if (data.length > 0) return oldWrite.call(rl.output, "*");
-      return true;
+
+    // Fallback for non-TTY (piped input): read without masking
+    if (!process.stdin.isTTY) {
+      const rl = createInterface({ input: process.stdin, output: process.stderr });
+      rl.question("", (answer) => { rl.close(); resolve(answer.trim()); });
+      return;
+    }
+
+    let buf = "";
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.setEncoding("utf-8");
+
+    const onData = (key) => {
+      // Ctrl+C
+      if (key === "\x03") {
+        process.stdin.setRawMode(false);
+        process.stdin.pause();
+        process.stdin.removeListener("data", onData);
+        process.stderr.write("\n");
+        reject(new Error("Aborted"));
+        return;
+      }
+      // Enter
+      if (key === "\r" || key === "\n") {
+        process.stdin.setRawMode(false);
+        process.stdin.pause();
+        process.stdin.removeListener("data", onData);
+        process.stderr.write("\n");
+        resolve(buf.trim());
+        return;
+      }
+      // Backspace / Delete
+      if (key === "\x7f" || key === "\b") {
+        if (buf.length > 0) {
+          buf = buf.slice(0, -1);
+          process.stderr.write("\b \b"); // erase last *
+        }
+        return;
+      }
+      // Paste or regular character(s) — mask each char individually
+      for (const ch of key) {
+        if (ch.charCodeAt(0) >= 32) { // printable
+          buf += ch;
+          process.stderr.write("*");
+        }
+      }
     };
-    rl.question("", (answer) => {
-      rl.output.write = oldWrite;
-      rl.close();
-      console.error(); // Move to next line
-      resolve(answer.trim());
-    });
+
+    process.stdin.on("data", onData);
   });
 }
 
@@ -46,9 +86,15 @@ export async function runLogin(flags) {
     openBrowser(ACCOUNT_URL);
   }
 
-  const key = await prompt("  Paste your API key: ");
+  let key;
+  try {
+    key = await prompt("  Paste your API key: ");
+  } catch {
+    // Ctrl+C during prompt
+    return;
+  }
   if (!key) {
-    console.error(`\n  ${red("\u2718")} No key provided.`);
+    console.error(`  ${red("\u2718")} No key provided.`);
     process.exitCode = 1;
     return;
   }
