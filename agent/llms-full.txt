@@ -142,7 +142,9 @@ For Claude Desktop users, add to `claude_desktop_config.json`:
 
 ### REST API Quick Reference
 
-**Base URL:** `https://qveris.ai/api/v1`
+**Base URL:** `https://qveris.ai/api/v1` (Global) or `https://qveris.cn/api/v1` (China)
+
+Region is auto-detected from API key prefix: `sk-cn-xxx` → China, `sk-xxx` → Global.
 
 **Authentication:** Bearer token in Authorization header
 
@@ -225,13 +227,13 @@ Follow the [setup guide (SETUP.md)](https://github.com/QVerisAI/QVerisAI/blob/ma
 ### Prerequisites
 
 - Node.js 18+ (for MCP server)
-- Valid QVERIS_API_KEY from https://qveris.ai/account?page=api-keys
+- Valid QVERIS_API_KEY from https://qveris.ai/account?page=api-keys (Global) or https://qveris.cn/account?page=api-keys (China)
 
 ### Installation Safety
 
 - Installation does **not** modify your shell startup files (unless explicitly requested)
 - All capability calls run in **sandbox**
-- You can review call logs and credit usage anytime at https://qveris.ai/account
+- You can review call logs and credit usage anytime at https://qveris.ai/account (or https://qveris.cn/account)
 
 ---
 
@@ -278,7 +280,7 @@ Every call records:
 - Credits consumed
 - Success/failure status
 
-View full audit trail: https://qveris.ai/account
+View full audit trail: https://qveris.ai/account (or https://qveris.cn/account)
 
 ---
 
@@ -302,7 +304,7 @@ Full reference: https://github.com/QVerisAI/QVerisAI/blob/main/docs/rest-api.md
 
 **Authentication:** Bearer token
 
-**Base URL:** https://qveris.ai/api/v1
+**Base URL:** https://qveris.ai/api/v1 (Global) or https://qveris.cn/api/v1 (China)
 
 ### Python SDK
 
@@ -402,9 +404,9 @@ Model improvement is a tailwind for QVeris, not a headwind.
 
 ### Primary Resources
 
-- **Website:** https://qveris.ai
+- **Website:** https://qveris.ai (Global) / https://qveris.cn (China)
 - **GitHub:** https://github.com/QVerisAI/QVerisAI
-- **Get API Key:** https://qveris.ai/account?page=api-keys (free, 1,000 credits on signup)
+- **Get API Key:** https://qveris.ai/account?page=api-keys (Global) / https://qveris.cn/account?page=api-keys (China) — free, 1,000 credits on signup
 - **Playground:** https://qveris.ai/newchat (test capabilities in browser)
 - **Pricing:** https://qveris.ai/pricing
 

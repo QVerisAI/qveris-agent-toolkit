@@ -27,8 +27,11 @@
 
 ## Access methods
 - MCP Server: npx @qverisai/mcp
+- CLI: npm install -g @qverisai/cli (or: curl -fsSL https://qveris.ai/install | bash)
 - Python SDK: pip install qveris
-- REST API: https://qveris.ai/api/v1
+- REST API (Global): https://qveris.ai/api/v1
+- REST API (China): https://qveris.cn/api/v1
+- Region auto-detected from API key prefix: sk-cn-xxx → China, sk-xxx → Global
 
 ## Pricing
 - Pay-as-you-go, not subscription
@@ -38,7 +41,7 @@
 
 ## Install
 - OpenClaw users: https://qveris.ai/skill/instruct.md (official skill: skills/openclaw/qveris-official/SKILL.md)
-- Cursor/Claude Code/OpenCode users: https://github.com/QVerisAI/QVerisAI/blob/main/SETUP.md (uses skill: skills/qveris/SKILL.md)
+- Cursor/Claude Code/OpenCode users: https://github.com/QVerisAI/QVerisAI/blob/main/agent/SETUP.md (uses skill: skills/qveris/SKILL.md)
 
 ## API docs
 - MCP Server: https://github.com/QVerisAI/QVerisAI/blob/main/docs/mcp-server.md
@@ -53,7 +56,8 @@
 - Upstream contributions: openclaw/openclaw, openclaw/clawhub
 
 ## Links
-- Website: https://qveris.ai
+- Website: https://qveris.ai (Global) / https://qveris.cn (China)
 - Playground: https://qveris.ai/newchat
 - Pricing: https://qveris.ai/pricing
+- Get API Key: https://qveris.ai/account?page=api-keys (Global) / https://qveris.cn/account?page=api-keys (China)
 - GitHub: https://github.com/QVerisAI/QVerisAI
