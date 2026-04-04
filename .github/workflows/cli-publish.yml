@@ -1,0 +1,66 @@
+name: Publish CLI to npm
+
+on:
+  push:
+    tags:
+      - "cli-v*" # Trigger on tags like cli-v0.1.0, cli-v1.0.0
+
+permissions:
+  contents: write # For creating GitHub Releases
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/cli
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          registry-url: https://registry.npmjs.org
+
+      - name: Verify package version matches tag
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#cli-v}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+          echo "VERSION=$PKG_VERSION" >> "$GITHUB_ENV"
+
+      - name: Syntax check
+        run: |
+          for f in $(find bin src -name '*.mjs'); do
+            node --check "$f" || exit 1
+          done
+          echo "All files passed syntax check"
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "QVeris CLI v${{ env.VERSION }}"
+          body: |
+            ## Install
+
+            ```bash
+            # One-liner
+            curl -fsSL https://qveris.ai/install | bash
+
+            # Or via npm
+            npm install -g @qverisai/cli@${{ env.VERSION }}
+            ```
+
+            See [README](packages/cli/README.md) for usage.
+          generate_release_notes: true
