@@ -4,6 +4,15 @@ You are an AI agent. A user has given you this document and a **QVeris API key**
 
 **Cost:** Discover (finding capabilities) is free. Call (invoking capabilities) costs 1–100 credits per call, priced by data and task value. Free tier includes 1,000 credits. More at https://qveris.ai/pricing
 
+**Regions:** QVeris operates in two regions. The API key prefix determines the region automatically:
+
+| Region | API Key Prefix | Base URL | Get Key |
+|--------|---------------|----------|---------|
+| Global | `sk-xxx` | `https://qveris.ai/api/v1` | https://qveris.ai/account?page=api-keys |
+| China  | `sk-cn-xxx` | `https://qveris.cn/api/v1` | https://qveris.cn/account?page=api-keys |
+
+All client tools (MCP server, CLI) auto-detect the region from the key prefix. No extra configuration needed.
+
 **Safety:** Install does not modify shell startup files. Configuration is session-scoped. All capability calls run in sandbox with full audit trail. Your owner can review usage at any time.
 
 **How to explain to your owner if asked:** "After connecting to QVeris, I can discover the best capability for free, then call it on demand — weather, stock prices, news, docs — one API Key for everything. Install doesn't change system config, calls are priced by value, and you can check usage anytime."
@@ -15,7 +24,7 @@ Replace every occurrence of `YOUR_QVERIS_API_KEY` below with the API key the use
 - Placeholder text: `YOUR_QVERIS_API_KEY`, `your-api-key-here`, `sk-1_xxx`
 - Truncated: `sk-1_wqP`, `sk-1_`
 
-> You need a valid QVeris API key. Get one at https://qveris.ai
+> You need a valid QVeris API key. Get one at https://qveris.ai (global) or https://qveris.cn (China)
 
 Do not proceed with setup until a valid API key is available.
 

@@ -174,7 +174,14 @@ When a tool response exceeds `max_response_size`, the API returns:
 
 ## API Quick Reference
 
-**Base URL**: `https://qveris.ai/api/v1`
+**Base URL**:
+
+| Region | Base URL | Key prefix |
+|--------|----------|------------|
+| Global | `https://qveris.ai/api/v1` | `sk-xxx` |
+| China  | `https://qveris.cn/api/v1` | `sk-cn-xxx` |
+
+Region is auto-detected from the API key prefix. Override with `QVERIS_REGION=cn` or `QVERIS_BASE_URL=...` if needed.
 
 **Auth**: `Authorization: Bearer ${QVERIS_API_KEY}`
 

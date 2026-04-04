@@ -1,8 +1,8 @@
-import { resolve } from "../config/resolve.mjs";
+import { resolveBaseUrl } from "../config/region.mjs";
 import { CliError } from "../errors/handler.mjs";
 
-function getBaseUrl(flagValue) {
-  return resolve("base_url", flagValue).value;
+function getBaseUrl(baseUrlFlag, apiKey) {
+  return resolveBaseUrl({ baseUrlFlag, apiKey }).baseUrl;
 }
 
 async function requestJson(path, { method = "POST", query = {}, body, timeoutMs = 30000, apiKey, baseUrl }) {
@@ -10,7 +10,7 @@ async function requestJson(path, { method = "POST", query = {}, body, timeoutMs 
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const url = new URL(baseUrl.replace(/\/$/, "") + path);
+    const url = new URL(baseUrl.replace(/\/+$/, "") + path);
     for (const [key, value] of Object.entries(query)) {
       if (value !== undefined && value !== null) {
         url.searchParams.set(key, String(value));
@@ -35,8 +35,6 @@ async function requestJson(path, { method = "POST", query = {}, body, timeoutMs 
         jsonBody = JSON.parse(rawText);
         errorDetail = jsonBody.error_message || jsonBody.message || null;
       } catch { /* not JSON */ }
-      // For known error codes, pass errorDetail only if it's a meaningful message
-      // (not raw JSON); otherwise let the CliError template message apply
       if (status === 401 || status === 403) throw new CliError("AUTH_INVALID_KEY", errorDetail);
       if (status === 402) throw new CliError("CREDITS_INSUFFICIENT", errorDetail);
       if (status === 429) throw new CliError("RATE_LIMITED", errorDetail);
@@ -60,12 +58,12 @@ async function requestJson(path, { method = "POST", query = {}, body, timeoutMs 
 }
 
 export async function discoverTools({ apiKey, baseUrl: baseUrlFlag, query, limit = 5, timeoutMs = 30000 }) {
-  const baseUrl = getBaseUrl(baseUrlFlag);
+  const baseUrl = getBaseUrl(baseUrlFlag, apiKey);
   return requestJson("/search", { apiKey, baseUrl, body: { query, limit }, timeoutMs });
 }
 
 export async function inspectToolsByIds({ apiKey, baseUrl: baseUrlFlag, toolIds, discoveryId, timeoutMs = 30000 }) {
-  const baseUrl = getBaseUrl(baseUrlFlag);
+  const baseUrl = getBaseUrl(baseUrlFlag, apiKey);
   const body = { tool_ids: toolIds };
   if (discoveryId) body.search_id = discoveryId;
   return requestJson("/tools/by-ids", { apiKey, baseUrl, body, timeoutMs });
@@ -80,7 +78,7 @@ export async function callTool({
   maxResponseSize = 102400,
   timeoutMs = 120000,
 }) {
-  const baseUrl = getBaseUrl(baseUrlFlag);
+  const baseUrl = getBaseUrl(baseUrlFlag, apiKey);
   return requestJson("/tools/execute", {
     apiKey,
     baseUrl,
@@ -93,4 +91,3 @@ export async function callTool({
     timeoutMs,
   });
 }
-

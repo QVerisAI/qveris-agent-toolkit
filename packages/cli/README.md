@@ -242,6 +242,28 @@ qveris discover "weather" --api-key "sk-1_..."
 
 **Resolution order:** `--api-key` flag > `QVERIS_API_KEY` env > config file
 
+### Region
+
+The API region is auto-detected from your key prefix:
+
+| Key prefix | Region | Base URL |
+|------------|--------|----------|
+| `sk-xxx` | Global | `https://qveris.ai/api/v1` |
+| `sk-cn-xxx` | China | `https://qveris.cn/api/v1` |
+
+No extra configuration needed. To override manually:
+
+```bash
+# Via environment variable
+export QVERIS_REGION=cn
+
+# Or set a custom base URL
+export QVERIS_BASE_URL=https://custom.endpoint/api/v1
+
+# Or per-command
+qveris discover "weather" --base-url https://qveris.cn/api/v1
+```
+
 ### Config File
 
 Located at `~/.config/qveris/config.json` (respects `XDG_CONFIG_HOME`).
@@ -313,9 +335,9 @@ QVeris CLI uses only Node.js built-in APIs. No `chalk`, no `commander`, no `yarg
 
 ## Links
 
-- Website: https://qveris.ai
+- Website: https://qveris.ai (global) / https://qveris.cn (China)
 - API Docs: https://qveris.ai/docs
-- Get API Key: https://qveris.ai/account?page=api-keys
+- Get API Key: https://qveris.ai/account?page=api-keys (global) / https://qveris.cn/account?page=api-keys (China)
 - GitHub: https://github.com/QVerisAI/QVerisAI
 
 ## License
