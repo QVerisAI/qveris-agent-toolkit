@@ -178,7 +178,7 @@ This is the **Call** action and costs **1-100 credits** per invocation, priced b
 |-----------|------|----------|-------------|
 | `tool_id` | string | Yes | Tool ID from discovery results |
 | `search_id` | string | Yes | Search ID from the discovery that found this tool |
-| `params_to_tool` | string | Yes | JSON-stringified parameters to pass to the tool |
+| `params_to_tool` | object | Yes | Dictionary of parameters to pass to the tool |
 | `session_id` | string | No | Session identifier for tracking |
 | `max_response_size` | number | No | Max response size in bytes (default `20480`) |
 
@@ -188,7 +188,7 @@ Example:
 {
   "tool_id": "openweathermap.weather.execute.v1",
   "search_id": "YOUR_SEARCH_ID",
-  "params_to_tool": "{\"city\":\"London\",\"units\":\"metric\"}"
+  "params_to_tool": {"city": "London", "units": "metric"}
 }
 ```
 
@@ -251,7 +251,7 @@ If `session_id` is omitted, the MCP server may generate one for the lifetime of 
 - Verify the API key is valid
 - Verify the selected `tool_id` came from a prior discovery
 - Re-run `get_tools_by_ids` to inspect the tool before calling
-- Check that `params_to_tool` is valid JSON
+- Check that `params_to_tool` is a valid object
 
 ### Windows-specific issues
 

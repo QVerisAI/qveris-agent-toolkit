@@ -118,7 +118,15 @@ export class QverisClient {
         throw error;
       }
 
-      return response.json() as Promise<T>;
+      try {
+        return await response.json() as T;
+      } catch {
+        const error: ApiError = {
+          status: response.status,
+          message: 'Invalid or empty JSON response from API',
+        };
+        throw error;
+      }
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'status' in err) {
         // ApiError — rethrow as-is

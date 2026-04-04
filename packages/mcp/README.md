@@ -99,7 +99,7 @@ Execute a discovered tool with specific parameters.
 |-----------|------|----------|-------------|
 | `tool_id` | string | ✓ | Tool ID from search results |
 | `search_id` | string | ✓ | Search ID from the search that found this tool |
-| `params_to_tool` | string | ✓ | JSON string of parameters to pass to the tool |
+| `params_to_tool` | object | ✓ | A dictionary of parameters to pass to the tool |
 | `session_id` | string | | Session identifier (auto-generated if omitted) |
 | `max_response_size` | number | | Max response size in bytes (default: 20480) |
 
@@ -109,7 +109,7 @@ Execute a discovered tool with specific parameters.
 {
   "tool_id": "openweathermap.weather.execute.v1",
   "search_id": "abcd1234-ab12-ab12-ab12-abcdef123456",
-  "params_to_tool": "{\"city\": \"London\", \"units\": \"metric\"}"
+  "params_to_tool": {"city": "London", "units": "metric"}
 }
 ```
 
