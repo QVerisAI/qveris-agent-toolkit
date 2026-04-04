@@ -93,7 +93,7 @@ export const executeToolSchema = {
       default: 20480,
     },
   },
-  required: ['tool_id', 'params_to_tool'],
+  required: ['tool_id', 'search_id', 'params_to_tool'],
 };
 
 /**

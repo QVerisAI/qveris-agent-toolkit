@@ -2,7 +2,7 @@
  * Qveris API HTTP Client
  *
  * Provides a type-safe HTTP client for interacting with the Qveris REST API.
- * Handles authentication, request formatting, and error handling.
+ * Handles authentication, request formatting, timeouts, and error handling.
  *
  * @module api/client
  */
@@ -20,6 +20,10 @@ import type {
 /** Production API base URL */
 const DEFAULT_BASE_URL = 'https://qveris.ai/api/v1';
 
+/** Default timeout: 30s for search/inspect, 120s for execute */
+const DEFAULT_TIMEOUT_MS = 30_000;
+const EXECUTE_TIMEOUT_MS = 120_000;
+
 /**
  * Qveris API Client
  *
@@ -30,13 +34,11 @@ const DEFAULT_BASE_URL = 'https://qveris.ai/api/v1';
  * ```typescript
  * const client = new QverisClient({ apiKey: 'your-api-key' });
  *
- * // Search for tools
  * const searchResult = await client.searchTools({
  *   query: 'weather API',
  *   limit: 5
  * });
  *
- * // Execute a tool
  * const execResult = await client.executeTool('tool-id', {
  *   search_id: searchResult.search_id,
  *   parameters: { city: 'London' }
@@ -46,95 +48,98 @@ const DEFAULT_BASE_URL = 'https://qveris.ai/api/v1';
 export class QverisClient {
   private readonly apiKey: string;
   private readonly baseUrl: string;
+  private readonly defaultTimeoutMs: number;
 
-  /**
-   * Creates a new Qveris API client.
-   *
-   * @param config - Client configuration
-   * @throws {Error} If apiKey is not provided
-   */
   constructor(config: QverisClientConfig) {
     if (!config.apiKey) {
       throw new Error('Qveris API key is required');
     }
     this.apiKey = config.apiKey;
-    this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
+    // Normalize: strip trailing slash to prevent double-slash URLs
+    this.baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, '');
+    this.defaultTimeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
   /**
    * Makes an authenticated HTTP request to the Qveris API.
-   *
-   * @param method - HTTP method
-   * @param endpoint - API endpoint (relative to base URL)
-   * @param body - Request body (will be JSON serialized)
-   * @returns Parsed JSON response
-   * @throws {ApiError} If the request fails
    */
   private async request<T>(
     method: 'GET' | 'POST',
     endpoint: string,
-    body?: unknown
+    body?: unknown,
+    timeoutMs?: number,
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(
+      () => controller.abort(),
+      timeoutMs ?? this.defaultTimeoutMs,
+    );
 
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: body ? JSON.stringify(body) : undefined,
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      let errorMessage: string;
-      let errorDetails: unknown;
+      if (!response.ok) {
+        const status = response.status;
+        let errorMessage: string;
+        let errorDetails: unknown;
 
-      try {
-        const errorBody = (await response.json()) as Record<string, unknown>;
-        errorMessage =
-          (errorBody.message as string) ||
-          (errorBody.error as string) ||
-          response.statusText;
-        errorDetails = errorBody;
-      } catch {
-        errorMessage = response.statusText || `HTTP ${response.status}`;
+        try {
+          const errorBody = (await response.json()) as Record<string, unknown>;
+          errorMessage =
+            (errorBody.error_message as string) ||
+            (errorBody.message as string) ||
+            (errorBody.error as string) ||
+            response.statusText;
+          errorDetails = errorBody;
+        } catch {
+          errorMessage = response.statusText || `HTTP ${status}`;
+        }
+
+        // Provide actionable hints for specific status codes
+        if (status === 402) {
+          errorMessage = `Insufficient credits. ${errorMessage}. Purchase credits at https://qveris.ai/pricing`;
+        }
+
+        const error: ApiError = {
+          status,
+          message: errorMessage,
+          details: errorDetails,
+        };
+
+        throw error;
       }
 
-      const error: ApiError = {
-        status: response.status,
-        message: errorMessage,
-        details: errorDetails,
-      };
-
-      throw error;
+      return response.json() as Promise<T>;
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'status' in err) {
+        // ApiError — rethrow as-is
+        throw err;
+      }
+      if (err instanceof Error && err.name === 'AbortError') {
+        const error: ApiError = {
+          status: 408,
+          message: 'Request timed out. Check connectivity or increase timeout.',
+        };
+        throw error;
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    return response.json() as Promise<T>;
   }
 
   /**
    * Search for tools based on a natural language query.
-   *
-   * Finds tools that match the described capability. Results include
-   * tool metadata, parameter schemas, and usage examples.
-   *
-   * @param request - Search parameters
-   * @returns Search results with matching tools
-   *
-   * @example
-   * ```typescript
-   * const result = await client.searchTools({
-   *   query: 'send SMS message',
-   *   limit: 10,
-   *   session_id: 'abcd1234-ab12-ab12-ab12-abcdef123456'
-   * });
-   *
-   * console.log(`Found ${result.total} tools`);
-   * for (const tool of result.results) {
-   *   console.log(`- ${tool.name}: ${tool.description}`);
-   * }
-   * ```
+   * This is the Discover action and is free.
    */
   async searchTools(request: SearchRequest): Promise<SearchResponse> {
     return this.request<SearchResponse>('POST', '/search', request);
@@ -142,27 +147,7 @@ export class QverisClient {
 
   /**
    * Get tool descriptions by their IDs.
-   *
-   * Retrieves detailed information about specific tools when you already
-   * know their tool_ids. Useful for refreshing tool metadata or getting
-   * details for tools from previous searches.
-   *
-   * @param request - Request parameters with tool IDs
-   * @returns Tool information matching the provided IDs
-   *
-   * @example
-   * ```typescript
-   * const result = await client.getToolsByIds({
-   *   tool_ids: ['weather-tool-1', 'email-tool-2'],
-   *   search_id: 'abcd1234-ab12-ab12-ab12-abcdef123456',
-   *   session_id: 'abcd1234-ab12-ab12-ab12-abcdef123456'
-   * });
-   *
-   * console.log(`Retrieved ${result.results.length} tools`);
-   * for (const tool of result.results) {
-   *   console.log(`- ${tool.name}: ${tool.description}`);
-   * }
-   * ```
+   * This is the Inspect action and is free.
    */
   async getToolsByIds(request: GetToolsByIdsRequest): Promise<SearchResponse> {
     return this.request<SearchResponse>('POST', '/tools/by-ids', request);
@@ -170,54 +155,26 @@ export class QverisClient {
 
   /**
    * Execute a tool with the specified parameters.
-   *
-   * The tool_id must come from a previous searchTools call.
-   * The search_id links this execution to that search for analytics.
-   *
-   * @param toolId - The tool identifier from search results
-   * @param request - Execution parameters
-   * @returns Execution result
-   *
-   * @example
-   * ```typescript
-   * const result = await client.executeTool('openweathermap_current', {
-   *   search_id: 'abcd1234-ab12-ab12-ab12-abcdef123456',
-   *   session_id: 'abcd1234-ab12-ab12-ab12-abcdef123456',
-   *   parameters: {
-   *     city: 'Tokyo',
-   *     units: 'metric'
-   *   }
-   * });
-   *
-   * if (result.success) {
-   *   console.log('Result:', result.result);
-   * } else {
-   *   console.error('Failed:', result.error_message);
-   * }
-   * ```
+   * This is the Call action and costs 1-100 credits per call.
+   * Uses a longer timeout (120s) by default.
    */
   async executeTool(
     toolId: string,
     request: ExecuteRequest
   ): Promise<ExecuteResponse> {
     const endpoint = `/tools/execute?tool_id=${encodeURIComponent(toolId)}`;
-    return this.request<ExecuteResponse>('POST', endpoint, request);
+    return this.request<ExecuteResponse>(
+      'POST',
+      endpoint,
+      request,
+      EXECUTE_TIMEOUT_MS,
+    );
   }
 }
 
 /**
  * Creates a Qveris client from environment variables.
- *
  * Reads the API key from the QVERIS_API_KEY environment variable.
- *
- * @returns Configured Qveris client
- * @throws {Error} If QVERIS_API_KEY is not set
- *
- * @example
- * ```typescript
- * // Ensure QVERIS_API_KEY is set in your environment
- * const client = createClientFromEnv();
- * ```
  */
 export function createClientFromEnv(): QverisClient {
   const apiKey = process.env.QVERIS_API_KEY;
@@ -225,11 +182,9 @@ export function createClientFromEnv(): QverisClient {
   if (!apiKey) {
     throw new Error(
       'QVERIS_API_KEY environment variable is required.\n' +
-      'Please set it to your Qveris API token.\n' +
-      'Contact Qveris to obtain an API token.'
+      'Get your API key at https://qveris.ai/account?page=api-keys'
     );
   }
 
   return new QverisClient({ apiKey });
 }
-

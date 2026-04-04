@@ -1,8 +1,9 @@
 /**
  * Qveris API Type Definitions
  *
- * This module contains TypeScript types that match the Qveris API v0.1.6 schema.
- * All types are fully documented for IDE autocompletion and developer experience.
+ * This module contains TypeScript types that match the Qveris API schema.
+ * Aligned with backend ToolInfo, SearchResponse, ToolCallResponse, and
+ * the REST API documentation at docs/en-US/rest-api.md.
  *
  * @module types
  * @see {@link https://qveris.ai/api/v1} Qveris API Base URL
@@ -14,22 +15,9 @@
 
 /**
  * Request body for the Search Tools API.
- *
- * @example
- * ```typescript
- * const request: SearchRequest = {
- *   query: "weather forecast API",
- *   limit: 10,
- *   session_id: "abcd1234-ab12-ab12-ab12-abcdef123456"
- * };
- * ```
  */
 export interface SearchRequest {
-  /**
-   * Natural language search query describing the tool capability you need.
-   * @example "weather forecast API"
-   * @example "send email notification"
-   */
+  /** Natural language search query describing the tool capability you need. */
   query: string;
 
   /**
@@ -40,16 +28,12 @@ export interface SearchRequest {
    */
   limit?: number;
 
-  /**
-   * Session identifier for tracking user sessions.
-   * Same ID corresponds to the same user session.
-   */
+  /** Session identifier for tracking user sessions. */
   session_id?: string;
 }
 
 /**
  * Parameter definition for a tool.
- * Describes a single input parameter that a tool accepts.
  */
 export interface ToolParameter {
   /** Parameter name (used as key in the parameters object) */
@@ -77,6 +61,20 @@ export interface ToolExamples {
 }
 
 /**
+ * Historical execution performance statistics for a tool.
+ */
+export interface ToolStats {
+  /** Historical average execution time in milliseconds */
+  avg_execution_time_ms?: number;
+
+  /** Historical success rate (0.0 - 1.0) */
+  success_rate?: number;
+
+  /** Estimated cost in credits per call */
+  cost?: number;
+}
+
+/**
  * Information about a tool returned from search results.
  * Contains everything needed to understand and execute the tool.
  */
@@ -90,28 +88,49 @@ export interface ToolInfo {
   /** Detailed description of what the tool does */
   description: string;
 
+  /** Tool categories/tags */
+  categories?: string[];
+
   /** Name of the organization/service providing this tool */
   provider_name?: string;
 
   /** Description of the provider */
   provider_description?: string;
 
+  /** Provider website URL */
+  provider_website_url?: string;
+
   /**
    * Geographic availability of the tool.
    * - "global" - Available worldwide
    * - "US|CA" - Whitelist: only available in US and Canada
-   * - "!CN|RU" - Blacklist: not available in China and Russia
+   * - "-CN|RU" - Blacklist: not available in China and Russia
    */
   region?: string;
-
-  /** Average response latency in milliseconds */
-  avg_latency_ms?: number;
 
   /** List of parameters the tool accepts */
   params?: ToolParameter[];
 
   /** Usage examples with sample parameters */
   examples?: ToolExamples;
+
+  /** Historical execution performance statistics */
+  stats?: ToolStats;
+
+  /** Relevance score for the search query (0.0 - 1.0, higher = better match) */
+  final_score?: number;
+
+  /** Whether this tool has been executed before (verified in production) */
+  has_last_execution?: boolean;
+
+  /** Most recent execution record, if available */
+  last_execution_record?: Record<string, unknown>;
+
+  /** Documentation URL for the tool */
+  docs_url?: string;
+
+  /** Protocol type */
+  protocol?: string;
 }
 
 /**
@@ -119,7 +138,13 @@ export interface ToolInfo {
  */
 export interface SearchStats {
   /** Total time to complete the search in milliseconds */
-  search_time_ms: number;
+  search_time_ms?: number;
+
+  /** Vector recall count */
+  vector_recall_count?: number;
+
+  /** Fulltext recall count */
+  fulltext_recall_count?: number;
 }
 
 /**
@@ -143,6 +168,12 @@ export interface SearchResponse {
 
   /** Search performance statistics */
   stats?: SearchStats;
+
+  /** User's remaining credits after this operation */
+  remaining_credits?: number;
+
+  /** Total elapsed time in milliseconds */
+  elapsed_time_ms?: number;
 }
 
 // ============================================================================
@@ -151,32 +182,15 @@ export interface SearchResponse {
 
 /**
  * Request body for the Get Tools by IDs API.
- *
- * @example
- * ```typescript
- * const request: GetToolsByIdsRequest = {
- *   tool_ids: ["tool-1", "tool-2"],
- *   search_id: "search-123",
- *   session_id: "abcd1234-ab12-ab12-ab12-abcdef123456"
- * };
- * ```
  */
 export interface GetToolsByIdsRequest {
-  /**
-   * Array of tool IDs to retrieve information for.
-   */
+  /** Array of tool IDs to retrieve information for. */
   tool_ids: string[];
 
-  /**
-   * The search_id from the search that returned the tool(s).
-   * Optional but recommended for analytics and billing.
-   */
+  /** The search_id from the search that returned the tool(s). */
   search_id?: string;
 
-  /**
-   * Session identifier for tracking user sessions.
-   * Same ID corresponds to the same user session.
-   */
+  /** Session identifier for tracking user sessions. */
   session_id?: string;
 }
 
@@ -186,28 +200,15 @@ export interface GetToolsByIdsRequest {
 
 /**
  * Request body for the Execute Tool API.
- *
- * @example
- * ```typescript
- * const request: ExecuteRequest = {
- *   search_id: "abcd1234-ab12-ab12-ab12-abcdef123456",
- *   session_id: "abcd1234-ab12-ab12-ab12-abcdef123456",
- *   parameters: { city: "London", units: "metric" },
- *   max_response_size: 20480
- * };
- * ```
  */
 export interface ExecuteRequest {
   /**
    * The search_id from the search that returned this tool.
-   * Links the execution to the original search for analytics.
+   * Links the execution to the original search for analytics and billing.
    */
   search_id: string;
 
-  /**
-   * Session identifier for tracking user sessions.
-   * Same ID corresponds to the same user session.
-   */
+  /** Session identifier for tracking user sessions. */
   session_id?: string;
 
   /**
@@ -253,6 +254,12 @@ export interface ExecuteResultTruncated {
    * Useful for previewing the data structure.
    */
   truncated_content: string;
+
+  /**
+   * JSON Schema describing the structure of the full content.
+   * Helps the agent understand the data shape without downloading.
+   */
+  content_schema?: Record<string, unknown>;
 }
 
 /**
@@ -291,8 +298,17 @@ export interface ExecuteResponse {
   /** Execution duration in seconds */
   execution_time?: number;
 
+  /** Execution duration in milliseconds (alternative field) */
+  elapsed_time_ms?: number;
+
+  /** Credits consumed by this execution */
+  cost?: number;
+
+  /** User's remaining credits after this execution */
+  remaining_credits?: number;
+
   /** Timestamp of execution (ISO 8601 format) */
-  created_at: string;
+  created_at?: string;
 }
 
 // ============================================================================
@@ -308,6 +324,9 @@ export interface QverisClientConfig {
 
   /** Base URL for the API (defaults to production) */
   baseUrl?: string;
+
+  /** Default request timeout in milliseconds */
+  timeoutMs?: number;
 }
 
 /**
@@ -323,4 +342,3 @@ export interface ApiError {
   /** Original error details if available */
   details?: unknown;
 }
-

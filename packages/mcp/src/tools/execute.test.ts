@@ -11,6 +11,7 @@ describe('execute_tool', () => {
   describe('executeToolSchema', () => {
     it('should have tool_id, search_id, params_to_tool as required', () => {
       expect(executeToolSchema.required).toContain('tool_id');
+      expect(executeToolSchema.required).toContain('search_id');
       expect(executeToolSchema.required).toContain('params_to_tool');
     });
 
@@ -22,8 +23,8 @@ describe('execute_tool', () => {
       expect(executeToolSchema.properties.search_id.type).toBe('string');
     });
 
-    it('should define params_to_tool as string (JSON)', () => {
-      expect(executeToolSchema.properties.params_to_tool.type).toBe('string');
+    it('should define params_to_tool as object', () => {
+      expect(executeToolSchema.properties.params_to_tool.type).toBe('object');
     });
 
     it('should define max_response_size with default', () => {
