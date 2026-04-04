@@ -188,21 +188,34 @@ Latest capabilities and updates: [qveris.ai](https://qveris.ai)
 
 QVeris's core routing engine runs as a managed service. We actively support the open-source ecosystem by open-sourcing all client-side tooling — MCP server, SDKs, Agent skills, and plugins — and contributing code to upstream projects.
 
-### Official projects
+### Monorepo packages
+
+This repository (`QVerisAI/QVerisAI`) is the primary monorepo for QVeris client-side tooling:
+
+| Package | Path | npm |
+|---------|------|-----|
+| MCP Server | [`packages/mcp`](packages/mcp) | [@qverisai/mcp](https://www.npmjs.com/package/@qverisai/mcp) |
+| CLI | [`packages/cli`](packages/cli) | [@qverisai/cli](https://www.npmjs.com/package/@qverisai/cli) |
+| Agent docs | [`agent/`](agent) | — |
+| Skills | [`skills/`](skills) | — |
+
+### Other repositories
 
 | Repository | Description |
 |------------|-------------|
-| [QVerisAI/QVerisAI](https://github.com/QVerisAI/QVerisAI) | Core repo — skills, docs, llms.txt |
 | [QVerisAI/sdk-python](https://github.com/QVerisAI/sdk-python) | Python SDK |
-| [@qverisai/mcp (npm)](https://www.npmjs.com/package/@qverisai/mcp) | MCP Server |
-| [QVerisAI/open-qveris-skills](https://github.com/QVerisAI/open-qveris-skills) | Community skills |
+| [QVerisAI/open-qveris-skills](https://github.com/QVerisAI/open-qveris-skills) | Community skills (stock copilot, market reports, etc.) |
+| [QVerisAI/openclaw-qveris-plugin](https://github.com/QVerisAI/openclaw-qveris-plugin) | OpenClaw plugin |
+| [QVerisAI/vscode-qveris-ai](https://github.com/QVerisAI/vscode-qveris-ai) | VS Code extension |
 
 Full list: [github.com/orgs/QVerisAI/repositories](https://github.com/orgs/QVerisAI/repositories)
 
 ### Distribution channels
 
-- **ClawHub**: [clawhub.ai/skills?q=qveris](https://clawhub.ai/skills?sort=downloads&q=qveris) — official skills for OpenClaw agents
-- **npm**: [@qverisai](https://www.npmjs.com/org/qverisai) — MCP server and tooling packages
+- **npm**: [@qverisai](https://www.npmjs.com/org/qverisai) — MCP server, CLI
+- **PyPI**: [QVerisAI/sdk-python](https://github.com/QVerisAI/sdk-python) — Python SDK
+- **ClawHub**: [clawhub.ai/skills?q=qveris](https://clawhub.ai/skills?sort=downloads&q=qveris) — OpenClaw skills
+- **One-liner install**: `curl -fsSL https://qveris.ai/install | bash`
 
 ### Upstream contributions
 
