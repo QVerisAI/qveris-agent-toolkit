@@ -140,7 +140,7 @@ async function main(): Promise<void> {
 
     try {
       if (name === 'search_tools') {
-        const input = args as unknown as SearchToolsInput;
+        const input = (args ?? {}) as unknown as SearchToolsInput;
 
         // Validate required fields
         if (!input.query || typeof input.query !== 'string') {
@@ -171,7 +171,7 @@ async function main(): Promise<void> {
       }
 
       if (name === 'get_tools_by_ids') {
-        const input = args as unknown as GetToolsByIdsInput;
+        const input = (args ?? {}) as unknown as GetToolsByIdsInput;
 
         // Validate required fields
         if (!input.tool_ids || !Array.isArray(input.tool_ids) || input.tool_ids.length === 0) {
@@ -202,7 +202,7 @@ async function main(): Promise<void> {
       }
 
       if (name === 'execute_tool') {
-        const input = args as unknown as ExecuteToolInput;
+        const input = (args ?? {}) as unknown as ExecuteToolInput;
 
         // Validate required fields
         const missingFields: string[] = [];

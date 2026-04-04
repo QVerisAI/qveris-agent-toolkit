@@ -27,13 +27,14 @@ export interface ExecuteToolInput {
   search_id: string;
 
   /**
-   * JSON stringified dictionary of parameters to pass to the remote tool.
+   * Dictionary of parameters to pass to the remote tool.
    * Keys are parameter names, values can be of any type.
+   * Can be provided as an object directly or as a JSON string (legacy).
    *
-   * @example '{"city": "London", "units": "metric"}'
-   * @example '{"query": "AI news", "limit": 10}'
+   * @example {"city": "London", "units": "metric"}
+   * @example {"query": "AI news", "limit": 10}
    */
-  params_to_tool: string;
+  params_to_tool: Record<string, unknown> | string;
 
   /**
    * Session identifier for tracking user sessions.
@@ -71,11 +72,11 @@ export const executeToolSchema = {
         'Required for linking execution to the original search.',
     },
     params_to_tool: {
-      type: 'string',
+      type: 'object',
       description:
-        'A JSON stringified dictionary of parameters to pass to the remote tool. ' +
+        'A dictionary of parameters to pass to the remote tool. ' +
         'Keys are param names and values can be of any type. ' +
-        'Example: \'{"city": "London", "units": "metric"}\'',
+        'Example: {"city": "London", "units": "metric"}',
     },
     session_id: {
       type: 'string',
@@ -109,15 +110,21 @@ export async function executeExecuteTool(
   input: ExecuteToolInput,
   defaultSessionId: string
 ): Promise<ExecuteResponse> {
-  // Parse the JSON parameters
+  // Resolve parameters: accept object directly or JSON string (legacy compat)
   let parameters: Record<string, unknown>;
-  try {
-    parameters = JSON.parse(input.params_to_tool) as Record<string, unknown>;
-  } catch (error) {
-    throw new Error(
-      `Invalid JSON in params_to_tool: ${error instanceof Error ? error.message : 'Unknown parse error'}. ` +
-      `Received: ${input.params_to_tool}`
-    );
+  if (typeof input.params_to_tool === 'string') {
+    try {
+      parameters = JSON.parse(input.params_to_tool) as Record<string, unknown>;
+    } catch (error) {
+      throw new Error(
+        `Invalid JSON in params_to_tool: ${error instanceof Error ? error.message : 'Unknown parse error'}. ` +
+        `Received: ${input.params_to_tool}`
+      );
+    }
+  } else if (typeof input.params_to_tool === 'object' && input.params_to_tool !== null) {
+    parameters = input.params_to_tool;
+  } else {
+    parameters = {};
   }
 
   const response = await client.executeTool(input.tool_id, {
