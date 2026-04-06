@@ -56,7 +56,7 @@ jobs:
 
             ```bash
             # One-liner
-            curl -fsSL https://qveris.ai/install | bash
+            curl -fsSL https://qveris.ai/cli/install | bash
 
             # Or via npm
             npm install -g @qverisai/cli@${{ env.VERSION }}

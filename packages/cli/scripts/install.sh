@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # QVeris CLI Installer
-# Usage: curl -fsSL https://qveris.ai/install | bash
+# Usage: curl -fsSL https://qveris.ai/cli/install | bash
 set -euo pipefail
 
 BOLD='\033[1m'

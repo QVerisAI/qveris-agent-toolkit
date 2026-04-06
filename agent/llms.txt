@@ -38,7 +38,7 @@
 - Zero tokens consumed per tool invocation — CLI runs outside the LLM context
 - Deterministic output schema: same command, same format, every time
 - 10,000+ tools accessible without adding any schema to the prompt
-- Install: curl -fsSL https://qveris.ai/install | bash
+- Install: curl -fsSL https://qveris.ai/cli/install | bash
 - Docs: https://github.com/QVerisAI/QVerisAI/blob/main/packages/cli/README.md
 
 ## Pricing

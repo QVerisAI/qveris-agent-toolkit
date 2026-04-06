@@ -57,7 +57,7 @@ tool: weather_gov...  ·  id: 7ebcaf9d-...
 **One-liner (recommended):**
 
 ```bash
-curl -fsSL https://qveris.ai/install | bash
+curl -fsSL https://qveris.ai/cli/install | bash
 ```
 
 **Or via npm:**

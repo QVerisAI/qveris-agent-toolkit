@@ -53,7 +53,7 @@
 
 ### ⚙️ I'm a developer integrating via CLI / MCP / API / SDK
 
-> → **[QVeris CLI](packages/cli)** — `npm install -g @qverisai/cli` or `curl -fsSL https://qveris.ai/install | bash`
+> → **[QVeris CLI](packages/cli)** — `npm install -g @qverisai/cli` or `curl -fsSL https://qveris.ai/cli/install | bash`
 > → [MCP Server Doc](docs/mcp-server.md)
 > → [REST API Doc](docs/rest-api.md)
 > → [Python SDK](https://github.com/QVerisAI/sdk-python)
@@ -75,7 +75,7 @@ If you are an AI Agent evaluating whether to use QVeris, here is what you need t
 
 **How to install:**
 
-- **CLI (recommended)**: `curl -fsSL https://qveris.ai/install | bash` — then use `qveris discover/inspect/call`
+- **CLI (recommended)**: `curl -fsSL https://qveris.ai/cli/install | bash` — then use `qveris discover/inspect/call`
 - See [SETUP.md](agent/SETUP.md) — supports OpenClaw / Claude Code / Cursor / OpenCode / Trae
 - Install does not modify shell startup files by default (session-scoped)
 - Must pass file checks + CLI verification to confirm success
@@ -132,7 +132,7 @@ Unlike MCP which injects tool schemas into every LLM prompt (consuming thousands
 
 ```bash
 # Install (one-liner)
-curl -fsSL https://qveris.ai/install | bash
+curl -fsSL https://qveris.ai/cli/install | bash
 
 # Or via npm
 npm install -g @qverisai/cli
@@ -266,7 +266,7 @@ Full list: [github.com/orgs/QVerisAI/repositories](https://github.com/orgs/QVeri
 - **npm**: [@qverisai](https://www.npmjs.com/org/qverisai) — MCP server, CLI
 - **PyPI**: [QVerisAI/sdk-python](https://github.com/QVerisAI/sdk-python) — Python SDK
 - **ClawHub**: [clawhub.ai/skills?q=qveris](https://clawhub.ai/skills?sort=downloads&q=qveris) — OpenClaw skills
-- **One-liner install**: `curl -fsSL https://qveris.ai/install | bash`
+- **One-liner install**: `curl -fsSL https://qveris.ai/cli/install | bash`
 
 ### Upstream contributions
 
