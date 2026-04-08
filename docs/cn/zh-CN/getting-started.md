@@ -16,7 +16,32 @@ QVeris 在 Agent 循环中表现出色（发现 → 检查 → 调用 → 将结
 
 ## 快速开始
 
-QVeris 提供三种使用方式。
+QVeris 提供多种使用方式，选择最适合你的即可。
+
+### 使用 QVeris CLI
+
+在终端中直接发现、检查和调用能力。
+
+**安装**
+
+```bash
+curl -fsSL https://qveris.cn/cli/install | bash
+```
+
+也可通过 npm 安装（`npm install -g @qverisai/cli`）或免安装运行（`npx @qverisai/cli`）。
+
+**快速上手**
+
+```bash
+qveris login                              # 登录认证
+qveris discover "weather forecast"        # 发现能力
+qveris inspect 1                          # 查看详情
+qveris call 1 --params '{"wfo":"LWX","x":90,"y":90}'  # 调用执行
+```
+
+CLI 还支持交互模式（`qveris interactive`）、代码生成（`--codegen curl|python|js`）和 Shell 自动补全。完整参考见 [CLI 文档](https://github.com/QVerisAI/QVerisAI/blob/main/packages/cli/README.md)。
+
+---
 
 ### 通过 MCP 使用 QVeris
 
@@ -288,6 +313,14 @@ if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${await resp.text()}`);
 const data = await resp.json();
 console.log(data);
 ```
+
+---
+
+### 在 AI Agent 中安装 QVeris
+
+如果你正在配置 AI 编程助手（Claude Code、Cursor、OpenCode、Trae 等），可以将 [Agent 安装指南](https://github.com/QVerisAI/QVerisAI/blob/main/agent/SETUP.md) 连同你的 API 密钥一起提供给 Agent。它会自动检测运行环境，并完成 MCP 服务器和技能定义的配置。
+
+支持的环境：Claude Code、OpenCode、Cursor、Trae、VS Code、OpenClaw。
 
 ---
 

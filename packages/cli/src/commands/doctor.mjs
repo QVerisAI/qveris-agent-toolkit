@@ -1,5 +1,6 @@
 import { resolve } from "../config/resolve.mjs";
 import { discoverTools } from "../client/api.mjs";
+import { resolveBaseUrl } from "../config/region.mjs";
 import { bold, green, red, dim, cyan } from "../output/colors.mjs";
 
 export async function runDoctor(flags) {
@@ -21,6 +22,10 @@ export async function runDoctor(flags) {
   if (apiKey && apiKey.trim()) {
     const masked = apiKey.slice(0, 6) + "..." + apiKey.slice(-4);
     console.log(`  ${green("\u2713")} API key configured (${masked} via ${source})`);
+
+    // Show resolved region
+    const { baseUrl, region, source: regionSource } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl, apiKey });
+    console.log(`  ${green("\u2713")} Region: ${region} ${dim(`(${regionSource})`)} → ${dim(baseUrl)}`);
 
     // Test connectivity
     process.stderr.write(`  \u2026 Testing API connectivity...\r`);

@@ -5,10 +5,9 @@ import { resolve } from "../config/resolve.mjs";
 import { setConfigValue, deleteConfigValue } from "../config/store.mjs";
 import { discoverTools } from "../client/api.mjs";
 import { VERSION } from "../config/defaults.mjs";
+import { resolveBaseUrl, getSiteUrl } from "../config/region.mjs";
 import { bold, green, red, dim, cyan } from "../output/colors.mjs";
 import { printLoginBanner } from "../output/banner.mjs";
-
-const ACCOUNT_URL = "https://qveris.ai/account?page=api-keys";
 
 function openBrowser(url) {
   const cmds = { darwin: "open", win32: "cmd", linux: "xdg-open" };
@@ -87,9 +86,54 @@ function prompt(question) {
   });
 }
 
+/**
+ * Prompt user to select region interactively.
+ * Skipped if region is already determined via --base-url, QVERIS_REGION, or QVERIS_BASE_URL.
+ */
+function promptRegion() {
+  return new Promise((pResolve, pReject) => {
+    console.log(`  ${bold("Select your region / 选择站点区域:")}\n`);
+    console.log(`    ${cyan("1)")} Global  — qveris.ai  (International users)`);
+    console.log(`    ${cyan("2)")} China   — qveris.cn  (中国大陆用户)\n`);
+
+    if (!process.stdin.isTTY) {
+      const rl = createInterface({ input: process.stdin, output: process.stderr });
+      rl.question("  Enter 1 or 2: ", (answer) => { rl.close(); pResolve(answer.trim()); });
+      return;
+    }
+
+    process.stderr.write("  Enter 1 or 2: ");
+
+    const cleanup = () => {
+      process.stdin.removeListener("data", onData);
+      try { process.stdin.setRawMode(false); } catch {}
+      process.stdin.pause();
+    };
+    const onExit = () => { try { process.stdin.setRawMode(false); } catch {} };
+    process.once("exit", onExit);
+
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.setEncoding("utf-8");
+
+    const onData = (chunk) => {
+      const ch = chunk[0];
+      if (ch === "\x03") { cleanup(); process.removeListener("exit", onExit); process.stderr.write("\n"); pReject(new Error("Aborted")); return; }
+      if (ch === "1" || ch === "2") {
+        cleanup();
+        process.removeListener("exit", onExit);
+        process.stderr.write(`${ch}\n`);
+        pResolve(ch);
+      }
+      // Ignore other keys
+    };
+    process.stdin.on("data", onData);
+  });
+}
+
 export async function runLogin(flags) {
   if (flags.token) {
-    await validateAndSave(flags.token);
+    await validateAndSave(flags.token, flags.baseUrl);
     return;
   }
 
@@ -97,10 +141,29 @@ export async function runLogin(flags) {
     printLoginBanner({ version: VERSION, noColor: flags.noColor });
   }
 
-  console.log(`  Get your API key at: ${cyan(ACCOUNT_URL)}\n`);
+  // Determine region: if already set via flag/env, use that; otherwise ask the user.
+  const { region: presetRegion, baseUrl: presetBaseUrl, source: regionSource } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
+  let region;
+  let baseUrl = presetBaseUrl;
+  if (regionSource !== "default") {
+    // Region explicitly configured — use it directly
+    region = presetRegion;
+  } else {
+    // No explicit region — let user choose interactively
+    let choice;
+    try {
+      choice = await promptRegion();
+    } catch {
+      return; // Ctrl+C
+    }
+    region = choice === "2" ? "cn" : "global";
+  }
+
+  const accountUrl = `${getSiteUrl(region, baseUrl)}/account?page=api-keys`;
+  console.log(`\n  Get your API key at: ${cyan(accountUrl)}\n`);
 
   if (!flags.noBrowser) {
-    openBrowser(ACCOUNT_URL);
+    openBrowser(accountUrl);
   }
 
   let key;
@@ -116,18 +179,21 @@ export async function runLogin(flags) {
     return;
   }
 
-  await validateAndSave(key);
+  await validateAndSave(key, flags.baseUrl);
 }
 
-async function validateAndSave(key) {
+async function validateAndSave(key, baseUrlFlag) {
   process.stderr.write(`  Validating key...`);
 
+  const { baseUrl, region, source } = resolveBaseUrl({ baseUrlFlag, apiKey: key });
+
   try {
-    await discoverTools({ apiKey: key, query: "test", limit: 1, timeoutMs: 10000 });
+    await discoverTools({ apiKey: key, baseUrl, query: "test", limit: 1, timeoutMs: 10000 });
     setConfigValue("api_key", key);
     const masked = key.slice(0, 6) + "..." + key.slice(-4);
     console.error(`\r\x1b[K`);
     console.log(`  ${green("\u2713")} Authenticated as ${bold(masked)}`);
+    console.log(`  ${dim("Region:")} ${region} ${dim(`(${source})`)}`);
     console.log(`  ${dim("Key saved to config.")}`);
   } catch {
     console.error(`\r\x1b[K`);
@@ -151,15 +217,17 @@ export async function runWhoami(flags) {
   }
 
   const masked = key.slice(0, 6) + "..." + key.slice(-4);
+  const { baseUrl, region, source: regionSource } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl, apiKey: key });
 
   process.stderr.write(`  Validating...`);
 
   try {
-    await discoverTools({ apiKey: key, query: "test", limit: 1, timeoutMs: 10000 });
+    await discoverTools({ apiKey: key, baseUrl, query: "test", limit: 1, timeoutMs: 10000 });
     process.stderr.write("\r\x1b[K");
     console.log(`\n  ${green("\u2713")} Authenticated`);
     console.log(`  Key:    ${bold(masked)}`);
     console.log(`  Source: ${dim(source)}`);
+    console.log(`  Region: ${region} ${dim(`(${regionSource})`)}`);
   } catch {
     console.error(`\r\x1b[K`);
     console.log(`\n  ${red("\u2718")} Key ${masked} is ${red("invalid")}`);
