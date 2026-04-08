@@ -5,7 +5,7 @@
 
 import { homedir } from "node:os";
 import { cwd as processCwd } from "node:process";
-import { dim, cyan, bold, isColorEnabled } from "./colors.mjs";
+import { dim, cyan, isColorEnabled } from "./colors.mjs";
 
 /** @type {readonly [number, number, number][]} brand stops: highlight → mid → shadow */
 const BRAND_STOPS = [
@@ -62,41 +62,64 @@ function truecolorFg(r, g, b) {
 
 /**
  * Map column index to gradient color (horizontal sweep across the banner).
- * Spaces stay uncolored (reset) for cleaner edges.
+ * Spaces stay uncolored. Consecutive non-space chars with identical RGB share one SGR span.
  */
 function paintLineTruecolor(line, maxCols) {
   if (!line.length) return "";
   const denom = Math.max(1, maxCols - 1);
   let out = "";
-  for (let i = 0; i < line.length; i++) {
+  let i = 0;
+  while (i < line.length) {
     const ch = line[i];
     if (ch === " ") {
       out += ch;
+      i++;
       continue;
     }
-    const t = i / denom;
-    const [r, g, b] = rgbAt(t);
-    out += truecolorFg(r, g, b) + ch;
-  }
-  return out + RESET;
+    const t0 = i / denom;
+    const [r0, g0, b0] = rgbAt(t0);
+    let j = i + 1;
+    while (j < line.length) {
+      const chj = line[j];
+      if (chj === " ") break;
+      const t = j / denom;
+      const [r, g, b] = rgbAt(t);
+      if (r !== r0 || g !== g0 || b !== b0) break;
+      j++;
+    }
+    out += truecolorFg(r0, g0, b0) + line.slice(i, j) + RESET;
+    i = j;
   }
   return out;
 }
 
+/** 16-color fallback: batched SGR per band (cyan / bold cyan / dim cyan). */
 function paintLineFallback(line, maxCols) {
-  let out = "";
+  if (!isColorEnabled()) return line;
   const denom = Math.max(1, maxCols - 1);
-  for (let i = 0; i < line.length; i++) {
+  let out = "";
+  let i = 0;
+  while (i < line.length) {
     const ch = line[i];
     if (ch === " ") {
       out += ch;
+      i++;
       continue;
     }
-    const t = i / denom;
-    const band = Math.min(2, Math.floor(t * 3));
-    if (band === 0) out += cyan(ch);
-    else if (band === 1) out += bold(cyan(ch));
-    else out += dim(cyan(ch));
+    const band0 = Math.min(2, Math.floor((i / denom) * 3));
+    let j = i + 1;
+    while (j < line.length) {
+      const chj = line[j];
+      if (chj === " ") break;
+      const band = Math.min(2, Math.floor((j / denom) * 3));
+      if (band !== band0) break;
+      j++;
+    }
+    const chunk = line.slice(i, j);
+    if (band0 === 0) out += `\x1b[36m${chunk}\x1b[0m`;
+    else if (band0 === 1) out += `\x1b[1;36m${chunk}\x1b[0m`;
+    else out += `\x1b[2;36m${chunk}\x1b[0m`;
+    i = j;
   }
   return out;
 }
@@ -168,7 +191,7 @@ export function printWelcomeBanner(opts) {
   const nl = compact ? "\n" : "\n\n";
   console.log(nl + centered.join("\n"));
 
-  const tag = "✦ Discover · Inspect · Call · 10,000+ capabilities · 智能编排 ✦";
+  const tag = "✦ Discover · Inspect · Call · 10,000+ capabilities · intelligent orchestration ✦";
   const meta = dim(`v${version} · ${shortenPath(processCwd())}`);
   const tagLine = centerLine(dim(cyan(tag)), termCols);
   const metaLine = centerLine(meta, termCols);
@@ -188,7 +211,7 @@ function printPlainBanner({ version, compact }) {
   const centered = centerBlock(rawLines, termCols);
   const nl = compact ? "\n" : "\n\n";
   console.log(nl + centered.join("\n"));
-  const tag = "✦ Discover · Inspect · Call · 10,000+ capabilities · 智能编排 ✦";
+  const tag = "✦ Discover · Inspect · Call · 10,000+ capabilities · intelligent orchestration ✦";
   const meta = `v${version} · ${shortenPath(processCwd())}`;
   const tagLine = centerLine(dim(tag), termCols);
   const metaLine = centerLine(dim(meta), termCols);
