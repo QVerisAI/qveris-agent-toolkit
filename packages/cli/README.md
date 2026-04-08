@@ -104,9 +104,9 @@ qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
 
 | Command | Description |
 |---------|-------------|
-| `qveris login` | Authenticate with API key (opens browser or `--token` for direct input) |
+| `qveris login` | Authenticate with API key (interactive region selection, opens browser, or `--token` for direct input) |
 | `qveris logout` | Remove stored key |
-| `qveris whoami` | Show current auth status and key source |
+| `qveris whoami` | Show current auth status, key source, and region |
 | `qveris credits` | Check credit balance |
 
 ### Utilities
@@ -114,7 +114,7 @@ qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
 | Command | Description |
 |---------|-------------|
 | `qveris interactive` | Launch REPL mode (discover/inspect/call/codegen in one session) |
-| `qveris doctor` | Self-check: Node.js version, API key, connectivity |
+| `qveris doctor` | Self-check: Node.js version, API key, region, connectivity |
 | `qveris config <subcommand>` | Manage CLI settings (set, get, list, reset, path) |
 | `qveris completions <shell>` | Generate shell completions (bash/zsh/fish) |
 

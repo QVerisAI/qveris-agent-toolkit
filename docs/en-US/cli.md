@@ -182,7 +182,7 @@ For agent/script use (`--json` or piped output), the default increases to 20KB. 
 
 ### `qveris login`
 
-Authenticate with your QVeris API key. Opens browser to the key page, then prompts for masked input.
+Authenticate with your QVeris API key. If no region is pre-configured, prompts you to select your region (Global or China), then opens the browser to the corresponding API key page and prompts for masked input.
 
 ```bash
 qveris login [flags]
@@ -190,15 +190,26 @@ qveris login [flags]
 
 | Flag | Description |
 |------|-------------|
-| `--token <key>` | Provide key directly (skip browser) |
+| `--token <key>` | Provide key directly (skip browser and region prompt) |
 | `--no-browser` | Don't open browser |
 
 ```bash
-# Interactive (opens browser, masked input)
+# Interactive (select region → opens browser → masked input)
 qveris login
 
 # Non-interactive
 qveris login --token "sk-1_your-key-here"
+```
+
+During interactive login, if `QVERIS_REGION` or `--base-url` is not set, you will be prompted:
+
+```
+Select your region / 选择站点区域:
+
+  1) Global  — qveris.ai  (International users)
+  2) China   — qveris.cn  (中国大陆用户)
+
+Enter 1 or 2:
 ```
 
 The key is saved to `~/.config/qveris/config.json` with `0600` permissions (owner-only).
@@ -213,7 +224,7 @@ qveris logout
 
 ### `qveris whoami`
 
-Show current auth status, key source, and validate against the API.
+Show current auth status, key source, resolved region, and validate against the API.
 
 ```bash
 qveris whoami
@@ -263,7 +274,7 @@ qveris> exit
 
 ### `qveris doctor`
 
-Self-check diagnostics: verifies Node.js version, API key configuration, and API connectivity.
+Self-check diagnostics: verifies Node.js version, API key configuration, resolved region and base URL, and API connectivity.
 
 ```bash
 qveris doctor
@@ -377,6 +388,7 @@ After each `discover`, the CLI saves session state to `~/.config/qveris/.session
 
 - Discovery ID
 - Query
+- Region and base URL
 - Result list (tool_id, name, provider)
 
 Subsequent `inspect` and `call` commands auto-read this session, enabling numeric index shortcuts:
