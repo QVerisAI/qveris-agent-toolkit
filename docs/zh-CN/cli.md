@@ -354,13 +354,22 @@ qveris history [--clear]
 | `sk-xxx` | 全球 | `https://qveris.ai/api/v1` |
 | `sk-cn-xxx` | 中国 | `https://qveris.cn/api/v1` |
 
-手动覆盖：
+**交互式登录：** 运行 `qveris login` 时，如果未设置 `QVERIS_REGION` 或 `--base-url`，会提示选择区域。仅用于首次人工登录。
+
+**Agent / 脚本使用：** Agent 和脚本应跳过交互式提示。区域自动解析：
 
 ```bash
+# 方式 1：Key 前缀自动检测（推荐）
+qveris login --token "sk-cn-xxx"    # 自动检测为中国区
+
+# 方式 2：环境变量
 export QVERIS_REGION=cn
-# 或
-export QVERIS_BASE_URL=https://custom.endpoint/api/v1
-# 或单次命令
+qveris login --token "sk-xxx"
+
+# 方式 3：显式 API 地址
+export QVERIS_BASE_URL=https://qveris.cn/api/v1
+
+# 方式 4：单次命令参数
 qveris discover "weather" --base-url https://qveris.cn/api/v1
 ```
 

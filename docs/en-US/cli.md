@@ -370,13 +370,22 @@ Region is auto-detected from your API key prefix. No extra configuration needed.
 | `sk-xxx` | Global | `https://qveris.ai/api/v1` |
 | `sk-cn-xxx` | China | `https://qveris.cn/api/v1` |
 
-Override manually:
+**Interactive login:** When running `qveris login` without `QVERIS_REGION` or `--base-url`, you'll be prompted to choose a region. This is for first-time human users only.
+
+**Agent / script usage:** Agents and scripts should skip the interactive prompt. Region is resolved automatically:
 
 ```bash
+# Option 1: Key prefix auto-detection (recommended)
+qveris login --token "sk-cn-xxx"    # auto-detects China region
+
+# Option 2: Environment variable
 export QVERIS_REGION=cn
-# or
-export QVERIS_BASE_URL=https://custom.endpoint/api/v1
-# or per-command
+qveris login --token "sk-xxx"
+
+# Option 3: Explicit base URL
+export QVERIS_BASE_URL=https://qveris.cn/api/v1
+
+# Option 4: Per-command flag
 qveris discover "weather" --base-url https://qveris.cn/api/v1
 ```
 
