@@ -5,7 +5,9 @@ import { resolveParams } from "../utils/params.mjs";
 import { formatDiscoverResult, formatInspectResult, formatCallResult } from "../output/formatter.mjs";
 import { generateSnippet } from "../output/codegen.mjs";
 import { writeSession } from "../session/session.mjs";
+import { VERSION } from "../config/defaults.mjs";
 import { bold, dim, cyan } from "../output/colors.mjs";
+import { printWelcomeBanner } from "../output/banner.mjs";
 import { handleError } from "../errors/handler.mjs";
 import { createSpinner } from "../output/spinner.mjs";
 
@@ -22,7 +24,11 @@ export async function runInteractive(flags) {
     lastCallContext: null,
   };
 
-  console.log(`\n  ${bold("QVeris Interactive Mode")}`);
+  if (!flags.json) {
+    printWelcomeBanner({ version: VERSION, noColor: flags.noColor, compact: true });
+  }
+
+  console.log(`  ${bold("QVeris Interactive Mode")}`);
   console.log(`  ${dim("Type 'help' for commands, 'exit' to quit.")}\n`);
 
   const rl = createInterface({

@@ -4,7 +4,9 @@ import { platform } from "node:os";
 import { resolve } from "../config/resolve.mjs";
 import { setConfigValue, deleteConfigValue } from "../config/store.mjs";
 import { discoverTools } from "../client/api.mjs";
+import { VERSION } from "../config/defaults.mjs";
 import { bold, green, red, dim, cyan } from "../output/colors.mjs";
+import { printLoginBanner } from "../output/banner.mjs";
 
 const ACCOUNT_URL = "https://qveris.ai/account?page=api-keys";
 
@@ -91,7 +93,11 @@ export async function runLogin(flags) {
     return;
   }
 
-  console.log(`\n  Get your API key at: ${cyan(ACCOUNT_URL)}\n`);
+  if (!flags.json) {
+    printLoginBanner({ version: VERSION, noColor: flags.noColor });
+  }
+
+  console.log(`  Get your API key at: ${cyan(ACCOUNT_URL)}\n`);
 
   if (!flags.noBrowser) {
     openBrowser(ACCOUNT_URL);

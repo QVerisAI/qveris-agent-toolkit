@@ -2,6 +2,7 @@ import { normalizeLegacyArgs } from "./compat/aliases.mjs";
 import { handleError } from "./errors/handler.mjs";
 import { VERSION } from "./config/defaults.mjs";
 import { bold, dim, cyan } from "./output/colors.mjs";
+import { printWelcomeBanner } from "./output/banner.mjs";
 
 export async function main(argv) {
   const rawArgs = argv.slice(2);
@@ -12,6 +13,10 @@ export async function main(argv) {
   }
 
   const flags = extractGlobalFlags(args);
+  if (flags.noColor) {
+    process.env.NO_COLOR = "1";
+  }
+
   const positional = flags._positional;
   const command = positional[0];
   const rest = positional.slice(1);
@@ -22,7 +27,7 @@ export async function main(argv) {
   }
 
   if (!command || flags.help) {
-    printUsage();
+    printUsage(flags);
     return;
   }
 
@@ -202,9 +207,13 @@ function extractGlobalFlags(args) {
   return flags;
 }
 
-function printUsage() {
+function printUsage(flags = {}) {
+  if (!flags.json) {
+    printWelcomeBanner({ version: VERSION, noColor: flags.noColor, compact: false });
+  }
+
   console.log(`
-  ${bold("QVeris CLI")} ${dim(`v${VERSION}`)} -- discover, inspect, and call 10,000+ capabilities
+  ${bold("QVeris CLI")} — ${dim("discover, inspect, and call 10,000+ capabilities")}
 
   ${bold("Usage:")}
     qveris <command> [args] [flags]
