@@ -1,6 +1,10 @@
-export const isColorEnabled = () =>
-  !process.env.NO_COLOR &&
-  (process.env.FORCE_COLOR === "1" || (process.stdout.isTTY && process.stderr.isTTY));
+let memoizedEnabled;
+export const isColorEnabled = () => {
+  if (memoizedEnabled !== undefined) return memoizedEnabled;
+  memoizedEnabled = !process.env.NO_COLOR &&
+    (process.env.FORCE_COLOR === "1" || (process.stdout.isTTY && process.stderr.isTTY));
+  return memoizedEnabled;
+};
 
 const code = (open, close) => (s) =>
   isColorEnabled() ? `\x1b[${open}m${s}\x1b[${close}m` : s;
