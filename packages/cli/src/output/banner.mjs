@@ -76,7 +76,9 @@ function paintLineTruecolor(line, maxCols) {
     }
     const t = i / denom;
     const [r, g, b] = rgbAt(t);
-    out += truecolorFg(r, g, b) + ch + RESET;
+    out += truecolorFg(r, g, b) + ch;
+  }
+  return out + RESET;
   }
   return out;
 }
