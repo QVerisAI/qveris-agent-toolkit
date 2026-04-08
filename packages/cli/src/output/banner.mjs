@@ -169,7 +169,7 @@ export function printWelcomeBanner(opts) {
   console.log(nl + centered.join("\n"));
 
   const tag = "✦ Discover · Inspect · Call · 10,000+ capabilities · 智能编排 ✦";
-  const meta = `${dim("v" + version)} ${dim("·")} ${dim(shortenPath(processCwd()))}`;
+  const meta = dim(`v${version} · ${shortenPath(processCwd())}`);
   const tagLine = centerLine(dim(cyan(tag)), termCols);
   const metaLine = centerLine(meta, termCols);
 
