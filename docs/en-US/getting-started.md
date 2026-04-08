@@ -16,7 +16,32 @@ QVeris works well in agent loops (Discover → Inspect → Call → feed results
 
 ## Quick start
 
-There are three ways to use QVeris.
+There are several ways to use QVeris. Pick the one that fits your workflow.
+
+### Use the QVeris CLI
+
+Discover, inspect, and call capabilities directly from your terminal.
+
+**Install**
+
+```bash
+curl -fsSL https://qveris.ai/cli/install | bash
+```
+
+Also available via npm (`npm install -g @qverisai/cli`) or without installing (`npx @qverisai/cli`).
+
+**Quick start**
+
+```bash
+qveris login                              # Authenticate
+qveris discover "weather forecast"        # Find capabilities
+qveris inspect 1                          # View details
+qveris call 1 --params '{"wfo":"LWX","x":90,"y":90}'  # Execute
+```
+
+The CLI also supports interactive mode (`qveris interactive`), code generation (`--codegen curl|python|js`), and shell completions. For the full reference, see [CLI documentation](cli.md).
+
+---
 
 ### Use QVeris MCP anywhere MCP is supported
 
@@ -288,6 +313,14 @@ if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${await resp.text()}`);
 const data = await resp.json();
 console.log(data);
 ```
+
+---
+
+### Set up QVeris in your AI Agent
+
+If you are configuring an AI coding agent (Claude Code, Cursor, OpenCode, Trae, etc.), you can give the [Agent Setup Guide](https://github.com/QVerisAI/QVerisAI/blob/main/agent/SETUP.md) to your agent along with your API key. It will auto-detect the environment and configure both the MCP server and skill definition automatically.
+
+Supported environments: Claude Code, OpenCode, Cursor, Trae, VS Code, and OpenClaw.
 
 ---
 

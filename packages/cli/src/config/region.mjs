@@ -13,6 +13,20 @@ const REGION_URLS = {
   cn: "https://qveris.cn/api/v1",
 };
 
+const SITE_URLS = {
+  global: "https://qveris.ai",
+  cn: "https://qveris.cn",
+};
+
+/**
+ * Get the site URL (not API URL) for a given region.
+ * @param {string} region
+ * @returns {string}
+ */
+export function getSiteUrl(region) {
+  return SITE_URLS[region] || SITE_URLS.global;
+}
+
 /**
  * Detect region from API key prefix.
  * @param {string} apiKey

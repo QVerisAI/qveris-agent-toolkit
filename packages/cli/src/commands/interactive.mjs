@@ -1,6 +1,7 @@
 import { createInterface } from "node:readline";
 import { resolveApiKey } from "../client/auth.mjs";
 import { discoverTools, inspectToolsByIds, callTool } from "../client/api.mjs";
+import { resolveBaseUrl } from "../config/region.mjs";
 import { resolveParams } from "../utils/params.mjs";
 import { formatDiscoverResult, formatInspectResult, formatCallResult } from "../output/formatter.mjs";
 import { generateSnippet } from "../output/codegen.mjs";
@@ -14,6 +15,7 @@ import { createSpinner } from "../output/spinner.mjs";
 export async function runInteractive(flags) {
   const apiKey = resolveApiKey(flags.apiKey);
   const baseUrl = flags.baseUrl;
+  const { region } = resolveBaseUrl({ baseUrlFlag: baseUrl, apiKey });
   const limit = parseInt(flags.limit, 10) || 5;
   const discoverTimeout = (parseInt(flags.timeout, 10) || 30) * 1000;
   const callTimeout = (parseInt(flags.timeout, 10) || 60) * 1000;
@@ -63,7 +65,7 @@ export async function runInteractive(flags) {
             index: i + 1, tool_id: t.tool_id, name: t.name, provider_name: t.provider_name,
           }));
           // Persist session so index shortcuts work in subsequent non-interactive calls
-          writeSession({ discoveryId: result.search_id, query, results: state.results });
+          writeSession({ discoveryId: result.search_id, query, region, results: state.results });
           console.log(formatDiscoverResult(result));
           break;
         }

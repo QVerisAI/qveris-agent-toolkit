@@ -241,11 +241,17 @@ function printUsage(flags = {}) {
   ${bold("Global Flags:")}
     --json, -j             Output raw JSON
     --api-key <key>        Override API key
+    --base-url <url>       Override API base URL
     --timeout <seconds>    Request timeout
     --no-color             Disable colors
     --verbose, -v          Show request details
     --version, -V          Print version
     --help, -h             Show help
+
+  ${bold("Environment Variables:")}
+    QVERIS_API_KEY         API key
+    QVERIS_REGION          Region override (global | cn)
+    QVERIS_BASE_URL        Custom API base URL
 
   ${bold("Examples:")}
     qveris discover "weather forecast API"
@@ -254,6 +260,6 @@ function printUsage(flags = {}) {
     qveris call 1 --params @params.json --codegen curl
     qveris interactive
 
-  ${dim("https://qveris.ai")}
+  ${dim("https://qveris.ai (global) / https://qveris.cn (China)")}
 `);
 }

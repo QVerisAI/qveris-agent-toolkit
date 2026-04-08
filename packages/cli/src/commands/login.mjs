@@ -5,10 +5,9 @@ import { resolve } from "../config/resolve.mjs";
 import { setConfigValue, deleteConfigValue } from "../config/store.mjs";
 import { discoverTools } from "../client/api.mjs";
 import { VERSION } from "../config/defaults.mjs";
+import { resolveBaseUrl, getSiteUrl } from "../config/region.mjs";
 import { bold, green, red, dim, cyan } from "../output/colors.mjs";
 import { printLoginBanner } from "../output/banner.mjs";
-
-const ACCOUNT_URL = "https://qveris.ai/account?page=api-keys";
 
 function openBrowser(url) {
   const cmds = { darwin: "open", win32: "cmd", linux: "xdg-open" };
@@ -89,18 +88,23 @@ function prompt(question) {
 
 export async function runLogin(flags) {
   if (flags.token) {
-    await validateAndSave(flags.token);
+    await validateAndSave(flags.token, flags.baseUrl);
     return;
   }
+
+  // Resolve region for account URL — at this point we don't have a key yet,
+  // so region comes from flags/env only; defaults to global.
+  const { region } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
+  const accountUrl = `${getSiteUrl(region)}/account?page=api-keys`;
 
   if (!flags.json) {
     printLoginBanner({ version: VERSION, noColor: flags.noColor });
   }
 
-  console.log(`  Get your API key at: ${cyan(ACCOUNT_URL)}\n`);
+  console.log(`  Get your API key at: ${cyan(accountUrl)}\n`);
 
   if (!flags.noBrowser) {
-    openBrowser(ACCOUNT_URL);
+    openBrowser(accountUrl);
   }
 
   let key;
@@ -116,18 +120,21 @@ export async function runLogin(flags) {
     return;
   }
 
-  await validateAndSave(key);
+  await validateAndSave(key, flags.baseUrl);
 }
 
-async function validateAndSave(key) {
+async function validateAndSave(key, baseUrlFlag) {
   process.stderr.write(`  Validating key...`);
 
+  const { baseUrl, region, source } = resolveBaseUrl({ baseUrlFlag, apiKey: key });
+
   try {
-    await discoverTools({ apiKey: key, query: "test", limit: 1, timeoutMs: 10000 });
+    await discoverTools({ apiKey: key, baseUrl, query: "test", limit: 1, timeoutMs: 10000 });
     setConfigValue("api_key", key);
     const masked = key.slice(0, 6) + "..." + key.slice(-4);
     console.error(`\r\x1b[K`);
     console.log(`  ${green("\u2713")} Authenticated as ${bold(masked)}`);
+    console.log(`  ${dim("Region:")} ${region} ${dim(`(${source})`)}`);
     console.log(`  ${dim("Key saved to config.")}`);
   } catch {
     console.error(`\r\x1b[K`);
@@ -151,15 +158,17 @@ export async function runWhoami(flags) {
   }
 
   const masked = key.slice(0, 6) + "..." + key.slice(-4);
+  const { baseUrl, region, source: regionSource } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl, apiKey: key });
 
   process.stderr.write(`  Validating...`);
 
   try {
-    await discoverTools({ apiKey: key, query: "test", limit: 1, timeoutMs: 10000 });
+    await discoverTools({ apiKey: key, baseUrl, query: "test", limit: 1, timeoutMs: 10000 });
     process.stderr.write("\r\x1b[K");
     console.log(`\n  ${green("\u2713")} Authenticated`);
     console.log(`  Key:    ${bold(masked)}`);
     console.log(`  Source: ${dim(source)}`);
+    console.log(`  Region: ${region} ${dim(`(${regionSource})`)}`);
   } catch {
     console.error(`\r\x1b[K`);
     console.log(`\n  ${red("\u2718")} Key ${masked} is ${red("invalid")}`);

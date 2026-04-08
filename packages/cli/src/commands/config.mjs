@@ -1,5 +1,6 @@
 import { getConfigPath, getConfigValue, setConfigValue, writeConfig } from "../config/store.mjs";
-import { resolveAll } from "../config/resolve.mjs";
+import { resolve, resolveAll } from "../config/resolve.mjs";
+import { resolveBaseUrl } from "../config/region.mjs";
 import { bold, dim, cyan } from "../output/colors.mjs";
 import { outputJson } from "../output/json.mjs";
 
@@ -64,11 +65,17 @@ function configGet(key, flags) {
 
 function configList(flags) {
   const all = resolveAll();
+
+  // Resolve effective region
+  const { value: apiKey } = resolve("api_key", flags.apiKey);
+  const { region, source: regionSource, baseUrl } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl, apiKey });
+
   if (flags.json) {
     const obj = {};
     for (const [k, v] of Object.entries(all)) {
       obj[k] = { value: k === "api_key" && v.value ? mask(v.value) : v.value, source: v.source };
     }
+    obj._region = { region, source: regionSource, baseUrl };
     outputJson(obj);
     return;
   }
@@ -78,6 +85,7 @@ function configList(flags) {
     const display = key === "api_key" && value ? mask(value) : String(value ?? dim("(not set)"));
     console.log(`  ${cyan(key.padEnd(20))}${display.padEnd(25)}${dim(source)}`);
   }
+  console.log(`\n  ${bold("Effective region:")} ${region} ${dim(`(${regionSource})`)} → ${dim(baseUrl)}`);
   console.log();
 }
 
