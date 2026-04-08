@@ -86,22 +86,80 @@ function prompt(question) {
   });
 }
 
+/**
+ * Prompt user to select region interactively.
+ * Skipped if region is already determined via --base-url, QVERIS_REGION, or QVERIS_BASE_URL.
+ */
+function promptRegion() {
+  return new Promise((pResolve, pReject) => {
+    console.log(`  ${bold("Select your region / 选择站点区域:")}\n`);
+    console.log(`    ${cyan("1)")} Global  — qveris.ai  (International users)`);
+    console.log(`    ${cyan("2)")} China   — qveris.cn  (中国大陆用户)\n`);
+
+    if (!process.stdin.isTTY) {
+      const rl = createInterface({ input: process.stdin, output: process.stderr });
+      rl.question("  Enter 1 or 2: ", (answer) => { rl.close(); pResolve(answer.trim()); });
+      return;
+    }
+
+    process.stderr.write("  Enter 1 or 2: ");
+
+    const cleanup = () => {
+      process.stdin.removeListener("data", onData);
+      try { process.stdin.setRawMode(false); } catch {}
+      process.stdin.pause();
+    };
+    const onExit = () => { try { process.stdin.setRawMode(false); } catch {} };
+    process.once("exit", onExit);
+
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.setEncoding("utf-8");
+
+    const onData = (chunk) => {
+      const ch = chunk[0];
+      if (ch === "\x03") { cleanup(); process.removeListener("exit", onExit); process.stderr.write("\n"); pReject(new Error("Aborted")); return; }
+      if (ch === "1" || ch === "2") {
+        cleanup();
+        process.removeListener("exit", onExit);
+        process.stderr.write(`${ch}\n`);
+        pResolve(ch);
+      }
+      // Ignore other keys
+    };
+    process.stdin.on("data", onData);
+  });
+}
+
 export async function runLogin(flags) {
   if (flags.token) {
     await validateAndSave(flags.token, flags.baseUrl);
     return;
   }
 
-  // Resolve region for account URL — at this point we don't have a key yet,
-  // so region comes from flags/env only; defaults to global.
-  const { region } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
-  const accountUrl = `${getSiteUrl(region)}/account?page=api-keys`;
-
   if (!flags.json) {
     printLoginBanner({ version: VERSION, noColor: flags.noColor });
   }
 
-  console.log(`  Get your API key at: ${cyan(accountUrl)}\n`);
+  // Determine region: if already set via flag/env, use that; otherwise ask the user.
+  const { region: presetRegion, source: regionSource } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
+  let region;
+  if (regionSource !== "default") {
+    // Region explicitly configured — use it directly
+    region = presetRegion;
+  } else {
+    // No explicit region — let user choose interactively
+    let choice;
+    try {
+      choice = await promptRegion();
+    } catch {
+      return; // Ctrl+C
+    }
+    region = choice === "2" ? "cn" : "global";
+  }
+
+  const accountUrl = `${getSiteUrl(region)}/account?page=api-keys`;
+  console.log(`\n  Get your API key at: ${cyan(accountUrl)}\n`);
 
   if (!flags.noBrowser) {
     openBrowser(accountUrl);
