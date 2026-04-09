@@ -128,7 +128,7 @@ async function main(): Promise<void> {
           description:
             'Call a specific remote tool with provided parameters. ' +
             'The tool_id and search_id must come from a previous discover call. ' +
-            'Pass parameters to the tool through params_to_tool as a JSON string.',
+            'Pass parameters to the tool through params_to_tool.',
           inputSchema: executeToolSchema,
         },
         // Deprecated aliases (backward compatibility)
