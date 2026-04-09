@@ -14,8 +14,7 @@ import { createSpinner } from "../output/spinner.mjs";
 
 export async function runInteractive(flags) {
   const apiKey = resolveApiKey(flags.apiKey);
-  const baseUrl = flags.baseUrl;
-  const { region, baseUrl: resolvedBaseUrl } = resolveBaseUrl({ baseUrlFlag: baseUrl, apiKey });
+  const { region, baseUrl: resolvedBaseUrl } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl, apiKey });
   const limit = parseInt(flags.limit, 10) || 5;
   const discoverTimeout = (parseInt(flags.timeout, 10) || 30) * 1000;
   const callTimeout = (parseInt(flags.timeout, 10) || 60) * 1000;
@@ -58,7 +57,7 @@ export async function runInteractive(flags) {
           const query = rest.join(" ");
           if (!query) { console.log("  Usage: discover <query>"); break; }
           const sp = createSpinner("Discovering...");
-          const result = await discoverTools({ apiKey, baseUrl, query, limit, timeoutMs: discoverTimeout });
+          const result = await discoverTools({ apiKey, baseUrl: resolvedBaseUrl, query, limit, timeoutMs: discoverTimeout });
           sp.stop();
           state.discoveryId = result.search_id;
           state.results = (result.results ?? []).map((t, i) => ({
@@ -73,7 +72,7 @@ export async function runInteractive(flags) {
           const toolId = resolveId(rest[0], state);
           if (!toolId) { console.log("  Usage: inspect <index|tool_id>"); break; }
           const sp2 = createSpinner("Inspecting...");
-          const result = await inspectToolsByIds({ apiKey, baseUrl, toolIds: [toolId], discoveryId: state.discoveryId, timeoutMs: discoverTimeout });
+          const result = await inspectToolsByIds({ apiKey, baseUrl: resolvedBaseUrl, toolIds: [toolId], discoveryId: state.discoveryId, timeoutMs: discoverTimeout });
           sp2.stop();
           console.log(formatInspectResult(result));
           break;
@@ -85,7 +84,7 @@ export async function runInteractive(flags) {
           const paramsStr = rest.slice(1).join(" ") || "{}";
           const parameters = resolveParams(paramsStr);
           const sp3 = createSpinner("Calling...");
-          const result = await callTool({ apiKey, baseUrl, toolId, discoveryId: state.discoveryId, parameters, timeoutMs: callTimeout });
+          const result = await callTool({ apiKey, baseUrl: resolvedBaseUrl, toolId, discoveryId: state.discoveryId, parameters, timeoutMs: callTimeout });
           sp3.stop();
           console.log(formatCallResult(result));
           if (result.success) {
