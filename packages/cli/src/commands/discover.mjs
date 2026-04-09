@@ -8,6 +8,7 @@ import { createSpinner } from "../output/spinner.mjs";
 
 export async function runDiscover(query, flags) {
   const apiKey = resolveApiKey(flags.apiKey);
+  const { region, baseUrl: resolvedBaseUrl } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl, apiKey });
   const limit = parseInt(flags.limit, 10) || 5;
   const timeoutMs = (parseInt(flags.timeout, 10) || 30) * 1000;
 
@@ -16,7 +17,7 @@ export async function runDiscover(query, flags) {
   try {
     const result = await discoverTools({
       apiKey,
-      baseUrl: flags.baseUrl,
+      baseUrl: resolvedBaseUrl,
       query,
       limit,
       timeoutMs,
@@ -26,7 +27,6 @@ export async function runDiscover(query, flags) {
 
     // Store richer session data for index resolution
     const tools = result.results ?? [];
-    const { region, baseUrl: resolvedBaseUrl } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl, apiKey });
     writeSession({
       discoveryId: result.search_id,
       query,

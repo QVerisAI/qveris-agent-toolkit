@@ -30,7 +30,7 @@ export async function runDoctor(flags) {
     // Test connectivity
     process.stderr.write(`  \u2026 Testing API connectivity...\r`);
     try {
-      await discoverTools({ apiKey, baseUrl: flags.baseUrl, query: "test", limit: 1, timeoutMs: 10000 });
+      await discoverTools({ apiKey, baseUrl, query: "test", limit: 1, timeoutMs: 10000 });
       console.log(`  ${green("\u2713")} API connectivity OK                `);
     } catch (err) {
       console.log(`  ${red("\u2718")} API connectivity failed: ${err.message}  `);

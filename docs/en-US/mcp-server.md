@@ -54,11 +54,15 @@ Both surfaces map to the same QVeris protocol:
 npx -y @qverisai/mcp
 ```
 
-The MCP server reads your API key from:
+The MCP server reads configuration from environment variables:
 
 ```bash
-QVERIS_API_KEY=your-api-key
+QVERIS_API_KEY=your-api-key          # Required
+QVERIS_REGION=cn                      # Optional: force region (global | cn)
+QVERIS_BASE_URL=https://...          # Optional: override API base URL
 ```
+
+Region is auto-detected from your API key prefix (`sk-cn-xxx` → China, `sk-xxx` → Global). Set `QVERIS_REGION` only if you need to override.
 
 ### Claude Desktop example
 
@@ -86,6 +90,25 @@ QVERIS_API_KEY=your-api-key
       "args": ["-y", "@qverisai/mcp"],
       "env": {
         "QVERIS_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+### China region example
+
+For users in mainland China, add `QVERIS_REGION` or use a `sk-cn-` prefixed key:
+
+```json
+{
+  "mcpServers": {
+    "qveris": {
+      "command": "npx",
+      "args": ["-y", "@qverisai/mcp"],
+      "env": {
+        "QVERIS_API_KEY": "sk-cn-your-api-key-here",
+        "QVERIS_REGION": "cn"
       }
     }
   }

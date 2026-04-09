@@ -1,6 +1,6 @@
 {
   "name": "@qverisai/cli",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "QVeris CLI -- discover, inspect, and call 10,000+ capabilities",
   "type": "module",
   "bin": {

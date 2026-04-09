@@ -54,11 +54,15 @@
 npx -y @qverisai/mcp
 ```
 
-MCP 服务器从以下环境变量读取 API 密钥：
+MCP 服务器从以下环境变量读取配置：
 
 ```bash
-QVERIS_API_KEY=your-api-key
+QVERIS_API_KEY=your-api-key          # 必填
+QVERIS_REGION=cn                      # 可选：强制区域（global | cn）
+QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 ```
+
+区域从 API key 前缀自动检测（`sk-cn-xxx` → 中国区，`sk-xxx` → 全球）。仅在需要覆盖时设置 `QVERIS_REGION`。
 
 ### Claude Desktop 配置示例
 
@@ -86,6 +90,25 @@ QVERIS_API_KEY=your-api-key
       "args": ["-y", "@qverisai/mcp"],
       "env": {
         "QVERIS_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+### 中国区配置示例
+
+中国大陆用户可添加 `QVERIS_REGION` 或使用 `sk-cn-` 前缀的 key：
+
+```json
+{
+  "mcpServers": {
+    "qveris": {
+      "command": "npx",
+      "args": ["-y", "@qverisai/mcp"],
+      "env": {
+        "QVERIS_API_KEY": "sk-cn-your-api-key-here",
+        "QVERIS_REGION": "cn"
       }
     }
   }

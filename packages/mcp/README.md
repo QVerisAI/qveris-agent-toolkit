@@ -17,7 +17,7 @@ This SDK provides a [Model Context Protocol (MCP)](https://modelcontextprotocol.
 
 ### 1. Get Your API Key
 
-Visit [QVeris](https://qveris.ai) to get your API key.
+Visit [QVeris](https://qveris.ai) (Global) or [QVeris](https://qveris.cn) (China) to get your API key.
 
 ### 2. Configure Your MCP Client
 
@@ -182,11 +182,41 @@ The `full_content_file_url` is valid for 120 minutes.
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `QVERIS_API_KEY` | ✓ | Your QVeris API key |
+| `QVERIS_REGION` | | Force region: `global` or `cn` (auto-detected from key prefix if not set) |
+| `QVERIS_BASE_URL` | | Override API base URL (highest priority, for custom endpoints) |
+
+## Region
+
+Region is auto-detected from your API key prefix — no extra configuration needed.
+
+| Key prefix | Region | API endpoint |
+|------------|--------|--------------|
+| `sk-xxx` | Global | `https://qveris.ai/api/v1` |
+| `sk-cn-xxx` | China | `https://qveris.cn/api/v1` |
+
+To override manually, set environment variables in your MCP client config:
+
+```json
+{
+  "mcpServers": {
+    "qveris": {
+      "command": "npx",
+      "args": ["-y", "@qverisai/mcp"],
+      "env": {
+        "QVERIS_API_KEY": "your-api-key",
+        "QVERIS_REGION": "cn"
+      }
+    }
+  }
+}
+```
+
+**Priority:** `QVERIS_BASE_URL` > `QVERIS_REGION` > API key prefix auto-detection > default (global)
 
 ## Requirements
 
 - Node.js 18.0.0 or higher
-- A valid QVeris API key
+- A valid QVeris API key ([qveris.ai](https://qveris.ai) or [qveris.cn](https://qveris.cn))
 
 ## Development
 

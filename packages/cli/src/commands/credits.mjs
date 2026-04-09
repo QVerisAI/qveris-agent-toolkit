@@ -14,7 +14,7 @@ export async function runCredits(flags) {
 
   try {
     // The backend returns remaining_credits in every /search response
-    const result = await discoverTools({ apiKey, baseUrl: flags.baseUrl, query: "credit balance", limit: 1, timeoutMs: 10000 });
+    const result = await discoverTools({ apiKey, baseUrl, query: "credit balance", limit: 1, timeoutMs: 10000 });
     spinner.stop();
 
     const credits = result.remaining_credits;
