@@ -64,8 +64,8 @@ const { version: SERVER_VERSION } = require('../package.json');
 /**
  * Main entry point for the Qveris MCP Server.
  *
- * Sets up the MCP server with stdio transport, registers the search_tools
- * and execute_tool handlers, and starts listening for requests.
+ * Sets up the MCP server with stdio transport, registers the discover,
+ * inspect, and call handlers, and starts listening for requests.
  */
 async function main(): Promise<void> {
   // Initialize API client (validates QVERIS_API_KEY)
@@ -101,48 +101,80 @@ async function main(): Promise<void> {
 
   /**
    * Lists available tools.
-   * Returns the search_tools, get_tools_by_ids, and execute_tool definitions.
+   * Returns the discover, inspect, and call definitions (plus deprecated aliases).
    */
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
       tools: [
+        // Primary tools (aligned with CLI naming)
+        {
+          name: 'discover',
+          description:
+            'Discover available tools based on natural language queries. ' +
+            'Returns relevant tools that can help accomplish tasks. ' +
+            'Use this to find tools before inspecting or calling them.',
+          inputSchema: searchToolsSchema,
+        },
+        {
+          name: 'inspect',
+          description:
+            'Inspect tools by their IDs to get detailed information. ' +
+            'Returns parameters, success rate, latency, and examples. ' +
+            'Use tool_ids from a previous discover call.',
+          inputSchema: getToolsByIdsSchema,
+        },
+        {
+          name: 'call',
+          description:
+            'Call a specific remote tool with provided parameters. ' +
+            'The tool_id and search_id must come from a previous discover call. ' +
+            'Pass parameters to the tool through params_to_tool as a JSON string.',
+          inputSchema: executeToolSchema,
+        },
+        // Deprecated aliases (backward compatibility)
         {
           name: 'search_tools',
-          description:
-            'Search for available tools based on natural language queries. ' +
-            'Returns relevant tools that can help accomplish tasks. ' +
-            'Use this to discover tools before executing them.',
+          description: '[Deprecated: use "discover" instead] Search for available tools based on natural language queries.',
           inputSchema: searchToolsSchema,
         },
         {
           name: 'get_tools_by_ids',
-          description:
-            'Get descriptions of tools based on their tool IDs. ' +
-            'Useful for retrieving detailed information about specific tools ' +
-            'when you already know their tool_ids from previous searches.',
+          description: '[Deprecated: use "inspect" instead] Get descriptions of tools based on their tool IDs.',
           inputSchema: getToolsByIdsSchema,
         },
         {
           name: 'execute_tool',
-          description:
-            'Execute a specific remote tool with provided parameters. ' +
-            'The tool_id and search_id must come from a previous search_tools call. ' +
-            'Pass parameters to the tool through params_to_tool as a JSON string.',
+          description: '[Deprecated: use "call" instead] Execute a specific remote tool with provided parameters.',
           inputSchema: executeToolSchema,
         },
       ],
     };
   });
 
+  // Deprecated tool name aliases → canonical names
+  const DEPRECATED_ALIASES: Record<string, string> = {
+    search_tools: 'discover',
+    get_tools_by_ids: 'inspect',
+    execute_tool: 'call',
+  };
+
   /**
    * Handles tool execution requests.
    * Routes to the appropriate handler based on tool name.
+   * Deprecated aliases emit a warning to stderr.
    */
   server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
-    const { name, arguments: args } = request.params;
+    const { name: rawName, arguments: args } = request.params;
+
+    // Resolve deprecated aliases
+    let name = rawName;
+    if (DEPRECATED_ALIASES[rawName]) {
+      name = DEPRECATED_ALIASES[rawName];
+      process.stderr.write(`[qveris] Deprecated: "${rawName}" → use "${name}" instead\n`);
+    }
 
     try {
-      if (name === 'search_tools') {
+      if (name === 'discover') {
         const input = (args ?? {}) as unknown as SearchToolsInput;
 
         // Validate required fields
@@ -173,7 +205,7 @@ async function main(): Promise<void> {
         };
       }
 
-      if (name === 'get_tools_by_ids') {
+      if (name === 'inspect') {
         const input = (args ?? {}) as unknown as GetToolsByIdsInput;
 
         // Validate required fields
@@ -204,7 +236,7 @@ async function main(): Promise<void> {
         };
       }
 
-      if (name === 'execute_tool') {
+      if (name === 'call') {
         const input = (args ?? {}) as unknown as ExecuteToolInput;
 
         // Validate required fields
@@ -220,7 +252,7 @@ async function main(): Promise<void> {
                 type: 'text',
                 text: JSON.stringify({
                   error: `Missing required parameters: ${missingFields.join(', ')}`,
-                  hint: 'tool_id and search_id must come from a previous search_tools call',
+                  hint: 'tool_id and search_id must come from a previous discover call',
                 }),
               },
             ],
@@ -246,8 +278,8 @@ async function main(): Promise<void> {
           {
             type: 'text',
             text: JSON.stringify({
-              error: `Unknown tool: ${name}`,
-              available_tools: ['search_tools', 'get_tools_by_ids', 'execute_tool'],
+              error: `Unknown tool: ${rawName}`,
+              available_tools: ['discover', 'inspect', 'call'],
             }),
           },
         ],

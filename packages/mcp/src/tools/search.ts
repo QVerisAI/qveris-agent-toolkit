@@ -1,5 +1,5 @@
 /**
- * search_tools MCP Tool Implementation
+ * discover MCP Tool Implementation (formerly search_tools)
  *
  * Searches for available tools based on natural language queries.
  * Returns relevant tools that can help accomplish tasks.
@@ -11,7 +11,7 @@ import type { QverisClient } from '../api/client.js';
 import type { SearchResponse } from '../types.js';
 
 /**
- * Input parameters for the search_tools tool.
+ * Input parameters for the discover tool.
  */
 export interface SearchToolsInput {
   /**

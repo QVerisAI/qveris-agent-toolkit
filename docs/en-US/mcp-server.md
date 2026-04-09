@@ -6,9 +6,9 @@
 
 It gives agents access to QVeris through three MCP tools:
 
-- `search_tools` = **Discover**
-- `get_tools_by_ids` = **Inspect**
-- `execute_tool` = **Call**
+- `discover` — Find capabilities by natural language
+- `inspect` — Get detailed tool info (params, success rate, examples)
+- `call` — Execute a tool with parameters
 
 In other words, the MCP server is the agent-facing transport for the same core QVeris protocol described elsewhere in this repository.
 
@@ -32,9 +32,11 @@ Both surfaces map to the same QVeris protocol:
 
 | Protocol action | MCP tool | REST API |
 |----------------|----------|----------|
-| **Discover** | `search_tools` | `POST /search` |
-| **Inspect** | `get_tools_by_ids` | `POST /tools/by-ids` |
-| **Call** | `execute_tool` | `POST /tools/execute` |
+| **Discover** | `discover` | `POST /search` |
+| **Inspect** | `inspect` | `POST /tools/by-ids` |
+| **Call** | `call` | `POST /tools/execute` |
+
+> **Note:** The old tool names (`search_tools`, `get_tools_by_ids`, `execute_tool`) are still supported as deprecated aliases.
 
 ---
 
@@ -126,9 +128,9 @@ For environment-specific setup guides, see:
 
 ## Available MCP Tools
 
-### 1. `search_tools`
+### 1. `discover`
 
-Use this tool to discover capabilities with natural language.
+Use this tool to find capabilities with natural language.
 
 This is the **Discover** action and is **free**.
 
@@ -159,7 +161,7 @@ Typical response fields:
 
 ---
 
-### 2. `get_tools_by_ids`
+### 2. `inspect`
 
 Use this tool to inspect one or more known `tool_id`s before reuse or execution.
 
@@ -180,7 +182,7 @@ Example:
 }
 ```
 
-Use `get_tools_by_ids` when:
+Use `inspect` when:
 
 - Multiple candidates look similar
 - You want to re-check parameters before calling
@@ -191,7 +193,7 @@ The response schema matches `/search` for the requested tools, including paramet
 
 ---
 
-### 3. `execute_tool`
+### 3. `call`
 
 Use this tool to call a discovered QVeris capability.
 
@@ -236,9 +238,9 @@ For very large outputs, QVeris may return:
 
 For most agent tasks, use this flow:
 
-1. `search_tools` to discover relevant capabilities
-2. `get_tools_by_ids` to inspect the best candidate(s) when needed
-3. `execute_tool` to call the selected capability
+1. `discover` to find relevant capabilities
+2. `inspect` to review the best candidate(s) when needed
+3. `call` to execute the selected capability
 
 In practice:
 

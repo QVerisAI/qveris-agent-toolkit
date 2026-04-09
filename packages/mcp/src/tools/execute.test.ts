@@ -1,5 +1,5 @@
 /**
- * Unit tests for the execute_tool MCP tool
+ * Unit tests for the call (execute_tool) MCP tool
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -7,7 +7,7 @@ import { executeExecuteTool, executeToolSchema } from './execute.js';
 import { QverisClient } from '../api/client.js';
 import type { ExecuteResponse } from '../types.js';
 
-describe('execute_tool', () => {
+describe('call (execute_tool)', () => {
   describe('executeToolSchema', () => {
     it('should have tool_id, search_id, params_to_tool as required', () => {
       expect(executeToolSchema.required).toContain('tool_id');

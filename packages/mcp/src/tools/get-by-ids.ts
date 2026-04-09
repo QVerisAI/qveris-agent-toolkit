@@ -1,5 +1,5 @@
 /**
- * get_tools_by_ids MCP Tool Implementation
+ * inspect MCP Tool Implementation (formerly get_tools_by_ids)
  *
  * Retrieves tool descriptions based on tool IDs.
  * Useful for getting detailed information about specific tools
@@ -12,7 +12,7 @@ import type { QverisClient } from '../api/client.js';
 import type { SearchResponse } from '../types.js';
 
 /**
- * Input parameters for the get_tools_by_ids tool.
+ * Input parameters for the inspect tool.
  */
 export interface GetToolsByIdsInput {
   /**
@@ -50,14 +50,14 @@ export const getToolsByIdsSchema = {
       },
       description:
         'Array of tool IDs to retrieve information for. ' +
-        'These IDs should come from previous search_tools results.',
+        'These IDs should come from previous discover results.',
       minItems: 1,
     },
     search_id: {
       type: 'string',
       description:
-        'The search_id from the search_tools response that returned the tool(s). ' +
-        'Optional but recommended for linking to the original search.',
+        'The search_id from the discover response that returned the tool(s). ' +
+        'Optional but recommended for linking to the original discovery.',
     },
     session_id: {
       type: 'string',

@@ -59,22 +59,22 @@ Add the QVeris server to your MCP client configuration:
 
 Once configured, You could add this to system prompt:
 
-> "You can use qveris MCP Server to dynamically search and execute tools to help the user. First think about what kind of tools might be useful to accomplish the user's task. Then use the search_tools tool with query describing the capability of the tool, not what params you want to pass to the tool later. Then call a suitable searched tool using the execute_tool tool, passing parameters to the searched tool through params_to_tool. You could reference the examples given if any for each tool. You may call make multiple tool calls in a single response."
+> "You can use qveris MCP Server to dynamically discover and call tools to help the user. First think about what kind of tools might be useful to accomplish the user's task. Then use the discover tool with a query describing the capability of the tool, not what params you want to pass to the tool later. Then call a suitable tool using the call tool, passing parameters through params_to_tool. You could reference the examples given if any for each tool. You may make multiple tool calls in a single response."
 
-Then your AI assistant can search for and execute tools:
+Then your AI assistant can discover and call tools:
 
 > "Find me a weather tool and get the current weather in Tokyo"
 
 The assistant will:
-1. Call `search_tools` with query "weather"
-2. Review the results and select an appropriate tool
-3. Call `execute_tool` with the tool_id and parameters
+1. Call `discover` with query "weather"
+2. Optionally call `inspect` to review tool details
+3. Call `call` with the tool_id and parameters
 
 ## Available Tools
 
-### `search_tools`
+### `discover`
 
-Search for available tools based on natural language queries.
+Discover available tools based on natural language queries.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -91,14 +91,33 @@ Search for available tools based on natural language queries.
 }
 ```
 
-### `execute_tool`
+### `inspect`
 
-Execute a discovered tool with specific parameters.
+Inspect tools by their IDs to get detailed information (parameters, success rate, latency, examples).
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `tool_id` | string | ✓ | Tool ID from search results |
-| `search_id` | string | ✓ | Search ID from the search that found this tool |
+| `tool_ids` | array | ✓ | Array of tool IDs to retrieve (at least one required) |
+| `search_id` | string | | Search ID from the discover call that returned the tool(s) |
+| `session_id` | string | | Session identifier (auto-generated if omitted) |
+
+**Example:**
+
+```json
+{
+  "tool_ids": ["openweathermap.weather.execute.v1", "worldbank_refined.search_indicators.v1"],
+  "search_id": "abcd1234-ab12-ab12-ab12-abcdef123456"
+}
+```
+
+### `call`
+
+Call a discovered tool with specific parameters.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `tool_id` | string | ✓ | Tool ID from discover results |
+| `search_id` | string | ✓ | Search ID from the discover call that found this tool |
 | `params_to_tool` | object | ✓ | A dictionary of parameters to pass to the tool |
 | `session_id` | string | | Session identifier (auto-generated if omitted) |
 | `max_response_size` | number | | Max response size in bytes (default: 20480) |
@@ -113,24 +132,15 @@ Execute a discovered tool with specific parameters.
 }
 ```
 
-### `get_tools_by_ids`
+### Deprecated tool names
 
-Get detailed descriptions of tools based on their tool IDs. Useful for retrieving information about specific tools when you already know their IDs from previous searches.
+For backward compatibility, the old tool names are still supported but emit a deprecation warning:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `tool_ids` | array | ✓ | Array of tool IDs to retrieve (at least one required) |
-| `search_id` | string | | Search ID from the search that returned the tool(s) |
-| `session_id` | string | | Session identifier (auto-generated if omitted) |
-
-**Example:**
-
-```json
-{
-  "tool_ids": ["openweathermap.weather.execute.v1", "worldbank_refined.search_indicators.v1"],
-  "search_id": "abcd1234-ab12-ab12-ab12-abcdef123456"
-}
-```
+| Old name (deprecated) | New name |
+|----------------------|----------|
+| `search_tools` | `discover` |
+| `get_tools_by_ids` | `inspect` |
+| `execute_tool` | `call` |
 
 ## Session Management
 

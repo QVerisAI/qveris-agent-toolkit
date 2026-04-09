@@ -1,5 +1,5 @@
 /**
- * Unit tests for the get_tools_by_ids MCP tool
+ * Unit tests for the inspect (get_tools_by_ids) MCP tool
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -7,7 +7,7 @@ import { executeGetToolsByIds, getToolsByIdsSchema } from './get-by-ids.js';
 import { QverisClient } from '../api/client.js';
 import type { SearchResponse } from '../types.js';
 
-describe('get_tools_by_ids', () => {
+describe('inspect (get_tools_by_ids)', () => {
   describe('getToolsByIdsSchema', () => {
     it('should have tool_ids as required parameter', () => {
       expect(getToolsByIdsSchema.required).toContain('tool_ids');

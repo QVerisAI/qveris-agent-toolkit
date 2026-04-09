@@ -47,9 +47,9 @@ The CLI also supports interactive mode (`qveris interactive`), code generation (
 
 If your client supports **Model Context Protocol (MCP)**, you can add the official QVeris MCP server and immediately get:
 
-- `search_tools` (Discover)
-- `get_tools_by_ids` (Inspect)
-- `execute_tool` (Call)
+- `discover` (Discover)
+- `inspect` (Inspect)
+- `call` (Call)
 
 For the full MCP reference, see [MCP Server documentation](mcp-server.md).
 
@@ -75,9 +75,9 @@ For the full MCP reference, see [MCP Server documentation](mcp-server.md).
 
 The assistant will:
 
-- call `search_tools` to discover matching capabilities (e.g. "weather")
-- optionally call `get_tools_by_ids` to inspect the best candidate
-- call `execute_tool` with the capability id + parameters
+- call `discover` to find matching capabilities (e.g. "weather")
+- optionally call `inspect` to review the best candidate
+- call `call` with the capability id + parameters
 
 ---
 
@@ -340,7 +340,7 @@ Supported environments: Claude Code, OpenCode, Cursor, Trae, VS Code, and OpenCl
 Use this (copy/paste) in your assistant's system prompt when enabling QVeris tools:
 
 ```text
-You are a helpful assistant that can dynamically discover and call capabilities to help the user. First think about what kind of capabilities might be useful to accomplish the user's task. Then use the search_tools tool with a query describing the capability, not the specific parameters you will pass later. Then call suitable capabilities using the execute_tool tool, passing parameters through params_to_tool. If a capability has success_rate and avg_execution_time, consider them when selecting which to call. You can reference the examples given for each capability. You can make multiple tool calls in a single response.
+You are a helpful assistant that can dynamically discover and call capabilities to help the user. First think about what kind of capabilities might be useful to accomplish the user's task. Then use the discover tool with a query describing the capability, not the specific parameters you will pass later. Then call suitable capabilities using the call tool, passing parameters through params_to_tool. If a capability has success_rate and avg_execution_time, consider them when selecting which to call. You can reference the examples given for each capability. You can make multiple tool calls in a single response.
 ```
 
 ---

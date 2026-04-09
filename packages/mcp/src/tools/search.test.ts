@@ -1,5 +1,5 @@
 /**
- * Unit tests for the search_tools MCP tool
+ * Unit tests for the discover (search_tools) MCP tool
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -7,7 +7,7 @@ import { executeSearchTools, searchToolsSchema } from './search.js';
 import { QverisClient } from '../api/client.js';
 import type { SearchResponse } from '../types.js';
 
-describe('search_tools', () => {
+describe('discover (search_tools)', () => {
   describe('searchToolsSchema', () => {
     it('should have query as required parameter', () => {
       expect(searchToolsSchema.required).toContain('query');

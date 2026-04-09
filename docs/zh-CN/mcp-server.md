@@ -6,9 +6,9 @@
 
 它通过三个 MCP 工具为 Agent 提供 QVeris 访问能力：
 
-- `search_tools` = **发现（Discover）**
-- `get_tools_by_ids` = **检查（Inspect）**
-- `execute_tool` = **调用（Call）**
+- `discover` — 用自然语言发现能力
+- `inspect` — 获取工具详情（参数、成功率、示例）
+- `call` — 执行工具并传入参数
 
 换言之，MCP 服务器是本仓库其他文档所描述的 QVeris 核心协议的 Agent 侧传输层。
 
@@ -32,9 +32,11 @@
 
 | 协议操作 | MCP 工具 | REST API |
 |---------|---------|---------|
-| **发现** | `search_tools` | `POST /search` |
-| **检查** | `get_tools_by_ids` | `POST /tools/by-ids` |
-| **调用** | `execute_tool` | `POST /tools/execute` |
+| **发现** | `discover` | `POST /search` |
+| **检查** | `inspect` | `POST /tools/by-ids` |
+| **调用** | `call` | `POST /tools/execute` |
+
+> **注意：** 旧工具名称（`search_tools`、`get_tools_by_ids`、`execute_tool`）仍作为弃用别名支持。
 
 ---
 
@@ -126,7 +128,7 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 
 ## 可用 MCP 工具
 
-### 1. `search_tools`
+### 1. `discover`
 
 使用自然语言发现能力。
 
@@ -159,7 +161,7 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 
 ---
 
-### 2. `get_tools_by_ids`
+### 2. `inspect`
 
 在复用或调用之前，检查一个或多个已知 `tool_id` 的详情。
 
@@ -180,7 +182,7 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 }
 ```
 
-以下情况建议使用 `get_tools_by_ids`：
+以下情况建议使用 `inspect`：
 
 - 多个候选能力看起来类似
 - 调用前想重新确认参数
@@ -191,7 +193,7 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 
 ---
 
-### 3. `execute_tool`
+### 3. `call`
 
 调用已发现的 QVeris 能力。
 
@@ -236,9 +238,9 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 
 对于大多数 Agent 任务，建议使用以下流程：
 
-1. `search_tools` — 发现相关能力
-2. `get_tools_by_ids` — 在需要时检查最佳候选
-3. `execute_tool` — 调用所选能力
+1. `discover` — 发现相关能力
+2. `inspect` — 在需要时检查最佳候选
+3. `call` — 调用所选能力
 
 实践中：
 

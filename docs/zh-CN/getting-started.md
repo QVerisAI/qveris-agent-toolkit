@@ -47,9 +47,9 @@ CLI 还支持交互模式（`qveris interactive`）、代码生成（`--codegen 
 
 如果你的客户端支持 **Model Context Protocol (MCP)**，可以添加官方 QVeris MCP 服务器，立即获得：
 
-- `search_tools`（发现）
-- `get_tools_by_ids`（检查）
-- `execute_tool`（调用）
+- `discover`（发现）
+- `inspect`（检查）
+- `call`（调用）
 
 完整 MCP 参考文档见 [MCP 服务器文档](mcp-server.md)。
 
@@ -75,9 +75,9 @@ CLI 还支持交互模式（`qveris interactive`）、代码生成（`--codegen 
 
 助手会：
 
-- 调用 `search_tools` 发现匹配的能力（如"天气"）
-- 可选调用 `get_tools_by_ids` 检查最佳候选
-- 使用能力 ID 和参数调用 `execute_tool`
+- 调用 `discover` 发现匹配的能力（如"天气"）
+- 可选调用 `inspect` 检查最佳候选
+- 使用能力 ID 和参数调用 `call`
 
 ---
 
@@ -340,7 +340,7 @@ console.log(data);
 在启用 QVeris 工具时，将以下内容复制粘贴到助手的系统提示词中：
 
 ```text
-你是一个有用的助手，可以动态发现并调用各种能力来帮助用户。首先思考完成用户任务可能需要哪类能力。然后使用 search_tools 工具，以描述能力的查询词进行搜索，而非直接写出你稍后要传入的具体参数。再使用 execute_tool 工具调用合适的能力，通过 params_to_tool 传入参数。如果能力具有 success_rate 和 avg_execution_time，请在选择时加以参考。你可以参考每个能力提供的示例。你可以在一次响应中发起多个工具调用。
+你是一个有用的助手，可以动态发现并调用各种能力来帮助用户。首先思考完成用户任务可能需要哪类能力。然后使用 discover 工具，以描述能力的查询词进行搜索，而非直接写出你稍后要传入的具体参数。再使用 call 工具调用合适的能力，通过 params_to_tool 传入参数。如果能力具有 success_rate 和 avg_execution_time，请在选择时加以参考。你可以参考每个能力提供的示例。你可以在一次响应中发起多个工具调用。
 ```
 
 ---
