@@ -41,12 +41,61 @@ The QVeris MCP server requires Node.js.
    - Attempt to install it using the system's package manager (e.g., `winget install OpenJS.NodeJS` on Windows, `brew install node` on macOS, or `apt install nodejs` on Linux).
    - If you cannot install it automatically, stop and ask the user to install Node.js (LTS version recommended).
 
-## 2. Detect Environment & Configure
+## 2. Choose Integration Method
+
+QVeris supports two integration methods. Choose based on your environment:
+
+| Method | Best For | How It Works |
+|--------|----------|--------------|
+| **CLI** (recommended) | Agents with shell access (Claude Code, OpenClaw, terminals) | Subprocess calls — zero prompt tokens, 10,000+ tools without bloat |
+| **MCP Server** | IDE integrations (Cursor, Claude Desktop, OpenCode) | MCP protocol — tools injected into agent context |
+
+### Option A: CLI Setup (Recommended for shell-capable agents)
+
+Install the CLI globally:
+
+```bash
+# One-liner install
+curl -fsSL https://qveris.ai/cli/install | bash
+
+# Or via npm
+npm install -g @qverisai/cli
+```
+
+Authenticate with interactive region selection:
+
+```bash
+qveris login
+```
+
+The `login` command will:
+1. Prompt for region selection (Global or China) if not pre-configured
+2. Open a browser to retrieve your API key
+3. Accept masked key input and validate it
+4. Save credentials to `~/.config/qveris/config.json`
+
+Alternatively, set the API key directly:
+
+```bash
+qveris config set api_key YOUR_QVERIS_API_KEY
+```
+
+Verify the setup:
+
+```bash
+qveris doctor    # Check Node.js, API key, region, connectivity
+qveris whoami    # Show auth status and region
+qveris credits   # Check credit balance
+```
+
+Skip to **Section 3: Verify Installation** once `qveris doctor` passes all checks.
+
+### Option B: MCP Server Setup
 
 Detect which coding tool or environment you are currently running in (e.g., Claude Code, OpenCode, Cursor, Trae, VS Code).
 
 **Configuration involves two steps for all environments:**
-1. **MCP Server Setup:** Connects the QVeris tool server (`@qverisai/mcp`) to your environment.
+1. **MCP Server Setup:** Connects the QVeris tool server (`@qverisai/mcp` v0.5.0) to your environment.
 2. **Skill Configuration:** Teaches the agent how to use the tools using the MCP/client skill definition file.
    - **Skill URL:** `https://github.com/QVerisAI/QVerisAI/blob/main/skills/qveris/SKILL.md`
 
@@ -215,11 +264,20 @@ More details: https://qveris.ai/docs/openclaw-setup
 
 ## 3. Verify Installation
 
-After configuration, you must verify that the QVeris tools are visible and usable.
+After configuration, verify that QVeris tools are visible and usable.
+
+### CLI Verification
+
+```bash
+qveris doctor                              # Run diagnostics
+qveris discover "weather forecast API"     # Test discovery (free)
+```
+
+### MCP Verification
 
 1. **Restart:** If required by the environment, restart the MCP client or reload the window.
-2. **List Tools:** Run the tool discovery command available to you (e.g., `mcp.list_tools`, `search_tools`, or `/mcp` in chat).
-3. **Check for QVeris:** Look for tools starting with `qveris_` or the `qveris` server in the list.
+2. **List Tools:** Run the tool discovery command available to you (e.g., `mcp.list_tools`, or `/mcp` in chat).
+3. **Check for QVeris:** Look for `discover`, `inspect`, `call` tools (or the `qveris` server) in the list. Legacy tool names `search_tools`, `get_tools_by_ids`, `execute_tool` are still supported as deprecated aliases.
 
 ## 4. Troubleshooting & Fixes
 

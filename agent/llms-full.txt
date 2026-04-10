@@ -110,28 +110,76 @@ Every capability includes:
 
 ## Integration Methods
 
-QVeris supports three integration methods:
+QVeris supports four integration methods:
 
 | Method | Use Case | Documentation |
 |--------|----------|--------------|
-| **MCP Server** | Cursor / Claude Desktop / Any MCP client | https://github.com/QVerisAI/QVerisAI/blob/main/docs/mcp-server.md |
+| **CLI** (recommended) | Agents with shell access (Claude Code, OpenClaw, terminals) | https://github.com/QVerisAI/QVerisAI/blob/main/packages/cli/README.md |
+| **MCP Server** | Cursor / Claude Desktop / Any MCP client | https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/mcp-server.md |
 | **Python SDK** | Python projects, Agent frameworks | https://github.com/QVerisAI/sdk-python |
-| **REST API** | Any language, Custom integrations | https://github.com/QVerisAI/QVerisAI/blob/main/docs/rest-api.md |
+| **REST API** | Any language, Custom integrations | https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/rest-api.md |
 
 ### QVeris CLI — Token-Efficient Agent Tool Use (Recommended)
 
-The CLI is the most efficient way for agents to access QVeris capabilities. Unlike MCP which injects tool schemas into every LLM prompt, CLI runs as a subprocess — zero prompt tokens consumed.
+The CLI (`@qverisai/cli` v0.4.0) is the most efficient way for agents to access QVeris capabilities. Unlike MCP which injects tool schemas into every LLM prompt, CLI runs as a subprocess — zero prompt tokens consumed. Zero external dependencies — only Node.js built-ins.
 
 ```bash
 # Install
 curl -fsSL https://qveris.ai/cli/install | bash
 # or: npm install -g @qverisai/cli
 
+# Authenticate (interactive region selection + browser-based key retrieval)
+qveris login
+
 # Agent workflow
 qveris discover "weather forecast API"     # Find tools (free)
-qveris inspect 1                            # Check params, stats
+qveris inspect 1                            # Check params, stats (index from last discover)
 qveris call 1 --params '{"city":"London"}'  # Execute (1-100 credits)
+
+# Validate without consuming credits
+qveris call 1 --params '{"city":"London"}' --dry-run
+
+# Generate code snippets after a call
+qveris call 1 --params '{"city":"London"}' --codegen curl
 ```
+
+**CLI Commands:**
+
+| Command | Description |
+|---------|-------------|
+| `qveris login` | Interactive login with region selection and browser-based key retrieval |
+| `qveris logout` | Remove stored API key |
+| `qveris discover <query>` | Find capabilities by natural language |
+| `qveris inspect <id\|index>` | View full tool details, parameters, examples |
+| `qveris call <id\|index>` | Execute a capability with parameters |
+| `qveris config <subcommand>` | Manage settings (set, get, list, reset, path) |
+| `qveris interactive` | Launch REPL mode (discover/inspect/call loop) |
+| `qveris doctor` | Self-check diagnostics (Node.js, API key, region, connectivity) |
+| `qveris credits` | Check credit balance |
+| `qveris whoami` | Show auth status, key source, and region |
+| `qveris completions <shell>` | Generate shell completions (bash/zsh/fish) |
+
+**Key Flags:**
+
+| Flag | Description |
+|------|-------------|
+| `--json, -j` | Output raw JSON (agent/script mode) |
+| `--dry-run` | Validate without executing (no credits consumed) |
+| `--codegen <curl\|js\|python>` | Generate code snippets after call |
+| `--params <json\|@file\|->` | Parameters as inline JSON, file path, or stdin |
+| `--limit <n>` | Result limit for discover (default: 5) |
+| `--max-size <bytes>` | Response size limit; -1 for unlimited (default: 4KB TTY, 20KB non-TTY). MCP default is 20KB. |
+| `--verbose, -v` | Show request details |
+
+**Session & Index Shortcuts:**
+- After `discover`, results are stored in a session file (~/.config/qveris/.session.json, 30-min TTL)
+- Use numeric indices (`qveris inspect 1`, `qveris call 2`) to reference results from last discover
+- Session tracks discovery ID, query, region, and result list
+
+**Multi-Region Support:**
+- Region auto-detected from API key prefix (`sk-cn-xxx` → China, `sk-xxx` → Global)
+- Override with `--base-url`, `QVERIS_BASE_URL`, or `QVERIS_REGION` env
+- `qveris login` offers interactive region selection when no region is pre-configured
 
 **Why CLI over MCP for agents:**
 - **Zero token cost** — runs as subprocess, tool schemas never enter the prompt
@@ -139,6 +187,8 @@ qveris call 1 --params '{"city":"London"}'  # Execute (1-100 credits)
 - **Deterministic output** — same command always produces same schema
 - **`--json` mode** — structured output for programmatic parsing
 - **Smart truncation** — large results auto-truncate with OSS download link
+- **`--dry-run`** — validate parameters without consuming credits
+- **`--codegen`** — generate curl/JS/Python snippets from any successful call
 
 **Use CLI when:** Agent framework supports `exec` / `bash` (Claude Code, OpenClaw, Cursor terminal)
 **Use MCP when:** IDE only supports MCP protocol (Cursor inline, Claude Desktop)
@@ -147,9 +197,29 @@ Full CLI docs: https://github.com/QVerisAI/QVerisAI/blob/main/packages/cli/READM
 
 ### MCP Server Quick Start
 
+The MCP server (`@qverisai/mcp` v0.5.0) exposes three primary tools via the Model Context Protocol:
+
+| MCP Tool | Description | Cost |
+|----------|-------------|------|
+| `discover` | Search for tools by natural language query | Free |
+| `inspect` | Get detailed tool info by IDs | Free |
+| `call` | Execute a tool with parameters | 1-100 credits |
+
+> **Backward compatibility:** The old tool names `search_tools`, `get_tools_by_ids`, and `execute_tool` are still supported as deprecated aliases with stderr warnings. Use the new names going forward.
+
 ```bash
 npx @qverisai/mcp
 ```
+
+**Environment Variables:**
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `QVERIS_API_KEY` | Yes | API authentication key |
+| `QVERIS_REGION` | No | Force region: `global` or `cn` |
+| `QVERIS_BASE_URL` | No | Custom API endpoint override |
+
+Region is auto-detected from API key prefix when not explicitly set.
 
 For Claude Desktop users, add to `claude_desktop_config.json`:
 
@@ -166,6 +236,14 @@ For Claude Desktop users, add to `claude_desktop_config.json`:
   }
 }
 ```
+
+**MCP Tool Parameters:**
+
+- **`discover`**: `query` (string, required), `limit` (number, 1-100, default 20), `session_id` (string, optional)
+- **`inspect`**: `tool_ids` (string[], required), `search_id` (string, optional), `session_id` (string, optional)
+- **`call`**: `tool_id` (string, required), `search_id` (string, required), `params_to_tool` (object|string, required), `session_id` (string, optional), `max_response_size` (number, optional, default 20480)
+
+> **Parameter naming:** The MCP `call` tool uses `params_to_tool` for tool arguments, while the REST API uses `parameters` and the CLI uses `--params`. The field names differ across interfaces but serve the same purpose.
 
 ### REST API Quick Reference
 
@@ -315,19 +393,19 @@ View full audit trail: https://qveris.ai/account (or https://qveris.cn/account)
 
 ### MCP Server Documentation
 
-Full reference: https://github.com/QVerisAI/QVerisAI/blob/main/docs/mcp-server.md
+Full reference: https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/mcp-server.md
 
 **Available MCP Tools:**
 
-- `search_tools` — Discover capabilities
-- `get_tools_by_ids` — Inspect capability details
-- `execute_tool` — Call a capability
+- `discover` — Find capabilities by natural language query (free)
+- `inspect` — View capability details, parameters, stats (free)
+- `call` — Execute a capability with parameters (1-100 credits)
+
+> Deprecated aliases still supported: `search_tools` → `discover`, `get_tools_by_ids` → `inspect`, `execute_tool` → `call`
 
 ### REST API Documentation
 
-Full reference: https://github.com/QVerisAI/QVerisAI/blob/main/docs/rest-api.md
-
-**Version:** 0.1.9
+Full reference: https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/rest-api.md
 
 **Authentication:** Bearer token
 
@@ -439,13 +517,13 @@ Model improvement is a tailwind for QVeris, not a headwind.
 
 ### Documentation
 
-- **Getting Started:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/getting-started.md
-- **MCP Server:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/mcp-server.md
-- **REST API:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/rest-api.md
+- **Getting Started:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/getting-started.md
+- **MCP Server:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/mcp-server.md
+- **REST API:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/rest-api.md
 - **Setup Guide:** https://github.com/QVerisAI/QVerisAI/blob/main/agent/SETUP.md
-- **Claude Code Setup:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/claude-code-setup.md
-- **OpenCode Setup:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/opencode-setup.md
-- **IDE/CLI Setup:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/ide-cli-setup.md
+- **Claude Code Setup:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/claude-code-setup.md
+- **OpenCode Setup:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/opencode-setup.md
+- **IDE/CLI Setup:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/ide-cli-setup.md
 
 ### Skills
 
@@ -455,8 +533,9 @@ Model improvement is a tailwind for QVeris, not a headwind.
 
 ### SDK & Tools
 
+- **CLI (npm):** https://www.npmjs.com/package/@qverisai/cli — `npm install -g @qverisai/cli` (v0.4.0)
+- **MCP Server (npm):** https://www.npmjs.com/package/@qverisai/mcp — `npx @qverisai/mcp` (v0.5.0)
 - **Python SDK:** https://github.com/QVerisAI/sdk-python
-- **MCP Server (npm):** https://www.npmjs.com/package/@qverisai/mcp
 - **Online Docs:** https://qveris.ai/docs
 
 ### Open Ecosystem
@@ -511,11 +590,11 @@ You are a helpful assistant that can dynamically discover and call capabilities 
 
 First, think about what kind of capabilities might be useful to accomplish the user's task.
 
-Then use the search_tools tool with a query describing the capability type, not the specific parameters you will pass later.
+Then use the discover tool with a query describing the capability type, not the specific parameters you will pass later.
 
-Optionally, use get_tools_by_ids to inspect top candidates (check success_rate, avg_execution_time, parameters).
+Optionally, use inspect to check top candidates (success_rate, avg_execution_time, parameters, examples).
 
-Then call suitable capabilities using the execute_tool tool, passing parameters through params_to_tool.
+Then call suitable capabilities using the call tool, passing parameters through params_to_tool.
 
 If a capability has success_rate and avg_execution_time, consider them when selecting which to call.
 
@@ -523,6 +602,8 @@ You can reference the examples given for each capability.
 
 You can make multiple tool calls in a single response.
 ```
+
+> **Note:** If your agent uses CLI instead of MCP, replace the tool calls above with subprocess calls: `qveris discover`, `qveris inspect`, `qveris call`. Use `--json` flag for structured output.
 
 ### Error Handling Best Practices
 
@@ -545,9 +626,10 @@ Generate a new UUID for each user session, and reuse it throughout that session.
 
 ## Version Information
 
-- **llms-full.txt Version:** 1.0.0
-- **QVeris REST API Version:** 0.1.9
-- **Last Updated:** 2026-03-13
+- **llms-full.txt Version:** 1.1.0
+- **CLI Version:** 0.4.0
+- **MCP Server Version:** 0.5.0
+- **Last Updated:** 2026-04-10
 
 For the latest updates, always refer to:
 

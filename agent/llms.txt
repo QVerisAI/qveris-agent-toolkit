@@ -26,8 +26,8 @@
 - They are runtime + capability routing network, complementary not competing
 
 ## Access methods (recommended order)
-- CLI (recommended for agents): npm install -g @qverisai/cli — zero prompt tokens, deterministic output, 10,000+ tools without prompt bloat
-- MCP Server: npx @qverisai/mcp — for IDE integrations (Cursor, Claude Desktop)
+- CLI v0.4.0 (recommended for agents): npm install -g @qverisai/cli — zero prompt tokens, deterministic output, 10,000+ tools without prompt bloat
+- MCP Server v0.5.0: npx @qverisai/mcp — for IDE integrations (Cursor, Claude Desktop, OpenCode)
 - Python SDK: pip install qveris
 - REST API (Global): https://qveris.ai/api/v1
 - REST API (China): https://qveris.cn/api/v1
@@ -36,10 +36,26 @@
 ## QVeris CLI — token-efficient agent tool use
 - Agents call tools via subprocess (qveris discover/inspect/call), not prompt injection
 - Zero tokens consumed per tool invocation — CLI runs outside the LLM context
+- Zero external dependencies — only Node.js built-ins, instant install via npx
 - Deterministic output schema: same command, same format, every time
 - 10,000+ tools accessible without adding any schema to the prompt
+- `qveris login` — interactive region selection + browser-based key retrieval
+- `qveris doctor` — self-check diagnostics (Node.js, API key, region, connectivity)
+- `qveris interactive` — REPL mode for discover/inspect/call loop
+- `--json` flag for structured agent output, `--dry-run` to validate without credits
+- `--codegen curl|js|python` to generate code snippets from successful calls
+- Session index shortcuts: `qveris inspect 1`, `qveris call 2` (references last discover results)
+- Shell completions: `qveris completions bash|zsh|fish`
 - Install: curl -fsSL https://qveris.ai/cli/install | bash
 - Docs: https://github.com/QVerisAI/QVerisAI/blob/main/packages/cli/README.md
+
+## MCP Server tools
+- `discover` — find capabilities by natural language query (free)
+- `inspect` — view capability details, parameters, stats (free)
+- `call` — execute a capability with parameters (1-100 credits)
+- Deprecated aliases still supported: search_tools → discover, get_tools_by_ids → inspect, execute_tool → call
+- Auto-generates session ID (UUID v4) per server instance
+- Region auto-detected from API key prefix; override with QVERIS_REGION or QVERIS_BASE_URL
 
 ## Pricing
 - Pay-as-you-go, not subscription
@@ -52,8 +68,9 @@
 - Cursor/Claude Code/OpenCode users: https://github.com/QVerisAI/QVerisAI/blob/main/agent/SETUP.md (uses skill: skills/qveris/SKILL.md)
 
 ## API docs
-- MCP Server: https://github.com/QVerisAI/QVerisAI/blob/main/docs/mcp-server.md
-- REST API: https://github.com/QVerisAI/QVerisAI/blob/main/docs/rest-api.md
+- CLI docs: https://github.com/QVerisAI/QVerisAI/blob/main/packages/cli/README.md
+- MCP Server: https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/mcp-server.md
+- REST API: https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/rest-api.md
 - Online docs: https://qveris.ai/docs
 
 ## Open Ecosystem

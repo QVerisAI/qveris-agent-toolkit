@@ -162,6 +162,58 @@ When a tool response exceeds `max_response_size`, the API returns:
 
 ---
 
+## CLI Workflow
+
+When using the QVeris CLI (`@qverisai/cli` v0.4.0) instead of MCP, the same Discover → Inspect → Call pattern applies via shell commands.
+
+### Basic Agent Workflow
+
+```bash
+# Discover tools (free)
+qveris discover "weather forecast API" --json
+
+# Inspect top result by index (free)
+qveris inspect 1 --json
+
+# Call with parameters (1-100 credits)
+qveris call 1 --params '{"city": "London"}' --json
+
+# Validate without consuming credits
+qveris call 1 --params '{"city": "London"}' --dry-run --json
+
+# Generate code snippet after successful call
+qveris call 1 --params '{"city": "London"}' --codegen curl
+```
+
+### Key Flags for Agents
+
+| Flag | Purpose |
+|------|---------|
+| `--json` | Structured JSON output — always use in agent/script contexts |
+| `--dry-run` | Validate parameters without executing (no credits consumed) |
+| `--codegen <curl\|js\|python>` | Generate API call snippets from last successful call |
+| `--params <json\|@file\|->` | Pass parameters as inline JSON, from file (`@params.json`), or stdin (`-`) |
+| `--limit <n>` | Limit discover results (default: 5) |
+| `--max-size <bytes>` | Response size limit; `-1` for unlimited (default: 4KB TTY, 20KB non-TTY). MCP default is 20KB. |
+
+### Session & Index Shortcuts
+
+After `qveris discover`, results are stored in a session file (30-minute TTL). Use numeric indices in subsequent commands:
+
+```bash
+qveris discover "stock price API"    # Returns indexed results: 1, 2, 3...
+qveris inspect 1                     # Inspect first result by index
+qveris call 1 --params '...'         # Call first result by index
+```
+
+The session tracks the discovery ID, so `inspect` and `call` automatically link back to the original discovery for analytics. Use `qveris history` to view current session state.
+
+### Diagnostics
+
+Run `qveris doctor` to check setup: Node.js version, API key validity, region detection, and API connectivity.
+
+---
+
 ## Self-Check (before responding)
 
 - Is my discover query a **tool type description** or a **factual question**? → If it contains specific names, "is X listed?", or "what is Y?" — use web_search.
@@ -185,10 +237,20 @@ Region is auto-detected from the API key prefix. Override with `QVERIS_REGION=cn
 
 **Auth**: `Authorization: Bearer ${QVERIS_API_KEY}`
 
-| Action | Endpoint | Body |
-|--------|----------|------|
-| Discover | `POST /search` | `{"query": "...", "limit": 10}` |
-| Inspect | `POST /tools/by-ids` | `{"tool_ids": ["..."], "search_id": "..."}` |
-| Call | `POST /tools/execute?tool_id=...` | `{"search_id": "...", "parameters": {...}, "max_response_size": 20480}` |
+| Action | REST Endpoint | MCP Tool | CLI Command |
+|--------|--------------|----------|-------------|
+| Discover | `POST /search` | `discover` | `qveris discover <query>` |
+| Inspect | `POST /tools/by-ids` | `inspect` | `qveris inspect <id\|index>` |
+| Call | `POST /tools/execute?tool_id=...` | `call` | `qveris call <id\|index>` |
+
+**REST Body Examples:**
+
+| Action | Body |
+|--------|------|
+| Discover | `{"query": "...", "limit": 10}` |
+| Inspect | `{"tool_ids": ["..."], "search_id": "..."}` |
+| Call | `{"search_id": "...", "parameters": {...}, "max_response_size": 20480}` |
+
+> **MCP backward compatibility:** Old tool names `search_tools`, `get_tools_by_ids`, `execute_tool` are still supported as deprecated aliases in MCP server v0.5.0. Use the new names (`discover`, `inspect`, `call`) going forward.
 
 Full API documentation: https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/rest-api.md
