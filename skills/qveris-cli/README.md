@@ -14,7 +14,7 @@ Unlike MCP which injects tool schemas into every LLM prompt (consuming 200-500 t
 
 | | CLI | MCP |
 |---|---|---|
-| Token cost | Zero | High (schemas per turn) |
+| Token cost | Zero (for schemas) | High (schemas per turn) |
 | Scalability | 10,000+ tools, no bloat | Each tool adds tokens |
 | Output | Deterministic `--json` | Varies by client |
 | Debugging | Visible, `--dry-run` | Opaque in MCP logs |
