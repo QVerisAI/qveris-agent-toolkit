@@ -17,9 +17,19 @@ qveris call 1 --params '{"wfo": "BOU", "x": 50, "y": 30}' --json
 
 # Validate without consuming credits
 qveris call 1 --params '{"wfo": "BOU", "x": 50, "y": 30}' --dry-run --json
+
+# Generate production code snippet (curl/python/js) — only on successful calls
+qveris call 1 --params '{"wfo": "BOU", "x": 50, "y": 30}' --codegen curl
 ```
 
 **Always use `--json`** for structured output.
+
+---
+
+## Response Size
+
+Default: 4KB (TTY) / 20KB (piped/`--json`). Use `--max-size -1` for unlimited.
+Large responses are auto-truncated with a download link for the full result.
 
 ---
 

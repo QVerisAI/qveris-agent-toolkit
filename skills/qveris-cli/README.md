@@ -6,15 +6,15 @@ The `qveris-cli` Skill complements the existing `qveris` MCP Skill, offering dis
 
 ### 1. Process Isolation & Stability
 
-CLI runs as a **separate process**. If a tool call fails or encounters corrupt data, the fault is confined to the CLI process without affecting Claude Code's main session.
+CLI runs as a **separate process**. If a tool call fails or encounters corrupt data, the fault is confined to the CLI process without affecting the host agent's main session.
 
-### 2. Zero Token Cost
+### 2. Low Prompt Tokens
 
-Unlike MCP which injects tool schemas into every LLM prompt (consuming 200-500 tokens per tool), CLI runs as a subprocess — zero prompt tokens, deterministic output.
+Unlike MCP which injects tool schemas into every LLM prompt (consuming 200-500 tokens per tool), CLI runs as a subprocess — no schema definitions are added to the prompt, resulting in significantly lower prompt token usage.
 
 | | CLI | MCP |
 |---|---|---|
-| Token cost | Zero (for schemas) | High (schemas per turn) |
+| Token cost | Low (no schema overhead) | High (schemas per turn) |
 | Scalability | 10,000+ tools, no bloat | Each tool adds tokens |
 | Output | Deterministic `--json` | Varies by client |
 | Debugging | Visible, `--dry-run` | Opaque in MCP logs |
@@ -62,6 +62,8 @@ npx @qverisai/cli discover "weather API"
 ---
 
 ## Quick Start
+
+The examples below omit `--json` for readability. Add `--json` when scripting or using with agents.
 
 ```bash
 # 1. Authenticate (saves key to ~/.config/qveris/config.json)
@@ -114,7 +116,7 @@ qveris call 1 --params '{"wfo": "BOU", "x": 50, "y": 30}' --dry-run --json
 # Execute the call
 qveris call 1 --params '{"wfo": "BOU", "x": 50, "y": 30}' --json
 
-# Generate production code snippet
+# Generate production code snippet (only produced on successful calls)
 qveris call 1 --params '{"wfo": "BOU", "x": 50, "y": 30}' --codegen curl
 qveris call 1 --params '{"wfo": "BOU", "x": 50, "y": 30}' --codegen python
 ```
@@ -123,11 +125,31 @@ qveris call 1 --params '{"wfo": "BOU", "x": 50, "y": 30}' --codegen python
 
 ---
 
+## Interactive Mode
+
+For hands-on exploration, launch a REPL session that keeps discovery state in memory:
+
+```bash
+qveris interactive
+```
+
+```
+qveris> discover "crypto price API"
+qveris> inspect 1
+qveris> call 1 {"symbol": "BTC"}
+qveris> codegen python
+qveris> exit
+```
+
+Available REPL commands: `discover`, `inspect`, `call`, `codegen <curl|js|python>`, `history`, `help`, `exit`.
+
+---
+
 ## When to Use Which
 
 | Scenario | Recommended Skill |
 |---|---|
-| Claude Code session with MCP configured | `qveris` (MCP) |
+| Agent session with MCP configured | `qveris` (MCP) |
 | Quick one-off query without MCP setup | `qveris-cli` |
 | CI/CD automation, shell scripts | `qveris-cli` |
 | Need to generate production REST API code | Either — CLI has `--codegen` |
