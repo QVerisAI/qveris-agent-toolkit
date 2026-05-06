@@ -72,6 +72,16 @@ export async function main(argv) {
         await runCredits(flags);
         break;
       }
+      case "usage": {
+        const { runUsage } = await import("./commands/usage.mjs");
+        await runUsage(flags);
+        break;
+      }
+      case "ledger": {
+        const { runLedger } = await import("./commands/ledger.mjs");
+        await runLedger(flags);
+        break;
+      }
       case "config": {
         const subcommand = rest[0];
         const subArgs = rest.slice(1);
@@ -119,6 +129,11 @@ const VALUE_FLAGS = {
   "api-key": "apiKey", "base-url": "baseUrl", timeout: "timeout",
   limit: "limit", "discovery-id": "discoveryId", params: "params",
   "max-size": "maxSize", codegen: "codegen", token: "token",
+  mode: "mode", "start-date": "startDate", "end-date": "endDate",
+  bucket: "bucket", "execution-id": "executionId", "search-id": "searchId",
+  "event-type": "eventType", kind: "kind", success: "success",
+  "charge-outcome": "chargeOutcome", "entry-type": "entryType",
+  direction: "direction", "min-credits": "minCredits", "max-credits": "maxCredits",
 };
 
 function takeNext(args, i, flag) {
@@ -199,6 +214,34 @@ function extractGlobalFlags(args) {
         flags.codegen = takeNext(args, i++, arg); break;
       case "--token":
         flags.token = takeNext(args, i++, arg); break;
+      case "--mode":
+        flags.mode = takeNext(args, i++, arg); break;
+      case "--start-date":
+        flags.startDate = takeNext(args, i++, arg); break;
+      case "--end-date":
+        flags.endDate = takeNext(args, i++, arg); break;
+      case "--bucket":
+        flags.bucket = takeNext(args, i++, arg); break;
+      case "--execution-id":
+        flags.executionId = takeNext(args, i++, arg); break;
+      case "--search-id":
+        flags.searchId = takeNext(args, i++, arg); break;
+      case "--event-type":
+        flags.eventType = takeNext(args, i++, arg); break;
+      case "--kind":
+        flags.kind = takeNext(args, i++, arg); break;
+      case "--success":
+        flags.success = takeNext(args, i++, arg); break;
+      case "--charge-outcome":
+        flags.chargeOutcome = takeNext(args, i++, arg); break;
+      case "--entry-type":
+        flags.entryType = takeNext(args, i++, arg); break;
+      case "--direction":
+        flags.direction = takeNext(args, i++, arg); break;
+      case "--min-credits":
+        flags.minCredits = takeNext(args, i++, arg); break;
+      case "--max-credits":
+        flags.maxCredits = takeNext(args, i++, arg); break;
       default:
         flags._positional.push(arg);
     }
@@ -228,6 +271,8 @@ function printUsage(flags = {}) {
     ${cyan("logout")}                       Remove stored API key
     ${cyan("whoami")}                       Show current auth status
     ${cyan("credits")}                      Show credit balance
+    ${cyan("usage")}                        Summarize or search usage audit history
+    ${cyan("ledger")}                       Summarize or search credit ledger entries
 
   ${bold("Configuration:")}
     ${cyan("config")}   set|get|list|reset  Manage CLI settings
@@ -243,6 +288,11 @@ function printUsage(flags = {}) {
     --api-key <key>        Override API key
     --base-url <url>       Override API base URL
     --timeout <seconds>    Request timeout
+    --mode <mode>          summary | search | export-file for usage/ledger
+    --start-date <date>    Usage/ledger range start (YYYY-MM-DD)
+    --end-date <date>      Usage/ledger range end (YYYY-MM-DD)
+    --min-credits <n>      Usage/ledger amount lower bound
+    --max-credits <n>      Usage/ledger amount upper bound
     --no-color             Disable colors
     --verbose, -v          Show request details
     --version, -V          Print version
@@ -258,6 +308,8 @@ function printUsage(flags = {}) {
     qveris inspect 1
     qveris call 1 --params '{"city": "London"}'
     qveris call 1 --params @params.json --codegen curl
+    qveris usage --mode search --execution-id <id>
+    qveris ledger --mode search --min-credits 50 --direction consume
     qveris interactive
 
   ${dim("https://qveris.ai (global) / https://qveris.cn (China)")}

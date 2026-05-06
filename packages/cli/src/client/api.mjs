@@ -62,6 +62,21 @@ async function requestJson(path, { method = "POST", query = {}, body, timeoutMs 
   }
 }
 
+export function unwrapApiResponse(response) {
+  if (
+    response &&
+    typeof response === "object" &&
+    Object.prototype.hasOwnProperty.call(response, "status") &&
+    Object.prototype.hasOwnProperty.call(response, "data")
+  ) {
+    if (response.status === "failure") {
+      throw new CliError("API_ERROR", response.message || "API request failed");
+    }
+    return response.data;
+  }
+  return response;
+}
+
 export async function discoverTools({ apiKey, baseUrl: baseUrlFlag, query, limit = 5, timeoutMs = 30000 }) {
   const baseUrl = getBaseUrl(baseUrlFlag, apiKey);
   return requestJson("/search", { apiKey, baseUrl, body: { query, limit }, timeoutMs });
@@ -93,6 +108,48 @@ export async function callTool({
       parameters,
       max_response_size: maxResponseSize,
     },
+    timeoutMs,
+  });
+}
+
+export async function getCredits({ apiKey, baseUrl: baseUrlFlag, timeoutMs = 30000 }) {
+  const baseUrl = getBaseUrl(baseUrlFlag, apiKey);
+  return requestJson("/auth/credits", {
+    method: "GET",
+    apiKey,
+    baseUrl,
+    timeoutMs,
+  });
+}
+
+export async function getUsageHistory({
+  apiKey,
+  baseUrl: baseUrlFlag,
+  query = {},
+  timeoutMs = 30000,
+}) {
+  const baseUrl = getBaseUrl(baseUrlFlag, apiKey);
+  return requestJson("/auth/usage/history/v2", {
+    method: "GET",
+    apiKey,
+    baseUrl,
+    query,
+    timeoutMs,
+  });
+}
+
+export async function getCreditsLedger({
+  apiKey,
+  baseUrl: baseUrlFlag,
+  query = {},
+  timeoutMs = 30000,
+}) {
+  const baseUrl = getBaseUrl(baseUrlFlag, apiKey);
+  return requestJson("/auth/credits/ledger", {
+    method: "GET",
+    apiKey,
+    baseUrl,
+    query,
     timeoutMs,
   });
 }

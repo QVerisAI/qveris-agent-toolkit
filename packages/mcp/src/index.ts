@@ -49,6 +49,16 @@ import {
   executeGetToolsByIds,
   type GetToolsByIdsInput,
 } from './tools/get-by-ids.js';
+import {
+  usageHistorySchema,
+  executeUsageHistory,
+  type UsageHistoryInput,
+} from './tools/usage-history.js';
+import {
+  creditsLedgerSchema,
+  executeCreditsLedger,
+  type CreditsLedgerInput,
+} from './tools/credits-ledger.js';
 import type { ApiError } from './types.js';
 
 // ============================================================================
@@ -112,14 +122,15 @@ async function main(): Promise<void> {
           description:
             'Discover available tools based on natural language queries. ' +
             'Returns relevant tools that can help accomplish tasks. ' +
-            'Use this to find tools before inspecting or calling them.',
+            'Use this to find tools before inspecting or calling them. ' +
+            'Results may include billing_rule metadata for rule-level pricing.',
           inputSchema: searchToolsSchema,
         },
         {
           name: 'inspect',
           description:
             'Inspect tools by their IDs to get detailed information. ' +
-            'Returns parameters, success rate, latency, and examples. ' +
+            'Returns parameters, success rate, latency, examples, and billing_rule when available. ' +
             'Use tool_ids from a previous discover call.',
           inputSchema: getToolsByIdsSchema,
         },
@@ -128,8 +139,21 @@ async function main(): Promise<void> {
           description:
             'Call a specific remote tool with provided parameters. ' +
             'The tool_id and search_id must come from a previous discover call. ' +
-            'Pass parameters to the tool through params_to_tool.',
+            'Pass parameters to the tool through params_to_tool. ' +
+            'The response may include pre-settlement billing; use usage_history or credits_ledger for final charge status.',
           inputSchema: executeToolSchema,
+        },
+        {
+          name: 'usage_history',
+          description:
+            'Context-safe usage audit query. Defaults to aggregated summary, supports precise search by execution_id/search_id/charge_outcome/credit range, and writes large exports to a local JSONL file instead of returning all rows.',
+          inputSchema: usageHistorySchema,
+        },
+        {
+          name: 'credits_ledger',
+          description:
+            'Context-safe final credits ledger query. Defaults to aggregated summary, supports precise search by entry type/direction/credit range, and writes large exports to a local JSONL file instead of returning all rows.',
+          inputSchema: creditsLedgerSchema,
         },
         // Deprecated aliases (backward compatibility)
         {
@@ -272,15 +296,43 @@ async function main(): Promise<void> {
         };
       }
 
+      if (name === 'usage_history') {
+        const input = (args ?? {}) as unknown as UsageHistoryInput;
+        const result = await executeUsageHistory(client, input);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      if (name === 'credits_ledger') {
+        const input = (args ?? {}) as unknown as CreditsLedgerInput;
+        const result = await executeCreditsLedger(client, input);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
       // Unknown tool
       return {
         content: [
           {
             type: 'text',
-            text: JSON.stringify({
-              error: `Unknown tool: ${rawName}`,
-              available_tools: ['discover', 'inspect', 'call'],
-            }),
+              text: JSON.stringify({
+                error: `Unknown tool: ${rawName}`,
+                available_tools: ['discover', 'inspect', 'call', 'usage_history', 'credits_ledger'],
+              }),
           },
         ],
         isError: true,

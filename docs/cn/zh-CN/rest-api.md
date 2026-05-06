@@ -2,13 +2,15 @@
 
 版本：0.1.9
 
-QVeris 通过 REST API 提供三个核心操作：
+QVeris 通过 REST API 提供三个核心能力操作和两个审计读取入口：
 
 | 协议操作 | API 端点 | 说明 |
 |---------|---------|------|
 | **发现（Discover）** | `POST /search` | 使用自然语言搜索能力（免费） |
 | **检查（Inspect）** | `POST /tools/by-ids` | 通过 ID 获取能力详情 |
-| **调用（Call）** | `POST /tools/execute` | 执行一个能力（1–100 积分） |
+| **调用（Call）** | `POST /tools/execute` | 执行能力；响应可能包含预结算 `billing` |
+| **调用审计** | `GET /auth/usage/history/v2` | 查询调用状态和收费结果 |
+| **Credits 账本** | `GET /auth/credits/ledger` | 查询最终 credits 余额变动 |
 
 ## 身份认证
 
@@ -182,7 +184,7 @@ POST /tools/by-ids
 
 ### 3. 调用 — 执行工具
 
-使用指定参数调用一个能力。这是**调用（Call）**操作，每次调用消耗 **1–100 积分**，按数据和任务价值计费。
+使用指定参数调用一个能力。这是**调用（Call）**操作；响应可能包含 compact 预结算 `billing`。最终是否扣费应通过调用审计或 credits 账本确认。
 
 #### 端点
 
@@ -244,6 +246,10 @@ POST /tools/execute?tool_id={tool_id}
   "success": true,
   "error_message": null,
   "elapsed_time_ms": 210.72,
+  "billing": {
+    "summary": "5 credits per successful request",
+    "list_amount_credits": 5.0
+  },
   "cost": 5.0
 }
 ```
@@ -257,9 +263,34 @@ POST /tools/execute?tool_id={tool_id}
 | success | boolean | 是 | 执行是否成功 |
 | error_message | string | 否 | 执行失败时的错误信息 |
 | elapsed_time_ms | number | 否 | 执行耗时（毫秒） |
-| cost | number | 否 | 从账户扣除的积分数 |
+| billing | object | 否 | compact 预结算账单 |
+| cost | number | 否 | 旧版 fallback 估算字段；最终扣费请看调用审计和 credits 账本 |
 
-若因第三方服务余额不足、配额超限或其他原因导致调用失败，`success` 将为 false，`error_message` 将包含详细的失败信息。
+若因第三方服务余额不足、配额超限或其他原因导致调用失败，`success` 将为 false，`error_message` 将包含详细的失败信息。若需确认失败调用是否扣费，请用 `execution_id` 查询 `/auth/usage/history/v2` 并查看 `charge_outcome`。
+
+### 调用审计
+
+```
+GET /auth/usage/history/v2
+```
+
+用于查询调用是否成功、失败和是否收费。Agent 客户端应默认使用聚合摘要或精确过滤，不应直接输出全量历史。
+
+常用查询参数：`start_date`、`end_date`、`summary`、`bucket`、`limit`、`execution_id`、`search_id`、`charge_outcome`、`min_credits`、`max_credits`、`page`、`page_size`。
+
+Agent / CLI / MCP 场景应传 `summary=true` 获取服务端聚合摘要与有限样本；`bucket` 支持 `hour`、`day`、`week`，`limit` 服务端硬上限为 50。日期支持 `YYYY-MM-DD` 或 ISO-8601 datetime。
+
+### Credits 账本
+
+```
+GET /auth/credits/ledger
+```
+
+用于解释最终 credits 余额变动。Agent 客户端应按时间聚合，或使用金额/时间精确过滤。
+
+常用查询参数：`start_date`、`end_date`、`summary`、`bucket`、`limit`、`entry_type`、`direction`、`min_credits`、`max_credits`、`page`、`page_size`。
+
+Agent / CLI / MCP 场景应传 `summary=true` 获取服务端聚合摘要与有限样本；`bucket` 支持 `hour`、`day`、`week`，`limit` 服务端硬上限为 50。`direction` 支持 `consume`、`grant`、`any`。
 
 #### 超长响应字段说明
 

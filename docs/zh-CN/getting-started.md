@@ -10,7 +10,7 @@
 
 QVeris 在 Agent 循环中表现出色（发现 → 检查 → 调用 → 将结果反馈给模型），支持多种集成方式。
 
-**费用：** 发现（Discover）免费。调用（Call）每次消耗 1–100 积分，按数据和任务价值计费。免费套餐含 1,000 积分。详情见 [qveris.ai/pricing](https://qveris.ai/pricing)。
+**费用：** 发现（Discover）免费。调用（Call）按能力的计费规则定价，最终结算结果可在调用历史和 credits 账本中查看。免费套餐含 1,000 积分。详情见 [qveris.ai/pricing](https://qveris.ai/pricing)。
 
 ---
 

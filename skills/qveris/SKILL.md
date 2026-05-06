@@ -14,6 +14,22 @@ When external functionality is needed, follow this two-phase workflow:
 3. Call `execute_tool` to test a candidate, passing parameters via `params_to_tool`
 4. Repeat or broaden the search if no suitable tool is found
 
+## Billing and Audit
+
+QVeris separates pricing rules, pre-settlement billing, and final settlement:
+
+- `billing_rule` explains how a capability is priced.
+- `billing` / `pre_settlement_bill` explains the theoretical charge for a call.
+- `usage_history` and `credits_ledger` answer whether credits were actually charged and how the balance changed.
+
+When the user asks whether a failed call was charged, do not infer from `cost` alone. Query `usage_history` with the `execution_id` and inspect `charge_outcome`.
+
+Use context-safe audit patterns:
+
+- Start with `mode: "summary"` for usage or ledger totals.
+- Use `mode: "search"` with precise filters such as `execution_id`, `charge_outcome`, `min_credits`, `max_credits`, or a date range.
+- Use `mode: "export_file"` for large analysis; read the resulting JSONL file in chunks instead of returning all rows into context.
+
 ## Phase 2: Generate Production Code
 
 Once a suitable tool is identified, generate code that calls the QVeris REST API directly. Do **not** reuse the MCP tool-call result — produce standalone code the user can run.

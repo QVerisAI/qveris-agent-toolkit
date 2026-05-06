@@ -2,13 +2,15 @@
 
 Version: 0.1.9
 
-QVeris exposes three core actions via REST API:
+QVeris exposes three core capability actions and two audit read paths via REST API:
 
 | Protocol action | API endpoint | Description |
 |----------------|-------------|-------------|
 | **Discover** | `POST /search` | Find capabilities with natural language (free) |
 | **Inspect** | `POST /tools/by-ids` | Get capability details by ID |
-| **Call** | `POST /tools/execute` | Invoke a capability (1–100 credits) |
+| **Call** | `POST /tools/execute` | Invoke a capability; response may include pre-settlement `billing` |
+| **Usage audit** | `GET /auth/usage/history/v2` | Query request status and charge outcome |
+| **Credits ledger** | `GET /auth/credits/ledger` | Query final credit balance movements |
 
 ## Authentication
 
@@ -182,7 +184,7 @@ Same schema as the response of `/search`
 
 ### 3. Call — Execute Tool
 
-Invoke a capability with specified parameters. This is the Call action and costs **1–100 credits** per call, priced by data and task value.
+Invoke a capability with specified parameters. This is the Call action; the response may include compact pre-settlement `billing`. Final charge status should be checked through usage audit or the credits ledger.
 
 #### Endpoint
 
@@ -244,6 +246,10 @@ Status Code: 200 OK
   "success": true,
   "error_message": null,
   "elapsed_time_ms": 210.72,
+  "billing": {
+    "summary": "5 credits per successful request",
+    "list_amount_credits": 5.0
+  },
   "cost": 5.0
 }
 ```
@@ -257,9 +263,52 @@ Status Code: 200 OK
 | success | boolean | Yes | Whether the execution was successful |
 | error_message | string | No | Error message if execution failed |
 | elapsed_time_ms | number | No | Execution time in milliseconds |
-| cost | number | No | cost deducted from account |
+| billing | object | No | Compact pre-settlement billing statement |
+| cost | number | No | Legacy fallback estimate; use usage audit / credits ledger for final charge status |
 
-If the call to the third-party service fails due to reasons such as insufficient balance, quota exceeded, or other issues, success will be false, and error_message will contain detailed information about the failure.
+If the call to the third-party service fails due to reasons such as insufficient balance, quota exceeded, or other issues, success will be false, and error_message will contain detailed information about the failure. To verify whether a failed call was charged, query `/auth/usage/history/v2` by `execution_id` and inspect `charge_outcome`.
+
+### Usage Audit — Context-Safe History
+
+```
+GET /auth/usage/history/v2
+```
+
+Use this endpoint to answer whether calls succeeded, failed, or charged credits. Agent-facing clients should default to summaries or precise filters instead of dumping full history.
+
+Common query parameters:
+
+| Parameter | Description |
+| --- | --- |
+| start_date / end_date | Date range, `YYYY-MM-DD` or ISO-8601 datetime |
+| summary | Set `true` for server-side aggregates and capped high-signal samples |
+| bucket | `hour`, `day`, or `week` for summary aggregation |
+| limit | Sample limit for summary/search style responses; service hard limit is 50 |
+| execution_id / search_id | Precise call lookup |
+| charge_outcome | `charged`, `included`, `failed_not_charged`, `failed_charged_review` |
+| min_credits / max_credits | Credit amount range |
+| page / page_size | Pagination |
+
+### Credits Ledger — Final Settlement
+
+```
+GET /auth/credits/ledger
+```
+
+Use this endpoint to explain final credit balance movements. Agent-facing clients should aggregate by time bucket or use precise amount/time filters.
+
+Common query parameters:
+
+| Parameter | Description |
+| --- | --- |
+| start_date / end_date | Date range, `YYYY-MM-DD` or ISO-8601 datetime |
+| summary | Set `true` for server-side aggregates and capped high-signal samples |
+| bucket | `hour`, `day`, or `week` for summary aggregation |
+| limit | Sample limit for summary/search style responses; service hard limit is 50 |
+| entry_type | Ledger entry type, for example `consume_tool_execute` |
+| direction | `consume`, `grant`, or `any` |
+| min_credits / max_credits | Absolute credit amount range |
+| page / page_size | Pagination |
 
 #### Result Fields for Long Tool Response
 

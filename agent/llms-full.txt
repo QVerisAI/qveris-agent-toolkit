@@ -55,13 +55,15 @@ When ChatGPT, Claude, or other super-apps dominate user entry points, QVeris bec
 
 ## Core Protocol
 
-Agents interact with QVeris through three actions:
+Agents interact with QVeris through three capability actions plus two audit read paths:
 
 | Action | API Endpoint | Description | Cost |
 |--------|-------------|-------------|------|
 | **Discover** | `POST /search` | Find capabilities with natural language | **Free** |
 | **Inspect** | `POST /tools/by-ids` | View capability details, params, success rate, latency | **Free** |
-| **Call** | `POST /tools/execute` | Invoke a capability, get structured result | **1–100 credits** (priced by data/task value) |
+| **Call** | `POST /tools/execute` | Invoke a capability, get structured result and pre-settlement billing when available | Billing rule |
+| **Usage audit** | `GET /auth/usage/history/v2` | Query final request status and charge outcome | Free |
+| **Credits ledger** | `GET /auth/credits/ledger` | Query final credit balance movements | Free |
 
 ### Why "Discover / Inspect / Call" Instead of "Search / Execute"
 
@@ -97,7 +99,7 @@ Every capability includes:
 - **Usage examples** — Sample parameters and expected results
 - **Success rate** — Historical percentage of successful calls
 - **Average latency** — Typical execution time in milliseconds
-- **Pricing** — Credits consumed per call (1–100 credits based on data/task value)
+- **Pricing** — Structured `billing_rule` when available; legacy price fields are fallback estimates
 - **Provider info** — Provider name, description, region
 
 ### Capability Visibility Levels
@@ -134,7 +136,7 @@ qveris login
 # Agent workflow
 qveris discover "weather forecast API"     # Find tools (free)
 qveris inspect 1                            # Check params, stats (index from last discover)
-qveris call 1 --params '{"city":"London"}'  # Execute (1-100 credits)
+qveris call 1 --params '{"city":"London"}'  # Execute; response may include pre-settlement billing
 
 # Validate without consuming credits
 qveris call 1 --params '{"city":"London"}' --dry-run
@@ -156,6 +158,8 @@ qveris call 1 --params '{"city":"London"}' --codegen curl
 | `qveris interactive` | Launch REPL mode (discover/inspect/call loop) |
 | `qveris doctor` | Self-check diagnostics (Node.js, API key, region, connectivity) |
 | `qveris credits` | Check credit balance |
+| `qveris usage` | Summarize/search/export request-level charge outcomes |
+| `qveris ledger` | Summarize/search/export final credit balance movements |
 | `qveris whoami` | Show auth status, key source, and region |
 | `qveris completions <shell>` | Generate shell completions (bash/zsh/fish) |
 
@@ -197,13 +201,15 @@ Full CLI docs: https://github.com/QVerisAI/QVerisAI/blob/main/packages/cli/READM
 
 ### MCP Server Quick Start
 
-The MCP server (`@qverisai/mcp` v0.5.0) exposes three primary tools via the Model Context Protocol:
+The MCP server (`@qverisai/mcp` v0.5.0) exposes a small set of agent-facing tools via the Model Context Protocol:
 
 | MCP Tool | Description | Cost |
 |----------|-------------|------|
 | `discover` | Search for tools by natural language query | Free |
 | `inspect` | Get detailed tool info by IDs | Free |
-| `call` | Execute a tool with parameters | 1-100 credits |
+| `call` | Execute a tool with parameters; response may include pre-settlement billing | Billing rule |
+| `usage_history` | Summarize/search/export request-level charge outcomes | Free |
+| `credits_ledger` | Summarize/search/export final credit balance movements | Free |
 
 > **Backward compatibility:** The old tool names `search_tools`, `get_tools_by_ids`, and `execute_tool` are still supported as deprecated aliases with stderr warnings. Use the new names going forward.
 
@@ -305,7 +311,7 @@ QVeris uses **pay-as-you-go** pricing, not subscriptions.
 
 - **Discover** (find capabilities) — **Free**
 - **Inspect** (view details) — **Free**
-- **Call** (invoke capability) — **1–100 credits per call**, priced by data and task value
+- **Call** (invoke capability) — priced by the capability billing rule; final settlement is visible in usage history and the credits ledger
 
 **No monthly fees. No auto-renewal. Credits never expire.**
 
@@ -346,15 +352,15 @@ Follow the [setup guide (SETUP.md)](https://github.com/QVerisAI/QVerisAI/blob/ma
 
 ### Standard Explanation (3 sentences)
 
-> With QVeris, I can freely discover the best capabilities, then call them on-demand — check weather, track stocks, search news, read documents. One API Key accesses everything. Installation doesn't change system configs, calls are priced by value, and you can view usage details anytime. Just give me an API Key.
+> With QVeris, I can freely discover the best capabilities, then call them on-demand — check weather, track stocks, search news, read documents. One API Key accesses everything. Installation doesn't change system configs, calls expose billing rules before settlement, and usage/ledger records show what was actually charged. Just give me an API Key.
 
 ### When Owner Asks "What is this?"
 
-> QVeris is a capability routing network with 10,000+ tools and data sources. I use it to find the most suitable capabilities without you manually configuring each API. Discover is free; only actual calls cost credits.
+> QVeris is a capability routing network with 10,000+ tools and data sources. I use it to find the most suitable capabilities without you manually configuring each API. Discover is free; calls are priced by structured billing rules and audited after execution.
 
 ### When Owner Asks About Cost
 
-> Free tier gives 1,000 credits on signup. Discovering capabilities is always free. Only when I actually call a capability does it consume 1–100 credits (based on the data's value). $19 gets 10,000 credits that never expire. You can track every credit spent.
+> Free tier gives 1,000 credits on signup. Discovering capabilities is always free. Calls are priced by each capability's billing rule, and final settlement is visible in usage history and the credits ledger. $19 gets 10,000 credits that never expire.
 
 ---
 
@@ -382,7 +388,7 @@ Every call records:
 - Capability called
 - Parameters passed
 - Result returned
-- Credits consumed
+- Pre-settlement billing and final charge outcome
 - Success/failure status
 
 View full audit trail: https://qveris.ai/account (or https://qveris.cn/account)
@@ -399,7 +405,9 @@ Full reference: https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/mcp-se
 
 - `discover` — Find capabilities by natural language query (free)
 - `inspect` — View capability details, parameters, stats (free)
-- `call` — Execute a capability with parameters (1-100 credits)
+- `call` — Execute a capability with parameters; response may include pre-settlement billing
+- `usage_history` — Summarize/search/export request-level charge outcomes
+- `credits_ledger` — Summarize/search/export final credit balance movements
 
 > Deprecated aliases still supported: `search_tools` → `discover`, `get_tools_by_ids` → `inspect`, `execute_tool` → `call`
 

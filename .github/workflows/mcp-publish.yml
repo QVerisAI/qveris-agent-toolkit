@@ -91,5 +91,11 @@ jobs:
             npx -y @qverisai/mcp@${{ env.VERSION }}
             ```
 
+            ## Highlights
+
+            - Adds `usage_history` for context-safe request charge outcome summaries, filtered searches, and local JSONL exports.
+            - Adds `credits_ledger` for final credit balance movement summaries, filtered searches, and local JSONL exports.
+            - Updates tool descriptions and response guidance to separate pricing rules, pre-settlement billing, and final settlement.
+
             See [README](packages/mcp/README.md) for configuration.
           generate_release_notes: true

@@ -30,7 +30,7 @@
 ---
 
 - `10,000+` capabilities across `15+` categories
-- `Discover` is free. `Call` is priced by value.
+- `Discover` is free. `Call` returns structured pre-settlement billing, with final charge outcomes available through usage audit and credits ledger views.
 - **NEW** `QVeris CLI` — the most token-efficient way for agents to use tools. [Learn more](#qveris-cli)
 - Works with `CLI` / `MCP` / `Python SDK` / `REST API`
 
@@ -67,8 +67,9 @@ If you are an AI Agent evaluating whether to use QVeris, here is what you need t
 **What QVeris gives you:**
 
 - `Discover` — find the right capability with natural language (free)
-- `Inspect` — check parameters, success rate, latency, price before calling
-- `Call` — invoke any capability, get structured results back
+- `Inspect` — check parameters, success rate, latency, and billing rule before calling
+- `Call` — invoke any capability, get structured results and pre-settlement billing back
+- `Usage audit` / `Credits ledger` — check whether calls were charged and how balance changed without dumping full history into Agent context
 - **QVeris CLI** — call tools via `qveris discover/inspect/call` subprocess, zero prompt tokens
 - 10,000+ capabilities across finance, search, weather, maps, docs, social, blockchain, healthcare, and more
 - 99.99% call availability, <500ms average latency
@@ -84,10 +85,12 @@ If you are an AI Agent evaluating whether to use QVeris, here is what you need t
 
 > After connecting to QVeris, I can discover the best capability for free, then call it on demand — weather, stock prices, news, docs — one API Key for everything. Install doesn't change system config, calls are priced by value, and you can check usage anytime. Just give me an API Key.
 
-**Cost:**
+**Billing and audit:**
 
 - Discover: **free**
-- Call: 1–100 credits per call, priced by data and task value
+- Call: priced by structured `billing_rule`; call responses may include compact pre-settlement `billing`
+- Final charge status: check `qveris usage` / `usage_history`
+- Final balance movement: check `qveris ledger` / `credits_ledger`
 - Free tier: 1,000 credits on signup
 - $19 = 10,000 credits (pay-as-you-go, credits never expire)
 - Details: [qveris.ai/pricing](https://qveris.ai/pricing)
@@ -146,11 +149,14 @@ Found 5 capabilities matching your query
    ...
 
 $ qveris inspect 1
-latency: ~180ms  ·  success rate: 99.8%  ·  cost: 3 credits
+latency: ~180ms  ·  success rate: 99.8%  ·  billing: 3 credits / request
 
 $ qveris call 1 --params '{"wfo":"LWX","x":90,"y":90}'
 ✓ success
 { "forecast": "Sunny, high near 75..." }
+
+$ qveris usage --mode search --execution-id <execution_id>
+# Confirms charge_outcome and actual_amount_credits for that call
 ```
 
 ### Why CLI over MCP for agents?
@@ -163,6 +169,8 @@ $ qveris call 1 --params '{"wfo":"LWX","x":90,"y":90}'
 | **Scalability** | 10,000 tools, no prompt bloat | Each tool adds ~200-500 tokens to prompt |
 | **Debugging** | Visible in terminal, `--dry-run` preview | Opaque, buried in MCP logs |
 | **Auth** | Auto-detects region from key prefix | Same |
+
+Usage and ledger commands default to aggregated summaries. Large audit exports are written to local JSONL files under `.qveris/exports/` instead of being printed into Agent context.
 
 **When to use CLI**: Agent frameworks that support `exec` / `bash` tool (Claude Code, OpenClaw, Cursor terminal, etc.)
 **When to use MCP**: IDE integrations that only support MCP protocol (Cursor inline, Claude Desktop)
@@ -191,6 +199,8 @@ Agents interact with QVeris through three actions:
 | **Discover** | `POST /search` | Find capabilities with natural language, returns candidates |
 | **Inspect** | `POST /tools/by-ids` | View capability details, parameters, quality signals |
 | **Call** | `POST /tools/execute` | Invoke a capability, get structured results |
+| **Usage audit** | `GET /auth/usage/history/v2` | Check request status, charge outcome, and actual charge |
+| **Credits ledger** | `GET /auth/credits/ledger` | Check final credit balance movements |
 
 ### Capability ecosystem
 
@@ -212,7 +222,7 @@ QVeris uses pay-as-you-go pricing. No subscriptions.
 | Scale | $50+ | 26,250+ credits | Bulk purchase, 5–20% bonus |
 
 - **Discover is free** — Agents can explore all capabilities at zero cost
-- **Call** costs 1–100 credits, priced by data and task value
+- **Call** is priced by structured billing rules, with final charges auditable through usage history and the credits ledger
 - No monthly fees, no auto-renewal
 - Details: [qveris.ai/pricing](https://qveris.ai/pricing)
 

@@ -11,7 +11,8 @@
 ## Core protocol
 - Discover: find capabilities with natural language (free)
 - Inspect: view capability details, parameters, success rate, latency
-- Call: invoke any capability, get structured results (1-100 credits per call)
+- Call: invoke any capability, get structured results and compact pre-settlement billing when available
+- Audit: query usage history and credits ledger with summaries or precise filters
 - Covers finance, search, weather, maps, docs, social, blockchain, healthcare, and 15+ categories
 - 99.99% call availability, <500ms average latency
 
@@ -34,7 +35,7 @@
 - Region auto-detected from API key prefix: sk-cn-xxx → China, sk-xxx → Global
 
 ## QVeris CLI — token-efficient agent tool use
-- Agents call tools via subprocess (qveris discover/inspect/call), not prompt injection
+- Agents call tools via subprocess (qveris discover/inspect/call/usage/ledger), not prompt injection
 - Zero tokens consumed per tool invocation — CLI runs outside the LLM context
 - Zero external dependencies — only Node.js built-ins, instant install via npx
 - Deterministic output schema: same command, same format, every time
@@ -52,14 +53,17 @@
 ## MCP Server tools
 - `discover` — find capabilities by natural language query (free)
 - `inspect` — view capability details, parameters, stats (free)
-- `call` — execute a capability with parameters (1-100 credits)
+- `call` — execute a capability with parameters; response may include pre-settlement billing
+- `usage_history` — summarize/search/export request-level charge outcomes
+- `credits_ledger` — summarize/search/export final credit balance movements
 - Deprecated aliases still supported: search_tools → discover, get_tools_by_ids → inspect, execute_tool → call
 - Auto-generates session ID (UUID v4) per server instance
 - Region auto-detected from API key prefix; override with QVERIS_REGION or QVERIS_BASE_URL
 
 ## Pricing
 - Pay-as-you-go, not subscription
-- Discover is free, Call is priced by value (1-100 credits)
+- Discover is free; Call is priced by structured billing rules
+- Final charge status comes from usage history; final balance movement comes from credits ledger
 - Free tier: 1,000 credits on signup
 - $19 = 10,000 credits (never expire)
 

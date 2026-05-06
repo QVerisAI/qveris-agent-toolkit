@@ -4,11 +4,13 @@
 
 `@qverisai/mcp` 是面向 Cursor、Claude Desktop 及其他编程 Agent 等 MCP 兼容客户端的官方 QVeris MCP 服务器。
 
-它通过三个 MCP 工具为 Agent 提供 QVeris 访问能力：
+它通过少量 MCP 工具为 Agent 提供 QVeris 访问能力：
 
 - `discover` — 用自然语言发现能力
 - `inspect` — 获取工具详情（参数、成功率、示例）
 - `call` — 执行工具并传入参数
+- `usage_history` — 上下文安全的调用审计摘要 / 精确查询 / 文件导出
+- `credits_ledger` — 上下文安全的最终 credits 账本摘要 / 精确查询 / 文件导出
 
 换言之，MCP 服务器是本仓库其他文档所描述的 QVeris 核心协议的 Agent 侧传输层。
 
@@ -35,6 +37,8 @@
 | **发现** | `discover` | `POST /search` |
 | **检查** | `inspect` | `POST /tools/by-ids` |
 | **调用** | `call` | `POST /tools/execute` |
+| **调用审计** | `usage_history` | `GET /auth/usage/history/v2` |
+| **Credits 账本** | `credits_ledger` | `GET /auth/credits/ledger` |
 
 > **注意：** 旧工具名称（`search_tools`、`get_tools_by_ids`、`execute_tool`）仍作为弃用别名支持。
 
@@ -197,7 +201,7 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 
 调用已发现的 QVeris 能力。
 
-这是**调用（Call）**操作，每次调用消耗 **1–100 积分**，按数据和任务价值计费。
+调用响应可能包含 compact `billing` 作为预结算账单。最终是否扣费请通过 `usage_history` 或 `credits_ledger` 查询。
 
 | 参数 | 类型 | 必填 | 说明 |
 |-----|------|------|------|
@@ -224,9 +228,53 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 - `success`
 - `result.data`
 - `elapsed_time_ms` 或 `execution_time`
-- `cost`
+- `billing` / `pre_settlement_bill`（如可用）
 
-对于超大输出，QVeris 可能返回：
+---
+
+### 4. `usage_history`
+
+当用户询问某次调用是否成功、失败或扣费时使用。默认 `summary` 模式，不会把全量历史塞进上下文。
+
+常用参数：
+
+- `mode`: `summary`、`search` 或 `export_file`
+- `execution_id` / `search_id`
+- `charge_outcome`: `charged`、`included`、`failed_not_charged`、`failed_charged_review`
+- `min_credits` / `max_credits`
+- `start_date` / `end_date`
+
+`summary` 模式会优先请求服务端 `summary=true` 聚合摘要；若旧部署暂不支持，则回退到有上限的客户端聚合。
+
+示例：
+
+```json
+{ "mode": "search", "execution_id": "EXECUTION_ID" }
+```
+
+### 5. `credits_ledger`
+
+当用户询问余额为何变化时使用。默认 `summary` 模式。
+
+常用参数：
+
+- `mode`: `summary`、`search` 或 `export_file`
+- `direction`: `consume`、`grant` 或 `any`
+- `entry_type`
+- `min_credits` / `max_credits`
+- `start_date` / `end_date`
+
+`summary` 模式会优先请求服务端 `summary=true` 聚合摘要；若旧部署暂不支持，则回退到有上限的客户端聚合。
+
+示例：
+
+```json
+{ "mode": "search", "direction": "consume", "min_credits": 50 }
+```
+
+大量记录应使用 `mode: "export_file"`，MCP server 会写入 `.qveris/exports/*.jsonl` 并返回文件路径，而不是直接输出全量记录。
+
+对于超大的工具调用输出，QVeris 可能返回：
 
 - `truncated_content`
 - `full_content_file_url`

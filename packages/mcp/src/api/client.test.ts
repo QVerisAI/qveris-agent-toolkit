@@ -372,6 +372,84 @@ describe('QverisClient', () => {
       );
     });
   });
+
+  describe('audit endpoints', () => {
+    let client: QverisClient;
+    let fetchMock: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      client = new QverisClient({ apiKey: 'test-api-key' });
+      fetchMock = vi.fn();
+      global.fetch = fetchMock;
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('should make GET request to usage history with query filters', async () => {
+      const mockResponse = {
+        items: [],
+        total: 0,
+        page: 1,
+        page_size: 20,
+      };
+
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const result = await client.getUsageHistory({
+        start_date: '2026-05-01',
+        end_date: '2026-05-04',
+        execution_id: 'exec-123',
+        min_credits: 30,
+        max_credits: 100,
+        summary: true,
+        bucket: 'hour',
+        limit: 10,
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://qveris.ai/api/v1/auth/usage/history/v2?start_date=2026-05-01&end_date=2026-05-04&execution_id=exec-123&min_credits=30&max_credits=100&summary=true&bucket=hour&limit=10',
+        expect.objectContaining({
+          method: 'GET',
+          body: undefined,
+        })
+      );
+      expect(result).toEqual(mockResponse);
+    });
+
+    it('should make GET request to credits ledger with amount filters', async () => {
+      const mockResponse = {
+        items: [],
+        total: 0,
+        page: 1,
+        page_size: 20,
+      };
+
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      await client.getCreditsLedger({
+        direction: 'consume',
+        min_credits: 50,
+        summary: true,
+        limit: 10,
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://qveris.ai/api/v1/auth/credits/ledger?direction=consume&min_credits=50&summary=true&limit=10',
+        expect.objectContaining({
+          method: 'GET',
+          body: undefined,
+        })
+      );
+    });
+  });
 });
 
 describe('createClientFromEnv', () => {

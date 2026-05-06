@@ -36,7 +36,7 @@ export function formatDiscoverResult(result) {
     successRate = typeof successRate === "number" ? `${(successRate * 100).toFixed(1)}%` : "N/A";
     let avgTime = stats.avg_execution_time_ms;
     avgTime = typeof avgTime === "number" ? `~${Math.round(avgTime)}ms` : "N/A";
-    const cost = stats.cost ?? "?";
+    const billingText = formatBillingRuleBrief(t.billing_rule, stats.cost);
 
     // Verified indicator
     const verified = t.has_last_execution ? green(" \u2713") : "";
@@ -58,7 +58,7 @@ export function formatDiscoverResult(result) {
     if (scoreStr) metricParts.push(`relevance: ${bold(scoreStr)}`);
     metricParts.push(`success: ${green(successRate)}`);
     metricParts.push(`latency: ${avgTime}`);
-    metricParts.push(`cost: ${yellow(String(cost))} cr`);
+    if (billingText) metricParts.push(`billing: ${yellow(billingText)}`);
     if (region !== "global") metricParts.push(`region: ${region}`);
     lines.push(`   ${dim(metricParts.join("  \u00b7  "))}`);
 
@@ -101,7 +101,7 @@ export function formatInspectResult(tools) {
     successRate = typeof successRate === "number" ? `${(successRate * 100).toFixed(1)}%` : "N/A";
     let avgTime = stats.avg_execution_time_ms;
     avgTime = typeof avgTime === "number" ? `~${Math.round(avgTime)}ms` : "N/A";
-    const cost = stats.cost ?? "?";
+    const billingText = formatBillingRuleBrief(t.billing_rule, stats.cost);
 
     // Header
     lines.push(bold(cyan(name)));
@@ -118,7 +118,7 @@ export function formatInspectResult(tools) {
     lines.push(`  Region:     ${region}`);
     lines.push(`  Latency:    ${bold(avgTime)}`);
     lines.push(`  Success:    ${green(successRate)}`);
-    lines.push(`  Cost:       ${yellow(String(cost))} credits`);
+    lines.push(`  Billing:    ${yellow(billingText || "N/A")}`);
     if (t.has_last_execution) lines.push(`  Verified:   ${green("\u2713 has execution history")}`);
     if (docsUrl) lines.push(`  Docs:       ${cyan(docsUrl)}`);
 
@@ -171,7 +171,8 @@ export function formatInspectResult(tools) {
 
 export function formatCallResult(result) {
   const success = result.success ?? false;
-  const cost = result.cost ?? result.credits_used ?? 0;
+  const billing = getCompactBilling(result);
+  const cost = getPreSettlementAmount(result);
   const remaining = result.remaining_credits;
   const executionId = result.execution_id;
   const toolId = result.tool_id;
@@ -188,7 +189,7 @@ export function formatCallResult(result) {
     }
     const parts = [`${green("\u2713")} ${bold("success")}`];
     if (timePart) parts.push(dim(timePart));
-    if (cost) parts.push(`${yellow(String(cost))} credits`);
+    if (cost) parts.push(`${yellow(String(cost))} credits pre-settlement`);
     if (typeof remaining === "number") parts.push(dim(`(${remaining} remaining)`));
     lines.push(parts.join("  \u00b7  "));
   } else {
@@ -202,6 +203,26 @@ export function formatCallResult(result) {
   if (toolId) metaParts.push(`tool: ${toolId}`);
   if (executionId) metaParts.push(`id: ${executionId}`);
   if (metaParts.length > 0) lines.push(dim(metaParts.join("  \u00b7  ")));
+
+  if (billing) {
+    lines.push("");
+    lines.push(bold("Billing:"));
+    if (billing.summary) lines.push(`  ${billing.summary}`);
+    if (billing.list_amount_credits !== undefined) {
+      lines.push(`  Pre-settlement: ${yellow(String(billing.list_amount_credits))} credits`);
+    }
+    const chargeLines = Array.isArray(billing.charge_lines) ? billing.charge_lines : [];
+    for (const line of chargeLines.slice(0, 5)) {
+      if (!line || typeof line !== "object") continue;
+      const label = line.description || line.component_key || "charge";
+      const amount = line.amount_credits ?? line.price?.amount_credits ?? "?";
+      const quantity = line.quantity !== undefined ? ` x ${line.quantity}` : "";
+      lines.push(`  - ${label}${quantity}: ${yellow(String(amount))} credits`);
+    }
+    if (chargeLines.length > 5) lines.push(dim(`  ... ${chargeLines.length - 5} more charge lines`));
+  }
+
+  if (executionId) lines.push(dim(`Final charge status: qveris usage --mode search --execution-id ${executionId}`));
 
   // Result data
   const data = result.result ?? {};
@@ -277,4 +298,36 @@ function stringifyDesc(desc) {
     return desc.en || desc.zh || desc["zh-CN"] || Object.values(desc).find((v) => typeof v === "string") || "";
   }
   return String(desc);
+}
+
+function formatBillingRuleBrief(rule, legacyCost) {
+  if (rule && typeof rule === "object") {
+    if (typeof rule.description === "string" && rule.description.trim()) {
+      return rule.description.trim();
+    }
+    const price = rule.price && typeof rule.price === "object" ? rule.price : null;
+    const amount = price?.amount_credits;
+    const unit = rule.billing_unit_label || rule.billing_unit || price?.unit_label || price?.unit;
+    if (amount !== undefined && unit) return `${amount} credits / ${unit}`;
+    if (amount !== undefined) return `${amount} credits`;
+    if (rule.billing_unit_label || rule.billing_unit) return String(rule.billing_unit_label || rule.billing_unit);
+  }
+  if (legacyCost !== undefined && legacyCost !== null) return `${legacyCost} credits (legacy estimate)`;
+  return "";
+}
+
+function getCompactBilling(result) {
+  if (!result || typeof result !== "object") return null;
+  if (result.billing && typeof result.billing === "object") return result.billing;
+  if (result.pre_settlement_bill && typeof result.pre_settlement_bill === "object") return result.pre_settlement_bill;
+  return null;
+}
+
+function getPreSettlementAmount(result) {
+  const billing = getCompactBilling(result);
+  if (billing) {
+    if (typeof billing.list_amount_credits === "number") return billing.list_amount_credits;
+    if (typeof billing.requested_amount_credits === "number") return billing.requested_amount_credits;
+  }
+  return result.cost ?? result.credits_used ?? 0;
 }

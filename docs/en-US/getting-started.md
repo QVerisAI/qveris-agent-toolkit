@@ -10,7 +10,7 @@
 
 QVeris works well in agent loops (Discover → Inspect → Call → feed results back to the model) and supports multiple integration styles.
 
-**Cost:** Discover is free. Call costs 1–100 credits per invocation, priced by data and task value. Free tier includes 1,000 credits. Details at [qveris.ai/pricing](https://qveris.ai/pricing).
+**Cost:** Discover is free. Call is priced by each capability's billing rule, with final settlement visible in usage history and the credits ledger. Free tier includes 1,000 credits. Details at [qveris.ai/pricing](https://qveris.ai/pricing).
 
 ---
 

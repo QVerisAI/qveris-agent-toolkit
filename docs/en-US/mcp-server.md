@@ -4,11 +4,13 @@
 
 `@qverisai/mcp` is the official QVeris MCP server for MCP-compatible clients such as Cursor, Claude Desktop, and other coding agents.
 
-It gives agents access to QVeris through three MCP tools:
+It gives agents access to QVeris through a small set of MCP tools:
 
 - `discover` — Find capabilities by natural language
 - `inspect` — Get detailed tool info (params, success rate, examples)
 - `call` — Execute a tool with parameters
+- `usage_history` — Context-safe usage audit summary/search/export
+- `credits_ledger` — Context-safe final credit ledger summary/search/export
 
 In other words, the MCP server is the agent-facing transport for the same core QVeris protocol described elsewhere in this repository.
 
@@ -35,6 +37,8 @@ Both surfaces map to the same QVeris protocol:
 | **Discover** | `discover` | `POST /search` |
 | **Inspect** | `inspect` | `POST /tools/by-ids` |
 | **Call** | `call` | `POST /tools/execute` |
+| **Usage audit** | `usage_history` | `GET /auth/usage/history/v2` |
+| **Credits ledger** | `credits_ledger` | `GET /auth/credits/ledger` |
 
 > **Note:** The old tool names (`search_tools`, `get_tools_by_ids`, `execute_tool`) are still supported as deprecated aliases.
 
@@ -197,7 +201,7 @@ The response schema matches `/search` for the requested tools, including paramet
 
 Use this tool to call a discovered QVeris capability.
 
-This is the **Call** action and costs **1-100 credits** per invocation, priced by data and task value.
+The call response may include compact pre-settlement `billing`. Final charge status should be checked with `usage_history` or `credits_ledger`.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -224,9 +228,61 @@ Typical successful response fields:
 - `success`
 - `result.data`
 - `elapsed_time_ms` or `execution_time`
-- `cost`
+- `billing` / `pre_settlement_bill` when available
 
-For very large outputs, QVeris may return:
+---
+
+### 4. `usage_history`
+
+Use this tool when the user asks whether a call succeeded, failed, or charged credits. It defaults to `summary` mode and does not dump full history into context.
+
+Useful inputs:
+
+- `mode`: `summary`, `search`, or `export_file`
+- `execution_id` or `search_id` for precise lookup
+- `charge_outcome` for `charged`, `included`, `failed_not_charged`, or `failed_charged_review`
+- `min_credits` / `max_credits` for amount ranges
+- `start_date` / `end_date` for time windows
+
+Summary mode requests service-side `summary=true` aggregates when available and falls back to bounded client-side aggregation for older deployments.
+
+Examples:
+
+```json
+{ "mode": "summary", "bucket": "hour" }
+```
+
+```json
+{ "mode": "search", "execution_id": "EXECUTION_ID" }
+```
+
+### 5. `credits_ledger`
+
+Use this tool when the user asks why their balance changed. It defaults to `summary` mode.
+
+Useful inputs:
+
+- `mode`: `summary`, `search`, or `export_file`
+- `direction`: `consume`, `grant`, or `any`
+- `entry_type`
+- `min_credits` / `max_credits`
+- `start_date` / `end_date`
+
+Summary mode requests service-side `summary=true` aggregates when available and falls back to bounded client-side aggregation for older deployments.
+
+Examples:
+
+```json
+{ "mode": "summary", "bucket": "day" }
+```
+
+```json
+{ "mode": "search", "direction": "consume", "min_credits": 50 }
+```
+
+Large result sets should use `mode: "export_file"`. The MCP server writes JSONL under `.qveris/exports/` and returns the file path instead of emitting every row.
+
+For very large call outputs, QVeris may return:
 
 - `truncated_content`
 - `full_content_file_url`

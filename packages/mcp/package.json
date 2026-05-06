@@ -1,6 +1,6 @@
 {
   "name": "@qverisai/mcp",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Official QVeris AI MCP Server SDK - Search and execute tools via natural language",
   "keywords": [
     "qveris",

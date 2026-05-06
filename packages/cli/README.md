@@ -9,12 +9,12 @@ Found 5 capabilities matching your query
 1. gridpoint_forecast  by Weather.gov
    weather_gov.gridpoints.forecast.retrieve.v1
    Returns a textual forecast for a 2.5km grid area
-   relevance: 95%  ·  success: 99.8%  ·  latency: ~180ms  ·  cost: 3 cr
+   relevance: 95%  ·  success: 99.8%  ·  latency: ~180ms  ·  billing: 3 credits / request
 
 2. current_weather  by OpenWeather
    openweathermap.weather.current.v1
    Get current weather data for any location
-   relevance: 87%  ·  success: 99.5%  ·  latency: ~200ms  ·  cost: 2 cr
+   relevance: 87%  ·  success: 99.5%  ·  latency: ~200ms  ·  billing: 2 credits / request
 
 $ qveris inspect 1
 gridpoint_forecast
@@ -23,7 +23,7 @@ Returns a textual forecast for a 2.5km grid area
   Provider:   Weather.gov
   Latency:    ~180ms
   Success:    99.8%
-  Cost:       3 credits
+  Billing:    3 credits / request
 
   Parameters:
     wfo     string   required
@@ -38,8 +38,12 @@ Returns a textual forecast for a 2.5km grid area
     {"wfo": "LWX", "x": 90, "y": 90}
 
 $ qveris call 1 --params '{"wfo":"LWX","x":90,"y":90}'
-✓ success  ·  523ms  ·  10 credits  ·  (1368087.93 remaining)
+✓ success  ·  523ms  ·  10 credits pre-settlement  ·  (1368087.93 remaining)
 tool: weather_gov...  ·  id: 7ebcaf9d-...
+
+Billing:
+  10 credits per successful request
+  Pre-settlement: 10 credits
 
 {
   "type": "Feature",
@@ -96,9 +100,9 @@ qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
 
 | Command | Description |
 |---------|-------------|
-| `qveris discover <query>` | Find capabilities by natural language. Shows tool ID, provider, description, relevance, success rate, latency, and cost for each result. |
+| `qveris discover <query>` | Find capabilities by natural language. Shows tool ID, provider, description, relevance, success rate, latency, and billing rule when available. |
 | `qveris inspect <id\|index>` | View full tool details: parameters (type, required, description, enum values), example, provider info, execution history. |
-| `qveris call <id\|index>` | Execute a capability. Shows result data, execution time, cost, and remaining credits. |
+| `qveris call <id\|index>` | Execute a capability. Shows result data, execution time, pre-settlement billing, and remaining credits. |
 
 ### Account
 
@@ -108,6 +112,8 @@ qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
 | `qveris logout` | Remove stored key |
 | `qveris whoami` | Show current auth status, key source, and region |
 | `qveris credits` | Check credit balance |
+| `qveris usage` | Context-safe usage audit summary/search/export |
+| `qveris ledger` | Context-safe credits ledger summary/search/export |
 
 ### Utilities
 
@@ -146,7 +152,7 @@ qveris inspect 1 2 3
 
 ### Call
 
-Execute a tool. Results are automatically truncated for terminal display (4KB). Large results get an OSS download link.
+Execute a tool. Results are automatically truncated for terminal display (4KB). Large results get an OSS download link. Billing shown here is pre-settlement; use `qveris usage` or `qveris ledger` for final charge status.
 
 ```bash
 # Inline params
@@ -178,7 +184,7 @@ For terminal use, results larger than 4KB are automatically truncated. The CLI s
 - The response schema so you know the data structure
 
 ```
-✓ success  ·  1200ms  ·  5 credits
+✓ success  ·  1200ms  ·  5 credits pre-settlement
 
 Response truncated (32KB → 4KB preview)
 
@@ -198,6 +204,40 @@ Preview:
 ```
 
 For agent/script use (`--json` or piped output), the default increases to 20KB (matching the MCP server). Use `--max-size -1` for unlimited.
+
+### Usage Audit
+
+Use `qveris usage` to answer whether recent calls succeeded, failed, or charged credits. It defaults to `summary` mode to protect Agent context.
+Summary mode requests service-side `summary=true` aggregates when available and falls back to bounded client-side aggregation for older deployments.
+
+```bash
+# Aggregate recent usage by hour/day/week
+qveris usage --mode summary --bucket hour
+
+# Check one execution precisely
+qveris usage --mode search --execution-id <execution_id> --json
+
+# Find high-cost or suspicious records
+qveris usage --mode search --min-credits 30 --max-credits 100 --json
+qveris usage --mode search --charge-outcome failed_charged_review --json
+
+# Export raw matching rows to a local JSONL file instead of stdout
+qveris usage --mode export-file --start-date 2026-05-01 --end-date 2026-05-04
+```
+
+### Credits Ledger
+
+Use `qveris ledger` to explain final credit balance movements. It also defaults to `summary` mode.
+Summary mode requests service-side `summary=true` aggregates when available and falls back to bounded client-side aggregation for older deployments.
+
+```bash
+qveris ledger --mode summary --bucket day
+qveris ledger --mode search --direction consume --min-credits 50 --json
+qveris ledger --mode search --entry-type consume_tool_execute --json
+qveris ledger --mode export-file --start-date 2026-05-01 --end-date 2026-05-04
+```
+
+`summary` and `search` never print full history. Large record sets are written to `.qveris/exports/*.jsonl` with `--mode export-file`.
 
 ### Interactive Mode
 

@@ -55,7 +55,7 @@ qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
 
 ### `qveris discover`
 
-Search for API capabilities using natural language. Returns tool name, provider, ID, description, relevance score, success rate, latency, and estimated cost.
+Search for API capabilities using natural language. Returns tool name, provider, ID, description, relevance score, success rate, latency, and billing rule metadata when available.
 
 ```bash
 qveris discover <query> [flags]
@@ -78,7 +78,7 @@ qveris discover "cryptocurrency market data" --json
 - Tool name and provider
 - `tool_id` (used for inspect/call)
 - Description
-- Relevance score, success rate, latency, estimated cost
+- Relevance score, success rate, latency, billing rule summary
 - Categories and region (if applicable)
 - Verified badge (if tool has execution history)
 
@@ -115,7 +115,7 @@ qveris inspect 1 2 3
 **Output includes:**
 - Tool name, ID, description
 - Provider name and description
-- Region, latency, success rate, cost
+- Region, latency, success rate, billing rule
 - **Parameters:** name, type, required/optional, description, allowed values (enum)
 - Example parameters
 - Last execution record (if available)
@@ -124,7 +124,7 @@ qveris inspect 1 2 3
 
 ### `qveris call`
 
-Execute a capability with parameters. Returns structured result data, execution time, cost, and remaining credits.
+Execute a capability with parameters. Returns structured result data, execution time, pre-settlement billing, and remaining credits. Final charge status is available through `qveris usage` and `qveris ledger`.
 
 ```bash
 qveris call <tool_id|index> [flags]
@@ -237,6 +237,68 @@ Check remaining credit balance.
 ```bash
 qveris credits
 ```
+
+### `qveris usage`
+
+Query request-level usage audit without flooding Agent context. Defaults to `summary` mode and returns aggregates instead of full raw rows.
+Summary mode requests service-side `summary=true` aggregates when available and falls back to bounded client-side aggregation for older deployments.
+
+```bash
+qveris usage [flags]
+```
+
+| Flag | Description |
+|------|-------------|
+| `--mode summary\|search\|export-file` | Output mode. Default: `summary` |
+| `--start-date <YYYY-MM-DD>` | Range start |
+| `--end-date <YYYY-MM-DD>` | Range end |
+| `--bucket hour\|day\|week` | Aggregation bucket for summary |
+| `--execution-id <id>` | Precise execution lookup |
+| `--search-id <id>` | Precise search lookup |
+| `--charge-outcome <value>` | `charged`, `included`, `failed_not_charged`, `failed_charged_review` |
+| `--min-credits <n>` | Minimum credit amount |
+| `--max-credits <n>` | Maximum credit amount |
+| `--limit <n>` | Search row cap, default 10, hard max 50 |
+
+Examples:
+
+```bash
+qveris usage --mode summary --bucket hour
+qveris usage --mode search --execution-id <execution_id> --json
+qveris usage --mode search --min-credits 30 --max-credits 100 --json
+qveris usage --mode export-file --start-date 2026-05-01 --end-date 2026-05-04
+```
+
+### `qveris ledger`
+
+Query final credit ledger entries without dumping full account history. Defaults to `summary` mode.
+Summary mode requests service-side `summary=true` aggregates when available and falls back to bounded client-side aggregation for older deployments.
+
+```bash
+qveris ledger [flags]
+```
+
+| Flag | Description |
+|------|-------------|
+| `--mode summary\|search\|export-file` | Output mode. Default: `summary` |
+| `--start-date <YYYY-MM-DD>` | Range start |
+| `--end-date <YYYY-MM-DD>` | Range end |
+| `--bucket hour\|day\|week` | Aggregation bucket for summary |
+| `--entry-type <type>` | Filter by ledger entry type |
+| `--direction consume\|grant\|any` | Filter by debit/credit direction |
+| `--min-credits <n>` | Minimum absolute credit amount |
+| `--max-credits <n>` | Maximum absolute credit amount |
+| `--limit <n>` | Search row cap, default 10, hard max 50 |
+
+Examples:
+
+```bash
+qveris ledger --mode summary --bucket day
+qveris ledger --mode search --direction consume --min-credits 50 --json
+qveris ledger --mode export-file --start-date 2026-05-01 --end-date 2026-05-04
+```
+
+`export-file` writes JSONL under `.qveris/exports/` and returns the path instead of printing every record.
 
 ---
 

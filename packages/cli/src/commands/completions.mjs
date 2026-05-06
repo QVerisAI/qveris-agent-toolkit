@@ -1,6 +1,6 @@
 const COMMANDS = [
   "discover", "inspect", "call",
-  "login", "logout", "whoami", "credits",
+  "login", "logout", "whoami", "credits", "usage", "ledger",
   "config", "interactive", "history", "doctor", "completions",
 ];
 

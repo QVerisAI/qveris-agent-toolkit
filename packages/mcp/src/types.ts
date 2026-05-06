@@ -70,8 +70,51 @@ export interface ToolStats {
   /** Historical success rate (0.0 - 1.0) */
   success_rate?: number;
 
-  /** Estimated cost in credits per call */
+  /** Legacy fallback estimate in credits per call */
   cost?: number;
+}
+
+export interface BillingPrice {
+  amount_credits: number;
+  per?: number | null;
+  unit?: string | null;
+  unit_label?: string | null;
+}
+
+export interface BillingChargeLine {
+  component_key: string;
+  quantity?: number | null;
+  unit?: string | null;
+  unit_label?: string | null;
+  price?: BillingPrice | null;
+  amount_credits?: number | null;
+  description?: string | null;
+  is_adjustment?: boolean | null;
+}
+
+export interface BillingRule {
+  metering_mode?: string;
+  billing_unit?: string;
+  billing_unit_label?: string;
+  price?: BillingPrice | null;
+  price_breakdown?: Record<string, unknown>[] | null;
+  pricing_dimensions?: Record<string, unknown>[] | null;
+  minimum_charge_credits?: number | null;
+  snapshot_id?: number | null;
+  snapshot_version?: string | null;
+  runtime_pricing_version?: string | null;
+  pricing_source_system?: string | null;
+  description?: string;
+}
+
+export interface CompactBillingStatement {
+  price?: BillingPrice | null;
+  quantity?: number | null;
+  charge_lines?: BillingChargeLine[] | null;
+  minimum_charge_credits?: number | null;
+  list_amount_credits?: number | null;
+  requested_amount_credits?: number | null;
+  summary?: string | null;
 }
 
 /**
@@ -116,6 +159,9 @@ export interface ToolInfo {
 
   /** Historical execution performance statistics */
   stats?: ToolStats;
+
+  /** Structured rule-level billing metadata when available */
+  billing_rule?: BillingRule;
 
   /** Relevance score for the search query (0.0 - 1.0, higher = better match) */
   final_score?: number;
@@ -301,14 +347,132 @@ export interface ExecuteResponse {
   /** Execution duration in milliseconds (alternative field) */
   elapsed_time_ms?: number;
 
-  /** Credits consumed by this execution */
+  /** Legacy fallback estimate; use usage audit or credits ledger for final charge */
   cost?: number;
+
+  /** Structured pre-settlement billing statement when available */
+  billing?: CompactBillingStatement;
+
+  /** Legacy/full pre-settlement bill snapshot when returned directly */
+  pre_settlement_bill?: Record<string, unknown>;
 
   /** User's remaining credits after this execution */
   remaining_credits?: number;
 
   /** Timestamp of execution (ISO 8601 format) */
   created_at?: string;
+}
+
+// ============================================================================
+// Account Audit API Types
+// ============================================================================
+
+export interface ApiEnvelope<T> {
+  status: string;
+  message?: string;
+  status_code?: number;
+  data: T;
+}
+
+export interface CreditsResponse {
+  remaining_credits: number;
+  daily_free?: Record<string, unknown>;
+  invite_reward?: Record<string, unknown>;
+  welcome_bonus?: Record<string, unknown>;
+  purchased?: Record<string, unknown>;
+}
+
+export interface UsageHistoryRequest {
+  start_date?: string;
+  end_date?: string;
+  summary?: boolean;
+  bucket?: string;
+  event_type?: string;
+  kind?: string;
+  success?: boolean;
+  charge_outcome?: string;
+  search_id?: string;
+  execution_id?: string;
+  min_credits?: number;
+  max_credits?: number;
+  limit?: number;
+  page?: number;
+  page_size?: number;
+}
+
+export interface UsageEventItem {
+  id: string;
+  event_type: string;
+  kind?: string | null;
+  source_system: string;
+  source_ref_type?: string | null;
+  source_ref_id?: string | null;
+  session_id?: string | null;
+  search_id?: string | null;
+  execution_id?: string | null;
+  tool_id?: string | null;
+  model?: string | null;
+  query?: string | null;
+  success: boolean;
+  charge_outcome?: string | null;
+  error_message?: string | null;
+  billing_snapshot_status?: string | null;
+  pre_settlement_bill?: Record<string, unknown> | null;
+  settlement_result?: Record<string, unknown> | null;
+  requested_amount_credits?: number | null;
+  actual_amount_credits?: number | null;
+  credits_ledger_entry_id?: string | null;
+  display_target?: string | null;
+  billing_summary?: string | null;
+  pre_settlement_amount_credits?: number | null;
+  settled_amount_credits?: number | null;
+  created_at: string;
+}
+
+export interface UsageEventsResponse {
+  items: UsageEventItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  summary?: Record<string, unknown> | null;
+}
+
+export interface CreditsLedgerRequest {
+  start_date?: string;
+  end_date?: string;
+  summary?: boolean;
+  bucket?: string;
+  entry_type?: string;
+  direction?: string;
+  min_credits?: number;
+  max_credits?: number;
+  limit?: number;
+  page?: number;
+  page_size?: number;
+}
+
+export interface CreditsLedgerItem {
+  id: string;
+  entry_type: string;
+  amount_credits: number;
+  source_system: string;
+  source_ref_type?: string | null;
+  source_ref_id?: string | null;
+  pre_settlement_bill?: Record<string, unknown> | null;
+  settlement_result?: Record<string, unknown> | null;
+  balance_before?: Record<string, unknown> | null;
+  balance_after?: Record<string, unknown> | null;
+  ledger_metadata?: Record<string, unknown> | null;
+  description?: string | null;
+  created_at: string;
+}
+
+export interface CreditsLedgerResponse {
+  items: CreditsLedgerItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  summary?: Record<string, unknown> | null;
 }
 
 // ============================================================================

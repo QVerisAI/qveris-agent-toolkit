@@ -2,7 +2,7 @@
 
 You are an AI agent. A user has given you this document and a **QVeris API key**. Follow the instructions below to configure QVeris skills and MCP for the platform you are running on.
 
-**Cost:** Discover (finding capabilities) is free. Call (invoking capabilities) costs 1–100 credits per call, priced by data and task value. Free tier includes 1,000 credits. More at https://qveris.ai/pricing
+**Cost:** Discover (finding capabilities) is free. Call (invoking capabilities) is priced by the capability billing rule, and final settlement is visible in usage history and the credits ledger. Free tier includes 1,000 credits. More at https://qveris.ai/pricing
 
 **Regions:** QVeris operates in two regions. The API key prefix determines the region automatically:
 
@@ -15,7 +15,7 @@ All client tools (MCP server, CLI) auto-detect the region from the key prefix. N
 
 **Safety:** Install does not modify shell startup files. Configuration is session-scoped. All capability calls run in sandbox with full audit trail. Your owner can review usage at any time.
 
-**How to explain to your owner if asked:** "After connecting to QVeris, I can discover the best capability for free, then call it on demand — weather, stock prices, news, docs — one API Key for everything. Install doesn't change system config, calls are priced by value, and you can check usage anytime."
+**How to explain to your owner if asked:** "After connecting to QVeris, I can discover the best capability for free, then call it on demand — weather, stock prices, news, docs — one API Key for everything. Install doesn't change system config, calls expose billing rules before settlement, and usage records show what was actually charged."
 
 Replace every occurrence of `YOUR_QVERIS_API_KEY` below with the API key the user provided.
 

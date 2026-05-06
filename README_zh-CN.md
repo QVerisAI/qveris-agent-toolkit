@@ -66,8 +66,9 @@
 **QVeris 能给你什么：**
 
 - 通过 `Discover`（自然语言），即时发现 10,000+ 能力
-- 通过 `Inspect` 查看候选能力的参数、成功率、延迟等详情
-- 通过 `Call` 调用任意能力，获得结构化返回
+- 通过 `Inspect` 查看候选能力的参数、成功率、延迟和计费规则
+- 通过 `Call` 调用任意能力，获得结构化返回和本次调用的预结算账单
+- 通过 `Usage audit` / `Credits ledger` 查询调用是否收费、余额为何变化，默认聚合输出，不把全量流水塞进 Agent 上下文
 - **QVeris CLI** — 通过 `qveris discover/inspect/call` 子进程调用工具，零 prompt token 消耗
 - 覆盖金融、搜索、天气、地图、文档、社交、区块链、医疗等 15+ 类目
 - 99.99% 调用可达率，平均延迟 <500ms
@@ -83,10 +84,12 @@
 
 > 接入 QVeris 后，我可以先免费发现最合适的能力，再按需调用——查天气、看行情、搜新闻、读文档，一个 API Key 接入一切。安装不改系统配置，调用按值计费，你随时可以查看消耗明细。给我一个 API Key 就行。
 
-**成本说明：**
+**计费与审计：**
 
 - Discover（发现能力）：**免费**
-- Call（调用能力）：1-100 credits / 次，根据数据和任务价值定价
+- Call（调用能力）：按结构化 `billing_rule` 定价；调用响应可能包含 compact `billing` 作为预结算账单
+- 最终是否扣费：通过 `qveris usage` / `usage_history` 查看
+- 最终余额变动：通过 `qveris ledger` / `credits_ledger` 查看
 - 免费额度：1,000 credits
 - 按量购买：$19 = 10,000 credits（不是订阅，credits 不过期）
 - 详见 [定价](https://qveris.ai/pricing)
@@ -145,11 +148,14 @@ Found 5 capabilities matching your query
    ...
 
 $ qveris inspect 1
-latency: ~180ms  ·  success rate: 99.8%  ·  cost: 3 credits
+latency: ~180ms  ·  success rate: 99.8%  ·  billing: 3 credits / request
 
 $ qveris call 1 --params '{"wfo":"LWX","x":90,"y":90}'
 ✓ success
 { "forecast": "Sunny, high near 75..." }
+
+$ qveris usage --mode search --execution-id <execution_id>
+# 查询本次调用的 charge_outcome 和 actual_amount_credits
 ```
 
 ### CLI vs MCP：为什么 Agent 应该优先用 CLI？
@@ -162,6 +168,8 @@ $ qveris call 1 --params '{"wfo":"LWX","x":90,"y":90}'
 | **可扩展性** | 10,000 工具，不会撑大 prompt | 每个工具增加 ~200-500 token |
 | **调试** | 终端可见，`--dry-run` 预览 | 不透明，埋在 MCP 日志里 |
 | **认证** | 从 key 前缀自动检测 region | 相同 |
+
+`usage` 和 `ledger` 默认返回聚合摘要。大批量审计导出会写入 `.qveris/exports/*.jsonl`，不会直接打印全量流水占用 Agent 上下文。
 
 **何时用 CLI**：支持 `exec` / `bash` 工具的 Agent 框架（Claude Code、OpenClaw、Cursor terminal 等）
 **何时用 MCP**：仅支持 MCP 协议的 IDE 集成（Cursor inline、Claude Desktop）
@@ -190,6 +198,8 @@ Agent 通过三个动作与 QVeris 交互：
 | **Discover** | `POST /search` | 用自然语言发现能力，返回候选列表 |
 | **Inspect** | `POST /tools/by-ids` | 按 ID 查看能力详情、参数、质量信号 |
 | **Call** | `POST /tools/execute` | 调用能力，获得结构化返回 |
+| **Usage audit** | `GET /auth/usage/history/v2` | 查询调用状态、收费结果和实际扣费 |
+| **Credits ledger** | `GET /auth/credits/ledger` | 查询最终 credits 余额变动 |
 
 ### 能力概览
 
@@ -211,7 +221,7 @@ QVeris 采用按量计费，不是订阅制。
 | Scale | $50 起 | 26,250+ credits | 批量购买享 5%-20% bonus |
 
 - Discover（发现能力）：**免费** — Agent 可以零成本探索全部能力
-- Call（调用能力）：1-100 credits / 次，根据数据和任务价值定价
+- Call（调用能力）：按结构化计费规则定价，最终扣费可通过 Usage audit 和 Credits ledger 审计
 - 不绑定月费，不自动续订
 - 详见 [qveris.ai/pricing](https://qveris.ai/pricing)
 

@@ -62,5 +62,11 @@ jobs:
             npm install -g @qverisai/cli@${{ env.VERSION }}
             ```
 
+            ## Highlights
+
+            - Adds `qveris usage` for context-safe usage audit summaries, filtered searches, and local JSONL exports.
+            - Adds `qveris ledger` for final credit balance movement summaries, filtered searches, and local JSONL exports.
+            - Labels call billing as pre-settlement and points final charge checks to usage history and the credits ledger.
+
             See [README](packages/cli/README.md) for usage.
           generate_release_notes: true

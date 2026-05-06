@@ -7,11 +7,13 @@ Official QVeris MCP Server — Dynamically search and execute tools via natural 
 
 ## Overview
 
-This SDK provides a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that enables LLMs to discover and execute third-party tools through the QVeris API. With three simple tools, your AI assistant can:
+This SDK provides a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that enables LLMs to discover and execute third-party tools through the QVeris API. With a small set of tools, your AI assistant can:
 
-- **Search** for tools using natural language queries
-- **Get** detailed information about specific tools by their IDs
-- **Execute** any discovered tool with the appropriate parameters
+- **Discover** tools using natural language queries
+- **Inspect** detailed information about specific tools by their IDs
+- **Call** any discovered tool with the appropriate parameters
+- **Audit usage** with context-safe summaries or precise filtered records
+- **Review credits ledger** without dumping full account history into context
 
 ## Quick Start
 
@@ -69,6 +71,7 @@ The assistant will:
 1. Call `discover` with query "weather"
 2. Optionally call `inspect` to review tool details
 3. Call `call` with the tool_id and parameters
+4. Use `usage_history` or `credits_ledger` only when the user asks about charge status or balance changes
 
 ## Available Tools
 
@@ -93,7 +96,7 @@ Discover available tools based on natural language queries.
 
 ### `inspect`
 
-Inspect tools by their IDs to get detailed information (parameters, success rate, latency, examples).
+Inspect tools by their IDs to get detailed information (parameters, success rate, latency, examples, and billing_rule when available).
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -131,6 +134,69 @@ Call a discovered tool with specific parameters.
   "params_to_tool": {"city": "London", "units": "metric"}
 }
 ```
+
+The `call` response may include compact pre-settlement `billing`. Final charge status should be checked with `usage_history` or `credits_ledger`.
+
+### `usage_history`
+
+Context-safe request-level usage audit. Defaults to aggregated `summary` mode.
+Summary mode requests service-side `summary=true` aggregates when available and falls back to bounded client-side aggregation for older deployments.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `mode` | string | | `summary`, `search`, or `export_file` (default: `summary`) |
+| `start_date` | string | | Start date, `YYYY-MM-DD` |
+| `end_date` | string | | End date, `YYYY-MM-DD` |
+| `bucket` | string | | `hour`, `day`, or `week` for summary aggregation |
+| `execution_id` | string | | Precise execution lookup |
+| `search_id` | string | | Precise search lookup |
+| `charge_outcome` | string | | `charged`, `included`, `failed_not_charged`, `failed_charged_review` |
+| `min_credits` | number | | Lower credit amount bound |
+| `max_credits` | number | | Upper credit amount bound |
+| `limit` | number | | Search row cap, default 10, hard max 50 |
+
+Examples:
+
+```json
+{ "mode": "summary", "bucket": "hour" }
+```
+
+```json
+{ "mode": "search", "execution_id": "exec-123" }
+```
+
+```json
+{ "mode": "search", "min_credits": 30, "max_credits": 100 }
+```
+
+### `credits_ledger`
+
+Context-safe final credit ledger query. Defaults to aggregated `summary` mode.
+Summary mode requests service-side `summary=true` aggregates when available and falls back to bounded client-side aggregation for older deployments.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `mode` | string | | `summary`, `search`, or `export_file` (default: `summary`) |
+| `start_date` | string | | Start date, `YYYY-MM-DD` |
+| `end_date` | string | | End date, `YYYY-MM-DD` |
+| `bucket` | string | | `hour`, `day`, or `week` for summary aggregation |
+| `entry_type` | string | | Ledger entry type, for example `consume_tool_execute` |
+| `direction` | string | | `consume`, `grant`, or `any` |
+| `min_credits` | number | | Lower absolute credit amount bound |
+| `max_credits` | number | | Upper absolute credit amount bound |
+| `limit` | number | | Search row cap, default 10, hard max 50 |
+
+Examples:
+
+```json
+{ "mode": "summary", "bucket": "day" }
+```
+
+```json
+{ "mode": "search", "direction": "consume", "min_credits": 50 }
+```
+
+Large result sets should use `mode: "export_file"`. The server writes JSONL under `.qveris/exports/` and returns the file path instead of emitting every row into MCP context.
 
 ### Deprecated tool names
 

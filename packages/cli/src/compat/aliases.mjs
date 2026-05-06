@@ -13,6 +13,7 @@ const FLAG_ALIASES = {
 export function normalizeLegacyArgs(args) {
   const result = [...args];
   const warnings = [];
+  const originalCommand = result[0];
 
   if (result.length > 0 && COMMAND_ALIASES[result[0]]) {
     warnings.push(`'${result[0]}' is deprecated; use '${COMMAND_ALIASES[result[0]]}' instead.`);
@@ -20,6 +21,9 @@ export function normalizeLegacyArgs(args) {
   }
 
   for (let i = 0; i < result.length; i++) {
+    if (originalCommand === "usage" && result[i] === "--search-id") {
+      continue;
+    }
     if (FLAG_ALIASES[result[i]]) {
       warnings.push(`'${result[i]}' is deprecated; use '${FLAG_ALIASES[result[i]]}' instead.`);
       result[i] = FLAG_ALIASES[result[i]];

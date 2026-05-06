@@ -13,6 +13,12 @@ import type {
   GetToolsByIdsRequest,
   ExecuteRequest,
   ExecuteResponse,
+  CreditsResponse,
+  UsageHistoryRequest,
+  UsageEventsResponse,
+  CreditsLedgerRequest,
+  CreditsLedgerResponse,
+  ApiEnvelope,
   QverisClientConfig,
   ApiError,
 } from '../types.js';
@@ -93,8 +99,16 @@ export class QverisClient {
     endpoint: string,
     body?: unknown,
     timeoutMs?: number,
+    query?: Record<string, unknown>,
   ): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`;
+    const url = new URL(`${this.baseUrl}${endpoint}`);
+    if (query) {
+      for (const [key, value] of Object.entries(query)) {
+        if (value !== undefined && value !== null && value !== '') {
+          url.searchParams.set(key, String(value));
+        }
+      }
+    }
     const controller = new AbortController();
     const timeout = setTimeout(
       () => controller.abort(),
@@ -102,7 +116,7 @@ export class QverisClient {
     );
 
     try {
-      const response = await fetch(url, {
+      const response = await fetch(url.toString(), {
         method,
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
@@ -189,7 +203,7 @@ export class QverisClient {
 
   /**
    * Execute a tool with the specified parameters.
-   * This is the Call action and costs 1-100 credits per call.
+   * This is the Call action; the response may include pre-settlement billing.
    * Uses a longer timeout (120s) by default.
    */
   async executeTool(
@@ -202,6 +216,43 @@ export class QverisClient {
       endpoint,
       request,
       EXECUTE_TIMEOUT_MS,
+    );
+  }
+
+  /**
+   * Get current credit balance and bucket details.
+   */
+  async getCredits(): Promise<ApiEnvelope<CreditsResponse> | CreditsResponse> {
+    return this.request<ApiEnvelope<CreditsResponse> | CreditsResponse>('GET', '/auth/credits');
+  }
+
+  /**
+   * Query request-level usage audit history.
+   */
+  async getUsageHistory(
+    request: UsageHistoryRequest
+  ): Promise<ApiEnvelope<UsageEventsResponse> | UsageEventsResponse> {
+    return this.request<ApiEnvelope<UsageEventsResponse> | UsageEventsResponse>(
+      'GET',
+      '/auth/usage/history/v2',
+      undefined,
+      this.defaultTimeoutMs,
+      request as Record<string, unknown>,
+    );
+  }
+
+  /**
+   * Query final credits ledger entries.
+   */
+  async getCreditsLedger(
+    request: CreditsLedgerRequest
+  ): Promise<ApiEnvelope<CreditsLedgerResponse> | CreditsLedgerResponse> {
+    return this.request<ApiEnvelope<CreditsLedgerResponse> | CreditsLedgerResponse>(
+      'GET',
+      '/auth/credits/ledger',
+      undefined,
+      this.defaultTimeoutMs,
+      request as Record<string, unknown>,
     );
   }
 }

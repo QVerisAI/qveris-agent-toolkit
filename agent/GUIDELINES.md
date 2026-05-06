@@ -93,7 +93,66 @@ Additional signals:
 
 - **`final_score`** (relevance): Higher = better match to your query
 - **`has_last_execution`**: Tool has been verified in production
-- **`cost`** (credits): Consider budget when choosing between similar tools
+- **`billing_rule`**: Preferred pricing signal when present. Legacy `cost` is only a fallback estimate.
+
+---
+
+## Billing Transparency and Usage Audit
+
+QVeris separates billing into three layers:
+
+| Layer | Field / command | Meaning |
+|-------|-----------------|---------|
+| Pricing rule | `billing_rule` | How the capability is priced |
+| Pre-settlement bill | `billing` / `pre_settlement_bill` | What this call theoretically costs |
+| Final settlement | `usage_history` / `credits_ledger` | Whether credits were actually charged and how balance changed |
+
+Do not treat `cost` or `credits_used` as the only billing truth. They are legacy fallback fields.
+
+### Checking Whether a Call Was Charged
+
+Use `usage_history` for request-level audit:
+
+```bash
+qveris usage --mode search --execution-id <execution_id> --json
+```
+
+Look at `success`, `charge_outcome`, `actual_amount_credits`, and `credits_ledger_entry_id`.
+
+Common `charge_outcome` values:
+
+| Value | Meaning |
+|-------|---------|
+| `charged` | The request was charged |
+| `included` | The request succeeded but settled at 0 credits |
+| `failed_not_charged` | The request failed and was not charged |
+| `failed_charged_review` | Failed request with a charge-like signal; review needed |
+
+Use `credits_ledger` for final balance movement:
+
+```bash
+qveris ledger --mode search --min-credits 50 --direction consume --json
+```
+
+### Context-Safe Audit Pattern
+
+Usage and ledger records can be large. Never dump full history into the prompt by default.
+
+Use this order:
+
+1. `summary` mode first for aggregate totals.
+2. `search` mode with precise filters for row-level investigation.
+3. `export-file` mode for large analysis; then read the local JSONL file in chunks.
+
+Examples:
+
+```bash
+qveris usage --mode summary --bucket hour --json
+qveris usage --mode search --charge-outcome failed_charged_review --json
+qveris usage --mode search --min-credits 30 --max-credits 100 --json
+qveris ledger --mode summary --bucket day --json
+qveris ledger --mode export-file --start-date 2026-05-01 --end-date 2026-05-04
+```
 
 ### Known Tools Cache
 
@@ -175,7 +234,7 @@ qveris discover "weather forecast API" --json
 # Inspect top result by index (free)
 qveris inspect 1 --json
 
-# Call with parameters (1-100 credits)
+# Call with parameters. The response may include pre-settlement billing.
 qveris call 1 --params '{"city": "London"}' --json
 
 # Validate without consuming credits
@@ -195,6 +254,15 @@ qveris call 1 --params '{"city": "London"}' --codegen curl
 | `--params <json\|@file\|->` | Pass parameters as inline JSON, from file (`@params.json`), or stdin (`-`) |
 | `--limit <n>` | Limit discover results (default: 5) |
 | `--max-size <bytes>` | Response size limit; `-1` for unlimited (default: 4KB TTY, 20KB non-TTY). MCP default is 20KB. |
+
+### Audit Commands
+
+| Command | Purpose |
+|---------|---------|
+| `qveris usage` | Context-safe usage audit summary/search/export |
+| `qveris ledger` | Context-safe credits ledger summary/search/export |
+
+Both commands default to `--mode summary`, return at most a small sample of records, and write large result sets to `.qveris/exports/*.jsonl` with `--mode export-file`.
 
 ### Session & Index Shortcuts
 
@@ -242,6 +310,8 @@ Region is auto-detected from the API key prefix. Override with `QVERIS_REGION=cn
 | Discover | `POST /search` | `discover` | `qveris discover <query>` |
 | Inspect | `POST /tools/by-ids` | `inspect` | `qveris inspect <id\|index>` |
 | Call | `POST /tools/execute?tool_id=...` | `call` | `qveris call <id\|index>` |
+| Usage audit | `GET /auth/usage/history/v2` | `usage_history` | `qveris usage` |
+| Credits ledger | `GET /auth/credits/ledger` | `credits_ledger` | `qveris ledger` |
 
 **REST Body Examples:**
 
