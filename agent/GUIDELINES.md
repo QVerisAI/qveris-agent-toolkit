@@ -223,7 +223,7 @@ When a tool response exceeds `max_response_size`, the API returns:
 
 ## CLI Workflow
 
-When using the QVeris CLI (`@qverisai/cli` v0.4.0) instead of MCP, the same Discover → Inspect → Call pattern applies via shell commands.
+When using the QVeris CLI (`@qverisai/cli` v0.5.0) instead of MCP, the same Discover → Inspect → Call pattern applies via shell commands.
 
 ### Basic Agent Workflow
 
@@ -321,6 +321,6 @@ Region is auto-detected from the API key prefix. Override with `QVERIS_REGION=cn
 | Inspect | `{"tool_ids": ["..."], "search_id": "..."}` |
 | Call | `{"search_id": "...", "parameters": {...}, "max_response_size": 20480}` |
 
-> **MCP backward compatibility:** Old tool names `search_tools`, `get_tools_by_ids`, `execute_tool` are still supported as deprecated aliases in MCP server v0.5.0. Use the new names (`discover`, `inspect`, `call`) going forward.
+> **MCP backward compatibility:** Old tool names `search_tools`, `get_tools_by_ids`, `execute_tool` are still supported as deprecated aliases in MCP server v0.6.0. Use the new names (`discover`, `inspect`, `call`) going forward.
 
 Full API documentation: https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/rest-api.md

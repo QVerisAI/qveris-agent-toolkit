@@ -95,7 +95,7 @@ Skip to **Section 3: Verify Installation** once `qveris doctor` passes all check
 Detect which coding tool or environment you are currently running in (e.g., Claude Code, OpenCode, Cursor, Trae, VS Code).
 
 **Configuration involves two steps for all environments:**
-1. **MCP Server Setup:** Connects the QVeris tool server (`@qverisai/mcp` v0.5.0) to your environment.
+1. **MCP Server Setup:** Connects the QVeris tool server (`@qverisai/mcp` v0.6.0) to your environment.
 2. **Skill Configuration:** Teaches the agent how to use the tools using the MCP/client skill definition file.
    - **Skill URL:** `https://github.com/QVerisAI/QVerisAI/blob/main/skills/qveris/SKILL.md`
 
