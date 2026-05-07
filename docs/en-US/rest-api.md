@@ -318,7 +318,7 @@ If the tool generates data longer than max_response_size bytes, result will have
 {
   "result": {
     "message": "Result content is too long (3210 bytes). You can reference the truncated content (200 bytes) and download the full content from the url provided.",
-    "full_content_file_url": "http://qveris-tool-results-cache-bj.oss-cn-beijing.aliyuncs.com/tool_result_cache%2F20260120%2Fpubmed_refined.search_articles.v1%2F2409f329c07949a295b5ab0b704883ca.json?OSSAccessKeyId=LTAI5tM3qNRZSgSrg1iSTALm&Expires=1768920673&Signature=ThkQxoa9ryYHn%2F6XbVloiegS5ss%3D",
+    "full_content_file_url": "https://oss.qveris.ai/tool_result_cache%2F20260120%2Fpubmed_refined.search_articles.v1%2F2409f329c07949a295b5ab0b704883ca.json?Expires=1768920673&Signature=YOUR_SIGNATURE",
     "truncated_content": "{\"query\": \"evolution\", \"sort\": \"relevance\", \"total_results\": 890994, \"returned\": 10, \"articles\": [{\"pmid\": \"34099656\", \"title\": \"Towards an engineering theory of evolution.\", \"journal\": \"Nature commun",
     "content_schema": {
       "type": "object",
