@@ -1,6 +1,6 @@
 # QVeris
 
-> Every capability. One call away. QVeris is the capability routing network for agents — discover, compare, call, and settle capabilities through one protocol.
+> Every capability. One call away. QVeris is the capability routing network for agents — discover, compare, call, and settle real-world, verified capabilities through one protocol.
 
 ## What QVeris does
 - Lets Agents discover the right capability with natural language instead of blindly picking APIs
@@ -27,7 +27,7 @@
 - They are runtime + capability routing network, complementary not competing
 
 ## Access methods (recommended order)
-- CLI v0.4.0 (recommended for agents): npm install -g @qverisai/cli — zero prompt tokens, deterministic output, 10,000+ tools without prompt bloat
+- CLI v0.4.0 (recommended for agents): npm install -g @qverisai/cli — zero prompt tokens, deterministic output, 10,000+ real-world, verified tools without prompt bloat
 - MCP Server v0.5.0: npx @qverisai/mcp — for IDE integrations (Cursor, Claude Desktop, OpenCode)
 - Python SDK: pip install qveris
 - REST API (Global): https://qveris.ai/api/v1
@@ -39,7 +39,7 @@
 - Zero tokens consumed per tool invocation — CLI runs outside the LLM context
 - Zero external dependencies — only Node.js built-ins, instant install via npx
 - Deterministic output schema: same command, same format, every time
-- 10,000+ tools accessible without adding any schema to the prompt
+- 10,000+ real-world, verified tools accessible without adding any schema to the prompt
 - `qveris login` — interactive region selection + browser-based key retrieval
 - `qveris doctor` — self-check diagnostics (Node.js, API key, region, connectivity)
 - `qveris interactive` — REPL mode for discover/inspect/call loop

@@ -47,7 +47,7 @@ QVeris supports two integration methods. Choose based on your environment:
 
 | Method | Best For | How It Works |
 |--------|----------|--------------|
-| **CLI** (recommended) | Agents with shell access (Claude Code, OpenClaw, terminals) | Subprocess calls — zero prompt tokens, 10,000+ tools without bloat |
+| **CLI** (recommended) | Agents with shell access (Claude Code, OpenClaw, terminals) | Subprocess calls — zero prompt tokens, 10,000+ real-world, verified tools without bloat |
 | **MCP Server** | IDE integrations (Cursor, Claude Desktop, OpenCode) | MCP protocol — tools injected into agent context |
 
 ### Option A: CLI Setup (Recommended for shell-capable agents)
