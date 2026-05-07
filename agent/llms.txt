@@ -86,7 +86,7 @@
 
 ## Links
 - Website: https://qveris.ai (Global) / https://qveris.cn (China)
-- Playground: https://qveris.ai/playground  (Global) / https://qveris.cn/playground (China)
+- Playground: https://qveris.ai/playground (Global) / https://qveris.cn/playground (China)
 - Pricing: https://qveris.ai/pricing (Global) / https://qveris.cn/pricing (China)
 - Get API Key: https://qveris.ai/account?page=api-keys (Global) / https://qveris.cn/account?page=api-keys (China)
 - GitHub: https://github.com/QVerisAI/QVerisAI
