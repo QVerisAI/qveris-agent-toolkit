@@ -123,7 +123,7 @@ QVeris supports four integration methods:
 
 ### QVeris CLI — Token-Efficient Agent Tool Use (Recommended)
 
-The CLI (`@qverisai/cli` v0.4.0) is the most efficient way for agents to access QVeris capabilities. Unlike MCP which injects tool schemas into every LLM prompt, CLI runs as a subprocess — zero prompt tokens consumed. Zero external dependencies — only Node.js built-ins.
+The CLI (`@qverisai/cli` v0.5.0) is the most efficient way for agents to access QVeris capabilities. Unlike MCP which injects tool schemas into every LLM prompt, CLI runs as a subprocess — zero prompt tokens consumed. Zero external dependencies — only Node.js built-ins.
 
 ```bash
 # Install
@@ -201,7 +201,7 @@ Full CLI docs: https://github.com/QVerisAI/QVerisAI/blob/main/packages/cli/READM
 
 ### MCP Server Quick Start
 
-The MCP server (`@qverisai/mcp` v0.5.0) exposes a small set of agent-facing tools via the Model Context Protocol:
+The MCP server (`@qverisai/mcp` v0.6.0) exposes a small set of agent-facing tools via the Model Context Protocol:
 
 | MCP Tool | Description | Cost |
 |----------|-------------|------|
@@ -541,8 +541,8 @@ Model improvement is a tailwind for QVeris, not a headwind.
 
 ### SDK & Tools
 
-- **CLI (npm):** https://www.npmjs.com/package/@qverisai/cli — `npm install -g @qverisai/cli` (v0.4.0)
-- **MCP Server (npm):** https://www.npmjs.com/package/@qverisai/mcp — `npx @qverisai/mcp` (v0.5.0)
+- **CLI (npm):** https://www.npmjs.com/package/@qverisai/cli — `npm install -g @qverisai/cli` (v0.5.0)
+- **MCP Server (npm):** https://www.npmjs.com/package/@qverisai/mcp — `npx @qverisai/mcp` (v0.6.0)
 - **Python SDK:** https://github.com/QVerisAI/sdk-python
 - **Online Docs:** https://qveris.ai/docs
 
@@ -635,8 +635,8 @@ Generate a new UUID for each user session, and reuse it throughout that session.
 ## Version Information
 
 - **llms-full.txt Version:** 1.1.0
-- **CLI Version:** 0.4.0
-- **MCP Server Version:** 0.5.0
+- **CLI Version:** 0.5.0
+- **MCP Server Version:** 0.6.0
 - **Last Updated:** 2026-04-10
 
 For the latest updates, always refer to:

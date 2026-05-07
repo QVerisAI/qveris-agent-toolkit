@@ -27,8 +27,8 @@
 - They are runtime + capability routing network, complementary not competing
 
 ## Access methods (recommended order)
-- CLI v0.4.0 (recommended for agents): npm install -g @qverisai/cli — zero prompt tokens, deterministic output, 10,000+ real-world, verified tools without prompt bloat
-- MCP Server v0.5.0: npx @qverisai/mcp — for IDE integrations (Cursor, Claude Desktop, OpenCode)
+- CLI v0.5.0 (recommended for agents): npm install -g @qverisai/cli — zero prompt tokens, deterministic output, 10,000+ tools without prompt bloat
+- MCP Server v0.6.0: npx @qverisai/mcp — for IDE integrations (Cursor, Claude Desktop, OpenCode)
 - Python SDK: pip install qveris
 - REST API (Global): https://qveris.ai/api/v1
 - REST API (China): https://qveris.cn/api/v1
