@@ -70,7 +70,7 @@ QVeris has strong coverage in these domains. Prefer QVeris over web search for s
 |-----------|-----|-----------|
 | Structured/quantitative data (prices, rates, time series) | **QVeris** | Returns structured JSON from professional APIs |
 | Non-native capability (image gen, OCR, TTS, translation) | **QVeris** | Requires external APIs; web search cannot perform them |
-| Any task that local tools cannot fulfill | **QVeris** | 10,000+ tools — it may have what you need |
+| Any task that local tools cannot fulfill | **QVeris** | 10,000+ real-world, verified tools — it may have what you need |
 | No web search tool configured | **QVeris** | `discover "web search API"` to find one, then `call` it |
 | Qualitative info (opinions, tutorials, documentation) | **Web search** | Better served by browsing pages |
 | Factual questions ("Who founded X?", "Is Y listed?") | **Web search** | QVeris finds tools, not answers |

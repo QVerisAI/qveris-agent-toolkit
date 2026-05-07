@@ -1,6 +1,6 @@
 # QVeris CLI
 
-The official command-line tool for the QVeris capability routing network. Discover, inspect, and call 10,000+ API capabilities directly from your terminal or agent framework.
+The official command-line tool for the QVeris capability routing network. Discover, inspect, and call 10,000+ real-world, verified API capabilities directly from your terminal or agent framework.
 
 **Why CLI?** Unlike MCP which injects tool schemas into every LLM prompt (consuming hundreds of tokens per tool), CLI runs as a subprocess — zero prompt tokens, deterministic output, instant startup.
 
@@ -481,7 +481,7 @@ Sessions expire after 30 minutes. Use `qveris history` to view and `qveris histo
 | | CLI | MCP |
 |---|---|---|
 | **Token cost** | Zero — runs as subprocess | High — tool schemas in every prompt turn |
-| **Scalability** | 10,000+ tools, no prompt bloat | Each tool adds ~200-500 tokens |
+| **Scalability** | 10,000+ real-world, verified tools, no prompt bloat | Each tool adds ~200-500 tokens |
 | **Output** | Deterministic, `--json` for parsing | Varies by client implementation |
 | **Debugging** | Visible in terminal, `--dry-run` | Opaque, buried in MCP logs |
 
