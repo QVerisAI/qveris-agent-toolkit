@@ -72,17 +72,17 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/QVerisAI/qveris-agent-
 1. 重启 OpenCode
 2. 运行 `/mcp` 命令查看已连接的服务器
 3. 让 OpenCode 使用 QVeris 搜索工具
-4. 技能会自动发现 — Agent 可通过 `skill` 工具查看可用技能
+4. 技能会自动发现 — 智能体可通过 `skill` 工具查看可用技能
 
 ## 使用
 
 配置完成后，在提示词中引用 QVeris 即可：
 
 ```
-Write a python script that prints the current bitcoin price. use qveris
+请编写一个 Python 脚本，打印当前比特币价格。使用 qveris。
 ```
 
-OpenCode 的 Agent 会自动发现 QVeris 技能和 MCP 服务器，找到并执行合适的 API 工具。
+OpenCode 的智能体会自动发现 QVeris 技能和 MCP 服务器，找到并执行合适的 API 工具。
 
 ## 故障排查
 

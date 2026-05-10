@@ -65,7 +65,7 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/QVerisAI/qveris-agent-
 在提示词中通过 `@.claude/skills/qveris/`（Mac/Linux）或 `@.claude\skills\qveris\`（Windows）引用 QVeris 技能：
 
 ```
-Write a python script that prints the current bitcoin price using @.claude/skills/qveris/
+请使用 @.claude/skills/qveris/ 编写一个 Python 脚本，打印当前比特币价格。
 ```
 
 ## 故障排查

@@ -2,15 +2,15 @@
 
 ## 什么是 QVeris
 
-**QVeris** 是**面向智能体的能力路由网络**。它让你的 Agent 能够：
+**QVeris** 是**面向智能体的能力路由网络**。它让你的智能体能够：
 
 - **发现（Discover）** 能力（API、数据源、自动化任务），使用自然语言描述需求 — 免费
 - **检查（Inspect）** 候选能力，比较参数、成功率、延迟和价格
 - **调用（Call）** 任意能力，传入结构化参数，获取结构化结果
 
-QVeris 在 Agent 循环中表现出色（发现 → 检查 → 调用 → 将结果反馈给模型），支持多种集成方式。
+QVeris 在智能体循环中表现出色（发现 → 检查 → 调用 → 将结果反馈给模型），支持多种集成方式。
 
-**费用：** 发现（Discover）免费。调用（Call）按能力的计费规则定价，最终结算结果可在调用历史和 credits 账本中查看。免费套餐含 1,000 积分。详情见 [qveris.ai/pricing](https://qveris.ai/pricing)。
+**费用：** 发现（Discover）免费。调用（Call）按能力的计费规则定价，最终结算结果可在调用历史和积分账本中查看。免费套餐含 1,000 积分。详情见 [qveris.ai/pricing](https://qveris.ai/pricing)。
 
 ---
 
@@ -34,7 +34,7 @@ curl -fsSL https://qveris.ai/cli/install | bash
 
 ```bash
 qveris login                              # 登录认证
-qveris discover "weather forecast"        # 发现能力
+qveris discover "天气预报"                # 发现能力
 qveris inspect 1                          # 查看详情
 qveris call 1 --params '{"wfo":"LWX","x":90,"y":90}'  # 调用执行
 ```
@@ -83,7 +83,7 @@ CLI 还支持交互模式（`qveris interactive`）、代码生成（`--codegen 
 
 ### 使用 QVeris Python SDK
 
-Python SDK 现在位于本 monorepo 的 [`packages/python-sdk`](../../packages/python-sdk)。安装已发布的包：
+Python SDK 现在位于本单体仓库的 [`packages/python-sdk`](../../packages/python-sdk)。安装已发布的包：
 
 ```bash
 pip install qveris
@@ -116,7 +116,7 @@ if __name__ == "__main__":
 
 ### 直接调用 QVeris REST API
 
-**Base URL**
+**基础 URL**
 
 `https://qveris.ai/api/v1`
 
@@ -138,10 +138,10 @@ Authorization: Bearer YOUR_API_KEY
 curl -sS -X POST "https://qveris.ai/api/v1/search" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
-  -d "{\"query\":\"weather forecast API\",\"limit\":10}"
+  -d "{\"query\":\"天气预报 API\",\"limit\":10}"
 ```
 
-响应包含 `search_id` 和能力列表（每项含 `tool_id`、参数 schema、示例等）。
+响应包含 `search_id` 和能力列表（每项含 `tool_id`、参数结构、示例等）。
 
 **Python**
 
@@ -157,7 +157,7 @@ resp = requests.post(
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json",
     },
-    json={"query": "weather forecast API", "limit": 10},
+    json={"query": "天气预报 API", "limit": 10},
     timeout=30,
 )
 resp.raise_for_status()
@@ -177,7 +177,7 @@ const resp = await fetch("https://qveris.ai/api/v1/search", {
     Authorization: `Bearer ${apiKey}`,
     "Content-Type": "application/json",
   },
-  body: JSON.stringify({ query: "weather forecast API", limit: 10 }),
+  body: JSON.stringify({ query: "天气预报 API", limit: 10 }),
 });
 
 if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${await resp.text()}`);
@@ -240,7 +240,7 @@ const data = await resp.json();
 console.log(data.results);
 ```
 
-返回与 `/search` 相同的 schema — 包含完整能力详情、参数、示例和统计数据。
+返回与 `/search` 相同的结构 — 包含完整能力详情、参数、示例和统计数据。
 
 #### 3）调用能力
 
@@ -316,9 +316,9 @@ console.log(data);
 
 ---
 
-### 在 AI Agent 中安装 QVeris
+### 在 AI 智能体中安装 QVeris
 
-如果你正在配置 AI 编程助手（Claude Code、Cursor、OpenCode、Trae 等），可以将 [Agent 安装指南](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/SETUP.md) 连同你的 API 密钥一起提供给 Agent。它会自动检测运行环境，并完成 MCP 服务器和技能定义的配置。
+如果你正在配置 AI 编程助手（Claude Code、Cursor、OpenCode、Trae 等），可以将 [智能体安装指南](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/SETUP.md) 连同你的 API 密钥一起提供给智能体。它会自动检测运行环境，并完成 MCP 服务器和技能定义的配置。
 
 支持的环境：Claude Code、OpenCode、Cursor、Trae、VS Code、OpenClaw。
 
