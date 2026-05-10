@@ -92,13 +92,14 @@ class QverisClient:
 
         self._debug(f"[Qveris API] Response status: {response.status_code}")
         try:
-            response_json = response.json()
-            self._debug(f"[Qveris API] Response body: {json.dumps(response_json, indent=2)}")
+            data = response.json()
+            self._debug(f"[Qveris API] Response body: {json.dumps(data, indent=2)}")
         except Exception:
+            data = None
             self._debug(f"[Qveris API] Response body (raw): {response.text[:500]}")
 
         response.raise_for_status()
-        return SearchResponse(**response.json())
+        return SearchResponse(**(data if data is not None else response.json()))
 
     async def execute_tool(
         self,
