@@ -16,7 +16,7 @@
  *   "mcpServers": {
  *     "qveris": {
  *       "command": "npx",
- *       "args": ["@qverisai/mcp"],
+ *       "args": ["-y", "@qverisai/mcp"],
  *       "env": { "QVERIS_API_KEY": "your-api-key" }
  *     }
  *   }

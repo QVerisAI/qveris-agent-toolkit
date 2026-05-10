@@ -70,6 +70,36 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 
 区域从 API 密钥前缀自动检测（`sk-cn-xxx` → 中国区，`sk-xxx` → 全球）。仅在需要覆盖时设置 `QVERIS_REGION`。
 
+### 使用 QVeris CLI 配置
+
+可以用 CLI 生成客户端配置，无需手写 JSON。默认会打印带有 `YOUR_QVERIS_API_KEY` 占位符的安全配置；占位符输出会故意无法通过 API key 校验，直到你替换占位符或使用 `--include-key`。
+
+```bash
+# 打印安全的 Cursor 配置
+qveris mcp configure --target cursor
+
+# 使用 qveris login 或 QVERIS_API_KEY 中的 API key 写入可直接使用的配置
+qveris mcp configure --target cursor --write --include-key
+qveris mcp configure --target claude-desktop --write --include-key
+qveris mcp configure --target opencode --write --include-key
+qveris mcp configure --target openclaw --write --include-key
+
+# Claude Code 使用 shell 命令，而不是 JSON 配置文件
+qveris mcp configure --target claude-code
+```
+
+重启客户端前可以先校验配置：
+
+```bash
+qveris mcp validate --target cursor
+```
+
+对 stdio 客户端，可添加 `--probe` 启动配置中的 MCP server，并通过 `tools/list` 确认 `discover`、`inspect`、`call` 可见：
+
+```bash
+qveris mcp validate --target cursor --probe
+```
+
 ### Claude Desktop 配置示例
 
 ```json
@@ -127,6 +157,19 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 - [Claude Code 配置](claude-code-setup.md)
 - [OpenCode 配置](opencode-setup.md)
 - [IDE / CLI 配置](ide-cli-setup.md)
+
+---
+
+## Hosted MCP
+
+Hosted MCP 已列入规划，但当前接入路径不依赖托管端点。在正式发布托管端点前，请使用上文的 stdio server：`npx -y @qverisai/mcp`。
+
+托管 MCP 端点可用后，接入流程会是：
+
+1. 创建或选择一个 QVeris API key。
+2. 从 QVeris 控制台或文档复制 hosted MCP URL。
+3. 按 MCP 客户端的远程 MCP 配置流程添加该 hosted URL。
+4. 运行 `qveris mcp validate --target <client>` 或使用客户端内置工具列表，确认 `discover`、`inspect`、`call` 可见。
 
 ---
 

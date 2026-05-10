@@ -180,6 +180,60 @@ qveris call 1 --params '{"symbol": "AAPL"}' --codegen js
 
 ---
 
+### `qveris mcp configure`
+
+为 Cursor、Claude Desktop、Claude Code、OpenCode、OpenClaw 或通用 stdio 客户端生成 MCP 配置。默认是打印模式，并使用 `YOUR_QVERIS_API_KEY` 占位符，因此输出可以安全粘贴到 issue 或文档中。占位符输出会故意无法通过 API key 校验，直到你替换占位符或使用 `--include-key`。
+
+```bash
+qveris mcp configure --target cursor
+qveris mcp configure --target cursor --write --include-key
+qveris mcp configure --target claude-desktop --write --include-key
+qveris mcp configure --target opencode --write --include-key
+qveris mcp configure --target openclaw --write --include-key
+qveris mcp configure --target claude-code
+qveris mcp configure --target generic --json
+```
+
+支持的目标：
+
+| 目标 | 输出 |
+|------|------|
+| `cursor` | `~/.cursor/mcp.json` |
+| `claude-desktop` | Claude Desktop MCP 配置 |
+| `claude-code` | `claude mcp add` 命令 |
+| `opencode` | OpenCode 本地 MCP 配置 |
+| `openclaw` | OpenClaw qveris 插件配置 |
+| `generic` | 原始 stdio server JSON |
+
+参数：
+
+| 参数 | 说明 |
+|------|------|
+| `--target <target>` | 目标客户端，默认 `cursor` |
+| `--output <path>` | 覆盖配置输出路径 |
+| `--write` | 将生成的配置写入磁盘 |
+| `--include-key` | 使用解析到的 API key，而不是占位符 |
+| `--json` | 输出机器可读 JSON |
+
+### `qveris mcp validate`
+
+校验 MCP 配置文件。静态校验会检查配置结构、QVeris 条目、API key 绑定方式，以及预期的规范工具。
+
+```bash
+qveris mcp validate --target cursor
+qveris mcp validate --target cursor --output ~/.cursor/mcp.json
+```
+
+添加 `--probe` 会启动配置中的 stdio MCP server，并通过 `tools/list` 确认 `discover`、`inspect`、`call` 工具可见。
+
+```bash
+qveris mcp validate --target cursor --probe
+```
+
+`--probe` 需要可执行的 stdio 命令和真实的 `QVERIS_API_KEY`；OpenClaw 插件配置不支持该探测方式。
+
+---
+
 ### `qveris login`
 
 使用 QVeris API 密钥认证。如果未预设区域，会先提示选择站点区域（全球 / 中国），然后打开对应的 API 密钥页面并掩码输入。

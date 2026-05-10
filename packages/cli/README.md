@@ -122,6 +122,8 @@ qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
 | `qveris interactive` | Launch REPL mode (discover/inspect/call/codegen in one session) |
 | `qveris doctor` | Self-check: Node.js version, API key, region, connectivity |
 | `qveris config <subcommand>` | Manage CLI settings (set, get, list, reset, path) |
+| `qveris mcp configure` | Generate MCP client config for Cursor, Claude Desktop/Code, OpenCode, OpenClaw, or generic stdio |
+| `qveris mcp validate` | Validate an MCP config file, with optional live stdio tool probing |
 | `qveris completions <shell>` | Generate shell completions (bash/zsh/fish) |
 
 ## Usage
@@ -204,6 +206,37 @@ Preview:
 ```
 
 For agent/script use (`--json` or piped output), the default increases to 20KB (matching the MCP server). Use `--max-size -1` for unlimited.
+
+### MCP Configuration
+
+Generate MCP client config without hand-editing JSON. Print mode is the default and uses `YOUR_QVERIS_API_KEY` placeholders so the output is safe to share. Placeholder output intentionally fails API key validation until you replace it or use `--include-key`.
+
+```bash
+# Print safe config for Cursor
+qveris mcp configure --target cursor
+
+# Write a working Cursor config using your resolved API key
+qveris mcp configure --target cursor --write --include-key
+
+# Other supported targets
+qveris mcp configure --target claude-desktop --write --include-key
+qveris mcp configure --target opencode --write --include-key
+qveris mcp configure --target openclaw --write --include-key
+qveris mcp configure --target claude-code
+qveris mcp configure --target generic --json
+```
+
+Validate an existing config:
+
+```bash
+# Static config validation
+qveris mcp validate --target cursor
+
+# Live stdio probe: starts the MCP server and confirms discover/inspect/call are visible
+qveris mcp validate --target cursor --probe
+```
+
+Supported targets: `cursor`, `claude-desktop`, `claude-code`, `opencode`, `openclaw`, `generic`.
 
 ### Usage Audit
 
@@ -342,6 +375,11 @@ qveris completions fish | source
 | `--api-key <key>` | | Override API key |
 | `--timeout <seconds>` | | Request timeout |
 | `--max-size <bytes>` | | Response size limit (-1 = unlimited) |
+| `--target <target>` | | MCP target |
+| `--output <path>` | | MCP config output path |
+| `--write` | | Write MCP config to disk |
+| `--include-key` | | Include resolved API key instead of a placeholder |
+| `--probe` | | Live-probe MCP tools during validation |
 | `--no-color` | | Disable colors |
 | `--version` | `-V` | Print version |
 | `--help` | `-h` | Show help |

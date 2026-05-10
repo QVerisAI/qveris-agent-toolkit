@@ -10,6 +10,14 @@
 
 ## 1. MCP 服务器配置
 
+可以用 QVeris CLI 生成命令：
+
+```bash
+qveris mcp configure --target claude-code
+```
+
+也可以手动运行：
+
 运行以下命令（将 `your-api-key-here` 替换为你的实际 API 密钥）：
 
 **Mac：**

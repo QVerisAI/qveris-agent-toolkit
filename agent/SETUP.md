@@ -105,6 +105,17 @@ Detect which coding tool or environment you are currently running in (e.g., Clau
 
 ### Configuration Examples
 
+For Cursor, Claude Desktop, OpenCode, OpenClaw, and generic stdio clients, prefer the CLI generator when available:
+
+```bash
+# Print safe config with placeholders
+qveris mcp configure --target cursor
+
+# Write a working config with the resolved API key
+qveris mcp configure --target cursor --write --include-key
+qveris mcp validate --target cursor
+```
+
 Use these examples as a guide. Adapt paths and commands to your specific environment's conventions.
 
 #### A. Claude Code

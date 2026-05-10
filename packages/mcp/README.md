@@ -23,6 +23,23 @@ Visit [QVeris](https://qveris.ai) (Global) or [QVeris](https://qveris.cn) (China
 
 ### 2. Configure Your MCP Client
 
+Use the QVeris CLI to generate config without hand-editing JSON. Placeholder output intentionally fails API key validation until you replace it or use `--include-key`:
+
+```bash
+# Print safe config with YOUR_QVERIS_API_KEY placeholder
+qveris mcp configure --target cursor
+
+# Write a working config using your resolved API key
+qveris mcp configure --target cursor --write --include-key
+qveris mcp configure --target claude-desktop --write --include-key
+qveris mcp configure --target opencode --write --include-key
+qveris mcp configure --target openclaw --write --include-key
+
+# Validate config, or live-probe visible tools for stdio clients
+qveris mcp validate --target cursor
+qveris mcp validate --target cursor --probe
+```
+
 Add the QVeris server to your MCP client configuration:
 
 **Claude Desktop** (`claude_desktop_config.json`):
@@ -32,7 +49,7 @@ Add the QVeris server to your MCP client configuration:
   "mcpServers": {
     "qveris": {
       "command": "npx",
-      "args": ["@qverisai/mcp"],
+      "args": ["-y", "@qverisai/mcp"],
       "env": {
         "QVERIS_API_KEY": "your-api-key-here"
       }
@@ -48,7 +65,7 @@ Add the QVeris server to your MCP client configuration:
   "mcpServers": {
     "qveris": {
       "command": "npx",
-      "args": ["@qverisai/mcp"],
+      "args": ["-y", "@qverisai/mcp"],
       "env": {
         "QVERIS_API_KEY": "your-api-key-here"
       }

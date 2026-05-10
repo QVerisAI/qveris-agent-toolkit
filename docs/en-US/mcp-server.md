@@ -70,6 +70,36 @@ QVERIS_BASE_URL=https://...          # Optional: override API base URL
 
 Region is auto-detected from your API key prefix (`sk-cn-xxx` → China, `sk-xxx` → Global). Set `QVERIS_REGION` only if you need to override.
 
+### Configure with QVeris CLI
+
+Use the CLI to generate client config without hand-editing JSON. By default it prints a safe config with `YOUR_QVERIS_API_KEY` placeholders; placeholder output intentionally fails API key validation until you replace it or use `--include-key`.
+
+```bash
+# Print safe Cursor config
+qveris mcp configure --target cursor
+
+# Write a working config using the API key from qveris login or QVERIS_API_KEY
+qveris mcp configure --target cursor --write --include-key
+qveris mcp configure --target claude-desktop --write --include-key
+qveris mcp configure --target opencode --write --include-key
+qveris mcp configure --target openclaw --write --include-key
+
+# Claude Code uses a shell command instead of a JSON config file
+qveris mcp configure --target claude-code
+```
+
+Validate a config before restarting the client:
+
+```bash
+qveris mcp validate --target cursor
+```
+
+For stdio clients, add `--probe` to start the configured MCP server and confirm that `discover`, `inspect`, and `call` are visible via `tools/list`:
+
+```bash
+qveris mcp validate --target cursor --probe
+```
+
 ### Claude Desktop example
 
 ```json
@@ -127,6 +157,19 @@ For environment-specific setup guides, see:
 - [Claude Code setup](claude-code-setup.md)
 - [OpenCode setup](opencode-setup.md)
 - [IDE / CLI setup](ide-cli-setup.md)
+
+---
+
+## Hosted MCP
+
+Hosted MCP is planned but not required for the current onboarding path. Until a hosted endpoint is published, use the stdio server shown above with `npx -y @qverisai/mcp`.
+
+When a hosted MCP endpoint becomes available, the onboarding flow will be:
+
+1. Create or select a QVeris API key.
+2. Copy the hosted MCP URL from the QVeris dashboard or docs.
+3. Add the hosted URL to your MCP client using its remote MCP configuration flow.
+4. Run `qveris mcp validate --target <client>` or the client's built-in tool list view and confirm `discover`, `inspect`, and `call` are visible.
 
 ---
 

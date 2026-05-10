@@ -180,6 +180,60 @@ For agent/script use (`--json` or piped output), the default increases to 20KB. 
 
 ---
 
+### `qveris mcp configure`
+
+Generate MCP client configuration for Cursor, Claude Desktop, Claude Code, OpenCode, OpenClaw, or a generic stdio client. Print mode is the default and uses `YOUR_QVERIS_API_KEY` placeholders so the output is safe to paste into issues or docs. Placeholder output intentionally fails API key validation until you replace it or use `--include-key`.
+
+```bash
+qveris mcp configure --target cursor
+qveris mcp configure --target cursor --write --include-key
+qveris mcp configure --target claude-desktop --write --include-key
+qveris mcp configure --target opencode --write --include-key
+qveris mcp configure --target openclaw --write --include-key
+qveris mcp configure --target claude-code
+qveris mcp configure --target generic --json
+```
+
+Supported targets:
+
+| Target | Output |
+|--------|--------|
+| `cursor` | `~/.cursor/mcp.json` |
+| `claude-desktop` | Claude Desktop MCP config |
+| `claude-code` | `claude mcp add` command |
+| `opencode` | OpenCode local MCP config |
+| `openclaw` | OpenClaw qveris plugin config |
+| `generic` | Raw stdio server JSON |
+
+Flags:
+
+| Flag | Description |
+|------|-------------|
+| `--target <target>` | Target client. Defaults to `cursor` |
+| `--output <path>` | Override config output path |
+| `--write` | Write the generated config to disk |
+| `--include-key` | Include the resolved API key instead of the placeholder |
+| `--json` | Output machine-readable JSON |
+
+### `qveris mcp validate`
+
+Validate an MCP config file. Static validation checks config shape, QVeris entry presence, API key wiring, and expected canonical tools.
+
+```bash
+qveris mcp validate --target cursor
+qveris mcp validate --target cursor --output ~/.cursor/mcp.json
+```
+
+Add `--probe` to start the configured stdio server and confirm the `discover`, `inspect`, and `call` tools are visible via `tools/list`.
+
+```bash
+qveris mcp validate --target cursor --probe
+```
+
+`--probe` requires a runnable stdio command and a real `QVERIS_API_KEY`; it is not available for OpenClaw plugin configs.
+
+---
+
 ### `qveris login`
 
 Authenticate with your QVeris API key. If no region is pre-configured, prompts you to select your region (Global or China), then opens the browser to the corresponding API key page and prompts for masked input.

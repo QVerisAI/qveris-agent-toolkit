@@ -10,6 +10,14 @@ This guide explains how to configure QVeris MCP server and skills in Claude Code
 
 ## 1. MCP Server Configuration
 
+You can generate the command with QVeris CLI:
+
+```bash
+qveris mcp configure --target claude-code
+```
+
+Or run the command manually:
+
 Run the following command (replace `your-api-key-here` with your actual API key):
 
 **Mac:**

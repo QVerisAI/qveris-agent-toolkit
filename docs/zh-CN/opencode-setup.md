@@ -10,6 +10,15 @@
 
 ## 1. MCP 服务器配置
 
+可以用 QVeris CLI 生成并写入配置：
+
+```bash
+qveris mcp configure --target opencode --write --include-key
+qveris mcp validate --target opencode
+```
+
+也可以手动配置：
+
 创建或编辑全局 OpenCode 配置文件：
 
 **Mac/Linux：**
@@ -36,11 +45,14 @@
       },
       "enabled": true
     }
+  },
+  "tools": {
+    "qveris*": true
   }
 }
 ```
 
-如果已有 `opencode.json` 文件，请将 `mcp.qveris` 部分合并到现有配置中。
+如果已有 `opencode.json` 文件，请将 `mcp.qveris` 和 `tools["qveris*"]` 部分合并到现有配置中。
 
 ## 2. 技能配置
 

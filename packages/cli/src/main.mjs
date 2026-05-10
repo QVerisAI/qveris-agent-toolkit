@@ -90,6 +90,14 @@ export async function main(argv) {
         await runConfig(subcommand, subArgs, flags);
         break;
       }
+      case "mcp": {
+        const subcommand = rest[0];
+        const subArgs = rest.slice(1);
+        if (!subcommand) { console.error("  Usage: qveris mcp <configure|validate> [target]"); process.exitCode = 2; return; }
+        const { runMcp } = await import("./commands/mcp.mjs");
+        await runMcp(subcommand, subArgs, flags);
+        break;
+      }
       case "interactive":
       case "repl": {
         const { runInteractive } = await import("./commands/interactive.mjs");
@@ -129,6 +137,7 @@ const VALUE_FLAGS = {
   "api-key": "apiKey", "base-url": "baseUrl", timeout: "timeout",
   limit: "limit", "discovery-id": "discoveryId", params: "params",
   "max-size": "maxSize", codegen: "codegen", token: "token",
+  target: "target", output: "output",
   mode: "mode", "start-date": "startDate", "end-date": "endDate",
   bucket: "bucket", "execution-id": "executionId", "search-id": "searchId",
   "event-type": "eventType", kind: "kind", success: "success",
@@ -192,6 +201,16 @@ function extractGlobalFlags(args) {
         flags.version = true; break;
       case "--dry-run":
         flags.dryRun = true; break;
+      case "--write":
+        flags.write = true; break;
+      case "--print":
+        flags.print = true; break;
+      case "--include-key":
+        flags.includeKey = true; break;
+      case "--validate":
+        flags.validate = true; break;
+      case "--probe":
+        flags.probe = true; break;
       case "--no-browser":
         flags.noBrowser = true; break;
       case "--clear":
@@ -214,6 +233,10 @@ function extractGlobalFlags(args) {
         flags.codegen = takeNext(args, i++, arg); break;
       case "--token":
         flags.token = takeNext(args, i++, arg); break;
+      case "--target":
+        flags.target = takeNext(args, i++, arg); break;
+      case "--output":
+        flags.output = takeNext(args, i++, arg); break;
       case "--mode":
         flags.mode = takeNext(args, i++, arg); break;
       case "--start-date":
@@ -276,6 +299,7 @@ function printUsage(flags = {}) {
 
   ${bold("Configuration:")}
     ${cyan("config")}   set|get|list|reset  Manage CLI settings
+    ${cyan("mcp")}      configure|validate   Generate and validate MCP client config
 
   ${bold("Utilities:")}
     ${cyan("interactive")}                  Launch interactive REPL mode
@@ -288,6 +312,11 @@ function printUsage(flags = {}) {
     --api-key <key>        Override API key
     --base-url <url>       Override API base URL
     --timeout <seconds>    Request timeout
+    --target <target>      MCP target: cursor | claude-desktop | claude-code | opencode | openclaw | generic
+    --output <path>        MCP config output path
+    --write                Write MCP config to disk
+    --include-key          Include resolved API key instead of placeholder
+    --probe                Start MCP server and verify visible tools during validation
     --mode <mode>          summary | search | export-file for usage/ledger
     --start-date <date>    Usage/ledger range start (YYYY-MM-DD)
     --end-date <date>      Usage/ledger range end (YYYY-MM-DD)
@@ -308,6 +337,8 @@ function printUsage(flags = {}) {
     qveris inspect 1
     qveris call 1 --params '{"city": "London"}'
     qveris call 1 --params @params.json --codegen curl
+    qveris mcp configure --target cursor --write --include-key
+    qveris mcp validate --target cursor
     qveris usage --mode search --execution-id <id>
     qveris ledger --mode search --min-credits 50 --direction consume
     qveris interactive

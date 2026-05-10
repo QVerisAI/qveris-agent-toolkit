@@ -10,6 +10,15 @@ This guide explains how to configure the QVeris MCP server and skills in [OpenCo
 
 ## 1. MCP Server Configuration
 
+You can generate and write the config with QVeris CLI:
+
+```bash
+qveris mcp configure --target opencode --write --include-key
+qveris mcp validate --target opencode
+```
+
+Or configure it manually:
+
 Create or edit the global OpenCode config file:
 
 **Mac/Linux:**
@@ -36,11 +45,14 @@ Add the following content (replace `your-api-key-here` with your actual API key)
       },
       "enabled": true
     }
+  },
+  "tools": {
+    "qveris*": true
   }
 }
 ```
 
-If you already have an `opencode.json` file, merge the `mcp.qveris` section into your existing config.
+If you already have an `opencode.json` file, merge the `mcp.qveris` and `tools["qveris*"]` sections into your existing config.
 
 ## 2. Skills Configuration
 
