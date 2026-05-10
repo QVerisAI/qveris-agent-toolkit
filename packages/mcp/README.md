@@ -298,8 +298,8 @@ To override manually, set environment variables in your MCP client config:
 
 ```bash
 # Clone the repository
-git clone https://github.com/QVerisAI/QVerisAI.git
-cd QVerisAI/packages/mcp
+git clone https://github.com/QVerisAI/qveris-agent-toolkit.git
+cd qveris-agent-toolkit/packages/mcp
 
 # Install dependencies
 npm install
@@ -317,6 +317,6 @@ MIT © [QVerisAI](https://github.com/QVerisAI)
 
 ## Support
 
-- 🐛 [Issue Tracker](https://github.com/QVerisAI/QVerisAI/issues)
+- 🐛 [Issue Tracker](https://github.com/QVerisAI/qveris-agent-toolkit/issues)
 - 💬 Contact: contact@qveris.ai
 

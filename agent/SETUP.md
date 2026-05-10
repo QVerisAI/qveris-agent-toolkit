@@ -97,7 +97,7 @@ Detect which coding tool or environment you are currently running in (e.g., Clau
 **Configuration involves two steps for all environments:**
 1. **MCP Server Setup:** Connects the QVeris tool server (`@qverisai/mcp` v0.6.0) to your environment.
 2. **Skill Configuration:** Teaches the agent how to use the tools using the MCP/client skill definition file.
-   - **Skill URL:** `https://github.com/QVerisAI/QVerisAI/blob/main/skills/qveris/SKILL.md`
+   - **Skill URL:** `https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/skills/qveris/SKILL.md`
 
 **General Rule:**
 - **Prefer User/Global Scope:** Configure QVeris globally so it works across all projects.
@@ -121,7 +121,7 @@ claude mcp add qveris --transport stdio --scope user --env QVERIS_API_KEY=YOUR_Q
 
 **Step 2: Skill Configuration**
 Download the skill definition file from:
-`https://github.com/QVerisAI/QVerisAI/blob/main/skills/qveris/SKILL.md`
+`https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/skills/qveris/SKILL.md`
 
 Save it to:
 - Mac/Linux: `~/.claude/skills/qveris/SKILL.md`
@@ -153,7 +153,7 @@ Add or merge this JSON structure:
 
 **Step 2: Skill Configuration**
 Download the skill definition file from:
-`https://github.com/QVerisAI/QVerisAI/blob/main/skills/qveris/SKILL.md`
+`https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/skills/qveris/SKILL.md`
 
 Save it to:
 - Mac/Linux: `~/.config/opencode/skill/qveris/SKILL.md`
@@ -178,7 +178,7 @@ Add to the `mcpServers` object:
 
 **Step 2: Skill Configuration**
 Download the skill definition file from:
-`https://github.com/QVerisAI/QVerisAI/blob/main/skills/qveris/SKILL.md`
+`https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/skills/qveris/SKILL.md`
 
 Save it as `.cursor/rules/qveris.mdc` in the project root.
 
@@ -201,7 +201,7 @@ Add the standard MCP server configuration to the `mcpServers` object:
 
 **Step 2: Skill Configuration**
 If the environment supports rule or skill files, add the file from:
-`https://github.com/QVerisAI/QVerisAI/blob/main/skills/qveris/SKILL.md`
+`https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/skills/qveris/SKILL.md`
 
 #### E. OpenClaw
 

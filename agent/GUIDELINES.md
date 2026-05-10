@@ -323,4 +323,4 @@ Region is auto-detected from the API key prefix. Override with `QVERIS_REGION=cn
 
 > **MCP backward compatibility:** Old tool names `search_tools`, `get_tools_by_ids`, `execute_tool` are still supported as deprecated aliases in MCP server v0.6.0. Use the new names (`discover`, `inspect`, `call`) going forward.
 
-Full API documentation: https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/rest-api.md
+Full API documentation: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/rest-api.md

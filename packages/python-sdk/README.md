@@ -1,13 +1,13 @@
 # QVeris Python SDK
 
-Empower LLM agents with [**QVeris**](https://qveris.ai): dynamically search for thousands of live tools (APIs, data sources, automations) and execute them in a tight agent loop.
+Empower LLM agents with [**QVeris**](https://qveris.ai): dynamically discover, inspect, call, and audit thousands of live capabilities (APIs, data sources, automations) in a tight agent loop.
 
 ## What QVeris is
 
-QVeris provides a **tool search + tool execution** layer for agents:
+QVeris provides a **capability routing** layer for agents:
 
-- **search**: the agent can call `search_tools` with a natural-language capability query (e.g. “stock price”, “web search”, “send email”).
-- **execute**: after selecting a tool from search results, the agent calls `execute_tool` with the tool id + parameters.
+- **discover**: the agent can call `search_tools` with a natural-language capability query (e.g. “stock price”, “web search”, “send email”).
+- **call**: after selecting a capability from search results, the agent calls `execute_tool` with the tool id + parameters.
 
 The `qveris.Agent` wraps this into a loop that:
 

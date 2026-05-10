@@ -2,26 +2,26 @@
 
 ## 简介
 
-`@qverisai/mcp` 是面向 Cursor、Claude Desktop 及其他编程 Agent 等 MCP 兼容客户端的官方 QVeris MCP 服务器。
+`@qverisai/mcp` 是面向 Cursor、Claude Desktop 及其他编程智能体等 MCP 兼容客户端的官方 QVeris MCP 服务器。
 
-它通过少量 MCP 工具为 Agent 提供 QVeris 访问能力：
+它通过少量 MCP 工具为智能体提供 QVeris 访问能力：
 
 - `discover` — 用自然语言发现能力
 - `inspect` — 获取工具详情（参数、成功率、示例）
 - `call` — 执行工具并传入参数
 - `usage_history` — 上下文安全的调用审计摘要 / 精确查询 / 文件导出
-- `credits_ledger` — 上下文安全的最终 credits 账本摘要 / 精确查询 / 文件导出
+- `credits_ledger` — 上下文安全的最终积分账本摘要 / 精确查询 / 文件导出
 
-换言之，MCP 服务器是本仓库其他文档所描述的 QVeris 核心协议的 Agent 侧传输层。
+换言之，MCP 服务器是本仓库其他文档所描述的 QVeris 核心协议的智能体侧传输层。
 
 ---
 
-## MCP vs REST API
+## MCP 与 REST API 对比
 
 **适合使用 MCP 服务器的场景：**
 
 - 将 QVeris 集成到 Cursor、Claude Desktop、OpenCode 或其他 MCP 客户端
-- 希望 Agent 在对话中直接调用 QVeris 工具
+- 希望智能体在对话中直接调用 QVeris 工具
 - 希望客户端自动管理工具调用
 
 **适合使用 REST API 的场景：**
@@ -38,7 +38,7 @@
 | **检查** | `inspect` | `POST /tools/by-ids` |
 | **调用** | `call` | `POST /tools/execute` |
 | **调用审计** | `usage_history` | `GET /auth/usage/history/v2` |
-| **Credits 账本** | `credits_ledger` | `GET /auth/credits/ledger` |
+| **积分账本** | `credits_ledger` | `GET /auth/credits/ledger` |
 
 > **注意：** 旧工具名称（`search_tools`、`get_tools_by_ids`、`execute_tool`）仍作为弃用别名支持。
 
@@ -68,7 +68,7 @@ QVERIS_REGION=cn                      # 可选：强制区域（global | cn）
 QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 ```
 
-区域从 API key 前缀自动检测（`sk-cn-xxx` → 中国区，`sk-xxx` → 全球）。仅在需要覆盖时设置 `QVERIS_REGION`。
+区域从 API 密钥前缀自动检测（`sk-cn-xxx` → 中国区，`sk-xxx` → 全球）。仅在需要覆盖时设置 `QVERIS_REGION`。
 
 ### Claude Desktop 配置示例
 
@@ -104,7 +104,7 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 
 ### 中国区配置示例
 
-中国大陆用户可添加 `QVERIS_REGION` 或使用 `sk-cn-` 前缀的 key：
+中国大陆用户可添加 `QVERIS_REGION` 或使用 `sk-cn-` 前缀的密钥：
 
 ```json
 {
@@ -123,7 +123,7 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 
 各环境的详细配置指南，请参考：
 
-- [Agent 安装指南](../../agent/SETUP.md)
+- [智能体安装指南](../../agent/SETUP.md)
 - [Claude Code 配置](claude-code-setup.md)
 - [OpenCode 配置](opencode-setup.md)
 - [IDE / CLI 配置](ide-cli-setup.md)
@@ -148,7 +148,7 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 
 ```json
 {
-  "query": "weather forecast API",
+  "query": "天气预报 API",
   "limit": 10
 }
 ```
@@ -193,7 +193,7 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 - 想检查成功率或延迟数据
 - 复用上一轮对话中发现的工具
 
-响应 schema 与 `/search` 一致，包含所请求工具的参数、示例和统计数据。
+响应结构与 `/search` 一致，包含所请求工具的参数、示例和统计数据。
 
 ---
 
@@ -201,7 +201,7 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 
 调用已发现的 QVeris 能力。
 
-调用响应可能包含 compact `billing` 作为预结算账单。最终是否扣费请通过 `usage_history` 或 `credits_ledger` 查询。
+调用响应可能包含紧凑的 `billing` 预结算账单。最终是否扣费请通过 `usage_history` 或 `credits_ledger` 查询。
 
 | 参数 | 类型 | 必填 | 说明 |
 |-----|------|------|------|
@@ -217,7 +217,7 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 {
   "tool_id": "openweathermap.weather.execute.v1",
   "search_id": "YOUR_SEARCH_ID",
-  "params_to_tool": {"city": "London", "units": "metric"}
+  "params_to_tool": {"city": "北京", "units": "metric"}
 }
 ```
 
@@ -272,7 +272,7 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 { "mode": "search", "direction": "consume", "min_credits": 50 }
 ```
 
-大量记录应使用 `mode: "export_file"`，MCP server 会写入 `.qveris/exports/*.jsonl` 并返回文件路径，而不是直接输出全量记录。
+大量记录应使用 `mode: "export_file"`，MCP 服务器会写入 `.qveris/exports/*.jsonl` 并返回文件路径，而不是直接输出全量记录。
 
 对于超大的工具调用输出，QVeris 可能返回：
 
@@ -284,7 +284,7 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 
 ## 推荐使用模式
 
-对于大多数 Agent 任务，建议使用以下流程：
+对于大多数智能体任务，建议使用以下流程：
 
 1. `discover` — 发现相关能力
 2. `inspect` — 在需要时检查最佳候选
@@ -343,5 +343,5 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 
 - [快速开始](getting-started.md)
 - [REST API 文档](rest-api.md)
-- [Agent 安装指南](../../agent/SETUP.md)
+- [智能体安装指南](../../agent/SETUP.md)
 - [IDE / CLI 配置指南](ide-cli-setup.md)

@@ -318,7 +318,7 @@ console.log(data);
 
 ### Set up QVeris in your AI Agent
 
-If you are configuring an AI coding agent (Claude Code, Cursor, OpenCode, Trae, etc.), you can give the [Agent Setup Guide](https://github.com/QVerisAI/QVerisAI/blob/main/agent/SETUP.md) to your agent along with your API key. It will auto-detect the environment and configure both the MCP server and skill definition automatically.
+If you are configuring an AI coding agent (Claude Code, Cursor, OpenCode, Trae, etc.), you can give the [Agent Setup Guide](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/SETUP.md) to your agent along with your API key. It will auto-detect the environment and configure both the MCP server and skill definition automatically.
 
 Supported environments: Claude Code, OpenCode, Cursor, Trae, VS Code, and OpenClaw.
 

@@ -562,7 +562,7 @@ For backward compatibility, the following aliases are supported with deprecation
 ## Links
 
 - Website: [qveris.ai](https://qveris.ai) (Global) / [qveris.cn](https://qveris.cn) (China)
-- GitHub: [QVerisAI/QVerisAI](https://github.com/QVerisAI/QVerisAI)
+- GitHub: [QVerisAI/qveris-agent-toolkit](https://github.com/QVerisAI/qveris-agent-toolkit)
 - npm: [@qverisai/cli](https://www.npmjs.com/package/@qverisai/cli)
 - REST API: [docs/en-US/rest-api.md](rest-api.md)
 - MCP Server: [docs/en-US/mcp-server.md](mcp-server.md)

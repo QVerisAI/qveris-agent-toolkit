@@ -33,18 +33,18 @@ claude mcp remove qveris # 移除服务器
 
 从 GitHub 仓库下载 QVeris MCP/客户端技能：
 
-**仓库地址：** https://github.com/QVerisAI/QVerisAI/tree/main/skills/qveris
+**仓库地址：** https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/skills/qveris
 
 **Mac：**
 ```bash
 mkdir -p ~/.claude/skills/qveris
-curl -sL https://raw.githubusercontent.com/QVerisAI/QVerisAI/main/skills/qveris/SKILL.md -o ~/.claude/skills/qveris/SKILL.md
+curl -sL https://raw.githubusercontent.com/QVerisAI/qveris-agent-toolkit/main/skills/qveris/SKILL.md -o ~/.claude/skills/qveris/SKILL.md
 ```
 
 **Windows（PowerShell）：**
 ```powershell
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.claude\skills\qveris"
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/QVerisAI/QVerisAI/main/skills/qveris/SKILL.md" -OutFile "$env:USERPROFILE\.claude\skills\qveris\SKILL.md"
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/QVerisAI/qveris-agent-toolkit/main/skills/qveris/SKILL.md" -OutFile "$env:USERPROFILE\.claude\skills\qveris\SKILL.md"
 ```
 
 技能目录结构应如下所示：
@@ -65,7 +65,7 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/QVerisAI/QVerisAI/main
 在提示词中通过 `@.claude/skills/qveris/`（Mac/Linux）或 `@.claude\skills\qveris\`（Windows）引用 QVeris 技能：
 
 ```
-Write a python script that prints the current bitcoin price using @.claude/skills/qveris/
+请使用 @.claude/skills/qveris/ 编写一个 Python 脚本，打印当前比特币价格。
 ```
 
 ## 故障排查

@@ -116,10 +116,10 @@ QVeris supports four integration methods:
 
 | Method | Use Case | Documentation |
 |--------|----------|--------------|
-| **CLI** (recommended) | Agents with shell access (Claude Code, OpenClaw, terminals) | https://github.com/QVerisAI/QVerisAI/blob/main/packages/cli/README.md |
-| **MCP Server** | Cursor / Claude Desktop / Any MCP client | https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/mcp-server.md |
-| **Python SDK** | Python projects, Agent frameworks | https://github.com/QVerisAI/QVerisAI/tree/main/packages/python-sdk |
-| **REST API** | Any language, Custom integrations | https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/rest-api.md |
+| **CLI** (recommended) | Agents with shell access (Claude Code, OpenClaw, terminals) | https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/packages/cli/README.md |
+| **MCP Server** | Cursor / Claude Desktop / Any MCP client | https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/mcp-server.md |
+| **Python SDK** | Python projects, Agent frameworks | https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/python-sdk |
+| **REST API** | Any language, Custom integrations | https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/rest-api.md |
 
 ### QVeris CLI — Token-Efficient Agent Tool Use (Recommended)
 
@@ -197,7 +197,7 @@ qveris call 1 --params '{"city":"London"}' --codegen curl
 **Use CLI when:** Agent framework supports `exec` / `bash` (Claude Code, OpenClaw, Cursor terminal)
 **Use MCP when:** IDE only supports MCP protocol (Cursor inline, Claude Desktop)
 
-Full CLI docs: https://github.com/QVerisAI/QVerisAI/blob/main/packages/cli/README.md
+Full CLI docs: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/packages/cli/README.md
 
 ### MCP Server Quick Start
 
@@ -329,11 +329,11 @@ Send this to your Agent:
 Install QVeris skill following https://qveris.ai/skill/instruct.md and use QVERIS_API_KEY=your-key
 ```
 
-The Agent will automatically download the [official OpenClaw skill](https://github.com/QVerisAI/QVerisAI/blob/main/skills/openclaw/qveris-official/SKILL.md) and complete installation.
+The Agent will automatically download the [official OpenClaw skill](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/skills/openclaw/qveris-official/SKILL.md) and complete installation.
 
 ### For Cursor / Claude Code / OpenCode Users
 
-Follow the [setup guide (SETUP.md)](https://github.com/QVerisAI/QVerisAI/blob/main/agent/SETUP.md) — your Agent will configure MCP server + [skill definition](https://github.com/QVerisAI/QVerisAI/blob/main/skills/qveris/SKILL.md) for your environment.
+Follow the [setup guide (SETUP.md)](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/SETUP.md) — your Agent will configure MCP server + [skill definition](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/skills/qveris/SKILL.md) for your environment.
 
 ### Prerequisites
 
@@ -399,7 +399,7 @@ View full audit trail: https://qveris.ai/account (or https://qveris.cn/account)
 
 ### MCP Server Documentation
 
-Full reference: https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/mcp-server.md
+Full reference: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/mcp-server.md
 
 **Available MCP Tools:**
 
@@ -413,7 +413,7 @@ Full reference: https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/mcp-se
 
 ### REST API Documentation
 
-Full reference: https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/rest-api.md
+Full reference: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/rest-api.md
 
 **Authentication:** Bearer token
 
@@ -421,7 +421,7 @@ Full reference: https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/rest-a
 
 ### Python SDK
 
-Repository path: https://github.com/QVerisAI/QVerisAI/tree/main/packages/python-sdk
+Repository path: https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/python-sdk
 
 ```bash
 pip install qveris
@@ -518,32 +518,32 @@ Model improvement is a tailwind for QVeris, not a headwind.
 ### Primary Resources
 
 - **Website:** https://qveris.ai (Global) / https://qveris.cn (China)
-- **GitHub:** https://github.com/QVerisAI/QVerisAI
+- **GitHub:** https://github.com/QVerisAI/qveris-agent-toolkit
 - **Get API Key:** https://qveris.ai/account?page=api-keys (Global) / https://qveris.cn/account?page=api-keys (China) — free, 1,000 credits on signup
 - **Playground:** https://qveris.ai/playground (test capabilities in browser)
 - **Pricing:** https://qveris.ai/pricing
 
 ### Documentation
 
-- **Getting Started:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/getting-started.md
-- **MCP Server:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/mcp-server.md
-- **REST API:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/rest-api.md
-- **Setup Guide:** https://github.com/QVerisAI/QVerisAI/blob/main/agent/SETUP.md
-- **Claude Code Setup:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/claude-code-setup.md
-- **OpenCode Setup:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/opencode-setup.md
-- **IDE/CLI Setup:** https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/ide-cli-setup.md
+- **Getting Started:** https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/getting-started.md
+- **MCP Server:** https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/mcp-server.md
+- **REST API:** https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/rest-api.md
+- **Setup Guide:** https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/SETUP.md
+- **Claude Code Setup:** https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/claude-code-setup.md
+- **OpenCode Setup:** https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/opencode-setup.md
+- **IDE/CLI Setup:** https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/ide-cli-setup.md
 
 ### Skills
 
-- **OpenClaw Official Skill:** https://github.com/QVerisAI/QVerisAI/blob/main/skills/openclaw/qveris-official/SKILL.md
-- **MCP/Client Skill:** https://github.com/QVerisAI/QVerisAI/blob/main/skills/qveris/SKILL.md
+- **OpenClaw Official Skill:** https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/skills/openclaw/qveris-official/SKILL.md
+- **MCP/Client Skill:** https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/skills/qveris/SKILL.md
 - **Agent Install Protocol:** https://qveris.ai/skill/instruct.md
 
 ### SDK & Tools
 
 - **CLI (npm):** https://www.npmjs.com/package/@qverisai/cli — `npm install -g @qverisai/cli` (v0.5.0)
 - **MCP Server (npm):** https://www.npmjs.com/package/@qverisai/mcp — `npx @qverisai/mcp` (v0.6.0)
-- **Python SDK:** https://github.com/QVerisAI/QVerisAI/tree/main/packages/python-sdk
+- **Python SDK:** https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/python-sdk
 - **Online Docs:** https://qveris.ai/docs
 
 ### Open Ecosystem
@@ -554,7 +554,7 @@ QVeris's Discover / Inspect / Call core engine runs as a managed, always-on serv
 
 | Repository | Description |
 |------------|-------------|
-| QVerisAI/QVerisAI | Core monorepo — CLI, MCP server, Python SDK, skills, docs, llms.txt |
+| QVerisAI/qveris-agent-toolkit | Core monorepo — CLI, MCP server, Python SDK, skills, docs, llms.txt |
 | QVerisAI/QVerisBot | MCP Server |
 | QVerisAI/open-qveris-skills | Community skills |
 
@@ -640,8 +640,8 @@ Generate a new UUID for each user session, and reuse it throughout that session.
 
 For the latest updates, always refer to:
 
-- **Simple overview:** https://github.com/QVerisAI/QVerisAI/blob/main/llms.txt
-- **This full reference:** https://github.com/QVerisAI/QVerisAI/blob/main/llms-full.txt
+- **Simple overview:** https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/llms.txt
+- **This full reference:** https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/llms-full.txt
 - **Official documentation:** https://qveris.ai/docs
 
 ---

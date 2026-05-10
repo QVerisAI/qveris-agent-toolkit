@@ -1,7 +1,7 @@
 {
   "name": "@qverisai/mcp",
   "version": "0.6.0",
-  "description": "Official QVeris AI MCP Server SDK - Search and execute tools via natural language",
+  "description": "QVeris MCP server for agent tool discovery, inspection, and calling",
   "keywords": [
     "qveris",
     "mcp",
@@ -14,12 +14,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/QVerisAI/QVerisAI",
+    "url": "https://github.com/QVerisAI/qveris-agent-toolkit",
     "directory": "packages/mcp"
   },
   "homepage": "https://qveris.ai",
   "bugs": {
-    "url": "https://github.com/QVerisAI/QVerisAI/issues"
+    "url": "https://github.com/QVerisAI/qveris-agent-toolkit/issues"
   },
   "type": "module",
   "main": "dist/index.js",

@@ -2,9 +2,10 @@
 <div align="center">
   <img src="assets/logo-light.png" width="120" alt="QVeris Logo" />
 
-  <h1>Every capability. One call away.</h1>
+  <h1>QVeris Agent Toolkit</h1>
 
-  <p><strong>QVeris is the capability routing network for agents — discover, compare, call, and settle capabilities through one protocol.</strong></p>
+  <p><strong>Every capability. One call away.</strong></p>
+  <p>QVeris is the capability routing network for agents. This repository is the open-source agent toolkit: CLI, MCP server, Python SDK, skills, and REST API docs for discovering, inspecting, calling, and auditing real-world tools.</p>
   <p>
   Website: <a href="https://qveris.ai" target="_blank"><b>https://qveris.ai</b></a>
   </p>
@@ -15,14 +16,14 @@
   </p>
 
   <p>
-    <a href="https://github.com/QVerisAI/QVerisAI">
-      <img src="https://img.shields.io/github/stars/QVerisAI/QVerisAI?style=social" alt="GitHub stars" />
+    <a href="https://github.com/QVerisAI/qveris-agent-toolkit">
+      <img src="https://img.shields.io/github/stars/QVerisAI/qveris-agent-toolkit?style=social" alt="GitHub stars" />
     </a>
     <a href="https://www.npmjs.com/package/@qverisai/mcp">
       <img src="https://img.shields.io/npm/v/@qverisai/mcp?label=@qverisai/mcp" alt="npm version" />
     </a>
-    <a href="https://github.com/QVerisAI/QVerisAI/blob/main/LICENSE">
-      <img src="https://img.shields.io/github/license/QVerisAI/QVerisAI" alt="license" />
+    <a href="https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/LICENSE">
+      <img src="https://img.shields.io/github/license/QVerisAI/qveris-agent-toolkit" alt="license" />
     </a>
   </p>
 </div>
@@ -30,6 +31,7 @@
 ---
 
 - `10,000+` capabilities across `15+` categories
+- `Discover / Inspect / Call / Audit` — one protocol for finding, evaluating, invoking, and tracking capabilities
 - `Discover` is free. `Call` returns structured pre-settlement billing, with final charge outcomes available through usage audit and credits ledger views.
 - **NEW** `QVeris CLI` — the most token-efficient way for agents to use tools. [Learn more](#qveris-cli)
 - Works with `CLI` / `MCP` / `Python SDK` / `REST API`
@@ -251,7 +253,7 @@ QVeris's core routing engine runs as a managed service. We actively support the 
 
 ### Monorepo packages
 
-This repository (`QVerisAI/QVerisAI`) is the primary monorepo for QVeris client-side tooling:
+This repository (`QVerisAI/qveris-agent-toolkit`) is the primary monorepo for QVeris client-side tooling:
 
 | Package | Path | Distribution |
 |---------|------|--------------|

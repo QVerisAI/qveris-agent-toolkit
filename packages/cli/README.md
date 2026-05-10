@@ -383,7 +383,7 @@ QVeris CLI uses only Node.js built-in APIs. No `chalk`, no `commander`, no `yarg
 - Website: https://qveris.ai (global) / https://qveris.cn (China)
 - API Docs: https://qveris.ai/docs
 - Get API Key: https://qveris.ai/account?page=api-keys (global) / https://qveris.cn/account?page=api-keys (China)
-- GitHub: https://github.com/QVerisAI/QVerisAI
+- GitHub: https://github.com/QVerisAI/qveris-agent-toolkit
 
 ## License
 

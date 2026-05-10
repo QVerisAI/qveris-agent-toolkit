@@ -48,7 +48,7 @@
 - Session index shortcuts: `qveris inspect 1`, `qveris call 2` (references last discover results)
 - Shell completions: `qveris completions bash|zsh|fish`
 - Install: curl -fsSL https://qveris.ai/cli/install | bash
-- Docs: https://github.com/QVerisAI/QVerisAI/blob/main/packages/cli/README.md
+- Docs: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/packages/cli/README.md
 
 ## MCP Server tools
 - `discover` — find capabilities by natural language query (free)
@@ -69,12 +69,12 @@
 
 ## Install
 - OpenClaw users: https://qveris.ai/skill/instruct.md (official skill: skills/openclaw/qveris-official/SKILL.md)
-- Cursor/Claude Code/OpenCode users: https://github.com/QVerisAI/QVerisAI/blob/main/agent/SETUP.md (uses skill: skills/qveris/SKILL.md)
+- Cursor/Claude Code/OpenCode users: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/SETUP.md (uses skill: skills/qveris/SKILL.md)
 
 ## API docs
-- CLI docs: https://github.com/QVerisAI/QVerisAI/blob/main/packages/cli/README.md
-- MCP Server: https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/mcp-server.md
-- REST API: https://github.com/QVerisAI/QVerisAI/blob/main/docs/en-US/rest-api.md
+- CLI docs: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/packages/cli/README.md
+- MCP Server: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/mcp-server.md
+- REST API: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/rest-api.md
 - Online docs: https://qveris.ai/docs
 
 ## Open Ecosystem
@@ -89,4 +89,4 @@
 - Playground: https://qveris.ai/playground (Global) / https://qveris.cn/playground (China)
 - Pricing: https://qveris.ai/pricing (Global) / https://qveris.cn/pricing (China)
 - Get API Key: https://qveris.ai/account?page=api-keys (Global) / https://qveris.cn/account?page=api-keys (China)
-- GitHub: https://github.com/QVerisAI/QVerisAI
+- GitHub: https://github.com/QVerisAI/qveris-agent-toolkit

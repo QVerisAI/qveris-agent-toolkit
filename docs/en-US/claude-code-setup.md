@@ -33,18 +33,18 @@ claude mcp remove qveris # Remove a server
 
 Download the QVeris MCP/client skill from the GitHub repository:
 
-**Repository:** https://github.com/QVerisAI/QVerisAI/tree/main/skills/qveris
+**Repository:** https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/skills/qveris
 
 **Mac:**
 ```bash
 mkdir -p ~/.claude/skills/qveris
-curl -sL https://raw.githubusercontent.com/QVerisAI/QVerisAI/main/skills/qveris/SKILL.md -o ~/.claude/skills/qveris/SKILL.md
+curl -sL https://raw.githubusercontent.com/QVerisAI/qveris-agent-toolkit/main/skills/qveris/SKILL.md -o ~/.claude/skills/qveris/SKILL.md
 ```
 
 **Windows (PowerShell):**
 ```powershell
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.claude\skills\qveris"
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/QVerisAI/QVerisAI/main/skills/qveris/SKILL.md" -OutFile "$env:USERPROFILE\.claude\skills\qveris\SKILL.md"
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/QVerisAI/qveris-agent-toolkit/main/skills/qveris/SKILL.md" -OutFile "$env:USERPROFILE\.claude\skills\qveris\SKILL.md"
 ```
 
 Your skills directory should look like:
