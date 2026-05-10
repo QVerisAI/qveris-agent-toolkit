@@ -18,6 +18,10 @@ class OpenAIProvider(LLMProvider):
             base_url=self.config.base_url
         )
 
+    async def close(self) -> None:
+        """Close the underlying async HTTP client."""
+        await self.client.close()
+
     async def chat_stream(
         self,
         messages: List[Message],

@@ -31,11 +31,13 @@ When the LLM requests one or more tool calls:
 4. the loop continues with the updated conversation.
 """
 
+import inspect
 import json
 import uuid
 from typing import Any, AsyncGenerator, Awaitable, Callable, Dict, List, Optional
 
 import httpx
+from openai import APIConnectionError, APIStatusError, APITimeoutError, AuthenticationError, RateLimitError
 from openai.types.chat import ChatCompletionToolParam
 
 from ..client.api import QverisClient
@@ -113,6 +115,27 @@ class Agent:
 
         # Setup new session
         self.new_session()
+
+    async def close(self) -> None:
+        """
+        Close network resources owned by the agent.
+
+        Call this when you are done with a long-lived `Agent`, or use the agent as an async
+        context manager so cleanup happens automatically.
+        """
+        await self.client.close()
+
+        close_llm = getattr(self.llm, "close", None)
+        if callable(close_llm):
+            result = close_llm()
+            if inspect.isawaitable(result):
+                await result
+
+    async def __aenter__(self) -> "Agent":
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
+        await self.close()
 
     async def run(
         self,
@@ -226,16 +249,20 @@ class Agent:
             except httpx.HTTPStatusError as e:
                 yield StreamEvent(type="error", error=f"LLM HTTP error {e.response.status_code}: {e.response.text[:200]}")
                 return
+            except AuthenticationError as e:
+                yield StreamEvent(type="error", error=f"LLM authentication failed: {e}")
+                return
+            except RateLimitError as e:
+                yield StreamEvent(type="error", error=f"LLM rate limit exceeded: {e}")
+                return
+            except (APIConnectionError, APITimeoutError) as e:
+                yield StreamEvent(type="error", error=f"LLM connection error: {e}")
+                return
+            except APIStatusError as e:
+                yield StreamEvent(type="error", error=f"LLM API error {e.status_code}: {e}")
+                return
             except Exception as e:
-                error_type = type(e).__name__
-                if error_type in ("AuthenticationError", "APIKeyError"):
-                    yield StreamEvent(type="error", error=f"LLM authentication failed: {e}")
-                elif error_type == "RateLimitError":
-                    yield StreamEvent(type="error", error=f"LLM rate limit exceeded: {e}")
-                elif error_type in ("APIConnectionError", "APITimeoutError"):
-                    yield StreamEvent(type="error", error=f"LLM connection error: {e}")
-                else:
-                    yield StreamEvent(type="error", error=f"LLM error: {e}")
+                yield StreamEvent(type="error", error=f"LLM error: {e}")
                 return
 
             # Handle tool calls
