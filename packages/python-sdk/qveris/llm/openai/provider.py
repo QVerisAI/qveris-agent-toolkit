@@ -143,6 +143,8 @@ class OpenAIProvider(LLMProvider):
             temperature=config.temperature
         )
 
+        if not response.choices:
+            return ChatResponse()
         choice = response.choices[0]
         message = choice.message
 
