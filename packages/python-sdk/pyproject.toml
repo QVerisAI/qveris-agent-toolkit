@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "qveris"
+version = "0.1.0"
+description = "Official Python SDK for QVeris - Build LLM Agents with Search & Execute capabilities"
+requires-python = ">=3.8"
+license = "MIT"
+authors = [
+    { name = "QVeris Team", email = "contact@qveris.ai" },
+]
+dependencies = [
+    "httpx>=0.25.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "openai>=1.0.0",  # Default provider
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "python-dotenv",
+    "rich>=13.0.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["qveris"]
+
