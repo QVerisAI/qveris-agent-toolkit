@@ -29,5 +29,5 @@ Configure this for me https://github.com/QVerisAI/qveris-agent-toolkit/blob/main
 
 OpenCode：
 ```
-Configure this for me https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/opencode-setup.md. The API key is sk-xxxxxxxxxxxxx
+Configure this for me https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/zh-CN/opencode-setup.md. The API key is sk-xxxxxxxxxxxxx
 ```
