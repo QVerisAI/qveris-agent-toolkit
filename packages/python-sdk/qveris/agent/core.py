@@ -345,6 +345,12 @@ class Agent:
             else:
                 should_continue = False
 
+        if should_continue:
+            yield StreamEvent(
+                type="error",
+                error=f"Agent stopped after reaching max_iterations={self.config.max_iterations}"
+            )
+
     async def run_to_completion(self, messages: List[Message]) -> str:
         """
         Run the agent in non-streaming mode and return the final assistant text.

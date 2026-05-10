@@ -15,7 +15,7 @@ Both classes inherit from `pydantic_settings.BaseSettings`, so values can be sup
 
 `QverisConfig`
 - `QVERIS_API_KEY`: Qveris API key (sent as `Authorization: Bearer ...`)
-- `QVERIS_BASE_URL`: API base URL (defaults to `https://api.qveris.com/v1`)
+- `QVERIS_BASE_URL`: API base URL (defaults to `https://qveris.ai/api/v1/`)
 
 `AgentConfig`
 - no fixed env var aliases are defined here (pass values explicitly), but you can still rely on
@@ -38,7 +38,7 @@ class QverisConfig(BaseSettings):
     """
     # Qveris Settings
     api_key: Optional[str] = Field(default=None, validation_alias='QVERIS_API_KEY')
-    base_url: str = Field(default="https://qveris.ai/api/v1", validation_alias='QVERIS_BASE_URL')
+    base_url: str = Field(default="https://qveris.ai/api/v1/", validation_alias='QVERIS_BASE_URL')
 
     # Agent behavior settings
     enable_history_pruning: bool = Field(

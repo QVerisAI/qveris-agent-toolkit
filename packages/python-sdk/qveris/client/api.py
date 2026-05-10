@@ -43,8 +43,9 @@ class QverisClient:
             self.headers["Authorization"] = f"Bearer {self.config.api_key}"
 
         # httpx automatically respects HTTP_PROXY/HTTPS_PROXY env vars
+        self.base_url = self.config.base_url.rstrip("/") + "/"
         self.client = httpx.AsyncClient(
-            base_url=self.config.base_url,
+            base_url=self.base_url,
             headers=self.headers,
             timeout=60.0
         )
@@ -64,6 +65,10 @@ class QverisClient:
             self._debug(f"[Qveris API] Response body (raw): {response.text[:500]}")
             response.raise_for_status()
             raise
+
+    def _url_for(self, path: str, params: Optional[Dict[str, Any]] = None) -> str:
+        """Build the effective request URL using the same httpx client settings."""
+        return str(self.client.build_request("POST", path, params=params).url)
 
     async def close(self):
         """
@@ -86,7 +91,7 @@ class QverisClient:
         Returns:
             `SearchResponse` containing `results` (tools) and `search_id` used for execution.
         """
-        url = f"{self.config.base_url}/search"
+        url = self._url_for("search")
         payload = {
             "query": query,
             "limit": limit,
@@ -99,7 +104,7 @@ class QverisClient:
         self._debug(f"[Qveris API] Request body: {json.dumps(payload, indent=2)}")
         self._debug(f"[Qveris API] Headers: {json.dumps({k: v if k != 'Authorization' else 'Bearer ***' for k, v in self.headers.items()}, indent=2)}")
 
-        response = await self.client.post("/search", json=payload)
+        response = await self.client.post("search", json=payload)
 
         self._debug(f"[Qveris API] Response status: {response.status_code}")
         data = self._parse_response_json(response)
@@ -127,7 +132,7 @@ class QverisClient:
         Returns:
             `ToolExecutionResponse` with `success`, `result`, and metadata.
         """
-        url = f"{self.config.base_url}/tools/execute?tool_id={tool_id}"
+        url = self._url_for("tools/execute", params={"tool_id": tool_id})
         payload = {
             "parameters": parameters
         }
@@ -146,7 +151,7 @@ class QverisClient:
         self._debug(f"[Qveris API] Headers: {json.dumps({k: v if k != 'Authorization' else 'Bearer ***' for k, v in self.headers.items()}, indent=2)}")
 
         response = await self.client.post(
-            "/tools/execute",
+            "tools/execute",
             params={"tool_id": tool_id},
             json=payload
         )
