@@ -2,6 +2,12 @@
 
 Discover, inspect, and call 10,000+ API capabilities from your terminal.
 
+New users can run the guided first-call wizard:
+
+```bash
+qveris init
+```
+
 ```
 $ qveris discover "weather forecast API"
 Found 5 capabilities matching your query
@@ -81,6 +87,10 @@ Requires Node.js 18+.
 ## Quick Start
 
 ```bash
+# Guided path: auth → discover → inspect → call → usage/ledger guidance
+qveris init
+
+# Manual path
 # 1. Authenticate
 qveris login
 
@@ -100,6 +110,7 @@ qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
 
 | Command | Description |
 |---------|-------------|
+| `qveris init` | Guided first-call wizard: auth, discover, inspect, call, and usage/ledger reconciliation guidance. |
 | `qveris discover <query>` | Find capabilities by natural language. Shows tool ID, provider, description, relevance, success rate, latency, and billing rule when available. |
 | `qveris inspect <id\|index>` | View full tool details: parameters (type, required, description, enum values), example, provider info, execution history. |
 | `qveris call <id\|index>` | Execute a capability. Shows result data, execution time, pre-settlement billing, and remaining credits. |
@@ -125,6 +136,20 @@ qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
 | `qveris completions <shell>` | Generate shell completions (bash/zsh/fish) |
 
 ## Usage
+
+### Init
+
+Run the guided first-call wizard:
+
+```bash
+qveris init
+qveris init --query "weather forecast API"
+qveris init --dry-run
+qveris init --resume --params '{"city": "London"}'
+qveris init --json
+```
+
+`init` discovers a capability, inspects the selected result, calls it with sample parameters when available, and ends with exact `usage` / `ledger` commands so you can reconcile final billing. Use `--resume` after recoverable parameter or provider failures to reuse the last discovery session.
 
 ### Discover
 

@@ -29,8 +29,23 @@ export const ERROR_CODES = {
   },
   PARAMS_INVALID_JSON: {
     message: "Invalid JSON in --params",
-    hint: "Check JSON syntax in --params value",
+    hint: "Check JSON syntax in --params value, or pass a file with --params @params.json",
     exit: EX_USAGE,
+  },
+  INIT_PARAMS_REQUIRED: {
+    message: "Init could not infer safe parameters for the selected capability",
+    hint: "Run 'qveris inspect 1' to review required params, then rerun 'qveris init --resume --params <json>'",
+    exit: EX_USAGE,
+  },
+  TOOL_CALL_FAILED: {
+    message: "Capability call failed",
+    hint: "Review the error, adjust --params, then rerun 'qveris init --resume --params <json>'",
+    exit: EX_UNAVAILABLE,
+  },
+  PROVIDER_FAILURE: {
+    message: "Remote provider failed",
+    hint: "Try another discovered capability with 'qveris inspect 2' and 'qveris call 2', or rerun discovery with a broader query",
+    exit: EX_UNAVAILABLE,
   },
   TOOL_NOT_FOUND: {
     message: "Tool not found",
@@ -44,12 +59,12 @@ export const ERROR_CODES = {
   },
   CREDITS_INSUFFICIENT: {
     message: "Insufficient credits",
-    hint: "Purchase credits at https://qveris.ai/pricing",
+    hint: "Purchase credits at https://qveris.ai/pricing, then confirm balance with 'qveris credits'",
     exit: EX_NOPERM,
   },
   SESSION_EXPIRED: {
     message: "Session expired",
-    hint: "Run 'qveris discover' to start a new session",
+    hint: "Run 'qveris discover' or 'qveris init' to start a new session",
     exit: EX_USAGE,
   },
 };

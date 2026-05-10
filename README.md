@@ -144,6 +144,9 @@ npm install -g @qverisai/cli
 ```
 
 ```bash
+# Guided first call: auth → discover → inspect → call → reconcile
+$ qveris init
+
 # Agent workflow: discover → inspect → call
 $ qveris discover "weather forecast API"
 Found 5 capabilities matching your query

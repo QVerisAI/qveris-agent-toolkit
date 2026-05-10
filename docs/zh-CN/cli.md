@@ -36,6 +36,10 @@ npx @qverisai/cli discover "天气 API"
 ## 快速开始
 
 ```bash
+# 引导式首次调用
+qveris init
+
+# 手动流程
 # 1. 认证（保存到 ~/.config/qveris/config.json）
 qveris login
 
@@ -52,6 +56,34 @@ qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
 ---
 
 ## 命令
+
+### `qveris init`
+
+引导式首次调用向导：解析认证、发现能力、检查能力、执行调用，并在最后给出 usage/ledger 对账命令。
+
+```bash
+qveris init [query] [flags]
+```
+
+| 参数 | 说明 | 默认值 |
+|------|------|--------|
+| `--query <query>` | 覆盖发现查询 | `weather forecast API` |
+| `--params <json\|@file\|->` | 覆盖调用参数 | 能力示例参数（如可用） |
+| `--resume` | 在可恢复失败后复用上一次发现会话 | false |
+| `--dry-run` | 打印计划执行的发现/调用载荷，但不实际调用 | false |
+| `--tool-id <id>` | 指定工具 ID，而不是使用第一个发现结果 | 第一个结果 |
+| `--json` | 输出机器可读的向导状态 | false |
+
+**示例：**
+
+```bash
+qveris init
+qveris init --query "股票价格 API"
+qveris init --dry-run
+qveris init --resume --params '{"city": "London"}'
+```
+
+最后一步会打印精确的 `qveris usage` 和 `qveris ledger` 命令，便于确认最终扣费结果。
 
 ### `qveris discover`
 
