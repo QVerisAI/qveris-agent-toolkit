@@ -4,7 +4,7 @@
 
   <h1>Every capability. One call away.</h1>
 
-  <p><strong>QVeris is the capability routing network for agents — discover, compare, call, and settle capabilities through one protocol.</strong></p>
+  <p><strong>QVeris is the capability search engine and routing network for agents — discover, compare, call, and settle capabilities through one protocol.</strong></p>
   <p>
   Website: <a href="https://qveris.ai" target="_blank"><b>https://qveris.ai</b></a>
   </p>
