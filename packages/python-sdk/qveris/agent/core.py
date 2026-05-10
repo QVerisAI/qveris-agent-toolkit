@@ -200,7 +200,7 @@ class Agent:
                     async for event in llm_stream:
                         if event.type in ["content", "reasoning"]:
                             yield event
-                            if event.content:
+                            if event.type == "content" and event.content:
                                 content_accumulated += event.content
                         elif event.type == "reasoning_details":
                             # Accumulate reasoning_details for Gemini thought signatures
