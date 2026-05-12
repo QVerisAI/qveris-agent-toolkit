@@ -2,6 +2,7 @@ import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "n
 import { dirname, join } from "node:path";
 import { homedir, platform } from "node:os";
 import { spawn } from "node:child_process";
+import { createInterface } from "node:readline";
 import { resolveApiKey } from "../client/auth.mjs";
 import { resolveBaseUrl, detectRegionFromKey } from "../config/region.mjs";
 import { CliError } from "../errors/handler.mjs";
