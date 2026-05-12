@@ -7,7 +7,9 @@ import { join } from "node:path";
 import test from "node:test";
 
 import {
+  extractEnvAssignmentValue,
   mcpSpawnOptions,
+  resolveProbeTimeoutMs,
   shellQuoteForPlatform,
   writeTargetConfig,
 } from "../src/commands/mcp.mjs";
@@ -69,6 +71,33 @@ test("mcp live probe enables shell execution on Windows only", () => {
 test("mcp command quoting follows the target shell platform", () => {
   assert.equal(shellQuoteForPlatform("L'Ondon", "darwin"), `'L'\\''Ondon'`);
   assert.equal(shellQuoteForPlatform('say "hi"', "win32"), `"say ""hi"""`);
+});
+
+test("mcp probe timeout parsing always returns a valid duration", () => {
+  assert.equal(resolveProbeTimeoutMs("2.5"), 2500);
+  assert.equal(resolveProbeTimeoutMs("0.25"), 1000);
+  assert.equal(resolveProbeTimeoutMs("not-a-number"), 15000);
+  assert.equal(resolveProbeTimeoutMs("-2"), 15000);
+  assert.equal(resolveProbeTimeoutMs(undefined), 15000);
+});
+
+test("mcp command env extraction handles shell quoted values", () => {
+  assert.equal(
+    extractEnvAssignmentValue("claude mcp add --env QVERIS_API_KEY='sk-test' -- npx", "QVERIS_API_KEY"),
+    "sk-test"
+  );
+  assert.equal(
+    extractEnvAssignmentValue("claude mcp add --env QVERIS_API_KEY='sk'\\''quoted' -- npx", "QVERIS_API_KEY"),
+    "sk'quoted"
+  );
+  assert.equal(
+    extractEnvAssignmentValue('claude mcp add --env QVERIS_API_KEY="sk ""quoted""" -- cmd /c npx', "QVERIS_API_KEY"),
+    'sk "quoted"'
+  );
+  assert.equal(
+    extractEnvAssignmentValue("NOT_QVERIS_API_KEY=bad QVERIS_API_KEY=sk-real", "QVERIS_API_KEY"),
+    "sk-real"
+  );
 });
 
 test("mcp configure emits valid JSON fragments for each supported target", () => {
@@ -337,26 +366,33 @@ test("mcp validate probe verifies visible stdio tools", () => {
     writeFileSync(serverPath, `
 import readline from "node:readline";
 
+function writeChunked(message) {
+  const line = JSON.stringify(message);
+  const midpoint = Math.floor(line.length / 2);
+  process.stdout.write(line.slice(0, midpoint));
+  setTimeout(() => process.stdout.write(line.slice(midpoint) + "\\n"), 5);
+}
+
 const rl = readline.createInterface({ input: process.stdin });
 rl.on("line", (line) => {
   const message = JSON.parse(line);
   if (message.id === 1) {
-    console.log(JSON.stringify({
+    writeChunked({
       jsonrpc: "2.0",
       id: 1,
       result: {
         protocolVersion: "2024-11-05",
         capabilities: {},
-        serverInfo: { name: "fake-qveris-mcp", version: "1.0.0" }
+        serverInfo: { name: "fake-qveris-mcp-探测", version: "1.0.0" }
       }
-    }));
+    });
   }
   if (message.id === 2) {
-    console.log(JSON.stringify({
+    writeChunked({
       jsonrpc: "2.0",
       id: 2,
       result: { tools: [{ name: "discover" }, { name: "inspect" }, { name: "call" }] }
-    }));
+    });
   }
 });
 `);
@@ -375,7 +411,7 @@ rl.on("line", (line) => {
       configPath,
       "--probe",
       "--timeout",
-      "2",
+      "not-a-number",
       "--json",
     ]);
     assert.equal(result.status, 0, result.stderr);

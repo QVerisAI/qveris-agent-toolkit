@@ -306,7 +306,7 @@ async function probeVisibleTools(target, config, flags) {
   }
 
   try {
-    const timeoutMs = Math.max(1000, Number(flags.timeout || 15) * 1000);
+    const timeoutMs = resolveProbeTimeoutMs(flags.timeout);
     const toolNames = await listMcpTools(spec, timeoutMs);
     const required = ["discover", "inspect", "call"];
     const missing = required.filter((name) => !toolNames.includes(name));
@@ -356,15 +356,16 @@ function stdioSpecFromServer(target, server) {
 function listMcpTools(spec, timeoutMs) {
   return new Promise((resolve, reject) => {
     const child = spawn(spec.command, spec.args || [], mcpSpawnOptions(spec.env));
-    let stdout = "";
     let stderr = "";
     let settled = false;
     let timer;
+    let rl;
 
     const finish = (fn, value) => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      if (rl) rl.close();
       child.kill();
       fn(value);
     };
@@ -399,21 +400,13 @@ function listMcpTools(spec, timeoutMs) {
       }
     };
 
-    child.stdout.setEncoding("utf8");
-    child.stdout.on("data", (chunk) => {
-      stdout += chunk;
-      let index = stdout.indexOf("\n");
-      while (index !== -1) {
-        const line = stdout.slice(0, index).trim();
-        stdout = stdout.slice(index + 1);
-        if (line) {
-          try {
-            handleMessage(JSON.parse(line));
-          } catch {
-            finish(reject, new Error(`invalid MCP JSON response: ${line.slice(0, 120)}`));
-          }
-        }
-        index = stdout.indexOf("\n");
+    rl = createInterface({ input: child.stdout, terminal: false });
+    rl.on("line", (line) => {
+      if (!line.trim()) return;
+      try {
+        handleMessage(JSON.parse(line));
+      } catch {
+        finish(reject, new Error(`invalid MCP JSON response: ${line.slice(0, 120)}`));
       }
     });
 
@@ -442,6 +435,12 @@ function listMcpTools(spec, timeoutMs) {
       },
     });
   });
+}
+
+export function resolveProbeTimeoutMs(timeout) {
+  const seconds = Number.parseFloat(timeout ?? "15");
+  const usableSeconds = Number.isFinite(seconds) && seconds > 0 ? seconds : 15;
+  return Math.max(1000, usableSeconds * 1000);
 }
 
 export function mcpSpawnOptions(env = {}, os = platform()) {
@@ -566,21 +565,57 @@ function commandHasUsableApiKey(command) {
   return typeof value === "string" && value.trim() !== "" && !isPlaceholderApiKey(value);
 }
 
-function extractEnvAssignmentValue(command, name) {
+export function extractEnvAssignmentValue(command, name) {
   if (typeof command !== "string") return null;
   const marker = `${name}=`;
-  const start = command.indexOf(marker);
+  let start = command.indexOf(marker);
+  while (start !== -1 && start > 0 && !/\s/.test(command[start - 1])) {
+    start = command.indexOf(marker, start + marker.length);
+  }
   if (start === -1) return null;
   const valueStart = start + marker.length;
-  const quote = command[valueStart];
-  if (quote === "'" || quote === "\"") {
-    const end = command.indexOf(quote, valueStart + 1);
-    if (end === -1) return command.slice(valueStart + 1);
-    const value = command.slice(valueStart + 1, end);
-    return quote === "\"" ? value.replaceAll("\"\"", "\"") : value;
+  return readShellToken(command, valueStart);
+}
+
+function readShellToken(command, start) {
+  let value = "";
+  let quote = null;
+  for (let i = start; i < command.length; i++) {
+    const char = command[i];
+    if (!quote && /\s/.test(char)) break;
+
+    if (quote === "'") {
+      if (char === "'") quote = null;
+      else value += char;
+      continue;
+    }
+
+    if (quote === "\"") {
+      if (char === "\"") {
+        if (command[i + 1] === "\"") {
+          value += "\"";
+          i += 1;
+        } else {
+          quote = null;
+        }
+      } else if (char === "\\" && i + 1 < command.length) {
+        value += command[i + 1];
+        i += 1;
+      } else {
+        value += char;
+      }
+      continue;
+    }
+
+    if (char === "'" || char === "\"") quote = char;
+    else if (char === "\\" && i + 1 < command.length) {
+      value += command[i + 1];
+      i += 1;
+    } else {
+      value += char;
+    }
   }
-  const end = command.slice(valueStart).search(/\s/);
-  return end === -1 ? command.slice(valueStart) : command.slice(valueStart, valueStart + end);
+  return value;
 }
 
 function unique(values) {
