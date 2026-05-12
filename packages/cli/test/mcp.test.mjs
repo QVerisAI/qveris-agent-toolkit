@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { chmodSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { platform, tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -129,6 +129,22 @@ test("mcp command is reachable through the CLI and parses target flags", () => {
   assert.equal(payload.config.env.QVERIS_API_KEY, "YOUR_QVERIS_API_KEY");
 });
 
+test("mcp command parses MCP value flags with equals syntax", () => {
+  const dir = mkdtempSync(join(tmpdir(), "qveris-cli-mcp-"));
+  try {
+    const path = join(dir, "generic-mcp.json");
+    const result = runCli(["mcp", "configure", "--target=generic", `--output=${path}`, "--write", "--json"]);
+    assert.equal(result.status, 0, result.stderr);
+    const payload = parseCliJson(result);
+
+    assert.equal(payload.target, "generic");
+    assert.equal(payload.path, path);
+    assert.equal(existsSync(path), true);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("mcp configure write merges cursor config and validate reads it back", () => {
   const dir = mkdtempSync(join(tmpdir(), "qveris-cli-mcp-"));
   try {
@@ -180,7 +196,53 @@ test("mcp configure write merges cursor config and validate reads it back", () =
   }
 });
 
-test("mcp validate reports placeholder keys as invalid configs", () => {
+test("mcp configure write redacts real api keys from command output", () => {
+  const dir = mkdtempSync(join(tmpdir(), "qveris-cli-mcp-"));
+  try {
+    const jsonPath = join(dir, "generic-json.json");
+    const jsonResult = runCli([
+      "mcp",
+      "configure",
+      "--target",
+      "generic",
+      "--output",
+      jsonPath,
+      "--write",
+      "--include-key",
+      "--api-key",
+      "sk-secret-123",
+      "--json",
+    ]);
+    assert.equal(jsonResult.status, 0, jsonResult.stderr);
+    assert.equal(jsonResult.stdout.includes("sk-secret-123"), false);
+    const jsonPayload = parseCliJson(jsonResult);
+
+    assert.equal(jsonPayload.config.env.QVERIS_API_KEY, "********");
+    assert.equal(JSON.parse(readFileSync(jsonPath, "utf8")).env.QVERIS_API_KEY, "sk-secret-123");
+
+    const humanPath = join(dir, "generic-human.json");
+    const humanResult = runCli([
+      "mcp",
+      "configure",
+      "--target",
+      "generic",
+      "--output",
+      humanPath,
+      "--write",
+      "--include-key",
+      "--api-key",
+      "sk-secret-456",
+    ]);
+    assert.equal(humanResult.status, 0, humanResult.stderr);
+    assert.equal(humanResult.stdout.includes("sk-secret-456"), false);
+    assert.equal(humanResult.stdout.includes("********"), true);
+    assert.equal(JSON.parse(readFileSync(humanPath, "utf8")).env.QVERIS_API_KEY, "sk-secret-456");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("mcp validate reports generated placeholder keys as invalid configs", () => {
   const dir = mkdtempSync(join(tmpdir(), "qveris-cli-mcp-"));
   try {
     const path = join(dir, "generic-mcp.json");
@@ -196,6 +258,75 @@ test("mcp validate reports placeholder keys as invalid configs", () => {
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test("mcp validate rejects common manual placeholder keys", () => {
+  const dir = mkdtempSync(join(tmpdir(), "qveris-cli-mcp-"));
+  try {
+    const cases = [
+      {
+        target: "generic",
+        check: "api_key_env",
+        key: "your-api-key",
+        config: {
+          command: "npx",
+          args: ["-y", "@qverisai/mcp"],
+          env: { QVERIS_API_KEY: "your-api-key" },
+        },
+      },
+      {
+        target: "generic",
+        check: "api_key_env",
+        key: "YOUR_API_KEY",
+        config: {
+          command: "npx",
+          args: ["-y", "@qverisai/mcp"],
+          env: { QVERIS_API_KEY: "YOUR_API_KEY" },
+        },
+      },
+      {
+        target: "openclaw",
+        check: "api_key_config",
+        key: "your-api-key",
+        config: {
+          plugins: {
+            allow: ["qveris"],
+            entries: {
+              qveris: {
+                enabled: true,
+                config: { apiKey: "your-api-key", region: "global" },
+              },
+            },
+          },
+          tools: { alsoAllow: ["qveris"] },
+        },
+      },
+    ];
+
+    for (const item of cases) {
+      const path = join(dir, `${item.target}-${item.key}.json`);
+      writeFileSync(path, JSON.stringify(item.config, null, 2) + "\n");
+
+      const result = runCli(["mcp", "validate", "--target", item.target, "--output", path, "--json"]);
+      assert.equal(result.status, 1, result.stderr);
+      const payload = parseCliJson(result);
+
+      assert.equal(payload.ok, false);
+      assert.equal(payload.checks.find((check) => check.name === item.check).ok, false);
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("mcp configure claude-code marks placeholder commands invalid", () => {
+  const result = runCli(["mcp", "configure", "--target", "claude-code", "--json"]);
+  assert.equal(result.status, 0, result.stderr);
+  const payload = parseCliJson(result);
+
+  assert.equal(payload.config.command.includes("YOUR_QVERIS_API_KEY"), true);
+  assert.equal(payload.validation.ok, false);
+  assert.equal(payload.validation.checks.find((item) => item.name === "api_key_env").ok, false);
 });
 
 test("mcp validate probe verifies visible stdio tools", () => {

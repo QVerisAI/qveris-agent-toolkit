@@ -142,7 +142,7 @@ const VALUE_FLAGS = {
   "api-key": "apiKey", "base-url": "baseUrl", timeout: "timeout",
   limit: "limit", "discovery-id": "discoveryId", params: "params",
   "max-size": "maxSize", codegen: "codegen", token: "token",
-  query: "query", "tool-id": "toolId",
+  query: "query", "tool-id": "toolId", target: "target", output: "output",
   mode: "mode", "start-date": "startDate", "end-date": "endDate",
   bucket: "bucket", "execution-id": "executionId", "search-id": "searchId",
   "event-type": "eventType", kind: "kind", success: "success",

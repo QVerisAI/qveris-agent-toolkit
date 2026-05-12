@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { homedir, platform } from "node:os";
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
-import { resolveApiKey } from "../client/auth.mjs";
+import { isPlaceholderApiKey, resolveApiKey } from "../client/auth.mjs";
 import { resolveBaseUrl, detectRegionFromKey } from "../config/region.mjs";
 import { CliError } from "../errors/handler.mjs";
 import { bold, cyan, dim, green, red, yellow } from "../output/colors.mjs";
@@ -51,8 +51,9 @@ function configure(args, flags) {
     const written = writeTargetConfig(target, outputPath, fragment);
     const validation = validateConfigObject(target, written.config);
     const payload = { ...printable, wrote: true, path: written.path, validation };
-    if (flags.json) outputJson(payload);
-    else printConfigureResult(payload);
+    const outputPayload = redactWrittenPayload(payload);
+    if (flags.json) outputJson(outputPayload);
+    else printConfigureResult(outputPayload);
     return;
   }
 
@@ -266,14 +267,17 @@ function validateOpenClawConfig(config) {
 }
 
 function validateClaudeCodeCommand(fragment) {
-  const ok = Boolean(fragment?.command?.includes("@qverisai/mcp"));
+  const commandPresent = Boolean(fragment?.command);
+  const usesPackage = Boolean(fragment?.command?.includes("@qverisai/mcp"));
+  const hasUsableKey = commandHasUsableApiKey(fragment?.command);
+  const checks = [
+    check("command_present", commandPresent, "Claude Code command was generated"),
+    check("uses_qveris_mcp", usesPackage, "Command runs @qverisai/mcp"),
+    check("api_key_env", hasUsableKey, "Command includes a usable QVERIS_API_KEY value"),
+  ];
   return {
-    ok,
-    checks: [
-      check("command_present", Boolean(fragment?.command), "Claude Code command was generated"),
-      check("uses_qveris_mcp", ok, "Command runs @qverisai/mcp"),
-      check("api_key_env", Boolean(fragment?.command?.includes("QVERIS_API_KEY")), "Command includes QVERIS_API_KEY environment"),
-    ],
+    ok: checks.every((item) => item.ok),
+    checks,
     expected_tools: EXPECTED_TOOLS,
   };
 }
@@ -468,14 +472,7 @@ function hasUsableApiKey(server, target) {
     ? server.config?.apiKey
     : server.env?.QVERIS_API_KEY || server.environment?.QVERIS_API_KEY;
   if (typeof value !== "string" || !value.trim()) return false;
-  const normalized = value.trim().toLowerCase();
-  return ![
-    API_KEY_PLACEHOLDER.toLowerCase(),
-    "your-api-key-here",
-    "sk-cn-your-api-key-here",
-    "sk-1_xxx",
-    "sk-1_",
-  ].includes(normalized);
+  return !isPlaceholderApiKey(value);
 }
 
 function check(name, ok, message) {
@@ -524,6 +521,24 @@ function printConfigureResult(payload) {
   if (payload.validation) printValidation(payload.validation);
 }
 
+function redactWrittenPayload(payload) {
+  if (!payload.wrote || !payload.includes_real_api_key) return payload;
+  return { ...payload, config: redactConfigSecrets(payload.config) };
+}
+
+function redactConfigSecrets(value) {
+  if (Array.isArray(value)) return value.map((item) => redactConfigSecrets(item));
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(Object.entries(value).map(([key, nested]) => [
+    key,
+    isSecretConfigKey(key) ? "********" : redactConfigSecrets(nested),
+  ]));
+}
+
+function isSecretConfigKey(key) {
+  return key === "QVERIS_API_KEY" || key === "apiKey";
+}
+
 function printValidation(payload) {
   console.log(`\n  ${bold("MCP validation")}${payload.target ? ` ${dim(payload.target)}` : ""}\n`);
   for (const item of payload.checks || []) {
@@ -544,6 +559,28 @@ function buildClaudeCodeEnvArgs(env, os) {
 export function shellQuoteForPlatform(value, os = platform()) {
   if (os === "win32") return `"${String(value).replaceAll("\"", "\"\"")}"`;
   return `'${String(value).replaceAll("'", "'\\''")}'`;
+}
+
+function commandHasUsableApiKey(command) {
+  const value = extractEnvAssignmentValue(command, "QVERIS_API_KEY");
+  return typeof value === "string" && value.trim() !== "" && !isPlaceholderApiKey(value);
+}
+
+function extractEnvAssignmentValue(command, name) {
+  if (typeof command !== "string") return null;
+  const marker = `${name}=`;
+  const start = command.indexOf(marker);
+  if (start === -1) return null;
+  const valueStart = start + marker.length;
+  const quote = command[valueStart];
+  if (quote === "'" || quote === "\"") {
+    const end = command.indexOf(quote, valueStart + 1);
+    if (end === -1) return command.slice(valueStart + 1);
+    const value = command.slice(valueStart + 1, end);
+    return quote === "\"" ? value.replaceAll("\"\"", "\"") : value;
+  }
+  const end = command.slice(valueStart).search(/\s/);
+  return end === -1 ? command.slice(valueStart) : command.slice(valueStart, valueStart + end);
 }
 
 function unique(values) {

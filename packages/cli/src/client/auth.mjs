@@ -16,11 +16,15 @@ export function resolveApiKey(flagValue) {
   }
 
   const trimmed = value.trim();
-  for (const pattern of PLACEHOLDER_PATTERNS) {
-    if (pattern.test(trimmed)) {
-      throw new CliError("AUTH_MISSING_KEY", "API key appears to be a placeholder. Set a real key.");
-    }
+  if (isPlaceholderApiKey(trimmed)) {
+    throw new CliError("AUTH_MISSING_KEY", "API key appears to be a placeholder. Set a real key.");
   }
 
   return trimmed;
+}
+
+export function isPlaceholderApiKey(value) {
+  if (typeof value !== "string") return true;
+  const trimmed = value.trim();
+  return PLACEHOLDER_PATTERNS.some((pattern) => pattern.test(trimmed));
 }
