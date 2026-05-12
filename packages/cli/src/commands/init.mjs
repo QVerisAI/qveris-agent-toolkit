@@ -344,7 +344,9 @@ function printHumanSummary(payload) {
     }
     if (step.name === "discover") {
       console.log(`      ${dim("search_id")} ${step.search_id || payload.discovery.search_id}`);
-      if (step.selected_tool_id) console.log(`      ${dim("selected")} ${cyan(step.selected_tool_id)}`);
+    }
+    if (step.name === "inspect" && step.tool_id) {
+      console.log(`      ${dim("selected")} ${cyan(step.tool_id)}`);
     }
     if (step.name === "call" && step.execution_id) {
       console.log(`      ${dim("execution_id")} ${step.execution_id}`);

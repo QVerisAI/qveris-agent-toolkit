@@ -206,6 +206,42 @@ test("init selects a candidate whose required params match provided params", asy
   });
 });
 
+test("init human summary prints selected tool after inspection", async () => {
+  await withTempConfig(async () => {
+    await withMockFetch((request) => {
+      if (request.url.pathname.endsWith("/search")) {
+        return response({
+          search_id: "search-1",
+          total: 1,
+          results: [{ tool_id: "weather.tool.v1", name: "Weather" }],
+        });
+      }
+      if (request.url.pathname.endsWith("/tools/by-ids")) {
+        return response({
+          results: [
+            {
+              tool_id: "weather.tool.v1",
+              name: "Weather",
+              params: [{ name: "city", required: true }],
+              examples: { sample_parameters: { city: "London" } },
+            },
+          ],
+        });
+      }
+      throw new Error(`unexpected path ${request.url.pathname}`);
+    }, async () => {
+      const stdout = await captureStdout(() => runInit(null, {
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        dryRun: true,
+      }));
+
+      assert.match(stdout, /search_id\s+search-1/);
+      assert.match(stdout, /inspect[\s\S]*selected\s+weather\.tool\.v1/);
+    });
+  });
+});
+
 test("init call uses max size and failure hint remains copyable with single quotes", async () => {
   await withTempConfig(async () => {
     await withMockFetch((request) => {
