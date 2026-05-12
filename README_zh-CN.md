@@ -142,6 +142,9 @@ npm install -g @qverisai/cli
 ```
 
 ```bash
+# 引导式首次调用：认证 → 发现 → 检查 → 调用 → 对账
+$ qveris init
+
 # Agent 工作流：discover → inspect → call
 $ qveris discover "weather forecast API"
 Found 5 capabilities matching your query

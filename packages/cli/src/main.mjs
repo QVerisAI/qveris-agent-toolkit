@@ -52,6 +52,11 @@ export async function main(argv) {
         await runCall(rest[0], flags);
         break;
       }
+      case "init": {
+        const { runInit } = await import("./commands/init.mjs");
+        await runInit(rest.join(" "), flags);
+        break;
+      }
       case "login": {
         const { runLogin } = await import("./commands/login.mjs");
         await runLogin(flags);
@@ -129,6 +134,7 @@ const VALUE_FLAGS = {
   "api-key": "apiKey", "base-url": "baseUrl", timeout: "timeout",
   limit: "limit", "discovery-id": "discoveryId", params: "params",
   "max-size": "maxSize", codegen: "codegen", token: "token",
+  query: "query", "tool-id": "toolId",
   mode: "mode", "start-date": "startDate", "end-date": "endDate",
   bucket: "bucket", "execution-id": "executionId", "search-id": "searchId",
   "event-type": "eventType", kind: "kind", success: "success",
@@ -192,6 +198,8 @@ function extractGlobalFlags(args) {
         flags.version = true; break;
       case "--dry-run":
         flags.dryRun = true; break;
+      case "--resume":
+        flags.resume = true; break;
       case "--no-browser":
         flags.noBrowser = true; break;
       case "--clear":
@@ -214,6 +222,10 @@ function extractGlobalFlags(args) {
         flags.codegen = takeNext(args, i++, arg); break;
       case "--token":
         flags.token = takeNext(args, i++, arg); break;
+      case "--query":
+        flags.query = takeNext(args, i++, arg); break;
+      case "--tool-id":
+        flags.toolId = takeNext(args, i++, arg); break;
       case "--mode":
         flags.mode = takeNext(args, i++, arg); break;
       case "--start-date":
@@ -262,6 +274,7 @@ function printUsage(flags = {}) {
     qveris <command> [args] [flags]
 
   ${bold("Core Commands:")}
+    ${cyan("init")}                         Guided first-call wizard
     ${cyan("discover")} <query>             Find capabilities by natural language
     ${cyan("inspect")}  <tool_id|index>     View tool details, parameters, and stats
     ${cyan("call")}     <tool_id|index>     Execute a capability
@@ -288,6 +301,9 @@ function printUsage(flags = {}) {
     --api-key <key>        Override API key
     --base-url <url>       Override API base URL
     --timeout <seconds>    Request timeout
+    --query <query>        Init discovery query override
+    --tool-id <id>         Init selected capability override
+    --resume               Resume init from the last discovery session
     --mode <mode>          summary | search | export-file for usage/ledger
     --start-date <date>    Usage/ledger range start (YYYY-MM-DD)
     --end-date <date>      Usage/ledger range end (YYYY-MM-DD)
@@ -304,6 +320,9 @@ function printUsage(flags = {}) {
     QVERIS_BASE_URL        Custom API base URL
 
   ${bold("Examples:")}
+    qveris init
+    qveris init --query "weather forecast API"
+    qveris init --resume --params '{"city": "London"}'
     qveris discover "weather forecast API"
     qveris inspect 1
     qveris call 1 --params '{"city": "London"}'
