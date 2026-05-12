@@ -78,7 +78,7 @@ class QverisClient:
         """
         await self.client.aclose()
 
-    async def discover(self, query: str, limit: int = 100, session_id: Optional[str] = None) -> SearchResponse:
+    async def discover(self, query: str, limit: int = 20, session_id: Optional[str] = None) -> SearchResponse:
         """
         Discover capabilities from the Qveris index.
 
