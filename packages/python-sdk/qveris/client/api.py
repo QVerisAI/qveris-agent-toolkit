@@ -111,7 +111,7 @@ class QverisClient:
         response.raise_for_status()
         return SearchResponse(**data)
 
-    async def search_tools(self, query: str, limit: int = 100, session_id: Optional[str] = None) -> SearchResponse:
+    async def search_tools(self, query: str, limit: int = 20, session_id: Optional[str] = None) -> SearchResponse:
         """
         Deprecated alias for `discover(...)`.
         """
