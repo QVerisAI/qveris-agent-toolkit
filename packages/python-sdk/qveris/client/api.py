@@ -218,7 +218,7 @@ class QverisClient:
             if func_name in {"discover", "search_tools"}:
                 result = await self.discover(
                     query=func_args.get("query"),
-                    limit=func_args.get("limit", 10),
+                    limit=func_args.get("limit", 20),
                     session_id=session_id
                 )
                 return result.model_dump(), False, True
