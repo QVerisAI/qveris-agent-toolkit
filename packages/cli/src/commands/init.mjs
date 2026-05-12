@@ -145,9 +145,11 @@ export async function runInit(queryArg, flags) {
   });
 
   if (!callResult.success) {
-    const err = new CliError("TOOL_CALL_FAILED", callResult.error_message || "The selected capability returned success=false.");
-    if (looksLikeProviderFailure(callResult.error_message)) err.code = "PROVIDER_FAILURE";
-    err.hint = `Rerun with adjusted params: qveris init --resume --params ${shellSingleQuote(JSON.stringify(parameters))}`;
+    const code = looksLikeProviderFailure(callResult.error_message) ? "PROVIDER_FAILURE" : "TOOL_CALL_FAILED";
+    const err = new CliError(code, callResult.error_message || "The selected capability returned success=false.");
+    if (code === "TOOL_CALL_FAILED") {
+      err.hint = `Rerun with adjusted params: qveris init --resume --params ${shellSingleQuote(JSON.stringify(parameters))}`;
+    }
     throw err;
   }
 

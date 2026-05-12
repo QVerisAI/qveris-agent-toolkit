@@ -253,3 +253,50 @@ test("init call uses max size and failure hint remains copyable with single quot
     });
   });
 });
+
+test("init provider failures keep provider recovery hint", async () => {
+  await withTempConfig(async () => {
+    await withMockFetch((request) => {
+      if (request.url.pathname.endsWith("/search")) {
+        return response({
+          search_id: "search-1",
+          total: 1,
+          results: [{ tool_id: "weather.tool.v1", name: "Weather" }],
+        });
+      }
+      if (request.url.pathname.endsWith("/tools/by-ids")) {
+        return response({
+          results: [
+            {
+              tool_id: "weather.tool.v1",
+              name: "Weather",
+              examples: { sample_parameters: { city: "London" } },
+            },
+          ],
+        });
+      }
+      if (request.url.pathname.endsWith("/tools/execute")) {
+        return response({
+          execution_id: "exec-1",
+          success: false,
+          error_message: "upstream provider temporarily unavailable",
+        });
+      }
+      throw new Error(`unexpected path ${request.url.pathname}`);
+    }, async () => {
+      await assert.rejects(
+        () => runInit(null, {
+          apiKey: "sk-test",
+          baseUrl: "https://unit.test/api/v1",
+          json: true,
+        }),
+        (err) => (
+          err instanceof CliError &&
+          err.code === "PROVIDER_FAILURE" &&
+          err.hint.includes("Try another discovered capability") &&
+          !err.hint.includes("--params")
+        )
+      );
+    });
+  });
+});
