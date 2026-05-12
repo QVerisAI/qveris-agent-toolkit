@@ -135,7 +135,7 @@ class QverisClient:
         Returns:
             `SearchResponse` with full tool details for the requested IDs.
         """
-        ids = [tool_ids] if isinstance(tool_ids, str) else list(tool_ids)
+        ids = [tool_ids] if isinstance(tool_ids, str) else list(tool_ids or [])
         url = self._url_for("tools/by-ids")
         payload: Dict[str, Any] = {"tool_ids": ids}
         if search_id:
