@@ -4,7 +4,7 @@ from ..types import Message
 
 def prune_tool_history(messages: List[Message], previous_messages_count: int) -> List[Message]:
     """
-    Collapses old 'search_tools' results into concise summaries to save tokens.
+    Collapses old discovery results into concise summaries to save tokens.
 
     Args:
         messages: The full message history
@@ -29,7 +29,7 @@ def prune_tool_history(messages: List[Message], previous_messages_count: int) ->
         if msg.role == 'tool' and msg.tool_call_id and i < previous_messages_count:
             tool_name = tool_id_to_name.get(msg.tool_call_id)
 
-            if tool_name == 'search_tools' and msg.content:
+            if tool_name in {'discover', 'search_tools'} and msg.content:
                 try:
                     content_obj = json.loads(msg.content)
                     # If it has 'results' array, it's the full uncompressed result

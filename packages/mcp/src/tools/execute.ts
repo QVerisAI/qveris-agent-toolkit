@@ -54,7 +54,7 @@ export interface ExecuteToolInput {
 }
 
 /**
- * JSON Schema for the execute_tool tool input.
+ * JSON Schema for the call tool input.
  * Used by MCP to validate and document the tool parameters.
  */
 export const executeToolSchema = {
@@ -97,7 +97,7 @@ export const executeToolSchema = {
 };
 
 /**
- * Executes the execute_tool operation.
+ * Executes the call operation.
  *
  * @param client - Initialized Qveris API client
  * @param input - Execution parameters

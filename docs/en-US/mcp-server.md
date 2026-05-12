@@ -331,7 +331,7 @@ If `session_id` is omitted, the MCP server may generate one for the lifetime of 
 
 - Verify the API key is valid
 - Verify the selected `tool_id` came from a prior discovery
-- Re-run `get_tools_by_ids` to inspect the tool before calling
+- Re-run `inspect` to inspect the tool before calling
 - Check that `params_to_tool` is a valid object
 
 ### Windows-specific issues

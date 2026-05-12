@@ -412,7 +412,7 @@ Each tool parameter follows this schema:
 For LLM/agent tool use scenario, below are example code snippets to encapsulate QVeris AI REST API calls into tools that can be invoked by large language models:
 
 ```typescript
-export async function searchTools(
+export async function discoverCapabilities(
   query: string,
   sessionId: string,
   limit: number = 20
@@ -425,7 +425,7 @@ export async function searchTools(
   return response.data
 }
 
-export async function executeTool(
+export async function callCapability(
   toolId: string,
   searchId: string,
   sessionId: string,
@@ -443,22 +443,22 @@ export async function executeTool(
 }
 
 export const qverisApi = {
-  searchTools,
-  executeTool,
+  discover: discoverCapabilities,
+  call: callCapability,
 }
 
-// Execute tool function
-async function executeTool(name: string, args: Record<string, unknown>) {
+// Dispatch model tool calls to QVeris
+async function handleModelToolCall(name: string, args: Record<string, unknown>) {
   console.log(`[Tool] Executing ${name} with:`, args)
 
-  if (name === 'search_tools') {
-    const result = await qverisApi.searchTools(
+  if (name === 'discover') {
+    const result = await qverisApi.discover(
       args.query as string,
       args.session_id as string,
       20
     )
     return result
-  } else if (name === 'execute_tool') {
+  } else if (name === 'call') {
     let parsedParams: Record<string, unknown>
     try {
       parsedParams = JSON.parse(args.params_to_tool as string) as
@@ -473,7 +473,7 @@ async function executeTool(name: string, args: Record<string, unknown>) {
       )
     }
 
-    const result = await qverisApi.executeTool(
+    const result = await qverisApi.call(
       args.tool_id as string,
       args.search_id as string,
       args.session_id as string,
@@ -486,15 +486,17 @@ async function executeTool(name: string, args: Record<string, unknown>) {
 }
 ```
 
-Below are example declarations for the encapsulated search and execute tools. Just add them to chat completion tool list.
+Below are example declarations for the canonical `discover` and `call` tools. Just add them to the chat completion tool list.
+
+Deprecated aliases (`search_tools`, `get_tools_by_ids`, `execute_tool`) remain supported by the MCP server for backward compatibility, but new tool declarations should use `discover`, `inspect`, and `call`.
 
 ```javascript
 {
   type: 'function',
   function: {
-    name: 'search_tools',
+    name: 'discover',
     description:
-      'Search for available tools. Returns relevant tools that can help accomplish tasks.',
+      'Discover available capabilities. Returns relevant tools that can help accomplish tasks.',
     parameters: {
       type: 'object',
       properties: {
@@ -514,9 +516,9 @@ Below are example declarations for the encapsulated search and execute tools. Ju
 {
   type: 'function',
   function: {
-    name: 'execute_tool',
+    name: 'call',
     description:
-      'Execute a specific remote tool with provided parameters. The tool_id must come from a previous search_tools call; The params_to_tool is where the params can be passed.',
+      'Call a specific remote capability with provided parameters. The tool_id and search_id must come from a previous discover call; params_to_tool is where the capability parameters are passed.',
     parameters: {
       type: 'object',
       properties: {
@@ -526,7 +528,7 @@ Below are example declarations for the encapsulated search and execute tools. Ju
         },
         search_id: {
           type: 'string',
-          description: 'The search_id in the response of the search_tools call that returned the information of this remote tool',
+          description: 'The search_id in the response of the discover call that returned the information of this remote tool',
         },
         session_id: {
           type: 'string',
@@ -552,7 +554,7 @@ You can then use below system prompt and start testing! Have fun exploring!
 ```javascript
 {
   role: 'system',
-  content: 'You are a helpful assistant that can dynamically discover and call capabilities to help the user. First think about what kind of capabilities might be useful to accomplish the user\'s task. Then use the search_tools tool with a query describing the capability, not the specific parameters you will pass later. Then call suitable capabilities using the execute_tool tool, passing parameters through params_to_tool. If a capability has success_rate and avg_execution_time (in seconds), consider them when selecting which to call. You can reference the examples given for each capability. You can make multiple tool calls in a single response.',
+  content: 'You are a helpful assistant that can dynamically discover and call capabilities to help the user. First think about what kind of capabilities might be useful to accomplish the user\'s task. Then use the discover tool with a query describing the capability, not the specific parameters you will pass later. Then call suitable capabilities using the call tool, passing parameters through params_to_tool. If a capability has success_rate and avg_execution_time_ms, consider them when selecting which to call. You can reference the examples given for each capability. You can make multiple tool calls in a single response.',
 }
 
 ```

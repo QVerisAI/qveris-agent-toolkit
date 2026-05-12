@@ -4,7 +4,7 @@ Qveris agent runtime.
 This module defines `Agent`, the high-level orchestration layer that connects:
 
 - an LLM provider (`LLMProvider`) capable of emitting tool calls,
-- Qveris built-in tools (`search_tools`, `execute_tool`) exposed to the LLM,
+- Qveris built-in tools (`discover`, `inspect`, `call`) exposed to the LLM,
 - optional user-provided tools and a handler for those tools,
 - and an execution loop that feeds tool results back to the LLM until completion.
 
@@ -41,7 +41,7 @@ from openai import APIConnectionError, APIStatusError, APITimeoutError, Authenti
 from openai.types.chat import ChatCompletionToolParam
 
 from ..client.api import QverisClient
-from ..client.tools import DEFAULT_SYSTEM_PROMPT, EXECUTE_TOOL_DEF, SEARCH_TOOL_DEF
+from ..client.tools import CALL_TOOL_DEF, DEFAULT_SYSTEM_PROMPT, DISCOVER_TOOL_DEF, INSPECT_TOOL_DEF
 from ..config import AgentConfig, QverisConfig
 from ..llm.base import LLMProvider
 from ..llm.openai import OpenAIProvider
@@ -58,8 +58,9 @@ class Agent:
 
     The agent runs an LLM/tool loop that can:
 
-    - search for tools via Qveris (`search_tools`),
-    - execute a selected tool (`execute_tool`),
+    - discover capabilities via Qveris (`discover`),
+    - inspect candidate capabilities (`inspect`),
+    - call a selected capability (`call`),
     - optionally execute additional user-provided tools (`extra_tools` + `extra_tool_handler`).
 
     Parameters:
@@ -106,7 +107,7 @@ class Agent:
             # Fallback to internal OpenAI provider
             self.llm = OpenAIProvider()
 
-        self.tools: List[ChatCompletionToolParam] = [SEARCH_TOOL_DEF, EXECUTE_TOOL_DEF]
+        self.tools: List[ChatCompletionToolParam] = [DISCOVER_TOOL_DEF, INSPECT_TOOL_DEF, CALL_TOOL_DEF]
         if extra_tools:
             self.tools.extend(extra_tools)
 
@@ -407,7 +408,7 @@ class Agent:
         """
         Create and set a new session id.
 
-        The session id is forwarded to Qveris API calls (search/execute) and can be used server-side
+        The session id is forwarded to Qveris API calls (discover/call) and can be used server-side
         for correlation, tracing, and analytics.
         """
         self.session_id = str(uuid.uuid4())

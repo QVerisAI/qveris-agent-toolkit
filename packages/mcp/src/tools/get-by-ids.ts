@@ -37,7 +37,7 @@ export interface GetToolsByIdsInput {
 }
 
 /**
- * JSON Schema for the get_tools_by_ids tool input.
+ * JSON Schema for the inspect tool input.
  * Used by MCP to validate and document the tool parameters.
  */
 export const getToolsByIdsSchema = {
@@ -70,7 +70,7 @@ export const getToolsByIdsSchema = {
 };
 
 /**
- * Executes the get_tools_by_ids operation.
+ * Executes the inspect operation.
  *
  * @param client - Initialized Qveris API client
  * @param input - Request parameters with tool IDs
