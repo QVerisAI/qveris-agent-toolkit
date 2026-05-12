@@ -166,7 +166,7 @@ export async function runInit(queryArg, flags) {
     ledger: finalNextCommands.ledger,
   });
 
-  const payload = buildPayload({ steps, discovery, inspectedTool, parameters, callResult, nextCommands: finalNextCommands, startedAt, dryRun: false });
+  const payload = buildPayload({ steps, discovery, inspectedTool, parameters, callResult, nextCommands, startedAt, dryRun: false });
   if (flags.json) outputJson(payload);
   else printHumanSummary(payload);
 }
