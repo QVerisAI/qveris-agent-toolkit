@@ -213,7 +213,7 @@ function getSampleParameters(tool) {
 function pickInspectedTool(response, toolId) {
   const list = normalizeToolList(response);
   if (!Array.isArray(list)) return null;
-  return list.find((t) => t?.tool_id === toolId) || list[0] || null;
+  return (toolId ? list.find((t) => t?.tool_id === toolId) : list[0]) || null;
 }
 
 function normalizeToolList(response) {
