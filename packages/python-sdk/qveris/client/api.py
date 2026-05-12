@@ -281,8 +281,8 @@ class QverisClient:
                 if isinstance(params_val, str):
                     try:
                         params = json.loads(params_val) if params_val else {}
-                    except (json.JSONDecodeError, TypeError):
-                        params = {}
+                    except json.JSONDecodeError as e:
+                        return {"error": f"Invalid JSON in params_to_tool: {e}"}, True, True
                 else:
                     params = params_val if isinstance(params_val, dict) else {}
 
