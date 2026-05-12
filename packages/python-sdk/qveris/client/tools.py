@@ -54,7 +54,7 @@ DISCOVER_TOOL_DEF: ChatCompletionToolParam = {
                 },
                 "limit": {
                     "type": "integer",
-                    "description": "The number of capabilities to return (default 10)"
+                    "description": "The number of capabilities to return (default 20)"
                 }
             },
             "required": ["query"]
