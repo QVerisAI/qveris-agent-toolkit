@@ -522,6 +522,6 @@ async function handleModelToolCall(name: string, args: Record<string, unknown>) 
 ```javascript
 {
   role: 'system',
-  content: '你是一个有用的助手，可以动态发现并调用各种能力来帮助用户。首先思考完成用户任务可能需要哪类能力。然后使用 discover 工具，以描述能力的查询词进行搜索，而不是直接写出稍后要传入的具体参数。再使用 call 工具调用合适的能力，并通过 params_to_tool 传递参数。如果能力具有 success_rate 和 avg_execution_time（秒），请在选择时加以参考。你可以参考每个能力提供的示例。你可以在一次响应中发起多个工具调用。',
+  content: '你是一个有用的助手，可以动态发现并调用各种能力来帮助用户。首先思考完成用户任务可能需要哪类能力。然后使用 discover 工具，以描述能力的查询词进行搜索，而不是直接写出稍后要传入的具体参数。再使用 call 工具调用合适的能力，并通过 params_to_tool 传递参数。如果能力具有 success_rate 和 avg_execution_time_ms，请在选择时加以参考。你可以参考每个能力提供的示例。你可以在一次响应中发起多个工具调用。',
 }
 ```
