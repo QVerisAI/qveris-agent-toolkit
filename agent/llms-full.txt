@@ -430,21 +430,28 @@ pip install qveris
 Usage example:
 
 ```python
-from qveris import QVerisClient
+import asyncio
 
-client = QVerisClient(api_key="your-key")
+from qveris import QverisClient, QverisConfig
 
-# Discover
-results = client.search("weather data", limit=5)
+async def main():
+    client = QverisClient(QverisConfig(api_key="your-key"))
+    try:
+        # Discover
+        results = await client.discover("weather data", limit=5)
+        tool = results.results[0]
 
-# Inspect
-details = client.get_tool_by_id("openweathermap.weather.execute.v1")
+        # Call
+        response = await client.call(
+            tool_id=tool.tool_id,
+            search_id=results.search_id,
+            parameters={"city": "Tokyo", "units": "metric"},
+        )
+        print(response.model_dump())
+    finally:
+        await client.close()
 
-# Call
-response = client.execute_tool(
-    tool_id="openweathermap.weather.execute.v1",
-    parameters={"city": "Tokyo", "units": "metric"}
-)
+asyncio.run(main())
 ```
 
 ---

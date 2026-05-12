@@ -21,7 +21,7 @@ When emitting a tool call, providers should surface a dict shaped like:
   "id": "<call-id>",
   "type": "function",
   "function": {
-    "name": "search_tools" | "execute_tool" | "<your-extra-tool-name>",
+    "name": "discover" | "inspect" | "call" | "<your-extra-tool-name>",
     "arguments": "<json-string>"
   }
 }
@@ -29,8 +29,12 @@ When emitting a tool call, providers should surface a dict shaped like:
 
 Where `arguments` is a JSON-encoded string. For Qveris built-ins:
 
-- `search_tools` expects `{"query": "...", "limit": 10}` (limit optional)
-- `execute_tool` expects `{"tool_id": "...", "search_id": "...", "params_to_tool": "<json-string>", "max_response_size": 20480}`
+- `discover` expects `{"query": "...", "limit": 20}` (limit optional)
+- `inspect` expects `{"tool_ids": ["..."], "search_id": "..."}`
+- `call` expects `{"tool_id": "...", "search_id": "...", "params_to_tool": "<json-string>", "max_response_size": 20480}`
+
+Deprecated names `search_tools`, `get_tools_by_ids`, and `execute_tool` are still accepted by
+`QverisClient.handle_tool_call(...)` for backward compatibility.
 
 ## Event types
 

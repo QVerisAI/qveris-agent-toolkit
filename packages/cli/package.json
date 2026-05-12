@@ -6,6 +6,9 @@
   "bin": {
     "qveris": "./bin/qveris.mjs"
   },
+  "scripts": {
+    "test": "node --test"
+  },
   "engines": {
     "node": ">=18"
   },

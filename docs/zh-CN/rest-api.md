@@ -380,7 +380,7 @@ GET /auth/credits/ledger
 以下代码片段展示了如何将 QVeris AI REST API 调用封装为可供大语言模型调用的工具：
 
 ```typescript
-export async function searchTools(
+export async function discoverCapabilities(
   query: string,
   sessionId: string,
   limit: number = 20
@@ -393,7 +393,7 @@ export async function searchTools(
   return response.data
 }
 
-export async function executeTool(
+export async function callCapability(
   toolId: string,
   searchId: string,
   sessionId: string,
@@ -411,22 +411,22 @@ export async function executeTool(
 }
 
 export const qverisApi = {
-  searchTools,
-  executeTool,
+  discover: discoverCapabilities,
+  call: callCapability,
 }
 
-// 工具执行函数
-async function executeTool(name: string, args: Record<string, unknown>) {
+// 将模型工具调用分发到 QVeris
+async function handleModelToolCall(name: string, args: Record<string, unknown>) {
   console.log(`[工具] 正在执行 ${name}，参数为：`, args)
 
-  if (name === 'search_tools') {
-    const result = await qverisApi.searchTools(
+  if (name === 'discover') {
+    const result = await qverisApi.discover(
       args.query as string,
       args.session_id as string,
       20
     )
     return result
-  } else if (name === 'execute_tool') {
+  } else if (name === 'call') {
     let parsedParams: Record<string, unknown>
     try {
       parsedParams = JSON.parse(args.params_to_tool as string) as
@@ -441,7 +441,7 @@ async function executeTool(name: string, args: Record<string, unknown>) {
       )
     }
 
-    const result = await qverisApi.executeTool(
+    const result = await qverisApi.call(
       args.tool_id as string,
       args.search_id as string,
       args.session_id as string,
@@ -454,15 +454,17 @@ async function executeTool(name: string, args: Record<string, unknown>) {
 }
 ```
 
-以下是封装后的搜索和执行工具声明示例，可直接添加到聊天补全的工具列表中：
+以下是封装后的 canonical `discover` 和 `call` 工具声明示例，可直接添加到聊天补全的工具列表中。
+
+旧 MCP 名称（`search_tools`、`get_tools_by_ids`、`execute_tool`）仍作为兼容别名支持，但新的工具声明应使用 `discover`、`inspect` 和 `call`。
 
 ```javascript
 {
   type: 'function',
   function: {
-    name: 'search_tools',
+    name: 'discover',
     description:
-      '搜索可用工具。返回有助于完成任务的相关工具。',
+      '发现可用能力。返回有助于完成任务的相关工具。',
     parameters: {
       type: 'object',
       properties: {
@@ -482,9 +484,9 @@ async function executeTool(name: string, args: Record<string, unknown>) {
 {
   type: 'function',
   function: {
-    name: 'execute_tool',
+    name: 'call',
     description:
-      '使用提供的参数执行指定远程工具。tool_id 必须来自此前的 search_tools 调用；params_to_tool 用于传递工具参数。',
+      '使用提供的参数调用指定远程能力。tool_id 和 search_id 必须来自此前的 discover 调用；params_to_tool 用于传递能力参数。',
     parameters: {
       type: 'object',
       properties: {
@@ -494,7 +496,7 @@ async function executeTool(name: string, args: Record<string, unknown>) {
         },
         search_id: {
           type: 'string',
-          description: '返回该远程工具信息的 search_tools 调用响应中的 search_id',
+          description: '返回该远程工具信息的 discover 调用响应中的 search_id',
         },
         session_id: {
           type: 'string',
@@ -520,6 +522,6 @@ async function executeTool(name: string, args: Record<string, unknown>) {
 ```javascript
 {
   role: 'system',
-  content: '你是一个有用的助手，可以动态发现并调用各种能力来帮助用户。首先思考完成用户任务可能需要哪类能力。然后使用 search_tools 工具，以描述能力的查询词进行搜索，而不是直接写出稍后要传入的具体参数。再使用 execute_tool 工具调用合适的能力，并通过 params_to_tool 传递参数。如果能力具有 success_rate 和 avg_execution_time（秒），请在选择时加以参考。你可以参考每个能力提供的示例。你可以在一次响应中发起多个工具调用。',
+  content: '你是一个有用的助手，可以动态发现并调用各种能力来帮助用户。首先思考完成用户任务可能需要哪类能力。然后使用 discover 工具，以描述能力的查询词进行搜索，而不是直接写出稍后要传入的具体参数。再使用 call 工具调用合适的能力，并通过 params_to_tool 传递参数。如果能力具有 success_rate 和 avg_execution_time_ms，请在选择时加以参考。你可以参考每个能力提供的示例。你可以在一次响应中发起多个工具调用。',
 }
 ```

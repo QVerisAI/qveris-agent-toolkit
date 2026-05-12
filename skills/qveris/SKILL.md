@@ -1,18 +1,21 @@
 ---
 name: qveris
-description: "Search for and execute third-party API tools via the QVeris MCP server, then generate production code that calls the QVeris REST API for tasks like fetching weather data, stock prices, or public datasets. Use when the user needs to find an external API, integrate a web service, connect to a third-party REST endpoint, or retrieve data from an external source."
+description: "Discover, inspect, and call third-party API capabilities via the QVeris MCP server, then generate production code that calls the QVeris REST API for tasks like fetching weather data, stock prices, or public datasets. Use when the user needs to find an external API, integrate a web service, connect to a third-party REST endpoint, or retrieve data from an external source."
 ---
 
 For discovery query formulation, tool selection criteria, parameter handling, and error recovery, see [Agent Guidelines](../../agent/GUIDELINES.md).
 
 When external functionality is needed, follow this two-phase workflow:
 
-## Phase 1: Discover Tools via MCP
+## Phase 1: Discover and Call Capabilities via MCP
 
 1. Identify what tool capability the user needs
-2. Call `search_tools` with a **functionality description** (not parameter names) — limit results to 10
-3. Call `execute_tool` to test a candidate, passing parameters via `params_to_tool`
-4. Repeat or broaden the search if no suitable tool is found
+2. Call `discover` with a **functionality description** (not parameter names) — limit results to 10
+3. Call `inspect` when you need full parameter details, examples, success rate, latency, or billing metadata
+4. Call `call` to test a candidate, passing parameters via `params_to_tool`
+5. Repeat or broaden the discovery query if no suitable capability is found
+
+Compatibility note: legacy MCP names `search_tools`, `get_tools_by_ids`, and `execute_tool` remain deprecated aliases only. Prefer `discover`, `inspect`, and `call` in all new workflows.
 
 ## Billing and Audit
 
@@ -50,8 +53,8 @@ API_KEY = os.environ.get("QVERIS_API_KEY", "<QVERIS_API_KEY from MCP config>")
 # Auto-detect region from key prefix: sk-cn-xxx → qveris.cn, sk-xxx → qveris.ai
 BASE_URL = "https://qveris.cn/api/v1" if API_KEY.startswith("sk-cn-") else "https://qveris.ai/api/v1"
 
-def execute_tool(tool_id: str, search_id: str, params: dict) -> dict:
-    """Execute a QVeris tool and return the result."""
+def call_tool(tool_id: str, search_id: str, params: dict) -> dict:
+    """Call a QVeris capability and return the result."""
     resp = requests.post(
         f"{BASE_URL}/tools/execute",
         params={"tool_id": tool_id},
@@ -79,7 +82,7 @@ def execute_tool(tool_id: str, search_id: str, params: dict) -> dict:
     return result
 
 # Usage
-result = execute_tool(
+result = call_tool(
     tool_id="openweathermap_current_weather",
     search_id="<search_id from Phase 1>",
     params={"city": "London", "units": "metric"},
@@ -97,7 +100,7 @@ print(result)  # {"data": {"temperature": 15.5, "humidity": 72}}
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `search_id` | string | ID returned by `search_tools` |
+| `search_id` | string | ID returned by `discover` |
 | `session_id` | string | Optional session identifier |
 | `parameters` | object | Tool-specific input parameters |
 | `max_response_size` | number | Max response bytes (default 20480) |

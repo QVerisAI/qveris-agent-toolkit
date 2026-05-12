@@ -36,6 +36,10 @@ npx @qverisai/cli discover "weather API"
 ## Quick Start
 
 ```bash
+# Guided first call
+qveris init
+
+# Manual flow
 # 1. Authenticate (saves key to ~/.config/qveris/config.json)
 qveris login
 
@@ -52,6 +56,34 @@ qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
 ---
 
 ## Commands
+
+### `qveris init`
+
+Guided first-call wizard: resolve auth, discover a capability, inspect it, call it, and finish with usage/ledger reconciliation guidance.
+
+```bash
+qveris init [query] [flags]
+```
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--query <query>` | Discovery query override | `weather forecast API` |
+| `--params <json\|@file\|->` | Call parameters override | sample parameters when available |
+| `--resume` | Reuse the last discovery session after a recoverable failure | false |
+| `--dry-run` | Print planned discovery/call payload without executing the call | false |
+| `--tool-id <id>` | Select a specific tool ID instead of the first result | first result |
+| `--json` | Output machine-readable wizard state | false |
+
+**Examples:**
+
+```bash
+qveris init
+qveris init --query "stock price API"
+qveris init --dry-run
+qveris init --resume --params '{"city": "London"}'
+```
+
+The final step prints exact `qveris usage` and `qveris ledger` commands so you can reconcile the call.
 
 ### `qveris discover`
 

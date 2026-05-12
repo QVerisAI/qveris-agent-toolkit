@@ -40,7 +40,7 @@ export interface SearchToolsInput {
 }
 
 /**
- * JSON Schema for the search_tools tool input.
+ * JSON Schema for the discover tool input.
  * Used by MCP to validate and document the tool parameters.
  */
 export const searchToolsSchema = {
@@ -71,7 +71,7 @@ export const searchToolsSchema = {
 };
 
 /**
- * Executes the search_tools operation.
+ * Executes the discover operation.
  *
  * @param client - Initialized Qveris API client
  * @param input - Search parameters

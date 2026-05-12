@@ -366,7 +366,7 @@ Hosted MCP 已列入规划，但当前接入路径不依赖托管端点。在正
 
 - 验证 API 密钥是否有效
 - 验证所选 `tool_id` 来自此前的发现结果
-- 重新运行 `get_tools_by_ids` 检查工具后再调用
+- 重新运行 `inspect` 检查工具后再调用
 - 检查 `params_to_tool` 是否为有效对象
 
 ### Windows 特定问题
