@@ -6,6 +6,7 @@ import test from "node:test";
 
 import {
   buildNextCommands,
+  pickInitTool,
   resolveInitMaxResponseSize,
   runInit,
   shellSingleQuote,
@@ -99,6 +100,17 @@ test("init helpers respect max size and escape single quotes in shell hints", ()
     }).retry,
     `qveris call weather.tool.v1 --discovery-id search-1 --params ${quoted}`
   );
+
+  assert.equal(
+    pickInitTool(
+      [
+        { tool_id: "icons", params: [{ name: "set", required: true }] },
+        { tool_id: "weather", params: [{ name: "city", required: true }] },
+      ],
+      { parameters: { city: "London" } }
+    ).tool_id,
+    "weather"
+  );
 });
 
 test("init dry run records the provided max response size", async () => {
@@ -134,6 +146,62 @@ test("init dry run records the provided max response size", async () => {
       const payload = JSON.parse(stdout);
       const callStep = payload.steps.find((step) => step.name === "call");
       assert.equal(callStep.max_response_size, 65536);
+    });
+  });
+});
+
+test("init selects a candidate whose required params match provided params", async () => {
+  await withTempConfig(async () => {
+    await withMockFetch((request) => {
+      if (request.url.pathname.endsWith("/search")) {
+        return response({
+          search_id: "search-1",
+          total: 2,
+          results: [
+            { tool_id: "weather.icons.v1", name: "Icons" },
+            { tool_id: "weather.city.v1", name: "City Weather" },
+          ],
+        });
+      }
+      if (request.url.pathname.endsWith("/tools/by-ids")) {
+        assert.deepEqual(request.body.tool_ids, ["weather.icons.v1", "weather.city.v1"]);
+        return response({
+          results: [
+            {
+              tool_id: "weather.icons.v1",
+              name: "Icons",
+              params: [
+                { name: "set", required: true },
+                { name: "timeOfDay", required: true },
+              ],
+              examples: { sample_parameters: { set: "land", timeOfDay: "day" } },
+            },
+            {
+              tool_id: "weather.city.v1",
+              name: "City Weather",
+              params: [{ name: "city", required: true }],
+              examples: { sample_parameters: { city: "London" } },
+            },
+          ],
+        });
+      }
+      throw new Error(`unexpected path ${request.url.pathname}`);
+    }, async () => {
+      const stdout = await captureStdout(() => runInit(null, {
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        json: true,
+        dryRun: true,
+        params: '{"city":"London"}',
+      }));
+      const payload = JSON.parse(stdout);
+      const inspectStep = payload.steps.find((step) => step.name === "inspect");
+      const callStep = payload.steps.find((step) => step.name === "call");
+
+      assert.equal(payload.selected_tool.tool_id, "weather.city.v1");
+      assert.equal(inspectStep.selected_reason, "params_match");
+      assert.equal(callStep.tool_id, "weather.city.v1");
+      assert.match(payload.next_commands.retry, /qveris call weather\.city\.v1/);
     });
   });
 });

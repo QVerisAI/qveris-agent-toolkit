@@ -34,9 +34,11 @@ export async function runInit(queryArg, flags) {
   let discovery;
   let discoveryId;
   let selected;
+  let candidateTools = [];
   const query = flags.query || queryArg || DEFAULT_QUERY;
   const limit = parseInt(flags.limit, 10) || DEFAULT_LIMIT;
   const maxResponseSize = resolveInitMaxResponseSize(flags);
+  const flagParameters = flags.params ? resolveParams(flags.params) : null;
 
   if (flags.resume) {
     const session = readSession();
@@ -44,9 +46,9 @@ export async function runInit(queryArg, flags) {
       throw new CliError("SESSION_EXPIRED", "No resumable init session found. Run 'qveris init' without --resume first.");
     }
     discoveryId = session.discoveryId;
-    selected = flags.toolId
-      ? { tool_id: flags.toolId, name: flags.toolId }
-      : session.results[0];
+    candidateTools = flags.toolId
+      ? [{ tool_id: flags.toolId, name: flags.toolId }]
+      : session.results;
     discovery = {
       search_id: discoveryId,
       query: session.query,
@@ -56,7 +58,6 @@ export async function runInit(queryArg, flags) {
     record(steps, "discover", "ok", "Resumed previous discovery session", {
       query: session.query,
       search_id: discoveryId,
-      selected_tool_id: selected.tool_id,
     });
   } else {
     record(steps, "discover", "running", `Discovering capabilities for "${query}"`, { query, limit });
@@ -66,9 +67,9 @@ export async function runInit(queryArg, flags) {
       throw new CliError("TOOL_NOT_FOUND", `No capabilities matched "${query}". Try 'qveris init --query <broader-query>'.`);
     }
     discoveryId = discovery.search_id;
-    selected = flags.toolId
-      ? { tool_id: flags.toolId, name: flags.toolId }
-      : results[0];
+    candidateTools = flags.toolId
+      ? [{ tool_id: flags.toolId, name: flags.toolId }]
+      : results;
     writeSession({
       discoveryId,
       query,
@@ -85,27 +86,39 @@ export async function runInit(queryArg, flags) {
       query,
       search_id: discoveryId,
       total: discovery.total ?? results.length,
-      selected_tool_id: selected.tool_id,
-      selected_name: selected.name,
     });
   }
 
-  record(steps, "inspect", "running", "Inspecting selected capability", { tool_id: selected.tool_id });
+  const candidateToolIds = candidateTools.map((tool) => tool?.tool_id).filter(Boolean);
+  if (candidateToolIds.length === 0) {
+    throw new CliError("TOOL_NOT_FOUND", "No selectable capabilities were returned.");
+  }
+
+  record(
+    steps,
+    "inspect",
+    "running",
+    candidateToolIds.length === 1 ? "Inspecting selected capability" : "Inspecting candidate capabilities",
+    { tool_ids: candidateToolIds }
+  );
   const inspected = await inspectToolsByIds({
     apiKey,
     baseUrl,
-    toolIds: [selected.tool_id],
+    toolIds: candidateToolIds,
     discoveryId,
     timeoutMs,
   });
-  const inspectedTool = pickInspectedTool(inspected, selected.tool_id) || selected;
+  const inspectedTools = mergeCandidateTools(candidateTools, normalizeToolList(inspected));
+  selected = pickInitTool(inspectedTools, { toolId: flags.toolId, parameters: flagParameters });
+  const inspectedTool = pickInspectedTool(inspectedTools, selected.tool_id) || selected;
   updateLast(steps, "ok", "Inspection completed", {
     tool_id: inspectedTool.tool_id || selected.tool_id,
     tool_name: inspectedTool.name || selected.name,
+    selected_reason: flagParameters && !flags.toolId ? "params_match" : flags.toolId ? "explicit_tool" : "first_candidate",
     has_sample_parameters: Boolean(getSampleParameters(inspectedTool)),
   });
 
-  const { parameters, source: paramsSource } = getInitParameters(flags, inspectedTool);
+  const { parameters, source: paramsSource } = getInitParameters(flags, inspectedTool, flagParameters);
   record(steps, "call", flags.dryRun ? "skipped" : "running", flags.dryRun ? "Dry run requested" : "Calling selected capability", {
     tool_id: selected.tool_id,
     params_source: paramsSource,
@@ -167,9 +180,9 @@ function getInitApiKey(flags) {
   }
 }
 
-function getInitParameters(flags, tool) {
+function getInitParameters(flags, tool, flagParameters = null) {
   if (flags.params) {
-    return { parameters: resolveParams(flags.params), source: "flag" };
+    return { parameters: flagParameters ?? resolveParams(flags.params), source: "flag" };
   }
 
   const sample = getSampleParameters(tool);
@@ -196,9 +209,68 @@ function getSampleParameters(tool) {
 }
 
 function pickInspectedTool(response, toolId) {
-  const list = Array.isArray(response) ? response : response?.results ?? response?.tools ?? [];
+  const list = normalizeToolList(response);
   if (!Array.isArray(list)) return null;
   return list.find((t) => t?.tool_id === toolId) || list[0] || null;
+}
+
+function normalizeToolList(response) {
+  if (Array.isArray(response)) return response;
+  return response?.results ?? response?.tools ?? [];
+}
+
+function mergeCandidateTools(discoveredTools, inspectedTools) {
+  const inspectedById = new Map(
+    normalizeToolList(inspectedTools)
+      .filter((tool) => tool?.tool_id)
+      .map((tool) => [tool.tool_id, tool])
+  );
+  return discoveredTools.map((tool) => ({
+    ...tool,
+    ...(inspectedById.get(tool.tool_id) ?? {}),
+  }));
+}
+
+export function pickInitTool(tools, { toolId, parameters } = {}) {
+  const list = normalizeToolList(tools).filter((tool) => tool?.tool_id);
+  if (toolId) return list.find((tool) => tool.tool_id === toolId) || { tool_id: toolId, name: toolId };
+  if (!parameters) return list[0];
+
+  const ranked = list
+    .map((tool, index) => ({ tool, index, score: scoreParameterMatch(tool, parameters) }))
+    .filter((item) => item.score > Number.NEGATIVE_INFINITY)
+    .sort((a, b) => b.score - a.score || a.index - b.index);
+
+  if (ranked.length > 0) return ranked[0].tool;
+
+  const err = new CliError("INIT_PARAMS_REQUIRED", "Provided --params do not satisfy any discovered capability.");
+  err.hint = `Inspect candidates and retry with matching params: ${summarizeRequiredParams(list)}`;
+  throw err;
+}
+
+function scoreParameterMatch(tool, parameters) {
+  const schema = Array.isArray(tool?.params) ? tool.params : [];
+  if (schema.length === 0) return 0;
+
+  const provided = new Set(Object.keys(parameters ?? {}));
+  const required = schema.filter((param) => param?.required).map((param) => param.name).filter(Boolean);
+  const allNames = schema.map((param) => param?.name).filter(Boolean);
+  const missingRequired = required.filter((name) => !provided.has(name));
+  if (missingRequired.length > 0) return Number.NEGATIVE_INFINITY;
+
+  const overlap = allNames.filter((name) => provided.has(name)).length;
+  if (overlap === 0 && required.length > 0) return Number.NEGATIVE_INFINITY;
+  return required.length * 10 + overlap;
+}
+
+function summarizeRequiredParams(tools) {
+  return tools.slice(0, 5).map((tool, index) => {
+    const required = (Array.isArray(tool?.params) ? tool.params : [])
+      .filter((param) => param?.required)
+      .map((param) => param.name)
+      .filter(Boolean);
+    return `${index + 1}. ${tool.tool_id}: ${required.length ? required.join(", ") : "no required params"}`;
+  }).join("; ");
 }
 
 export function resolveInitMaxResponseSize(flags) {
