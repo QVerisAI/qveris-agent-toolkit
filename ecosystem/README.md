@@ -29,6 +29,12 @@ node scripts/validate-ecosystem-manifests.mjs recipes
 
 CI runs the same validator on recipe, schema, and validator changes. A manifest fails validation when required metadata is missing, permission declarations are incomplete, examples point at missing docs, or marketplace listing fields are absent.
 
+Run validator regression tests:
+
+```bash
+node scripts/test-ecosystem-validator.mjs
+```
+
 ## Manifest Templates
 
 - [`templates/skill-manifest.template.json`](templates/skill-manifest.template.json)
