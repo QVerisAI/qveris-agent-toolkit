@@ -35,10 +35,10 @@ Returns a forecast icon. Icon services in API are deprecated.
   Parameters:
     set  string  required
       .
-    timeOfDay  string  required
-      .
-    first  string  required
-      .
+    timeOfDay  string  required  The time of day for which to retrieve  data (e.g., "morning", "afternoon")
+
+    first  string  required  The first record to retrieve (index or ID)
+
     size  string  optional
       Font size
     fontsize  integer  optional
@@ -54,7 +54,7 @@ tool: amap_webservice.weather.weatherinfo.retrieve.v3  ·  id: d79cd15b-2f36-4ce
 Billing:
   Charged 5.75 credits for this call
   Pre-settlement: 5.75 credits
-Final charge status: qveris usage --mode search --execution-id d79cd15b-2f36-4ce1-bb3c-6ea28b5ecfa2
+  Final charge status: qveris usage --mode search --execution-id d79cd15b-2f36-4ce1-bb3c-6ea28b5ecfa2
 
 {
   "status": "1",
@@ -132,7 +132,7 @@ qveris call 1 --params '{"set":"land","first":"sct","timeOfDay":"day"}'
 | Command | Description |
 |---------|-------------|
 | `qveris init` | Guided first-call wizard: auth, discover, inspect, call, and usage/ledger reconciliation guidance. |
-| `qveris discover <query>` | Find capabilities by natural language. Shows tool ID, provider, description, success rate, latency, and billing rule when available. |
+| `qveris discover <query>` | Find capabilities by natural language. Shows tool ID, region, description, success rate, latency, and billing rule when available. |
 | `qveris inspect <id\|index>` | View full tool details: parameters (type, required, description, enum values), example, provider info, execution history. |
 | `qveris call <id\|index>` | Execute a capability. Shows result data, execution time, pre-settlement billing, and remaining credits. |
 
@@ -156,7 +156,7 @@ qveris call 1 --params '{"set":"land","first":"sct","timeOfDay":"day"}'
 | `qveris config <subcommand>` | Manage CLI settings (set, get, list, reset, path) |
 | `qveris mcp configure` | Generate MCP client config for Cursor, Claude Desktop/Code, OpenCode, OpenClaw, or generic stdio |
 | `qveris mcp validate` | Validate an MCP config file, with optional live stdio tool probing |
-| `qveris completions <shell>` | Generate shell completions (bash/zsh/fish/powershell) |
+| `qveris completions <shell>` | Generate shell completions (bash/zsh/fish) |
 
 ## Usage
 
@@ -276,7 +276,7 @@ qveris mcp configure --target generic --json
 Config file locations:
 - **Cursor**: `~/.cursor/mcp.json` (Linux/macOS) or `%USERPROFILE%\.cursor\mcp.json` (Windows)
 - **Claude Desktop**: `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows)
-- **Claude Code**: `~/.claude/claude_desktop_config.json` (Linux/macOS) or `%USERPROFILE%\.claude\claude_desktop_config.json` (Windows)
+- **Claude Code**: `qveris mcp configure --target claude-code` outputs a `claude mcp add` command rather than writing a config file
 
 Validate an existing config:
 
@@ -419,7 +419,7 @@ qveris discover "weather" --base-url https://qveris.cn/api/v1
 
 Located at:
 - **Linux / macOS**: `~/.config/qveris/config.json` (respects `XDG_CONFIG_HOME`)
-- **Windows**: `%APPDATA%\qveris\config.json`
+- **Windows / all platforms**: `~/.config/qveris/config.json`
 
 ```bash
 qveris config list          # View all settings with sources
@@ -484,8 +484,12 @@ qveris call "$TOOL" --params '{"city":"London"}' --json | jq '.result.data'
 $TOOL = qveris discover "weather" --json | ConvertFrom-Json | Select-Object -ExpandProperty results | Select-Object -First 1 | Select-Object -ExpandProperty tool_id
 qveris call $TOOL --params '{"city":"London"}' --json | ConvertFrom-Json | Select-Object -ExpandProperty result | Select-Object -ExpandProperty data
 
-# Windows (CMD) - requires jq for Windows
+ # Windows (CMD, interactive) - requires jq for Windows
 for /f "tokens=*" %i in ('qveris discover "weather" --json ^| jq -r ".results[0].tool_id"') do set TOOL=%i
+qveris call %TOOL% --params "{\"city\":\"London\"}" --json | jq ".result.data"
+
+# Windows (.bat/.cmd script) - use %%i instead of %i
+for /f "tokens=*" %%i in ('qveris discover "weather" --json ^| jq -r ".results[0].tool_id"') do set TOOL=%%i
 qveris call %TOOL% --params "{\"city\":\"London\"}" --json | jq ".result.data"
 ```
 
