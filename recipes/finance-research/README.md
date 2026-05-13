@@ -38,6 +38,9 @@ async def main() -> None:
     client = QverisClient()
     try:
         discovered = await client.discover("public company stock quote and market data API", limit=5)
+        if not discovered.results:
+            print("No capabilities found.")
+            return
         tool = discovered.results[0]
         inspected = await client.inspect(tool.tool_id, search_id=discovered.search_id)
         selected = inspected.results[0] if inspected.results else tool
