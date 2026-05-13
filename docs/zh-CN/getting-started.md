@@ -95,6 +95,31 @@ pip install qveris
 - `OPENAI_API_KEY`（或你的 OpenAI 兼容服务商密钥）
 - `OPENAI_BASE_URL`（可选；用于 OpenAI 兼容服务商）
 
+Typed client 工作流：
+
+```python
+import asyncio
+from qveris import QverisClient
+
+async def main():
+    client = QverisClient()
+    try:
+        discovered = await client.discover("weather forecast API", limit=5)
+        tool = discovered.results[0]
+        inspected = await client.inspect([tool.tool_id], search_id=discovered.search_id)
+        selected = inspected.results[0]
+        result = await client.call(
+            selected.tool_id,
+            {"city": "London"},
+            search_id=discovered.search_id,
+        )
+        print(result.execution_id, result.success, result.billing)
+    finally:
+        await client.close()
+
+asyncio.run(main())
+```
+
 最小流式示例：
 
 ```python

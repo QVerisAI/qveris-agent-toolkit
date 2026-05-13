@@ -95,6 +95,31 @@ Set environment variables:
 - `OPENAI_API_KEY` (or your OpenAI-compatible provider key)
 - `OPENAI_BASE_URL` (optional; for OpenAI-compatible providers)
 
+Typed client workflow:
+
+```python
+import asyncio
+from qveris import QverisClient
+
+async def main():
+    client = QverisClient()
+    try:
+        discovered = await client.discover("weather forecast API", limit=5)
+        tool = discovered.results[0]
+        inspected = await client.inspect([tool.tool_id], search_id=discovered.search_id)
+        selected = inspected.results[0]
+        result = await client.call(
+            selected.tool_id,
+            {"city": "London"},
+            search_id=discovered.search_id,
+        )
+        print(result.execution_id, result.success, result.billing)
+    finally:
+        await client.close()
+
+asyncio.run(main())
+```
+
 Minimal streaming example:
 
 ```python

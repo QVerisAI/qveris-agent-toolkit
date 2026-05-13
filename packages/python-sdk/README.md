@@ -1,117 +1,135 @@
 # QVeris Python SDK
 
-Empower LLM agents with [**QVeris**](https://qveris.ai): dynamically discover, inspect, call, and audit thousands of live capabilities (APIs, data sources, automations) in a tight agent loop.
+Async Python SDK for the QVeris Agent External Data & Tool Harness workflow: discover, inspect, call, and audit real-world capabilities from your own agents or applications.
 
-## What QVeris is
+## Install
 
-QVeris provides a **capability routing** layer for agents:
+```bash
+pip install qveris
+```
 
-- **discover**: find matching capabilities with a natural-language query (e.g. "stock price", "web search", "send email").
-- **inspect**: review parameters, examples, quality signals, and billing metadata before calling.
-- **call**: invoke the selected capability with the tool id, search id, and structured parameters.
+For local development in this monorepo:
 
-The `qveris.Agent` wraps this into a loop that:
-
-- discovers suitable capabilities to complete the task,
-- inspects candidate capabilities when more detail is useful,
-- calls proper capabilities (and your extra tools, if provided),
-- feeds tool outputs back into the LLM until it reaches a final answer.
+```bash
+cd packages/python-sdk
+uv run --extra dev python -m pytest
+```
 
 ## Configuration
 
-Set the following environment variables (or pass them via `QverisConfig` / provider configs):
+```bash
+export QVERIS_API_KEY="sk-..."
+```
 
-- `QVERIS_API_KEY`: Your QVeris API key. (Get it from [QVeris](https://qveris.ai))
-- `OPENAI_API_KEY`: Your OpenAI (or OpenAI-compatible) provider API key.
-- `OPENAI_BASE_URL`: Base URL for OpenAI-compatible providers (e.g. OpenAI, OpenRouter etc).
+`QverisConfig` also accepts explicit values:
 
-## Quick Start
+```python
+from qveris import QverisClient, QverisConfig
+
+client = QverisClient(QverisConfig(api_key="sk-...", base_url="https://qveris.ai/api/v1"))
+```
+
+## Canonical Workflow
+
+```python
+import asyncio
+from qveris import QverisClient
+
+async def main():
+    client = QverisClient()
+    try:
+        discovered = await client.discover("weather forecast API", limit=5)
+        tool = discovered.results[0]
+
+        inspected = await client.inspect([tool.tool_id], search_id=discovered.search_id)
+        selected = inspected.results[0]
+
+        params = selected.examples.sample_parameters if selected.examples else {"city": "London"}
+        result = await client.call(
+            selected.tool_id,
+            params,
+            search_id=discovered.search_id,
+            max_response_size=20480,
+        )
+
+        usage = await client.usage(execution_id=result.execution_id, summary=True)
+        ledger = await client.ledger(summary=True, limit=5)
+
+        print(result.success, result.billing, usage.total, ledger.total)
+    finally:
+        await client.close()
+
+asyncio.run(main())
+```
+
+First-class typed APIs:
+
+| Method | REST endpoint | Purpose |
+|--------|---------------|---------|
+| `discover(query, ...)` | `POST /search` | Find capabilities with natural language |
+| `inspect(tool_ids, ...)` | `POST /tools/by-ids` | Fetch full capability metadata |
+| `call(tool_id, parameters, ...)` | `POST /tools/execute` | Execute a selected capability |
+| `usage(...)` | `GET /auth/usage/history/v2` | Audit request status and charge outcome |
+| `ledger(...)` | `GET /auth/credits/ledger` | Inspect final credit balance movements |
+
+Backward-compatible aliases remain available: `search_tools`, `get_tools_by_ids`, and `execute_tool`.
+
+## Typed Models
+
+The SDK exposes Pydantic v2 models for the main QVeris Agent External Data & Tool Harness surfaces:
+
+- Capability metadata: `ToolInfo`, `ToolParameter`, `ToolStats`
+- Billing: `BillingRule`, `CompactBillingStatement`, `BillingChargeLine`
+- Execution: `ToolExecutionResponse`
+- Audit: `UsageHistoryResponse`, `UsageEventItem`
+- Credits ledger: `CreditsLedgerResponse`, `CreditsLedgerItem`
+
+Models allow additive API fields so newer backend metadata does not break older SDK clients.
+
+## Agent Runtime
+
+`qveris.Agent` wraps the same workflow into an LLM tool loop. It exposes canonical `discover`, `inspect`, and `call` tool definitions to OpenAI-compatible providers.
 
 ```python
 import asyncio
 from qveris import Agent, Message
 
 async def main():
-    # Uses env vars automatically (QVERIS_API_KEY / OPENAI_API_KEY / ...)
     agent = Agent()
+    try:
+        messages = [Message(role="user", content="Find a weather capability and explain its parameters.")]
+        async for event in agent.run(messages):
+            if event.type == "content" and event.content:
+                print(event.content, end="", flush=True)
+    finally:
+        await agent.close()
 
-    messages = [
-        Message(role="user", content="Find a weather tool and check New York weather.")
-    ]
-
-    print("Assistant: ", end="", flush=True)
-    async for event in agent.run(messages):  # streaming by default
-        if event.type == "content" and event.content:
-            print(event.content, end="", flush=True)
-        elif event.type == "tool_result" and event.tool_result:
-            tr = event.tool_result
-            name = tr.get("name", "unknown")
-            is_error = tr.get("is_error", False)
-            result = tr.get("result")
-            print(f"\n← tool_result: {name} (error={is_error})", flush=True)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+asyncio.run(main())
 ```
 
-## Examples
+Set `OPENAI_API_KEY` and optional `OPENAI_BASE_URL` for the default OpenAI-compatible provider, or pass your own `LLMProvider`.
 
-This package includes two example scripts that show different integration styles:
+## Integration Patterns
 
-- **Interactive streaming chat** (`examples/interactive_chat.py`): a terminal chat UI that streams tokens and prints tool calls/results as they happen (great for debugging and demos).
-- **Stock debate** (`examples/stock_debate.py`): two agents debate NVIDIA using non-streaming turns while still surfacing tool calls/results (demonstrates multi-agent orchestration and different models).
+Use the SDK at the level that matches your application:
 
-## Integration patterns
+- Direct typed client: call `discover`, `inspect`, `call`, `usage`, and `ledger` from your own code.
+- Built-in streaming agent: use `Agent.run(messages)` and consume `StreamEvent` values for content, tool calls, tool results, metrics, and errors.
+- Built-in non-streaming agent: use `Agent.run(messages, stream=False)` when your UI wants complete assistant turns plus events.
+- Final text only: use `Agent.run_to_completion(messages)`.
+- Bring your own loop: pass `DISCOVER_TOOL_DEF`, `INSPECT_TOOL_DEF`, and `CALL_TOOL_DEF` to your LLM provider, then route tool calls through `QverisClient.handle_tool_call(...)`.
 
-QVeris supports several ways to integrate, depending on how much control you want over events and UI.
+## Custom LLM Providers
 
-### (a) Built-in streaming agent
-
-Use `Agent.run(messages)` (streaming is the default). You’ll receive `StreamEvent`s as the model streams content and as tools are invoked.
-
-### (b) Built-in non-streaming agent, and you need events (tool calls/results, metrics, etc.)
-
-Use `Agent.run(messages, stream=False)` and handle `StreamEvent`s:
-
-- `content` (full assistant message, non-streaming)
-- `tool_call` (what the model asked to run)
-- `tool_result` (what actually ran + output)
-- `metrics` (token usage if available)
-- `error`
-
-### (c) Built-in non-streaming agent, final message only
-
-If you only need the final assistant text (no tool-calls), use:
-
-```python
-final_text = await agent.run_to_completion(messages)
-```
-
-### (d) Bring your own agent loop (use QVeris client + tool definitions directly)
-
-If you already have an agent framework (or want full control), you can directly use:
-
-- `qveris.client.tools.SEARCH_TOOL_DEF` / `GET_TOOLS_BY_IDS_TOOL_DEF` / `EXECUTE_TOOL_DEF` to expose tool schemas to your LLM
-- `qveris.client.tools.DEFAULT_SYSTEM_PROMPT` as a starting system prompt
-- `qveris.client.api.QverisClient` to handle QVeris tool calls
-
-Your loop is responsible for:
-
-- sending messages + tool schemas to the LLM,
-- detecting tool calls,
-- calling `QverisClient.handle_tool_call(...)`,
-- appending tool results back into messages until completion.
-
-## Custom LLM providers (non-OpenAI compatible APIs)
-
-By default, `Agent()` uses an internal OpenAI-compatible provider. If your model API is **not** OpenAI-compatible, implement a provider that follows `LLMProvider` (`qveris/llm/base.py`) and pass it to `Agent`:
+The default `Agent()` uses the built-in OpenAI-compatible provider. For non-OpenAI-compatible model APIs, implement `LLMProvider` and pass it to `Agent`:
 
 ```python
 from typing import AsyncGenerator, List
-from qveris.llm.base import LLMProvider
-from qveris.types import Message, StreamEvent, ChatResponse
 from openai.types.chat import ChatCompletionToolParam
+from qveris import Agent
 from qveris.config import AgentConfig
+from qveris.llm.base import LLMProvider
+from qveris.types import ChatResponse, Message, StreamEvent
 
 class MyProvider(LLMProvider):
     async def chat_stream(
@@ -120,7 +138,6 @@ class MyProvider(LLMProvider):
         tools: List[ChatCompletionToolParam],
         config: AgentConfig,
     ) -> AsyncGenerator[StreamEvent, None]:
-        # Yield StreamEvent(type="content", content="...") and/or tool_call/metrics/etc.
         ...
 
     async def chat(
@@ -129,16 +146,43 @@ class MyProvider(LLMProvider):
         tools: List[ChatCompletionToolParam],
         config: AgentConfig,
     ) -> ChatResponse:
-        # Return ChatResponse(content="...", tool_calls=[...], metrics={...})
         ...
 
 agent = Agent(llm_provider=MyProvider())
 ```
 
-## Features
+## Examples
 
-- **Provider Agnostic**: Works with OpenAI, OpenRouter, LocalAI, etc.
-- **Auto-Tool Execution**: The agent automatically searches for tools, executes them, and returns results.
-- **Smart Context**: Automatically prunes old tool results to save tokens (`enable_history_pruning=True`).
-- **Multiple Agents**: Configure different agents with unique system prompts and temperatures.
-- **Reasoning Support**: Captures reasoning traces from models like Gemini (via OpenRouter) or DeepSeek.
+Five runnable examples are included under [`examples/`](examples):
+
+| Example | Scenario |
+|---------|----------|
+| `finance_research.py` | Stock quote / market data research |
+| `risk_compliance.py` | Sanctions, adverse media, or compliance screening |
+| `crypto_market.py` | Crypto price and volume data |
+| `data_analysis.py` | Dataset enrichment with external capability data |
+| `agent_loop_integration.py` | LLM agent loop integration |
+
+The capability examples run `discover` and `inspect` when `QVERIS_API_KEY` is set. They only execute `call` when `RUN_QVERIS_CALLS=1` is set.
+
+## Tests
+
+```bash
+cd packages/python-sdk
+uv run python -m compileall qveris examples
+uv run --extra dev python -m pytest
+```
+
+Contract tests use `httpx.MockTransport` to validate SDK models against the REST API shapes for discover, inspect, call, usage, and ledger without consuming credits.
+
+## Compatibility and Release Policy
+
+- Python: `>=3.8`
+- Runtime dependencies: `httpx`, `pydantic`, `pydantic-settings`, `openai`
+- Public methods and Pydantic model fields follow additive compatibility where possible.
+- Deprecated aliases remain for at least one minor release after canonical replacements are available.
+- Breaking API changes require a major version bump and migration notes in this README.
+
+## License
+
+MIT
