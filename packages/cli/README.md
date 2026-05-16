@@ -15,18 +15,19 @@ Found 5 capabilities matching your query
 1. icons
    weather_gov.icons.retrieve.v3.ad0b4d80
    Returns a forecast icon. Icon services in API are deprecated.
-   success: 100.0%  ·  latency: ~325ms  ·  billing: Charged 5.75 credits per call
+   relevance: 99%  ·  success: 100.0%  ·  latency: ~325ms  ·  billing: Charged 5.75 credits per call
 
 2. Weather Information Retrieve
    amap_webservice.weather.weatherinfo.retrieve.v3
    Query current (base) or future (all) weather information for a specified city using adcode.
-   success: 83.0%  ·  latency: ~467ms  ·  billing: Charged 5.75 credits per call
+   relevance: 96%  ·  success: 83.0%  ·  latency: ~467ms  ·  billing: Charged 5.75 credits per call
 
 $ qveris inspect 1
 icons
 weather_gov.icons.retrieve.v3.ad0b4d80
 Returns a forecast icon. Icon services in API are deprecated.
 
+  Provider:   weather.gov
   Region:     global
   Latency:    ~325ms
   Success:    100.0%
@@ -52,9 +53,9 @@ $ qveris call 1 --params '{"set":"land","first":"sct","timeOfDay":"day"}'
 tool: amap_webservice.weather.weatherinfo.retrieve.v3  ·  id: d79cd15b-2f36-4ce1-bb3c-6ea28b5ecfa2
 
 Billing:
-  Charged 5.75 credits for this call
+  Total estimated pre-settlement charge: 5.75 credits
   Pre-settlement: 5.75 credits
-  Final charge status: qveris usage --mode search --execution-id d79cd15b-2f36-4ce1-bb3c-6ea28b5ecfa2
+Final charge status: qveris usage --mode search --execution-id d79cd15b-2f36-4ce1-bb3c-6ea28b5ecfa2
 
 {
   "status": "1",
@@ -93,7 +94,7 @@ irm https://qveris.ai/cli/install.ps1 | iex
 
 **Or via npm:**
 
-```bash
+```sh
 npm install -g @qverisai/cli
 ```
 
@@ -132,7 +133,7 @@ qveris call 1 --params '{"set":"land","first":"sct","timeOfDay":"day"}'
 | Command | Description |
 |---------|-------------|
 | `qveris init` | Guided first-call wizard: auth, discover, inspect, call, and usage/ledger reconciliation guidance. |
-| `qveris discover <query>` | Find capabilities by natural language. Shows tool ID, region, description, success rate, latency, and billing rule when available. |
+| `qveris discover <query>` | Find capabilities by natural language. Shows tool ID, description, relevance, success rate, latency, billing rule, provider, tags, and region when available. |
 | `qveris inspect <id\|index>` | View full tool details: parameters (type, required, description, enum values), example, provider info, execution history. |
 | `qveris call <id\|index>` | Execute a capability. Shows result data, execution time, pre-settlement billing, and remaining credits. |
 
@@ -154,7 +155,7 @@ qveris call 1 --params '{"set":"land","first":"sct","timeOfDay":"day"}'
 | `qveris interactive` | Launch REPL mode (discover/inspect/call/codegen in one session) |
 | `qveris doctor` | Self-check: Node.js version, API key, region, connectivity |
 | `qveris config <subcommand>` | Manage CLI settings (set, get, list, reset, path) |
-| `qveris mcp configure` | Generate MCP client config for Cursor, Claude Desktop/Code, OpenCode, OpenClaw, or generic stdio |
+| `qveris mcp configure` | Generate MCP client config for Cursor, Claude Desktop, OpenCode, OpenClaw, or generic stdio; generate a `claude mcp add` command for Claude Code |
 | `qveris mcp validate` | Validate an MCP config file, with optional live stdio tool probing |
 | `qveris completions <shell>` | Generate shell completions (bash/zsh/fish) |
 
@@ -256,7 +257,7 @@ For agent/script use (`--json` or piped output), the default increases to 20KB (
 
 ### MCP Configuration
 
-Generate MCP client config without hand-editing JSON. Print mode is the default and uses `YOUR_QVERIS_API_KEY` placeholders so the output is safe to share. Placeholder output intentionally fails API key validation until you replace it or use `--include-key`.
+Generate MCP client config without hand-editing JSON. Print mode is the default and uses `YOUR_QVERIS_API_KEY` placeholders so the output is safe to share. Placeholder output intentionally fails API key validation until you replace it or use `--include-key`. For Claude Code, the command prints a `claude mcp add` command instead of writing a config file.
 
 ```bash
 # Print safe config for Cursor
@@ -273,10 +274,10 @@ qveris mcp configure --target claude-code
 qveris mcp configure --target generic --json
 ```
 
-Config file locations:
+Config file locations and destinations:
 - **Cursor**: `~/.cursor/mcp.json` (Linux/macOS) or `%USERPROFILE%\.cursor\mcp.json` (Windows)
 - **Claude Desktop**: `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows)
-- **Claude Code**: `qveris mcp configure --target claude-code` outputs a `claude mcp add` command rather than writing a config file
+- **Claude Code**: no config file is written; `qveris mcp configure --target claude-code` outputs a `claude mcp add` command
 
 Validate an existing config:
 
@@ -355,7 +356,7 @@ qveris> exit
 ### API Key
 
 ```bash
-# Option 1: Login (saves to ~/.config/qveris/config.json)
+# Option 1: Login (saves to the qveris config file)
 qveris login
 
 # Option 2: Environment variable
@@ -418,8 +419,8 @@ qveris discover "weather" --base-url https://qveris.cn/api/v1
 ### Config File
 
 Located at:
-- **Linux / macOS**: `~/.config/qveris/config.json` (respects `XDG_CONFIG_HOME`)
-- **Windows / all platforms**: `~/.config/qveris/config.json`
+- **All platforms**: `$XDG_CONFIG_HOME/qveris/config.json` when `XDG_CONFIG_HOME` is set
+- **Default**: `~/.config/qveris/config.json` (for example, `C:\Users\<user>\.config\qveris\config.json` on Windows)
 
 ```bash
 qveris config list          # View all settings with sources
@@ -440,9 +441,6 @@ eval "$(qveris completions zsh)"
 
 # Fish
 qveris completions fish | source
-
-# PowerShell
-qveris completions powershell | Out-String | Invoke-Expression
 ```
 
 ## Global Flags
