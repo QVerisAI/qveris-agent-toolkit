@@ -12,53 +12,71 @@ qveris init
 $ qveris discover "weather forecast API"
 Found 5 capabilities matching your query
 
-1. gridpoint_forecast  by Weather.gov
-   weather_gov.gridpoints.forecast.retrieve.v1
-   Returns a textual forecast for a 2.5km grid area
-   relevance: 95%  ·  success: 99.8%  ·  latency: ~180ms  ·  billing: 3 credits / request
+1. icons
+   weather_gov.icons.retrieve.v3.ad0b4d80
+   Returns a forecast icon. Icon services in API are deprecated.
+   relevance: 99%  ·  success: 100.0%  ·  latency: ~325ms  ·  billing: Charged 5.75 credits per call
 
-2. current_weather  by OpenWeather
-   openweathermap.weather.current.v1
-   Get current weather data for any location
-   relevance: 87%  ·  success: 99.5%  ·  latency: ~200ms  ·  billing: 2 credits / request
+2. Weather Information Retrieve
+   amap_webservice.weather.weatherinfo.retrieve.v3
+   Query current (base) or future (all) weather information for a specified city using adcode.
+   relevance: 96%  ·  success: 83.0%  ·  latency: ~467ms  ·  billing: Charged 5.75 credits per call
 
 $ qveris inspect 1
-gridpoint_forecast
-Returns a textual forecast for a 2.5km grid area
+icons
+weather_gov.icons.retrieve.v3.ad0b4d80
+Returns a forecast icon. Icon services in API are deprecated.
 
-  Provider:   Weather.gov
-  Latency:    ~180ms
-  Success:    99.8%
-  Billing:    3 credits / request
+  Provider:   weather.gov
+  Region:     global
+  Latency:    ~325ms
+  Success:    100.0%
+  Billing:    Charged 5.75 credits per call
 
   Parameters:
-    wfo     string   required
-      Forecast office ID
-      values: "LWX", "OKX", "LAX", ...
-    x       integer  required
-      Forecast grid X coordinate
-    y       integer  required
-      Forecast grid Y coordinate
+    set  string  required
+      .
+    timeOfDay  string  required  The time of day for which to retrieve  data (e.g., "morning", "afternoon")
+
+    first  string  required  The first record to retrieve (index or ID)
+
+    size  string  optional
+      Font size
+    fontsize  integer  optional
+      Font size
 
   Example:
-    {"wfo": "LWX", "x": 90, "y": 90}
+    {"set":"land","first":"sct","timeOfDay":"day"}
 
-$ qveris call 1 --params '{"wfo":"LWX","x":90,"y":90}'
-✓ success  ·  523ms  ·  10 credits pre-settlement  ·  (1368087.93 remaining)
-tool: weather_gov...  ·  id: 7ebcaf9d-...
+$ qveris call 1 --params '{"set":"land","first":"sct","timeOfDay":"day"}'
+✓ success  ·  311ms  ·  5.75 credits pre-settlement  ·  (1078.15 remaining)
+tool: amap_webservice.weather.weatherinfo.retrieve.v3  ·  id: d79cd15b-2f36-4ce1-bb3c-6ea28b5ecfa2
 
 Billing:
-  10 credits per successful request
-  Pre-settlement: 10 credits
+  Total estimated pre-settlement charge: 5.75 credits
+  Pre-settlement: 5.75 credits
+Final charge status: qveris usage --mode search --execution-id d79cd15b-2f36-4ce1-bb3c-6ea28b5ecfa2
 
 {
-  "type": "Feature",
-  "properties": {
-    "periods": [
-      { "name": "Today", "temperature": 79, "shortForecast": "Partly Sunny" },
-      ...
-    ]
-  }
+  "status": "1",
+  "count": "1",
+  "info": "OK",
+  "infocode": "10000",
+  "lives": [
+    {
+      "province": "北京",
+      "city": "东城区",
+      "adcode": "110101",
+      "weather": "多云",
+      "temperature": "31",
+      "winddirection": "西南",
+      "windpower": "≤3",
+      "humidity": "50",
+      "reporttime": "2026-05-13 13:33:58",
+      "temperature_float": "31.0",
+      "humidity_float": "50.0"
+    }
+  ]
 }
 ```
 
@@ -67,12 +85,16 @@ Billing:
 **One-liner (recommended):**
 
 ```bash
+# Linux / macOS
 curl -fsSL https://qveris.ai/cli/install | bash
+
+# Windows (PowerShell)
+irm https://qveris.ai/cli/install.ps1 | iex
 ```
 
 **Or via npm:**
 
-```bash
+```sh
 npm install -g @qverisai/cli
 ```
 
@@ -101,7 +123,7 @@ qveris discover "weather forecast"
 qveris inspect 1
 
 # 4. Call it
-qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
+qveris call 1 --params '{"set":"land","first":"sct","timeOfDay":"day"}'
 ```
 
 ## Commands
@@ -111,7 +133,7 @@ qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
 | Command | Description |
 |---------|-------------|
 | `qveris init` | Guided first-call wizard: auth, discover, inspect, call, and usage/ledger reconciliation guidance. |
-| `qveris discover <query>` | Find capabilities by natural language. Shows tool ID, provider, description, relevance, success rate, latency, and billing rule when available. |
+| `qveris discover <query>` | Find capabilities by natural language. Shows tool ID, description, relevance, success rate, latency, billing rule, provider, tags, and region when available. |
 | `qveris inspect <id\|index>` | View full tool details: parameters (type, required, description, enum values), example, provider info, execution history. |
 | `qveris call <id\|index>` | Execute a capability. Shows result data, execution time, pre-settlement billing, and remaining credits. |
 
@@ -133,7 +155,7 @@ qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
 | `qveris interactive` | Launch REPL mode (discover/inspect/call/codegen in one session) |
 | `qveris doctor` | Self-check: Node.js version, API key, region, connectivity |
 | `qveris config <subcommand>` | Manage CLI settings (set, get, list, reset, path) |
-| `qveris mcp configure` | Generate MCP client config for Cursor, Claude Desktop/Code, OpenCode, OpenClaw, or generic stdio |
+| `qveris mcp configure` | Generate MCP client config for Cursor, Claude Desktop, OpenCode, OpenClaw, or generic stdio; generate a `claude mcp add` command for Claude Code |
 | `qveris mcp validate` | Validate an MCP config file, with optional live stdio tool probing |
 | `qveris completions <shell>` | Generate shell completions (bash/zsh/fish) |
 
@@ -217,7 +239,8 @@ Response truncated (32KB → 4KB preview)
 
 Full content (valid 120 min):
   https://qveris-tool-results-cache-bj.oss-cn-beijing...
-  Download: curl -o result.json '<url>'
+  Download: curl -o result.json '<url>' (Linux/macOS)
+  Download: Invoke-WebRequest -Uri '<url>' -OutFile result.json (Windows PowerShell)
 
 Schema:
   query: string
@@ -234,7 +257,7 @@ For agent/script use (`--json` or piped output), the default increases to 20KB (
 
 ### MCP Configuration
 
-Generate MCP client config without hand-editing JSON. Print mode is the default and uses `YOUR_QVERIS_API_KEY` placeholders so the output is safe to share. Placeholder output intentionally fails API key validation until you replace it or use `--include-key`.
+Generate MCP client config without hand-editing JSON. Print mode is the default and uses `YOUR_QVERIS_API_KEY` placeholders so the output is safe to share. Placeholder output intentionally fails API key validation until you replace it or use `--include-key`. For Claude Code, the command prints a `claude mcp add` command instead of writing a config file.
 
 ```bash
 # Print safe config for Cursor
@@ -250,6 +273,11 @@ qveris mcp configure --target openclaw --write --include-key
 qveris mcp configure --target claude-code
 qveris mcp configure --target generic --json
 ```
+
+Config file locations and destinations:
+- **Cursor**: `~/.cursor/mcp.json` (Linux/macOS) or `%USERPROFILE%\.cursor\mcp.json` (Windows)
+- **Claude Desktop**: `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows)
+- **Claude Code**: no config file is written; `qveris mcp configure --target claude-code` outputs a `claude mcp add` command
 
 Validate an existing config:
 
@@ -328,11 +356,18 @@ qveris> exit
 ### API Key
 
 ```bash
-# Option 1: Login (saves to ~/.config/qveris/config.json)
+# Option 1: Login (saves to the qveris config file)
 qveris login
 
 # Option 2: Environment variable
+# Linux / macOS
 export QVERIS_API_KEY="sk-1_..."
+
+# Windows (PowerShell)
+$env:QVERIS_API_KEY="sk-1_..."
+
+# Windows (CMD)
+set QVERIS_API_KEY=sk-1_...
 
 # Option 3: Per-command flag
 qveris discover "weather" --api-key "sk-1_..."
@@ -358,10 +393,24 @@ No extra configuration needed. `qveris login` prompts for region selection inter
 qveris login --token "sk-cn-xxx"
 
 # Or environment variable
+# Linux / macOS
 export QVERIS_REGION=cn
 
+# Windows (PowerShell)
+$env:QVERIS_REGION="cn"
+
+# Windows (CMD)
+set QVERIS_REGION=cn
+
 # Or custom base URL
+# Linux / macOS
 export QVERIS_BASE_URL=https://custom.endpoint/api/v1
+
+# Windows (PowerShell)
+$env:QVERIS_BASE_URL="https://custom.endpoint/api/v1"
+
+# Windows (CMD)
+set QVERIS_BASE_URL=https://custom.endpoint/api/v1
 
 # Or per-command
 qveris discover "weather" --base-url https://qveris.cn/api/v1
@@ -369,7 +418,9 @@ qveris discover "weather" --base-url https://qveris.cn/api/v1
 
 ### Config File
 
-Located at `~/.config/qveris/config.json` (respects `XDG_CONFIG_HOME`).
+Located at:
+- **All platforms**: `$XDG_CONFIG_HOME/qveris/config.json` when `XDG_CONFIG_HOME` is set
+- **Default**: `~/.config/qveris/config.json` (for example, `C:\Users\<user>\.config\qveris\config.json` on Windows)
 
 ```bash
 qveris config list          # View all settings with sources
@@ -422,8 +473,22 @@ When used by agents or in scripts, the CLI auto-detects non-TTY environments:
 
 ```bash
 # Agent workflow: discover → select → call → parse
+
+# Linux / macOS
 TOOL=$(qveris discover "weather" --json | jq -r '.results[0].tool_id')
 qveris call "$TOOL" --params '{"city":"London"}' --json | jq '.result.data'
+
+# Windows (PowerShell)
+$TOOL = qveris discover "weather" --json | ConvertFrom-Json | Select-Object -ExpandProperty results | Select-Object -First 1 | Select-Object -ExpandProperty tool_id
+qveris call $TOOL --params '{"city":"London"}' --json | ConvertFrom-Json | Select-Object -ExpandProperty result | Select-Object -ExpandProperty data
+
+ # Windows (CMD, interactive) - requires jq for Windows
+for /f "tokens=*" %i in ('qveris discover "weather" --json ^| jq -r ".results[0].tool_id"') do set TOOL=%i
+qveris call %TOOL% --params "{\"city\":\"London\"}" --json | jq ".result.data"
+
+# Windows (.bat/.cmd script) - use %%i instead of %i
+for /f "tokens=*" %%i in ('qveris discover "weather" --json ^| jq -r ".results[0].tool_id"') do set TOOL=%%i
+qveris call %TOOL% --params "{\"city\":\"London\"}" --json | jq ".result.data"
 ```
 
 ## Exit Codes
