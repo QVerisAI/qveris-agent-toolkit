@@ -1,0 +1,5690 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "QVeris Public REST API",
+    "version": "2026-05-12",
+    "summary": "External REST API for enterprise integration.",
+    "description": "OpenAPI 3.1 schema for the formally released public `/api/v1` REST API surface. It covers search, provider discovery, tool metadata lookup/execution, credits, and account audit endpoints. Unreleased API families are intentionally excluded from this customer-facing schema."
+  },
+  "paths": {
+    "/auth/account/settlement-history": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Get Account Settlement History",
+        "description": "获取账号中心结算历史轻量 feed。\n\nThis first implementation serves the immutable ledger summary path used\nafter readiness confirms the ledger is complete for the requested range.",
+        "operationId": "get_account_settlement_history_api_v1_auth_account_settlement_history_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "开始日期 (YYYY-MM-DD)",
+              "title": "Start Date"
+            },
+            "description": "开始日期 (YYYY-MM-DD)"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "结束日期 (YYYY-MM-DD)",
+              "title": "End Date"
+            },
+            "description": "结束日期 (YYYY-MM-DD)"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "账本范围",
+              "default": "account_history",
+              "title": "Scope"
+            },
+            "description": "账本范围"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "下一页游标",
+              "title": "Cursor"
+            },
+            "description": "下一页游标"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "每页数量",
+              "default": 100,
+              "title": "Page Size"
+            },
+            "description": "每页数量"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_SettlementHistoryResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "x-qveris-source": {
+          "file": "backend/routers/auth.py",
+          "line": 3097
+        },
+        "x-qveris-response-model": "APIResponse[SettlementHistoryResponse]"
+      }
+    },
+    "/auth/credits": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Get Current User Credits",
+        "description": "查询当前用户的积分信息，包括各类积分明细和剩余总积分。支持 API Key 和 JWT 认证。",
+        "operationId": "get_current_user_credits_api_v1_auth_credits_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_dict_"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "x-qveris-source": {
+          "file": "backend/routers/auth.py",
+          "line": 1087
+        },
+        "x-qveris-response-model": "APIResponse[dict]"
+      }
+    },
+    "/auth/credits/ledger": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Query credits ledger",
+        "description": "Query immutable final credit balance movements. Usage audit explains request outcomes; the credits ledger explains signed balance changes. Negative `amount_credits` values consume credits and positive values grant credits.",
+        "operationId": "get_credits_ledger_api_v1_auth_credits_ledger_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "开始日期 (YYYY-MM-DD)",
+              "title": "Start Date"
+            },
+            "description": "开始日期 (YYYY-MM-DD)",
+            "example": "2026-05-01"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "结束日期 (YYYY-MM-DD)",
+              "title": "End Date"
+            },
+            "description": "结束日期 (YYYY-MM-DD)",
+            "example": "2026-05-16"
+          },
+          {
+            "name": "entry_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "账本事件类型",
+              "title": "Entry Type"
+            },
+            "description": "账本事件类型",
+            "example": "consume_tool_execute"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "预定义账本范围，例如 account_history",
+              "title": "Scope"
+            },
+            "description": "预定义账本范围，例如 account_history",
+            "example": "account_history"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "页码",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "页码",
+            "example": 1
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "每页数量",
+              "default": 50,
+              "title": "Page Size"
+            },
+            "description": "每页数量",
+            "example": 50
+          },
+          {
+            "name": "min_credits",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Credits"
+            },
+            "example": 1
+          },
+          {
+            "name": "max_credits",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Credits"
+            },
+            "example": 25
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "any",
+              "title": "Direction"
+            },
+            "example": "consume"
+          },
+          {
+            "name": "bucket",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Bucket"
+            },
+            "example": "day"
+          },
+          {
+            "name": "summary",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Summary"
+            },
+            "example": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            },
+            "example": 5
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_CreditsLedgerResponse_"
+                },
+                "example": {
+                  "status": "success",
+                  "message": "Credits ledger retrieved successfully",
+                  "status_code": 0,
+                  "data": {
+                    "items": [
+                      {
+                        "id": "led_01HZX9R39K6QZ",
+                        "entry_type": "consume_tool_execute",
+                        "amount_credits": -5,
+                        "source_system": "qveris_website",
+                        "source_ref_type": "tool_execute",
+                        "source_ref_id": "exec_01HZX9R2R4S2E",
+                        "pre_settlement_bill": {
+                          "summary": "5 credits per successful request",
+                          "list_amount_credits": 5
+                        },
+                        "settlement_result": {
+                          "settled_amount_credits": 5
+                        },
+                        "balance_before": {
+                          "total_available_credits": 995
+                        },
+                        "balance_after": {
+                          "total_available_credits": 990
+                        },
+                        "description": "Tool execution charge",
+                        "created_at": "2026-05-16T08:30:13Z"
+                      }
+                    ],
+                    "total": 1,
+                    "page": 1,
+                    "page_size": 50,
+                    "summary": null
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid ledger query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_dict_"
+                },
+                "example": {
+                  "status": "failure",
+                  "message": "Invalid direction. Use consume, grant, or any",
+                  "status_code": -7,
+                  "data": null
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "x-qveris-source": {
+          "file": "backend/routers/auth.py",
+          "line": 3195
+        },
+        "x-qveris-response-model": "APIResponse[CreditsLedgerResponse]"
+      }
+    },
+    "/auth/credits/ledger-readiness": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Get Credits Ledger Readiness",
+        "description": "Check whether this user's account history can safely switch to credits_ledger.",
+        "operationId": "get_credits_ledger_readiness_api_v1_auth_credits_ledger_readiness_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "开始日期 (YYYY-MM-DD)",
+              "title": "Start Date"
+            },
+            "description": "开始日期 (YYYY-MM-DD)"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "结束日期 (YYYY-MM-DD)",
+              "title": "End Date"
+            },
+            "description": "结束日期 (YYYY-MM-DD)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_CreditsLedgerReadinessResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "x-qveris-source": {
+          "file": "backend/routers/auth.py",
+          "line": 3508
+        },
+        "x-qveris-response-model": "APIResponse[CreditsLedgerReadinessResponse]"
+      }
+    },
+    "/auth/credits/ledger/export": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Export Credits Ledger",
+        "description": "导出用户 credits ledger 账本，供账号中心和运营审计使用。",
+        "operationId": "export_credits_ledger_api_v1_auth_credits_ledger_export_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "开始日期 (YYYY-MM-DD)",
+              "title": "Start Date"
+            },
+            "description": "开始日期 (YYYY-MM-DD)"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "结束日期 (YYYY-MM-DD)",
+              "title": "End Date"
+            },
+            "description": "结束日期 (YYYY-MM-DD)"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "账本导出范围",
+              "default": "account_history",
+              "title": "Scope"
+            },
+            "description": "账本导出范围"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV export.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "x-qveris-source": {
+          "file": "backend/routers/auth.py",
+          "line": 3371
+        }
+      }
+    },
+    "/auth/credits/ledger/{entry_id}": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Get Credits Ledger Entry",
+        "description": "获取单条 credits ledger detail，用于账单详情展开和审计追溯。",
+        "operationId": "get_credits_ledger_entry_api_v1_auth_credits_ledger__entry_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "entry_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entry Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_CreditsLedgerItem_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "x-qveris-source": {
+          "file": "backend/routers/auth.py",
+          "line": 3456
+        },
+        "x-qveris-response-model": "APIResponse[CreditsLedgerItem]"
+      }
+    },
+    "/auth/usage/credits-spent": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Get Usage Credits Spent",
+        "description": "Return the total credits spent by the current user in the given date range.\n\nUses a single server-side SUM query — no pagination limit — so results are\naccurate even for high-volume users with thousands of events in the window.",
+        "operationId": "get_usage_credits_spent_api_v1_auth_usage_credits_spent_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "开始日期 (YYYY-MM-DD)",
+              "title": "Start Date"
+            },
+            "description": "开始日期 (YYYY-MM-DD)"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "结束日期 (YYYY-MM-DD)",
+              "title": "End Date"
+            },
+            "description": "结束日期 (YYYY-MM-DD)"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "事件分组过滤",
+              "title": "Kind"
+            },
+            "description": "事件分组过滤"
+          },
+          {
+            "name": "charge_outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "收费结果过滤",
+              "title": "Charge Outcome"
+            },
+            "description": "收费结果过滤"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_UsageCreditsSpentResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "x-qveris-source": {
+          "file": "backend/routers/auth.py",
+          "line": 2860
+        },
+        "x-qveris-response-model": "APIResponse[UsageCreditsSpentResponse]"
+      }
+    },
+    "/auth/usage/history/v2": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Query usage audit history",
+        "description": "Query canonical usage events to confirm request success, failure, and final charge outcome. Agent, CLI, and MCP clients should prefer precise filters such as `execution_id` or `summary=true` with a bounded `limit` instead of dumping full history.",
+        "operationId": "get_usage_history_v2_api_v1_auth_usage_history_v2_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "开始日期 (YYYY-MM-DD)",
+              "title": "Start Date"
+            },
+            "description": "开始日期 (YYYY-MM-DD)",
+            "example": "2026-05-01"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "结束日期 (YYYY-MM-DD)",
+              "title": "End Date"
+            },
+            "description": "结束日期 (YYYY-MM-DD)",
+            "example": "2026-05-16"
+          },
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "事件类型过滤",
+              "title": "Event Type"
+            },
+            "description": "事件类型过滤",
+            "example": "tool_execute"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "事件分组过滤",
+              "title": "Kind"
+            },
+            "description": "事件分组过滤",
+            "example": "call"
+          },
+          {
+            "name": "success",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "是否成功",
+              "title": "Success"
+            },
+            "description": "是否成功",
+            "example": true
+          },
+          {
+            "name": "billable_success",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "是否可计费",
+              "title": "Billable Success"
+            },
+            "description": "是否可计费",
+            "example": true
+          },
+          {
+            "name": "outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "执行 outcome 过滤",
+              "title": "Outcome"
+            },
+            "description": "执行 outcome 过滤",
+            "example": "completed"
+          },
+          {
+            "name": "reason_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "执行 reason_code 过滤",
+              "title": "Reason Code"
+            },
+            "description": "执行 reason_code 过滤",
+            "example": "provider_success"
+          },
+          {
+            "name": "has_execution_outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "是否存在 execution_outcome",
+              "title": "Has Execution Outcome"
+            },
+            "description": "是否存在 execution_outcome",
+            "example": true
+          },
+          {
+            "name": "charge_outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "收费结果过滤",
+              "title": "Charge Outcome"
+            },
+            "description": "收费结果过滤",
+            "example": "charged"
+          },
+          {
+            "name": "anomaly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "异常类型过滤",
+              "title": "Anomaly"
+            },
+            "description": "异常类型过滤",
+            "example": "missing_ledger_link"
+          },
+          {
+            "name": "search_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "search_id 聚焦过滤",
+              "title": "Search Id"
+            },
+            "description": "search_id 聚焦过滤",
+            "example": "srch_01HZX9QK7J3M9T"
+          },
+          {
+            "name": "execution_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "execution_id 聚焦过滤",
+              "title": "Execution Id"
+            },
+            "description": "execution_id 聚焦过滤",
+            "example": "exec_01HZX9R2R4S2E"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "页码",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "页码",
+            "example": 1
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50000,
+              "minimum": 1,
+              "description": "每页数量",
+              "default": 50,
+              "title": "Page Size"
+            },
+            "description": "每页数量",
+            "example": 50
+          },
+          {
+            "name": "min_credits",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Credits"
+            },
+            "example": 1
+          },
+          {
+            "name": "max_credits",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Credits"
+            },
+            "example": 25
+          },
+          {
+            "name": "bucket",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Bucket"
+            },
+            "example": "day"
+          },
+          {
+            "name": "summary",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Summary"
+            },
+            "example": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            },
+            "example": 5
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_UsageEventsResponse_"
+                },
+                "example": {
+                  "status": "success",
+                  "message": "Usage events retrieved successfully",
+                  "status_code": 0,
+                  "data": {
+                    "items": [
+                      {
+                        "id": "evt_01HZX9R31GH2R",
+                        "event_type": "tool_execute",
+                        "source_system": "qveris_website",
+                        "source_ref_type": "tool_execute",
+                        "source_ref_id": "exec_01HZX9R2R4S2E",
+                        "session_id": "sess_7Q9m",
+                        "search_id": "srch_01HZX9QK7J3M9T",
+                        "execution_id": "exec_01HZX9R2R4S2E",
+                        "tool_id": "openweathermap.weather.execute.v1",
+                        "success": true,
+                        "charge_outcome": "charged",
+                        "duration_ms": 211,
+                        "billing_snapshot_status": "upstream_provided",
+                        "pre_settlement_amount_credits": 5,
+                        "settled_amount_credits": 5,
+                        "actual_amount_credits": 5,
+                        "credits_ledger_entry_id": "led_01HZX9R39K6QZ",
+                        "display_target": "openweathermap.weather.execute.v1",
+                        "billing_summary": "5 credits per successful request",
+                        "created_at": "2026-05-16T08:30:12Z"
+                      }
+                    ],
+                    "total": 1,
+                    "page": 1,
+                    "page_size": 50,
+                    "summary": null
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid audit query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_dict_"
+                },
+                "example": {
+                  "status": "failure",
+                  "message": "Invalid start_date format. Use YYYY-MM-DD or ISO-8601 datetime",
+                  "status_code": -7,
+                  "data": null
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "x-qveris-source": {
+          "file": "backend/routers/auth.py",
+          "line": 2568
+        },
+        "x-qveris-response-model": "APIResponse[UsageEventsResponse]"
+      }
+    },
+    "/auth/usage/history/v2/export": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Export Usage History V2",
+        "description": "导出 request-level usage audit，供用户与支持审计使用。",
+        "operationId": "export_usage_history_v2_api_v1_auth_usage_history_v2_export_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "开始日期 (YYYY-MM-DD)",
+              "title": "Start Date"
+            },
+            "description": "开始日期 (YYYY-MM-DD)"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "结束日期 (YYYY-MM-DD)",
+              "title": "End Date"
+            },
+            "description": "结束日期 (YYYY-MM-DD)"
+          },
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "事件类型过滤",
+              "title": "Event Type"
+            },
+            "description": "事件类型过滤"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "事件分组过滤",
+              "title": "Kind"
+            },
+            "description": "事件分组过滤"
+          },
+          {
+            "name": "success",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "是否成功",
+              "title": "Success"
+            },
+            "description": "是否成功"
+          },
+          {
+            "name": "billable_success",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "是否可计费",
+              "title": "Billable Success"
+            },
+            "description": "是否可计费"
+          },
+          {
+            "name": "outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "执行 outcome 过滤",
+              "title": "Outcome"
+            },
+            "description": "执行 outcome 过滤"
+          },
+          {
+            "name": "reason_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "执行 reason_code 过滤",
+              "title": "Reason Code"
+            },
+            "description": "执行 reason_code 过滤"
+          },
+          {
+            "name": "has_execution_outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "是否存在 execution_outcome",
+              "title": "Has Execution Outcome"
+            },
+            "description": "是否存在 execution_outcome"
+          },
+          {
+            "name": "charge_outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "收费结果过滤",
+              "title": "Charge Outcome"
+            },
+            "description": "收费结果过滤"
+          },
+          {
+            "name": "anomaly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "异常类型过滤",
+              "title": "Anomaly"
+            },
+            "description": "异常类型过滤"
+          },
+          {
+            "name": "search_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "search_id 聚焦过滤",
+              "title": "Search Id"
+            },
+            "description": "search_id 聚焦过滤"
+          },
+          {
+            "name": "execution_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "execution_id 聚焦过滤",
+              "title": "Execution Id"
+            },
+            "description": "execution_id 聚焦过滤"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV export.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "x-qveris-source": {
+          "file": "backend/routers/auth.py",
+          "line": 2930
+        }
+      }
+    },
+    "/auth/usage/history/v2/summary": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Get Usage History V2 Summary",
+        "description": "获取轻量 usage events summary，用于账号页列表快速渲染。",
+        "operationId": "get_usage_history_v2_summary_api_v1_auth_usage_history_v2_summary_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "开始日期 (YYYY-MM-DD)",
+              "title": "Start Date"
+            },
+            "description": "开始日期 (YYYY-MM-DD)"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "结束日期 (YYYY-MM-DD)",
+              "title": "End Date"
+            },
+            "description": "结束日期 (YYYY-MM-DD)"
+          },
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "事件类型过滤",
+              "title": "Event Type"
+            },
+            "description": "事件类型过滤"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "事件分组过滤",
+              "title": "Kind"
+            },
+            "description": "事件分组过滤"
+          },
+          {
+            "name": "success",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "是否成功",
+              "title": "Success"
+            },
+            "description": "是否成功"
+          },
+          {
+            "name": "billable_success",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "是否可计费",
+              "title": "Billable Success"
+            },
+            "description": "是否可计费"
+          },
+          {
+            "name": "outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "执行 outcome 过滤",
+              "title": "Outcome"
+            },
+            "description": "执行 outcome 过滤"
+          },
+          {
+            "name": "reason_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "执行 reason_code 过滤",
+              "title": "Reason Code"
+            },
+            "description": "执行 reason_code 过滤"
+          },
+          {
+            "name": "has_execution_outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "是否存在 execution_outcome",
+              "title": "Has Execution Outcome"
+            },
+            "description": "是否存在 execution_outcome"
+          },
+          {
+            "name": "charge_outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "收费结果过滤",
+              "title": "Charge Outcome"
+            },
+            "description": "收费结果过滤"
+          },
+          {
+            "name": "anomaly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "异常类型过滤",
+              "title": "Anomaly"
+            },
+            "description": "异常类型过滤"
+          },
+          {
+            "name": "search_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "search_id 聚焦过滤",
+              "title": "Search Id"
+            },
+            "description": "search_id 聚焦过滤"
+          },
+          {
+            "name": "execution_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "execution_id 聚焦过滤",
+              "title": "Execution Id"
+            },
+            "description": "execution_id 聚焦过滤"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "下一页游标",
+              "title": "Cursor"
+            },
+            "description": "下一页游标"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "每页数量",
+              "default": 100,
+              "title": "Page Size"
+            },
+            "description": "每页数量"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_UsageEventSummaryResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "x-qveris-source": {
+          "file": "backend/routers/auth.py",
+          "line": 2749
+        },
+        "x-qveris-response-model": "APIResponse[UsageEventSummaryResponse]"
+      }
+    },
+    "/auth/usage/history/v2/{event_id}": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Get Usage History V2 Entry",
+        "description": "获取单条 usage event 详情。",
+        "operationId": "get_usage_history_v2_entry_api_v1_auth_usage_history_v2__event_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_UsageEventItem_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "x-qveris-source": {
+          "file": "backend/routers/auth.py",
+          "line": 3055
+        },
+        "x-qveris-response-model": "APIResponse[UsageEventItem]"
+      }
+    },
+    "/auth/verify-token": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Verify Token",
+        "description": "验证JWT token是否有效和是否过期\n\nArgs:\n    token: JWT访问令牌\n    \nReturns:\n    TokenVerificationResponse: 包含token验证结果的响应",
+        "operationId": "verify_token_api_v1_auth_verify_token_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_TokenVerificationResponse_"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "x-qveris-source": {
+          "file": "backend/routers/auth.py",
+          "line": 3647
+        },
+        "x-qveris-response-model": "APIResponse[TokenVerificationResponse]"
+      }
+    },
+    "/credits": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Get Current User Credits",
+        "description": "查询当前用户的积分信息，包括各类积分明细和剩余总积分。支持 API Key 和 JWT 认证。",
+        "operationId": "get_current_user_credits_api_v1_credits_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_dict_"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "x-qveris-source": {
+          "file": "backend/routers/credits.py",
+          "line": 28
+        },
+        "x-qveris-response-model": "APIResponse[dict]"
+      }
+    },
+    "/providers": {
+      "get": {
+        "tags": [
+          "Discovery"
+        ],
+        "summary": "Get Providers",
+        "description": "Get providers from the real API with optional filtering and pagination",
+        "operationId": "get_providers_api_v1_providers_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "categories",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Categories"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "x-qveris-source": {
+          "file": "backend/routers/search.py",
+          "line": 2245
+        }
+      }
+    },
+    "/providers/categories": {
+      "get": {
+        "tags": [
+          "Discovery"
+        ],
+        "summary": "Get Provider Categories",
+        "description": "Get provider categories from the real API",
+        "operationId": "get_provider_categories_api_v1_providers_categories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "x-qveris-source": {
+          "file": "backend/routers/search.py",
+          "line": 2174
+        }
+      }
+    },
+    "/search": {
+      "post": {
+        "tags": [
+          "Discovery"
+        ],
+        "summary": "Discover capabilities",
+        "description": "Find ranked capabilities from a natural-language query. Discover is free. Results may include `expected_cost` and `billing_rule` so clients can estimate a later Call.",
+        "operationId": "search_api_v1_search_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicSearchResponse"
+                },
+                "example": {
+                  "query": "weather forecast API",
+                  "search_id": "srch_01HZX9QK7J3M9T",
+                  "total": 1,
+                  "results": [
+                    {
+                      "tool_id": "openweathermap.weather.execute.v1",
+                      "name": "Current Weather",
+                      "description": "Get current weather data for a city.",
+                      "provider_name": "OpenWeatherMap",
+                      "params": [
+                        {
+                          "name": "city",
+                          "type": "string",
+                          "required": true,
+                          "description": "City name"
+                        }
+                      ],
+                      "expected_cost": "5 credits per successful request",
+                      "billing_rule": {
+                        "unit": "request",
+                        "amount_credits": 5
+                      },
+                      "stats": {
+                        "avg_execution_time_ms": 210.7,
+                        "success_rate": 0.982
+                      }
+                    }
+                  ],
+                  "elapsed_time_ms": 245.6,
+                  "remaining_credits": 995
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "status_code": 401,
+                  "message": "Invalid API key"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient credits",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicSearchResponse"
+                },
+                "example": {
+                  "query": "weather forecast API",
+                  "search_id": "srch_failed",
+                  "total": 0,
+                  "results": [],
+                  "error_message": "Insufficient credits",
+                  "remaining_credits": 0
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "status_code": 429,
+                  "message": "Rate limit exceeded. Please try again later."
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicSearchRequest"
+              },
+              "example": {
+                "query": "weather forecast API",
+                "limit": 10,
+                "session_id": "sess_7Q9m"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tools/by-ids": {
+      "post": {
+        "tags": [
+          "Tool Execution"
+        ],
+        "summary": "Inspect capabilities by id",
+        "description": "Fetch full capability metadata for one or more tool ids. Inspect is free and returns the same capability shape as Discover, including parameter schema, examples, quality signals, and cost estimates.",
+        "operationId": "get_tools_by_ids_api_v1_tools_by_ids_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicSearchResponse"
+                },
+                "example": {
+                  "search_id": "srch_01HZX9QK7J3M9T",
+                  "total": 1,
+                  "results": [
+                    {
+                      "tool_id": "openweathermap.weather.execute.v1",
+                      "name": "Current Weather",
+                      "description": "Get current weather data for a city.",
+                      "provider_name": "OpenWeatherMap",
+                      "params": [
+                        {
+                          "name": "city",
+                          "type": "string",
+                          "required": true,
+                          "description": "City name"
+                        }
+                      ],
+                      "examples": {
+                        "sample_parameters": {
+                          "city": "London",
+                          "units": "metric"
+                        }
+                      },
+                      "expected_cost": "5 credits per successful request",
+                      "billing_rule": {
+                        "unit": "request",
+                        "amount_credits": 5
+                      },
+                      "stats": {
+                        "avg_execution_time_ms": 210.7,
+                        "success_rate": 0.982
+                      }
+                    }
+                  ],
+                  "remaining_credits": 995
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "status_code": 401,
+                  "message": "Invalid API key"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Upstream timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "error": "Request timeout",
+                  "remaining_credits": 995
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "x-qveris-source": {
+          "file": "backend/routers/search.py",
+          "line": 2302
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicToolsByIdsRequest"
+              },
+              "example": {
+                "tool_ids": [
+                  "openweathermap.weather.execute.v1"
+                ],
+                "search_id": "srch_01HZX9QK7J3M9T",
+                "session_id": "sess_7Q9m"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tools/execute": {
+      "post": {
+        "tags": [
+          "Tool Execution"
+        ],
+        "summary": "Call a capability",
+        "description": "Execute a selected capability. Call may consume credits according to the capability `billing_rule`; the response can include a pre-settlement `billing` statement, while final settlement is available through usage audit and credits ledger endpoints.",
+        "operationId": "execute_api_v1_tools_execute_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tool_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Tool ID (optional if provided in request body)",
+              "title": "Tool Id"
+            },
+            "description": "Tool ID (optional if provided in request body)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicExecuteToolResponse"
+                },
+                "example": {
+                  "execution_id": "exec_01HZX9R2R4S2E",
+                  "result": {
+                    "data": {
+                      "temperature": 15.5,
+                      "description": "partly cloudy"
+                    }
+                  },
+                  "success": true,
+                  "error_message": null,
+                  "execution_time": 0.211,
+                  "billing": {
+                    "summary": "5 credits per successful request",
+                    "list_amount_credits": 5
+                  },
+                  "cost": 5,
+                  "remaining_credits": 990
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient credits",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicExecuteToolResponse"
+                },
+                "example": {
+                  "execution_id": "exec_01HZX9R2R4S2E",
+                  "result": {
+                    "data": {}
+                  },
+                  "success": false,
+                  "error_message": "Insufficient credits",
+                  "execution_time": 0.01,
+                  "remaining_credits": 0
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "status_code": 429,
+                  "message": "Rate limit exceeded. Please try again later."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicExecuteToolResponse"
+                },
+                "example": {
+                  "execution_id": "exec_01HZX9R2R4S2E",
+                  "result": {
+                    "data": {}
+                  },
+                  "success": false,
+                  "error_message": "Missing required parameter: tool_id. Provide it as query (?tool_id=xxx) or in JSON body.",
+                  "execution_time": 0.01
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicExecuteToolRequest"
+              },
+              "example": {
+                "search_id": "srch_01HZX9QK7J3M9T",
+                "session_id": "sess_7Q9m",
+                "parameters": {
+                  "city": "London",
+                  "units": "metric"
+                },
+                "max_response_size": 20480
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "APIResponse_CreditsLedgerItem_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CreditsLedgerItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[CreditsLedgerItem]"
+      },
+      "APIResponse_CreditsLedgerReadinessResponse_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CreditsLedgerReadinessResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[CreditsLedgerReadinessResponse]"
+      },
+      "APIResponse_CreditsLedgerResponse_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CreditsLedgerResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[CreditsLedgerResponse]"
+      },
+      "APIResponse_SettlementHistoryResponse_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SettlementHistoryResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[SettlementHistoryResponse]"
+      },
+      "APIResponse_TokenVerificationResponse_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TokenVerificationResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[TokenVerificationResponse]"
+      },
+      "APIResponse_UsageCreditsSpentResponse_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UsageCreditsSpentResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[UsageCreditsSpentResponse]"
+      },
+      "APIResponse_UsageEventItem_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UsageEventItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[UsageEventItem]"
+      },
+      "APIResponse_UsageEventSummaryResponse_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UsageEventSummaryResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[UsageEventSummaryResponse]"
+      },
+      "APIResponse_UsageEventsResponse_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UsageEventsResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[UsageEventsResponse]"
+      },
+      "APIResponse_dict_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[dict]"
+      },
+      "CreditsLedgerItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "entry_type": {
+            "type": "string",
+            "title": "Entry Type"
+          },
+          "amount_credits": {
+            "type": "number",
+            "title": "Amount Credits"
+          },
+          "source_system": {
+            "type": "string",
+            "title": "Source System"
+          },
+          "source_ref_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Ref Type"
+          },
+          "source_ref_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Ref Id"
+          },
+          "pre_settlement_bill": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pre Settlement Bill"
+          },
+          "settlement_result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement Result"
+          },
+          "balance_before": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Balance Before"
+          },
+          "balance_after": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Balance After"
+          },
+          "ledger_metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ledger Metadata"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "entry_type",
+          "amount_credits",
+          "source_system",
+          "created_at"
+        ],
+        "title": "CreditsLedgerItem"
+      },
+      "CreditsLedgerReadinessEntity": {
+        "properties": {
+          "entity_type": {
+            "type": "string",
+            "title": "Entity Type"
+          },
+          "legacy_count": {
+            "type": "integer",
+            "title": "Legacy Count"
+          },
+          "legacy_amount_credits": {
+            "type": "number",
+            "title": "Legacy Amount Credits"
+          },
+          "ledger_count": {
+            "type": "integer",
+            "title": "Ledger Count"
+          },
+          "ledger_amount_credits": {
+            "type": "number",
+            "title": "Ledger Amount Credits"
+          },
+          "missing_count": {
+            "type": "integer",
+            "title": "Missing Count"
+          },
+          "extra_count": {
+            "type": "integer",
+            "title": "Extra Count"
+          },
+          "amount_delta_credits": {
+            "type": "number",
+            "title": "Amount Delta Credits"
+          },
+          "ready": {
+            "type": "boolean",
+            "title": "Ready"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity_type",
+          "legacy_count",
+          "legacy_amount_credits",
+          "ledger_count",
+          "ledger_amount_credits",
+          "missing_count",
+          "extra_count",
+          "amount_delta_credits",
+          "ready"
+        ],
+        "title": "CreditsLedgerReadinessEntity"
+      },
+      "CreditsLedgerReadinessResponse": {
+        "properties": {
+          "checked_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Checked At"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          },
+          "recommended_read_mode": {
+            "type": "string",
+            "title": "Recommended Read Mode"
+          },
+          "ready": {
+            "type": "boolean",
+            "title": "Ready"
+          },
+          "legacy_total_count": {
+            "type": "integer",
+            "title": "Legacy Total Count"
+          },
+          "legacy_total_amount_credits": {
+            "type": "number",
+            "title": "Legacy Total Amount Credits"
+          },
+          "ledger_total_count": {
+            "type": "integer",
+            "title": "Ledger Total Count"
+          },
+          "ledger_total_amount_credits": {
+            "type": "number",
+            "title": "Ledger Total Amount Credits"
+          },
+          "entities": {
+            "items": {
+              "$ref": "#/components/schemas/CreditsLedgerReadinessEntity"
+            },
+            "type": "array",
+            "title": "Entities"
+          }
+        },
+        "type": "object",
+        "required": [
+          "checked_at",
+          "scope",
+          "recommended_read_mode",
+          "ready",
+          "legacy_total_count",
+          "legacy_total_amount_credits",
+          "ledger_total_count",
+          "ledger_total_amount_credits",
+          "entities"
+        ],
+        "title": "CreditsLedgerReadinessResponse"
+      },
+      "CreditsLedgerResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CreditsLedgerItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CreditsLedgerSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "CreditsLedgerResponse"
+      },
+      "CreditsLedgerSummary": {
+        "properties": {
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          },
+          "bucket": {
+            "type": "string",
+            "title": "Bucket"
+          },
+          "total_entries": {
+            "type": "integer",
+            "title": "Total Entries"
+          },
+          "consume_count": {
+            "type": "integer",
+            "title": "Consume Count"
+          },
+          "grant_count": {
+            "type": "integer",
+            "title": "Grant Count"
+          },
+          "consumed_credits": {
+            "type": "number",
+            "title": "Consumed Credits"
+          },
+          "granted_credits": {
+            "type": "number",
+            "title": "Granted Credits"
+          },
+          "net_amount_credits": {
+            "type": "number",
+            "title": "Net Amount Credits"
+          },
+          "max_amount_items": {
+            "items": {
+              "$ref": "#/components/schemas/CreditsLedgerItem"
+            },
+            "type": "array",
+            "title": "Max Amount Items"
+          },
+          "buckets": {
+            "items": {
+              "$ref": "#/components/schemas/CreditsLedgerSummaryBucket"
+            },
+            "type": "array",
+            "title": "Buckets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bucket",
+          "total_entries",
+          "consume_count",
+          "grant_count",
+          "consumed_credits",
+          "granted_credits",
+          "net_amount_credits",
+          "max_amount_items",
+          "buckets"
+        ],
+        "title": "CreditsLedgerSummary"
+      },
+      "CreditsLedgerSummaryBucket": {
+        "properties": {
+          "bucket_start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Bucket Start"
+          },
+          "entry_count": {
+            "type": "integer",
+            "title": "Entry Count"
+          },
+          "consume_count": {
+            "type": "integer",
+            "title": "Consume Count"
+          },
+          "grant_count": {
+            "type": "integer",
+            "title": "Grant Count"
+          },
+          "consumed_credits": {
+            "type": "number",
+            "title": "Consumed Credits"
+          },
+          "granted_credits": {
+            "type": "number",
+            "title": "Granted Credits"
+          },
+          "net_amount_credits": {
+            "type": "number",
+            "title": "Net Amount Credits"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bucket_start",
+          "entry_count",
+          "consume_count",
+          "grant_count",
+          "consumed_credits",
+          "granted_credits",
+          "net_amount_credits"
+        ],
+        "title": "CreditsLedgerSummaryBucket"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "SettlementHistoryItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "entry_type": {
+            "type": "string",
+            "title": "Entry Type"
+          },
+          "amount_credits": {
+            "type": "number",
+            "title": "Amount Credits"
+          },
+          "source_system": {
+            "type": "string",
+            "title": "Source System"
+          },
+          "source_ref_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Ref Type"
+          },
+          "source_ref_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Ref Id"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "display_target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Target"
+          },
+          "billing_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Summary"
+          },
+          "billing_snapshot_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Snapshot Status"
+          },
+          "details_available": {
+            "type": "boolean",
+            "title": "Details Available",
+            "default": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source",
+          "entry_type",
+          "amount_credits",
+          "source_system",
+          "created_at"
+        ],
+        "title": "SettlementHistoryItem"
+      },
+      "SettlementHistoryResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SettlementHistoryItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "has_more",
+          "page_size"
+        ],
+        "title": "SettlementHistoryResponse"
+      },
+      "TokenVerificationResponse": {
+        "properties": {
+          "is_valid": {
+            "type": "boolean",
+            "title": "Is Valid"
+          },
+          "is_expired": {
+            "type": "boolean",
+            "title": "Is Expired"
+          },
+          "payload": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payload"
+          }
+        },
+        "type": "object",
+        "required": [
+          "is_valid",
+          "is_expired"
+        ],
+        "title": "TokenVerificationResponse"
+      },
+      "UsageCreditsSpentResponse": {
+        "properties": {
+          "total_credits": {
+            "type": "number",
+            "title": "Total Credits"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_credits"
+        ],
+        "title": "UsageCreditsSpentResponse"
+      },
+      "UsageEventItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "source_system": {
+            "type": "string",
+            "title": "Source System"
+          },
+          "source_ref_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Ref Type"
+          },
+          "source_ref_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Ref Id"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "search_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search Id"
+          },
+          "execution_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Id"
+          },
+          "tool_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Id"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "charge_outcome": {
+            "type": "string",
+            "title": "Charge Outcome"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "request_payload": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Payload"
+          },
+          "response_payload_summary": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Payload Summary"
+          },
+          "execution_outcome": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Outcome"
+          },
+          "outcome_schema_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome Schema Version"
+          },
+          "transport_success": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transport Success"
+          },
+          "provider_success": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Success"
+          },
+          "result_valid": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Valid"
+          },
+          "billable_success": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billable Success"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "outcome_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome Status"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          },
+          "outcome_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome Message"
+          },
+          "provider_status_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Status Code"
+          },
+          "provider_status_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Status Message"
+          },
+          "http_status_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Status Code"
+          },
+          "valid_result_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Result Count"
+          },
+          "raw_result_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Result Count"
+          },
+          "chargeable_quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chargeable Quantity"
+          },
+          "retryable": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retryable"
+          },
+          "display_severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Severity"
+          },
+          "billing_snapshot_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Snapshot Status"
+          },
+          "billing_rule_snapshot": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Rule Snapshot"
+          },
+          "pre_settlement_bill": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pre Settlement Bill"
+          },
+          "settlement_result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement Result"
+          },
+          "requested_amount_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested Amount Credits"
+          },
+          "actual_amount_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Amount Credits"
+          },
+          "credits_ledger_entry_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credits Ledger Entry Id"
+          },
+          "display_target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Target"
+          },
+          "billing_unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Unit"
+          },
+          "unit_price_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Price Credits"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "list_amount_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "List Amount Credits"
+          },
+          "minimum_charge_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Charge Credits"
+          },
+          "pricing_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pricing Profile Id"
+          },
+          "billing_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Summary"
+          },
+          "pre_settlement_amount_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pre Settlement Amount Credits"
+          },
+          "settled_amount_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settled Amount Credits"
+          },
+          "pricing_context_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pricing Context Id"
+          },
+          "harbor_snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Harbor Snapshot Id"
+          },
+          "harbor_snapshot_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Harbor Snapshot Version"
+          },
+          "resolver_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolver Version"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "event_type",
+          "source_system",
+          "success",
+          "charge_outcome",
+          "created_at"
+        ],
+        "title": "UsageEventItem"
+      },
+      "UsageEventSummaryItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "source_system": {
+            "type": "string",
+            "title": "Source System"
+          },
+          "source_ref_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Ref Type"
+          },
+          "source_ref_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Ref Id"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "search_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search Id"
+          },
+          "execution_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Id"
+          },
+          "tool_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Id"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "charge_outcome": {
+            "type": "string",
+            "title": "Charge Outcome"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "transport_success": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transport Success"
+          },
+          "provider_success": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Success"
+          },
+          "result_valid": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Valid"
+          },
+          "billable_success": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billable Success"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "outcome_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome Status"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          },
+          "outcome_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome Message"
+          },
+          "provider_status_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Status Code"
+          },
+          "provider_status_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Status Message"
+          },
+          "http_status_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Status Code"
+          },
+          "valid_result_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Result Count"
+          },
+          "raw_result_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Result Count"
+          },
+          "chargeable_quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chargeable Quantity"
+          },
+          "retryable": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retryable"
+          },
+          "display_severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Severity"
+          },
+          "billing_snapshot_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Snapshot Status"
+          },
+          "requested_amount_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested Amount Credits"
+          },
+          "actual_amount_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Amount Credits"
+          },
+          "credits_ledger_entry_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credits Ledger Entry Id"
+          },
+          "display_target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Target"
+          },
+          "billing_unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Unit"
+          },
+          "unit_price_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Price Credits"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "list_amount_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "List Amount Credits"
+          },
+          "minimum_charge_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Charge Credits"
+          },
+          "pricing_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pricing Profile Id"
+          },
+          "billing_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Summary"
+          },
+          "pre_settlement_amount_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pre Settlement Amount Credits"
+          },
+          "settled_amount_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settled Amount Credits"
+          },
+          "pricing_context_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pricing Context Id"
+          },
+          "harbor_snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Harbor Snapshot Id"
+          },
+          "harbor_snapshot_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Harbor Snapshot Version"
+          },
+          "resolver_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolver Version"
+          },
+          "details_available": {
+            "type": "boolean",
+            "title": "Details Available",
+            "default": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "event_type",
+          "source_system",
+          "success",
+          "charge_outcome",
+          "created_at"
+        ],
+        "title": "UsageEventSummaryItem"
+      },
+      "UsageEventSummaryResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UsageEventSummaryItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "has_more",
+          "page_size"
+        ],
+        "title": "UsageEventSummaryResponse"
+      },
+      "UsageEventsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UsageEventItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UsageEventsSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "UsageEventsResponse"
+      },
+      "UsageEventsSummary": {
+        "properties": {
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          },
+          "bucket": {
+            "type": "string",
+            "title": "Bucket"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count"
+          },
+          "success_count": {
+            "type": "integer",
+            "title": "Success Count"
+          },
+          "failure_count": {
+            "type": "integer",
+            "title": "Failure Count"
+          },
+          "charge_outcome_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Charge Outcome Counts"
+          },
+          "pre_settlement_credits": {
+            "type": "number",
+            "title": "Pre Settlement Credits"
+          },
+          "settled_credits": {
+            "type": "number",
+            "title": "Settled Credits"
+          },
+          "max_charge_items": {
+            "items": {
+              "$ref": "#/components/schemas/UsageEventItem"
+            },
+            "type": "array",
+            "title": "Max Charge Items"
+          },
+          "buckets": {
+            "items": {
+              "$ref": "#/components/schemas/UsageEventsSummaryBucket"
+            },
+            "type": "array",
+            "title": "Buckets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bucket",
+          "total_count",
+          "success_count",
+          "failure_count",
+          "charge_outcome_counts",
+          "pre_settlement_credits",
+          "settled_credits",
+          "max_charge_items",
+          "buckets"
+        ],
+        "title": "UsageEventsSummary"
+      },
+      "UsageEventsSummaryBucket": {
+        "properties": {
+          "bucket_start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Bucket Start"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count"
+          },
+          "success_count": {
+            "type": "integer",
+            "title": "Success Count"
+          },
+          "failure_count": {
+            "type": "integer",
+            "title": "Failure Count"
+          },
+          "charged_count": {
+            "type": "integer",
+            "title": "Charged Count"
+          },
+          "included_count": {
+            "type": "integer",
+            "title": "Included Count"
+          },
+          "failed_not_charged_count": {
+            "type": "integer",
+            "title": "Failed Not Charged Count"
+          },
+          "failed_charged_review_count": {
+            "type": "integer",
+            "title": "Failed Charged Review Count"
+          },
+          "pre_settlement_credits": {
+            "type": "number",
+            "title": "Pre Settlement Credits"
+          },
+          "settled_credits": {
+            "type": "number",
+            "title": "Settled Credits"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bucket_start",
+          "total_count",
+          "success_count",
+          "failure_count",
+          "charged_count",
+          "included_count",
+          "failed_not_charged_count",
+          "failed_charged_review_count",
+          "pre_settlement_credits",
+          "settled_credits"
+        ],
+        "title": "UsageEventsSummaryBucket"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "PublicApiError": {
+        "type": "object",
+        "title": "PublicApiError",
+        "additionalProperties": true,
+        "properties": {
+          "status": {
+            "type": "string",
+            "examples": [
+              "failure"
+            ]
+          },
+          "status_code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "error_message": {
+            "type": "string"
+          },
+          "remaining_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "search_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "execution_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "total": {
+            "type": "integer"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "PublicSearchRequest": {
+        "type": "object",
+        "title": "PublicSearchRequest",
+        "required": [
+          "query"
+        ],
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Natural-language capability query.",
+            "minLength": 1
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of ranked results to return.",
+            "default": 20,
+            "minimum": 1,
+            "maximum": 100
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional tracking and pricing-context identifier. It does not promise a cache hit."
+          }
+        }
+      },
+      "PublicToolsByIdsRequest": {
+        "type": "object",
+        "title": "PublicToolsByIdsRequest",
+        "required": [
+          "tool_ids"
+        ],
+        "properties": {
+          "tool_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "description": "Capability ids returned by Discover."
+          },
+          "search_id": {
+            "type": "string",
+            "description": "Search id that returned these capabilities, when available."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional tracking and pricing-context identifier. It does not promise a cache hit."
+          }
+        }
+      },
+      "PublicExecuteToolRequest": {
+        "type": "object",
+        "title": "PublicExecuteToolRequest",
+        "required": [
+          "parameters"
+        ],
+        "properties": {
+          "tool_id": {
+            "type": "string",
+            "description": "Capability id. Optional when supplied as the `tool_id` query parameter."
+          },
+          "search_id": {
+            "type": "string",
+            "description": "Search id that returned the selected capability."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional tracking and pricing-context identifier. If omitted, the service may use the execution id."
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Capability-specific parameters validated by the selected tool schema."
+          },
+          "max_response_size": {
+            "type": "integer",
+            "default": 20480,
+            "description": "Maximum response payload bytes before truncation. Use -1 for no limit."
+          }
+        }
+      },
+      "PublicToolParameter": {
+        "type": "object",
+        "title": "PublicToolParameter",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "enum": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "required"
+        ]
+      },
+      "PublicToolStats": {
+        "type": "object",
+        "title": "PublicToolStats",
+        "properties": {
+          "avg_execution_time_ms": {
+            "type": "number"
+          },
+          "success_rate": {
+            "type": "number"
+          }
+        }
+      },
+      "PublicBillingRule": {
+        "type": "object",
+        "title": "PublicBillingRule",
+        "additionalProperties": true,
+        "description": "Capability billing rule used for pre-call estimation. Final settlement is reflected in usage audit and credits ledger endpoints."
+      },
+      "PublicCapabilityResult": {
+        "type": "object",
+        "title": "PublicCapabilityResult",
+        "additionalProperties": true,
+        "required": [
+          "tool_id"
+        ],
+        "properties": {
+          "tool_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "provider_id": {
+            "type": "string"
+          },
+          "provider_name": {
+            "type": "string"
+          },
+          "provider_description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "params": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicToolParameter"
+            }
+          },
+          "examples": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "stats": {
+            "$ref": "#/components/schemas/PublicToolStats"
+          },
+          "expected_cost": {
+            "type": "string",
+            "description": "Pre-call cost estimate returned by Discover/Inspect when available."
+          },
+          "cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Legacy cost estimate. Prefer `expected_cost` and `billing_rule` for pre-call display."
+          },
+          "billing_rule": {
+            "$ref": "#/components/schemas/PublicBillingRule"
+          },
+          "calls_count": {
+            "type": "string"
+          }
+        }
+      },
+      "PublicSearchResponse": {
+        "type": "object",
+        "title": "PublicSearchResponse",
+        "additionalProperties": true,
+        "required": [
+          "search_id",
+          "total",
+          "results"
+        ],
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "search_id": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicCapabilityResult"
+            }
+          },
+          "elapsed_time_ms": {
+            "type": "number"
+          },
+          "remaining_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "PublicExecuteResult": {
+        "type": "object",
+        "title": "PublicExecuteResult",
+        "additionalProperties": true,
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "message": {
+            "type": "string"
+          },
+          "truncated_content": {
+            "type": "string"
+          },
+          "full_content_file_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "content_schema": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "PublicCompactBillingStatement": {
+        "type": "object",
+        "title": "PublicCompactBillingStatement",
+        "additionalProperties": true,
+        "properties": {
+          "summary": {
+            "type": "string"
+          },
+          "list_amount_credits": {
+            "type": "number"
+          },
+          "final_amount_credits": {
+            "type": "number"
+          }
+        }
+      },
+      "PublicExecuteToolResponse": {
+        "type": "object",
+        "title": "PublicExecuteToolResponse",
+        "additionalProperties": true,
+        "required": [
+          "execution_id",
+          "result",
+          "success"
+        ],
+        "properties": {
+          "execution_id": {
+            "type": "string"
+          },
+          "result": {
+            "$ref": "#/components/schemas/PublicExecuteResult"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "execution_time": {
+            "type": "number"
+          },
+          "elapsed_time_ms": {
+            "type": "number"
+          },
+          "billing": {
+            "$ref": "#/components/schemas/PublicCompactBillingStatement"
+          },
+          "cost": {
+            "type": "number"
+          },
+          "remaining_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "OAuth2PasswordBearer": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "/api/v1/auth/login"
+          }
+        }
+      },
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://qveris.ai/api/v1",
+      "description": "Global deployment"
+    },
+    {
+      "url": "https://qveris.cn/api/v1",
+      "description": "China deployment"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Discovery",
+      "description": "Search and provider discovery APIs that are released for enterprise integration."
+    },
+    {
+      "name": "Tool Execution",
+      "description": "Tool metadata lookup and execution."
+    },
+    {
+      "name": "Account",
+      "description": "Credits, usage audit, and billing ledger APIs."
+    }
+  ],
+  "x-qveris-route-count": 18,
+  "x-qveris-public-operation-count": 18,
+  "x-qveris-private-operation-count": 0,
+  "x-qveris-generation-source": "Filtered from qveris-internal-api.openapi.json"
+}
