@@ -89,6 +89,8 @@ Python SDK 现在位于本 monorepo 的 [`packages/python-sdk`](../../../package
 pip install qveris
 ```
 
+完整指南（client、agent、类型化模型、集成方式）见 [Python SDK](python-sdk.md)。
+
 设置环境变量：
 
 - `QVERIS_API_KEY`（从 [QVeris](https://qveris.cn) 获取）
@@ -343,9 +345,9 @@ console.log(data);
 
 ### 在 AI Agent 中安装 QVeris
 
-如果你正在配置 AI 编程助手（Claude Code、Cursor、OpenCode、Trae 等），可以将 [Agent 安装指南](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/SETUP.md) 连同你的 API 密钥一起提供给 Agent。它会自动检测运行环境，并完成 MCP 服务器和技能定义的配置。
+如果你正在配置 AI 编程助手（Cursor、OpenCode、Trae 等），可以将 [Agent 安装指南](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/SETUP.md) 连同你的 API 密钥一起提供给 Agent。它会自动检测运行环境，并完成 MCP 服务器和技能定义的配置。
 
-支持的环境：Claude Code、OpenCode、Cursor、Trae、VS Code、OpenClaw。
+支持的环境：OpenCode、Cursor、Trae、VS Code、OpenClaw。
 
 ---
 

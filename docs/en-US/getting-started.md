@@ -89,6 +89,8 @@ The Python SDK now lives in this monorepo at [`packages/python-sdk`](../../packa
 pip install qveris
 ```
 
+For the full guide (client, agent, typed models, integration patterns), see [Python SDK](python-sdk.md).
+
 Set environment variables:
 
 - `QVERIS_API_KEY` (from [QVeris](https://qveris.ai))
