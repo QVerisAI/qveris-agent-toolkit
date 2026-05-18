@@ -12,8 +12,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 
-const REPO_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_SPEC = path.join("docs", "openapi", "qveris-public-api.openapi.json");
 
 // Core agent-path endpoints the toolkit calls. Listed in the issue.
@@ -70,6 +71,11 @@ function main() {
     spec = JSON.parse(fs.readFileSync(specPath, "utf8"));
   } catch (error) {
     fail([`${rel} is not valid JSON: ${error.message}`]);
+    return;
+  }
+
+  if (!spec || typeof spec !== "object" || Array.isArray(spec)) {
+    fail([`${rel} is not a valid OpenAPI object`]);
     return;
   }
 

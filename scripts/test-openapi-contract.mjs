@@ -10,8 +10,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 
-const REPO_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const VALIDATOR = path.join(REPO_ROOT, "scripts/validate-openapi-contract.mjs");
 const REAL_SPEC = path.join(REPO_ROOT, "docs/openapi/qveris-public-api.openapi.json");
 const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "qveris-openapi-contract-"));
@@ -45,6 +46,13 @@ const tests = [
     const result = run(target);
     assert.equal(result.status, 1);
     assert.match(result.stderr, /not valid JSON/);
+  }],
+  ["rejects valid JSON that is not an object", () => {
+    const target = path.join(tmpRoot, "null.json");
+    fs.writeFileSync(target, "null");
+    const result = run(target);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /not a valid OpenAPI object/);
   }],
   ["rejects missing info.version", () => {
     const target = writeSpec("no-version.json", (spec) => {
