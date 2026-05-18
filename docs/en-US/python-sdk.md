@@ -33,7 +33,7 @@ from qveris import QverisClient, QverisConfig
 client = QverisClient(QverisConfig(api_key="sk-..."))
 ```
 
-The default API base URL is `https://qveris.ai/api/v1/`. Override it with the `QVERIS_BASE_URL` environment variable or `QverisConfig(base_url=...)` when targeting another region or a custom endpoint.
+The default API base URL is `https://qveris.ai/api/v1/`. Override it with the `QVERIS_BASE_URL` environment variable or `QverisConfig(base_url=...)` when targeting a custom endpoint.
 
 ## Quickstart
 

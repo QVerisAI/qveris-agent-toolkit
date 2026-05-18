@@ -268,7 +268,7 @@ qveris mcp validate --target cursor --probe
 
 ### `qveris login`
 
-使用 QVeris API 密钥认证。如果未预设区域，会先提示选择站点区域（全球 / 中国），然后打开对应的 API 密钥页面并掩码输入。
+使用 QVeris API 密钥认证。打开浏览器进入 API 密钥页面并掩码输入。
 
 ```bash
 qveris login [flags]
@@ -276,26 +276,15 @@ qveris login [flags]
 
 | 参数 | 说明 |
 |------|------|
-| `--token <key>` | 直接提供密钥（跳过浏览器和区域选择） |
+| `--token <key>` | 直接提供密钥（跳过浏览器） |
 | `--no-browser` | 不打开浏览器 |
 
 ```bash
-# 交互式（选择区域 → 打开浏览器 → 掩码输入）
+# 交互式（打开浏览器 → 掩码输入）
 qveris login
 
 # 非交互式
 qveris login --token "sk-1_your-key-here"
-```
-
-交互式登录时，如果未设置 `QVERIS_REGION` 或 `--base-url`，会提示选择区域：
-
-```
-选择站点区域：
-
-  1) 全球   — qveris.ai  （国际用户）
-  2) 中国   — qveris.cn  （中国大陆用户）
-
-输入 1 或 2：
 ```
 
 密钥保存到 `~/.config/qveris/config.json`，权限为 `0600`（仅所有者可读写）。
@@ -306,7 +295,7 @@ qveris login --token "sk-1_your-key-here"
 
 ### `qveris whoami`
 
-显示当前认证状态、密钥来源、所属区域，并验证密钥有效性。
+显示当前认证状态、密钥来源，并验证密钥有效性。
 
 ### `qveris credits`
 
@@ -375,7 +364,7 @@ qveris> exit
 
 ### `qveris doctor`
 
-自检诊断：验证 Node.js 版本、API 密钥配置、区域和 API 地址、API 连通性。
+自检诊断：验证 Node.js 版本、API 密钥配置、API 地址、API 连通性。
 
 ### `qveris config`
 
@@ -446,8 +435,7 @@ qveris history [--clear]
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
 | `QVERIS_API_KEY` | API 认证密钥 | — |
-| `QVERIS_REGION` | 强制区域：`global` 或 `cn` | 从密钥自动检测 |
-| `QVERIS_BASE_URL` | 覆盖 API 地址 | 从区域自动设置 |
+| `QVERIS_BASE_URL` | 覆盖 API 地址 | 从密钥自动设置 |
 | `QVERIS_DEFAULT_LIMIT` | 默认 discover 限制 | 5 |
 | `QVERIS_DEFAULT_MAX_SIZE` | 默认响应大小限制 | 4096 |
 | `XDG_CONFIG_HOME` | 配置目录基础路径 | `~/.config` |
@@ -458,34 +446,6 @@ qveris history [--clear]
 
 ---
 
-## 区域
-
-区域从 API 密钥前缀自动检测，无需额外配置。
-
-| 密钥前缀 | 区域 | API 地址 |
-|----------|------|----------|
-| `sk-xxx` | 全球 | `https://qveris.ai/api/v1` |
-| `sk-cn-xxx` | 中国 | `https://qveris.cn/api/v1` |
-
-**交互式登录：** 运行 `qveris login` 时，如果未设置 `QVERIS_REGION` 或 `--base-url`，会提示选择区域。仅用于首次人工登录。
-
-**智能体 / 脚本使用：** 智能体和脚本应跳过交互式提示。区域自动解析：
-
-```bash
-# 方式 1：密钥前缀自动检测（推荐）
-qveris login --token "sk-cn-xxx"    # 自动检测为中国区
-
-# 方式 2：环境变量
-export QVERIS_REGION=cn
-qveris login --token "sk-xxx"
-
-# 方式 3：显式 API 地址
-export QVERIS_BASE_URL=https://qveris.cn/api/v1
-
-# 方式 4：单次命令参数
-qveris discover "天气" --base-url https://qveris.cn/api/v1
-```
-
 ---
 
 ## 会话管理
@@ -494,7 +454,7 @@ qveris discover "天气" --base-url https://qveris.cn/api/v1
 
 - 发现 ID
 - 查询内容
-- 区域和 API 地址
+- API 地址
 - 结果列表（tool_id、名称、提供商）
 
 后续 `inspect` 和 `call` 自动读取会话，支持数字索引快捷方式：
@@ -581,7 +541,7 @@ qveris call "$TOOL" --discovery-id "$SEARCH_ID" --params '{"city":"London"}' --j
 │   ├── commands/              # 12 个命令处理器
 │   ├── client/api.mjs         # HTTP 客户端（原生 fetch）
 │   ├── client/auth.mjs        # API 密钥解析
-│   ├── config/region.mjs      # 区域自动检测
+│   ├── config/endpoint.mjs    # API 地址解析
 │   ├── config/store.mjs       # 配置文件读写（0600 权限）
 │   ├── session/session.mjs    # 会话持久化
 │   ├── output/formatter.mjs   # 人类友好格式化
@@ -596,9 +556,9 @@ qveris call "$TOOL" --discovery-id "$SEARCH_ID" --params '{"city":"London"}' --j
 
 ## 链接
 
-- 官网：[qveris.ai](https://qveris.ai)（全球）/ [qveris.cn](https://qveris.cn)（中国）
+- 官网：[qveris.ai](https://qveris.ai)
 - GitHub：[QVerisAI/qveris-agent-toolkit](https://github.com/QVerisAI/qveris-agent-toolkit)
 - npm：[@qverisai/cli](https://www.npmjs.com/package/@qverisai/cli)
 - REST API：[docs/zh-CN/rest-api.md](rest-api.md)
 - MCP 服务器：[docs/zh-CN/mcp-server.md](mcp-server.md)
-- 获取 API 密钥：[qveris.ai/account](https://qveris.ai/account?page=api-keys) / [qveris.cn/account](https://qveris.cn/account?page=api-keys)
+- 获取 API 密钥：[qveris.ai/account](https://qveris.ai/account?page=api-keys)

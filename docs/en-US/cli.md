@@ -268,7 +268,7 @@ qveris mcp validate --target cursor --probe
 
 ### `qveris login`
 
-Authenticate with your QVeris API key. If no region is pre-configured, prompts you to select your region (Global or China), then opens the browser to the corresponding API key page and prompts for masked input.
+Authenticate with your QVeris API key. Opens the browser to the API key page and prompts for masked input.
 
 ```bash
 qveris login [flags]
@@ -276,26 +276,15 @@ qveris login [flags]
 
 | Flag | Description |
 |------|-------------|
-| `--token <key>` | Provide key directly (skip browser and region prompt) |
+| `--token <key>` | Provide key directly (skip browser prompt) |
 | `--no-browser` | Don't open browser |
 
 ```bash
-# Interactive (select region → opens browser → masked input)
+# Interactive (opens browser → masked input)
 qveris login
 
 # Non-interactive
 qveris login --token "sk-1_your-key-here"
-```
-
-During interactive login, if `QVERIS_REGION` or `--base-url` is not set, you will be prompted:
-
-```
-Select your region / 选择站点区域:
-
-  1) Global  — qveris.ai  (International users)
-  2) China   — qveris.cn  (中国大陆用户)
-
-Enter 1 or 2:
 ```
 
 The key is saved to `~/.config/qveris/config.json` with `0600` permissions (owner-only).
@@ -310,7 +299,7 @@ qveris logout
 
 ### `qveris whoami`
 
-Show current auth status, key source, resolved region, and validate against the API.
+Show current auth status and key source, and validate against the API.
 
 ```bash
 qveris whoami
@@ -422,7 +411,7 @@ qveris> exit
 
 ### `qveris doctor`
 
-Self-check diagnostics: verifies Node.js version, API key configuration, resolved region and base URL, and API connectivity.
+Self-check diagnostics: verifies Node.js version, API key configuration, base URL, and API connectivity.
 
 ```bash
 qveris doctor
@@ -497,8 +486,7 @@ Use `--` to end option parsing: `qveris discover -- --literal-query`.
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `QVERIS_API_KEY` | API authentication key | — |
-| `QVERIS_REGION` | Force region: `global` or `cn` | auto from key |
-| `QVERIS_BASE_URL` | Override API base URL | auto from region |
+| `QVERIS_BASE_URL` | Override API base URL | auto from key |
 | `QVERIS_DEFAULT_LIMIT` | Default discover limit | 5 |
 | `QVERIS_DEFAULT_MAX_SIZE` | Default response size limit | 4096 |
 | `XDG_CONFIG_HOME` | Config directory base | `~/.config` |
@@ -509,43 +497,13 @@ Use `--` to end option parsing: `qveris discover -- --literal-query`.
 
 ---
 
-## Region
-
-Region is auto-detected from your API key prefix. No extra configuration needed.
-
-| Key prefix | Region | Base URL |
-|------------|--------|----------|
-| `sk-xxx` | Global | `https://qveris.ai/api/v1` |
-| `sk-cn-xxx` | China | `https://qveris.cn/api/v1` |
-
-**Interactive login:** When running `qveris login` without `QVERIS_REGION` or `--base-url`, you'll be prompted to choose a region. This is for first-time human users only.
-
-**Agent / script usage:** Agents and scripts should skip the interactive prompt. Region is resolved automatically:
-
-```bash
-# Option 1: Key prefix auto-detection (recommended)
-qveris login --token "sk-cn-xxx"    # auto-detects China region
-
-# Option 2: Environment variable
-export QVERIS_REGION=cn
-qveris login --token "sk-xxx"
-
-# Option 3: Explicit base URL
-export QVERIS_BASE_URL=https://qveris.cn/api/v1
-
-# Option 4: Per-command flag
-qveris discover "weather" --base-url https://qveris.cn/api/v1
-```
-
----
-
 ## Session Management
 
 After each `discover`, the CLI saves session state to `~/.config/qveris/.session.json`:
 
 - Discovery ID
 - Query
-- Region and base URL
+- Base URL
 - Result list (tool_id, name, provider)
 
 Subsequent `inspect` and `call` commands auto-read this session, enabling numeric index shortcuts:
@@ -632,7 +590,7 @@ For backward compatibility, the following aliases are supported with deprecation
 │   ├── commands/              # 12 command handlers
 │   ├── client/api.mjs         # HTTP client (native fetch)
 │   ├── client/auth.mjs        # API key resolution
-│   ├── config/region.mjs      # Region auto-detection
+│   ├── config/endpoint.mjs    # API endpoint resolution
 │   ├── config/store.mjs       # Config file R/W (0600 perms)
 │   ├── session/session.mjs    # Session persistence
 │   ├── output/formatter.mjs   # Human-readable formatting
@@ -647,9 +605,9 @@ For backward compatibility, the following aliases are supported with deprecation
 
 ## Links
 
-- Website: [qveris.ai](https://qveris.ai) (Global) / [qveris.cn](https://qveris.cn) (China)
+- Website: [qveris.ai](https://qveris.ai)
 - GitHub: [QVerisAI/qveris-agent-toolkit](https://github.com/QVerisAI/qveris-agent-toolkit)
 - npm: [@qverisai/cli](https://www.npmjs.com/package/@qverisai/cli)
 - REST API: [docs/en-US/rest-api.md](rest-api.md)
 - MCP Server: [docs/en-US/mcp-server.md](mcp-server.md)
-- Get API Key: [qveris.ai/account](https://qveris.ai/account?page=api-keys) / [qveris.cn/account](https://qveris.cn/account?page=api-keys)
+- Get API Key: [qveris.ai/account](https://qveris.ai/account?page=api-keys)

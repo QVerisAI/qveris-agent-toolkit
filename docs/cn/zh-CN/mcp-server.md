@@ -63,12 +63,9 @@ npx -y @qverisai/mcp
 MCP 服务器从以下环境变量读取配置：
 
 ```bash
-QVERIS_API_KEY=sk-cn-your-api-key    # 必填
-QVERIS_REGION=cn                      # 可选：强制区域（global | cn）
+QVERIS_API_KEY=your-api-key          # 必填
 QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 ```
-
-区域从 API 密钥前缀自动检测（`sk-cn-xxx` → 中国区，`sk-xxx` → 全球）。中国大陆用户使用 `sk-cn-` 前缀的密钥即可自动指向 `https://qveris.cn`，仅在需要覆盖时设置 `QVERIS_REGION`。
 
 ### 使用 QVeris CLI 配置
 
@@ -105,26 +102,7 @@ qveris mcp validate --target cursor --probe
       "command": "npx",
       "args": ["-y", "@qverisai/mcp"],
       "env": {
-        "QVERIS_API_KEY": "sk-cn-your-api-key-here"
-      }
-    }
-  }
-}
-```
-
-### 中国区配置示例
-
-中国大陆用户使用 `sk-cn-` 前缀的密钥即可自动指向中国区；也可显式添加 `QVERIS_REGION`：
-
-```json
-{
-  "mcpServers": {
-    "qveris": {
-      "command": "npx",
-      "args": ["-y", "@qverisai/mcp"],
-      "env": {
-        "QVERIS_API_KEY": "sk-cn-your-api-key-here",
-        "QVERIS_REGION": "cn"
+        "QVERIS_API_KEY": "your-api-key-here"
       }
     }
   }

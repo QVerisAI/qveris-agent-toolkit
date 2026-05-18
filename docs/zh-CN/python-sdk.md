@@ -33,7 +33,7 @@ from qveris import QverisClient, QverisConfig
 client = QverisClient(QverisConfig(api_key="sk-..."))
 ```
 
-默认 API 基础地址为 `https://qveris.ai/api/v1/`。如需指向其他区域或自定义端点，用环境变量 `QVERIS_BASE_URL` 或 `QverisConfig(base_url=...)` 覆盖。
+默认 API 基础地址为 `https://qveris.ai/api/v1/`。如需指向自定义端点，用环境变量 `QVERIS_BASE_URL` 或 `QverisConfig(base_url=...)` 覆盖。
 
 ## 快速开始
 
