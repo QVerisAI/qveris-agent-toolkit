@@ -74,6 +74,11 @@ function main() {
     return;
   }
 
+  } catch (error) {
+    fail([`${rel} is not valid JSON: ${error.message}`]);
+    return;
+  }
+
   if (!spec || typeof spec !== "object" || Array.isArray(spec)) {
     fail([`${rel} is not a valid OpenAPI object`]);
     return;
