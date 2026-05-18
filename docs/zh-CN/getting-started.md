@@ -89,6 +89,8 @@ Python SDK 现在位于本单体仓库的 [`packages/python-sdk`](../../packages
 pip install qveris
 ```
 
+完整指南（client、agent、类型化模型、集成方式）见 [Python SDK](python-sdk.md)。
+
 设置环境变量：
 
 - `QVERIS_API_KEY`（从 [QVeris](https://qveris.ai) 获取）
