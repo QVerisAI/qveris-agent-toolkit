@@ -24,5 +24,5 @@ QVeris 已集成到多种 IDE 和 CLI 编程工具中。通过自动配置 QVeri
 
 OpenCode：
 ```
-请按照 https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/cn/zh-CN/opencode-setup.md 帮我完成配置。API 密钥是 sk-cn-xxxxxxxxxxxxx
+请按照 https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/cn/zh-CN/opencode-setup.md 帮我完成配置。API 密钥是 sk-xxxxxxxxxxxxx
 ```

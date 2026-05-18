@@ -17,27 +17,25 @@ pip install qveris
 
 需要 Python 3.8+。运行时依赖：`httpx`、`pydantic`、`pydantic-settings`、`openai`。
 
-## 身份认证（中国区）
+## 身份认证
 
-SDK 从环境变量 `QVERIS_API_KEY` 读取 API 密钥。**SDK 默认指向全球区 `https://qveris.ai/api/v1/`，中国区用户必须显式指向 `https://qveris.cn`**：
+SDK 从环境变量 `QVERIS_API_KEY` 读取 API 密钥，并通过 `QVERIS_BASE_URL` 指向 API 地址。请设置：
 
 ```bash
-export QVERIS_API_KEY="sk-cn-..."
+export QVERIS_API_KEY="your-api-key"
 export QVERIS_BASE_URL="https://qveris.cn/api/v1"
 ```
 
-在 [qveris.cn](https://qveris.cn) 获取密钥（中国区密钥为 `sk-cn-` 前缀）。也可以显式传入配置：
+在 [qveris.cn](https://qveris.cn) 获取密钥。也可以显式传入配置：
 
 ```python
 from qveris import QverisClient, QverisConfig
 
 client = QverisClient(QverisConfig(
-    api_key="sk-cn-...",
+    api_key="your-api-key",
     base_url="https://qveris.cn/api/v1",
 ))
 ```
-
-> 注意：与 CLI / MCP 服务器不同，Python SDK **不会**根据 `sk-cn-` 前缀自动切换区域。中国区必须通过 `QVERIS_BASE_URL` 环境变量或 `QverisConfig(base_url=...)` 显式设置 `https://qveris.cn/api/v1`。
 
 ## 快速开始
 
@@ -97,7 +95,7 @@ export OPENAI_API_KEY="..."
 export OPENAI_BASE_URL="https://your-openai-compatible-endpoint/v1"   # 你的 OpenAI 兼容服务地址
 ```
 
-QVeris 区域仍由 `QVERIS_BASE_URL` 控制，与 LLM provider 相互独立。
+QVeris API 地址仍由 `QVERIS_BASE_URL` 控制，与 LLM provider 相互独立。
 
 ### 流式
 
@@ -151,7 +149,7 @@ async with Agent(config=QverisConfig(base_url="https://qveris.cn/api/v1")) as ag
 | 字段 | 环境变量 | 默认值 | 说明 |
 |------|---------|--------|------|
 | `api_key` | `QVERIS_API_KEY` | `None` | API 密钥，以 `Authorization: Bearer ...` 发送 |
-| `base_url` | `QVERIS_BASE_URL` | `https://qveris.ai/api/v1/` | API 基础地址；**中国区须设为 `https://qveris.cn/api/v1`** |
+| `base_url` | `QVERIS_BASE_URL` | `https://qveris.cn/api/v1` | API 基础地址 |
 | `enable_history_pruning` | — | `True` | 裁剪/压缩旧的工具输出以节省 token（agent 循环） |
 | `max_iterations` | — | `50` | agent 工具循环的最大迭代次数 |
 
