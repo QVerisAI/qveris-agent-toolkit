@@ -1,0 +1,39 @@
+name: Validate OpenAPI contract
+
+on:
+  pull_request:
+    paths:
+      - "docs/openapi/**"
+      - "scripts/validate-openapi-contract.mjs"
+      - "scripts/test-openapi-contract.mjs"
+      - ".github/workflows/openapi-contract.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/openapi/**"
+      - "scripts/validate-openapi-contract.mjs"
+      - "scripts/test-openapi-contract.mjs"
+      - ".github/workflows/openapi-contract.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate OpenAPI contract
+        run: node scripts/validate-openapi-contract.mjs
+
+      - name: Test contract validator
+        run: node scripts/test-openapi-contract.mjs
