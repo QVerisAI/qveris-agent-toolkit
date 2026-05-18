@@ -38,7 +38,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "prepublishOnly": "npm run build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "gen:openapi": "openapi-typescript ../../docs/openapi/qveris-public-api.openapi.json -o src/generated/openapi.d.ts && npx prettier --write src/generated/openapi.d.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
@@ -47,6 +48,7 @@
   "devDependencies": {
     "@types/node": "^22.10.1",
     "@types/uuid": "^10.0.0",
+    "openapi-typescript": "7.4.4",
     "typescript": "^5.7.2",
     "vitest": "^2.1.0"
   },

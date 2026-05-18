@@ -24,6 +24,9 @@ dev = [
     "pytest-asyncio",
     "python-dotenv",
     "rich>=13.0.0",
+    # Pinned so regenerated models stay byte-stable with the checked-in
+    # qveris/generated/openapi_models.py and the drift CI (issue #37 phase 2).
+    "datamodel-code-generator==0.26.3",
 ]
 
 [tool.hatch.build.targets.wheel]
