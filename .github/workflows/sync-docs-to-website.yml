@@ -11,22 +11,31 @@ on:
     branches:
       - main
     paths:
-      # Toolkit-owned docs (matches qveris-website docs/.source-manifest.json
-      # sources.toolkit_owned). cn/zh-CN docs are toolkit-only and not mirrored.
+      # Toolkit-owned docs. The website's docs/.source-manifest.json
+      # (sources.toolkit_owned.paths) is the authority for what sync-docs.mjs
+      # actually mirrors; this trigger must be a SUPERSET of it so a toolkit
+      # edit reliably starts the sync. Paths the manifest does not list yet
+      # (python-sdk, the docs/cn/zh-CN CN-region variants) are included here so
+      # they trigger as soon as the website manifest is updated to mirror them.
       - "docs/en-US/cli.md"
       - "docs/zh-CN/cli.md"
+      - "docs/cn/zh-CN/cli.md"
       - "docs/en-US/mcp-server.md"
       - "docs/zh-CN/mcp-server.md"
+      - "docs/cn/zh-CN/mcp-server.md"
       - "docs/en-US/ide-cli-setup.md"
       - "docs/zh-CN/ide-cli-setup.md"
+      - "docs/cn/zh-CN/ide-cli-setup.md"
       - "docs/en-US/claude-code-setup.md"
       - "docs/zh-CN/claude-code-setup.md"
       - "docs/en-US/opencode-setup.md"
       - "docs/zh-CN/opencode-setup.md"
+      - "docs/cn/zh-CN/opencode-setup.md"
       # SDK docs (added after the manifest's last policy update; the website
       # manifest must list these before sync-docs.mjs will mirror them).
       - "docs/en-US/python-sdk.md"
       - "docs/zh-CN/python-sdk.md"
+      - "docs/cn/zh-CN/python-sdk.md"
       - ".github/workflows/sync-docs-to-website.yml"
   workflow_dispatch:
 
@@ -49,12 +58,22 @@ jobs:
       - name: Check sync token
         id: guard
         run: |
-          if [ -z "${WEBSITE_SYNC_TOKEN}" ]; then
-            echo "WEBSITE_SYNC_TOKEN is not configured; skipping toolkit -> website docs sync."
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-          else
+          if [ -n "${WEBSITE_SYNC_TOKEN}" ]; then
             echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          # Missing secret. Do NOT report a silent green "success" that did
+          # nothing — that hid this breakage until a manual run was inspected.
+          echo "::error title=WEBSITE_SYNC_TOKEN missing::Repo secret WEBSITE_SYNC_TOKEN is not configured, so the toolkit -> website docs sync cannot run. Add it under Settings -> Secrets and variables -> Actions. The token needs Contents:write + Pull requests:write on ${WEBSITE_REPO}."
+          if [ "${GITHUB_REPOSITORY}" = "QVerisAI/qveris-agent-toolkit" ]; then
+            # First-party repo: a missing required secret is a misconfiguration
+            # that must be visible (red), not a silent no-op.
+            exit 1
+          fi
+          # Forks / mirrors legitimately cannot hold this secret — skip there
+          # so they are not permanently red for a sync they can't perform.
+          echo "Not the first-party repo (${GITHUB_REPOSITORY}); skipping fork-safe."
+          echo "skip=true" >> "$GITHUB_OUTPUT"
 
       - name: Checkout toolkit
         if: steps.guard.outputs.skip != 'true'
