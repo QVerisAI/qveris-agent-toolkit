@@ -32,7 +32,7 @@
   },
   "compatibility": {
     "agent_skill": ">=0.1.0",
-    "mcp": ">=0.6.0"
+    "mcp": ">=0.7.0"
   },
   "marketplace": {
     "listing_slug": "replace-with-skill-slug",
