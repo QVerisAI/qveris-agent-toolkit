@@ -5,9 +5,9 @@ The ecosystem manifest is designed to keep recipes, skills, plugins, and marketp
 | Surface | Minimum version | Used for |
 |---------|-----------------|----------|
 | Manifest schema | `2026-05-13` | Shared metadata, permissions, docs, examples, and marketplace listing fields |
-| QVeris CLI | `>=0.5.0` | `discover`, `inspect`, `call`, `usage`, `ledger`, and `init` recipe commands |
-| QVeris MCP server | `>=0.6.0` | Canonical MCP tools plus usage and credits ledger audit tools |
-| QVeris Python SDK | `>=0.1.0` | Typed `QverisClient`, `Agent`, and audit methods |
+| QVeris CLI | `>=0.6.0` | `discover`, `inspect`, `call`, `usage`, `ledger`, and `init` recipe commands |
+| QVeris MCP server | `>=0.7.0` | Canonical MCP tools plus usage and credits ledger audit tools |
+| QVeris Python SDK | `>=0.2.0` | Typed `QverisClient`, `Agent`, and audit methods |
 | QVeris agent skill | `>=0.1.0` | Agent-facing discover, inspect, call, and audit workflow guidance |
 
 ## Compatibility Policy
