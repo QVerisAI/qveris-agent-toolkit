@@ -485,8 +485,8 @@ curl -sS "$QVERIS_BASE_URL/auth/usage/history/v2?execution_id=exec_01HZX9R2R4S2E
         "id": "evt_01HZX9R31GH2R",
         "event_type": "tool_execute",
         "source_system": "qveris_website",
-        "source_ref_type": "tool_execute",
-        "source_ref_id": "exec_01HZX9R2R4S2E",
+        "source_ref_type": "execute_history",
+        "source_ref_id": "2b7f7c4a-9f3a-4f61-8b59-3a983a8192a0",
         "session_id": "sess_7Q9m",
         "search_id": "srch_01HZX9QK7J3M9T",
         "execution_id": "exec_01HZX9R2R4S2E",
@@ -697,9 +697,11 @@ curl -sS "$QVERIS_BASE_URL/auth/credits/ledger?entry_type=consume_tool_execute&p
         "entry_type": "consume_tool_execute",
         "amount_credits": -5,
         "source_system": "qveris_website",
-        "source_ref_type": "tool_execute",
-        "source_ref_id": "exec_01HZX9R2R4S2E",
+        "source_ref_type": "execute_history",
+        "source_ref_id": "2b7f7c4a-9f3a-4f61-8b59-3a983a8192a0",
+        "execution_id": "exec_01HZX9R2R4S2E",
         "pre_settlement_bill": {
+          "execution_id": "exec_01HZX9R2R4S2E",
           "summary": "5 credits per successful request",
           "list_amount_credits": 5
         },
@@ -742,7 +744,9 @@ curl -sS "$QVERIS_BASE_URL/auth/credits/ledger?summary=true&scope=account_histor
         "id": "led_01HZX9R39K6QZ",
         "entry_type": "consume_tool_execute",
         "amount_credits": -5,
-        "source_ref_id": "exec_01HZX9R2R4S2E",
+        "source_ref_type": "execute_history",
+        "source_ref_id": "2b7f7c4a-9f3a-4f61-8b59-3a983a8192a0",
+        "execution_id": "exec_01HZX9R2R4S2E",
         "created_at": "2026-05-16T08:30:13Z"
       }
     ],
@@ -792,7 +796,8 @@ Important `data.items[]` fields:
 | `entry_type` | Immutable ledger event type. |
 | `amount_credits` | Signed balance movement. Negative values consume credits; positive values grant credits. |
 | `source_system` | System that created the ledger row. |
-| `source_ref_type` / `source_ref_id` | Correlation target, usually an execution id, search id, payment id, or model call id. |
+| `source_ref_type` / `source_ref_id` | Source row reference for backend audit. |
+| `execution_id` | Call execution id returned by `/tools/execute`; use this for user reconciliation. Present for Call ledger rows when available. |
 | `pre_settlement_bill` | Billing snapshot before final settlement. |
 | `settlement_result` | Final settlement result. |
 | `balance_before` / `balance_after` | Balance snapshots around this movement when available. |
