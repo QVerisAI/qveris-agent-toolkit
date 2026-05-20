@@ -53,6 +53,7 @@ class QverisConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="",  # We use specific aliases
         case_sensitive=False,
+        populate_by_name=True,
         extra="ignore"
     )
 

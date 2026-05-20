@@ -20,6 +20,16 @@ def make_client(handler: Callable[[httpx.Request], httpx.Response]) -> QverisCli
     return client
 
 
+def test_qveris_config_constructor_values_override_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("QVERIS_API_KEY", "sk-env")
+    monkeypatch.setenv("QVERIS_BASE_URL", "https://env.example/api/v1")
+
+    config = QverisConfig(api_key="sk-test", base_url="https://qveris.ai/api/v1")
+
+    assert config.api_key == "sk-test"
+    assert config.base_url == "https://qveris.ai/api/v1"
+
+
 @pytest.mark.asyncio
 async def test_discover_contract_parses_tool_quality_and_billing() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
