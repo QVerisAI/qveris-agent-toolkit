@@ -6,7 +6,7 @@ on:
       - "python-sdk-v*" # Trigger on tags like python-sdk-v0.1.0, python-sdk-v1.0.0
 
 permissions:
-  contents: write # For creating GitHub Releases
+  contents: read
 
 jobs:
   test:
@@ -43,6 +43,9 @@ jobs:
   publish:
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # For creating GitHub Releases
+      id-token: write # For PyPI trusted publishing
     defaults:
       run:
         working-directory: packages/python-sdk
