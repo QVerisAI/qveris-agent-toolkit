@@ -39,7 +39,7 @@
     "test:coverage": "vitest run --coverage",
     "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit",
-    "gen:openapi": "openapi-typescript ../../docs/openapi/qveris-public-api.openapi.json -o src/generated/openapi.d.ts && npx prettier --write src/generated/openapi.d.ts"
+    "gen:openapi": "bash ../../scripts/regenerate-openapi-artifacts.sh"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",

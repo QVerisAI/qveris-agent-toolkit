@@ -12,6 +12,7 @@ on:
       - "packages/python-sdk/qveris/generated/**"
       - "packages/mcp/package.json"
       - "packages/python-sdk/pyproject.toml"
+      - "scripts/regenerate-openapi-artifacts.sh"
       - ".github/workflows/openapi-types.yml"
   push:
     branches:
@@ -22,6 +23,7 @@ on:
       - "packages/python-sdk/qveris/generated/**"
       - "packages/mcp/package.json"
       - "packages/python-sdk/pyproject.toml"
+      - "scripts/regenerate-openapi-artifacts.sh"
       - ".github/workflows/openapi-types.yml"
 
 permissions:
@@ -44,26 +46,14 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Regenerate MCP TypeScript types
-        run: npx --yes openapi-typescript@7.4.4 docs/openapi/qveris-public-api.openapi.json -o packages/mcp/src/generated/openapi.d.ts
-
-      - name: Regenerate Python SDK models
-        run: |
-          python -m pip install --quiet "datamodel-code-generator==0.26.3"
-          python -m datamodel_code_generator \
-            --input docs/openapi/qveris-public-api.openapi.json \
-            --input-file-type openapi \
-            --output packages/python-sdk/qveris/generated/openapi_models.py \
-            --output-model-type pydantic_v2.BaseModel \
-            --target-python-version 3.8 \
-            --use-schema-description \
-            --disable-timestamp
+      - name: Regenerate OpenAPI artifacts
+        run: bash scripts/regenerate-openapi-artifacts.sh
 
       - name: Fail on drift
         run: |
           if ! git diff --exit-code -- \
               packages/mcp/src/generated/openapi.d.ts \
               packages/python-sdk/qveris/generated/openapi_models.py; then
-            echo "::error::Generated OpenAPI artifacts are out of date. Run 'npm --prefix packages/mcp run gen:openapi' and regenerate the Python models, then commit."
+            echo "::error::Generated OpenAPI artifacts are out of date. Run 'bash scripts/regenerate-openapi-artifacts.sh' or 'npm --prefix packages/mcp run gen:openapi', then commit."
             exit 1
           fi
