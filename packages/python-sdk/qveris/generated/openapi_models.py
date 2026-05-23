@@ -24,6 +24,7 @@ class CreditsLedgerItem(BaseModel):
     source_system: str = Field(..., title='Source System')
     source_ref_type: Optional[str] = Field(None, title='Source Ref Type')
     source_ref_id: Optional[str] = Field(None, title='Source Ref Id')
+    execution_id: Optional[str] = Field(None, title='Execution Id')
     pre_settlement_bill: Optional[Dict[str, Any]] = Field(
         None, title='Pre Settlement Bill'
     )
@@ -79,6 +80,7 @@ class SettlementHistoryItem(BaseModel):
     source_system: str = Field(..., title='Source System')
     source_ref_type: Optional[str] = Field(None, title='Source Ref Type')
     source_ref_id: Optional[str] = Field(None, title='Source Ref Id')
+    execution_id: Optional[str] = Field(None, title='Execution Id')
     description: Optional[str] = Field(None, title='Description')
     display_target: Optional[str] = Field(None, title='Display Target')
     billing_summary: Optional[str] = Field(None, title='Billing Summary')

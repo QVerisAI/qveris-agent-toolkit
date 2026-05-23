@@ -485,8 +485,8 @@ curl -sS "$QVERIS_BASE_URL/auth/usage/history/v2?execution_id=exec_01HZX9R2R4S2E
         "id": "evt_01HZX9R31GH2R",
         "event_type": "tool_execute",
         "source_system": "qveris_website",
-        "source_ref_type": "tool_execute",
-        "source_ref_id": "exec_01HZX9R2R4S2E",
+        "source_ref_type": "execute_history",
+        "source_ref_id": "2b7f7c4a-9f3a-4f61-8b59-3a983a8192a0",
         "session_id": "sess_7Q9m",
         "search_id": "srch_01HZX9QK7J3M9T",
         "execution_id": "exec_01HZX9R2R4S2E",
@@ -697,9 +697,11 @@ curl -sS "$QVERIS_BASE_URL/auth/credits/ledger?entry_type=consume_tool_execute&p
         "entry_type": "consume_tool_execute",
         "amount_credits": -5,
         "source_system": "qveris_website",
-        "source_ref_type": "tool_execute",
-        "source_ref_id": "exec_01HZX9R2R4S2E",
+        "source_ref_type": "execute_history",
+        "source_ref_id": "2b7f7c4a-9f3a-4f61-8b59-3a983a8192a0",
+        "execution_id": "exec_01HZX9R2R4S2E",
         "pre_settlement_bill": {
+          "execution_id": "exec_01HZX9R2R4S2E",
           "summary": "每次成功请求 5 积分",
           "list_amount_credits": 5
         },
@@ -742,7 +744,9 @@ curl -sS "$QVERIS_BASE_URL/auth/credits/ledger?summary=true&scope=account_histor
         "id": "led_01HZX9R39K6QZ",
         "entry_type": "consume_tool_execute",
         "amount_credits": -5,
-        "source_ref_id": "exec_01HZX9R2R4S2E",
+        "source_ref_type": "execute_history",
+        "source_ref_id": "2b7f7c4a-9f3a-4f61-8b59-3a983a8192a0",
+        "execution_id": "exec_01HZX9R2R4S2E",
         "created_at": "2026-05-16T08:30:13Z"
       }
     ],
@@ -792,7 +796,8 @@ curl -sS "$QVERIS_BASE_URL/auth/credits/ledger?summary=true&scope=account_histor
 | `entry_type` | 不可变账本事件类型。 |
 | `amount_credits` | 带符号的余额变动。负数表示消耗，正数表示发放。 |
 | `source_system` | 创建账本行的系统。 |
-| `source_ref_type` / `source_ref_id` | 关联目标，通常是 execution id、search id、payment id 或 model call id。 |
+| `source_ref_type` / `source_ref_id` | 后端审计用来源行引用。 |
+| `execution_id` | `/tools/execute` 返回的 Call 执行 id；用户对账时使用这个字段。可用时会出现在 Call 账本行。 |
 | `pre_settlement_bill` | 最终结算前的计费快照。 |
 | `settlement_result` | 最终结算结果。 |
 | `balance_before` / `balance_after` | 可用时返回本次变动前后的余额快照。 |
