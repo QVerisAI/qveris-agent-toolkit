@@ -305,7 +305,7 @@ export interface paths {
         };
         /**
          * Get Provider Categories
-         * @description Get provider categories from the real API
+         * @description Get provider categories from the shared provider catalog snapshot.
          */
         get: operations["get_provider_categories_api_v1_providers_categories_get"];
         put?: never;
