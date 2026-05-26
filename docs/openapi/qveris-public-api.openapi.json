@@ -2139,7 +2139,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/search.py",
-          "line": 3691
+          "line": 3885
         }
       }
     },
@@ -2174,7 +2174,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/search.py",
-          "line": 2552
+          "line": 2605
         }
       }
     },
@@ -2508,7 +2508,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/search.py",
-          "line": 3851
+          "line": 4046
         },
         "requestBody": {
           "required": true,
