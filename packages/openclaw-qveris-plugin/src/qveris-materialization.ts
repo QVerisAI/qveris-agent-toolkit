@@ -217,32 +217,78 @@ export function inferJsonAnalysis(
   return {};
 }
 
-function inferCsvAnalysis(
+function isNonEmptyLine(line: string): boolean {
+  return line.trim().length > 0;
+}
+
+function readLines(text: string, options?: { maxLines?: number; nonEmptyOnly?: boolean }): string[] {
+  const maxLines = options?.maxLines ?? Number.POSITIVE_INFINITY;
+  const lines: string[] = [];
+  let start = 0;
+
+  while (start <= text.length && lines.length < maxLines) {
+    const newline = text.indexOf("\n", start);
+    const end = newline === -1 ? text.length : newline;
+    const rawLine = text.slice(start, end);
+    const line = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine;
+
+    if (!options?.nonEmptyOnly || isNonEmptyLine(line)) {
+      lines.push(line);
+    }
+
+    if (newline === -1) break;
+    start = newline + 1;
+  }
+
+  return lines;
+}
+
+function countLines(text: string, options?: { nonEmptyOnly?: boolean }): number {
+  if (text.length === 0) return 0;
+
+  let count = 0;
+  let start = 0;
+  while (start <= text.length) {
+    const newline = text.indexOf("\n", start);
+    const end = newline === -1 ? text.length : newline;
+    const rawLine = text.slice(start, end);
+    const line = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine;
+
+    if (!options?.nonEmptyOnly || isNonEmptyLine(line)) {
+      count += 1;
+    }
+
+    if (newline === -1) break;
+    start = newline + 1;
+  }
+
+  return count;
+}
+
+export function inferCsvAnalysis(
   text: string,
   maxPreviewChars: number,
 ): ContentAnalysis & { preview?: string } {
-  const lines = text.split("\n").filter((l) => l.trim().length > 0);
-  if (lines.length === 0) return { line_count: 0 };
+  const firstLines = readLines(text, { maxLines: 5, nonEmptyOnly: true });
+  if (firstLines.length === 0) return { line_count: 0 };
 
-  const firstLine = lines[0];
+  const firstLine = firstLines[0];
   const delimiter = firstLine.includes("\t") ? "\t" : ",";
   const columnNames = firstLine.split(delimiter).map((c) => c.trim().replace(/^["']|["']$/g, ""));
 
-  const previewLines = lines.slice(0, 5);
-  let preview = previewLines.join("\n");
+  let preview = firstLines.join("\n");
   if (preview.length > maxPreviewChars) preview = preview.slice(0, maxPreviewChars) + "...";
 
-  return { line_count: lines.length, column_names: columnNames, preview };
+  return { line_count: countLines(text, { nonEmptyOnly: true }), column_names: columnNames, preview };
 }
 
-function inferTextAnalysis(
+export function inferTextAnalysis(
   text: string,
   maxPreviewChars: number,
 ): ContentAnalysis & { preview?: string } {
-  const lines = text.split("\n");
   let preview = text.slice(0, maxPreviewChars);
   if (text.length > maxPreviewChars) preview += "...";
-  return { line_count: lines.length, preview };
+  return { line_count: countLines(text), preview };
 }
 
 function buildContentAnalysis(

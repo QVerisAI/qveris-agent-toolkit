@@ -41,6 +41,24 @@ openclaw plugins install @qverisai/qveris
 openclaw plugins install -l ./extensions/qveris
 ```
 
+### Package safety checks
+
+The published npm package is limited to runtime plugin files. Unit tests, integration tests, fixtures, helper scripts, and coverage output are intentionally excluded so normal installation does not require a security-audit override.
+
+Before publishing, verify the package contents:
+
+```bash
+npm run build
+npm pack --dry-run --json
+npm run check:pack
+```
+
+Real network integration tests must live under `integration/` and are disabled by default:
+
+```bash
+QVERIS_RUN_INTEGRATION=1 npm run test:integration
+```
+
 ---
 
 ## Configuration
