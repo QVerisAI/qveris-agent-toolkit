@@ -1,0 +1,38 @@
+{
+  "name": "@qverisai/qveris",
+  "version": "2026.3.23",
+  "description": "OpenClaw QVeris plugin — capability discovery, tool inspection, and tool calling",
+  "type": "module",
+  "dependencies": {
+    "@sinclair/typebox": "0.34.48"
+  },
+  "devDependencies": {
+    "openclaw": "workspace:*"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.3.22"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "compat": {
+      "pluginApi": ">=2026.3.22"
+    },
+    "build": {
+      "openclawVersion": "2026.3.24"
+    },
+    "install": {
+      "npmSpec": "@qverisai/qveris",
+      "minHostVersion": ">=2026.3.22"
+    },
+    "release": {
+      "publishToNpm": true
+    }
+  }
+}

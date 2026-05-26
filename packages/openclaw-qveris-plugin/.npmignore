@@ -1,0 +1,3 @@
+# Test files
+src/**/*.test.ts
+src/**/*.test.js
