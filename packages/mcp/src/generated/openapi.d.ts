@@ -1825,6 +1825,9 @@ export interface operations {
                 categories?: string | null;
                 skip?: number;
                 limit?: number;
+                query?: string | null;
+                sort_by?: string | null;
+                sort_order?: string;
             };
             header?: never;
             path?: never;
