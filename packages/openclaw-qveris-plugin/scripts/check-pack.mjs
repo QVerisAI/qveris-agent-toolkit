@@ -44,13 +44,15 @@ function fail(message, details = []) {
   process.exit(1);
 }
 
-const raw = execFileSync("npm", ["pack", "--dry-run", "--json"], {
+execFileSync("npm", ["run", "build"], { stdio: "inherit" });
+
+const raw = execFileSync("npm", ["pack", "--dry-run", "--json", "--ignore-scripts"], {
   encoding: "utf8",
   stdio: ["ignore", "pipe", "pipe"],
 });
 
 const [pack] = JSON.parse(raw);
-const files = pack.files.map((entry) => entry.path).sort();
+const files = pack.files.map((entry) => entry.path.replace(/^package\//, "")).sort();
 
 const missingRequired = [...requiredFiles].filter((file) => !files.includes(file));
 if (missingRequired.length > 0) {
