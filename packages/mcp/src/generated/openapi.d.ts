@@ -305,7 +305,7 @@ export interface paths {
         };
         /**
          * Get Provider Categories
-         * @description Get provider categories from the shared provider catalog snapshot.
+         * @description Get provider category slugs from Quaestio category facets.
          */
         get: operations["get_provider_categories_api_v1_providers_categories_get"];
         put?: never;

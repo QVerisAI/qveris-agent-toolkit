@@ -2139,7 +2139,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/search.py",
-          "line": 3691
+          "line": 4326
         }
       }
     },
@@ -2149,7 +2149,7 @@
           "Discovery"
         ],
         "summary": "Get Provider Categories",
-        "description": "Get provider categories from the shared provider catalog snapshot.",
+        "description": "Get provider category slugs from Quaestio category facets.",
         "operationId": "get_provider_categories_api_v1_providers_categories_get",
         "responses": {
           "200": {
@@ -2174,7 +2174,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/search.py",
-          "line": 2552
+          "line": 2625
         }
       }
     },
@@ -2508,7 +2508,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/search.py",
-          "line": 3851
+          "line": 4487
         },
         "requestBody": {
           "required": true,
