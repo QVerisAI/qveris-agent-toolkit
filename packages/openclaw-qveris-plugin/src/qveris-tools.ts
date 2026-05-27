@@ -241,7 +241,18 @@ export function createQverisTools(options: {
 
       let toolParams: Record<string, unknown>;
       try {
-        toolParams = JSON.parse(paramsToToolRaw) as Record<string, unknown>;
+        const parsed = JSON.parse(paramsToToolRaw) as unknown;
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+          return jsonResult({
+            success: false,
+            error_type: "json_parse_error",
+            detail: "params_to_tool must be a JSON object.",
+            retry_hint:
+              "Use sample_parameters from the qveris_discover result as a template and pass a JSON object such as {\"city\":\"London\"}.",
+            note: QVERIS_WORKFLOW_NOTE,
+          } satisfies QverisErrorResult);
+        }
+        toolParams = parsed as Record<string, unknown>;
       } catch (parseError) {
         return jsonResult({
           success: false,

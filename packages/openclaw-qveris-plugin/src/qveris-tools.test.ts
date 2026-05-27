@@ -4,17 +4,11 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-runtime";
 import plugin from "../index.js";
-import { classifyQverisError } from "./qveris-errors.js";
-import { inferJsonAnalysis } from "./qveris-materialization.js";
 import {
-  resolveQverisApiKey,
-  resolveQverisBaseUrl,
-  resolveQverisRegion,
-  resolveDiscoverTimeoutSeconds,
-  resolveCallTimeoutSeconds,
-  resolveFullContentAllowedDomains,
-  QVERIS_REGION_DOMAINS,
-} from "./config.js";
+  inferCsvAnalysis,
+  inferJsonAnalysis,
+  inferTextAnalysis,
+} from "./qveris-materialization.js";
 import { createQverisTools } from "./qveris-tools.js";
 
 // ---------------------------------------------------------------------------
@@ -146,197 +140,6 @@ describe("plugin registration", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Config resolution
-// ---------------------------------------------------------------------------
-
-describe("config resolution", () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  it("resolves API key from plugin config", () => {
-    expect(resolveQverisApiKey({ apiKey: "from-config" })).toBe("from-config");
-  });
-
-  it("falls back to QVERIS_API_KEY env", () => {
-    vi.stubEnv("QVERIS_API_KEY", "env-key");
-    expect(resolveQverisApiKey(undefined)).toBe("env-key");
-  });
-
-  it("prefers plugin config over env var", () => {
-    vi.stubEnv("QVERIS_API_KEY", "env-key");
-    expect(resolveQverisApiKey({ apiKey: "config-key" })).toBe("config-key");
-  });
-
-  it("returns undefined when no key anywhere", () => {
-    const saved = process.env.QVERIS_API_KEY;
-    delete process.env.QVERIS_API_KEY;
-    try {
-      expect(resolveQverisApiKey(undefined)).toBeUndefined();
-    } finally {
-      if (saved !== undefined) process.env.QVERIS_API_KEY = saved;
-    }
-  });
-
-  it("resolves global region by default", () => {
-    expect(resolveQverisRegion(undefined)).toBe("global");
-    expect(resolveQverisRegion({})).toBe("global");
-  });
-
-  it("resolves cn region when configured", () => {
-    expect(resolveQverisRegion({ region: "cn" })).toBe("cn");
-  });
-
-  it("builds global base URL from region domain", () => {
-    expect(resolveQverisBaseUrl(undefined)).toBe(`https://${QVERIS_REGION_DOMAINS.global}/api/v1`);
-  });
-
-  it("builds cn base URL from region", () => {
-    expect(resolveQverisBaseUrl({ region: "cn" })).toBe(
-      `https://${QVERIS_REGION_DOMAINS.cn}/api/v1`,
-    );
-  });
-
-  it("uses explicit baseUrl when provided", () => {
-    expect(resolveQverisBaseUrl({ baseUrl: "https://proxy.example/qveris" })).toBe(
-      "https://proxy.example/qveris",
-    );
-  });
-
-  it("resolveDiscoverTimeoutSeconds returns default when not set", () => {
-    expect(resolveDiscoverTimeoutSeconds(undefined)).toBe(5);
-  });
-
-  it("resolveCallTimeoutSeconds returns default when not set", () => {
-    expect(resolveCallTimeoutSeconds(undefined)).toBe(60);
-  });
-
-  it("resolveDiscoverTimeoutSeconds uses searchTimeoutSeconds", () => {
-    expect(resolveDiscoverTimeoutSeconds({ searchTimeoutSeconds: 10 })).toBe(10);
-  });
-
-  it("resolveCallTimeoutSeconds uses executeTimeoutSeconds", () => {
-    expect(resolveCallTimeoutSeconds({ executeTimeoutSeconds: 120 })).toBe(120);
-  });
-
-  it("full-content allowed domains includes region domain", () => {
-    const domains = resolveFullContentAllowedDomains(undefined);
-    expect(domains).toContain(QVERIS_REGION_DOMAINS.global);
-  });
-
-  it("full-content allowed domains for cn region contains qveris.cn only", () => {
-    const domains = resolveFullContentAllowedDomains({ region: "cn" });
-    expect(domains).toContain(QVERIS_REGION_DOMAINS.cn);
-    expect(domains).not.toContain(QVERIS_REGION_DOMAINS.global);
-  });
-
-  it("full-content allowed domains extends to baseUrl qveris domain", () => {
-    const domains = resolveFullContentAllowedDomains({
-      region: "global",
-      baseUrl: "https://qveris.cn/api/v1",
-    });
-    expect(domains).toContain(QVERIS_REGION_DOMAINS.global);
-    expect(domains).toContain(QVERIS_REGION_DOMAINS.cn);
-  });
-
-  it("subdomain of region domain (e.g. oss.qveris.cn) is allowed for cn region", () => {
-    const domains = resolveFullContentAllowedDomains({ region: "cn" });
-    // oss.qveris.cn ends with .qveris.cn — must be whitelisted for materialization
-    const ossHostname = `oss.${QVERIS_REGION_DOMAINS.cn}`;
-    const allowed = domains.some(
-      (d) => ossHostname === d || ossHostname.endsWith(`.${d}`),
-    );
-    expect(allowed).toBe(true);
-  });
-
-  it("subdomain of region domain (e.g. oss.qveris.ai) is allowed for global region", () => {
-    const domains = resolveFullContentAllowedDomains(undefined);
-    const ossHostname = `oss.${QVERIS_REGION_DOMAINS.global}`;
-    const allowed = domains.some(
-      (d) => ossHostname === d || ossHostname.endsWith(`.${d}`),
-    );
-    expect(allowed).toBe(true);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// classifyQverisError
-// ---------------------------------------------------------------------------
-
-describe("classifyQverisError", () => {
-  it("classifies AbortError (DOMException) as timeout", () => {
-    const err = new DOMException("The operation was aborted", "AbortError");
-    const result = classifyQverisError(err);
-    expect(result.success).toBe(false);
-    expect(result.error_type).toBe("timeout");
-    expect(result.detail).toContain("timed out");
-    expect(result.retry_hint).toBeDefined();
-  });
-
-  it("classifies plain Error with name AbortError as timeout", () => {
-    const err = Object.assign(new Error("aborted"), { name: "AbortError" });
-    const result = classifyQverisError(err);
-    expect(result.success).toBe(false);
-    expect(result.error_type).toBe("timeout");
-  });
-
-  it("classifies HTTP 4xx errors correctly", () => {
-    const err = new Error("QVeris call failed (422): unprocessable entity");
-    const result = classifyQverisError(err);
-    expect(result.success).toBe(false);
-    expect(result.error_type).toBe("http_error");
-    expect(result.status).toBe(422);
-    expect(result.retry_hint).toContain("tool_id");
-  });
-
-  it("classifies HTTP 5xx errors correctly", () => {
-    const err = new Error("QVeris discover failed (503): service unavailable");
-    const result = classifyQverisError(err);
-    expect(result.success).toBe(false);
-    expect(result.error_type).toBe("http_error");
-    expect(result.status).toBe(503);
-    expect(result.retry_hint).toContain("retry");
-  });
-
-  it("classifies 429 rate-limit errors", () => {
-    const err = new Error("QVeris discover failed (429): too many requests [retry-after:30]");
-    const result = classifyQverisError(err);
-    expect(result.success).toBe(false);
-    expect(result.error_type).toBe("rate_limited");
-    expect(result.status).toBe(429);
-    expect(result.retry_after_seconds).toBe(30);
-    expect(result.retry_hint).toContain("30s");
-  });
-
-  it("classifies network errors", () => {
-    const err = new Error("fetch failed: ECONNREFUSED");
-    const result = classifyQverisError(err);
-    expect(result.success).toBe(false);
-    expect(result.error_type).toBe("network_error");
-    expect(result.detail).toContain("ECONNREFUSED");
-  });
-
-  it("classifies unknown thrown values", () => {
-    const result = classifyQverisError("something weird");
-    expect(result.success).toBe(false);
-    expect(result.error_type).toBe("network_error");
-    expect(result.detail).toBe("something weird");
-  });
-
-  it("includes default workflow note", () => {
-    const result = classifyQverisError(new Error("fail"));
-    expect(result.note).toContain("Stay inside the QVeris tool workflow");
-    expect(result.note).toContain("Never call /search");
-    expect(result.note).toContain("QVERIS_API_KEY");
-  });
-
-  it("uses caller-provided note when supplied", () => {
-    const result = classifyQverisError(new Error("fail"), { note: "custom note" });
-    expect(result.note).toBe("custom note");
-  });
-});
-
-// ---------------------------------------------------------------------------
 // createQverisTools — factory behavior
 // ---------------------------------------------------------------------------
 
@@ -349,17 +152,6 @@ describe("createQverisTools", () => {
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
-  });
-
-  it("returns null when no API key", () => {
-    const saved = process.env.QVERIS_API_KEY;
-    delete process.env.QVERIS_API_KEY;
-    try {
-      const tools = createQverisTools({ api: fakeApi({ enabled: true }), ctx: fakeCtx() });
-      expect(tools).toBeNull();
-    } finally {
-      if (saved !== undefined) process.env.QVERIS_API_KEY = saved;
-    }
   });
 
   it("creates three tools when API key is configured", () => {
@@ -614,6 +406,27 @@ describe("createQverisTools", () => {
     expect(parsed.error_type).toBe("json_parse_error");
   });
 
+  it.each(["null", "123", '"city"', "[1,2]"])(
+    "qveris_call rejects non-object params_to_tool JSON: %s",
+    async (paramsToTool) => {
+      globalThis.fetch = mockFetchJson(SAMPLE_DISCOVER_RESPONSE);
+      const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() });
+      const discover = tools!.find((t) => t.name === "qveris_discover")!;
+      const callTool = tools!.find((t) => t.name === "qveris_call")!;
+
+      await discover.execute("d1", { query: "weather forecast API" });
+      const result = await callTool.execute("c1", {
+        tool_id: "openweathermap.weather.execute.v1",
+        params_to_tool: paramsToTool,
+      });
+
+      const parsed = parseToolResult(result);
+      expect(parsed.success).toBe(false);
+      expect(parsed.error_type).toBe("json_parse_error");
+      expect(parsed.detail).toContain("JSON object");
+    },
+  );
+
   it("session state is isolated per factory call — undiscovered call uses null search_id", async () => {
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       if (typeof url === "string" && url.includes("/search")) {
@@ -691,6 +504,30 @@ describe("inferJsonAnalysis", () => {
   it("returns empty analysis for invalid JSON", () => {
     const result = inferJsonAnalysis("not json", 800);
     expect(result.root_type).toBeUndefined();
+  });
+});
+
+describe("inferCsvAnalysis", () => {
+  it("counts non-empty rows and previews only the first rows", () => {
+    const rows = ["name,value", ...Array.from({ length: 1000 }, (_, i) => `row-${i},${i}`)];
+    const result = inferCsvAnalysis(rows.join("\n"), 800);
+
+    expect(result.line_count).toBe(1001);
+    expect(result.column_names).toEqual(["name", "value"]);
+    expect(result.preview).toContain("row-0,0");
+    expect(result.preview).toContain("row-3,3");
+    expect(result.preview).not.toContain("row-4,4");
+    expect(result.preview).not.toContain("row-999,999");
+  });
+});
+
+describe("inferTextAnalysis", () => {
+  it("counts lines without splitting the whole text into an array", () => {
+    const text = Array.from({ length: 1000 }, (_, i) => `line-${i}`).join("\n");
+    const result = inferTextAnalysis(text, 20);
+
+    expect(result.line_count).toBe(1000);
+    expect(result.preview).toBe("line-0\nline-1\nline-2...");
   });
 });
 

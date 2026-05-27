@@ -1,7 +1,14 @@
 {
   "id": "qveris",
-  "providerAuthEnvVars": {
-    "qveris": ["QVERIS_API_KEY"]
+  "setup": {
+    "providers": [
+      {
+        "id": "qveris",
+        "authMethods": ["api-key"],
+        "envVars": ["QVERIS_API_KEY"]
+      }
+    ],
+    "requiresRuntime": false
   },
   "uiHints": {
     "apiKey": {

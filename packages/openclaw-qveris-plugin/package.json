@@ -3,6 +3,25 @@
   "version": "2026.3.23",
   "description": "OpenClaw QVeris plugin — capability discovery, tool inspection, and tool calling",
   "type": "module",
+  "files": [
+    "index.ts",
+    "dist/**/*.js",
+    "openclaw.plugin.json",
+    "README.md",
+    "LICENSE",
+    "src/config.ts",
+    "src/qveris-cache.ts",
+    "src/qveris-client.ts",
+    "src/qveris-errors.ts",
+    "src/qveris-materialization.ts",
+    "src/qveris-tools.ts"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check:pack": "node scripts/check-pack.mjs",
+    "prepack": "npm run build",
+    "test:integration": "node scripts/run-integration-tests.mjs"
+  },
   "dependencies": {
     "@sinclair/typebox": "0.34.48"
   },
