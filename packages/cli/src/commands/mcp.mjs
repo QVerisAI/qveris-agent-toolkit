@@ -355,7 +355,8 @@ function stdioSpecFromServer(target, server) {
 
 function listMcpTools(spec, timeoutMs) {
   return new Promise((resolve, reject) => {
-    const child = spawn(spec.command, spec.args || [], mcpSpawnOptions(spec.env));
+    const childSpec = mcpSpawnCommand(spec);
+    const child = spawn(childSpec.command, childSpec.args, mcpSpawnOptions(spec.env));
     let stderr = "";
     let settled = false;
     let timer;
@@ -447,8 +448,31 @@ export function mcpSpawnOptions(env = {}, os = platform()) {
   return {
     env: { ...process.env, ...(env || {}) },
     stdio: ["pipe", "pipe", "pipe"],
-    shell: os === "win32",
+    shell: false,
   };
+}
+
+export function mcpSpawnCommand(spec, os = platform()) {
+  const args = spec.args || [];
+  if (os !== "win32" || isWindowsExecutable(spec.command)) {
+    return { command: spec.command, args };
+  }
+
+  return {
+    command: process.env.ComSpec || "cmd.exe",
+    args: ["/d", "/s", "/c", wrapWindowsCommandLine([spec.command, ...args])],
+  };
+}
+
+function isWindowsExecutable(command) {
+  return /\.(?:exe|com)$/i.test(command);
+}
+
+function wrapWindowsCommandLine(parts) {
+  const commandLine = parts
+    .map((part) => shellQuoteForPlatform(part, "win32"))
+    .join(" ");
+  return `"${commandLine}"`;
 }
 
 function extractServer(target, config) {

@@ -29,12 +29,11 @@ export interface ExecuteToolInput {
   /**
    * Dictionary of parameters to pass to the remote tool.
    * Keys are parameter names, values can be of any type.
-   * Can be provided as an object directly or as a JSON string (legacy).
    *
    * @example {"city": "London", "units": "metric"}
    * @example {"query": "AI news", "limit": 10}
    */
-  params_to_tool: Record<string, unknown> | string;
+  params_to_tool: Record<string, unknown>;
 
   /**
    * Session identifier for tracking user sessions.
@@ -103,37 +102,28 @@ export const executeToolSchema = {
  * @param input - Execution parameters
  * @param defaultSessionId - Fallback session ID if not provided in input
  * @returns Execution result from the tool
- * @throws {Error} If params_to_tool is not valid JSON
+ * @throws {Error} If params_to_tool is not a JSON object
  */
 export async function executeExecuteTool(
   client: QverisClient,
   input: ExecuteToolInput,
   defaultSessionId: string
 ): Promise<ExecuteResponse> {
-  // Resolve parameters: accept object directly or JSON string (legacy compat)
-  let parameters: Record<string, unknown>;
-  if (typeof input.params_to_tool === 'string') {
-    try {
-      parameters = JSON.parse(input.params_to_tool) as Record<string, unknown>;
-    } catch (error) {
-      throw new Error(
-        `Invalid JSON in params_to_tool: ${error instanceof Error ? error.message : 'Unknown parse error'}. ` +
-        `Received: ${input.params_to_tool}`
-      );
-    }
-  } else if (typeof input.params_to_tool === 'object' && input.params_to_tool !== null) {
-    parameters = input.params_to_tool;
-  } else {
-    parameters = {};
+  if (!isParamsObject(input.params_to_tool)) {
+    throw new Error('params_to_tool must be a JSON object.');
   }
 
   const response = await client.executeTool(input.tool_id, {
     search_id: input.search_id,
     session_id: input.session_id ?? defaultSessionId,
-    parameters,
+    parameters: input.params_to_tool,
     max_response_size: input.max_response_size,
   });
 
   return response;
+}
+
+function isParamsObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
