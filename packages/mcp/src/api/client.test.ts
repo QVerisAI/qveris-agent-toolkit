@@ -103,13 +103,25 @@ describe('QverisClient', () => {
         ok: false,
         status: 401,
         statusText: 'Unauthorized',
+        headers: new Headers({ 'x-request-id': 'req-401' }),
         json: async () => ({ message: 'Invalid API key' }),
       });
 
-      await expect(client.searchTools({ query: 'test' })).rejects.toEqual({
+      await expect(client.searchTools({ query: 'test' })).rejects.toMatchObject({
         status: 401,
         message: 'Invalid API key',
         details: { message: 'Invalid API key' },
+        observability: {
+          source: 'qveris_api',
+          operation: 'discover',
+          method: 'POST',
+          endpoint: '/search',
+          url: 'https://qveris.ai/api/v1/search',
+          timeout_ms: 30000,
+          http_status: 401,
+          request_id: 'req-401',
+          error_type: 'http_error',
+        },
       });
     });
 
@@ -123,10 +135,37 @@ describe('QverisClient', () => {
         },
       });
 
-      await expect(client.searchTools({ query: 'test' })).rejects.toEqual({
+      await expect(client.searchTools({ query: 'test' })).rejects.toMatchObject({
         status: 500,
         message: 'Internal Server Error',
-        details: undefined,
+        observability: {
+          operation: 'discover',
+          endpoint: '/search',
+          http_status: 500,
+          error_type: 'http_error',
+        },
+      });
+    });
+
+    it('should convert fetch network failures to observable ApiError', async () => {
+      fetchMock.mockRejectedValueOnce(
+        new Error('fetch failed', { cause: new Error('ECONNRESET') })
+      );
+
+      await expect(client.searchTools({ query: 'test' })).rejects.toMatchObject({
+        status: 0,
+        message: 'fetch failed',
+        cause: 'ECONNRESET',
+        observability: {
+          source: 'qveris_api',
+          operation: 'discover',
+          method: 'POST',
+          endpoint: '/search',
+          url: 'https://qveris.ai/api/v1/search',
+          timeout_ms: 30000,
+          http_status: 0,
+          error_type: 'network_error',
+        },
       });
     });
   });
@@ -244,10 +283,16 @@ describe('QverisClient', () => {
 
       await expect(
         client.getToolsByIds({ tool_ids: [] })
-      ).rejects.toEqual({
+      ).rejects.toMatchObject({
         status: 400,
         message: 'Invalid tool_ids',
         details: { message: 'Invalid tool_ids' },
+        observability: {
+          operation: 'inspect',
+          endpoint: '/tools/by-ids',
+          http_status: 400,
+          error_type: 'http_error',
+        },
       });
     });
 
@@ -263,10 +308,15 @@ describe('QverisClient', () => {
 
       await expect(
         client.getToolsByIds({ tool_ids: ['tool-1'] })
-      ).rejects.toEqual({
+      ).rejects.toMatchObject({
         status: 500,
         message: 'Internal Server Error',
-        details: undefined,
+        observability: {
+          operation: 'inspect',
+          endpoint: '/tools/by-ids',
+          http_status: 500,
+          error_type: 'http_error',
+        },
       });
     });
   });

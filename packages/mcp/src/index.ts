@@ -145,6 +145,73 @@ export const DEPRECATED_ALIASES: Record<string, string> = {
   execute_tool: 'call',
 };
 
+function buildMcpObservability(
+  requestedTool: string,
+  mcpTool: string,
+  args: unknown,
+  defaultSessionId: string,
+): Record<string, unknown> {
+  const input = isRecord(args) ? args : {};
+  const toolId = readString(input.tool_id);
+  const toolIds = readStringArray(input.tool_ids);
+  const providerIds = uniqueStrings([
+    ...(toolId ? [toolId] : []),
+    ...toolIds,
+  ].map(inferProviderId));
+
+  return compactObject({
+    source: 'qveris_mcp',
+    requested_tool: requestedTool,
+    mcp_tool: mcpTool,
+    session_id: readString(input.session_id) ?? defaultSessionId,
+    search_id: readString(input.search_id),
+    tool_id: toolId,
+    tool_ids: toolIds.length > 0 ? toolIds : undefined,
+    provider_id: providerIds[0],
+    provider_ids: providerIds.length > 1 ? providerIds : undefined,
+    query: readString(input.query),
+  });
+}
+
+function withApiObservability(
+  mcpObservability: Record<string, unknown>,
+  apiObservability: ApiError['observability'],
+): Record<string, unknown> {
+  return compactObject({
+    ...mcpObservability,
+    api: apiObservability,
+  });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function readString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function readStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === 'string' && item.length > 0);
+}
+
+function inferProviderId(toolId: string | undefined): string | undefined {
+  if (!toolId) return undefined;
+  const [providerId] = toolId.split('.');
+  return providerId || undefined;
+}
+
+function uniqueStrings(values: Array<string | undefined>): string[] {
+  return [...new Set(values.filter((value): value is string => Boolean(value)))];
+}
+
+function compactObject(input: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(input).filter(([, value]) => value !== undefined),
+  );
+}
+
 /**
  * Route one MCP tool call to the matching Qveris operation.
  */
@@ -161,6 +228,7 @@ export async function executeQverisMcpTool(
     name = DEPRECATED_ALIASES[rawName];
     warn(`[qveris] Deprecated: "${rawName}" -> use "${name}" instead\n`);
   }
+  const mcpObservability = buildMcpObservability(rawName, name, args, defaultSessionId);
 
   try {
     if (name === 'discover') {
@@ -175,6 +243,7 @@ export async function executeQverisMcpTool(
               text: JSON.stringify({
                 error: 'Missing required parameter: query',
                 hint: 'Provide a natural language query describing the tool capability you need',
+                observability: mcpObservability,
               }),
             },
           ],
@@ -206,6 +275,7 @@ export async function executeQverisMcpTool(
               text: JSON.stringify({
                 error: 'Missing or invalid required parameter: tool_ids',
                 hint: 'Provide an array of tool IDs (at least one) to retrieve tool information',
+                observability: mcpObservability,
               }),
             },
           ],
@@ -232,7 +302,7 @@ export async function executeQverisMcpTool(
       const missingFields: string[] = [];
       if (!input.tool_id) missingFields.push('tool_id');
       if (!input.search_id) missingFields.push('search_id');
-      if (!input.params_to_tool) missingFields.push('params_to_tool');
+      if (input.params_to_tool === undefined) missingFields.push('params_to_tool');
 
       if (missingFields.length > 0) {
         return {
@@ -242,6 +312,7 @@ export async function executeQverisMcpTool(
               text: JSON.stringify({
                 error: `Missing required parameters: ${missingFields.join(', ')}`,
                 hint: 'tool_id and search_id must come from a previous discover call',
+                observability: mcpObservability,
               }),
             },
           ],
@@ -297,6 +368,7 @@ export async function executeQverisMcpTool(
           text: JSON.stringify({
             error: `Unknown tool: ${rawName}`,
             available_tools: ['discover', 'inspect', 'call', 'usage_history', 'credits_ledger'],
+            observability: mcpObservability,
           }),
         },
       ],
@@ -312,7 +384,9 @@ export async function executeQverisMcpTool(
             text: JSON.stringify({
               error: error.message,
               status: error.status,
-              details: error.details,
+              ...(error.details !== undefined && { details: error.details }),
+              ...(error.cause && { cause: error.cause }),
+              observability: withApiObservability(mcpObservability, error.observability),
             }),
           },
         ],
@@ -333,6 +407,10 @@ export async function executeQverisMcpTool(
           text: JSON.stringify({
             error: errorMessage,
             ...(errorCause && { cause: errorCause }),
+            observability: {
+              ...mcpObservability,
+              error_type: 'runtime_error',
+            },
           }),
         },
       ],
