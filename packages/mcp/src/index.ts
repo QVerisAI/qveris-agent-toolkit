@@ -232,7 +232,7 @@ export async function executeQverisMcpTool(
       const missingFields: string[] = [];
       if (!input.tool_id) missingFields.push('tool_id');
       if (!input.search_id) missingFields.push('search_id');
-      if (!input.params_to_tool) missingFields.push('params_to_tool');
+      if (input.params_to_tool === undefined) missingFields.push('params_to_tool');
 
       if (missingFields.length > 0) {
         return {

@@ -119,6 +119,16 @@ describe('MCP public tool interface', () => {
       'call',
       { tool_id: 'weather.tool.v1' },
     );
+    const invalidCallParams = await executeQverisMcpTool(
+      client,
+      'session-1',
+      'call',
+      {
+        tool_id: 'weather.tool.v1',
+        search_id: 'search-1',
+        params_to_tool: '{"city":"London"}',
+      },
+    );
     const unknown = await executeQverisMcpTool(client, 'session-1', 'not_a_tool', {});
     const apiError = await executeQverisMcpTool(
       client,
@@ -131,6 +141,8 @@ describe('MCP public tool interface', () => {
     expect(payload(missingQuery).error).toContain('query');
     expect(missingCallParams.isError).toBe(true);
     expect(payload(missingCallParams).error).toContain('search_id');
+    expect(invalidCallParams.isError).toBe(true);
+    expect(payload(invalidCallParams).error).toContain('JSON object');
     expect(unknown.isError).toBe(true);
     expect(payload(unknown).available_tools).toEqual([
       'discover',

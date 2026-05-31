@@ -8,6 +8,7 @@ import test from "node:test";
 
 import {
   extractEnvAssignmentValue,
+  mcpSpawnCommand,
   mcpSpawnOptions,
   resolveProbeTimeoutMs,
   shellQuoteForPlatform,
@@ -58,14 +59,45 @@ test("mcp configure enforces owner-only permissions on existing config files", (
   }
 });
 
-test("mcp live probe enables shell execution on Windows only", () => {
+test("mcp live probe disables shell execution for spawn options", () => {
   const windowsOptions = mcpSpawnOptions({ QVERIS_API_KEY: "sk-test" }, "win32");
-  assert.equal(windowsOptions.shell, true);
+  assert.equal(windowsOptions.shell, false);
   assert.equal(windowsOptions.env.QVERIS_API_KEY, "sk-test");
   assert.deepEqual(windowsOptions.stdio, ["pipe", "pipe", "pipe"]);
 
   const posixOptions = mcpSpawnOptions({}, "darwin");
   assert.equal(posixOptions.shell, false);
+});
+
+test("mcp live probe runs Windows executables directly", () => {
+  const spec = mcpSpawnCommand(
+    {
+      command: "C:\\Program Files\\nodejs\\node.exe",
+      args: ["fake server.mjs", "--package=@qverisai/mcp"],
+    },
+    "win32",
+  );
+
+  assert.equal(spec.command, "C:\\Program Files\\nodejs\\node.exe");
+  assert.deepEqual(spec.args, ["fake server.mjs", "--package=@qverisai/mcp"]);
+});
+
+test("mcp live probe wraps Windows command shims through cmd.exe without shell option", () => {
+  const spec = mcpSpawnCommand(
+    {
+      command: "npx",
+      args: ["fake server.mjs", "--package=@qverisai/mcp"],
+    },
+    "win32",
+  );
+
+  assert.equal(spec.command.endsWith("cmd.exe"), true);
+  assert.deepEqual(spec.args, [
+    "/d",
+    "/s",
+    "/c",
+    "\"\"npx\" \"fake server.mjs\" \"--package=@qverisai/mcp\"\"",
+  ]);
 });
 
 test("mcp command quoting follows the target shell platform", () => {

@@ -53,7 +53,7 @@ describe('call (execute_tool)', () => {
       vi.restoreAllMocks();
     });
 
-    it('should parse JSON params and call client.executeTool', async () => {
+    it('should pass object params and call client.executeTool', async () => {
       const mockResponse: ExecuteResponse = {
         execution_id: 'exec-123',
         tool_id: 'weather-tool',
@@ -70,7 +70,7 @@ describe('call (execute_tool)', () => {
         {
           tool_id: 'weather-tool',
           search_id: 'search-123',
-          params_to_tool: '{"city": "Tokyo", "units": "metric"}',
+          params_to_tool: { city: 'Tokyo', units: 'metric' },
         },
         'default-session'
       );
@@ -99,7 +99,7 @@ describe('call (execute_tool)', () => {
         {
           tool_id: 'tool-1',
           search_id: 'search-123',
-          params_to_tool: '{}',
+          params_to_tool: {},
           session_id: 'custom-session',
         },
         'default-session'
@@ -127,7 +127,7 @@ describe('call (execute_tool)', () => {
         {
           tool_id: 'tool-1',
           search_id: 'search-123',
-          params_to_tool: '{}',
+          params_to_tool: {},
           max_response_size: 102400,
         },
         'default-session'
@@ -141,33 +141,22 @@ describe('call (execute_tool)', () => {
       });
     });
 
-    it('should throw error for invalid JSON in params_to_tool', async () => {
-      await expect(
-        executeExecuteTool(
-          mockClient,
-          {
-            tool_id: 'tool-1',
-            search_id: 'search-123',
-            params_to_tool: 'not valid json',
-          },
-          'default-session'
-        )
-      ).rejects.toThrow('Invalid JSON in params_to_tool');
-    });
-
-    it('should include original params in JSON parse error message', async () => {
-      await expect(
-        executeExecuteTool(
-          mockClient,
-          {
-            tool_id: 'tool-1',
-            search_id: 'search-123',
-            params_to_tool: '{broken',
-          },
-          'default-session'
-        )
-      ).rejects.toThrow('Received: {broken');
-    });
+    it.each(['not valid json', null, ['city']])(
+      'should reject non-object params_to_tool: %s',
+      async (paramsToTool) => {
+        await expect(
+          executeExecuteTool(
+            mockClient,
+            {
+              tool_id: 'tool-1',
+              search_id: 'search-123',
+              params_to_tool: paramsToTool as unknown as Record<string, unknown>,
+            },
+            'default-session'
+          )
+        ).rejects.toThrow('params_to_tool must be a JSON object');
+      }
+    );
 
     it('should handle complex nested parameters', async () => {
       const complexParams = {
@@ -192,7 +181,7 @@ describe('call (execute_tool)', () => {
         {
           tool_id: 'search-products',
           search_id: 'search-123',
-          params_to_tool: JSON.stringify(complexParams),
+          params_to_tool: complexParams,
         },
         'default-session'
       );
@@ -215,7 +204,7 @@ describe('call (execute_tool)', () => {
           {
             tool_id: 'tool-1',
             search_id: 'search-123',
-            params_to_tool: '{}',
+            params_to_tool: {},
           },
           'session'
         )
