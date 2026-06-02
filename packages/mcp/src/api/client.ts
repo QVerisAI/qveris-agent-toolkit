@@ -21,6 +21,8 @@ import type {
   ApiEnvelope,
   QverisClientConfig,
   ApiError,
+  ApiObservability,
+  ApiOperation,
 } from '../types.js';
 
 /** Region-specific API base URLs */
@@ -31,7 +33,7 @@ const REGION_URLS: Record<string, string> = {
 
 /**
  * Detect region from API key prefix.
- * sk-cn-xxx → cn, sk-xxx → global
+ * sk-cn-xxx -> cn, sk-xxx -> global
  */
 function detectRegionFromKey(apiKey: string): string {
   return apiKey.startsWith('sk-cn-') ? 'cn' : 'global';
@@ -95,6 +97,7 @@ export class QverisClient {
    * Makes an authenticated HTTP request to the Qveris API.
    */
   private async request<T>(
+    operation: ApiOperation,
     method: 'GET' | 'POST',
     endpoint: string,
     body?: unknown,
@@ -110,10 +113,18 @@ export class QverisClient {
       }
     }
     const controller = new AbortController();
-    const timeout = setTimeout(
-      () => controller.abort(),
-      timeoutMs ?? this.defaultTimeoutMs,
-    );
+    const resolvedTimeoutMs = timeoutMs ?? this.defaultTimeoutMs;
+    const queryParams = Object.fromEntries(url.searchParams.entries());
+    const requestContext: ApiObservability = {
+      source: 'qveris_api',
+      operation,
+      method,
+      endpoint,
+      url: url.toString(),
+      ...(Object.keys(queryParams).length > 0 && { query_params: queryParams }),
+      timeout_ms: resolvedTimeoutMs,
+    };
+    const timeout = setTimeout(() => controller.abort(), resolvedTimeoutMs);
 
     try {
       const response = await fetch(url.toString(), {
@@ -152,7 +163,13 @@ export class QverisClient {
         const error: ApiError = {
           status,
           message: errorMessage,
-          details: errorDetails,
+          ...(errorDetails !== undefined && { details: errorDetails }),
+          observability: withErrorContext(
+            requestContext,
+            'http_error',
+            status,
+            extractRequestId(response),
+          ),
         };
 
         throw error;
@@ -164,22 +181,37 @@ export class QverisClient {
         const error: ApiError = {
           status: response.status,
           message: 'Invalid or empty JSON response from API',
+          observability: withErrorContext(
+            requestContext,
+            'invalid_json',
+            response.status,
+            extractRequestId(response),
+          ),
         };
         throw error;
       }
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'status' in err) {
-        // ApiError — rethrow as-is
+      if (isApiError(err)) {
         throw err;
       }
       if (err instanceof Error && err.name === 'AbortError') {
+        const cause = getErrorCause(err);
         const error: ApiError = {
           status: 408,
           message: 'Request timed out. Check connectivity or increase timeout.',
+          observability: withErrorContext(requestContext, 'timeout', 0),
+          ...(cause && { cause }),
         };
         throw error;
       }
-      throw err;
+      const cause = getErrorCause(err);
+      const error: ApiError = {
+        status: 0,
+        message: getErrorMessage(err, 'Network request failed'),
+        observability: withErrorContext(requestContext, 'network_error', 0),
+        ...(cause && { cause }),
+      };
+      throw error;
     } finally {
       clearTimeout(timeout);
     }
@@ -190,7 +222,7 @@ export class QverisClient {
    * This is the Discover action and is free.
    */
   async searchTools(request: SearchRequest): Promise<SearchResponse> {
-    return this.request<SearchResponse>('POST', '/search', request);
+    return this.request<SearchResponse>('discover', 'POST', '/search', request);
   }
 
   /**
@@ -198,7 +230,7 @@ export class QverisClient {
    * This is the Inspect action and is free.
    */
   async getToolsByIds(request: GetToolsByIdsRequest): Promise<SearchResponse> {
-    return this.request<SearchResponse>('POST', '/tools/by-ids', request);
+    return this.request<SearchResponse>('inspect', 'POST', '/tools/by-ids', request);
   }
 
   /**
@@ -212,6 +244,7 @@ export class QverisClient {
   ): Promise<ExecuteResponse> {
     const endpoint = `/tools/execute?tool_id=${encodeURIComponent(toolId)}`;
     return this.request<ExecuteResponse>(
+      'call',
       'POST',
       endpoint,
       request,
@@ -223,7 +256,7 @@ export class QverisClient {
    * Get current credit balance and bucket details.
    */
   async getCredits(): Promise<ApiEnvelope<CreditsResponse> | CreditsResponse> {
-    return this.request<ApiEnvelope<CreditsResponse> | CreditsResponse>('GET', '/auth/credits');
+    return this.request<ApiEnvelope<CreditsResponse> | CreditsResponse>('credits', 'GET', '/auth/credits');
   }
 
   /**
@@ -233,6 +266,7 @@ export class QverisClient {
     request: UsageHistoryRequest
   ): Promise<ApiEnvelope<UsageEventsResponse> | UsageEventsResponse> {
     return this.request<ApiEnvelope<UsageEventsResponse> | UsageEventsResponse>(
+      'usage_history',
       'GET',
       '/auth/usage/history/v2',
       undefined,
@@ -248,6 +282,7 @@ export class QverisClient {
     request: CreditsLedgerRequest
   ): Promise<ApiEnvelope<CreditsLedgerResponse> | CreditsLedgerResponse> {
     return this.request<ApiEnvelope<CreditsLedgerResponse> | CreditsLedgerResponse>(
+      'credits_ledger',
       'GET',
       '/auth/credits/ledger',
       undefined,
@@ -260,7 +295,7 @@ export class QverisClient {
 /**
  * Creates a Qveris client from environment variables.
  * Reads the API key from QVERIS_API_KEY. Region is auto-detected from key prefix
- * (sk-cn-xxx → cn, sk-xxx → global), or overridden via QVERIS_REGION or QVERIS_BASE_URL.
+ * (sk-cn-xxx -> cn, sk-xxx -> global), or overridden via QVERIS_REGION or QVERIS_BASE_URL.
  */
 export function createClientFromEnv(): QverisClient {
   const apiKey = process.env.QVERIS_API_KEY;
@@ -279,4 +314,51 @@ export function createClientFromEnv(): QverisClient {
   console.error(`Region: ${region} (${effectiveUrl})`);
 
   return client;
+}
+
+function withErrorContext(
+  context: ApiObservability,
+  errorType: NonNullable<ApiObservability['error_type']>,
+  httpStatus?: number,
+  requestId?: string,
+): ApiObservability {
+  return {
+    ...context,
+    error_type: errorType,
+    ...(httpStatus !== undefined && { http_status: httpStatus }),
+    ...(requestId && { request_id: requestId }),
+  };
+}
+
+function extractRequestId(response: Response): string | undefined {
+  const headers = response.headers;
+  return (
+    headers?.get('x-request-id') ??
+    headers?.get('x-qveris-request-id') ??
+    headers?.get('x-correlation-id') ??
+    undefined
+  );
+}
+
+function isApiError(error: unknown): error is ApiError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'status' in error &&
+    'message' in error
+  );
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === 'string' && error) return error;
+  return fallback;
+}
+
+function getErrorCause(error: unknown): string | undefined {
+  if (!(error instanceof Error)) return undefined;
+  const cause = error.cause;
+  if (cause instanceof Error) return cause.message;
+  if (typeof cause === 'string' && cause) return cause;
+  return undefined;
 }

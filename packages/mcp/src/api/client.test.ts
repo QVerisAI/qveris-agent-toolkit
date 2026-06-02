@@ -106,7 +106,7 @@ describe('QverisClient', () => {
         json: async () => ({ message: 'Invalid API key' }),
       });
 
-      await expect(client.searchTools({ query: 'test' })).rejects.toEqual({
+      await expect(client.searchTools({ query: 'test' })).rejects.toMatchObject({
         status: 401,
         message: 'Invalid API key',
         details: { message: 'Invalid API key' },
@@ -123,10 +123,44 @@ describe('QverisClient', () => {
         },
       });
 
-      await expect(client.searchTools({ query: 'test' })).rejects.toEqual({
+      await expect(client.searchTools({ query: 'test' })).rejects.toMatchObject({
         status: 500,
         message: 'Internal Server Error',
-        details: undefined,
+      });
+    });
+
+    it('should convert fetch network failures to observable ApiError', async () => {
+      fetchMock.mockRejectedValueOnce(
+        new Error('fetch failed', { cause: new Error('ECONNRESET') })
+      );
+
+      await expect(client.searchTools({ query: 'test' })).rejects.toMatchObject({
+        status: 0,
+        message: 'fetch failed',
+        cause: 'ECONNRESET',
+        observability: {
+          operation: 'discover',
+          endpoint: '/search',
+          http_status: 0,
+          error_type: 'network_error',
+        },
+      });
+    });
+
+    it('should mark timeouts as transport failures in observability', async () => {
+      const abortError = new Error('aborted');
+      abortError.name = 'AbortError';
+      fetchMock.mockRejectedValueOnce(abortError);
+
+      await expect(client.searchTools({ query: 'test' })).rejects.toMatchObject({
+        status: 408,
+        message: 'Request timed out. Check connectivity or increase timeout.',
+        observability: {
+          operation: 'discover',
+          endpoint: '/search',
+          http_status: 0,
+          error_type: 'timeout',
+        },
       });
     });
   });
@@ -244,7 +278,7 @@ describe('QverisClient', () => {
 
       await expect(
         client.getToolsByIds({ tool_ids: [] })
-      ).rejects.toEqual({
+      ).rejects.toMatchObject({
         status: 400,
         message: 'Invalid tool_ids',
         details: { message: 'Invalid tool_ids' },
@@ -263,10 +297,9 @@ describe('QverisClient', () => {
 
       await expect(
         client.getToolsByIds({ tool_ids: ['tool-1'] })
-      ).rejects.toEqual({
+      ).rejects.toMatchObject({
         status: 500,
         message: 'Internal Server Error',
-        details: undefined,
       });
     });
   });
