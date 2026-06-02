@@ -132,7 +132,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/auth.py",
-          "line": 3154
+          "line": 3182
         },
         "x-qveris-response-model": "APIResponse[SettlementHistoryResponse]"
       }
@@ -170,7 +170,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/auth.py",
-          "line": 1156
+          "line": 1162
         },
         "x-qveris-response-model": "APIResponse[dict]"
       }
@@ -469,7 +469,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/auth.py",
-          "line": 3252
+          "line": 3280
         },
         "x-qveris-response-model": "APIResponse[CreditsLedgerResponse]"
       }
@@ -555,7 +555,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/auth.py",
-          "line": 3556
+          "line": 3584
         },
         "x-qveris-response-model": "APIResponse[CreditsLedgerReadinessResponse]"
       }
@@ -651,7 +651,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/auth.py",
-          "line": 3428
+          "line": 3456
         }
       }
     },
@@ -709,7 +709,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/auth.py",
-          "line": 3504
+          "line": 3532
         },
         "x-qveris-response-model": "APIResponse[CreditsLedgerItem]"
       }
@@ -831,7 +831,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/auth.py",
-          "line": 2923
+          "line": 2951
         },
         "x-qveris-response-model": "APIResponse[UsageCreditsSpentResponse]"
       }
@@ -1127,6 +1127,18 @@
             "example": 50
           },
           {
+            "name": "include_details",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "是否在列表中返回完整审计详情字段",
+              "default": false,
+              "title": "Include Details"
+            },
+            "description": "是否在列表中返回完整审计详情字段"
+          },
+          {
             "name": "min_credits",
             "in": "query",
             "required": false,
@@ -1287,7 +1299,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/auth.py",
-          "line": 2631
+          "line": 2637
         },
         "x-qveris-response-model": "APIResponse[UsageEventsResponse]"
       }
@@ -1562,7 +1574,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/auth.py",
-          "line": 2993
+          "line": 3021
         }
       }
     },
@@ -1877,7 +1889,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/auth.py",
-          "line": 2812
+          "line": 2840
         },
         "x-qveris-response-model": "APIResponse[UsageEventSummaryResponse]"
       }
@@ -1937,7 +1949,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/auth.py",
-          "line": 3112
+          "line": 3140
         },
         "x-qveris-response-model": "APIResponse[UsageEventItem]"
       }
@@ -1975,7 +1987,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/auth.py",
-          "line": 3689
+          "line": 3717
         },
         "x-qveris-response-model": "APIResponse[TokenVerificationResponse]"
       }
@@ -2139,7 +2151,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/search.py",
-          "line": 4463
+          "line": 4959
         }
       }
     },
@@ -2174,7 +2186,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/search.py",
-          "line": 2641
+          "line": 3039
         }
       }
     },
@@ -2508,7 +2520,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/search.py",
-          "line": 4625
+          "line": 5121
         },
         "requestBody": {
           "required": true,
