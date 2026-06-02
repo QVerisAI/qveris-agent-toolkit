@@ -141,7 +141,7 @@ describe('call (execute_tool)', () => {
       });
     });
 
-    it.each(['not valid json', null, ['city']])(
+    it.each(['not valid json', null, ['city'], new Date('2026-01-01'), new Map([['city', 'London']])])(
       'should reject non-object params_to_tool: %s',
       async (paramsToTool) => {
         await expect(
@@ -157,6 +157,28 @@ describe('call (execute_tool)', () => {
         ).rejects.toThrow('params_to_tool must be a JSON object');
       }
     );
+
+    it('should allow null-prototype params_to_tool objects', async () => {
+      const params = Object.create(null) as Record<string, unknown>;
+      params.city = 'London';
+
+      await executeExecuteTool(
+        mockClient,
+        {
+          tool_id: 'tool-1',
+          search_id: 'search-123',
+          params_to_tool: params,
+        },
+        'default-session'
+      );
+
+      expect(mockClient.executeTool).toHaveBeenCalledWith('tool-1', {
+        search_id: 'search-123',
+        session_id: 'default-session',
+        parameters: params,
+        max_response_size: undefined,
+      });
+    });
 
     it('should handle complex nested parameters', async () => {
       const complexParams = {

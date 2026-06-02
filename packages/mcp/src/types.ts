@@ -496,6 +496,22 @@ export interface QverisClientConfig {
 /**
  * Error response from the Qveris API.
  */
+export type ApiOperation = 'discover' | 'inspect' | 'call' | 'credits' | 'usage_history' | 'credits_ledger';
+export type ApiErrorType = 'http_error' | 'invalid_json' | 'timeout' | 'network_error';
+
+export interface ApiObservability {
+  source: 'qveris_api';
+  operation: ApiOperation;
+  method: 'GET' | 'POST';
+  endpoint: string;
+  url: string;
+  query_params?: Record<string, string>;
+  timeout_ms: number;
+  http_status?: number;
+  request_id?: string;
+  error_type?: ApiErrorType;
+}
+
 export interface ApiError {
   /** HTTP status code */
   status: number;
@@ -505,4 +521,10 @@ export interface ApiError {
 
   /** Original error details if available */
   details?: unknown;
+
+  /** Request metadata for diagnosing API/provider/tool-chain failures. */
+  observability?: ApiObservability;
+
+  /** Lower-level transport or runtime cause when available. */
+  cause?: string;
 }
