@@ -145,6 +145,47 @@ export const DEPRECATED_ALIASES: Record<string, string> = {
   execute_tool: 'call',
 };
 
+function buildMcpObservability(
+  requestedTool: string,
+  mcpTool: string,
+  args: unknown,
+  defaultSessionId: string,
+): Record<string, unknown> {
+  const input = isRecord(args) ? args : {};
+  const toolId = readString(input.tool_id);
+
+  return compactObject({
+    source: 'qveris_mcp',
+    requested_tool: requestedTool,
+    mcp_tool: mcpTool,
+    session_id: readString(input.session_id) ?? defaultSessionId,
+    search_id: readString(input.search_id),
+    tool_id: toolId,
+    provider_id: inferProviderId(toolId),
+    query: readString(input.query),
+  });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function readString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function inferProviderId(toolId: string | undefined): string | undefined {
+  if (!toolId) return undefined;
+  const [providerId] = toolId.split('.');
+  return providerId || undefined;
+}
+
+function compactObject(input: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(input).filter(([, value]) => value !== undefined),
+  );
+}
+
 /**
  * Route one MCP tool call to the matching Qveris operation.
  */
@@ -161,6 +202,7 @@ export async function executeQverisMcpTool(
     name = DEPRECATED_ALIASES[rawName];
     warn(`[qveris] Deprecated: "${rawName}" -> use "${name}" instead\n`);
   }
+  const mcpObservability = buildMcpObservability(rawName, name, args, defaultSessionId);
 
   try {
     if (name === 'discover') {
@@ -232,7 +274,7 @@ export async function executeQverisMcpTool(
       const missingFields: string[] = [];
       if (!input.tool_id) missingFields.push('tool_id');
       if (!input.search_id) missingFields.push('search_id');
-      if (!input.params_to_tool) missingFields.push('params_to_tool');
+      if (input.params_to_tool === undefined) missingFields.push('params_to_tool');
 
       if (missingFields.length > 0) {
         return {
@@ -312,7 +354,12 @@ export async function executeQverisMcpTool(
             text: JSON.stringify({
               error: error.message,
               status: error.status,
-              details: error.details,
+              ...(error.details !== undefined && { details: error.details }),
+              ...(error.cause && { cause: error.cause }),
+              observability: compactObject({
+                ...mcpObservability,
+                api: error.observability,
+              }),
             }),
           },
         ],

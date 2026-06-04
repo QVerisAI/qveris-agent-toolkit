@@ -1,0 +1,41 @@
+{
+  "id": "qveris",
+  "setup": {
+    "providers": [
+      {
+        "id": "qveris",
+        "authMethods": ["api-key"],
+        "envVars": ["QVERIS_API_KEY"]
+      }
+    ],
+    "requiresRuntime": false
+  },
+  "uiHints": {
+    "apiKey": {
+      "label": "QVeris API Key",
+      "help": "QVeris API key for capability discovery and tool calling (fallback: QVERIS_API_KEY env var).",
+      "sensitive": true,
+      "placeholder": "qv-..."
+    },
+    "region": {
+      "label": "QVeris Region",
+      "help": "API region: global (qveris.ai) or cn (qveris.cn)."
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "apiKey": { "type": ["string", "object"] },
+      "region": { "type": "string", "enum": ["global", "cn"] },
+      "baseUrl": { "type": "string" },
+      "autoMaterializeFullContent": { "type": "boolean" },
+      "fullContentMaxBytes": { "type": "number" },
+      "fullContentTimeoutSeconds": { "type": "number" },
+      "searchTimeoutSeconds": { "type": "number" },
+      "executeTimeoutSeconds": { "type": "number" },
+      "maxResponseSize": { "type": "number" },
+      "searchLimit": { "type": "number" }
+    }
+  }
+}

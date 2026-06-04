@@ -8,6 +8,7 @@ import test from "node:test";
 
 import {
   extractEnvAssignmentValue,
+  mcpSpawnCommand,
   mcpSpawnOptions,
   resolveProbeTimeoutMs,
   shellQuoteForPlatform,
@@ -58,14 +59,92 @@ test("mcp configure enforces owner-only permissions on existing config files", (
   }
 });
 
-test("mcp live probe enables shell execution on Windows only", () => {
+test("mcp live probe disables shell execution for spawn options", () => {
   const windowsOptions = mcpSpawnOptions({ QVERIS_API_KEY: "sk-test" }, "win32");
-  assert.equal(windowsOptions.shell, true);
+  assert.equal(windowsOptions.shell, false);
   assert.equal(windowsOptions.env.QVERIS_API_KEY, "sk-test");
   assert.deepEqual(windowsOptions.stdio, ["pipe", "pipe", "pipe"]);
 
   const posixOptions = mcpSpawnOptions({}, "darwin");
   assert.equal(posixOptions.shell, false);
+});
+
+test("mcp live probe runs Windows executables directly", () => {
+  const spec = mcpSpawnCommand(
+    {
+      command: "C:\\Program Files\\nodejs\\node.exe",
+      args: ["fake server.mjs", "--package=@qverisai/mcp"],
+    },
+    "win32",
+  );
+
+  assert.equal(spec.command, "C:\\Program Files\\nodejs\\node.exe");
+  assert.deepEqual(spec.args, ["fake server.mjs", "--package=@qverisai/mcp"]);
+});
+
+test("mcp live probe wraps Windows command shims through cmd.exe without shell option", () => {
+  const spec = mcpSpawnCommand(
+    {
+      command: "npx",
+      args: ["fake server.mjs", "--package=@qverisai/mcp"],
+    },
+    "win32",
+  );
+
+  assert.equal(spec.command.endsWith("cmd.exe"), true);
+  assert.deepEqual(spec.args, [
+    "/d",
+    "/s",
+    "/c",
+    "\"\"npx\" \"fake server.mjs\" \"--package=@qverisai/mcp\"\"",
+  ]);
+});
+
+test("mcp live probe safely quotes Windows command shim arguments", () => {
+  const spec = mcpSpawnCommand(
+    {
+      command: "C:\\Tools\\npm shim\\npx.cmd",
+      args: [
+        "--name=foo\"bar",
+        "C:\\temp\\tail\\",
+        "100% ready",
+        "safe&literal",
+      ],
+    },
+    "win32",
+  );
+
+  assert.equal(spec.command.endsWith("cmd.exe"), true);
+  assert.deepEqual(spec.args, [
+    "/d",
+    "/s",
+    "/c",
+    "\"\"C:\\Tools\\npm shim\\npx.cmd\" \"--name=foo\\\"bar\" \"C:\\temp\\tail\\\\\" \"100%% ready\" \"safe&literal\"\"",
+  ]);
+});
+
+test("mcp live probe preserves percent signs for non-batch Windows commands", () => {
+  const spec = mcpSpawnCommand(
+    {
+      command: "node",
+      args: ["100% ready"],
+    },
+    "win32",
+  );
+
+  assert.deepEqual(spec.args, [
+    "/d",
+    "/s",
+    "/c",
+    "\"\"node\" \"100% ready\"\"",
+  ]);
+});
+
+test("mcp live probe rejects Windows control characters before cmd.exe wrapping", () => {
+  assert.throws(
+    () => mcpSpawnCommand({ command: "npx", args: ["safe\nunsafe"] }, "win32"),
+    /cannot contain CR, LF, or NUL/
+  );
 });
 
 test("mcp command quoting follows the target shell platform", () => {

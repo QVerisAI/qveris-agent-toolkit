@@ -1,0 +1,39 @@
+# Test files
+**/*.test.ts
+**/*.test.js
+**/*.spec.ts
+**/*.spec.js
+__tests__/
+__mocks__/
+test/
+tests/
+integration/
+fixtures/
+fixture/
+testdata/
+
+# Test config & output
+vitest.config.*
+jest.config.*
+playwright.config.*
+coverage/
+*.lcov
+.nyc_output/
+
+# Dev config
+tsconfig.json
+.gitignore
+.eslintrc*
+.prettierrc*
+
+# Build caches
+*.tsbuildinfo
+.cache/
+.temp/
+.tmp/
+tmp/
+*.tgz
+
+# Repository and release helpers
+.github/
+scripts/

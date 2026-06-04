@@ -355,7 +355,8 @@ function stdioSpecFromServer(target, server) {
 
 function listMcpTools(spec, timeoutMs) {
   return new Promise((resolve, reject) => {
-    const child = spawn(spec.command, spec.args || [], mcpSpawnOptions(spec.env));
+    const childSpec = mcpSpawnCommand(spec);
+    const child = spawn(childSpec.command, childSpec.args, mcpSpawnOptions(spec.env));
     let stderr = "";
     let settled = false;
     let timer;
@@ -443,12 +444,74 @@ export function resolveProbeTimeoutMs(timeout) {
   return Math.max(1000, usableSeconds * 1000);
 }
 
-export function mcpSpawnOptions(env = {}, os = platform()) {
+export function mcpSpawnOptions(env = {}, _os = platform()) {
   return {
     env: { ...process.env, ...(env || {}) },
     stdio: ["pipe", "pipe", "pipe"],
-    shell: os === "win32",
+    shell: false,
   };
+}
+
+export function mcpSpawnCommand(spec, os = platform()) {
+  const args = spec.args || [];
+  if (os !== "win32" || isWindowsExecutable(spec.command)) {
+    return { command: spec.command, args };
+  }
+
+  return {
+    command: process.env.ComSpec || "cmd.exe",
+    args: ["/d", "/s", "/c", wrapWindowsCommandLine([spec.command, ...args])],
+  };
+}
+
+function isWindowsExecutable(command) {
+  return /\.(?:exe|com)$/i.test(command);
+}
+
+function isWindowsBatchCommand(command) {
+  const name = String(command).split(/[\\/]/).pop() || "";
+  return (
+    /\.(?:cmd|bat)$/i.test(name) ||
+    /^(?:corepack|npm|npx|pnpm|yarn)$/i.test(name)
+  );
+}
+
+function wrapWindowsCommandLine(parts) {
+  const escapePercent = isWindowsBatchCommand(parts[0]);
+  const commandLine = parts
+    .map((part) => quoteWindowsCommandArgument(part, escapePercent))
+    .join(" ");
+  return `"${commandLine}"`;
+}
+
+function quoteWindowsCommandArgument(value, escapePercent = false) {
+  const raw = String(value);
+  if (/[\0\r\n]/.test(raw)) {
+    throw new Error("MCP command arguments cannot contain CR, LF, or NUL characters.");
+  }
+  const text = escapePercent ? raw.replaceAll("%", "%%") : raw;
+  let quoted = "\"";
+  let backslashes = 0;
+
+  for (const char of text) {
+    if (char === "\\") {
+      backslashes += 1;
+      continue;
+    }
+    if (char === "\"") {
+      quoted += "\\".repeat(backslashes * 2 + 1);
+      quoted += char;
+      backslashes = 0;
+      continue;
+    }
+    quoted += "\\".repeat(backslashes);
+    backslashes = 0;
+    quoted += char;
+  }
+
+  quoted += "\\".repeat(backslashes * 2);
+  quoted += "\"";
+  return quoted;
 }
 
 function extractServer(target, config) {

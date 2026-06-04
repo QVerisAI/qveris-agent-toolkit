@@ -105,7 +105,17 @@ describe('MCP public tool interface', () => {
 
   it('returns MCP error payloads for validation, unknown tools, and API errors', async () => {
     const client = {
-      searchTools: vi.fn().mockRejectedValue({ status: 401, message: 'bad key', details: { code: 'auth' } }),
+      searchTools: vi.fn().mockRejectedValue({
+        status: 401,
+        message: 'bad key',
+        details: { code: 'auth' },
+        observability: {
+          operation: 'discover',
+          endpoint: '/search',
+          http_status: 401,
+          error_type: 'http_error',
+        },
+      }),
       getToolsByIds: vi.fn(),
       executeTool: vi.fn(),
       getUsageHistory: vi.fn(),
@@ -119,6 +129,16 @@ describe('MCP public tool interface', () => {
       'call',
       { tool_id: 'weather.tool.v1' },
     );
+    const invalidCallParams = await executeQverisMcpTool(
+      client,
+      'session-1',
+      'call',
+      {
+        tool_id: 'weather.tool.v1',
+        search_id: 'search-1',
+        params_to_tool: '{"city":"London"}',
+      },
+    );
     const unknown = await executeQverisMcpTool(client, 'session-1', 'not_a_tool', {});
     const apiError = await executeQverisMcpTool(
       client,
@@ -131,6 +151,8 @@ describe('MCP public tool interface', () => {
     expect(payload(missingQuery).error).toContain('query');
     expect(missingCallParams.isError).toBe(true);
     expect(payload(missingCallParams).error).toContain('search_id');
+    expect(invalidCallParams.isError).toBe(true);
+    expect(payload(invalidCallParams).error).toContain('JSON object');
     expect(unknown.isError).toBe(true);
     expect(payload(unknown).available_tools).toEqual([
       'discover',
@@ -140,10 +162,76 @@ describe('MCP public tool interface', () => {
       'credits_ledger',
     ]);
     expect(apiError.isError).toBe(true);
-    expect(payload(apiError)).toEqual({
+    expect(payload(apiError)).toMatchObject({
       error: 'bad key',
       status: 401,
       details: { code: 'auth' },
+      observability: {
+        source: 'qveris_mcp',
+        requested_tool: 'discover',
+        mcp_tool: 'discover',
+        session_id: 'session-1',
+        query: 'weather',
+        api: {
+          operation: 'discover',
+          endpoint: '/search',
+          http_status: 401,
+          error_type: 'http_error',
+        },
+      },
+    });
+  });
+
+  it('adds tool and provider observability to failed call payloads', async () => {
+    const client = {
+      searchTools: vi.fn(),
+      getToolsByIds: vi.fn(),
+      executeTool: vi.fn().mockRejectedValue({
+        status: 0,
+        message: 'fetch failed',
+        cause: 'ECONNRESET',
+        observability: {
+          operation: 'call',
+          endpoint: '/tools/execute?tool_id=weather.forecast.v1',
+          http_status: 0,
+          error_type: 'network_error',
+        },
+      }),
+      getUsageHistory: vi.fn(),
+      getCreditsLedger: vi.fn(),
+    } as unknown as QverisClient;
+
+    const result = await executeQverisMcpTool(
+      client,
+      'session-1',
+      'call',
+      {
+        tool_id: 'weather.forecast.v1',
+        search_id: 'search-1',
+        params_to_tool: { city: 'London' },
+      },
+    );
+
+    expect(result.isError).toBe(true);
+    expect(payload(result)).toMatchObject({
+      error: 'fetch failed',
+      status: 0,
+      cause: 'ECONNRESET',
+      observability: {
+        source: 'qveris_mcp',
+        requested_tool: 'call',
+        mcp_tool: 'call',
+        session_id: 'session-1',
+        search_id: 'search-1',
+        tool_id: 'weather.forecast.v1',
+        provider_id: 'weather',
+        api: {
+          operation: 'call',
+          endpoint: '/tools/execute?tool_id=weather.forecast.v1',
+          http_status: 0,
+          error_type: 'network_error',
+        },
+      },
     });
   });
 });
