@@ -1,0 +1,64 @@
+name: Publish QVeris OpenClaw plugin to npm
+
+on:
+  push:
+    tags:
+      - "qveris-plugin-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/openclaw-qveris-plugin
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - name: Verify package version matches tag
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#qveris-plugin-v}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+          echo "VERSION=$PKG_VERSION" >> "$GITHUB_ENV"
+
+      - name: Verify npm package contents
+        run: npm run check:pack
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "QVeris OpenClaw Plugin v${{ env.VERSION }}"
+          body: |
+            ## Install
+
+            ```bash
+            openclaw plugins install @qverisai/qveris@${{ env.VERSION }}
+            ```
+
+            ## Highlights
+
+            - Publishes compiled JavaScript runtime files under `dist/`.
+            - Points `openclaw.extensions` at `./dist/index.js` for current OpenClaw package-install compatibility.
+            - Keeps TypeScript source in the package for inspection, but no longer depends on TypeScript runtime loading.
+
+            See [README](packages/openclaw-qveris-plugin/README.md) for usage.
+          generate_release_notes: true
