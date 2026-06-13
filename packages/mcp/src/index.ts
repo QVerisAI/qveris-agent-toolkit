@@ -474,7 +474,15 @@ function isApiError(error: unknown): error is ApiError {
 export function isEntrypoint(argvEntry: string | undefined, moduleUrl = import.meta.url): boolean {
   if (!argvEntry) return false;
 
-  return pathToFileURL(realpathSync(argvEntry)).href === moduleUrl;
+  try {
+    return pathToFileURL(realpathSync(argvEntry)).href === moduleUrl;
+  } catch {
+    try {
+      return pathToFileURL(argvEntry).href === moduleUrl;
+    } catch {
+      return false;
+    }
+  }
 }
 
 // Run the server only when this file is the process entrypoint.

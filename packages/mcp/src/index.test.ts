@@ -23,13 +23,26 @@ describe('MCP public tool interface', () => {
       const realEntrypoint = join(tempDir, 'dist-index.js');
       const symlinkEntrypoint = join(tempDir, 'qveris-mcp');
       writeFileSync(realEntrypoint, '#!/usr/bin/env node\n');
-      symlinkSync(realEntrypoint, symlinkEntrypoint);
 
       expect(isEntrypoint(realEntrypoint, pathToFileURL(realEntrypoint).href)).toBe(true);
-      expect(isEntrypoint(symlinkEntrypoint, pathToFileURL(realEntrypoint).href)).toBe(true);
+
+      try {
+        symlinkSync(realEntrypoint, symlinkEntrypoint);
+        expect(isEntrypoint(symlinkEntrypoint, pathToFileURL(realEntrypoint).href)).toBe(true);
+      } catch (error) {
+        if (hasErrorCode(error, 'EPERM')) return;
+
+        throw error;
+      }
     } finally {
       rmSync(tempDir, { recursive: true, force: true });
     }
+  });
+
+  it('falls back to the original entrypoint path when realpath resolution fails', () => {
+    const missingEntrypoint = join(tmpdir(), 'qveris-mcp-missing-entrypoint.js');
+
+    expect(isEntrypoint(missingEntrypoint, pathToFileURL(missingEntrypoint).href)).toBe(true);
   });
 
   it('exposes canonical tools and deprecated aliases with matching schemas', () => {
@@ -254,3 +267,11 @@ describe('MCP public tool interface', () => {
     });
   });
 });
+
+function hasErrorCode(error: unknown, code: string): boolean {
+  return (
+    error instanceof Error &&
+    'code' in error &&
+    (error as NodeJS.ErrnoException).code === code
+  );
+}
