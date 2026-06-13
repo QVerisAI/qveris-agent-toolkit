@@ -1,6 +1,10 @@
+import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 
-import { executeQverisMcpTool, listQverisMcpTools } from './index.js';
+import { executeQverisMcpTool, isEntrypoint, listQverisMcpTools } from './index.js';
 import type { QverisClient } from './api/client.js';
 import { creditsLedgerSchema } from './tools/credits-ledger.js';
 import { executeToolSchema } from './tools/execute.js';
@@ -13,6 +17,21 @@ function payload(result: { content: Array<{ text: string }> }) {
 }
 
 describe('MCP public tool interface', () => {
+  it('detects the process entrypoint when npm launches the bin through a symlink', () => {
+    const tempDir = mkdtempSync(join(tmpdir(), 'qveris-mcp-entrypoint-'));
+    try {
+      const realEntrypoint = join(tempDir, 'dist-index.js');
+      const symlinkEntrypoint = join(tempDir, 'qveris-mcp');
+      writeFileSync(realEntrypoint, '#!/usr/bin/env node\n');
+      symlinkSync(realEntrypoint, symlinkEntrypoint);
+
+      expect(isEntrypoint(realEntrypoint, pathToFileURL(realEntrypoint).href)).toBe(true);
+      expect(isEntrypoint(symlinkEntrypoint, pathToFileURL(realEntrypoint).href)).toBe(true);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('exposes canonical tools and deprecated aliases with matching schemas', () => {
     const tools = listQverisMcpTools();
     const byName = new Map(tools.map((tool) => [tool.name, tool]));

@@ -31,6 +31,7 @@ import {
   ListToolsRequestSchema,
   type CallToolResult,
 } from '@modelcontextprotocol/sdk/types.js';
+import { realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -470,9 +471,14 @@ function isApiError(error: unknown): error is ApiError {
   );
 }
 
+export function isEntrypoint(argvEntry: string | undefined, moduleUrl = import.meta.url): boolean {
+  if (!argvEntry) return false;
+
+  return pathToFileURL(realpathSync(argvEntry)).href === moduleUrl;
+}
+
 // Run the server only when this file is the process entrypoint.
-const entrypoint = process.argv[1] ? pathToFileURL(process.argv[1]).href : undefined;
-if (entrypoint === import.meta.url) {
+if (isEntrypoint(process.argv[1])) {
   main().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
