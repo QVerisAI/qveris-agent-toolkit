@@ -1595,6 +1595,8 @@ export interface operations {
                  * @example 50
                  */
                 page_size?: number;
+                /** @description 是否在列表中返回完整审计详情字段 */
+                include_details?: boolean;
                 /** @example 1 */
                 min_credits?: number | null;
                 /** @example 25 */
