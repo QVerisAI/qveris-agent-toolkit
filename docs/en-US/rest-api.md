@@ -36,6 +36,52 @@ Call can return compact pre-settlement fields such as `billing` and `cost`. Fina
 
 `session_id` is optional. Use one stable value per user task or conversation for tracing, analytics, and pricing context. It is not a cache contract and does not promise cache reuse or `session_cache_hit`.
 
+## Search -> Execute integration contract
+
+Treat Discover and Inspect as the source of truth for Call. A Call request should be built from the exact capability result that the user or agent selected.
+
+Recommended contract:
+
+1. Generate one stable `session_id` for a user task or conversation.
+2. Call `POST /search` with a capability-level query.
+3. Save the returned `search_id`.
+4. Pick a `tool_id` from `results`.
+5. Build `parameters` from that same result's `params`, `one_of_required`, and `examples.sample_parameters`.
+6. Call `POST /tools/execute`, passing `tool_id`, `parameters`, `search_id`, `session_id`, and, for agent clients, `model`.
+7. Save `execution_id` for audit and support.
+
+Do not infer parameters from the tool name alone. Do not reuse parameters from another tool, another provider, or an old cached schema. If you cache tool metadata, use a short TTL or refresh it whenever the selected tool is returned by a new search.
+
+`examples.sample_parameters` is a starter example, not a contract. Validate the final `parameters` against the current `params` schema before executing.
+
+For LLM/agent integrations, include `model` in Call metadata whenever possible, for example `"model": "gpt-4.1"` or `"model": "deepseek-v4-pro"`. This helps correlate tool selection and parameter-generation quality with the model that produced the call.
+
+## Billing transparency contract
+
+QVeris separates pre-call estimate, execution outcome, pre-settlement billing, and final ledger settlement.
+
+| Stage | Where to read it | Important fields | How to use it |
+| --- | --- | --- | --- |
+| Pre-call estimate | Discover / Inspect | `expected_cost`, `billing_rule` | Show users the pricing rule before executing a capability. |
+| Execution result | Call | `success`, `error_message`, `execution_outcome` | Explain whether the provider/result was usable. Do not use `success` alone to decide final billing. |
+| Pre-settlement bill | Call and usage audit | `billing`, `pre_settlement_bill`, `requested_amount_credits` | Show the amount requested before final settlement, discounts, or no-charge rules are applied. |
+| Final request status | Usage audit | `charge_outcome`, `reason_code`, `settlement_result`, `actual_amount_credits` | Answer whether the request was finally charged and why. |
+| Final balance movement | Credits ledger | `amount_credits`, `balance_before`, `balance_after`, `execution_id` | Reconcile account balance and support tickets. |
+
+Recommended reconciliation flow:
+
+1. Use Discover or Inspect to show `billing_rule` / `expected_cost`.
+2. Call the capability and save `execution_id`, `billing`, `execution_outcome`, and legacy `cost`.
+3. Query `/auth/usage/history/v2?execution_id=...` to read `charge_outcome`, `reason_code`, `actual_amount_credits`, and `credits_ledger_entry_id`.
+4. Query `/auth/credits/ledger` or the linked ledger entry to verify the final signed balance movement.
+
+Client guidance:
+
+- REST clients should preserve `execution_id`, `billing`, `execution_outcome`, and `cost` from Call responses.
+- CLI, MCP, and SDK clients should display the same machine-readable fields instead of translating them into unrelated local status names.
+- Use stable machine fields such as `charge_outcome` and `reason_code` for automation; use `billing_summary` and `error_message` for user-facing text.
+- `cost` is kept for backward compatibility. New billing UIs should prefer usage audit and credits ledger for final settlement.
+
 ## Rate limits
 
 Rate limits are applied per API key when a Bearer token is present, otherwise per client IP.
@@ -293,6 +339,7 @@ You may pass `tool_id` as a query parameter or in the JSON body. Use the query p
 {
   "search_id": "srch_01HZX9QK7J3M9T",
   "session_id": "sess_7Q9m",
+  "model": "gpt-4.1",
   "parameters": {
     "city": "London",
     "units": "metric"
@@ -306,8 +353,17 @@ You may pass `tool_id` as a query parameter or in the JSON body. Use the query p
 | `tool_id` | string | Required overall | Unique id of the tool to execute. Provide it as the query parameter or in this JSON body. |
 | `search_id` | string | Recommended | Search id that returned the selected tool |
 | `session_id` | string | No | Tracking and pricing-context id; if omitted, the service may use the execution id |
+| `model` | string | Recommended for agents | Model that selected the tool or generated the parameters, such as `gpt-4.1`, `deepseek-v4-pro`, or `claude-sonnet-4` |
 | `parameters` | object | Yes | Capability-specific parameters from Inspect |
 | `max_response_size` | integer | No | Truncate long responses; default `20480`, `-1` disables truncation |
+
+Build `parameters` from the selected tool only:
+
+- Use the selected result's `params` field as the required schema.
+- Respect `required` and `enum` fields.
+- For CAP capabilities, respect `one_of_required`; each group means at least one field in that group must be present.
+- Use `examples.sample_parameters` only as a hint for shape and typical values.
+- If a parameter error mentions a different provider or looks unrelated to the selected tool, re-run search or inspect the selected `tool_id`; it often means the client mixed schemas from two tools.
 
 ### Success response
 
@@ -328,6 +384,14 @@ You may pass `tool_id` as a query parameter or in the JSON body. Use the query p
     "summary": "5 credits per successful request",
     "list_amount_credits": 5
   },
+  "execution_outcome": {
+    "outcome": "success",
+    "reason_code": "result.valid",
+    "provider_success": true,
+    "billable_success": true,
+    "result_valid": true,
+    "user_message": "The provider returned a valid result."
+  },
   "cost": 5,
   "remaining_credits": 990
 }
@@ -344,8 +408,40 @@ You may pass `tool_id` as a query parameter or in the JSON body. Use the query p
 | `execution_time` | number | Execution elapsed time in seconds. This is the legacy execute response timing field. |
 | `elapsed_time_ms` | number | Execution elapsed time in milliseconds when available. |
 | `billing` | object | Compact pre-settlement billing statement when available. |
+| `execution_outcome` | object | Structured result and billing outcome context when available. Includes stable fields such as `outcome`, `reason_code`, `provider_success`, `billable_success`, and `result_valid`. |
 | `cost` | number | Legacy/pre-settlement cost signal when available. |
 | `remaining_credits` | number/null | Remaining account credits when available. |
+
+### Example: empty result, not charged
+
+Some providers return a valid response that contains no usable result. In this case `success` can be `false`, the user message should explain the empty result, and the final usage audit should normally classify it as `failed_not_charged`.
+
+```json
+{
+  "execution_id": "exec_01HZX9EMPTY",
+  "result": {
+    "data": {}
+  },
+  "success": false,
+  "error_message": "The provider returned no results for the current parameters. Try different parameters.",
+  "execution_time": 0.184,
+  "elapsed_time_ms": 184,
+  "billing": {
+    "summary": "No charge: provider returned no usable result",
+    "list_amount_credits": 0
+  },
+  "execution_outcome": {
+    "outcome": "empty_result",
+    "reason_code": "result.empty",
+    "provider_success": true,
+    "billable_success": false,
+    "result_valid": false,
+    "user_message": "The provider returned no usable result data; this call was not charged."
+  },
+  "cost": 0,
+  "remaining_credits": 990
+}
+```
 
 ### Error responses
 
@@ -392,6 +488,19 @@ Upstream tool failure:
   "remaining_credits": 990
 }
 ```
+
+### Error troubleshooting
+
+| Error category | Typical symptom | What to check | Recommended action |
+| --- | --- | --- | --- |
+| `tool_id` format error | The request is rejected before provider execution. | Was the full `tool_id` copied from Discover or Inspect? | Use the exact `tool_id` returned by the API. Do not shorten, normalize, or guess ids. |
+| `tool_id` not found | The service cannot resolve the selected capability. | Is the tool stale, unavailable in this region, or from an old cache? | Run Discover again and execute a currently returned tool. |
+| Parameter error | Missing required field, invalid enum, invalid type, invalid date range, or invalid code/ticker format. | Compare the request body with the selected tool's current `params`. | Regenerate `parameters` from the selected result or Inspect response. |
+| Schema mismatch | Parameters look valid for a different provider or a different tool. | Did the agent choose one `tool_id` but fill parameters from another search result? | Keep `search_id`, selected result, and parameter schema together in one context object. |
+| Permission or region error | Auth, OAuth, or region restriction appears before provider execution. | Is the account authorized? Is the client using the right regional API base URL? | Ask the user to connect OAuth, change region, or select another returned tool. |
+| Provider failure | Parameters are accepted but upstream returns an HTTP/provider error. | Does `execution_outcome.reason_code` start with `provider.`? | Retry when appropriate, choose another provider, or share `execution_id` with support. |
+
+When contacting support, include `execution_id`, `search_id`, `session_id`, `tool_id`, and, for agent clients, `model`. These fields make it possible to tell whether the failure came from search ranking, tool selection, parameter generation, local validation, or the third-party provider.
 
 ## Long tool responses
 
@@ -467,6 +576,27 @@ GET /auth/usage/history/v2
 | `failed_not_charged` | The effective success flag is false and the settled/effective credit amount is zero. |
 | `failed_charged_review` | The effective success flag is false but the settled/effective amount is positive; treat this as a support/review case. |
 
+### Common reason codes
+
+`reason_code` is stable enough for automation, filters, and support workflows. User-facing text can change; machine clients should prefer the code.
+
+| Reason code | Typical charge outcome | User-facing meaning |
+| --- | --- | --- |
+| `result.valid` | `charged` or `included` | The provider returned usable data. |
+| `result.partial_success` | `charged`, `included`, or `failed_not_charged` | The provider returned partial data; inspect the result and billing statement. |
+| `result.empty` | `failed_not_charged` | The provider responded but returned no usable result data. |
+| `provider.error` | `failed_not_charged` | The provider returned an error. |
+| `provider.http_error` | `failed_not_charged` | The provider returned a non-success HTTP response. |
+| `provider.rate_limited` | `failed_not_charged` | The upstream provider rate-limited the request. |
+| `provider.auth_or_permission` | `failed_not_charged` | The upstream provider rejected auth or permission. |
+| `transport.timeout` | `failed_not_charged` | QVeris did not receive a provider response before timeout. |
+| `transport.no_response` | `failed_not_charged` | QVeris could not obtain a provider response. |
+| `transport.execution_failed` | `failed_not_charged` | The execution path failed before a billable provider result was available. |
+| `validation_error` | `failed_not_charged` | Request parameters were invalid or incomplete. |
+| `tool_unavailable` | `failed_not_charged` | The selected capability is unavailable. |
+| `region_restricted` | `failed_not_charged` | The selected capability is not available in the current region. |
+| `oauth_signin_required` | `failed_not_charged` | The capability requires OAuth sign-in before execution. |
+
 ### Example: lookup one execution
 
 ```bash
@@ -493,8 +623,20 @@ curl -sS "$QVERIS_BASE_URL/auth/usage/history/v2?execution_id=exec_01HZX9R2R4S2E
         "tool_id": "openweathermap.weather.execute.v1",
         "success": true,
         "charge_outcome": "charged",
+        "reason_code": "result.valid",
         "duration_ms": 211,
         "billing_snapshot_status": "upstream_provided",
+        "billing_rule_snapshot": {
+          "unit": "request",
+          "amount_credits": 5
+        },
+        "pre_settlement_bill": {
+          "summary": "5 credits per successful request",
+          "list_amount_credits": 5
+        },
+        "settlement_result": {
+          "settled_amount_credits": 5
+        },
         "pre_settlement_amount_credits": 5,
         "settled_amount_credits": 5,
         "actual_amount_credits": 5,
