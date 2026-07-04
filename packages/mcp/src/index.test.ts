@@ -1,6 +1,10 @@
+import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 
-import { executeQverisMcpTool, listQverisMcpTools } from './index.js';
+import { executeQverisMcpTool, isEntrypoint, listQverisMcpTools } from './index.js';
 import type { QverisClient } from './api/client.js';
 import { creditsLedgerSchema } from './tools/credits-ledger.js';
 import { executeToolSchema } from './tools/execute.js';
@@ -13,6 +17,34 @@ function payload(result: { content: Array<{ text: string }> }) {
 }
 
 describe('MCP public tool interface', () => {
+  it('detects the process entrypoint when npm launches the bin through a symlink', () => {
+    const tempDir = mkdtempSync(join(tmpdir(), 'qveris-mcp-entrypoint-'));
+    try {
+      const realEntrypoint = join(tempDir, 'dist-index.js');
+      const symlinkEntrypoint = join(tempDir, 'qveris-mcp');
+      writeFileSync(realEntrypoint, '#!/usr/bin/env node\n');
+
+      expect(isEntrypoint(realEntrypoint, pathToFileURL(realEntrypoint).href)).toBe(true);
+
+      try {
+        symlinkSync(realEntrypoint, symlinkEntrypoint);
+        expect(isEntrypoint(symlinkEntrypoint, pathToFileURL(realEntrypoint).href)).toBe(true);
+      } catch (error) {
+        if (hasErrorCode(error, 'EPERM')) return;
+
+        throw error;
+      }
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('falls back to the original entrypoint path when realpath resolution fails', () => {
+    const missingEntrypoint = join(tmpdir(), 'qveris-mcp-missing-entrypoint.js');
+
+    expect(isEntrypoint(missingEntrypoint, pathToFileURL(missingEntrypoint).href)).toBe(true);
+  });
+
   it('exposes canonical tools and deprecated aliases with matching schemas', () => {
     const tools = listQverisMcpTools();
     const byName = new Map(tools.map((tool) => [tool.name, tool]));
@@ -235,3 +267,11 @@ describe('MCP public tool interface', () => {
     });
   });
 });
+
+function hasErrorCode(error: unknown, code: string): boolean {
+  return (
+    error instanceof Error &&
+    'code' in error &&
+    (error as NodeJS.ErrnoException).code === code
+  );
+}
