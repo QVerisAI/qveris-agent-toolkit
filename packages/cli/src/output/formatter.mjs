@@ -298,8 +298,10 @@ function formatCategories(categories) {
   for (const c of categories) {
     let label = "";
     if (typeof c === "string") label = c;
-    else if (c && typeof c === "object") label = c.name || c.slug || "";
-    label = String(label).trim();
+    else if (c && typeof c === "object") {
+      label = stringifyDesc(c.name) || (typeof c.slug === "string" ? c.slug : "");
+    }
+    label = label.trim();
     if (!label) continue;
     const key = label.toLowerCase();
     if (seen.has(key)) continue;
