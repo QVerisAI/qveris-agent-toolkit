@@ -23,7 +23,7 @@ export function formatDiscoverResult(result) {
     const toolId = t.tool_id ?? "";
     const desc = stringifyDesc(t.description);
     const provider = t.provider_name ?? "";
-    const categories = Array.isArray(t.categories) ? t.categories.join(", ") : "";
+    const categories = formatCategories(t.categories);
     const region = t.region ?? "global";
     const stats = t.stats ?? {};
 
@@ -92,7 +92,7 @@ export function formatInspectResult(tools) {
     const desc = stringifyDesc(t.description);
     const provider = t.provider_name ?? "";
     const providerDesc = stringifyDesc(t.provider_description);
-    const categories = Array.isArray(t.categories) ? t.categories.join(", ") : "";
+    const categories = formatCategories(t.categories);
     const region = t.region ?? "global";
     const docsUrl = t.docs_url ?? "";
     const stats = t.stats ?? {};
@@ -288,6 +288,25 @@ function formatSchema(schema, indent = "", depth = 0) {
     lines.push(`${indent}${dim(schema.type ?? "any")}`);
   }
   return lines.join("\n");
+}
+
+/** Categories may be strings or objects like {slug, name, description}. */
+function formatCategories(categories) {
+  if (!Array.isArray(categories)) return "";
+  const seen = new Set();
+  const names = [];
+  for (const c of categories) {
+    let label = "";
+    if (typeof c === "string") label = c;
+    else if (c && typeof c === "object") label = c.name || c.slug || "";
+    label = String(label).trim();
+    if (!label) continue;
+    const key = label.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    names.push(label);
+  }
+  return names.join(", ");
 }
 
 /** Handle description that may be a string, i18n object {en: "...", zh: "..."}, or other. */
