@@ -5502,6 +5502,23 @@
         "additionalProperties": true,
         "description": "Capability billing rule used for pre-call estimation. Final settlement is reflected in usage audit and credits ledger endpoints."
       },
+      "PublicToolCategory": {
+        "type": "object",
+        "title": "PublicToolCategory",
+        "additionalProperties": true,
+        "description": "Category/tag attached to a capability.",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
       "PublicCapabilityResult": {
         "type": "object",
         "title": "PublicCapabilityResult",
@@ -5533,6 +5550,20 @@
           },
           "category": {
             "type": "string"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PublicToolCategory"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Categories/tags attached to the capability. Current responses return category objects; legacy responses returned plain strings."
           },
           "region": {
             "type": "string"

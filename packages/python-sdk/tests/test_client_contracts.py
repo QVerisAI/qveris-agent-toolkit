@@ -47,6 +47,10 @@ async def test_discover_contract_parses_tool_quality_and_billing() -> None:
                         "name": "Weather Forecast",
                         "description": "Forecast by location",
                         "provider_name": "Weather",
+                        "categories": [
+                            {"slug": "weather", "name": "Weather", "description": "Weather related tools."},
+                            "legacy-string-tag",
+                        ],
                         "params": [
                             {
                                 "name": "city",
@@ -81,6 +85,11 @@ async def test_discover_contract_parses_tool_quality_and_billing() -> None:
     assert response.results[0].billing_rule is not None
     assert response.results[0].billing_rule.price is not None
     assert response.results[0].billing_rule.price.amount_credits == 3
+    categories = response.results[0].categories
+    assert categories is not None
+    assert categories[0].slug == "weather"
+    assert categories[0].name == "Weather"
+    assert categories[1] == "legacy-string-tag"
 
 
 @pytest.mark.asyncio

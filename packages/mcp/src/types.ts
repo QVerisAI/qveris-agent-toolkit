@@ -118,6 +118,17 @@ export interface CompactBillingStatement {
 }
 
 /**
+ * Category/tag attached to a tool.
+ * Current API responses return category objects; legacy responses returned
+ * plain strings, so `ToolInfo.categories` accepts both.
+ */
+export interface ToolCategory {
+  slug?: string;
+  name?: string;
+  description?: string;
+}
+
+/**
  * Information about a tool returned from search results.
  * Contains everything needed to understand and execute the tool.
  */
@@ -131,8 +142,8 @@ export interface ToolInfo {
   /** Detailed description of what the tool does */
   description: string;
 
-  /** Tool categories/tags */
-  categories?: string[];
+  /** Tool categories/tags: category objects, or plain strings in legacy responses */
+  categories?: Array<string | ToolCategory>;
 
   /** Name of the organization/service providing this tool */
   provider_name?: string;
