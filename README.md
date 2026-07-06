@@ -193,6 +193,7 @@ Full CLI documentation: [packages/cli/README.md](packages/cli/README.md)
 | **CLI** (recommended) | Claude Code / OpenClaw / any agent with exec | [CLI docs](packages/cli/README.md) |
 | MCP Server | Cursor / Claude Desktop / MCP-only clients | [MCP docs](docs/mcp-server.md) |
 | Python SDK | Python projects, agent frameworks | [Python SDK docs](packages/python-sdk/README.md) |
+| TypeScript SDK | Node.js / TypeScript projects | [JS SDK docs](packages/js-sdk/README.md) |
 | REST API | Any language, custom integrations | [REST API docs](docs/rest-api.md) |
 
 ### Core protocol
@@ -263,6 +264,7 @@ This repository (`QVerisAI/qveris-agent-toolkit`) is the primary monorepo for QV
 | MCP Server | [`packages/mcp`](packages/mcp) | [@qverisai/mcp](https://www.npmjs.com/package/@qverisai/mcp) |
 | CLI | [`packages/cli`](packages/cli) | [@qverisai/cli](https://www.npmjs.com/package/@qverisai/cli) |
 | Python SDK | [`packages/python-sdk`](packages/python-sdk) | [qveris](https://pypi.org/project/qveris/) |
+| TypeScript SDK | [`packages/js-sdk`](packages/js-sdk) | [@qverisai/sdk](https://www.npmjs.com/package/@qverisai/sdk) |
 | Agent docs | [`agent/`](agent) | — |
 | Skills | [`skills/`](skills) | — |
 

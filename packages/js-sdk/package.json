@@ -1,0 +1,53 @@
+{
+  "name": "@qverisai/sdk",
+  "version": "0.1.0",
+  "description": "QVeris TypeScript SDK for agent capability discovery, inspection, calling, and audit",
+  "keywords": [
+    "qveris",
+    "ai",
+    "agent",
+    "tools",
+    "sdk",
+    "typescript",
+    "function-calling"
+  ],
+  "author": "QVerisAI",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/QVerisAI/qveris-agent-toolkit",
+    "directory": "packages/js-sdk"
+  },
+  "homepage": "https://qveris.ai",
+  "bugs": {
+    "url": "https://github.com/QVerisAI/qveris-agent-toolkit/issues"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
