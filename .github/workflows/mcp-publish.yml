@@ -93,8 +93,13 @@ jobs:
             echo "npx -y @qverisai/mcp@${VERSION}"
             echo '```'
           } > "$NOTES"
+          # actions/checkout maps the tag ref to the bare commit, dropping the
+          # annotation (actions/checkout#882) — re-fetch the real tag object.
+          git fetch --force --depth=1 origin "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}" \
+            || echo "::warning::Could not re-fetch tag ${GITHUB_REF_NAME}; Highlights may be omitted"
           if [ "$(git cat-file -t "refs/tags/${GITHUB_REF_NAME}" 2>/dev/null)" = "tag" ]; then
-            HIGHLIGHTS="$(git tag -l --format='%(contents)' "$GITHUB_REF_NAME")"
+            HIGHLIGHTS="$(git tag -l --format='%(contents)' "$GITHUB_REF_NAME" \
+              | sed -e '/^-----BEGIN PGP SIGNATURE-----$/,$d' -e '/^-----BEGIN SSH SIGNATURE-----$/,$d')"
             if [ -n "$HIGHLIGHTS" ]; then
               printf '\n## Highlights\n\n%s\n' "$HIGHLIGHTS" >> "$NOTES"
             fi
