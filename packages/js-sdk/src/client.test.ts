@@ -309,6 +309,19 @@ describe('Qveris client', () => {
     expect(response.summary).toEqual({ net_credits: -3 });
   });
 
+  it('maps aborted requests to status 408 with timeout error_type', async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockRejectedValue(Object.assign(new Error('This operation was aborted'), { name: 'AbortError' }));
+
+    const client = new Qveris({ apiKey: API_KEY });
+    const error = await client.discover('weather').catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(QverisApiError);
+    expect((error as QverisApiError).status).toBe(408);
+    expect((error as QverisApiError).message).toContain('timed out');
+    expect((error as QverisApiError).observability?.error_type).toBe('timeout');
+  });
+
   it('wraps network failures in QverisApiError with status 0', async () => {
     globalThis.fetch = vi.fn().mockRejectedValue(new Error('socket hang up'));
 
