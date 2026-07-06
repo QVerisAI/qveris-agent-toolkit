@@ -77,6 +77,10 @@ try {
 }
 ```
 
+## Version history note
+
+Versions `0.1.x` of this npm package were an early MCP-focused SDK, since superseded by [`@qverisai/mcp`](https://www.npmjs.com/package/@qverisai/mcp). The typed REST client documented here starts at **`0.2.0`**.
+
 ## Related
 
 - [QVeris CLI](https://www.npmjs.com/package/@qverisai/cli) — `qveris discover / inspect / call / usage / ledger`

@@ -1,6 +1,6 @@
 {
   "name": "@qverisai/sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "QVeris TypeScript SDK for agent capability discovery, inspection, calling, and audit",
   "keywords": [
     "qveris",
