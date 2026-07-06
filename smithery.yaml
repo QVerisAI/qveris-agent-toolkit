@@ -1,0 +1,27 @@
+# Smithery registry configuration (https://smithery.ai/docs)
+# Runs the published @qverisai/mcp npm package over stdio.
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - qverisApiKey
+    properties:
+      qverisApiKey:
+        type: string
+        description: QVeris API key (create one at https://qveris.ai)
+      qverisRegion:
+        type: string
+        enum:
+          - global
+          - cn
+        description: Optional region override (auto-detected from key prefix if not set)
+  commandFunction: |-
+    (config) => ({
+      command: 'npx',
+      args: ['-y', '@qverisai/mcp'],
+      env: {
+        QVERIS_API_KEY: config.qverisApiKey,
+        ...(config.qverisRegion ? { QVERIS_REGION: config.qverisRegion } : {})
+      }
+    })
