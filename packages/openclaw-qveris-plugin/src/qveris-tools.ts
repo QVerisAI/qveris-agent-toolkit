@@ -158,6 +158,8 @@ export function createQverisTools(options: {
         ? { sample_parameters: tool.examples.sample_parameters }
         : undefined,
       stats: tool.stats,
+      why_recommended: tool.why_recommended,
+      expected_cost: tool.expected_cost,
       ...(entry ? { previously_used: true, session_uses: entry.successCount } : {}),
     };
   }

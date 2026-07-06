@@ -41,6 +41,10 @@ export interface QverisDiscoverResultTool {
     success_rate?: number;
   };
   examples?: QverisDiscoverResultExamples;
+  /** Backend explanation of why this tool was recommended for the query */
+  why_recommended?: string;
+  /** Pre-call cost estimate in credits */
+  expected_cost?: string | number;
 }
 
 /** QVeris /search response */
