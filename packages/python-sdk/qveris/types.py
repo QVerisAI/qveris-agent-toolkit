@@ -115,7 +115,6 @@ class ToolInfo(QverisModel):
     provider_name: Optional[str] = None
     provider_description: Optional[Any] = None
     provider_website_url: Optional[str] = None
-    provider_logo_url: Optional[str] = None
     region: Optional[str] = None
     params: Optional[List[ToolParameter]] = None
     examples: Optional[ToolExamples] = None
