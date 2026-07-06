@@ -390,6 +390,32 @@ class PublicToolCategory(BaseModel):
     description: Optional[str] = None
 
 
+class PublicCapabilityTag(BaseModel):
+    """
+    Coverage tag attached to a capability descriptor (e.g. market coverage).
+    """
+
+    model_config = ConfigDict(
+        extra='allow',
+    )
+    id: Optional[str] = None
+    name: Optional[str] = None
+    type: Optional[str] = None
+    description: Optional[str] = None
+
+
+class PublicToolCapability(BaseModel):
+    """
+    Standardized capability descriptor attached to a capability result (e.g. MKT.BARS.ADJUSTED with market coverage tags).
+    """
+
+    model_config = ConfigDict(
+        extra='allow',
+    )
+    id: Optional[str] = None
+    tag: Optional[List[PublicCapabilityTag]] = None
+
+
 class PublicCapabilityResult(BaseModel):
     model_config = ConfigDict(
         extra='allow',
@@ -401,13 +427,21 @@ class PublicCapabilityResult(BaseModel):
     provider_id: Optional[str] = None
     provider_name: Optional[str] = None
     provider_description: Optional[str] = None
+    provider_logo_url: Optional[str] = None
     category: Optional[str] = None
     categories: Optional[List[Union[PublicToolCategory, str]]] = Field(
         None,
         description='Categories/tags attached to the capability. Current responses return category objects; legacy responses returned plain strings.',
     )
+    capabilities: Optional[List[PublicToolCapability]] = Field(
+        None, description='Standardized capability descriptors with coverage tags.'
+    )
     region: Optional[str] = None
     score: Optional[float] = None
+    why_recommended: Optional[str] = Field(
+        None,
+        description='Human-readable explanation of why this capability was recommended for the query. Returned by Discover.',
+    )
     params: Optional[List[PublicToolParameter]] = None
     examples: Optional[Dict[str, Any]] = None
     stats: Optional[PublicToolStats] = None

@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -18,7 +18,10 @@ function payload(result: { content: Array<{ text: string }> }) {
 
 describe('MCP public tool interface', () => {
   it('detects the process entrypoint when npm launches the bin through a symlink', () => {
-    const tempDir = mkdtempSync(join(tmpdir(), 'qveris-mcp-entrypoint-'));
+    // Canonicalize: on macOS tmpdir() sits behind the /var -> /private/var
+    // symlink, but Node always reports canonical paths in import.meta.url,
+    // which is what the moduleUrl argument simulates.
+    const tempDir = realpathSync(mkdtempSync(join(tmpdir(), 'qveris-mcp-entrypoint-')));
     try {
       const realEntrypoint = join(tempDir, 'dist-index.js');
       const symlinkEntrypoint = join(tempDir, 'qveris-mcp');

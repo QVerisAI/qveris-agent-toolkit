@@ -67,6 +67,12 @@ export function formatDiscoverResult(result) {
       lines.push(`   ${dim("tags:")} ${dim(categories)}`);
     }
 
+    // Line 6: recommendation reason (if present)
+    const why = stringifyDesc(t.why_recommended);
+    if (why) {
+      lines.push(`   ${dim("why:")} ${dim(why.length > 160 ? why.slice(0, 160) + "..." : why)}`);
+    }
+
     lines.push("");
   }
 
@@ -115,10 +121,18 @@ export function formatInspectResult(tools) {
       lines.push(`  Provider:   ${pLine}`);
     }
     if (categories) lines.push(`  Categories: ${categories}`);
+    for (const cap of formatCapabilities(t.capabilities)) {
+      lines.push(`  Capability: ${cap}`);
+    }
     lines.push(`  Region:     ${region}`);
     lines.push(`  Latency:    ${bold(avgTime)}`);
     lines.push(`  Success:    ${green(successRate)}`);
     lines.push(`  Billing:    ${yellow(billingText || "N/A")}`);
+    const expectedCost =
+      typeof t.expected_cost === "string" || typeof t.expected_cost === "number"
+        ? String(t.expected_cost).trim()
+        : "";
+    if (expectedCost) lines.push(`  Est. cost:  ${yellow(`${expectedCost} credits`)}`);
     if (t.has_last_execution) lines.push(`  Verified:   ${green("\u2713 has execution history")}`);
     if (docsUrl) lines.push(`  Docs:       ${cyan(docsUrl)}`);
 
@@ -309,6 +323,31 @@ function formatCategories(categories) {
     names.push(label);
   }
   return names.join(", ");
+}
+
+/**
+ * Capabilities are objects like {id, tag: [{id, name, type, description}]}.
+ * Returns one display line per capability: "MKT.BARS.ADJUSTED (US, CN, HK)".
+ */
+function formatCapabilities(capabilities) {
+  if (!Array.isArray(capabilities)) return [];
+  const rendered = [];
+  for (const cap of capabilities) {
+    if (!cap || typeof cap !== "object" || typeof cap.id !== "string" || !cap.id.trim()) continue;
+    const tags = Array.isArray(cap.tag)
+      ? cap.tag
+          .map((t) => {
+            if (!t || typeof t !== "object") return "";
+            if (typeof t.id === "string" && t.id.trim()) return t.id.trim();
+            return stringifyDesc(t.name);
+          })
+          .filter(Boolean)
+      : [];
+    const shown = tags.slice(0, 8);
+    const suffix = tags.length > 8 ? `, +${tags.length - 8} more` : "";
+    rendered.push(shown.length > 0 ? `${cap.id.trim()} (${shown.join(", ")}${suffix})` : cap.id.trim());
+  }
+  return rendered;
 }
 
 /** Handle description that may be a string, i18n object {en: "...", zh: "..."}, or other. */
