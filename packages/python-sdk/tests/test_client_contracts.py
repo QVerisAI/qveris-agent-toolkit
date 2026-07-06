@@ -59,11 +59,26 @@ async def test_discover_contract_parses_tool_quality_and_billing() -> None:
                                 "description": {"en": "City name", "zh": "城市名称"},
                             }
                         ],
+                        "capabilities": [
+                            {
+                                "id": "WX.FORECAST.DAILY",
+                                "tag": [
+                                    {
+                                        "id": "US",
+                                        "name": "United States",
+                                        "type": "market",
+                                        "description": "United States coverage.",
+                                    }
+                                ],
+                            }
+                        ],
                         "stats": {"avg_execution_time_ms": 42.5, "success_rate": 0.99},
                         "billing_rule": {
                             "metering_mode": "per_request",
                             "price": {"amount_credits": 3, "unit": "request"},
                         },
+                        "expected_cost": "3.0",
+                        "why_recommended": "Matched both semantic and keyword relevance signals.",
                     }
                 ],
                 "elapsed_time_ms": 12.5,
@@ -90,6 +105,14 @@ async def test_discover_contract_parses_tool_quality_and_billing() -> None:
     assert categories[0].slug == "weather"
     assert categories[0].name == "Weather"
     assert categories[1] == "legacy-string-tag"
+    capabilities = response.results[0].capabilities
+    assert capabilities is not None
+    assert capabilities[0].id == "WX.FORECAST.DAILY"
+    assert capabilities[0].tag is not None
+    assert capabilities[0].tag[0].id == "US"
+    assert capabilities[0].tag[0].type == "market"
+    assert response.results[0].expected_cost == "3.0"
+    assert response.results[0].why_recommended == "Matched both semantic and keyword relevance signals."
 
 
 @pytest.mark.asyncio

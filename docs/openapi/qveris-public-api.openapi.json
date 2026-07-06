@@ -5519,6 +5519,43 @@
           }
         }
       },
+      "PublicCapabilityTag": {
+        "type": "object",
+        "title": "PublicCapabilityTag",
+        "additionalProperties": true,
+        "description": "Coverage tag attached to a capability descriptor (e.g. market coverage).",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "PublicToolCapability": {
+        "type": "object",
+        "title": "PublicToolCapability",
+        "additionalProperties": true,
+        "description": "Standardized capability descriptor attached to a capability result (e.g. MKT.BARS.ADJUSTED with market coverage tags).",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "tag": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicCapabilityTag"
+            }
+          }
+        }
+      },
       "PublicCapabilityResult": {
         "type": "object",
         "title": "PublicCapabilityResult",
@@ -5548,6 +5585,9 @@
           "provider_description": {
             "type": "string"
           },
+          "provider_logo_url": {
+            "type": "string"
+          },
           "category": {
             "type": "string"
           },
@@ -5565,11 +5605,22 @@
             },
             "description": "Categories/tags attached to the capability. Current responses return category objects; legacy responses returned plain strings."
           },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicToolCapability"
+            },
+            "description": "Standardized capability descriptors with coverage tags."
+          },
           "region": {
             "type": "string"
           },
           "score": {
             "type": "number"
+          },
+          "why_recommended": {
+            "type": "string",
+            "description": "Human-readable explanation of why this capability was recommended for the query. Returned by Discover."
           },
           "params": {
             "type": "array",
