@@ -81,6 +81,8 @@ const SAMPLE_DISCOVER_RESPONSE = {
       params: [{ name: "city", type: "string", required: true, description: { en: "City name" } }],
       examples: { sample_parameters: { city: "London" } },
       stats: { success_rate: 0.95, avg_execution_time_ms: 800 },
+      why_recommended: "Matched both semantic and keyword relevance signals.",
+      expected_cost: "3.0",
     },
   ],
 };
@@ -388,6 +390,29 @@ describe("createQverisTools", () => {
     expect(results2[0].previously_used).toBe(true);
     expect(results2[0].session_uses).toBe(1);
     expect(results2[0].discovery_id).toBeUndefined();
+  });
+
+  it("qveris_discover projects why_recommended and expected_cost, omitting them when absent", async () => {
+    const response = {
+      query: "weather forecast API",
+      total: 2,
+      search_id: "search-abc",
+      results: [
+        SAMPLE_DISCOVER_RESPONSE.results[0],
+        { tool_id: "bare.tool.v1", name: "Bare Tool", description: "No extras" },
+      ],
+    };
+    globalThis.fetch = mockFetchJson(response);
+    const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() });
+    const discover = tools!.find((t) => t.name === "qveris_discover")!;
+
+    const parsed = parseToolResult(await discover.execute("d1", { query: "weather forecast API" }));
+    const results = parsed.results as Array<Record<string, unknown>>;
+
+    expect(results[0].why_recommended).toBe("Matched both semantic and keyword relevance signals.");
+    expect(results[0].expected_cost).toBe("3.0");
+    expect(results[1].why_recommended).toBeUndefined();
+    expect(results[1].expected_cost).toBeUndefined();
   });
 
   it("qveris_call parses invalid JSON in params_to_tool gracefully", async () => {
