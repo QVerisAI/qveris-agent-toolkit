@@ -179,9 +179,6 @@ export interface ToolInfo {
   /** Provider website URL */
   provider_website_url?: string;
 
-  /** Provider logo URL */
-  provider_logo_url?: string;
-
   /**
    * Geographic availability of the tool.
    * - "global" - Available worldwide

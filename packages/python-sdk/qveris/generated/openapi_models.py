@@ -427,7 +427,6 @@ class PublicCapabilityResult(BaseModel):
     provider_id: Optional[str] = None
     provider_name: Optional[str] = None
     provider_description: Optional[str] = None
-    provider_logo_url: Optional[str] = None
     category: Optional[str] = None
     categories: Optional[List[Union[PublicToolCategory, str]]] = Field(
         None,

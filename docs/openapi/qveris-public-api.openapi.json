@@ -5585,9 +5585,6 @@
           "provider_description": {
             "type": "string"
           },
-          "provider_logo_url": {
-            "type": "string"
-          },
           "category": {
             "type": "string"
           },
