@@ -1,9 +1,9 @@
-name: Publish CLI to npm
+name: Publish JS SDK to npm
 
 on:
   push:
     tags:
-      - "cli-v*" # Trigger on tags like cli-v0.1.0, cli-v1.0.0
+      - "js-sdk-v*" # Trigger on tags like js-sdk-v0.1.0, js-sdk-v1.0.0
 
 permissions:
   contents: write # For creating GitHub Releases
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: packages/cli
+        working-directory: packages/js-sdk
 
     strategy:
       matrix:
@@ -27,16 +27,27 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: packages/js-sdk/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
 
       - name: Run tests
-        run: node --test
+        run: npm test
+
+      - name: Build
+        run: npm run build
 
   publish:
     needs: test
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: packages/cli
+        working-directory: packages/js-sdk
 
     steps:
       - name: Checkout
@@ -45,12 +56,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           registry-url: https://registry.npmjs.org
 
       - name: Verify package version matches tag
         run: |
-          TAG_VERSION="${GITHUB_REF_NAME#cli-v}"
+          TAG_VERSION="${GITHUB_REF_NAME#js-sdk-v}"
           PKG_VERSION=$(node -p "require('./package.json').version")
           if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
             echo "::error::Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"
@@ -58,12 +69,11 @@ jobs:
           fi
           echo "VERSION=$PKG_VERSION" >> "$GITHUB_ENV"
 
-      - name: Syntax check
-        run: |
-          for f in $(find bin src -name '*.mjs'); do
-            node --check "$f" || exit 1
-          done
-          echo "All files passed syntax check"
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
 
       - name: Publish to npm
         run: npm publish --access public
@@ -71,8 +81,8 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # Release body = Install section + Highlights from the annotated tag
-      # message (git tag -a cli-vX.Y.Z -m "- bullet"), if any, + auto-generated
-      # notes. Lightweight tags simply get no Highlights section.
+      # message (git tag -a js-sdk-vX.Y.Z -m "- bullet"), if any, +
+      # auto-generated notes. Lightweight tags simply get no Highlights section.
       - name: Compose release notes
         run: |
           NOTES="$RUNNER_TEMP/release-notes.md"
@@ -80,11 +90,7 @@ jobs:
             echo '## Install'
             echo ''
             echo '```bash'
-            echo '# One-liner'
-            echo 'curl -fsSL https://qveris.ai/cli/install | bash'
-            echo ''
-            echo '# Or via npm'
-            echo "npm install -g @qverisai/cli@${VERSION}"
+            echo "npm install @qverisai/sdk@${VERSION}"
             echo '```'
           } > "$NOTES"
           # actions/checkout maps the tag ref to the bare commit, dropping the
@@ -98,11 +104,11 @@ jobs:
               printf '\n## Highlights\n\n%s\n' "$HIGHLIGHTS" >> "$NOTES"
             fi
           fi
-          printf '\nSee [README](packages/cli/README.md) for usage.\n' >> "$NOTES"
+          printf '\nSee [README](packages/js-sdk/README.md) for usage.\n' >> "$NOTES"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "QVeris CLI v${{ env.VERSION }}"
+          name: "QVeris JS SDK v${{ env.VERSION }}"
           body_path: ${{ runner.temp }}/release-notes.md
           generate_release_notes: true

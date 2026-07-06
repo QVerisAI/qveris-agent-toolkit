@@ -1204,7 +1204,6 @@ export interface components {
             provider_id?: string;
             provider_name?: string;
             provider_description?: string;
-            provider_logo_url?: string;
             category?: string;
             /** @description Categories/tags attached to the capability. Current responses return category objects; legacy responses returned plain strings. */
             categories?: (components["schemas"]["PublicToolCategory"] | string)[];
