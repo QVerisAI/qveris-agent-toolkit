@@ -377,6 +377,19 @@ class PublicBillingRule(BaseModel):
     )
 
 
+class PublicToolCategory(BaseModel):
+    """
+    Category/tag attached to a capability.
+    """
+
+    model_config = ConfigDict(
+        extra='allow',
+    )
+    slug: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+
 class PublicCapabilityResult(BaseModel):
     model_config = ConfigDict(
         extra='allow',
@@ -389,6 +402,10 @@ class PublicCapabilityResult(BaseModel):
     provider_name: Optional[str] = None
     provider_description: Optional[str] = None
     category: Optional[str] = None
+    categories: Optional[List[Union[PublicToolCategory, str]]] = Field(
+        None,
+        description='Categories/tags attached to the capability. Current responses return category objects; legacy responses returned plain strings.',
+    )
     region: Optional[str] = None
     score: Optional[float] = None
     params: Optional[List[PublicToolParameter]] = None

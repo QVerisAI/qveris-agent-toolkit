@@ -1162,6 +1162,17 @@ export interface components {
         PublicBillingRule: {
             [key: string]: unknown;
         };
+        /**
+         * PublicToolCategory
+         * @description Category/tag attached to a capability.
+         */
+        PublicToolCategory: {
+            slug?: string;
+            name?: string;
+            description?: string;
+        } & {
+            [key: string]: unknown;
+        };
         /** PublicCapabilityResult */
         PublicCapabilityResult: {
             tool_id: string;
@@ -1172,6 +1183,8 @@ export interface components {
             provider_name?: string;
             provider_description?: string;
             category?: string;
+            /** @description Categories/tags attached to the capability. Current responses return category objects; legacy responses returned plain strings. */
+            categories?: (components["schemas"]["PublicToolCategory"] | string)[];
             region?: string;
             score?: number;
             params?: components["schemas"]["PublicToolParameter"][];

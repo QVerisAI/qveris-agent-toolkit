@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -55,6 +55,18 @@ class CompactBillingStatement(QverisModel):
     summary: Optional[str] = None
 
 
+class ToolCategory(QverisModel):
+    """Category/tag attached to a tool.
+
+    Current API responses return category objects; legacy responses returned
+    plain strings, so ``ToolInfo.categories`` accepts both.
+    """
+
+    slug: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+
 class ToolParameter(QverisModel):
     name: str
     type: Any
@@ -77,7 +89,7 @@ class ToolInfo(QverisModel):
     tool_id: str
     name: Optional[str] = None
     description: Optional[Any] = None
-    categories: Optional[List[str]] = None
+    categories: Optional[List[Union[str, ToolCategory]]] = None
     category: Optional[str] = None
     provider_name: Optional[str] = None
     provider_description: Optional[Any] = None
