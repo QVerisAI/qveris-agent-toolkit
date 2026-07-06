@@ -61,6 +61,45 @@ test("formatDiscoverResult omits tags line when categories are missing or empty"
   }
 });
 
+function discoverResultWithTool(tool) {
+  return {
+    search_id: "s-1",
+    total: 1,
+    results: [
+      {
+        tool_id: "provider.tool.retrieve.v1.abc123",
+        name: "Sample Tool",
+        description: "A sample tool.",
+        ...tool,
+      },
+    ],
+  };
+}
+
+test("formatDiscoverResult renders why_recommended as a why line", () => {
+  const output = formatDiscoverResult(
+    discoverResultWithTool({
+      why_recommended: "Recommended because it matched both semantic and keyword relevance signals.",
+    }),
+  );
+  assert.ok(output.includes("why: Recommended because it matched both semantic and keyword relevance signals."));
+});
+
+test("formatDiscoverResult truncates long why_recommended text", () => {
+  const output = formatDiscoverResult(
+    discoverResultWithTool({ why_recommended: "x".repeat(200) }),
+  );
+  assert.ok(output.includes(`why: ${"x".repeat(160)}...`));
+  assert.ok(!output.includes("x".repeat(161)));
+});
+
+test("formatDiscoverResult omits why line when why_recommended is missing or empty", () => {
+  for (const why_recommended of [undefined, "", null]) {
+    const output = formatDiscoverResult(discoverResultWithTool({ why_recommended }));
+    assert.ok(!output.includes("why:"));
+  }
+});
+
 test("formatInspectResult renders object categories as names", () => {
   const output = formatInspectResult([
     {

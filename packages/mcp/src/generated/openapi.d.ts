@@ -1173,6 +1173,28 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /**
+         * PublicCapabilityTag
+         * @description Coverage tag attached to a capability descriptor (e.g. market coverage).
+         */
+        PublicCapabilityTag: {
+            id?: string;
+            name?: string;
+            type?: string;
+            description?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * PublicToolCapability
+         * @description Standardized capability descriptor attached to a capability result (e.g. MKT.BARS.ADJUSTED with market coverage tags).
+         */
+        PublicToolCapability: {
+            id?: string;
+            tag?: components["schemas"]["PublicCapabilityTag"][];
+        } & {
+            [key: string]: unknown;
+        };
         /** PublicCapabilityResult */
         PublicCapabilityResult: {
             tool_id: string;
@@ -1182,11 +1204,16 @@ export interface components {
             provider_id?: string;
             provider_name?: string;
             provider_description?: string;
+            provider_logo_url?: string;
             category?: string;
             /** @description Categories/tags attached to the capability. Current responses return category objects; legacy responses returned plain strings. */
             categories?: (components["schemas"]["PublicToolCategory"] | string)[];
+            /** @description Standardized capability descriptors with coverage tags. */
+            capabilities?: components["schemas"]["PublicToolCapability"][];
             region?: string;
             score?: number;
+            /** @description Human-readable explanation of why this capability was recommended for the query. Returned by Discover. */
+            why_recommended?: string;
             params?: components["schemas"]["PublicToolParameter"][];
             examples?: {
                 [key: string]: unknown;

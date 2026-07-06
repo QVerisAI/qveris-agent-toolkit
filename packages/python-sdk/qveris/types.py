@@ -67,6 +67,25 @@ class ToolCategory(QverisModel):
     description: Optional[str] = None
 
 
+class ToolCapabilityTag(QverisModel):
+    """Coverage tag attached to a capability (e.g. market coverage)."""
+
+    id: Optional[str] = None
+    name: Optional[str] = None
+    type: Optional[str] = None
+    description: Optional[str] = None
+
+
+class ToolCapability(QverisModel):
+    """Standardized capability descriptor attached to a tool.
+
+    Example: ``MKT.BARS.ADJUSTED`` with market coverage tags.
+    """
+
+    id: Optional[str] = None
+    tag: Optional[List[ToolCapabilityTag]] = None
+
+
 class ToolParameter(QverisModel):
     name: str
     type: Any
@@ -91,16 +110,21 @@ class ToolInfo(QverisModel):
     description: Optional[Any] = None
     categories: Optional[List[Union[str, ToolCategory]]] = None
     category: Optional[str] = None
+    capabilities: Optional[List[ToolCapability]] = None
+    provider_id: Optional[str] = None
     provider_name: Optional[str] = None
     provider_description: Optional[Any] = None
     provider_website_url: Optional[str] = None
+    provider_logo_url: Optional[str] = None
     region: Optional[str] = None
     params: Optional[List[ToolParameter]] = None
     examples: Optional[ToolExamples] = None
     stats: Optional[ToolStats] = None
     billing_rule: Optional[BillingRule] = None
+    expected_cost: Optional[Union[str, float]] = None
     final_score: Optional[float] = None
     score: Optional[float] = None
+    why_recommended: Optional[str] = None
     has_last_execution: Optional[bool] = None
     last_execution_record: Optional[Dict[str, Any]] = None
     docs_url: Optional[str] = None

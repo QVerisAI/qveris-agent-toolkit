@@ -129,6 +129,25 @@ export interface ToolCategory {
 }
 
 /**
+ * Coverage tag attached to a capability (e.g. market coverage).
+ */
+export interface ToolCapabilityTag {
+  id?: string;
+  name?: string;
+  type?: string;
+  description?: string;
+}
+
+/**
+ * Standardized capability descriptor attached to a tool
+ * (e.g. "MKT.BARS.ADJUSTED" with market coverage tags).
+ */
+export interface ToolCapability {
+  id?: string;
+  tag?: ToolCapabilityTag[];
+}
+
+/**
  * Information about a tool returned from search results.
  * Contains everything needed to understand and execute the tool.
  */
@@ -145,6 +164,12 @@ export interface ToolInfo {
   /** Tool categories/tags: category objects, or plain strings in legacy responses */
   categories?: Array<string | ToolCategory>;
 
+  /** Standardized capability descriptors with coverage tags */
+  capabilities?: ToolCapability[];
+
+  /** Provider identifier */
+  provider_id?: string;
+
   /** Name of the organization/service providing this tool */
   provider_name?: string;
 
@@ -153,6 +178,9 @@ export interface ToolInfo {
 
   /** Provider website URL */
   provider_website_url?: string;
+
+  /** Provider logo URL */
+  provider_logo_url?: string;
 
   /**
    * Geographic availability of the tool.
@@ -174,8 +202,14 @@ export interface ToolInfo {
   /** Structured rule-level billing metadata when available */
   billing_rule?: BillingRule;
 
+  /** Pre-call cost estimate in credits, when available */
+  expected_cost?: string | number;
+
   /** Relevance score for the search query (0.0 - 1.0, higher = better match) */
   final_score?: number;
+
+  /** Human-readable explanation of why this tool was recommended (Discover results only) */
+  why_recommended?: string;
 
   /** Whether this tool has been executed before (verified in production) */
   has_last_execution?: boolean;

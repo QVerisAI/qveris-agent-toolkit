@@ -67,6 +67,12 @@ export function formatDiscoverResult(result) {
       lines.push(`   ${dim("tags:")} ${dim(categories)}`);
     }
 
+    // Line 6: recommendation reason (if present)
+    const why = stringifyDesc(t.why_recommended);
+    if (why) {
+      lines.push(`   ${dim("why:")} ${dim(why.length > 160 ? why.slice(0, 160) + "..." : why)}`);
+    }
+
     lines.push("");
   }
 
