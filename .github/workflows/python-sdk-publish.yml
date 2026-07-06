@@ -84,22 +84,30 @@ jobs:
           packages-dir: packages/python-sdk/dist
           password: ${{ secrets.PYPI_API_TOKEN }}
 
+      # Release body = Install section + Highlights from the annotated tag
+      # message (git tag -a python-sdk-vX.Y.Z -m "- bullet"), if any, +
+      # auto-generated notes. Lightweight tags simply get no Highlights section.
+      - name: Compose release notes
+        run: |
+          NOTES="$RUNNER_TEMP/release-notes.md"
+          {
+            echo '## Install'
+            echo ''
+            echo '```bash'
+            echo "pip install qveris==${VERSION}"
+            echo '```'
+          } > "$NOTES"
+          if [ "$(git cat-file -t "refs/tags/${GITHUB_REF_NAME}" 2>/dev/null)" = "tag" ]; then
+            HIGHLIGHTS="$(git tag -l --format='%(contents)' "$GITHUB_REF_NAME")"
+            if [ -n "$HIGHLIGHTS" ]; then
+              printf '\n## Highlights\n\n%s\n' "$HIGHLIGHTS" >> "$NOTES"
+            fi
+          fi
+          printf '\nSee [README](packages/python-sdk/README.md) for usage.\n' >> "$NOTES"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: "QVeris Python SDK v${{ env.VERSION }}"
-          body: |
-            ## Install
-
-            ```bash
-            pip install qveris==${{ env.VERSION }}
-            ```
-
-            ## Highlights
-
-            - Publishes the typed Python SDK for the QVeris Agent External Data & Tool Harness.
-            - Includes discover, inspect, call, usage, and ledger client methods.
-            - Includes the built-in agent runtime and OpenAI-compatible provider support.
-
-            See [README](packages/python-sdk/README.md) for usage.
+          body_path: ${{ runner.temp }}/release-notes.md
           generate_release_notes: true

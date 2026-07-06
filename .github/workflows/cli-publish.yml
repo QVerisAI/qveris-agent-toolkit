@@ -47,26 +47,34 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      # Release body = Install section + Highlights from the annotated tag
+      # message (git tag -a cli-vX.Y.Z -m "- bullet"), if any, + auto-generated
+      # notes. Lightweight tags simply get no Highlights section.
+      - name: Compose release notes
+        run: |
+          NOTES="$RUNNER_TEMP/release-notes.md"
+          {
+            echo '## Install'
+            echo ''
+            echo '```bash'
+            echo '# One-liner'
+            echo 'curl -fsSL https://qveris.ai/cli/install | bash'
+            echo ''
+            echo '# Or via npm'
+            echo "npm install -g @qverisai/cli@${VERSION}"
+            echo '```'
+          } > "$NOTES"
+          if [ "$(git cat-file -t "refs/tags/${GITHUB_REF_NAME}" 2>/dev/null)" = "tag" ]; then
+            HIGHLIGHTS="$(git tag -l --format='%(contents)' "$GITHUB_REF_NAME")"
+            if [ -n "$HIGHLIGHTS" ]; then
+              printf '\n## Highlights\n\n%s\n' "$HIGHLIGHTS" >> "$NOTES"
+            fi
+          fi
+          printf '\nSee [README](packages/cli/README.md) for usage.\n' >> "$NOTES"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: "QVeris CLI v${{ env.VERSION }}"
-          body: |
-            ## Install
-
-            ```bash
-            # One-liner
-            curl -fsSL https://qveris.ai/cli/install | bash
-
-            # Or via npm
-            npm install -g @qverisai/cli@${{ env.VERSION }}
-            ```
-
-            ## Highlights
-
-            - Adds `qveris usage` for context-safe usage audit summaries, filtered searches, and local JSONL exports.
-            - Adds `qveris ledger` for final credit balance movement summaries, filtered searches, and local JSONL exports.
-            - Labels call billing as pre-settlement and points final charge checks to usage history and the credits ledger.
-
-            See [README](packages/cli/README.md) for usage.
+          body_path: ${{ runner.temp }}/release-notes.md
           generate_release_notes: true
