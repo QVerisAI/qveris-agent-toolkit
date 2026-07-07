@@ -22,8 +22,8 @@ qveris init \
 Use audit commands after execution:
 
 ```bash
-qveris usage --execution-id "exec_..." --summary --json
-qveris ledger --limit 5 --summary --json
+qveris usage --execution-id "exec_..." --json
+qveris ledger --limit 5 --json
 ```
 
 ## Python SDK
