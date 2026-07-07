@@ -274,6 +274,7 @@ Runnable examples live under [`packages/python-sdk/examples/`](https://github.co
 | `risk_compliance.py` | Sanctions, adverse media, compliance screening |
 | `crypto_market.py` | Crypto price and volume data |
 | `data_analysis.py` | Dataset enrichment with external capability data |
+| `explainable_routing.py` | Cost-aware capability selection with `why_recommended` / `expected_cost` |
 | `agent_loop_integration.py` | LLM agent loop integration |
 
 Capability examples run `discover`/`inspect` when `QVERIS_API_KEY` is set, and only execute `call` when `RUN_QVERIS_CALLS=1`.

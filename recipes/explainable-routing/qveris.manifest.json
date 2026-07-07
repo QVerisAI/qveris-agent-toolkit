@@ -1,0 +1,88 @@
+{
+  "$schema": "../../ecosystem/manifest.schema.json",
+  "schema_version": "2026-05-13",
+  "id": "qveris.recipe.explainable-routing",
+  "kind": "recipe",
+  "name": "Explainable Routing",
+  "summary": "Compare candidate capabilities on why_recommended, expected_cost, and quality signals, then select and explain the choice.",
+  "description": "A copy-paste recipe for transparent, cost-aware capability selection: discover several candidates, compare them on the routing signals QVeris returns (why_recommended, expected_cost, success rate, latency), pick one with a bounded cost/reliability rule, and explain the decision before spending credits.",
+  "version": "0.1.0",
+  "status": "beta",
+  "owner": {
+    "name": "QVeris",
+    "url": "https://qveris.ai"
+  },
+  "tags": ["routing", "cost-aware", "explainability", "capability-selection"],
+  "categories": ["analytics", "automation"],
+  "permissions": {
+    "qveris": [
+      {
+        "scope": "capability.discover",
+        "reason": "Discover multiple candidate capabilities and read their routing signals.",
+        "required": true
+      },
+      {
+        "scope": "capability.inspect",
+        "reason": "Read parameter, billing, quality, and example metadata before execution.",
+        "required": true
+      },
+      {
+        "scope": "capability.call",
+        "reason": "Execute the selected capability once a choice is made.",
+        "required": false
+      },
+      {
+        "scope": "capability.audit",
+        "reason": "Verify the final charge outcome after execution.",
+        "required": false
+      }
+    ],
+    "network": [
+      {
+        "host": "qveris.ai",
+        "reason": "Call QVeris API endpoints for discovery, execution, and audit.",
+        "required": true
+      }
+    ],
+    "secrets": [
+      {
+        "scope": "QVERIS_API_KEY",
+        "reason": "Authenticate QVeris API requests.",
+        "required": true
+      }
+    ]
+  },
+  "compatibility": {
+    "cli": ">=0.6.0",
+    "mcp": ">=0.7.0",
+    "python_sdk": ">=0.2.1",
+    "agent_skill": ">=0.1.0"
+  },
+  "marketplace": {
+    "listing_slug": "explainable-routing",
+    "headline": "Transparent, cost-aware capability selection with why_recommended and expected_cost.",
+    "audience": "Agents and developers that must justify capability choices and bound per-call spend.",
+    "use_cases": ["Compare candidate capabilities before calling", "Prefer reliability at equal cost", "Explain routing decisions to users"],
+    "integration_methods": ["cli", "python-sdk", "mcp"],
+    "primary_cta": "Run explainable routing recipe",
+    "docs_url": "recipes/explainable-routing/README.md"
+  },
+  "docs": {
+    "readme": "README.md",
+    "quickstart": "README.md#quickstart"
+  },
+  "examples": [
+    {
+      "name": "CLI candidate comparison",
+      "path": "README.md#cli",
+      "language": "shell",
+      "command": "qveris discover \"public company stock quote and market data API\" --limit 5 --json"
+    },
+    {
+      "name": "Python SDK explainable selection",
+      "path": "README.md#python-sdk",
+      "language": "python",
+      "command": "python explainable_routing.py"
+    }
+  ]
+}

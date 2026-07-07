@@ -153,7 +153,7 @@ agent = Agent(llm_provider=MyProvider())
 
 ## Examples
 
-Five runnable examples are included under [`examples/`](examples):
+Six runnable examples are included under [`examples/`](examples):
 
 | Example | Scenario |
 |---------|----------|
@@ -161,6 +161,7 @@ Five runnable examples are included under [`examples/`](examples):
 | `risk_compliance.py` | Sanctions, adverse media, or compliance screening |
 | `crypto_market.py` | Crypto price and volume data |
 | `data_analysis.py` | Dataset enrichment with external capability data |
+| `explainable_routing.py` | Cost-aware capability selection with `why_recommended` / `expected_cost` |
 | `agent_loop_integration.py` | LLM agent loop integration |
 
 The capability examples run `discover` and `inspect` when `QVERIS_API_KEY` is set. They only execute `call` when `RUN_QVERIS_CALLS=1` is set.
