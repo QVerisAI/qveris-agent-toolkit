@@ -12,13 +12,13 @@ import { describe, expect, it } from 'vitest';
  *   cp packages/mcp/src/types.ts packages/js-sdk/src/types.ts
  */
 describe('type definitions stay in sync with @qverisai/mcp', () => {
-  it('js-sdk/src/types.ts is byte-identical to packages/mcp/src/types.ts', () => {
-    const jsSdkTypes = readFileSync(fileURLToPath(new URL('./types.ts', import.meta.url)), 'utf8');
-    const mcpTypes = readFileSync(
-      fileURLToPath(new URL('../../mcp/src/types.ts', import.meta.url)),
-      'utf8',
-    );
+  it('js-sdk/src/types.ts matches packages/mcp/src/types.ts', () => {
+    // Normalize line endings so the comparison is robust across platforms
+    // (e.g. a Windows checkout with core.autocrlf converting one file to CRLF);
+    // we guard the type content, not the checkout's line-ending style.
+    const read = (relative: string) =>
+      readFileSync(fileURLToPath(new URL(relative, import.meta.url)), 'utf8').replace(/\r\n/g, '\n');
 
-    expect(jsSdkTypes).toBe(mcpTypes);
+    expect(read('./types.ts')).toBe(read('../../mcp/src/types.ts'));
   });
 });
