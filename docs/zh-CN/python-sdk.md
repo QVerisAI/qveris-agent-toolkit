@@ -274,6 +274,7 @@ agent = Agent(llm_provider=MyProvider())
 | `risk_compliance.py` | 制裁、负面舆情、合规筛查 |
 | `crypto_market.py` | 加密货币价格与成交量数据 |
 | `data_analysis.py` | 用外部能力数据丰富数据集 |
+| `explainable_routing.py` | 基于 `why_recommended` / `expected_cost` 的成本感知能力选型 |
 | `agent_loop_integration.py` | LLM agent 循环集成 |
 
 设置 `QVERIS_API_KEY` 后，能力示例会运行 `discover`/`inspect`；仅当设置 `RUN_QVERIS_CALLS=1` 时才执行 `call`。
