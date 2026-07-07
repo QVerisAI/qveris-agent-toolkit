@@ -16,25 +16,31 @@ already handles, so the tracker needs no extra network calls.
 
 from __future__ import annotations
 
+import math
 from typing import Any, Dict, Optional
 
 
 def parse_credits(value: Any) -> Optional[float]:
     """Coerce an ``expected_cost`` / credit value (str, int, or float) to float.
 
-    Returns ``None`` for missing or unparseable values. ``bool`` is rejected so
-    a stray ``True``/``False`` is not read as ``1.0``/``0.0``.
+    Returns ``None`` for missing, unparseable, or non-finite values. ``bool`` is
+    rejected so a stray ``True``/``False`` is not read as ``1.0``/``0.0``.
+    Non-finite values (``NaN`` / ``inf``, which ``json.loads`` and pydantic both
+    admit) are rejected so a malformed billing amount cannot poison cumulative
+    spend and silently disable the guard.
     """
     if isinstance(value, bool):
         return None
     if isinstance(value, (int, float)):
-        return float(value)
-    if isinstance(value, str):
+        result = float(value)
+    elif isinstance(value, str):
         try:
-            return float(value.strip())
+            result = float(value.strip())
         except ValueError:
             return None
-    return None
+    else:
+        return None
+    return result if math.isfinite(result) else None
 
 
 class BudgetTracker:
@@ -45,6 +51,17 @@ class BudgetTracker:
             tracker entirely.
         warn_ratio: Emit a single warning once cumulative spend first reaches
             this fraction of ``limit`` (default 0.8).
+
+    Notes:
+        - Best-effort, not a hard cap: blocking uses the pre-call
+          ``expected_cost`` estimate while ``spent`` accumulates the actual
+          (possibly larger) charge, so a call estimated under-budget that
+          charges more can push ``spent`` past ``limit``. The guard is only as
+          tight as ``discover`` / ``inspect`` coverage — a call whose cost was
+          never observed cannot be estimated and is not blocked.
+        - The tracker is per-``Agent`` session state, not per-``run()``. Don't
+          share one ``Agent`` across concurrent ``run()`` calls if you rely on
+          the budget: they share and race ``spent``.
     """
 
     def __init__(self, limit: Optional[float] = None, warn_ratio: float = 0.8) -> None:

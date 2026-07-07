@@ -13,6 +13,30 @@ def test_parse_credits_handles_str_number_and_rejects_bool_and_junk() -> None:
     assert parse_credits({}) is None
 
 
+def test_parse_credits_rejects_non_finite() -> None:
+    assert parse_credits("inf") is None
+    assert parse_credits("nan") is None
+    assert parse_credits(float("inf")) is None
+    assert parse_credits(float("-inf")) is None
+    assert parse_credits(float("nan")) is None
+
+
+def test_non_finite_billing_does_not_poison_spend_or_disable_guard() -> None:
+    b = BudgetTracker(10)
+    b.observe({"results": [{"tool_id": "t", "expected_cost": "6"}]})
+
+    # A NaN/inf billing amount must be ignored, not accumulated into spent.
+    b.record({"billing": {"list_amount_credits": float("nan")}})
+    assert b.spent == 0.0
+    b.record({"billing": {"list_amount_credits": float("inf")}})
+    assert b.spent == 0.0
+
+    # Guard still functions after: real 5 spent, a 6-credit call (11 > 10) blocks.
+    b.record({"billing": {"list_amount_credits": 5}})
+    assert b.spent == 5.0
+    assert b.check("t") is not None
+
+
 def test_disabled_tracker_is_a_noop() -> None:
     b = BudgetTracker(None)
     assert b.enabled is False
