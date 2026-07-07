@@ -141,6 +141,32 @@ if __name__ == "__main__":
 
 ---
 
+### 使用 QVeris TypeScript SDK
+
+TypeScript/JavaScript SDK 位于本单体仓库的 [`packages/js-sdk`](../../packages/js-sdk)。安装已发布的包：
+
+```bash
+npm install @qverisai/sdk
+```
+
+这是一个零依赖的类型化客户端（原生 `fetch`，Node.js 18+）。完整指南（配置、API 参考、类型化响应、错误处理）见 [TypeScript SDK](js-sdk.md)。
+
+```typescript
+import { Qveris } from '@qverisai/sdk';
+
+const qveris = Qveris.fromEnv(); // 读取 QVERIS_API_KEY
+
+const discovered = await qveris.discover('weather forecast API', { limit: 5 });
+const tool = discovered.results[0];
+const result = await qveris.call(tool.tool_id, {
+  parameters: { city: 'London' },
+  searchId: discovered.search_id,
+});
+console.log(result.execution_id, result.success, result.billing);
+```
+
+---
+
 ### 直接调用 QVeris REST API
 
 **基础 URL**

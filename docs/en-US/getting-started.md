@@ -141,6 +141,30 @@ if __name__ == "__main__":
 
 ---
 
+### Use the QVeris TypeScript SDK
+
+The TypeScript/JavaScript SDK lives in this monorepo at [`packages/js-sdk`](../../packages/js-sdk). Install the published package with:
+
+```bash
+npm install @qverisai/sdk
+```
+
+It is a zero-dependency typed client (native `fetch`, Node.js 18+). For the full guide (config, API reference, typed responses, error handling), see [TypeScript SDK](js-sdk.md).
+
+```typescript
+import { Qveris } from '@qverisai/sdk';
+
+const qveris = Qveris.fromEnv(); // reads QVERIS_API_KEY
+
+const discovered = await qveris.discover('weather forecast API', { limit: 5 });
+const tool = discovered.results[0];
+const result = await qveris.call(tool.tool_id, {
+  parameters: { city: 'London' },
+  searchId: discovered.search_id,
+});
+console.log(result.execution_id, result.success, result.billing);
+```
+
 ### Directly call the QVeris REST API
 
 **Base URL**
