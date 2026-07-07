@@ -138,6 +138,13 @@ describe('MCP public tool interface', () => {
     });
   });
 
+  it('returns an actionable error when called without a client (no QVERIS_API_KEY)', async () => {
+    const result = await executeQverisMcpTool(undefined, 'session-1', 'discover', { query: 'weather' });
+
+    expect(result.isError).toBe(true);
+    expect(payload(result).error).toContain('QVERIS_API_KEY');
+  });
+
   it('returns MCP error payloads for validation, unknown tools, and API errors', async () => {
     const client = {
       searchTools: vi.fn().mockRejectedValue({

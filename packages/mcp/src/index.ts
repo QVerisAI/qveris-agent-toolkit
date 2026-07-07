@@ -191,12 +191,32 @@ function compactObject(input: Record<string, unknown>): Record<string, unknown> 
  * Route one MCP tool call to the matching Qveris operation.
  */
 export async function executeQverisMcpTool(
-  client: QverisClient,
+  client: QverisClient | undefined,
   defaultSessionId: string,
   rawName: string,
   args: unknown,
   warn: (message: string) => void = (message) => process.stderr.write(message),
 ): Promise<CallToolResult> {
+  // Tool listing works without credentials, but calls need a key. When the
+  // server started without QVERIS_API_KEY the client is undefined; return an
+  // actionable error instead of crashing.
+  if (!client) {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            error:
+              'QVERIS_API_KEY is not set. Tool listing works without a key, but tool calls require one. ' +
+              'Create a key (global: https://qveris.ai/account?page=api-keys, ' +
+              'China: https://qveris.cn/account?page=api-keys), set QVERIS_API_KEY, and restart the server.',
+          }),
+        },
+      ],
+      isError: true,
+    };
+  }
+
   // Resolve deprecated aliases.
   let name = rawName;
   if (DEPRECATED_ALIASES[rawName]) {
@@ -396,15 +416,20 @@ export async function executeQverisMcpTool(
  * inspect, and call handlers, and starts listening for requests.
  */
 export async function main(): Promise<void> {
-  // Initialize API client (validates QVERIS_API_KEY)
-  let client: QverisClient;
+  // Initialize the API client when credentials are available. The server still
+  // starts without QVERIS_API_KEY so MCP clients and registry scanners can list
+  // tools before credentials are configured; tool calls then return an
+  // actionable error until a key is set.
+  let client: QverisClient | undefined;
   try {
     client = createClientFromEnv();
   } catch (error) {
     console.error(
       error instanceof Error ? error.message : 'Failed to initialize Qveris client'
     );
-    process.exit(1);
+    console.error(
+      'Starting without credentials: tool listing is available; set QVERIS_API_KEY to enable tool calls.'
+    );
   }
 
   // Generate a default session ID for this server instance
