@@ -1,7 +1,7 @@
 {
   "name": "@qverisai/mcp",
-  "mcpName": "io.github.qverisai/mcp",
-  "version": "0.7.3",
+  "mcpName": "io.github.QVerisAI/mcp",
+  "version": "0.7.4",
   "description": "QVeris MCP server for agent tool discovery, inspection, and calling",
   "keywords": [
     "qveris",
