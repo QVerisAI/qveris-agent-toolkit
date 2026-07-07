@@ -1,3 +1,4 @@
+from .agent.budget import BudgetTracker
 from .agent.core import Agent
 from .client.api import QverisClient
 from .config import QverisConfig, AgentConfig
@@ -20,6 +21,7 @@ from .types import (
 
 __all__ = [
     "Agent",
+    "BudgetTracker",
     "QverisClient",
     "QverisConfig",
     "AgentConfig",
