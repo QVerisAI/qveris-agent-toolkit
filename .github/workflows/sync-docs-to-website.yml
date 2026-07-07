@@ -36,6 +36,9 @@ on:
       - "docs/en-US/python-sdk.md"
       - "docs/zh-CN/python-sdk.md"
       - "docs/cn/zh-CN/python-sdk.md"
+      - "docs/en-US/js-sdk.md"
+      - "docs/zh-CN/js-sdk.md"
+      - "docs/cn/zh-CN/js-sdk.md"
       - ".github/workflows/sync-docs-to-website.yml"
   workflow_dispatch:
 
