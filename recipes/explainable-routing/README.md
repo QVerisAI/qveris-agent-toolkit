@@ -27,17 +27,17 @@ qveris discover "public company stock quote and market data API" --limit 5 --jso
       | "\(.tool_id)\tcost=\(.expected_cost // "n/a")\tsuccess=\(.stats.success_rate // "n/a")\twhy=\(.why_recommended // "n/a")"'
 ```
 
-Pick a capability (e.g. the most reliable one whose `expected_cost` is no higher than the top result), then inspect and call it:
+Pick a capability (e.g. the most reliable one whose `expected_cost` is no higher than the top result), then inspect and call it. Pass the `search_id` from the discover output as `--discovery-id`:
 
 ```bash
-qveris inspect <tool_id> --search-id <search_id> --json
-qveris call <tool_id> --search-id <search_id> --params '{"symbol":"AAPL"}' --json
+qveris inspect <tool_id> --discovery-id <search_id> --json
+qveris call <tool_id> --discovery-id <search_id> --params '{"symbol":"AAPL"}' --json
 ```
 
-After a call returns an `execution_id`, audit the final charge:
+After a call returns an `execution_id`, audit the final charge (usage defaults to a summary):
 
 ```bash
-qveris usage --execution-id "exec_..." --summary --json
+qveris usage --execution-id "exec_..." --json
 ```
 
 ## Python SDK

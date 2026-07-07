@@ -11,6 +11,8 @@ Run:
     # add RUN_QVERIS_CALLS=1 to also execute the chosen capability
 """
 
+from __future__ import annotations
+
 import asyncio
 from typing import Optional
 
@@ -56,12 +58,14 @@ def choose(tools: list[ToolInfo]) -> tuple[ToolInfo, str]:
     """
     top = tools[0]
     top_cost = parse_cost(top.expected_cost)
-    top_success = success_rate(top) or 0.0
+    top_success = success_rate(top)
 
     for alt in tools[1:]:
         alt_cost = parse_cost(alt.expected_cost)
-        alt_success = success_rate(alt) or 0.0
-        if top_cost is None or alt_cost is None:
+        alt_success = success_rate(alt)
+        # Only override the backend ranking on evidence: skip any candidate
+        # where cost or reliability is unknown rather than guess.
+        if None in (top_cost, alt_cost, top_success, alt_success):
             continue
         if alt_cost <= top_cost * 0.5 and alt_success >= top_success - 0.02:
             return alt, (
