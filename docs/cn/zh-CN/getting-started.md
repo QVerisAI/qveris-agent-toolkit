@@ -143,7 +143,7 @@ if __name__ == "__main__":
 
 ### 使用 QVeris TypeScript SDK
 
-TypeScript/JavaScript SDK 位于本单体仓库的 [`packages/js-sdk`](../../packages/js-sdk)。安装已发布的包：
+TypeScript/JavaScript SDK 位于本单体仓库的 [`packages/js-sdk`](../../../packages/js-sdk)。安装已发布的包：
 
 ```bash
 npm install @qverisai/sdk

@@ -165,8 +165,6 @@ const result = await qveris.call(tool.tool_id, {
 console.log(result.execution_id, result.success, result.billing);
 ```
 
----
-
 ### Directly call the QVeris REST API
 
 **Base URL**
