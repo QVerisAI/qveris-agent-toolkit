@@ -22,10 +22,41 @@ Both classes inherit from `pydantic_settings.BaseSettings`, so values can be sup
   `BaseSettings` behavior if you add your own `validation_alias` fields in a fork.
 """
 
-from typing import Optional
+from __future__ import annotations
 
-from pydantic import AliasChoices, Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Any, Dict, Optional, Tuple, Type
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
+
+
+class _AliasedInitSource(PydanticBaseSettingsSource):
+    """Init source that re-keys constructor kwargs onto each field's env alias.
+
+    ``QverisConfig(api_key=...)`` is emitted under the same key the env source
+    uses (``QVERIS_API_KEY``); placed ahead of the env source it therefore wins,
+    so an explicit constructor value overrides the environment (issue #136).
+    This is done *instead of* adding the field name as a ``validation_alias``
+    choice, which under ``case_sensitive=False`` would make pydantic-settings
+    also read the generic ``API_KEY`` / ``BASE_URL`` env vars — extremely common
+    names that would silently hijack the config.
+    """
+
+    def __init__(self, settings_cls: Type[BaseSettings], init_kwargs: Dict[str, Any]) -> None:
+        super().__init__(settings_cls)
+        self._init_kwargs = init_kwargs
+
+    def get_field_value(self, field: Any, field_name: str) -> Tuple[Any, str, bool]:  # pragma: no cover
+        return None, field_name, False
+
+    def __call__(self) -> Dict[str, Any]:
+        mapped: Dict[str, Any] = {}
+        for name, value in self._init_kwargs.items():
+            field = self.settings_cls.model_fields.get(name)
+            alias = getattr(field, "validation_alias", None) if field is not None else None
+            mapped[alias if isinstance(alias, str) else name] = value
+        return mapped
+
 
 class QverisConfig(BaseSettings):
     """
@@ -36,20 +67,11 @@ class QverisConfig(BaseSettings):
     - `qveris.client.api.QverisClient` (API key, base URL)
     - `qveris.agent.core.Agent` (loop controls like history pruning and max iterations)
     """
-    # Qveris Settings
-    #
-    # AliasChoices lists the field name first so an explicit constructor value
-    # (``QverisConfig(api_key=...)``) wins over the ``QVERIS_API_KEY`` env var.
-    # A bare ``validation_alias='QVERIS_API_KEY'`` regressed under pydantic
-    # 2.11+/2.12, where the env source began winning over the init source for
-    # aliased fields (see issue #136).
-    api_key: Optional[str] = Field(
-        default=None, validation_alias=AliasChoices('api_key', 'QVERIS_API_KEY')
-    )
-    base_url: str = Field(
-        default="https://qveris.ai/api/v1/",
-        validation_alias=AliasChoices('base_url', 'QVERIS_BASE_URL'),
-    )
+    # Qveris Settings. The env source reads ONLY the ``QVERIS_``-prefixed names;
+    # an explicit ``QverisConfig(api_key=...)`` still wins over the env var via
+    # the custom init source below (see settings_customise_sources / #136).
+    api_key: Optional[str] = Field(default=None, validation_alias='QVERIS_API_KEY')
+    base_url: str = Field(default="https://qveris.ai/api/v1/", validation_alias='QVERIS_BASE_URL')
 
     # Agent behavior settings
     enable_history_pruning: bool = Field(
@@ -64,9 +86,30 @@ class QverisConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="",  # We use specific aliases
         case_sensitive=False,
-        populate_by_name=True,
+        # populate_by_name is intentionally NOT set: it would make the env source
+        # also read the bare field names (api_key -> generic API_KEY env var,
+        # base_url -> BASE_URL), which under case_sensitive=False silently hijacks
+        # the config from common environment names. Constructor-by-name still
+        # works via the aliased init source below (#136).
         extra="ignore"
     )
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: Type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> Tuple[PydanticBaseSettingsSource, ...]:
+        # Re-key init kwargs onto field aliases so an explicit constructor value
+        # overrides the environment, robustly across pydantic versions (#136),
+        # without exposing field names as env-readable aliases.
+        init_kwargs = getattr(init_settings, "init_kwargs", {})
+        aliased_init = _AliasedInitSource(settings_cls, init_kwargs)
+        return (aliased_init, env_settings, dotenv_settings, file_secret_settings)
+
 
 class AgentConfig(BaseSettings):
     """
