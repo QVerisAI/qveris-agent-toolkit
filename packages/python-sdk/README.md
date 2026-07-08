@@ -151,9 +151,34 @@ class MyProvider(LLMProvider):
 agent = Agent(llm_provider=MyProvider())
 ```
 
+## Observability (OpenTelemetry)
+
+`discover` / `inspect` / `call` emit one OpenTelemetry span each, so you can trace QVeris activity and correlate it with the usage/ledger records. Tracing is **opt-in and dependency-free**:
+
+- Without the extra, the spans are a no-op — zero overhead, zero behavior change.
+- Install `pip install qveris[otel]` (adds `opentelemetry-api`) and configure any OTLP exporter to see them.
+
+Span attributes live under a `qveris.` namespace: `operation`, `tool_id` / `tool_id_count`, `search_id`, `execution_id`, `elapsed_time_ms`, `success`, and `credits` (pre-settlement). The natural-language query and tool parameters are intentionally **not** recorded. A failed `call` is marked as an error span.
+
+```python
+# pip install qveris[otel] opentelemetry-sdk opentelemetry-exporter-otlp
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+
+provider = TracerProvider()
+provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))  # e.g. OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+trace.set_tracer_provider(provider)
+
+# ... now use QverisClient / Agent as usual; spans flow to your collector (Jaeger, Tempo, ...).
+```
+
+See [`examples/otel_tracing.py`](examples/otel_tracing.py) for a runnable end-to-end example.
+
 ## Examples
 
-Ten runnable examples are included under [`examples/`](examples):
+Eleven runnable examples are included under [`examples/`](examples):
 
 | Example | Scenario |
 |---------|----------|
@@ -167,6 +192,7 @@ Ten runnable examples are included under [`examples/`](examples):
 | `langchain_integration.py` | QVeris capabilities as LangChain tools (`qveris[langchain]`) |
 | `openai_agents_integration.py` | QVeris capabilities as OpenAI Agents SDK tools (`qveris[openai-agents]`) |
 | `crewai_integration.py` | QVeris capabilities as CrewAI tools (`qveris[crewai]`) |
+| `otel_tracing.py` | OpenTelemetry spans for discover/call (`qveris[otel]`) |
 
 The capability examples run `discover` and `inspect` when `QVERIS_API_KEY` is set. They only execute `call` when `RUN_QVERIS_CALLS=1` is set.
 
