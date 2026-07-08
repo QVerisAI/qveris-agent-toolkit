@@ -30,6 +30,18 @@ def test_qveris_config_constructor_values_override_env(monkeypatch: pytest.Monke
     assert config.base_url == "https://qveris.ai/api/v1"
 
 
+def test_qveris_config_reads_env_when_no_init_value(monkeypatch: pytest.MonkeyPatch) -> None:
+    # The env aliases must still populate the fields when no constructor value
+    # is given (the other half of the AliasChoices fix for #136).
+    monkeypatch.setenv("QVERIS_API_KEY", "sk-env")
+    monkeypatch.setenv("QVERIS_BASE_URL", "https://env.example/api/v1")
+
+    config = QverisConfig()
+
+    assert config.api_key == "sk-env"
+    assert config.base_url == "https://env.example/api/v1"
+
+
 @pytest.mark.asyncio
 async def test_discover_contract_parses_tool_quality_and_billing() -> None:
     def handler(request: httpx.Request) -> httpx.Response:

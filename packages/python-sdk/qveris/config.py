@@ -24,7 +24,7 @@ Both classes inherit from `pydantic_settings.BaseSettings`, so values can be sup
 
 from typing import Optional
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class QverisConfig(BaseSettings):
@@ -37,8 +37,19 @@ class QverisConfig(BaseSettings):
     - `qveris.agent.core.Agent` (loop controls like history pruning and max iterations)
     """
     # Qveris Settings
-    api_key: Optional[str] = Field(default=None, validation_alias='QVERIS_API_KEY')
-    base_url: str = Field(default="https://qveris.ai/api/v1/", validation_alias='QVERIS_BASE_URL')
+    #
+    # AliasChoices lists the field name first so an explicit constructor value
+    # (``QverisConfig(api_key=...)``) wins over the ``QVERIS_API_KEY`` env var.
+    # A bare ``validation_alias='QVERIS_API_KEY'`` regressed under pydantic
+    # 2.11+/2.12, where the env source began winning over the init source for
+    # aliased fields (see issue #136).
+    api_key: Optional[str] = Field(
+        default=None, validation_alias=AliasChoices('api_key', 'QVERIS_API_KEY')
+    )
+    base_url: str = Field(
+        default="https://qveris.ai/api/v1/",
+        validation_alias=AliasChoices('base_url', 'QVERIS_BASE_URL'),
+    )
 
     # Agent behavior settings
     enable_history_pruning: bool = Field(
