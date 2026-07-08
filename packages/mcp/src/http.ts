@@ -30,6 +30,14 @@ import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 
+import {
+  buildCatalog,
+  buildServerCard,
+  CATALOG_PATH,
+  SERVER_CARD_MEDIA_TYPE,
+  type ServerCardInfo,
+} from './server-card.js';
+
 /** Transport selection plus the HTTP-mode settings. */
 export interface TransportConfig {
   mode: 'stdio' | 'http';
@@ -53,6 +61,8 @@ export interface TransportConfig {
   maxBodyBytes: number;
   /** Idle session TTL in ms; stale sessions are closed and evicted. */
   sessionTimeoutMs: number;
+  /** Public origin (e.g. behind a TLS proxy) used in discovery documents. */
+  publicUrl?: string;
 }
 
 const DEFAULT_PORT = 3000;
@@ -171,7 +181,19 @@ export function resolveTransportConfig(
     allowUnauthenticated: parseBool(env.QVERIS_MCP_HTTP_ALLOW_UNAUTHENTICATED, false),
     maxBodyBytes: parsePositiveInt(env.QVERIS_MCP_MAX_BODY_BYTES, DEFAULT_MAX_BODY_BYTES),
     sessionTimeoutMs: parsePositiveInt(env.QVERIS_MCP_SESSION_TIMEOUT_MS, DEFAULT_SESSION_TIMEOUT_MS),
+    publicUrl: env.QVERIS_MCP_PUBLIC_URL?.trim().replace(/\/+$/, '') || undefined,
   };
+}
+
+/** Absolute origin for discovery URLs: the configured public origin, or derived
+ *  from the request (honoring an `X-Forwarded-Proto` from a TLS-terminating proxy). */
+function requestOrigin(req: IncomingMessage, publicUrl: string | undefined): string {
+  if (publicUrl) return publicUrl;
+  const forwarded = req.headers['x-forwarded-proto'];
+  const proto =
+    (typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : undefined) || 'http';
+  const host = req.headers.host ?? 'localhost';
+  return `${proto}://${host}`;
 }
 
 /** Read and JSON-parse a request body with a hard size cap. */
@@ -234,6 +256,8 @@ export interface RunningHttpServer {
  * @param config - Resolved HTTP transport settings.
  * @param makeServer - Factory that builds a fresh Qveris {@link Server} for a
  *   new client session. Called once per `initialize`.
+ * @param cardInfo - Metadata for the discovery documents (Server Card + Catalog).
+ *   When omitted those endpoints are not served.
  * @param logger - Where to write startup/lifecycle lines (defaults to stderr,
  *   keeping stdout clean).
  * @throws if binding a non-loopback host without an auth token and without an
@@ -242,6 +266,7 @@ export interface RunningHttpServer {
 export async function startHttpServer(
   config: TransportConfig,
   makeServer: (sessionId: string) => Server,
+  cardInfo?: ServerCardInfo,
   logger: (message: string) => void = (message) => process.stderr.write(message),
 ): Promise<RunningHttpServer> {
   const nonLoopback = !isLoopbackHost(config.host);
@@ -256,6 +281,18 @@ export async function startHttpServer(
     logger(
       '[qveris] WARNING: HTTP transport exposed on a non-loopback host without an auth token. ' +
         'Ensure an external auth layer protects the endpoint.\n',
+    );
+  }
+  // The reserved public paths are matched before the transport path; a custom
+  // QVERIS_MCP_HTTP_PATH set to one of them would shadow the MCP endpoint, so
+  // fail fast rather than start a silently-broken server (consistent with the
+  // fail-closed auth check above). The card path (config.path + '/server-card')
+  // can't equal config.path, so it isn't a collision candidate.
+  const reservedPaths = cardInfo ? ['/health', CATALOG_PATH] : ['/health'];
+  if (reservedPaths.includes(config.path)) {
+    throw new Error(
+      `Refusing to start: QVERIS_MCP_HTTP_PATH="${config.path}" collides with a reserved ` +
+        `endpoint (${reservedPaths.join(', ')}) and would shadow the MCP transport; choose a different path.`,
     );
   }
 
@@ -326,6 +363,46 @@ export async function startHttpServer(
       // Lightweight, unauthenticated health check for load balancers.
       if (req.method === 'GET' && url.pathname === '/health') {
         writeJson(res, 200, { status: 'ok', transport: 'streamable-http' });
+        return;
+      }
+
+      // Public, unauthenticated discovery documents (Server Card + Catalog).
+      // Like robots.txt / OAuth metadata, these are meant to be crawled without
+      // credentials, so they are handled before the auth check.
+      const cardPath = `${config.path}/server-card`;
+      if (cardInfo && (url.pathname === cardPath || url.pathname === CATALOG_PATH)) {
+        const cors = {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Accept',
+        };
+        if (req.method === 'OPTIONS') {
+          req.resume();
+          res.writeHead(204, { ...cors, 'Access-Control-Max-Age': '86400' });
+          res.end();
+          return;
+        }
+        if (req.method === 'GET') {
+          const origin = requestOrigin(req, config.publicUrl);
+          // With a configured public origin the response is host-independent and
+          // freely cacheable. When the origin is derived from the request Host,
+          // don't let a shared cache serve it cross-host (cache-poisoning): mark
+          // it no-store and Vary on the headers it depends on.
+          const cache: Record<string, string> = config.publicUrl
+            ? { 'Cache-Control': 'public, max-age=3600' }
+            : { 'Cache-Control': 'no-store', Vary: 'Host, X-Forwarded-Proto' };
+          if (url.pathname === cardPath) {
+            const card = buildServerCard(cardInfo, `${origin}${config.path}`);
+            writeJson(res, 200, card, { ...cors, ...cache, 'Content-Type': SERVER_CARD_MEDIA_TYPE });
+          } else {
+            const catalog = buildCatalog(cardInfo, `${origin}${cardPath}`);
+            writeJson(res, 200, catalog, { ...cors, ...cache });
+          }
+          return;
+        }
+        req.resume();
+        res.writeHead(405, { Allow: 'GET, OPTIONS' });
+        res.end();
         return;
       }
 

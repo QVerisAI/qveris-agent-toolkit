@@ -29,9 +29,11 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  SUPPORTED_PROTOCOL_VERSIONS,
   type CallToolResult,
 } from '@modelcontextprotocol/sdk/types.js';
 import { resolveTransportConfig, startHttpServer } from './http.js';
+import type { ServerCardInfo } from './server-card.js';
 import { realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { v4 as uuidv4 } from 'uuid';
@@ -72,7 +74,26 @@ import { createRequire } from 'node:module';
 
 const SERVER_NAME = 'qveris';
 const require = createRequire(import.meta.url);
-const { version: SERVER_VERSION } = require('../package.json');
+const pkg = require('../package.json');
+const SERVER_VERSION: string = pkg.version;
+
+/** Discovery metadata (Server Card + Catalog) derived from package.json. */
+function buildServerCardInfo(): ServerCardInfo {
+  const repoUrl: string | undefined = pkg.repository?.url
+    ?.replace(/^git\+/, '')
+    .replace(/\.git$/, '');
+  return {
+    name: pkg.mcpName ?? 'io.github.QVerisAI/mcp',
+    version: SERVER_VERSION,
+    description: pkg.description,
+    title: 'QVeris',
+    websiteUrl: pkg.homepage,
+    repository: repoUrl
+      ? { source: 'github', url: repoUrl, subfolder: pkg.repository?.directory }
+      : undefined,
+    protocolVersions: SUPPORTED_PROTOCOL_VERSIONS,
+  };
+}
 
 /**
  * List the MCP tools exposed by this server.
@@ -479,7 +500,11 @@ export async function main(): Promise<void> {
 
   // Streamable HTTP: one Qveris server per MCP session, keyed by Mcp-Session-Id.
   if (transportConfig.mode === 'http') {
-    await startHttpServer(transportConfig, (sessionId) => createQverisServer(client, sessionId));
+    await startHttpServer(
+      transportConfig,
+      (sessionId) => createQverisServer(client, sessionId),
+      buildServerCardInfo(),
+    );
     return;
   }
 

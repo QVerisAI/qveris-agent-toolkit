@@ -105,14 +105,30 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
     running = undefined;
   });
 
-  async function startServer(extraEnv: Record<string, string> = {}): Promise<void> {
+  const CARD_INFO = {
+    name: 'io.github.QVerisAI/mcp',
+    version: '9.9.9',
+    description: 'QVeris MCP server.',
+    title: 'QVeris',
+    websiteUrl: 'https://qveris.ai',
+    protocolVersions: ['2025-11-25'],
+  };
+
+  async function startServer(
+    extraEnv: Record<string, string> = {},
+    cardInfo?: typeof CARD_INFO,
+  ): Promise<void> {
     const config = resolveTransportConfig(
       { QVERIS_MCP_TRANSPORT: 'http', QVERIS_MCP_HTTP_PORT: '0', ...extraEnv },
       [],
     );
     // Server has no QVERIS_API_KEY, so tool listing works but calls return an
     // actionable error — exactly the credential-less path we want to exercise.
-    running = await startHttpServer(config, (sessionId) => createQverisServer(undefined, sessionId));
+    running = await startHttpServer(
+      config,
+      (sessionId) => createQverisServer(undefined, sessionId),
+      cardInfo,
+    );
   }
 
   async function connectClient(
@@ -250,5 +266,70 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
     const res = await fetch(`http://127.0.0.1:${running!.port}/health`);
     expect(res.status).toBe(200);
     await res.text();
+  });
+
+  it('serves the Server Card unauthenticated with the right media type and CORS', async () => {
+    // A token is set to prove the card is reachable WITHOUT credentials.
+    await startServer({ QVERIS_MCP_HTTP_AUTH_TOKEN: 'tok' }, CARD_INFO);
+    const res = await fetch(`http://127.0.0.1:${running!.port}/mcp/server-card`, {
+      headers: { Accept: 'application/mcp-server-card+json' },
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('application/mcp-server-card+json');
+    expect(res.headers.get('access-control-allow-origin')).toBe('*');
+    // Host-derived origin must not be cached cross-host (poisoning guard).
+    expect(res.headers.get('cache-control')).toContain('no-store');
+    expect(res.headers.get('vary')).toContain('Host');
+    const card = (await res.json()) as Record<string, unknown>;
+    expect(card.name).toBe('io.github.QVerisAI/mcp');
+    expect(card.version).toBe('9.9.9');
+    expect((card.remotes as Array<{ url: string }>)[0].url).toBe(`http://127.0.0.1:${running!.port}/mcp`);
+  });
+
+  it('serves the MCP Catalog pointing at the Server Card', async () => {
+    await startServer({}, CARD_INFO);
+    const res = await fetch(`http://127.0.0.1:${running!.port}/.well-known/mcp/catalog.json`);
+    expect(res.status).toBe(200);
+    const catalog = (await res.json()) as { specVersion: string; entries: Array<Record<string, string>> };
+    expect(catalog.specVersion).toBe('draft');
+    expect(catalog.entries[0].mediaType).toBe('application/mcp-server-card+json');
+    expect(catalog.entries[0].url).toBe(`http://127.0.0.1:${running!.port}/mcp/server-card`);
+    expect(catalog.entries[0].identifier).toBe('urn:air:qveris.ai:mcp');
+  });
+
+  it('answers a CORS preflight for the Server Card', async () => {
+    await startServer({}, CARD_INFO);
+    const res = await fetch(`http://127.0.0.1:${running!.port}/mcp/server-card`, { method: 'OPTIONS' });
+    expect(res.status).toBe(204);
+    expect(res.headers.get('access-control-allow-methods')).toContain('GET');
+    await res.text();
+  });
+
+  it('refuses to start when the HTTP path collides with a reserved endpoint', async () => {
+    const config = resolveTransportConfig(
+      { QVERIS_MCP_TRANSPORT: 'http', QVERIS_MCP_HTTP_PORT: '0', QVERIS_MCP_HTTP_PATH: '/health' },
+      [],
+    );
+    await expect(
+      startHttpServer(config, (sessionId) => createQverisServer(undefined, sessionId), CARD_INFO),
+    ).rejects.toThrow(/reserved endpoint/);
+  });
+
+  it('does not serve discovery endpoints when no card info is provided', async () => {
+    await startServer(); // no cardInfo
+    const res = await fetch(`http://127.0.0.1:${running!.port}/mcp/server-card`, {
+      headers: { Accept: 'application/mcp-server-card+json' },
+    });
+    expect(res.status).toBe(404);
+    await res.text();
+  });
+
+  it('honors QVERIS_MCP_PUBLIC_URL in discovery URLs (behind a proxy)', async () => {
+    await startServer({ QVERIS_MCP_PUBLIC_URL: 'https://mcp.example.com' }, CARD_INFO);
+    const res = await fetch(`http://127.0.0.1:${running!.port}/mcp/server-card`);
+    // A configured public origin is host-independent, so it's freely cacheable.
+    expect(res.headers.get('cache-control')).toContain('public');
+    const card = (await res.json()) as { remotes: Array<{ url: string }> };
+    expect(card.remotes[0].url).toBe('https://mcp.example.com/mcp');
   });
 });
