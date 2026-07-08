@@ -277,6 +277,9 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('application/mcp-server-card+json');
     expect(res.headers.get('access-control-allow-origin')).toBe('*');
+    // Host-derived origin must not be cached cross-host (poisoning guard).
+    expect(res.headers.get('cache-control')).toContain('no-store');
+    expect(res.headers.get('vary')).toContain('Host');
     const card = (await res.json()) as Record<string, unknown>;
     expect(card.name).toBe('io.github.QVerisAI/mcp');
     expect(card.version).toBe('9.9.9');
@@ -314,6 +317,8 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
   it('honors QVERIS_MCP_PUBLIC_URL in discovery URLs (behind a proxy)', async () => {
     await startServer({ QVERIS_MCP_PUBLIC_URL: 'https://mcp.example.com' }, CARD_INFO);
     const res = await fetch(`http://127.0.0.1:${running!.port}/mcp/server-card`);
+    // A configured public origin is host-independent, so it's freely cacheable.
+    expect(res.headers.get('cache-control')).toContain('public');
     const card = (await res.json()) as { remotes: Array<{ url: string }> };
     expect(card.remotes[0].url).toBe('https://mcp.example.com/mcp');
   });

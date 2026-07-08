@@ -283,6 +283,15 @@ export async function startHttpServer(
         'Ensure an external auth layer protects the endpoint.\n',
     );
   }
+  // The reserved public paths are matched before the transport path; a custom
+  // QVERIS_MCP_HTTP_PATH set to one of them would shadow the MCP endpoint.
+  const reservedPaths = cardInfo ? ['/health', CATALOG_PATH, `${config.path}/server-card`] : ['/health'];
+  if (reservedPaths.includes(config.path)) {
+    logger(
+      `[qveris] WARNING: QVERIS_MCP_HTTP_PATH="${config.path}" collides with a reserved ` +
+        'endpoint (health/discovery) and would shadow the MCP transport; choose a different path.\n',
+    );
+  }
 
   const transports = new Map<string, StreamableHTTPServerTransport>();
   const lastSeen = new Map<string, number>();
@@ -372,7 +381,13 @@ export async function startHttpServer(
         }
         if (req.method === 'GET') {
           const origin = requestOrigin(req, config.publicUrl);
-          const cache = { 'Cache-Control': 'public, max-age=3600' };
+          // With a configured public origin the response is host-independent and
+          // freely cacheable. When the origin is derived from the request Host,
+          // don't let a shared cache serve it cross-host (cache-poisoning): mark
+          // it no-store and Vary on the headers it depends on.
+          const cache: Record<string, string> = config.publicUrl
+            ? { 'Cache-Control': 'public, max-age=3600' }
+            : { 'Cache-Control': 'no-store', Vary: 'Host, X-Forwarded-Proto' };
           if (url.pathname === cardPath) {
             const card = buildServerCard(cardInfo, `${origin}${config.path}`);
             writeJson(res, 200, card, { ...cors, ...cache, 'Content-Type': SERVER_CARD_MEDIA_TYPE });
