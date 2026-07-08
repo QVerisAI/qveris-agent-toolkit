@@ -79,6 +79,17 @@ async def test_call_tool_threads_ids_and_omits_absent_max_response_size() -> Non
 
 
 @pytest.mark.asyncio
+async def test_call_tool_omits_absent_search_id() -> None:
+    client = FakeClient()
+    call = _tool(get_qveris_tools(client), "qveris_call")
+
+    await _invoke(call, {"tool_id": "t1", "params_to_tool": {}})
+
+    assert "search_id" not in client.calls[0]["args"]
+    assert client.calls[0]["args"] == {"tool_id": "t1", "params_to_tool": {}}
+
+
+@pytest.mark.asyncio
 async def test_inspect_tool_passes_tool_ids_and_search_id() -> None:
     client = FakeClient()
     inspect = _tool(get_qveris_tools(client), "qveris_inspect")

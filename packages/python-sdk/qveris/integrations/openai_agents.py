@@ -86,23 +86,24 @@ def get_qveris_tools(
     @function_tool(strict_mode=False)
     async def qveris_call(
         tool_id: str,
-        search_id: str,
         params_to_tool: Dict[str, Any],
+        search_id: Optional[str] = None,
         max_response_size: Optional[int] = None,
     ) -> str:
         """Call a selected QVeris capability with parameters. May consume credits.
 
         Args:
             tool_id: The capability tool_id, from discover or inspect.
-            search_id: The search_id from the discover response.
             params_to_tool: Parameters to pass to the capability.
+            search_id: The search_id from the discover response, if available.
             max_response_size: Max response size in bytes; -1 means unlimited.
         """
         args: Dict[str, Any] = {
             "tool_id": tool_id,
-            "search_id": search_id,
             "params_to_tool": params_to_tool,
         }
+        if search_id is not None:
+            args["search_id"] = search_id
         if max_response_size is not None:
             args["max_response_size"] = max_response_size
         return await _route("call", args)
