@@ -306,14 +306,15 @@ pip install qveris[crewai]
 ```python
 from crewai import Agent
 from qveris import QverisClient
-from qveris.integrations.crewai import get_qveris_tools
+from qveris.integrations.crewai import get_qveris_tools, aclose
 
 client = QverisClient()
 agent = Agent(role="Researcher", goal="...", backstory="...", tools=get_qveris_tools(client))
-# 运行你的 crew，然后 await client.close()
+# 同步运行你的 crew（crew.kickoff()），然后：
+aclose(client)
 ```
 
-CrewAI 同步执行工具；适配器内部桥接到异步 client。TypeScript SDK 提供 Vercel AI SDK 适配器。
+CrewAI 同步执行工具；适配器在一个专用事件循环上桥接到异步 client。由于 client 的连接绑定在该循环上，请用 `aclose(client)` 关闭（而非 `await client.close()`）。TypeScript SDK 提供 Vercel AI SDK 适配器。
 
 ### 自定义 LLM provider
 

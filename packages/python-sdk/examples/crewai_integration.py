@@ -5,17 +5,18 @@
     python crewai_integration.py
 
 `get_qveris_tools(client)` returns three CrewAI tools
-(qveris_discover / qveris_inspect / qveris_call) for a CrewAI Agent.
+(qveris_discover / qveris_inspect / qveris_call). CrewAI runs synchronously; the
+tools bridge to the async client on a dedicated loop, so close the client with
+`aclose(client)` (not `await client.close()`).
 """
 
-import asyncio
 import os
 
 from qveris import QverisClient
-from qveris.integrations.crewai import get_qveris_tools
+from qveris.integrations.crewai import aclose, get_qveris_tools
 
 
-async def main() -> None:
+def main() -> None:
     client = QverisClient()
     try:
         tools = get_qveris_tools(client)
@@ -41,8 +42,8 @@ async def main() -> None:
         result = Crew(agents=[researcher], tasks=[task]).kickoff()
         print(result)
     finally:
-        await client.close()
+        aclose(client)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

@@ -8,24 +8,27 @@ through one QVeris API key.
 
     from crewai import Agent
     from qveris import QverisClient
-    from qveris.integrations.crewai import get_qveris_tools
+    from qveris.integrations.crewai import get_qveris_tools, aclose
 
     client = QverisClient()
     agent = Agent(role="Researcher", goal="...", backstory="...",
                   tools=get_qveris_tools(client))
-    # ... run your crew, then: await client.close()
+    # ... run your crew synchronously (crew.kickoff()), then:
+    aclose(client)
 
 CrewAI executes tools synchronously; these tools bridge to the async QVeris
-client internally, so they work under both ``crew.kickoff()`` and
-``crew.kickoff_async()``. Tools return JSON strings and thread ``search_id``
-from discover into inspect/call.
+client on a single dedicated background event loop, so they work under both
+``crew.kickoff()`` and ``crew.kickoff_async()``. Because the client's async
+resources bind to that loop, close it with :func:`aclose` (which runs on the
+same loop) rather than ``await client.close()``. Tools return JSON strings and
+thread ``search_id`` from discover into inspect/call.
 """
 
 from __future__ import annotations
 
 import asyncio
-import concurrent.futures
 import json
+import threading
 from typing import Any, Coroutine, Dict, List, Optional, Type
 
 from pydantic import BaseModel, Field
@@ -35,19 +38,49 @@ from ..client.api import QverisClient
 _INSTALL_HINT = "The CrewAI integration requires 'crewai'. Install it with: pip install qveris[crewai]"
 
 
-def _run_sync(coro: Coroutine[Any, Any, Any]) -> Any:
-    """Run an async coroutine from CrewAI's synchronous tool context.
+class _BridgeLoop:
+    """A single, long-lived event loop on a daemon thread.
 
-    Uses ``asyncio.run`` when no loop is running (``crew.kickoff()``); if a loop
-    is already running (``crew.kickoff_async()``), runs the coroutine in a
-    worker thread with its own loop to avoid "loop already running" errors.
+    CrewAI tools are synchronous but the QVeris client is async and holds a
+    persistent ``httpx.AsyncClient`` whose connection pool binds to the loop it
+    first runs on. Dispatching every call onto one stable loop (instead of a
+    fresh ``asyncio.run`` per call) keeps that client valid across the many
+    tool calls a crew makes, and works whether or not the caller has its own
+    running loop.
     """
-    try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        return asyncio.run(coro)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-        return executor.submit(asyncio.run, coro).result()
+
+    def __init__(self) -> None:
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._lock = threading.Lock()
+
+    def _ensure(self) -> asyncio.AbstractEventLoop:
+        with self._lock:
+            if self._loop is None:
+                loop = asyncio.new_event_loop()
+                threading.Thread(target=loop.run_forever, name="qveris-crewai-loop", daemon=True).start()
+                self._loop = loop
+            return self._loop
+
+    def run(self, coro: Coroutine[Any, Any, Any]) -> Any:
+        return asyncio.run_coroutine_threadsafe(coro, self._ensure()).result()
+
+
+_BRIDGE = _BridgeLoop()
+
+
+def _run_sync(coro: Coroutine[Any, Any, Any]) -> Any:
+    """Run an async coroutine on the shared CrewAI bridge loop and block for it."""
+    return _BRIDGE.run(coro)
+
+
+def aclose(client: QverisClient) -> None:
+    """Close a QVeris client whose async work ran through the CrewAI tools.
+
+    The client's connections are bound to the bridge loop, so ``close()`` must
+    run there too — a plain ``await client.close()`` on a different loop would
+    raise a cross-loop error. Call this instead when you're done with the crew.
+    """
+    _run_sync(client.close())
 
 
 class _DiscoverArgs(BaseModel):

@@ -1,3 +1,4 @@
+import asyncio
 import json
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -5,7 +6,7 @@ import pytest
 
 pytest.importorskip("crewai", reason="CrewAI integration requires crewai (Python >=3.10)")
 
-from qveris.integrations.crewai import get_qveris_tools  # noqa: E402
+from qveris.integrations.crewai import aclose, get_qveris_tools  # noqa: E402
 
 
 class FakeClient:
@@ -72,3 +73,44 @@ def test_inspect_tool_passes_tool_ids_and_search_id() -> None:
 
     assert client.calls[0]["name"] == "inspect"
     assert client.calls[0]["args"] == {"tool_ids": ["t1", "t2"], "search_id": "s1"}
+
+
+def test_all_tool_calls_run_on_one_shared_event_loop() -> None:
+    """Multiple tool calls must run on the SAME loop so a persistent async
+    client (e.g. httpx.AsyncClient) stays valid across a crew's many calls.
+    A fresh asyncio.run per call would give a different, closed loop each time.
+    """
+    loop_ids: List[int] = []
+
+    class LoopRecordingClient:
+        async def handle_tool_call(self, func_name, func_args, session_id=None):
+            loop_ids.append(id(asyncio.get_running_loop()))
+            return {"ok": True}, False, True
+
+    tools = get_qveris_tools(LoopRecordingClient())
+    _tool(tools, "qveris_discover")._run(query="x")
+    _tool(tools, "qveris_inspect")._run(tool_ids=["t"])
+    _tool(tools, "qveris_call")._run(tool_id="t", search_id="s", params_to_tool={})
+
+    assert len(loop_ids) == 3
+    assert len(set(loop_ids)) == 1  # all three on one stable bridge loop
+
+
+def test_aclose_runs_client_close_on_the_bridge_loop() -> None:
+    closed_on: Dict[str, Any] = {}
+
+    class ClosableClient:
+        async def handle_tool_call(self, func_name, func_args, session_id=None):
+            closed_on["call_loop"] = id(asyncio.get_running_loop())
+            return {"ok": True}, False, True
+
+        async def close(self):
+            closed_on["close_loop"] = id(asyncio.get_running_loop())
+
+    client = ClosableClient()
+    tools = get_qveris_tools(client)
+    _tool(tools, "qveris_discover")._run(query="x")
+    aclose(client)
+
+    # close() ran, and on the same loop the tool calls (and thus the client) used.
+    assert closed_on["close_loop"] == closed_on["call_loop"]
