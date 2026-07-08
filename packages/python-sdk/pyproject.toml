@@ -19,11 +19,17 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# langchain-core requires Python >=3.9; the marker keeps the package resolvable
+# on 3.8 (the integration and its tests are simply unavailable there).
+langchain = [
+    "langchain-core>=0.3.0; python_version >= '3.9'",
+]
 dev = [
     "pytest",
     "pytest-asyncio",
     "python-dotenv",
     "rich>=13.0.0",
+    "langchain-core>=0.3.0; python_version >= '3.9'",  # for the LangChain integration tests
     # Pinned so regenerated models stay byte-stable with the checked-in
     # qveris/generated/openapi_models.py and the drift CI (issue #37 phase 2).
     "datamodel-code-generator==0.26.3",

@@ -253,6 +253,27 @@ if handled and not is_error:
     ...  # feed result back to your model
 ```
 
+### Framework integrations
+
+Expose the QVeris discover/inspect/call workflow as tools for popular agent frameworks. Adapters import their framework lazily, so the base `qveris` package never depends on them.
+
+**LangChain**
+
+```bash
+pip install qveris[langchain]
+```
+
+```python
+from qveris import QverisClient
+from qveris.integrations.langchain import get_qveris_tools
+
+client = QverisClient()
+tools = get_qveris_tools(client)  # 3 async tools: qveris_discover / qveris_inspect / qveris_call
+# bind `tools` to a LangChain or LangGraph agent, then `await client.close()` when done
+```
+
+The tools are async (use `ainvoke` / an async agent executor). More adapters (CrewAI, OpenAI Agents SDK) are on the roadmap.
+
 ### Custom LLM providers
 
 The default `Agent()` uses the built-in OpenAI-compatible provider. For other model APIs, implement `LLMProvider` and pass it in:
@@ -294,6 +315,7 @@ Runnable examples live under [`packages/python-sdk/examples/`](https://github.co
 | `explainable_routing.py` | Cost-aware capability selection with `why_recommended` / `expected_cost` |
 | `budget_guard.py` | Per-session credit budget with `Agent(budget_credits=...)` |
 | `agent_loop_integration.py` | LLM agent loop integration |
+| `langchain_integration.py` | QVeris capabilities as LangChain tools (`qveris[langchain]`) |
 
 Capability examples run `discover`/`inspect` when `QVERIS_API_KEY` is set, and only execute `call` when `RUN_QVERIS_CALLS=1`.
 
