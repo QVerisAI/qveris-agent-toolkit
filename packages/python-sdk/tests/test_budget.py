@@ -37,6 +37,31 @@ def test_non_finite_billing_does_not_poison_spend_or_disable_guard() -> None:
     assert b.check("t") is not None
 
 
+def test_observe_and_record_accept_pydantic_models_not_just_dicts() -> None:
+    from qveris import SearchResponse, ToolExecutionResponse
+
+    b = BudgetTracker(100)
+
+    # observe() fed a pydantic SearchResponse directly (not a model_dump() dict).
+    b.observe(
+        SearchResponse(
+            search_id="s1",
+            results=[{"tool_id": "t", "name": "T", "expected_cost": "6"}],
+        )
+    )
+    assert b.estimate("t") == 6.0
+
+    # record() fed a pydantic ToolExecutionResponse directly.
+    b.record(
+        ToolExecutionResponse(
+            execution_id="e1",
+            success=True,
+            billing={"list_amount_credits": 6},
+        )
+    )
+    assert b.spent == 6.0
+
+
 def test_disabled_tracker_is_a_noop() -> None:
     b = BudgetTracker(None)
     assert b.enabled is False

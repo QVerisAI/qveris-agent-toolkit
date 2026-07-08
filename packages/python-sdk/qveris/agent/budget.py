@@ -43,6 +43,26 @@ def parse_credits(value: Any) -> Optional[float]:
     return result if math.isfinite(result) else None
 
 
+def _as_dict(value: Any) -> Optional[Dict[str, Any]]:
+    """Return a plain-dict view of a dict or a pydantic model, else ``None``.
+
+    The agent loop feeds JSON-shaped dicts (from ``model_dump()``), but the
+    public ``BudgetTracker`` may be handed pydantic models (``SearchResponse``,
+    ``ToolExecutionResponse``) directly — accept both so a model does not
+    silently disable estimate caching or spend accumulation.
+    """
+    if isinstance(value, dict):
+        return value
+    dump = getattr(value, "model_dump", None)
+    if callable(dump):
+        try:
+            dumped = dump()
+        except Exception:
+            return None
+        return dumped if isinstance(dumped, dict) else None
+    return None
+
+
 class BudgetTracker:
     """Track and enforce a per-session credit budget.
 
@@ -82,14 +102,21 @@ class BudgetTracker:
         return max(0.0, self.limit - self.spent)
 
     def observe(self, result: Any) -> None:
-        """Cache ``expected_cost`` per ``tool_id`` from a discover/inspect payload."""
-        if not self.enabled or not isinstance(result, dict):
+        """Cache ``expected_cost`` per ``tool_id`` from a discover/inspect payload.
+
+        Accepts a dict or a pydantic ``SearchResponse``.
+        """
+        if not self.enabled:
             return
-        for item in result.get("results") or []:
-            if not isinstance(item, dict):
+        data = _as_dict(result)
+        if data is None:
+            return
+        for item in data.get("results") or []:
+            entry = _as_dict(item)
+            if entry is None:
                 continue
-            tool_id = item.get("tool_id")
-            cost = parse_credits(item.get("expected_cost"))
+            tool_id = entry.get("tool_id")
+            cost = parse_credits(entry.get("expected_cost"))
             if isinstance(tool_id, str) and cost is not None:
                 self._estimates[tool_id] = cost
 
@@ -149,13 +176,17 @@ class BudgetTracker:
 
     @staticmethod
     def _charge_of(execution: Any) -> float:
-        """Extract the pre-settlement charge from a call result dict."""
-        if not isinstance(execution, dict):
+        """Extract the pre-settlement charge from a call result.
+
+        Accepts a dict or a pydantic ``ToolExecutionResponse``.
+        """
+        data = _as_dict(execution)
+        if data is None:
             return 0.0
-        billing = execution.get("billing")
-        if isinstance(billing, dict):
+        billing = _as_dict(data.get("billing"))
+        if billing is not None:
             for key in ("list_amount_credits", "requested_amount_credits"):
                 value = parse_credits(billing.get(key))
                 if value is not None:
                     return value
-        return parse_credits(execution.get("cost")) or 0.0
+        return parse_credits(data.get("cost")) or 0.0
