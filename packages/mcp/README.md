@@ -270,6 +270,34 @@ When tool output exceeds `max_response_size`, you'll receive:
 
 The `full_content_file_url` is valid for 120 minutes.
 
+## Transport modes
+
+The server speaks two MCP transports from the same binary:
+
+- **stdio** (default) — used by Claude Desktop, Cursor and other local clients. No change to existing configs.
+- **Streamable HTTP** — for remote deployment (e.g. Claude Desktop Custom Connectors, hosted/edge runtimes). Each client session gets its own session id (`Mcp-Session-Id` header), managed automatically.
+
+Enable HTTP mode with any of `--http`, `QVERIS_MCP_TRANSPORT=http`, or by setting an HTTP port/host:
+
+```bash
+# Local only (loopback): no inbound auth required
+QVERIS_API_KEY=sk-... npx -y @qverisai/mcp --http --port 3000
+
+# Exposed: bind all interfaces, require a bearer token, allow-list the public host
+QVERIS_API_KEY=sk-... \
+QVERIS_MCP_TRANSPORT=http \
+QVERIS_MCP_HTTP_HOST=0.0.0.0 \
+QVERIS_MCP_HTTP_AUTH_TOKEN=$(openssl rand -hex 32) \
+QVERIS_MCP_ALLOWED_HOSTS=mcp.example.com \
+npx -y @qverisai/mcp
+```
+
+- The endpoint is `POST/GET/DELETE {path}` (default `/mcp`); `GET /health` returns an unauthenticated liveness probe.
+- **Inbound auth:** set `QVERIS_MCP_HTTP_AUTH_TOKEN` to require `Authorization: Bearer <token>` on the MCP endpoint. The server **refuses to start** when binding a non-loopback host without a token, unless you set `QVERIS_MCP_HTTP_ALLOW_UNAUTHENTICATED=true` to delegate auth to an external proxy/gateway. Your `QVERIS_API_KEY` is the server's *outbound* credential to QVeris — it is **not** an inbound check, so anyone reaching an unauthenticated endpoint would spend your credits.
+- DNS-rebinding protection is **on by default** (localhost + the bound host/port are allow-listed). When exposing the server publicly, add your public host via `QVERIS_MCP_ALLOWED_HOSTS`.
+- Requests are capped at 4 MiB by default (`QVERIS_MCP_MAX_BODY_BYTES`), and idle sessions are evicted after 5 minutes (`QVERIS_MCP_SESSION_TIMEOUT_MS`).
+- Full OAuth 2.1 and a `.well-known` MCP Server Card are tracked as follow-ups in [#107](https://github.com/QVerisAI/qveris-agent-toolkit/issues/107).
+
 ## Environment Variables
 
 | Variable | Required | Description |
@@ -277,6 +305,18 @@ The `full_content_file_url` is valid for 120 minutes.
 | `QVERIS_API_KEY` | ✓ | Your QVeris API key |
 | `QVERIS_REGION` | | Force region: `global` or `cn` (auto-detected from key prefix if not set) |
 | `QVERIS_BASE_URL` | | Override API base URL (highest priority, for custom endpoints) |
+| `QVERIS_MCP_TRANSPORT` | | `stdio` (default) or `http` |
+| `QVERIS_MCP_HTTP_PORT` | | HTTP port (default `3000`; setting it implies HTTP mode) |
+| `QVERIS_MCP_HTTP_HOST` | | HTTP bind host (default `127.0.0.1`) |
+| `QVERIS_MCP_HTTP_PATH` | | MCP endpoint path (default `/mcp`) |
+| `QVERIS_MCP_ALLOWED_HOSTS` | | Comma-separated extra `Host` values to allow (for DNS-rebinding protection) |
+| `QVERIS_MCP_ALLOWED_ORIGINS` | | Comma-separated extra `Origin` values to allow |
+| `QVERIS_MCP_DNS_REBINDING_PROTECTION` | | `true` (default) / `false` |
+| `QVERIS_MCP_HTTP_JSON` | | `true` to return JSON responses instead of SSE (default `false`) |
+| `QVERIS_MCP_HTTP_AUTH_TOKEN` | | Require `Authorization: Bearer <token>` on the MCP endpoint |
+| `QVERIS_MCP_HTTP_ALLOW_UNAUTHENTICATED` | | `true` to allow a non-loopback bind without a token (auth delegated externally) |
+| `QVERIS_MCP_MAX_BODY_BYTES` | | Max request body size in bytes (default `4194304`) |
+| `QVERIS_MCP_SESSION_TIMEOUT_MS` | | Idle session TTL in ms (default `300000`) |
 
 ## Region
 
