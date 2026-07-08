@@ -77,6 +77,28 @@ try {
 }
 ```
 
+## Framework integrations
+
+Expose the QVeris workflow as [Vercel AI SDK](https://sdk.vercel.ai) tools. `ai` and `zod` are peer dependencies:
+
+```bash
+npm install @qverisai/sdk ai zod
+```
+
+```typescript
+import { generateText } from 'ai';
+import { Qveris } from '@qverisai/sdk';
+import { getQverisTools } from '@qverisai/sdk/ai';
+
+const qveris = new Qveris({ apiKey: process.env.QVERIS_API_KEY! });
+const { text } = await generateText({
+  model,
+  tools: getQverisTools(qveris), // qveris_discover / qveris_inspect / qveris_call
+  maxSteps: 6,
+  prompt: 'Find a stock quote capability and quote AAPL.',
+});
+```
+
 ## Version history note
 
 Versions `0.1.x` of this npm package were an early MCP-focused SDK, since superseded by [`@qverisai/mcp`](https://www.npmjs.com/package/@qverisai/mcp). The typed REST client documented here starts at **`0.2.0`**.
