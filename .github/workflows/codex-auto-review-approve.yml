@@ -1,0 +1,186 @@
+name: Codex Auto Review And Approve
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, reopened, ready_for_review, synchronize]
+  pull_request_review:
+    types: [submitted]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  request-codex-review:
+    if: github.event_name == 'pull_request_target' && !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask Codex to review this PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const marker = `<!-- codex-auto-review:${pr.head.sha} -->`;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              per_page: 100,
+            });
+
+            if (comments.some((comment) => comment.body?.includes(marker))) {
+              core.info(`Codex review already requested for ${pr.head.sha}.`);
+              return;
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body: `@codex review\n\n${marker}`,
+            });
+
+  approve-after-nonblocking-codex-review:
+    if: github.event_name == 'pull_request_review' && github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Approve when Codex reports no blocking issues
+        uses: actions/github-script@v7
+        env:
+          CODEX_REVIEW_AUTHOR_PATTERN: ${{ vars.CODEX_REVIEW_AUTHOR_PATTERN }}
+        with:
+          github-token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          script: |
+            const review = context.payload.review;
+            const pr = context.payload.pull_request;
+            const reviewer = review.user?.login || "";
+            const reviewerType = review.user?.type || "";
+            const authorPattern = new RegExp(
+              process.env.CODEX_REVIEW_AUTHOR_PATTERN ||
+                "^(_chatgpt-codex-connector|codex|codex\\[bot\\]|openai-codex|openai-codex\\[bot\\]|chatgpt-codex|chatgpt-codex\\[bot\\]|chatgpt-codex-connector|chatgpt-codex-connector\\[bot\\])$",
+              "i",
+            );
+
+            if (!authorPattern.test(reviewer) || reviewerType !== "Bot") {
+              core.info(`Ignoring review from ${reviewer} (${reviewerType}).`);
+              return;
+            }
+
+            if (review.state === "APPROVED") {
+              core.info("Codex already approved this PR.");
+              return;
+            }
+
+            const comments = await github.paginate(github.rest.pulls.listCommentsForReview, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              review_id: review.id,
+              per_page: 100,
+            });
+
+            const reviewText = [review.body || "", ...comments.map((comment) => comment.body || "")]
+              .join("\n")
+              .trim();
+            const hasBlockingState = review.state === "CHANGES_REQUESTED";
+            const hasBlockingSeverity = /(^|[^A-Za-z0-9])(P0|P1)([^A-Za-z0-9]|$)/i.test(reviewText);
+
+            if (hasBlockingState || hasBlockingSeverity) {
+              core.info(
+                `Codex review has blocking findings: state=${review.state}, comments=${comments.length}.`,
+              );
+              return;
+            }
+
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              event: "APPROVE",
+              body: "Codex review completed without blocking findings. Auto-approving this PR; developers should still review and address any non-blocking suggestions before merge.",
+            });
+
+  approve-after-clean-codex-comment:
+    if: github.event_name == 'issue_comment' && github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Approve when Codex leaves a clean summary comment
+        uses: actions/github-script@v7
+        env:
+          CODEX_COMMENT_AUTHOR_PATTERN: ${{ vars.CODEX_COMMENT_AUTHOR_PATTERN }}
+        with:
+          github-token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          script: |
+            const comment = context.payload.comment;
+            const issue = context.payload.issue;
+            const body = comment.body || "";
+            const commenter = comment.user?.login || "";
+            const commenterType = comment.user?.type || "";
+            const appSlug = comment.performed_via_github_app?.slug || "";
+            const authorPattern = new RegExp(
+              process.env.CODEX_COMMENT_AUTHOR_PATTERN ||
+                "(^|[-_])codex($|[-_\\[])|chatgpt-codex|openai-codex",
+              "i",
+            );
+
+            if (
+              commenterType !== "Bot" ||
+              (!authorPattern.test(commenter) && !authorPattern.test(appSlug))
+            ) {
+              core.info(`Ignoring comment from ${commenter || "unknown"} (${commenterType}).`);
+              return;
+            }
+
+            const normalizedBody = body.replace(/\s+/g, " ").trim();
+            const reportsCleanReview =
+              /Codex\s+Review\s*:\s*(?:Did(?:\s+not|n't)\s+find\s+any\s+(?:major\s+)?issues|No\s+(?:major\s+)?issues\s+found)\b/i.test(
+                normalizedBody,
+              );
+            const hasBlockingSeverity = /(^|[^A-Za-z0-9])(P0|P1)([^A-Za-z0-9]|$)/i.test(
+              normalizedBody,
+            );
+
+            if (!reportsCleanReview) {
+              core.info("Codex comment does not report a clean review.");
+              return;
+            }
+
+            if (hasBlockingSeverity) {
+              core.info("Codex comment includes blocking severity, skipping approval.");
+              return;
+            }
+
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: issue.number,
+            }).then((response) => response.data);
+
+            if (pr.base?.ref !== "main") {
+              core.info(`Ignoring PR targeting ${pr.base?.ref}.`);
+              return;
+            }
+
+            const reviewedCommitMatch = body.match(/Reviewed commit[^0-9a-f]*([0-9a-f]{7,40})/i);
+            const reviewedCommit = reviewedCommitMatch?.[1] || "";
+
+            if (!reviewedCommit || !pr.head.sha.startsWith(reviewedCommit)) {
+              core.info(
+                `Reviewed commit ${reviewedCommit || "<missing>"} does not match current PR head ${pr.head.sha}.`,
+              );
+              return;
+            }
+
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              event: "APPROVE",
+              body: "Codex left a clean summary comment for the current head commit. Auto-approving this PR; developers should still review any follow-up comments before merge.",
+            });
