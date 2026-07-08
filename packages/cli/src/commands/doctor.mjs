@@ -23,7 +23,12 @@ export async function runDoctor(flags) {
 
   console.log();
   if (ok) {
-    console.log(`  ${green("All checks passed.")}\n`);
+    const warned = checks.some((c) => c.status === "warn");
+    if (warned) {
+      console.log(`  ${yellow("All checks passed, with warnings.")} Review the ${yellow("!")} items above.\n`);
+    } else {
+      console.log(`  ${green("All checks passed.")}\n`);
+    }
   } else {
     console.log(`  ${red("Some checks failed.")} Fix the items above and re-run ${bold("qveris doctor")}.\n`);
     process.exitCode = 1;

@@ -80,6 +80,35 @@ test("runPreflight: timeout maps to a connectivity fail with a hint", async () =
   assert.ok(fail.hint);
 });
 
+test("runPreflight: a non-CliError probe rejection degrades gracefully (no crash, no undefined)", async () => {
+  const probe = async () => {
+    throw new TypeError("socket hang up");
+  };
+  const { checks, ok } = await runPreflight({ apiKeyFlag: "sk-test", probe });
+
+  assert.equal(ok, false);
+  const fail = checks.find((x) => x.status === "fail");
+  assert.equal(fail.name, "connectivity");
+  assert.equal(fail.detail, "socket hang up");
+  assert.equal(fail.hint, null);
+});
+
+test("runPreflight: an unsupported Node version short-circuits before probing", async () => {
+  let probed = false;
+  const { checks, ok } = await runPreflight({
+    apiKeyFlag: "sk-test",
+    nodeVersion: "v16.0.0",
+    probe: async () => {
+      probed = true;
+      return { search_id: "s", results: [] };
+    },
+  });
+
+  assert.equal(ok, false);
+  assert.equal(probed, false); // never probes on an unsupported runtime
+  assert.equal(byName(checks).node.status, "fail");
+});
+
 test("runPreflight: unexpected response shape warns about contract drift", async () => {
   const probe = async () => ({ unexpected: true }); // no search_id / results
   const { checks } = await runPreflight({ apiKeyFlag: "sk-test", probe });

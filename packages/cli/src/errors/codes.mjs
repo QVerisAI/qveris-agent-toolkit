@@ -12,6 +12,11 @@ export const ERROR_CODES = {
     hint: "Run 'qveris login' or set QVERIS_API_KEY",
     exit: EX_CONFIG,
   },
+  NODE_UNSUPPORTED: {
+    message: "Unsupported Node.js version",
+    hint: "Upgrade to Node.js 18 or newer",
+    exit: EX_CONFIG,
+  },
   AUTH_INVALID_KEY: {
     message: "Authentication failed",
     hint: "Check your key at https://qveris.ai/account",

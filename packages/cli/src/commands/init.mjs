@@ -21,9 +21,8 @@ export async function runInit(queryArg, flags) {
   // an actionable message — the same check `qveris doctor` surfaces.
   const node = nodeCheck(process.version);
   if (node.status === "fail") {
-    const err = new CliError("API_ERROR", node.detail);
-    err.hint = node.hint;
-    throw err;
+    // NODE_UNSUPPORTED carries EX_CONFIG (environment) semantics + the hint.
+    throw new CliError("NODE_UNSUPPORTED", node.detail);
   }
 
   if (!flags.json) {
