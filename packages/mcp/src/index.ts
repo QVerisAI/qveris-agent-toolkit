@@ -31,6 +31,7 @@ import {
   ListToolsRequestSchema,
   type CallToolResult,
 } from '@modelcontextprotocol/sdk/types.js';
+import { resolveTransportConfig, startHttpServer } from './http.js';
 import { realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { v4 as uuidv4 } from 'uuid';
@@ -410,10 +411,52 @@ export async function executeQverisMcpTool(
 }
 
 /**
+ * Build a fully-wired Qveris MCP {@link Server} instance.
+ *
+ * Registers the list-tools and call-tool handlers against the given client and
+ * default session id. Kept separate from transport startup so both the stdio
+ * and Streamable HTTP paths (and tests) can construct a server the same way; in
+ * HTTP mode one server is created per client session.
+ */
+export function createQverisServer(
+  client: QverisClient | undefined,
+  defaultSessionId: string,
+): Server {
+  const server = new Server(
+    {
+      name: SERVER_NAME,
+      version: SERVER_VERSION,
+    },
+    {
+      capabilities: {
+        tools: {},
+      },
+    }
+  );
+
+  // Lists available tools (discover/inspect/call plus deprecated aliases).
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    return {
+      tools: listQverisMcpTools(),
+    };
+  });
+
+  // Routes tool execution to the appropriate handler; deprecated aliases warn.
+  server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
+    const { name, arguments: args } = request.params;
+    return executeQverisMcpTool(client, defaultSessionId, name, args);
+  });
+
+  return server;
+}
+
+/**
  * Main entry point for the Qveris MCP Server.
  *
- * Sets up the MCP server with stdio transport, registers the discover,
- * inspect, and call handlers, and starts listening for requests.
+ * Registers the discover/inspect/call handlers and starts listening. The
+ * transport is selected by env/CLI (see {@link resolveTransportConfig}): stdio
+ * by default (unchanged for existing Claude Desktop / Cursor configs), or
+ * Streamable HTTP for remote deployment.
  */
 export async function main(): Promise<void> {
   // Initialize the API client when credentials are available. The server still
@@ -432,55 +475,22 @@ export async function main(): Promise<void> {
     );
   }
 
-  // Generate a default session ID for this server instance
+  const transportConfig = resolveTransportConfig(process.env, process.argv.slice(2));
+
+  // Streamable HTTP: one Qveris server per MCP session, keyed by Mcp-Session-Id.
+  if (transportConfig.mode === 'http') {
+    await startHttpServer(transportConfig, (sessionId) => createQverisServer(client, sessionId));
+    return;
+  }
+
+  // Default: stdio transport with a single session for this process.
   const defaultSessionId = uuidv4();
-
-  // Create MCP server
-  const server = new Server(
-    {
-      name: SERVER_NAME,
-      version: SERVER_VERSION,
-    },
-    {
-      capabilities: {
-        tools: {},
-      },
-    }
-  );
-
-  // =========================================================================
-  // Tool Handlers
-  // =========================================================================
-
-  /**
-   * Lists available tools.
-   * Returns the discover, inspect, and call definitions (plus deprecated aliases).
-   */
-  server.setRequestHandler(ListToolsRequestSchema, async () => {
-    return {
-      tools: listQverisMcpTools(),
-    };
-  });
-
-  /**
-   * Handles tool execution requests.
-   * Routes to the appropriate handler based on tool name.
-   * Deprecated aliases emit a warning to stderr.
-   */
-  server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
-    const { name, arguments: args } = request.params;
-    return executeQverisMcpTool(client, defaultSessionId, name, args);
-  });
-
-  // =========================================================================
-  // Start Server
-  // =========================================================================
-
+  const server = createQverisServer(client, defaultSessionId);
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
   // Log startup to stderr (stdout is reserved for MCP protocol)
-  console.error(`Qveris MCP Server v${SERVER_VERSION} started`);
+  console.error(`Qveris MCP Server v${SERVER_VERSION} started (stdio)`);
   console.error(`Session ID: ${defaultSessionId}`);
 }
 
