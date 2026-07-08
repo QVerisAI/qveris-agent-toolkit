@@ -133,8 +133,25 @@ async with Agent() as agent:
 | `tool_result` | Output of an executed tool call (`event.tool_result` has `name`, `result`, `is_error`) |
 | `metrics` | Token usage / timing, when the provider reports it |
 | `error` | Fatal error that ended the run |
+| `budget_warning` / `budget_exceeded` | Session spend crossed the warn threshold / a call was blocked to stay within budget (see [Budget guard](#budget-guard)) |
 
 Pass `stream=False` to `run(...)` to receive complete assistant turns instead of deltas.
+
+### Budget guard
+
+Set a per-session credit budget to bound autonomous spend:
+
+```python
+agent = Agent(budget_credits=25)
+```
+
+When set, the agent learns each capability's `expected_cost` from `discover` / `inspect` and **blocks a `call` projected to exceed the budget before the request is sent** — emitting a `budget_exceeded` event so the model can pick a cheaper capability or stop. It accumulates actual spend from `call` billing and emits a single `budget_warning` as spend approaches the limit. Query the state any time:
+
+```python
+status = agent.budget_status()   # {"limit": 25, "spent": 12.0, "remaining": 13.0}, or None
+```
+
+`spent` reflects pre-settlement charges — reconcile final charges with `usage(...)` / `ledger(...)`. Capabilities whose cost is unknown are not blocked (they cannot be estimated). Without `budget_credits`, agent behavior is unchanged.
 
 ## Configuration reference
 
@@ -275,6 +292,7 @@ Runnable examples live under [`packages/python-sdk/examples/`](https://github.co
 | `crypto_market.py` | Crypto price and volume data |
 | `data_analysis.py` | Dataset enrichment with external capability data |
 | `explainable_routing.py` | Cost-aware capability selection with `why_recommended` / `expected_cost` |
+| `budget_guard.py` | Per-session credit budget with `Agent(budget_credits=...)` |
 | `agent_loop_integration.py` | LLM agent loop integration |
 
 Capability examples run `discover`/`inspect` when `QVERIS_API_KEY` is set, and only execute `call` when `RUN_QVERIS_CALLS=1`.

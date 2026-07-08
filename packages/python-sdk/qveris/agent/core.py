@@ -46,6 +46,7 @@ from ..config import AgentConfig, QverisConfig
 from ..llm.base import LLMProvider
 from ..llm.openai import OpenAIProvider
 from ..types import ChatResponse, Message, StreamEvent
+from .budget import BudgetTracker
 from .memory import prune_tool_history
 
 # Type alias for extra tool handler callback.
@@ -92,10 +93,15 @@ class Agent:
         llm_provider: Optional[LLMProvider] = None,
         extra_tools: Optional[List[ChatCompletionToolParam]] = None,
         extra_tool_handler: Optional[ExtraToolHandler] = None,
-        debug_callback: Optional[Callable[[str], None]] = None
+        debug_callback: Optional[Callable[[str], None]] = None,
+        budget_credits: Optional[float] = None,
     ):
         self.config = config or QverisConfig()
         self.agent_config = agent_config or AgentConfig()
+
+        # Optional per-session credit budget. Disabled (no-op) when None, so
+        # default agent behavior is unchanged.
+        self.budget = BudgetTracker(budget_credits)
 
         # Setup API Client with debug callback
         self.client = QverisClient(self.config, debug_callback=debug_callback)
@@ -175,6 +181,15 @@ class Agent:
         prompt, that internal system message is omitted so callers can reuse the list directly.
         """
         return [message.model_copy(deep=True) for message in self.last_messages]
+
+    def budget_status(self) -> Optional[Dict[str, Any]]:
+        """Return the current budget state (``limit`` / ``spent`` / ``remaining``).
+
+        Returns ``None`` when no ``budget_credits`` was set. ``spent`` reflects
+        pre-settlement charges from ``call`` responses; reconcile final charges
+        with ``usage(...)`` / ``ledger(...)``.
+        """
+        return self.budget.snapshot() if self.budget.enabled else None
 
     async def run(
         self,
@@ -329,12 +344,42 @@ class Agent:
                         )
                         continue
 
-                    # Execute Tool
-                    result, is_error, handled = await self.client.handle_tool_call(
-                        func_name=func_name,
-                        func_args=func_args,
-                        session_id=self.session_id
-                    )
+                    # Budget guard: block a call projected to exceed the session
+                    # budget *before* sending it, and surface a budget_exceeded
+                    # event so the model can pick a cheaper capability or stop.
+                    is_call = func_name in ("call", "execute_tool")
+                    block = self.budget.check(func_args.get("tool_id")) if is_call else None
+                    if block is not None:
+                        result = {
+                            "error": "budget_exceeded",
+                            "message": (
+                                f"Call skipped to stay within budget: an estimated "
+                                f"{block['estimated']:g} credits would bring session spend to "
+                                f"{block['projected']:g}, over the {block['limit']:g}-credit limit "
+                                f"({block['remaining']:g} remaining). Choose a cheaper capability "
+                                f"or stop."
+                            ),
+                            **block,
+                        }
+                        is_error, handled = True, True
+                        yield StreamEvent(type="budget_exceeded", budget=block)
+                    else:
+                        # Execute Tool
+                        result, is_error, handled = await self.client.handle_tool_call(
+                            func_name=func_name,
+                            func_args=func_args,
+                            session_id=self.session_id
+                        )
+
+                        # Learn cost estimates from discover/inspect; accumulate
+                        # spend and warn from call responses.
+                        if handled and not is_error:
+                            if func_name in ("discover", "search_tools", "inspect", "get_tools_by_ids"):
+                                self.budget.observe(result)
+                            elif is_call:
+                                warning = self.budget.record(result)
+                                if warning is not None:
+                                    yield StreamEvent(type="budget_warning", budget=warning)
 
                     # Handle extra tools if not a built-in Qveris tool
                     if not handled:

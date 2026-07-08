@@ -264,13 +264,25 @@ class Message(QverisModel):
 
 
 class StreamEvent(QverisModel):
-    type: Literal["content", "reasoning", "tool_call", "tool_result", "metrics", "error", "reasoning_details"]
+    type: Literal[
+        "content",
+        "reasoning",
+        "tool_call",
+        "tool_result",
+        "metrics",
+        "error",
+        "reasoning_details",
+        "budget_warning",
+        "budget_exceeded",
+    ]
     content: Optional[str] = None
     tool_call: Optional[Dict[str, Any]] = None
     tool_result: Optional[Dict[str, Any]] = None
     metrics: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
     details: Optional[Any] = None
+    # Budget state for budget_warning / budget_exceeded events.
+    budget: Optional[Dict[str, Any]] = None
 
 
 class AgentMetrics(QverisModel):

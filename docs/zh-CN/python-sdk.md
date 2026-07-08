@@ -133,8 +133,25 @@ async with Agent() as agent:
 | `tool_result` | 工具调用的执行结果（`event.tool_result` 含 `name`、`result`、`is_error`） |
 | `metrics` | provider 上报的 token 用量 / 耗时 |
 | `error` | 终止本次运行的致命错误 |
+| `budget_warning` / `budget_exceeded` | 会话消耗越过预警阈值 / 某次调用因超预算被拦截（见 [预算护栏](#预算护栏)） |
 
 给 `run(...)` 传 `stream=False` 可改为接收完整助手轮次而非增量分片。
+
+### 预算护栏
+
+设置会话级积分预算以约束自主消耗：
+
+```python
+agent = Agent(budget_credits=25)
+```
+
+设置后，agent 会从 `discover` / `inspect` 学习每个能力的 `expected_cost`，并在**请求发出之前拦截预计会超预算的 `call`**——同时发出 `budget_exceeded` 事件，让模型改选更便宜的能力或停止。它从 `call` 的账单累计实际消耗，并在接近上限时发出一次 `budget_warning`。可随时查询状态：
+
+```python
+status = agent.budget_status()   # {"limit": 25, "spent": 12.0, "remaining": 13.0}，或 None
+```
+
+`spent` 反映预结算金额——请用 `usage(...)` / `ledger(...)` 核对最终扣费。成本未知的能力不会被拦截（无法估算）。未设置 `budget_credits` 时，agent 行为完全不变。
 
 ## 配置参考
 
@@ -275,6 +292,7 @@ agent = Agent(llm_provider=MyProvider())
 | `crypto_market.py` | 加密货币价格与成交量数据 |
 | `data_analysis.py` | 用外部能力数据丰富数据集 |
 | `explainable_routing.py` | 基于 `why_recommended` / `expected_cost` 的成本感知能力选型 |
+| `budget_guard.py` | 用 `Agent(budget_credits=...)` 设置会话级积分预算 |
 | `agent_loop_integration.py` | LLM agent 循环集成 |
 
 设置 `QVERIS_API_KEY` 后，能力示例会运行 `discover`/`inspect`；仅当设置 `RUN_QVERIS_CALLS=1` 时才执行 `call`。
