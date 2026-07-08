@@ -1,52 +1,36 @@
-import { resolve } from "../config/resolve.mjs";
-import { discoverTools } from "../client/api.mjs";
-import { resolveBaseUrl } from "../config/region.mjs";
-import { bold, green, red, dim, cyan } from "../output/colors.mjs";
+import { runPreflight } from "../client/preflight.mjs";
+import { bold, green, red, yellow, dim } from "../output/colors.mjs";
+
+const ICON = { ok: green("✓"), warn: yellow("!"), fail: red("✘") };
 
 export async function runDoctor(flags) {
-  console.log(`\n  ${bold("QVeris CLI Doctor")}\n`);
-  let allOk = true;
+  const { checks, ok, contractVersion } = await runPreflight({
+    apiKeyFlag: flags.apiKey,
+    baseUrlFlag: flags.baseUrl,
+  });
 
-  // Check Node.js version
-  const nodeVersion = process.version;
-  const major = parseInt(nodeVersion.slice(1), 10);
-  if (major >= 18) {
-    console.log(`  ${green("\u2713")} Node.js ${nodeVersion}`);
-  } else {
-    console.log(`  ${red("\u2718")} Node.js ${nodeVersion} -- requires >=18`);
-    allOk = false;
+  if (flags.json) {
+    console.log(JSON.stringify({ ok, contract_version: contractVersion, checks }, null, 2));
+    if (!ok) process.exitCode = 1;
+    return;
   }
 
-  // Check API key
-  const { value: apiKey, source } = resolve("api_key", flags.apiKey);
-  if (apiKey && apiKey.trim()) {
-    const masked = apiKey.slice(0, 6) + "..." + apiKey.slice(-4);
-    console.log(`  ${green("\u2713")} API key configured (${masked} via ${source})`);
-
-    // Show resolved region
-    const { baseUrl, region, source: regionSource } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl, apiKey });
-    console.log(`  ${green("\u2713")} Region: ${region} ${dim(`(${regionSource})`)} → ${dim(baseUrl)}`);
-
-    // Test connectivity
-    process.stderr.write(`  \u2026 Testing API connectivity...\r`);
-    try {
-      await discoverTools({ apiKey, baseUrl, query: "test", limit: 1, timeoutMs: 10000 });
-      console.log(`  ${green("\u2713")} API connectivity OK                `);
-    } catch (err) {
-      console.log(`  ${red("\u2718")} API connectivity failed: ${err.message}  `);
-      allOk = false;
-    }
-  } else {
-    console.log(`  ${red("\u2718")} No API key configured`);
-    console.log(`     Run ${cyan("qveris login")} or set QVERIS_API_KEY`);
-    allOk = false;
+  console.log(`\n  ${bold("QVeris CLI Doctor")}\n`);
+  for (const c of checks) {
+    console.log(`  ${ICON[c.status] || "-"} ${c.detail}`);
+    if (c.hint && c.status !== "ok") console.log(`     ${dim(c.hint)}`);
   }
 
   console.log();
-  if (allOk) {
-    console.log(`  ${green("All checks passed.")}\n`);
+  if (ok) {
+    const warned = checks.some((c) => c.status === "warn");
+    if (warned) {
+      console.log(`  ${yellow("All checks passed, with warnings.")} Review the ${yellow("!")} items above.\n`);
+    } else {
+      console.log(`  ${green("All checks passed.")}\n`);
+    }
   } else {
-    console.log(`  ${red("Some checks failed.")}\n`);
+    console.log(`  ${red("Some checks failed.")} Fix the items above and re-run ${bold("qveris doctor")}.\n`);
     process.exitCode = 1;
   }
 }

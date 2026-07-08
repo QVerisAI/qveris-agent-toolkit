@@ -411,10 +411,11 @@ qveris> exit
 
 ### `qveris doctor`
 
-Self-check diagnostics: verifies Node.js version, API key configuration, base URL, and API connectivity.
+Self-check diagnostics for a working first call. Checks Node.js version, API key, region, then a free `discover` probe covering connectivity, key validity, remaining credits, and response-shape conformance to the CLI contract. Each failure prints an actionable fix. Diagnostics consume no credits (discover is free). Add `--json` for machine-readable output.
 
 ```bash
 qveris doctor
+qveris doctor --json
 ```
 
 ### `qveris config`

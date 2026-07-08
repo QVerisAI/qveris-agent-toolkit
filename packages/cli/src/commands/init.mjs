@@ -1,5 +1,6 @@
 import { resolveApiKey } from "../client/auth.mjs";
 import { callTool, discoverTools, inspectToolsByIds } from "../client/api.mjs";
+import { nodeCheck } from "../client/preflight.mjs";
 import { resolve } from "../config/resolve.mjs";
 import { resolveBaseUrl } from "../config/region.mjs";
 import { CliError } from "../errors/handler.mjs";
@@ -15,6 +16,14 @@ const DEFAULT_MAX_RESPONSE_SIZE = 20480;
 export async function runInit(queryArg, flags) {
   const steps = [];
   const startedAt = Date.now();
+
+  // Fail fast (before any network work) on an unsupported Node.js version, with
+  // an actionable message — the same check `qveris doctor` surfaces.
+  const node = nodeCheck(process.version);
+  if (node.status === "fail") {
+    // NODE_UNSUPPORTED carries EX_CONFIG (environment) semantics + the hint.
+    throw new CliError("NODE_UNSUPPORTED", node.detail);
+  }
 
   if (!flags.json) {
     console.log(`\n  ${bold("QVeris init")} ${dim("first-call wizard")}\n`);

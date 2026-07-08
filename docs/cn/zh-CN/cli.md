@@ -360,7 +360,7 @@ qveris> exit
 
 ### `qveris doctor`
 
-自检诊断：验证 Node.js 版本、API 密钥配置、API 地址、API 连通性。
+面向首次调用的自检诊断：依次检查 Node.js 版本、API 密钥、区域，再用一次免费的 `discover` 探测覆盖连通性、密钥有效性、剩余积分，以及响应结构是否符合 CLI 合同。每项失败都会给出可执行的修复建议。诊断不消耗积分（discover 免费）。加 `--json` 输出机器可读结果。
 
 ### `qveris config`
 
