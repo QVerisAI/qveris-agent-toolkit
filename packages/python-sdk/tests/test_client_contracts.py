@@ -30,6 +30,33 @@ def test_qveris_config_constructor_values_override_env(monkeypatch: pytest.Monke
     assert config.base_url == "https://qveris.ai/api/v1"
 
 
+def test_qveris_config_reads_env_when_no_init_value(monkeypatch: pytest.MonkeyPatch) -> None:
+    # The env aliases must still populate the fields when no constructor value
+    # is given (the other half of the init-precedence fix for #136).
+    monkeypatch.setenv("QVERIS_API_KEY", "sk-env")
+    monkeypatch.setenv("QVERIS_BASE_URL", "https://env.example/api/v1")
+
+    config = QverisConfig()
+
+    assert config.api_key == "sk-env"
+    assert config.base_url == "https://env.example/api/v1"
+
+
+def test_qveris_config_ignores_generic_env_names(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Only the QVERIS_-prefixed names are read from the environment. The generic
+    # API_KEY / BASE_URL (very common for unrelated services) must NOT hijack the
+    # config — a footgun if the field names were exposed as env aliases (#136).
+    monkeypatch.delenv("QVERIS_API_KEY", raising=False)
+    monkeypatch.delenv("QVERIS_BASE_URL", raising=False)
+    monkeypatch.setenv("API_KEY", "sk-other-service")
+    monkeypatch.setenv("BASE_URL", "https://some-other-app.local/")
+
+    config = QverisConfig()
+
+    assert config.api_key is None
+    assert config.base_url == "https://qveris.ai/api/v1/"
+
+
 @pytest.mark.asyncio
 async def test_discover_contract_parses_tool_quality_and_billing() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
