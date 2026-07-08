@@ -126,6 +126,33 @@ function explain(result: ExecuteResponse): string {
 
 The typed client is a natural tool backend for any LLM agent framework: expose `discover` / `inspect` / `call` as tools to your model, then route the tool calls back through the client. Because `discover` returns `why_recommended` and `expected_cost`, your agent can rank and budget capabilities before calling them.
 
+## Framework integrations
+
+### Vercel AI SDK
+
+Expose the QVeris workflow as [Vercel AI SDK](https://sdk.vercel.ai) tools. `ai` and `zod` are peer dependencies (import from the `@qverisai/sdk/ai` subpath):
+
+```bash
+npm install @qverisai/sdk ai zod
+```
+
+```typescript
+import { generateText } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { Qveris } from '@qverisai/sdk';
+import { getQverisTools } from '@qverisai/sdk/ai';
+
+const qveris = new Qveris({ apiKey: process.env.QVERIS_API_KEY! });
+const { text } = await generateText({
+  model: openai('gpt-4o'),
+  tools: getQverisTools(qveris), // qveris_discover / qveris_inspect / qveris_call
+  maxSteps: 6,
+  prompt: 'Find a stock quote capability and quote AAPL.',
+});
+```
+
+The [Python SDK](python-sdk.md) ships LangChain and OpenAI Agents SDK adapters as well.
+
 ## Error handling
 
 Every failed request throws `QverisApiError` — an `Error` subclass carrying:

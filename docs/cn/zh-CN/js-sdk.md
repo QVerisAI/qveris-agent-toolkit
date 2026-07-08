@@ -126,6 +126,33 @@ function explain(result: ExecuteResponse): string {
 
 类型化客户端天然可作为任何 LLM Agent 框架的工具后端：把 `discover` / `inspect` / `call` 作为工具暴露给模型，再把工具调用路由回客户端。由于 `discover` 返回 `why_recommended` 和 `expected_cost`，你的 Agent 可以在调用前对能力进行排序和预算控制。
 
+## 框架集成
+
+### Vercel AI SDK
+
+把 QVeris 工作流暴露为 [Vercel AI SDK](https://sdk.vercel.ai) 工具。`ai` 和 `zod` 是 peer 依赖（从 `@qverisai/sdk/ai` 子路径导入）：
+
+```bash
+npm install @qverisai/sdk ai zod
+```
+
+```typescript
+import { generateText } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { Qveris } from '@qverisai/sdk';
+import { getQverisTools } from '@qverisai/sdk/ai';
+
+const qveris = new Qveris({ apiKey: process.env.QVERIS_API_KEY! });
+const { text } = await generateText({
+  model: openai('gpt-4o'),
+  tools: getQverisTools(qveris), // qveris_discover / qveris_inspect / qveris_call
+  maxSteps: 6,
+  prompt: 'Find a stock quote capability and quote AAPL.',
+});
+```
+
+[Python SDK](python-sdk.md) 还提供 LangChain 和 OpenAI Agents SDK 适配器。
+
 ## 错误处理
 
 每个失败请求都会抛出 `QverisApiError`——一个 `Error` 子类，携带：
