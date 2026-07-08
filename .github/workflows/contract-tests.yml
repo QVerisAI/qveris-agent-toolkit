@@ -15,6 +15,9 @@ on:
       - "packages/python-sdk/tests/test_openapi_contract.py"
       - "packages/js-sdk/src/**"
       - "packages/mcp/src/**"
+      - "packages/mcp/package.json"
+      - "packages/mcp/package-lock.json"
+      - "packages/mcp/tsconfig.json"
       - ".github/workflows/contract-tests.yml"
   push:
     branches:
@@ -27,6 +30,9 @@ on:
       - "packages/python-sdk/tests/test_openapi_contract.py"
       - "packages/js-sdk/src/**"
       - "packages/mcp/src/**"
+      - "packages/mcp/package.json"
+      - "packages/mcp/package-lock.json"
+      - "packages/mcp/tsconfig.json"
       - ".github/workflows/contract-tests.yml"
 
 permissions:

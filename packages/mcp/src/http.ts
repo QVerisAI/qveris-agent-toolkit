@@ -107,9 +107,14 @@ function hasFlag(argv: string[], name: string): boolean {
   return argv.some((arg) => arg === name || arg.startsWith(`${name}=`));
 }
 
+// Matches the whole IPv4 loopback range 127.0.0.0/8 (and only that) — a precise
+// address check, not a `startsWith('127.')` prefix that would also accept a
+// hostname like `127.example.com`.
+const IPV4_LOOPBACK = /^127(?:\.(?:0|[1-9]\d?|1\d\d|2[0-4]\d|25[0-5])){3}$/;
+
 function isLoopbackHost(host: string): boolean {
-  const h = host.trim().toLowerCase();
-  return h === 'localhost' || h === '::1' || h === '127.0.0.1' || h.startsWith('127.');
+  const h = host.trim().toLowerCase().replace(/^\[|\]$/g, ''); // strip IPv6 brackets
+  return h === 'localhost' || h === '::1' || IPV4_LOOPBACK.test(h);
 }
 
 /**
@@ -250,7 +255,20 @@ export async function startHttpServer(
 
   const transports = new Map<string, StreamableHTTPServerTransport>();
   const lastSeen = new Map<string, number>();
+  const inflight = new Map<string, number>(); // requests currently being handled per session
   let boundPort = config.port;
+
+  // In-flight guards keep the idle sweep from evicting a session that has an
+  // active request or a live (long-lived) SSE stream. A session is only
+  // eligible for idle eviction once it has zero in-flight requests.
+  const retain = (sessionId: string): void => {
+    inflight.set(sessionId, (inflight.get(sessionId) ?? 0) + 1);
+  };
+  const release = (sessionId: string): void => {
+    const remaining = (inflight.get(sessionId) ?? 0) - 1;
+    if (remaining > 0) inflight.set(sessionId, remaining);
+    else inflight.delete(sessionId);
+  };
 
   // The SDK matches the Host header (which includes the port) against
   // allowedHosts. Build the effective list once the real port is known so DNS
@@ -266,6 +284,7 @@ export async function startHttpServer(
 
   const evict = (sessionId: string): void => {
     lastSeen.delete(sessionId);
+    inflight.delete(sessionId);
     if (transports.get(sessionId)) transports.delete(sessionId);
   };
 
@@ -358,17 +377,35 @@ export async function startHttpServer(
           transport = await createTransport();
         }
 
-        await transport.handleRequest(req, res, body);
+        // Guard only requests against an existing session (a known id); a fresh
+        // initialize gets its id mid-handle and can't be swept in that window.
+        if (existing && typeof sessionId === 'string') {
+          retain(sessionId);
+          try {
+            await transport.handleRequest(req, res, body);
+          } finally {
+            release(sessionId);
+          }
+        } else {
+          await transport.handleRequest(req, res, body);
+        }
         return;
       }
 
       // GET (SSE stream) and DELETE (session teardown) require a live session.
       if (req.method === 'GET' || req.method === 'DELETE') {
-        if (!existing) {
+        if (!existing || typeof sessionId !== 'string') {
           writeJson(res, 404, jsonRpcError(null, -32001, 'Invalid or missing session ID'));
           return;
         }
-        await existing.handleRequest(req, res);
+        // A GET holds the SSE stream open for the session's lifetime; retaining
+        // it keeps the idle sweep from tearing down an active channel.
+        retain(sessionId);
+        try {
+          await existing.handleRequest(req, res);
+        } finally {
+          release(sessionId);
+        }
         return;
       }
 
@@ -398,10 +435,12 @@ export async function startHttpServer(
   });
 
   // Evict idle sessions so abandoned connections don't leak transports/servers.
+  // Sessions with an in-flight request or an open SSE stream are skipped so an
+  // active call is never torn down mid-flight.
   const sweep = setInterval(() => {
     const now = Date.now();
     for (const [sessionId, seen] of lastSeen) {
-      if (now - seen > config.sessionTimeoutMs) {
+      if (now - seen > config.sessionTimeoutMs && !inflight.get(sessionId)) {
         const transport = transports.get(sessionId);
         evict(sessionId);
         if (transport) void transport.close().catch(() => undefined);
@@ -422,6 +461,7 @@ export async function startHttpServer(
     }
     transports.clear();
     lastSeen.clear();
+    inflight.clear();
     await new Promise<void>((resolve) => {
       httpServer.close(() => resolve());
       // Don't wait out idle keep-alive sockets (clients pool connections and

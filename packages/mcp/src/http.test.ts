@@ -227,4 +227,23 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
       startHttpServer(config, (sessionId) => createQverisServer(undefined, sessionId)),
     ).rejects.toThrow(/non-loopback/);
   });
+
+  it('treats a 127.x hostname as non-loopback (precise address check, not a prefix)', async () => {
+    // `127.example.com` must NOT be mistaken for the 127.0.0.0/8 loopback range;
+    // it fails closed (throws before any bind is attempted).
+    const config = resolveTransportConfig(
+      { QVERIS_MCP_TRANSPORT: 'http', QVERIS_MCP_HTTP_HOST: '127.example.com', QVERIS_MCP_HTTP_PORT: '0' },
+      [],
+    );
+    await expect(
+      startHttpServer(config, (sessionId) => createQverisServer(undefined, sessionId)),
+    ).rejects.toThrow(/non-loopback/);
+  });
+
+  it('allows a non-loopback bind once a token is set', async () => {
+    await startServer({ QVERIS_MCP_HTTP_HOST: '0.0.0.0', QVERIS_MCP_HTTP_AUTH_TOKEN: 'tok' });
+    const res = await fetch(`http://127.0.0.1:${running!.port}/health`);
+    expect(res.status).toBe(200);
+    await res.text();
+  });
 });
