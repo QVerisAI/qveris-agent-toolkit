@@ -29,6 +29,12 @@ langchain = [
 openai-agents = [
     "openai-agents>=0.1.0; python_version >= '3.10'",
 ]
+# crewai requires Python >=3.10; heavy dep tree, so it is intentionally NOT in
+# `dev` — its integration test is importorskip-gated and run against an
+# on-demand install.
+crewai = [
+    "crewai>=0.80.0; python_version >= '3.10'",
+]
 dev = [
     "pytest",
     "pytest-asyncio",

@@ -297,7 +297,23 @@ result = await Runner.run(agent, "Find a stock quote capability and quote AAPL."
 await client.close()
 ```
 
-更多适配器（CrewAI、Vercel AI SDK）在路线图中。
+**CrewAI**
+
+```bash
+pip install qveris[crewai]
+```
+
+```python
+from crewai import Agent
+from qveris import QverisClient
+from qveris.integrations.crewai import get_qveris_tools
+
+client = QverisClient()
+agent = Agent(role="Researcher", goal="...", backstory="...", tools=get_qveris_tools(client))
+# 运行你的 crew，然后 await client.close()
+```
+
+CrewAI 同步执行工具；适配器内部桥接到异步 client。TypeScript SDK 提供 Vercel AI SDK 适配器。
 
 ### 自定义 LLM provider
 
@@ -342,6 +358,7 @@ agent = Agent(llm_provider=MyProvider())
 | `agent_loop_integration.py` | LLM agent 循环集成 |
 | `langchain_integration.py` | 把 QVeris 能力作为 LangChain 工具（`qveris[langchain]`） |
 | `openai_agents_integration.py` | 把 QVeris 能力作为 OpenAI Agents SDK 工具（`qveris[openai-agents]`） |
+| `crewai_integration.py` | 把 QVeris 能力作为 CrewAI 工具（`qveris[crewai]`） |
 
 设置 `QVERIS_API_KEY` 后，能力示例会运行 `discover`/`inspect`；仅当设置 `RUN_QVERIS_CALLS=1` 时才执行 `call`。运行前请确保已设置 `QVERIS_BASE_URL=https://qveris.cn/api/v1`。
 
