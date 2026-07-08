@@ -115,6 +115,27 @@ async def test_call_span_marked_error_on_http_failure(spans: InMemorySpanExporte
 
 
 @pytest.mark.asyncio
+async def test_broken_tracer_does_not_break_the_call(monkeypatch: pytest.MonkeyPatch) -> None:
+    # A misbehaving tracer provider must never break the traced operation.
+    class BrokenTracer:
+        def start_as_current_span(self, *args, **kwargs):
+            raise RuntimeError("sampler exploded")
+
+    monkeypatch.setattr(observability, "_tracer", BrokenTracer())
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"execution_id": "e1", "success": True})
+
+    client = make_client(handler)
+    try:
+        result = await client.call("t1", {"x": 1}, search_id="s1")
+    finally:
+        await client.close()
+
+    assert result.execution_id == "e1"  # call succeeded despite the broken tracer
+
+
+@pytest.mark.asyncio
 async def test_tracing_disabled_is_a_noop(monkeypatch: pytest.MonkeyPatch) -> None:
     # Simulate opentelemetry not installed: the client must still work unchanged.
     monkeypatch.setattr(observability, "_tracer", None)
