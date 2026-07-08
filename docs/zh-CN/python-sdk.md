@@ -253,6 +253,27 @@ if handled and not is_error:
     ...  # 把 result 回传给模型
 ```
 
+### 框架集成
+
+把 QVeris 的 discover/inspect/call 工作流暴露为主流 Agent 框架的工具。适配器惰性导入各自框架，因此基础 `qveris` 包不依赖它们。
+
+**LangChain**
+
+```bash
+pip install qveris[langchain]
+```
+
+```python
+from qveris import QverisClient
+from qveris.integrations.langchain import get_qveris_tools
+
+client = QverisClient()
+tools = get_qveris_tools(client)  # 3 个异步工具：qveris_discover / qveris_inspect / qveris_call
+# 把 `tools` 绑定到 LangChain 或 LangGraph agent，用完 `await client.close()`
+```
+
+工具是异步的（用 `ainvoke` / 异步 agent executor）。更多适配器（CrewAI、OpenAI Agents SDK）在路线图中。
+
 ### 自定义 LLM provider
 
 默认 `Agent()` 使用内置的 OpenAI 兼容 provider。如需对接其他模型 API，实现 `LLMProvider` 并传入：
@@ -294,6 +315,7 @@ agent = Agent(llm_provider=MyProvider())
 | `explainable_routing.py` | 基于 `why_recommended` / `expected_cost` 的成本感知能力选型 |
 | `budget_guard.py` | 用 `Agent(budget_credits=...)` 设置会话级积分预算 |
 | `agent_loop_integration.py` | LLM agent 循环集成 |
+| `langchain_integration.py` | 把 QVeris 能力作为 LangChain 工具（`qveris[langchain]`） |
 
 设置 `QVERIS_API_KEY` 后，能力示例会运行 `discover`/`inspect`；仅当设置 `RUN_QVERIS_CALLS=1` 时才执行 `call`。
 

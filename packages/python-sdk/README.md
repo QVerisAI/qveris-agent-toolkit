@@ -153,7 +153,7 @@ agent = Agent(llm_provider=MyProvider())
 
 ## Examples
 
-Seven runnable examples are included under [`examples/`](examples):
+Eight runnable examples are included under [`examples/`](examples):
 
 | Example | Scenario |
 |---------|----------|
@@ -164,6 +164,7 @@ Seven runnable examples are included under [`examples/`](examples):
 | `explainable_routing.py` | Cost-aware capability selection with `why_recommended` / `expected_cost` |
 | `budget_guard.py` | Per-session credit budget with `Agent(budget_credits=...)` |
 | `agent_loop_integration.py` | LLM agent loop integration |
+| `langchain_integration.py` | QVeris capabilities as LangChain tools (`qveris[langchain]`) |
 
 The capability examples run `discover` and `inspect` when `QVERIS_API_KEY` is set. They only execute `call` when `RUN_QVERIS_CALLS=1` is set.
 
