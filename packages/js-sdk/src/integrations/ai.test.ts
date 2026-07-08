@@ -67,6 +67,25 @@ describe('getQverisTools (Vercel AI SDK)', () => {
     expect(out.execution_id).toBe('e1');
   });
 
+  it('throws when given no valid client', () => {
+    expect(() => getQverisTools(undefined as never)).toThrow(TypeError);
+    expect(() => getQverisTools({} as never)).toThrow(/valid Qveris client/);
+  });
+
+  it('call omits search_id when absent and defaults params to {}', async () => {
+    const client = new FakeQveris();
+    const tools = getQverisTools(client as never);
+
+    await invoke(tools.qveris_call, { tool_id: 't1' });
+
+    expect(client.calls[0]).toEqual({
+      method: 'call',
+      toolId: 't1',
+      options: { parameters: {} },
+    });
+    expect('searchId' in (client.calls[0].options as object)).toBe(false);
+  });
+
   it('inspect passes tool_ids and searchId', async () => {
     const client = new FakeQveris();
     const tools = getQverisTools(client as never);

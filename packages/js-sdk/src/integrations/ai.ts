@@ -40,6 +40,14 @@ import type { Qveris } from '../client.js';
  *   `qveris_call`, ready to pass to `generateText`/`streamText`.
  */
 export function getQverisTools(qveris: Qveris, options: { sessionId?: string } = {}) {
+  if (
+    !qveris ||
+    typeof qveris.discover !== 'function' ||
+    typeof qveris.inspect !== 'function' ||
+    typeof qveris.call !== 'function'
+  ) {
+    throw new TypeError('getQverisTools requires a valid Qveris client instance.');
+  }
   const { sessionId } = options;
 
   return {
@@ -68,18 +76,21 @@ export function getQverisTools(qveris: Qveris, options: { sessionId?: string } =
       description: 'Call a selected QVeris capability with parameters. May consume credits.',
       inputSchema: z.object({
         tool_id: z.string().describe('The capability tool_id, from discover or inspect.'),
-        search_id: z.string().describe('The search_id from the discover response.'),
-        params_to_tool: z.record(z.string(), z.unknown()).describe('Parameters to pass to the capability.'),
+        params_to_tool: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe('Parameters to pass to the capability.'),
+        search_id: z.string().optional().describe('The search_id from the discover response, if available.'),
         max_response_size: z
           .number()
           .int()
           .optional()
           .describe('Max response size in bytes; -1 means unlimited.'),
       }),
-      execute: async ({ tool_id, search_id, params_to_tool, max_response_size }) =>
+      execute: async ({ tool_id, search_id, params_to_tool = {}, max_response_size }) =>
         qveris.call(tool_id, {
           parameters: params_to_tool,
-          searchId: search_id,
+          ...(search_id && { searchId: search_id }),
           ...(max_response_size !== undefined && { maxResponseSize: max_response_size }),
           ...(sessionId && { sessionId }),
         }),
