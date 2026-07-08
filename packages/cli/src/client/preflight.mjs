@@ -1,5 +1,5 @@
 import { resolve } from "../config/resolve.mjs";
-import { resolveBaseUrl } from "../config/region.mjs";
+import { resolveBaseUrl, getSiteUrl } from "../config/region.mjs";
 import { discoverTools } from "./api.mjs";
 import { ERROR_CODES } from "../errors/codes.mjs";
 
@@ -50,7 +50,7 @@ export function localPreflight({ apiKeyFlag, baseUrlFlag, nodeVersion = process.
   const checks = [nodeCheck(nodeVersion)];
 
   const { value: apiKey, source } = resolve("api_key", apiKeyFlag);
-  if (!apiKey || !apiKey.trim()) {
+  if (!apiKey || typeof apiKey !== "string" || !apiKey.trim()) {
     checks.push(check("api_key", "fail", ERROR_CODES.AUTH_MISSING_KEY.message, ERROR_CODES.AUTH_MISSING_KEY.hint));
     return { checks, ok: false, apiKey: null, baseUrl: null, region: null };
   }
@@ -87,8 +87,9 @@ export async function runPreflight({
   try {
     response = await probe({ apiKey: local.apiKey, baseUrl: local.baseUrl });
   } catch (err) {
-    const hint = err.hint || (err.code ? ERROR_CODES[err.code]?.hint : null) || null;
-    checks.push(check(codeToName(err.code), "fail", err.message, hint));
+    // A diagnostic must never crash: anything (even a non-Error) can be thrown.
+    const hint = err?.hint || (err?.code ? ERROR_CODES[err.code]?.hint : null) || null;
+    checks.push(check(codeToName(err?.code), "fail", err?.message || String(err), hint));
     return { checks, ok: false, contractVersion: CLI_CONTRACT_VERSION };
   }
 
@@ -101,7 +102,7 @@ export async function runPreflight({
         "credits",
         positive ? "ok" : "warn",
         `${response.remaining_credits} credits remaining`,
-        positive ? null : "Purchase credits at https://qveris.ai/pricing",
+        positive ? null : `Purchase credits at ${getSiteUrl(local.region, local.baseUrl)}/pricing`,
       ),
     );
   }

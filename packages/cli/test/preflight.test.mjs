@@ -42,6 +42,28 @@ test("runPreflight: zero credits warns (not fails) with a purchase hint", async 
   assert.match(credits.hint, /pricing/);
 });
 
+test("runPreflight: zero-credits hint is region-aware (CN key → qveris.cn)", async () => {
+  const probe = async () => ({ search_id: "s1", results: [], remaining_credits: 0 });
+  const { checks } = await runPreflight({ apiKeyFlag: "sk-cn-test", probe });
+
+  assert.match(byName(checks).credits.hint, /qveris\.cn\/pricing/);
+});
+
+test("runPreflight: a non-string API key is treated as missing, not crashed", async () => {
+  let probed = false;
+  const { checks, ok } = await runPreflight({
+    apiKeyFlag: 12345, // e.g. a numeric value parsed from config
+    probe: async () => {
+      probed = true;
+      return {};
+    },
+  });
+
+  assert.equal(ok, false);
+  assert.equal(probed, false);
+  assert.equal(byName(checks).api_key.status, "fail");
+});
+
 test("runPreflight: invalid key becomes an actionable fail from the error knowledge base", async () => {
   const probe = async () => {
     throw new CliError("AUTH_INVALID_KEY", "Authentication failed");
