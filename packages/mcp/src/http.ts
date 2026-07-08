@@ -284,12 +284,15 @@ export async function startHttpServer(
     );
   }
   // The reserved public paths are matched before the transport path; a custom
-  // QVERIS_MCP_HTTP_PATH set to one of them would shadow the MCP endpoint.
-  const reservedPaths = cardInfo ? ['/health', CATALOG_PATH, `${config.path}/server-card`] : ['/health'];
+  // QVERIS_MCP_HTTP_PATH set to one of them would shadow the MCP endpoint, so
+  // fail fast rather than start a silently-broken server (consistent with the
+  // fail-closed auth check above). The card path (config.path + '/server-card')
+  // can't equal config.path, so it isn't a collision candidate.
+  const reservedPaths = cardInfo ? ['/health', CATALOG_PATH] : ['/health'];
   if (reservedPaths.includes(config.path)) {
-    logger(
-      `[qveris] WARNING: QVERIS_MCP_HTTP_PATH="${config.path}" collides with a reserved ` +
-        'endpoint (health/discovery) and would shadow the MCP transport; choose a different path.\n',
+    throw new Error(
+      `Refusing to start: QVERIS_MCP_HTTP_PATH="${config.path}" collides with a reserved ` +
+        `endpoint (${reservedPaths.join(', ')}) and would shadow the MCP transport; choose a different path.`,
     );
   }
 

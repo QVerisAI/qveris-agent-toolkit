@@ -305,6 +305,16 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
     await res.text();
   });
 
+  it('refuses to start when the HTTP path collides with a reserved endpoint', async () => {
+    const config = resolveTransportConfig(
+      { QVERIS_MCP_TRANSPORT: 'http', QVERIS_MCP_HTTP_PORT: '0', QVERIS_MCP_HTTP_PATH: '/health' },
+      [],
+    );
+    await expect(
+      startHttpServer(config, (sessionId) => createQverisServer(undefined, sessionId), CARD_INFO),
+    ).rejects.toThrow(/reserved endpoint/);
+  });
+
   it('does not serve discovery endpoints when no card info is provided', async () => {
     await startServer(); // no cardInfo
     const res = await fetch(`http://127.0.0.1:${running!.port}/mcp/server-card`, {
