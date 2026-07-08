@@ -50,9 +50,14 @@ describe('resolveTransportConfig', () => {
     expect(config.sessionTimeoutMs).toBe(5 * 60 * 1000);
   });
 
-  it('falls back to the default port for an out-of-range port', () => {
+  it('falls back to the default port for an out-of-range, empty, or valueless port', () => {
     expect(resolveTransportConfig({ QVERIS_MCP_HTTP_PORT: '99999' }, []).port).toBe(3000);
     expect(resolveTransportConfig({}, ['--port', '-1']).port).toBe(3000);
+    expect(resolveTransportConfig({ QVERIS_MCP_HTTP_PORT: '' }, []).port).toBe(3000);
+    // A bare `--http --port` (no value) must not become an ephemeral port 0.
+    expect(resolveTransportConfig({}, ['--http', '--port']).port).toBe(3000);
+    // But an explicit 0 (ephemeral bind) is still honored.
+    expect(resolveTransportConfig({ QVERIS_MCP_HTTP_PORT: '0' }, []).port).toBe(0);
   });
 
   it('reads the inbound auth token and body/timeout overrides', () => {

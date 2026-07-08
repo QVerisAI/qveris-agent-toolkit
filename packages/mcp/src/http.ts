@@ -17,7 +17,7 @@
  * @module @qverisai/mcp/http
  */
 
-import { randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import {
   createServer,
   type IncomingMessage,
@@ -150,7 +150,11 @@ export function resolveTransportConfig(
   const rawPort = portFlag || envPort;
   const parsedPort = Number(rawPort);
   const port =
-    rawPort !== undefined && Number.isInteger(parsedPort) && parsedPort >= 0 && parsedPort <= MAX_PORT
+    rawPort !== undefined &&
+    rawPort.trim() !== '' && // e.g. a bare `--port` -> '' -> Number('') === 0; fall back instead
+    Number.isInteger(parsedPort) &&
+    parsedPort >= 0 &&
+    parsedPort <= MAX_PORT
       ? parsedPort
       : DEFAULT_PORT;
 
@@ -207,10 +211,12 @@ function bearerMatches(authHeader: string | undefined, token: string): boolean {
   if (!authHeader) return false;
   const prefix = 'bearer ';
   if (!authHeader.toLowerCase().startsWith(prefix)) return false;
-  const provided = Buffer.from(authHeader.slice(prefix.length).trim());
-  const expected = Buffer.from(token);
-  if (provided.length !== expected.length) return false;
-  return timingSafeEqual(provided, expected);
+  const provided = authHeader.slice(prefix.length).trim();
+  // Compare fixed-length SHA-256 digests so the comparison is constant-time
+  // *and* doesn't leak the expected token's length via an early length check.
+  const providedHash = createHash('sha256').update(provided).digest();
+  const expectedHash = createHash('sha256').update(token).digest();
+  return timingSafeEqual(providedHash, expectedHash);
 }
 
 /** Handle to a running HTTP server. */
@@ -349,8 +355,12 @@ export async function startHttpServer(
           body = await readJsonBody(req, config.maxBodyBytes);
         } catch (err) {
           if (err instanceof BodyTooLargeError) {
-            req.resume(); // drain the remainder of the oversized body
-            writeJson(res, 413, jsonRpcError(null, -32600, 'Request body too large'));
+            // Don't drain the rest of an oversized upload — terminate the
+            // connection so an attacker can't keep streaming a huge body.
+            writeJson(res, 413, jsonRpcError(null, -32600, 'Request body too large'), {
+              Connection: 'close',
+            });
+            req.destroy();
             return;
           }
           if (err instanceof JsonParseError) {
@@ -432,6 +442,12 @@ export async function startHttpServer(
       if (address) boundPort = address.port;
       resolve();
     });
+  });
+
+  // Keep a persistent error handler so a post-startup server error (e.g. EMFILE)
+  // is logged instead of crashing the process as an unhandled 'error' event.
+  httpServer.on('error', (err: Error) => {
+    logger(`[qveris] HTTP server error: ${err.message}\n`);
   });
 
   // Evict idle sessions so abandoned connections don't leak transports/servers.
