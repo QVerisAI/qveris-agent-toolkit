@@ -153,7 +153,7 @@ agent = Agent(llm_provider=MyProvider())
 
 ## Examples
 
-Nine runnable examples are included under [`examples/`](examples):
+Ten runnable examples are included under [`examples/`](examples):
 
 | Example | Scenario |
 |---------|----------|
@@ -166,6 +166,7 @@ Nine runnable examples are included under [`examples/`](examples):
 | `agent_loop_integration.py` | LLM agent loop integration |
 | `langchain_integration.py` | QVeris capabilities as LangChain tools (`qveris[langchain]`) |
 | `openai_agents_integration.py` | QVeris capabilities as OpenAI Agents SDK tools (`qveris[openai-agents]`) |
+| `crewai_integration.py` | QVeris capabilities as CrewAI tools (`qveris[crewai]`) |
 
 The capability examples run `discover` and `inspect` when `QVERIS_API_KEY` is set. They only execute `call` when `RUN_QVERIS_CALLS=1` is set.
 

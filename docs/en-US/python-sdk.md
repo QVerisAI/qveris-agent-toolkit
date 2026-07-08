@@ -291,7 +291,24 @@ result = await Runner.run(agent, "Find a stock quote capability and quote AAPL."
 await client.close()
 ```
 
-More adapters (CrewAI, Vercel AI SDK) are on the roadmap.
+**CrewAI**
+
+```bash
+pip install qveris[crewai]
+```
+
+```python
+from crewai import Agent
+from qveris import QverisClient
+from qveris.integrations.crewai import get_qveris_tools, aclose
+
+client = QverisClient()
+agent = Agent(role="Researcher", goal="...", backstory="...", tools=get_qveris_tools(client))
+# run your crew synchronously (crew.kickoff()), then:
+aclose(client)
+```
+
+CrewAI runs tools synchronously; these bridge to the async client on one dedicated event loop. Close the client with `aclose(client)` (not `await client.close()`), since its connections are bound to that loop. The TypeScript SDK ships a Vercel AI SDK adapter.
 
 ### Custom LLM providers
 
@@ -336,6 +353,7 @@ Runnable examples live under [`packages/python-sdk/examples/`](https://github.co
 | `agent_loop_integration.py` | LLM agent loop integration |
 | `langchain_integration.py` | QVeris capabilities as LangChain tools (`qveris[langchain]`) |
 | `openai_agents_integration.py` | QVeris capabilities as OpenAI Agents SDK tools (`qveris[openai-agents]`) |
+| `crewai_integration.py` | QVeris capabilities as CrewAI tools (`qveris[crewai]`) |
 
 Capability examples run `discover`/`inspect` when `QVERIS_API_KEY` is set, and only execute `call` when `RUN_QVERIS_CALLS=1`.
 
