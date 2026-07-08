@@ -24,12 +24,18 @@ dependencies = [
 langchain = [
     "langchain-core>=0.3.0; python_version >= '3.9'",
 ]
+# openai-agents requires Python >=3.10; the marker keeps the package resolvable
+# on older interpreters (the integration and its tests are unavailable there).
+openai-agents = [
+    "openai-agents>=0.1.0; python_version >= '3.10'",
+]
 dev = [
     "pytest",
     "pytest-asyncio",
     "python-dotenv",
     "rich>=13.0.0",
     "langchain-core>=0.3.0; python_version >= '3.9'",  # for the LangChain integration tests
+    "openai-agents>=0.1.0; python_version >= '3.10'",  # for the OpenAI Agents integration tests
     # Pinned so regenerated models stay byte-stable with the checked-in
     # qveris/generated/openapi_models.py and the drift CI (issue #37 phase 2).
     "datamodel-code-generator==0.26.3",

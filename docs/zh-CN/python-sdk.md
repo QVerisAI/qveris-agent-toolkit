@@ -272,7 +272,26 @@ tools = get_qveris_tools(client)  # 3 个异步工具：qveris_discover / qveris
 # 把 `tools` 绑定到 LangChain 或 LangGraph agent，用完 `await client.close()`
 ```
 
-工具是异步的（用 `ainvoke` / 异步 agent executor）。更多适配器（CrewAI、OpenAI Agents SDK）在路线图中。
+工具是异步的（用 `ainvoke` / 异步 agent executor）。
+
+**OpenAI Agents SDK**
+
+```bash
+pip install qveris[openai-agents]
+```
+
+```python
+from agents import Agent, Runner
+from qveris import QverisClient
+from qveris.integrations.openai_agents import get_qveris_tools
+
+client = QverisClient()
+agent = Agent(name="Assistant", tools=get_qveris_tools(client))
+result = await Runner.run(agent, "Find a stock quote capability and quote AAPL.")
+await client.close()
+```
+
+更多适配器（CrewAI、Vercel AI SDK）在路线图中。
 
 ### 自定义 LLM provider
 
@@ -316,6 +335,7 @@ agent = Agent(llm_provider=MyProvider())
 | `budget_guard.py` | 用 `Agent(budget_credits=...)` 设置会话级积分预算 |
 | `agent_loop_integration.py` | LLM agent 循环集成 |
 | `langchain_integration.py` | 把 QVeris 能力作为 LangChain 工具（`qveris[langchain]`） |
+| `openai_agents_integration.py` | 把 QVeris 能力作为 OpenAI Agents SDK 工具（`qveris[openai-agents]`） |
 
 设置 `QVERIS_API_KEY` 后，能力示例会运行 `discover`/`inspect`；仅当设置 `RUN_QVERIS_CALLS=1` 时才执行 `call`。
 

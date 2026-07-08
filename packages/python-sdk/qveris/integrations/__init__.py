@@ -7,4 +7,5 @@ package never depends on them.
 
 Available:
     - :mod:`qveris.integrations.langchain` — LangChain tools (``pip install qveris[langchain]``)
+    - :mod:`qveris.integrations.openai_agents` — OpenAI Agents SDK tools (``pip install qveris[openai-agents]``)
 """
