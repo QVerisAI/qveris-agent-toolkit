@@ -54,16 +54,16 @@ class _CallArgs(BaseModel):
 
 
 def get_qveris_tools(
-    client: Optional[QverisClient] = None,
+    client: QverisClient,
     *,
     session_id: Optional[str] = None,
 ) -> List[Any]:
     """Return LangChain tools for the QVeris discover/inspect/call workflow.
 
     Args:
-        client: A ``QverisClient`` to route calls through. If omitted, one is
-            created from the environment (``QVERIS_API_KEY``); you are then
-            responsible for closing it (``await client.close()``).
+        client: The ``QverisClient`` to route calls through. You own its
+            lifecycle — the tools hold a reference to it, so keep it open for
+            as long as the tools are used and ``await client.close()`` when done.
         session_id: Optional session id for correlation/pricing context.
 
     Returns:
@@ -78,7 +78,7 @@ def get_qveris_tools(
     except ImportError as exc:  # pragma: no cover - exercised via install extras
         raise ImportError(_INSTALL_HINT) from exc
 
-    qveris = client or QverisClient()
+    qveris = client
 
     async def _route(name: str, args: Dict[str, Any]) -> str:
         result, _is_error, _handled = await qveris.handle_tool_call(name, args, session_id=session_id)
