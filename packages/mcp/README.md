@@ -296,7 +296,11 @@ npx -y @qverisai/mcp
 - **Inbound auth:** set `QVERIS_MCP_HTTP_AUTH_TOKEN` to require `Authorization: Bearer <token>` on the MCP endpoint. The server **refuses to start** when binding a non-loopback host without a token, unless you set `QVERIS_MCP_HTTP_ALLOW_UNAUTHENTICATED=true` to delegate auth to an external proxy/gateway. Your `QVERIS_API_KEY` is the server's *outbound* credential to QVeris — it is **not** an inbound check, so anyone reaching an unauthenticated endpoint would spend your credits.
 - DNS-rebinding protection is **on by default** (localhost + the bound host/port are allow-listed). When exposing the server publicly, add your public host via `QVERIS_MCP_ALLOWED_HOSTS`.
 - Requests are capped at 4 MiB by default (`QVERIS_MCP_MAX_BODY_BYTES`), and idle sessions are evicted after 5 minutes (`QVERIS_MCP_SESSION_TIMEOUT_MS`).
-- Full OAuth 2.1 and a `.well-known` MCP Server Card are tracked as follow-ups in [#107](https://github.com/QVerisAI/qveris-agent-toolkit/issues/107).
+- **Discovery:** registries and crawlers can learn about the server without connecting:
+  - **Server Card** at `GET {path}/server-card` (default `/mcp/server-card`), media type `application/mcp-server-card+json` — server identity, version, and the remote endpoint.
+  - **MCP Catalog** at `GET /.well-known/mcp/catalog.json` — a site-wide index pointing at the Server Card.
+  - Both are public (unauthenticated, CORS-enabled), even when an auth token is set. Behind a TLS proxy, set `QVERIS_MCP_PUBLIC_URL` (or send `X-Forwarded-Proto`) so the advertised URLs use your public origin.
+- Full OAuth 2.1 authorization is tracked as a follow-up in [#107](https://github.com/QVerisAI/qveris-agent-toolkit/issues/107).
 
 ## Environment Variables
 
@@ -317,6 +321,7 @@ npx -y @qverisai/mcp
 | `QVERIS_MCP_HTTP_ALLOW_UNAUTHENTICATED` | | `true` to allow a non-loopback bind without a token (auth delegated externally) |
 | `QVERIS_MCP_MAX_BODY_BYTES` | | Max request body size in bytes (default `4194304`) |
 | `QVERIS_MCP_SESSION_TIMEOUT_MS` | | Idle session TTL in ms (default `300000`) |
+| `QVERIS_MCP_PUBLIC_URL` | | Public origin advertised in discovery documents (e.g. `https://mcp.example.com`) |
 
 ## Region
 
