@@ -27,6 +27,7 @@ thread ``search_id`` from discover into inspect/call.
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 import json
 import threading
 from typing import Any, Coroutine, Dict, List, Optional, Type
@@ -61,8 +62,12 @@ class _BridgeLoop:
                 self._loop = loop
             return self._loop
 
+    def submit(self, coro: Coroutine[Any, Any, Any]) -> "concurrent.futures.Future[Any]":
+        """Schedule a coroutine on the bridge loop; return its concurrent Future."""
+        return asyncio.run_coroutine_threadsafe(coro, self._ensure())
+
     def run(self, coro: Coroutine[Any, Any, Any]) -> Any:
-        return asyncio.run_coroutine_threadsafe(coro, self._ensure()).result()
+        return self.submit(coro).result()
 
 
 _BRIDGE = _BridgeLoop()
@@ -71,6 +76,16 @@ _BRIDGE = _BridgeLoop()
 def _run_sync(coro: Coroutine[Any, Any, Any]) -> Any:
     """Run an async coroutine on the shared CrewAI bridge loop and block for it."""
     return _BRIDGE.run(coro)
+
+
+async def _run_async(coro: Coroutine[Any, Any, Any]) -> Any:
+    """Await a coroutine on the shared bridge loop from within another loop.
+
+    Used by the tools' ``_arun`` path (CrewAI ``kickoff_async``): the work still
+    runs on the one bridge loop the client is bound to, so ``aclose`` and the
+    sync path stay consistent, while the caller's loop is not blocked.
+    """
+    return await asyncio.wrap_future(_BRIDGE.submit(coro))
 
 
 def aclose(client: QverisClient) -> None:
@@ -95,8 +110,8 @@ class _InspectArgs(BaseModel):
 
 class _CallArgs(BaseModel):
     tool_id: str = Field(description="The capability tool_id, from discover or inspect.")
-    search_id: str = Field(description="The search_id from the discover response.")
     params_to_tool: Dict[str, Any] = Field(description="Parameters to pass to the capability.")
+    search_id: Optional[str] = Field(default=None, description="The search_id from the discover response, if available.")
     max_response_size: Optional[int] = Field(default=None, description="Max response size in bytes; -1 means unlimited.")
 
 
@@ -129,6 +144,19 @@ def get_qveris_tools(
         result, _is_error, _handled = await client.handle_tool_call(name, args, session_id=session_id)
         return json.dumps(result, default=str)
 
+    def _call_args(
+        tool_id: str,
+        params_to_tool: Dict[str, Any],
+        search_id: Optional[str],
+        max_response_size: Optional[int],
+    ) -> Dict[str, Any]:
+        args: Dict[str, Any] = {"tool_id": tool_id, "params_to_tool": params_to_tool}
+        if search_id is not None:
+            args["search_id"] = search_id
+        if max_response_size is not None:
+            args["max_response_size"] = max_response_size
+        return args
+
     class QverisDiscoverTool(BaseTool):
         name: str = "qveris_discover"
         description: str = (
@@ -139,6 +167,9 @@ def get_qveris_tools(
         def _run(self, query: str, limit: int = 20) -> str:
             return _run_sync(_route("discover", {"query": query, "limit": limit}))
 
+        async def _arun(self, query: str, limit: int = 20) -> str:
+            return await _run_async(_route("discover", {"query": query, "limit": limit}))
+
     class QverisInspectTool(BaseTool):
         name: str = "qveris_inspect"
         description: str = "Inspect one or more QVeris capabilities by tool_id before calling them. Free."
@@ -146,6 +177,9 @@ def get_qveris_tools(
 
         def _run(self, tool_ids: List[str], search_id: Optional[str] = None) -> str:
             return _run_sync(_route("inspect", {"tool_ids": tool_ids, "search_id": search_id}))
+
+        async def _arun(self, tool_ids: List[str], search_id: Optional[str] = None) -> str:
+            return await _run_async(_route("inspect", {"tool_ids": tool_ids, "search_id": search_id}))
 
     class QverisCallTool(BaseTool):
         name: str = "qveris_call"
@@ -155,17 +189,19 @@ def get_qveris_tools(
         def _run(
             self,
             tool_id: str,
-            search_id: str,
             params_to_tool: Dict[str, Any],
+            search_id: Optional[str] = None,
             max_response_size: Optional[int] = None,
         ) -> str:
-            args: Dict[str, Any] = {
-                "tool_id": tool_id,
-                "search_id": search_id,
-                "params_to_tool": params_to_tool,
-            }
-            if max_response_size is not None:
-                args["max_response_size"] = max_response_size
-            return _run_sync(_route("call", args))
+            return _run_sync(_route("call", _call_args(tool_id, params_to_tool, search_id, max_response_size)))
+
+        async def _arun(
+            self,
+            tool_id: str,
+            params_to_tool: Dict[str, Any],
+            search_id: Optional[str] = None,
+            max_response_size: Optional[int] = None,
+        ) -> str:
+            return await _run_async(_route("call", _call_args(tool_id, params_to_tool, search_id, max_response_size)))
 
     return [QverisDiscoverTool(), QverisInspectTool(), QverisCallTool()]

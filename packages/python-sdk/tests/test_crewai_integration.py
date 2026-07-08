@@ -96,6 +96,43 @@ def test_all_tool_calls_run_on_one_shared_event_loop() -> None:
     assert len(set(loop_ids)) == 1  # all three on one stable bridge loop
 
 
+def test_call_tool_omits_absent_search_id() -> None:
+    client = FakeClient()
+    call = _tool(get_qveris_tools(client), "qveris_call")
+
+    call._run(tool_id="t1", params_to_tool={})
+
+    assert "search_id" not in client.calls[0]["args"]
+    assert client.calls[0]["args"] == {"tool_id": "t1", "params_to_tool": {}}
+
+
+def test_arun_dispatches_work_onto_the_bridge_loop() -> None:
+    """CrewAI's async path (_arun / kickoff_async) must still run client work on
+    the one bridge loop the persistent client is bound to — not the caller's
+    loop — so aclose and the sync path stay consistent.
+    """
+    loop_ids: List[int] = []
+
+    class LoopRecordingClient:
+        async def handle_tool_call(self, func_name, func_args, session_id=None):
+            loop_ids.append(id(asyncio.get_running_loop()))
+            return {"ok": True}, False, True
+
+    discover = _tool(get_qveris_tools(LoopRecordingClient()), "qveris_discover")
+    discover._run(query="x")  # sync path records the bridge loop
+    bridge_loop_id = loop_ids[0]
+
+    async def drive() -> str:
+        # This coroutine runs on a *different* loop (asyncio.run); _arun must
+        # not execute the client on it.
+        return await discover._arun(query="y")
+
+    asyncio.run(drive())
+
+    assert len(loop_ids) == 2
+    assert loop_ids[1] == bridge_loop_id
+
+
 def test_aclose_runs_client_close_on_the_bridge_loop() -> None:
     closed_on: Dict[str, Any] = {}
 
