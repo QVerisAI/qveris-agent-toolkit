@@ -56,5 +56,8 @@ describe('resolveMaxRetries', () => {
     expect(resolveMaxRetries('-3')).toBe(0);
     expect(resolveMaxRetries('2.9')).toBe(2);
     expect(resolveMaxRetries('nope')).toBe(DEFAULT_MAX_RETRIES);
+    // An env var set to '' must fall back to the default, not disable retries.
+    expect(resolveMaxRetries('')).toBe(DEFAULT_MAX_RETRIES);
+    expect(resolveMaxRetries('  ')).toBe(DEFAULT_MAX_RETRIES);
   });
 });
