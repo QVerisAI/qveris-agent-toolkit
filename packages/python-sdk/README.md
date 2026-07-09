@@ -119,6 +119,19 @@ Use the SDK at the level that matches your application:
 - Final text only: use `Agent.run_to_completion(messages)`.
 - Bring your own loop: pass `DISCOVER_TOOL_DEF`, `INSPECT_TOOL_DEF`, and `CALL_TOOL_DEF` to your LLM provider, then route tool calls through `QverisClient.handle_tool_call(...)`.
 
+## Rate limiting & retries
+
+The client transparently retries rate-limited (`429`) and transient (`503`) responses: it honors the `Retry-After` header when present, otherwise backs off exponentially with full jitter. Each sleep is capped and the number of retries is bounded, so a call never hangs indefinitely.
+
+```python
+# Default is 3 retries; tune via config or QVERIS_MAX_RETRIES.
+client = QverisClient(QverisConfig(max_retries=5))
+# ... after some calls under load:
+print(client.rate_limit_retries)  # how many times it backed off (pressure, not failures)
+```
+
+Set `max_retries=0` to disable automatic retrying. Rate-limit backoff is retried pressure rather than failure — inspect `client.rate_limit_retries` to observe it instead of treating the retried `429`s as errors.
+
 ## Custom LLM Providers
 
 The default `Agent()` uses the built-in OpenAI-compatible provider. For non-OpenAI-compatible model APIs, implement `LLMProvider` and pass it to `Agent`:

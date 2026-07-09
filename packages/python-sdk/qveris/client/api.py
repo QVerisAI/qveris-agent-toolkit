@@ -46,6 +46,7 @@ from ..observability import (
     start_span,
 )
 from ..types import CreditsLedgerResponse, SearchResponse, ToolExecutionResponse, UsageHistoryResponse
+from .retry import RetryTransport
 
 
 def _pre_settlement_credits(response: ToolExecutionResponse) -> Optional[float]:
@@ -67,13 +68,30 @@ class QverisClient:
         if self.config.api_key:
             self.headers["Authorization"] = f"Bearer {self.config.api_key}"
 
-        # httpx automatically respects HTTP_PROXY/HTTPS_PROXY env vars.
+        # httpx automatically respects HTTP_PROXY/HTTPS_PROXY env vars. Wrap the
+        # default transport so rate-limited (429) / transient (503) responses are
+        # retried (Retry-After / backoff) instead of failing the caller.
         self.base_url = self.config.base_url.rstrip("/") + "/"
+        self._retry_transport = RetryTransport(
+            httpx.AsyncHTTPTransport(),
+            max_retries=self.config.max_retries,
+        )
         self.client = httpx.AsyncClient(
             base_url=self.base_url,
             headers=self.headers,
             timeout=60.0,
+            transport=self._retry_transport,
         )
+
+    @property
+    def rate_limit_retries(self) -> int:
+        """How many times the client has backed off on a 429/503 so far.
+
+        Rate-limit backoff is retried pressure, not failure — surface this
+        rather than counting the retried responses as errors.
+        """
+        transport = getattr(self, "_retry_transport", None)
+        return transport.retries if transport is not None else 0
 
     def _debug(self, message: str):
         """Print debug message if callback is set."""
