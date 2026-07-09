@@ -45,6 +45,9 @@ test("resolveMaxRetries defaults, clamps, and floors", () => {
   assert.equal(resolveMaxRetries("-3"), 0);
   assert.equal(resolveMaxRetries("2.9"), 2);
   assert.equal(resolveMaxRetries("nope"), DEFAULT_MAX_RETRIES);
+  // An env var set to "" must fall back to the default, not disable retries.
+  assert.equal(resolveMaxRetries(""), DEFAULT_MAX_RETRIES);
+  assert.equal(resolveMaxRetries("  "), DEFAULT_MAX_RETRIES);
 });
 
 // --- integration through discoverTools --------------------------------------

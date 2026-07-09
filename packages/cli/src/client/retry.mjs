@@ -52,6 +52,11 @@ export function computeRetryDelayMs({
 
 /** Resolve a caller/env-supplied max-retries value to a safe non-negative int. */
 export function resolveMaxRetries(value) {
+  // Number('') === 0, so an env var set to an empty string would silently
+  // disable retries; treat blank as unset (default) instead.
+  if (value === undefined || (typeof value === "string" && value.trim() === "")) {
+    return DEFAULT_MAX_RETRIES;
+  }
   const n = Number(value);
   if (!Number.isFinite(n)) return DEFAULT_MAX_RETRIES;
   return Math.max(0, Math.floor(n));
