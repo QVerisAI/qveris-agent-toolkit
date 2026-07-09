@@ -3,6 +3,17 @@ name: qveris-cli
 description: "Use QVeris CLI to discover and call third-party API tools. Use when you need to find an external API, integrate a web service, or retrieve live data (prices, weather, news, etc)."
 ---
 
+## Quick first run
+
+New to QVeris? With your `QVERIS_API_KEY` set (create one at [qveris.ai](https://qveris.ai/account?page=api-keys) or [qveris.cn](https://qveris.cn/account?page=api-keys)), one command walks the whole loop end to end — auth, discover, inspect, a real call, and the exact usage/ledger commands to reconcile billing — no install needed:
+
+```bash
+export QVERIS_API_KEY="sk-..."
+npx @qverisai/cli init
+```
+
+Re-run anytime with `--query "..."` to target a different capability, or `--dry-run` to validate without consuming credits. Once you've seen the loop, the commands below are the day-to-day surface.
+
 ## Commands
 
 ```bash
