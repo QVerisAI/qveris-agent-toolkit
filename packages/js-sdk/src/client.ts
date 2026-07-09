@@ -320,7 +320,9 @@ export class Qveris {
             maxDelayMs: DEFAULT_MAX_DELAY_MS,
           });
           // Discard the body so the connection is released before we retry.
-          await response.body?.cancel().catch(() => undefined);
+          // (`.cancel?.()` so a body without cancel — e.g. a test double —
+          // can't throw here and mask the rate-limit as a network error.)
+          await response.body?.cancel?.().catch(() => undefined);
           this.rateLimitRetries++;
         } else if (!response.ok) {
           const status = response.status;
