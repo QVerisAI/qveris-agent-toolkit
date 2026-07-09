@@ -511,3 +511,70 @@ describe('createClientFromEnv', () => {
   });
 });
 
+describe('QverisClient rate-limit retries', () => {
+  const originalEnv = process.env;
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    delete process.env.QVERIS_MAX_RETRIES;
+    fetchMock = vi.fn();
+    global.fetch = fetchMock;
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+    vi.restoreAllMocks();
+  });
+
+  // Retry-After: 0 -> the retry sleep is 0ms, so the test doesn't actually wait.
+  function rateLimited() {
+    return {
+      ok: false,
+      status: 429,
+      body: null,
+      headers: { get: (name: string) => (name.toLowerCase() === 'retry-after' ? '0' : null) },
+      json: async () => ({ error_message: 'rate limited' }),
+    };
+  }
+
+  function ok(payload: unknown) {
+    return { ok: true, json: async () => payload };
+  }
+
+  it('retries a 429 then succeeds, counting the backoff', async () => {
+    fetchMock.mockResolvedValueOnce(rateLimited()).mockResolvedValueOnce(ok({ search_id: 's1', results: [], total: 0 }));
+
+    const client = new QverisClient({ apiKey: 'test-api-key' });
+    const result = await client.searchTools({ query: 'weather' });
+
+    expect(result.search_id).toBe('s1');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(client.rateLimitRetryCount).toBe(1);
+  });
+
+  it('gives up after QVERIS_MAX_RETRIES and throws the final 429', async () => {
+    process.env.QVERIS_MAX_RETRIES = '2';
+    fetchMock.mockResolvedValue(rateLimited());
+
+    const client = new QverisClient({ apiKey: 'test-api-key' });
+    const err = await client.searchTools({ query: 'weather' }).catch((e: unknown) => e);
+
+    expect((err as { status: number }).status).toBe(429);
+    expect(fetchMock).toHaveBeenCalledTimes(3); // maxRetries + 1
+    expect(client.rateLimitRetryCount).toBe(2);
+  });
+
+  it('QVERIS_MAX_RETRIES=0 disables retrying', async () => {
+    process.env.QVERIS_MAX_RETRIES = '0';
+    fetchMock.mockResolvedValue(rateLimited());
+
+    const client = new QverisClient({ apiKey: 'test-api-key' });
+    const err = await client.searchTools({ query: 'weather' }).catch((e: unknown) => e);
+
+    expect((err as { status: number }).status).toBe(429);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(client.rateLimitRetryCount).toBe(0);
+  });
+});
+

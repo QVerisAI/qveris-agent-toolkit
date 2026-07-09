@@ -24,6 +24,14 @@ import type {
   ApiObservability,
   ApiOperation,
 } from '../types.js';
+import {
+  computeRetryDelayMs,
+  DEFAULT_BASE_DELAY_MS,
+  DEFAULT_MAX_DELAY_MS,
+  parseRetryAfterMs,
+  resolveMaxRetries,
+  RETRYABLE_STATUS,
+} from '../retry.js';
 
 /** Region-specific API base URLs */
 const REGION_URLS: Record<string, string> = {
@@ -82,6 +90,8 @@ export class QverisClient {
   private readonly apiKey: string;
   private readonly baseUrl: string;
   private readonly defaultTimeoutMs: number;
+  private readonly maxRetries: number;
+  private rateLimitRetries = 0;
 
   constructor(config: QverisClientConfig) {
     if (!config.apiKey) {
@@ -91,6 +101,22 @@ export class QverisClient {
     // Resolve base URL: explicit > env > key prefix auto-detect
     this.baseUrl = resolveBaseUrl(config.apiKey, config.baseUrl);
     this.defaultTimeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    // Retries for 429/503, configurable via env (the server is env-configured).
+    this.maxRetries = resolveMaxRetries(process.env.QVERIS_MAX_RETRIES);
+  }
+
+  /**
+   * How many times the client has backed off on a rate-limited (429) /
+   * transient (503) response so far — retried pressure, not failure.
+   */
+  get rateLimitRetryCount(): number {
+    return this.rateLimitRetries;
+  }
+
+  /** Sleep for `ms` (a seam so tests can stub out the wait). */
+  private async sleep(ms: number): Promise<void> {
+    if (ms <= 0) return;
+    await new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -112,7 +138,6 @@ export class QverisClient {
         }
       }
     }
-    const controller = new AbortController();
     const resolvedTimeoutMs = timeoutMs ?? this.defaultTimeoutMs;
     const queryParams = Object.fromEntries(url.searchParams.entries());
     const requestContext: ApiObservability = {
@@ -124,96 +149,117 @@ export class QverisClient {
       ...(Object.keys(queryParams).length > 0 && { query_params: queryParams }),
       timeout_ms: resolvedTimeoutMs,
     };
-    const timeout = setTimeout(() => controller.abort(), resolvedTimeoutMs);
 
-    try {
-      const response = await fetch(url.toString(), {
-        method,
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: body ? JSON.stringify(body) : undefined,
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        const status = response.status;
-        let errorMessage: string;
-        let errorDetails: unknown;
-
-        try {
-          const errorBody = (await response.json()) as Record<string, unknown>;
-          errorMessage =
-            (errorBody.error_message as string) ||
-            (errorBody.message as string) ||
-            (errorBody.error as string) ||
-            response.statusText;
-          errorDetails = errorBody;
-        } catch {
-          errorMessage = response.statusText || `HTTP ${status}`;
-        }
-
-        // Provide actionable hints for specific status codes
-        if (status === 402) {
-          const pricingHost = this.baseUrl.includes('qveris.cn') ? 'https://qveris.cn' : 'https://qveris.ai';
-          errorMessage = `Insufficient credits. ${errorMessage}. Purchase credits at ${pricingHost}/pricing`;
-        }
-
-        const error: ApiError = {
-          status,
-          message: errorMessage,
-          ...(errorDetails !== undefined && { details: errorDetails }),
-          observability: withErrorContext(
-            requestContext,
-            'http_error',
-            status,
-            extractRequestId(response),
-          ),
-        };
-
-        throw error;
-      }
+    // Retry rate-limited (429) / transient (503) responses: honor Retry-After,
+    // otherwise exponential backoff with jitter, bounded by maxRetries. Each
+    // attempt is a fresh fetch with its own timeout.
+    for (let attempt = 0; ; attempt++) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), resolvedTimeoutMs);
+      let retryDelayMs: number | null = null;
 
       try {
-        return await response.json() as T;
-      } catch {
-        const error: ApiError = {
-          status: response.status,
-          message: 'Invalid or empty JSON response from API',
-          observability: withErrorContext(
-            requestContext,
-            'invalid_json',
-            response.status,
-            extractRequestId(response),
-          ),
-        };
-        throw error;
-      }
-    } catch (err: unknown) {
-      if (isApiError(err)) {
-        throw err;
-      }
-      if (err instanceof Error && err.name === 'AbortError') {
+        const response = await fetch(url.toString(), {
+          method,
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: body ? JSON.stringify(body) : undefined,
+          signal: controller.signal,
+        });
+
+        if (RETRYABLE_STATUS.has(response.status) && attempt < this.maxRetries) {
+          retryDelayMs = computeRetryDelayMs({
+            retryAfterMs: parseRetryAfterMs(response.headers.get('retry-after')),
+            attempt,
+            baseDelayMs: DEFAULT_BASE_DELAY_MS,
+            maxDelayMs: DEFAULT_MAX_DELAY_MS,
+          });
+          // Discard the body so the connection is released before we retry.
+          await response.body?.cancel().catch(() => undefined);
+          this.rateLimitRetries++;
+        } else if (!response.ok) {
+          const status = response.status;
+          let errorMessage: string;
+          let errorDetails: unknown;
+
+          try {
+            const errorBody = (await response.json()) as Record<string, unknown>;
+            errorMessage =
+              (errorBody.error_message as string) ||
+              (errorBody.message as string) ||
+              (errorBody.error as string) ||
+              response.statusText;
+            errorDetails = errorBody;
+          } catch {
+            errorMessage = response.statusText || `HTTP ${status}`;
+          }
+
+          // Provide actionable hints for specific status codes
+          if (status === 402) {
+            const pricingHost = this.baseUrl.includes('qveris.cn') ? 'https://qveris.cn' : 'https://qveris.ai';
+            errorMessage = `Insufficient credits. ${errorMessage}. Purchase credits at ${pricingHost}/pricing`;
+          }
+
+          const error: ApiError = {
+            status,
+            message: errorMessage,
+            ...(errorDetails !== undefined && { details: errorDetails }),
+            observability: withErrorContext(
+              requestContext,
+              'http_error',
+              status,
+              extractRequestId(response),
+            ),
+          };
+
+          throw error;
+        } else {
+          try {
+            return await response.json() as T;
+          } catch {
+            const error: ApiError = {
+              status: response.status,
+              message: 'Invalid or empty JSON response from API',
+              observability: withErrorContext(
+                requestContext,
+                'invalid_json',
+                response.status,
+                extractRequestId(response),
+              ),
+            };
+            throw error;
+          }
+        }
+      } catch (err: unknown) {
+        if (isApiError(err)) {
+          throw err;
+        }
+        if (err instanceof Error && err.name === 'AbortError') {
+          const cause = getErrorCause(err);
+          const error: ApiError = {
+            status: 408,
+            message: 'Request timed out. Check connectivity or increase timeout.',
+            observability: withErrorContext(requestContext, 'timeout', 0),
+            ...(cause && { cause }),
+          };
+          throw error;
+        }
         const cause = getErrorCause(err);
         const error: ApiError = {
-          status: 408,
-          message: 'Request timed out. Check connectivity or increase timeout.',
-          observability: withErrorContext(requestContext, 'timeout', 0),
+          status: 0,
+          message: getErrorMessage(err, 'Network request failed'),
+          observability: withErrorContext(requestContext, 'network_error', 0),
           ...(cause && { cause }),
         };
         throw error;
+      } finally {
+        clearTimeout(timeout);
       }
-      const cause = getErrorCause(err);
-      const error: ApiError = {
-        status: 0,
-        message: getErrorMessage(err, 'Network request failed'),
-        observability: withErrorContext(requestContext, 'network_error', 0),
-        ...(cause && { cause }),
-      };
-      throw error;
-    } finally {
-      clearTimeout(timeout);
+
+      // Only reached on the retry path (success returns, errors throw above).
+      await this.sleep(retryDelayMs ?? 0);
     }
   }
 
