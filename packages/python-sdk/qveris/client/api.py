@@ -171,7 +171,7 @@ class QverisClient:
                 span,
                 {
                     ATTR_SEARCH_ID: result.search_id,
-                    ATTR_RESULT_COUNT: result.total if result.total is not None else len(result.results),
+                    ATTR_RESULT_COUNT: result.total if result.total is not None else len(result.results or []),
                     ATTR_ELAPSED_MS: result.elapsed_time_ms,
                 },
             )
@@ -228,7 +228,7 @@ class QverisClient:
             data = self._unwrap_envelope(self._parse_response_json(response))
             response.raise_for_status()
             result = SearchResponse(**data)
-            set_span_attributes(span, {ATTR_RESULT_COUNT: len(result.results)})
+            set_span_attributes(span, {ATTR_RESULT_COUNT: len(result.results or [])})
             return result
 
     async def get_tools_by_ids(
