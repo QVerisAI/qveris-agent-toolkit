@@ -60,6 +60,19 @@ const credits = await qveris.credits();
 | `baseUrl` / `QVERIS_BASE_URL` | Override API base URL (highest priority) |
 | `QVERIS_REGION` | Force region: `global` or `cn`. Otherwise auto-detected from the key prefix (`sk-cn-…` → China) |
 | `timeoutMs` | Default request timeout (30s; `call` defaults to 120s) |
+| `maxRetries` | Retries for rate-limited (429) / transient (503) responses (default 3; `0` disables) |
+
+## Rate limiting & retries
+
+The client transparently retries rate-limited (`429`) and transient (`503`) responses: it honors the `Retry-After` header when present, otherwise backs off exponentially with full jitter. Each wait is capped and retries are bounded by `maxRetries`, so a call never hangs.
+
+```ts
+const qveris = new Qveris({ apiKey: process.env.QVERIS_API_KEY!, maxRetries: 5 });
+// ... after some calls under load:
+qveris.rateLimitRetryCount; // how many times it backed off (pressure, not failures)
+```
+
+Set `maxRetries: 0` to disable. Rate-limit backoff is retried pressure rather than failure — read `rateLimitRetryCount` to observe it instead of treating the retried `429`s as errors.
 
 ## Errors
 

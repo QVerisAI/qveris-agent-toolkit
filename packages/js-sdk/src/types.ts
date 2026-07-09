@@ -533,6 +533,13 @@ export interface QverisClientConfig {
 
   /** Default request timeout in milliseconds */
   timeoutMs?: number;
+
+  /**
+   * Max automatic retries for rate-limited (429) / transient (503) responses.
+   * Honors `Retry-After`, otherwise backs off exponentially with jitter.
+   * Defaults to 3; set to 0 to disable.
+   */
+  maxRetries?: number;
 }
 
 /**
