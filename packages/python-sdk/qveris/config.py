@@ -73,6 +73,14 @@ class QverisConfig(BaseSettings):
     api_key: Optional[str] = Field(default=None, validation_alias='QVERIS_API_KEY')
     base_url: str = Field(default="https://qveris.ai/api/v1/", validation_alias='QVERIS_BASE_URL')
 
+    # Transport settings. On a 429 (or 503) the client honors Retry-After and
+    # otherwise backs off exponentially with jitter, up to this many retries.
+    max_retries: int = Field(
+        default=3,
+        validation_alias='QVERIS_MAX_RETRIES',
+        description="Max automatic retries for rate-limited (429) / transient (503) responses.",
+    )
+
     # Agent behavior settings
     enable_history_pruning: bool = Field(
         default=True,
