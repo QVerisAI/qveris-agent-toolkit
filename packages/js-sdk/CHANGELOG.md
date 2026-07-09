@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-09
+
 ### Added
 
 - Vercel AI SDK adapter: `getQverisTools(qveris)` from `@qverisai/sdk/ai` returns `qveris_discover` / `qveris_inspect` / `qveris_call` tools for `generateText`/`streamText` (`ai` and `zod` as optional peer dependencies). ([#134])
@@ -23,7 +25,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - `0.1.x` under this npm name was an early MCP-focused SDK, superseded by `@qverisai/mcp`.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.2.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.3.0...HEAD
+[0.3.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.2.0...js-sdk-v0.3.0
 [0.2.0]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/js-sdk-v0.2.0
 [#143]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/143
 [#134]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/134
