@@ -1,0 +1,54 @@
+# Changelog
+
+All notable changes to the `qveris` Python SDK are documented here.
+
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/).
+
+## [Unreleased]
+
+### Added
+
+- Framework adapters as optional extras: LangChain (`qveris[langchain]`), OpenAI Agents SDK (`qveris[openai-agents]`), and CrewAI (`qveris[crewai]`) — each exposes the discover/inspect/call workflow as native tools for that framework. ([#132], [#133], [#135])
+- Per-session credit budget guard for the agent: `Agent(budget_credits=...)`. ([#130])
+- Optional OpenTelemetry tracing (`qveris[otel]`): one span per discover/inspect/call with `qveris.*` attributes (tool_id, search_id, execution_id, elapsed_time_ms, credits); dependency-free no-op when opentelemetry is absent, and tracer faults never break a call. ([#141])
+- Rate-limited (`429`) and transient (`503`) responses are retried automatically: honors `Retry-After` (measured against the response `Date` per RFC 9110), otherwise exponential backoff with jitter, bounded by `QverisConfig.max_retries` / `QVERIS_MAX_RETRIES` (default 3; `0` disables); `client.rate_limit_retries` surfaces backoff as pressure. ([#142])
+- `ToolInfo` declares `capabilities`, `expected_cost`, `why_recommended`, and provider fields; explainable-routing example. ([#102], [#128])
+
+### Fixed
+
+- `QverisConfig(api_key=...)` explicit constructor values override environment variables again under pydantic 2.11+/2.12, without exposing the generic `API_KEY` / `BASE_URL` env names. ([#138])
+
+### Removed
+
+- `provider_logo_url` from type declarations (dropped from the public spec). ([#105])
+
+## [0.2.1] - 2026-07-06
+
+### Fixed
+
+- Accept object-shaped tool categories in discover/inspect results (legacy string tags still supported); type widening recorded per review. ([#97])
+
+## [0.2.0] - 2026-05-21
+
+### Added
+
+- First release of the typed client surface: `discover` / `inspect` / `call` / `usage` / `ledger` with pydantic v2 models for capabilities, billing, execution, and audit. ([#34])
+- Generated OpenAPI contract models with drift CI. ([#48])
+- `Agent` runtime: LLM tool loop over the QVeris workflow with streaming events.
+
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.2.1...HEAD
+[0.2.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.2.0...python-sdk-v0.2.1
+[0.2.0]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/python-sdk-v0.2.0
+[#142]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/142
+[#141]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/141
+[#138]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/138
+[#135]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/135
+[#133]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/133
+[#132]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/132
+[#130]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/130
+[#128]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/128
+[#105]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/105
+[#102]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/102
+[#97]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/97
+[#48]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/48
+[#34]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/34

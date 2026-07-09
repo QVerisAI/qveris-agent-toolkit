@@ -14,7 +14,8 @@
     "src/qveris-client.ts",
     "src/qveris-errors.ts",
     "src/qveris-materialization.ts",
-    "src/qveris-tools.ts"
+    "src/qveris-tools.ts",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "node scripts/build.mjs",
