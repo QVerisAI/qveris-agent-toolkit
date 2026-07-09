@@ -39,6 +39,19 @@ def test_parse_retry_after_http_date_is_non_negative() -> None:
     assert parse_retry_after("Wed, 21 Oct 2015 07:28:00 GMT") == 0.0
 
 
+def test_parse_retry_after_http_date_uses_response_date_as_reference() -> None:
+    # RFC 9110 §10.2.3: with a Date header, the delay is Retry-After - Date —
+    # immune to client/server clock skew (30s here regardless of local time).
+    delay = parse_retry_after(
+        "Wed, 21 Oct 2015 07:28:30 GMT",  # Retry-After (HTTP-date, in the past locally)
+        "Wed, 21 Oct 2015 07:28:00 GMT",  # response Date
+    )
+    assert delay == 30.0
+
+    # An unparseable Date falls back to the local clock (past date -> 0).
+    assert parse_retry_after("Wed, 21 Oct 2015 07:28:30 GMT", "garbage") == 0.0
+
+
 def test_parse_retry_after_invalid_or_absent_returns_none() -> None:
     assert parse_retry_after(None) is None
     assert parse_retry_after("") is None

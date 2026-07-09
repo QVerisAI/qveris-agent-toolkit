@@ -32,11 +32,29 @@ _MAX_BACKOFF_EXPONENT = 30  # guard against 2**attempt overflow at absurd retrie
 RETRYABLE_STATUS = frozenset({429, 503})
 
 
-def parse_retry_after(value: Optional[str]) -> Optional[float]:
+def _parse_http_date(value: Optional[str]) -> Optional[datetime]:
+    """Parse an HTTP-date to an aware UTC datetime; ``None`` if unparseable."""
+    if not value:
+        return None
+    try:
+        dt = email.utils.parsedate_to_datetime(value)
+    except Exception:  # malformed input must never raise out of retry handling
+        return None
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def parse_retry_after(value: Optional[str], reference_date: Optional[str] = None) -> Optional[float]:
     """Parse a ``Retry-After`` header into seconds.
 
     Accepts both forms from RFC 9110: a delta in seconds (``"12"``) or an
-    HTTP-date. Returns ``None`` when absent/unparseable, and never a negative
+    HTTP-date. For the HTTP-date form the delay is computed against the
+    response's ``Date`` header when given (RFC 9110 §10.2.3), falling back to
+    the local clock — keeping the delay accurate under client/server clock
+    skew. Returns ``None`` when absent/unparseable, and never a negative
     value. Server-controlled input, so it must never raise.
     """
     if value is None:
@@ -48,15 +66,13 @@ def parse_retry_after(value: Optional[str]) -> Optional[float]:
     # can't parse, so require plain ASCII digits before converting.
     if value.isascii() and value.isdigit():
         return float(value)
-    try:
-        dt = email.utils.parsedate_to_datetime(value)
-    except (TypeError, ValueError):
-        return None
+    dt = _parse_http_date(value)
     if dt is None:
         return None
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return max(0.0, (dt - datetime.now(timezone.utc)).total_seconds())
+    ref = _parse_http_date(reference_date)
+    if ref is None:
+        ref = datetime.now(timezone.utc)
+    return max(0.0, (dt - ref).total_seconds())
 
 
 class RetryPolicy:
@@ -101,7 +117,10 @@ class RetryPolicy:
             attempt += 1
 
     def _delay_for(self, response: httpx.Response, attempt: int) -> float:
-        retry_after = parse_retry_after(response.headers.get("retry-after"))
+        retry_after = parse_retry_after(
+            response.headers.get("retry-after"),
+            response.headers.get("date"),
+        )
         if retry_after is not None:
             return min(retry_after, self.max_delay)
         # Exponential backoff with full jitter, capped at max_delay.
