@@ -1,6 +1,7 @@
 name: Publish CLI to npm
 
 on:
+  workflow_dispatch: # run the test matrix on demand (publish still requires a tag)
   push:
     tags:
       - "cli-v*" # Trigger on tags like cli-v0.1.0, cli-v1.0.0
@@ -10,14 +11,20 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         working-directory: packages/cli
 
     strategy:
+      fail-fast: false
       matrix:
+        os: [ubuntu-latest]
         node-version: [18, 20, 22]
+        include:
+          # Windows coverage on the LTS line only (issue #113).
+          - os: windows-latest
+            node-version: 20
 
     steps:
       - name: Checkout
@@ -33,6 +40,9 @@ jobs:
 
   publish:
     needs: test
+    # Event-scoped: a workflow_dispatch (even one targeting a tag ref) runs
+    # tests only; publishing requires an actual tag push.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     defaults:
       run:
