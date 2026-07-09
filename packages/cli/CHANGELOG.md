@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-07-09
+
 ### Added
 
 - Rate-limited (`429`) and transient (`503`) responses are retried automatically: the CLI honors `Retry-After`, otherwise backs off exponentially with jitter, bounded by `QVERIS_MAX_RETRIES` (default 3; `0` disables). ([#144])
@@ -61,7 +63,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial release: `discover` / `inspect` / `call` from the terminal against the QVeris API.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.6.1...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.7.0...HEAD
+[0.7.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.6.1...cli-v0.7.0
 [0.6.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.6.0...cli-v0.6.1
 [0.6.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.5.0...cli-v0.6.0
 [0.5.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.3.0...cli-v0.5.0

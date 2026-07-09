@@ -6,11 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-07-09
+
 ### Added
 
 - Streamable HTTP transport for remote MCP alongside the stdio default: per-session servers keyed by `Mcp-Session-Id`, optional inbound bearer auth (fail-closed on non-loopback binds), DNS-rebinding protection, request-body cap, and idle-session eviction. ([#139])
 - Server Card (`GET {path}/server-card`) and MCP Catalog (`GET /.well-known/mcp/catalog.json`) discovery documents, so registries and crawlers can learn about the server without connecting. ([#140])
 - Rate-limited (`429`) and transient (`503`) API responses are retried automatically: honors `Retry-After`, otherwise exponential backoff with jitter, bounded by `config.maxRetries` / `QVERIS_MAX_RETRIES` (default 3; `0` disables); `rateLimitRetryCount` exposes the backoff. ([#145])
+
+### Changed
+
+- Requires Node.js >= 18.2 (was >= 18.0): prompt HTTP-server shutdown uses `closeAllConnections`, added in 18.2. ([#139])
 
 ## [0.7.5] - 2026-07-07
 
@@ -88,7 +94,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Handle empty/non-JSON success responses gracefully; `params_to_tool` documented as an object.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.7.5...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.8.0...HEAD
+[0.8.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.7.5...mcp-v0.8.0
 [0.7.5]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.7.4...mcp-v0.7.5
 [0.7.4]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.7.3...mcp-v0.7.4
 [0.7.3]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.7.2...mcp-v0.7.3

@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-09
+
 ### Added
 
 - Framework adapters as optional extras: LangChain (`qveris[langchain]`), OpenAI Agents SDK (`qveris[openai-agents]`), and CrewAI (`qveris[crewai]`) — each exposes the discover/inspect/call workflow as native tools for that framework. ([#132], [#133], [#135])
@@ -36,7 +38,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Generated OpenAPI contract models with drift CI. ([#48])
 - `Agent` runtime: LLM tool loop over the QVeris workflow with streaming events.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.2.1...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.3.0...HEAD
+[0.3.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.2.1...python-sdk-v0.3.0
 [0.2.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.2.0...python-sdk-v0.2.1
 [0.2.0]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/python-sdk-v0.2.0
 [#142]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/142
