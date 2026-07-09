@@ -576,5 +576,17 @@ describe('QverisClient rate-limit retries', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(client.rateLimitRetryCount).toBe(0);
   });
+
+  it('config.maxRetries takes precedence over QVERIS_MAX_RETRIES', async () => {
+    process.env.QVERIS_MAX_RETRIES = '5';
+    fetchMock.mockResolvedValue(rateLimited());
+
+    const client = new QverisClient({ apiKey: 'test-api-key', maxRetries: 1 });
+    const err = await client.searchTools({ query: 'weather' }).catch((e: unknown) => e);
+
+    expect((err as { status: number }).status).toBe(429);
+    expect(fetchMock).toHaveBeenCalledTimes(2); // config's 1 retry, not env's 5
+    expect(client.rateLimitRetryCount).toBe(1);
+  });
 });
 

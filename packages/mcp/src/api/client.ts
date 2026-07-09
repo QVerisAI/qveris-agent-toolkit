@@ -101,8 +101,9 @@ export class QverisClient {
     // Resolve base URL: explicit > env > key prefix auto-detect
     this.baseUrl = resolveBaseUrl(config.apiKey, config.baseUrl);
     this.defaultTimeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    // Retries for 429/503, configurable via env (the server is env-configured).
-    this.maxRetries = resolveMaxRetries(process.env.QVERIS_MAX_RETRIES);
+    // Retries for 429/503: explicit config wins, then the env var (the MCP
+    // server itself is env-configured), then the default.
+    this.maxRetries = resolveMaxRetries(config.maxRetries ?? process.env.QVERIS_MAX_RETRIES);
   }
 
   /**
@@ -177,7 +178,9 @@ export class QverisClient {
             maxDelayMs: DEFAULT_MAX_DELAY_MS,
           });
           // Discard the body so the connection is released before we retry.
-          await response.body?.cancel().catch(() => undefined);
+          // (`.cancel?.()` so a body without cancel — e.g. a test double —
+          // can't throw here and mask the rate-limit as a network error.)
+          await response.body?.cancel?.().catch(() => undefined);
           this.rateLimitRetries++;
         } else if (!response.ok) {
           const status = response.status;
