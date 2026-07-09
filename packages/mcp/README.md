@@ -309,6 +309,7 @@ npx -y @qverisai/mcp
 | `QVERIS_API_KEY` | ✓ | Your QVeris API key |
 | `QVERIS_REGION` | | Force region: `global` or `cn` (auto-detected from key prefix if not set) |
 | `QVERIS_BASE_URL` | | Override API base URL (highest priority, for custom endpoints) |
+| `QVERIS_MAX_RETRIES` | | Retries for rate-limited (429) / transient (503) responses (default 3; `0` disables). Honors `Retry-After`, else backs off with jitter. |
 | `QVERIS_MCP_TRANSPORT` | | `stdio` (default) or `http` |
 | `QVERIS_MCP_HTTP_PORT` | | HTTP port (default `3000`; setting it implies HTTP mode) |
 | `QVERIS_MCP_HTTP_HOST` | | HTTP bind host (default `127.0.0.1`) |
