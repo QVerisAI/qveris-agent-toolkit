@@ -18,8 +18,9 @@ Each package releases independently via an annotated git tag; the matching GitHu
 4. **Tag the release commit with an annotated tag**, using the new CHANGELOG section as the tag message — this is what powers the release Highlights (#101), so the changelog and the tag stay one source of truth:
 
    ```bash
-   # Example for the MCP server
-   git tag -a mcp-v0.8.0 -F <(sed -n '/^## \[0.8.0\]/,/^## \[/p' packages/mcp/CHANGELOG.md | sed '$d' | tail -n +2)
+   # Example for the MCP server (stops at the next heading or the link
+   # definitions, so it also works for the oldest section in the file)
+   git tag -a mcp-v0.8.0 -F <(awk '/^## \[0.8.0\]/{p=1; next} /^## \[/ || /^\[/{p=0} p' packages/mcp/CHANGELOG.md)
    git push origin mcp-v0.8.0
    ```
 
@@ -27,6 +28,6 @@ Each package releases independently via an annotated git tag; the matching GitHu
 
 ## Notes
 
-- `CHANGELOG.md` ships inside each package (npm `files` whitelist / Python sdist), so registry users can read version diffs offline.
+- `CHANGELOG.md` ships inside each package (npm `files` whitelist; Python sdist and wheel, plus a PyPI `Changelog` project link), so registry users can read version diffs offline.
 - The cli/mcp/js-sdk/python-sdk publish workflows also support `workflow_dispatch` to run the test matrix on demand; a dispatch never publishes (publishing requires an actual tag push).
 - Keep the `[Unreleased]` section current as PRs land — release day should only be a rename, not an archaeology dig.

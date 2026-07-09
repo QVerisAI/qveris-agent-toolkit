@@ -54,5 +54,13 @@ dev = [
     "datamodel-code-generator==0.26.3",
 ]
 
+[project.urls]
+Changelog = "https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/packages/python-sdk/CHANGELOG.md"
+
 [tool.hatch.build.targets.wheel]
 packages = ["qveris"]
+
+# Ship the changelog in the wheel too (most users install the wheel, not the
+# sdist); it lands as qveris/CHANGELOG.md in site-packages.
+[tool.hatch.build.targets.wheel.force-include]
+"CHANGELOG.md" = "qveris/CHANGELOG.md"
