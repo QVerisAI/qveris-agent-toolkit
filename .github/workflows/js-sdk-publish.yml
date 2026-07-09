@@ -79,6 +79,13 @@ jobs:
           fi
           echo "VERSION=$PKG_VERSION" >> "$GITHUB_ENV"
 
+      - name: Verify CHANGELOG has an entry for this version
+        run: |
+          if ! grep -qE "^## \[$VERSION\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## [$VERSION]' section — move the Unreleased notes into a release section before tagging"
+            exit 1
+          fi
+
       - name: Install dependencies
         run: npm ci
 

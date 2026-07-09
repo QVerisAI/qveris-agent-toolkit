@@ -15,7 +15,8 @@
   "files": [
     "bin/",
     "src/",
-    "scripts/"
+    "scripts/",
+    "CHANGELOG.md"
   ],
   "keywords": [
     "qveris",
