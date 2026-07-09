@@ -40,7 +40,11 @@ permissions:
 
 jobs:
   cli-contract:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -51,7 +55,11 @@ jobs:
         run: node --test test/openapi-contract.test.mjs
 
   python-contract:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -59,12 +67,20 @@ jobs:
           python-version: "3.11"
       - name: Python SDK ↔ generated-contract test
         working-directory: packages/python-sdk
+        # PYTHONPATH is set via env (not inline) so the step works under both
+        # bash (ubuntu) and pwsh (windows) default shells.
+        env:
+          PYTHONPATH: .
         run: |
           python -m pip install --quiet pytest "pydantic>=2.0.0"
-          PYTHONPATH=. python -m pytest tests/test_openapi_contract.py -q
+          python -m pytest tests/test_openapi_contract.py -q
 
   js-sdk-tests:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         working-directory: packages/js-sdk
@@ -83,7 +99,11 @@ jobs:
         run: npm test
 
   mcp-tests:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         working-directory: packages/mcp
