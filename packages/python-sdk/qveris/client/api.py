@@ -46,7 +46,7 @@ from ..observability import (
     start_span,
 )
 from ..types import CreditsLedgerResponse, SearchResponse, ToolExecutionResponse, UsageHistoryResponse
-from .retry import RetryTransport
+from .retry import RetryPolicy
 
 
 def _pre_settlement_credits(response: ToolExecutionResponse) -> Optional[float]:
@@ -68,20 +68,21 @@ class QverisClient:
         if self.config.api_key:
             self.headers["Authorization"] = f"Bearer {self.config.api_key}"
 
-        # httpx automatically respects HTTP_PROXY/HTTPS_PROXY env vars. Wrap the
-        # default transport so rate-limited (429) / transient (503) responses are
-        # retried (Retry-After / backoff) instead of failing the caller.
+        # httpx automatically respects HTTP_PROXY/HTTPS_PROXY env vars (kept by
+        # using the default transport). Retries are layered on top at the client
+        # level so rate-limited (429) / transient (503) responses back off
+        # (Retry-After / jitter) instead of failing the caller.
         self.base_url = self.config.base_url.rstrip("/") + "/"
-        self._retry_transport = RetryTransport(
-            httpx.AsyncHTTPTransport(),
-            max_retries=self.config.max_retries,
-        )
         self.client = httpx.AsyncClient(
             base_url=self.base_url,
             headers=self.headers,
             timeout=60.0,
-            transport=self._retry_transport,
         )
+        self._retry = RetryPolicy(max_retries=self.config.max_retries)
+
+    async def _send(self, method: str, endpoint: str, **kwargs: Any) -> httpx.Response:
+        """Send a request through the retry policy (429/503 backoff)."""
+        return await self._retry.send(self.client, method, endpoint, **kwargs)
 
     @property
     def rate_limit_retries(self) -> int:
@@ -90,8 +91,8 @@ class QverisClient:
         Rate-limit backoff is retried pressure, not failure — surface this
         rather than counting the retried responses as errors.
         """
-        transport = getattr(self, "_retry_transport", None)
-        return transport.retries if transport is not None else 0
+        retry = getattr(self, "_retry", None)
+        return retry.retries if retry is not None else 0
 
     def _debug(self, message: str):
         """Print debug message if callback is set."""
@@ -179,7 +180,7 @@ class QverisClient:
             self._debug(f"[Qveris API] Request body: {json.dumps(payload, indent=2)}")
             self._debug_headers()
 
-            response = await self.client.post("search", json=payload)
+            response = await self._send("POST", "search", json=payload)
 
             self._debug(f"[Qveris API] Response status: {response.status_code}")
             data = self._unwrap_envelope(self._parse_response_json(response))
@@ -240,7 +241,7 @@ class QverisClient:
             self._debug(f"[Qveris API] Request body: {json.dumps(payload, indent=2)}")
             self._debug_headers()
 
-            response = await self.client.post("tools/by-ids", json=payload)
+            response = await self._send("POST", "tools/by-ids", json=payload)
 
             self._debug(f"[Qveris API] Response status: {response.status_code}")
             data = self._unwrap_envelope(self._parse_response_json(response))
@@ -306,7 +307,8 @@ class QverisClient:
             self._debug(f"[Qveris API] Request body: {json.dumps(payload, indent=2)}")
             self._debug_headers()
 
-            response = await self.client.post(
+            response = await self._send(
+                "POST",
                 "tools/execute",
                 params={"tool_id": tool_id},
                 json=payload,
@@ -389,7 +391,7 @@ class QverisClient:
 
         self._debug(f"[Qveris API] GET {self._url_for('GET', 'auth/usage/history/v2', params=params)}")
         self._debug_headers()
-        response = await self.client.get("auth/usage/history/v2", params=params)
+        response = await self._send("GET", "auth/usage/history/v2", params=params)
         self._debug(f"[Qveris API] Response status: {response.status_code}")
         data = self._unwrap_envelope(self._parse_response_json(response))
         response.raise_for_status()
@@ -432,7 +434,7 @@ class QverisClient:
 
         self._debug(f"[Qveris API] GET {self._url_for('GET', 'auth/credits/ledger', params=params)}")
         self._debug_headers()
-        response = await self.client.get("auth/credits/ledger", params=params)
+        response = await self._send("GET", "auth/credits/ledger", params=params)
         self._debug(f"[Qveris API] Response status: {response.status_code}")
         data = self._unwrap_envelope(self._parse_response_json(response))
         response.raise_for_status()
