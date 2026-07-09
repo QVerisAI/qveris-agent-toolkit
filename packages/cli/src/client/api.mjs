@@ -1,64 +1,101 @@
 import { resolveBaseUrl } from "../config/region.mjs";
 import { CliError } from "../errors/handler.mjs";
+import {
+  computeRetryDelayMs,
+  DEFAULT_BASE_DELAY_MS,
+  DEFAULT_MAX_DELAY_MS,
+  parseRetryAfterMs,
+  resolveMaxRetries,
+  RETRYABLE_STATUS,
+  sleep,
+} from "./retry.mjs";
 
 function getBaseUrl(baseUrlFlag, apiKey) {
   return resolveBaseUrl({ baseUrlFlag, apiKey }).baseUrl;
 }
 
-async function requestJson(path, { method = "POST", query = {}, body, timeoutMs = 30000, apiKey, baseUrl }) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const url = new URL(baseUrl.replace(/\/+$/, "") + path);
-    for (const [key, value] of Object.entries(query)) {
-      if (value !== undefined && value !== null) {
-        url.searchParams.set(key, String(value));
-      }
+async function requestJson(
+  path,
+  {
+    method = "POST",
+    query = {},
+    body,
+    timeoutMs = 30000,
+    apiKey,
+    baseUrl,
+    // Retry rate-limited (429) / transient (503) responses: honor Retry-After,
+    // otherwise exponential backoff with jitter, bounded by maxRetries.
+    maxRetries = resolveMaxRetries(process.env.QVERIS_MAX_RETRIES),
+  },
+) {
+  const url = new URL(baseUrl.replace(/\/+$/, "") + path);
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined && value !== null) {
+      url.searchParams.set(key, String(value));
     }
+  }
 
-    const response = await fetch(url.toString(), {
-      method,
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      const status = response.status;
-      const rawText = (await response.text()).slice(0, 8192);
-      let errorDetail, jsonBody;
-      try {
-        jsonBody = JSON.parse(rawText);
-        errorDetail = jsonBody.error_message || jsonBody.message || null;
-      } catch { /* not JSON */ }
-      if (status === 401 || status === 403) throw new CliError("AUTH_INVALID_KEY", errorDetail);
-      if (status === 402) {
-        const pricingHost = baseUrl.includes("qveris.cn") ? "https://qveris.cn" : "https://qveris.ai";
-        const err = new CliError("CREDITS_INSUFFICIENT", errorDetail);
-        err.hint = `Purchase credits at ${pricingHost}/pricing`;
-        throw err;
-      }
-      if (status === 429) throw new CliError("RATE_LIMITED", errorDetail);
-      const err = new CliError("API_ERROR", `HTTP ${status}: ${errorDetail || rawText}`);
-      if (jsonBody) err.responseData = jsonBody;
-      throw err;
-    }
+  for (let attempt = 0; ; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    let retryDelayMs = null;
 
     try {
-      return await response.json();
-    } catch {
-      throw new CliError("API_ERROR", "Invalid JSON response from API");
+      const response = await fetch(url.toString(), {
+        method,
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+        signal: controller.signal,
+      });
+
+      if (RETRYABLE_STATUS.has(response.status) && attempt < maxRetries) {
+        retryDelayMs = computeRetryDelayMs({
+          retryAfterMs: parseRetryAfterMs(response.headers.get("retry-after")),
+          attempt,
+          baseDelayMs: DEFAULT_BASE_DELAY_MS,
+          maxDelayMs: DEFAULT_MAX_DELAY_MS,
+        });
+        // Discard the body so the connection is released before we retry.
+        await response.body?.cancel?.().catch(() => {});
+      } else if (!response.ok) {
+        const status = response.status;
+        const rawText = (await response.text()).slice(0, 8192);
+        let errorDetail, jsonBody;
+        try {
+          jsonBody = JSON.parse(rawText);
+          errorDetail = jsonBody.error_message || jsonBody.message || null;
+        } catch { /* not JSON */ }
+        if (status === 401 || status === 403) throw new CliError("AUTH_INVALID_KEY", errorDetail);
+        if (status === 402) {
+          const pricingHost = baseUrl.includes("qveris.cn") ? "https://qveris.cn" : "https://qveris.ai";
+          const err = new CliError("CREDITS_INSUFFICIENT", errorDetail);
+          err.hint = `Purchase credits at ${pricingHost}/pricing`;
+          throw err;
+        }
+        if (status === 429) throw new CliError("RATE_LIMITED", errorDetail);
+        const err = new CliError("API_ERROR", `HTTP ${status}: ${errorDetail || rawText}`);
+        if (jsonBody) err.responseData = jsonBody;
+        throw err;
+      } else {
+        try {
+          return await response.json();
+        } catch {
+          throw new CliError("API_ERROR", "Invalid JSON response from API");
+        }
+      }
+    } catch (err) {
+      if (err instanceof CliError) throw err;
+      if (err.name === "AbortError") throw new CliError("NET_TIMEOUT");
+      throw err;
+    } finally {
+      clearTimeout(timeout);
     }
-  } catch (err) {
-    if (err instanceof CliError) throw err;
-    if (err.name === "AbortError") throw new CliError("NET_TIMEOUT");
-    throw err;
-  } finally {
-    clearTimeout(timeout);
+
+    // Only reached on the retry path (success returns, errors throw above).
+    await sleep(retryDelayMs ?? 0);
   }
 }
 
