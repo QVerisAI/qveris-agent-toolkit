@@ -30,7 +30,29 @@ from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Union
 import httpx
 
 from ..config import QverisConfig
+from ..observability import (
+    ATTR_CREDITS,
+    ATTR_ELAPSED_MS,
+    ATTR_EXECUTION_ID,
+    ATTR_LIMIT,
+    ATTR_OPERATION,
+    ATTR_RESULT_COUNT,
+    ATTR_SEARCH_ID,
+    ATTR_SESSION_ID,
+    ATTR_SUCCESS,
+    ATTR_TOOL_ID,
+    ATTR_TOOL_ID_COUNT,
+    set_span_attributes,
+    start_span,
+)
 from ..types import CreditsLedgerResponse, SearchResponse, ToolExecutionResponse, UsageHistoryResponse
+
+
+def _pre_settlement_credits(response: ToolExecutionResponse) -> Optional[float]:
+    """Best pre-settlement credit figure from a call response, for a span attribute."""
+    if response.billing is not None and response.billing.list_amount_credits is not None:
+        return response.billing.list_amount_credits
+    return response.cost
 
 
 class QverisClient:
@@ -131,16 +153,29 @@ class QverisClient:
         if session_id:
             payload["session_id"] = session_id
 
-        self._debug(f"[Qveris API] POST {url}")
-        self._debug(f"[Qveris API] Request body: {json.dumps(payload, indent=2)}")
-        self._debug_headers()
+        with start_span(
+            "qveris.discover",
+            {ATTR_OPERATION: "discover", ATTR_LIMIT: limit, ATTR_SESSION_ID: session_id},
+        ) as span:
+            self._debug(f"[Qveris API] POST {url}")
+            self._debug(f"[Qveris API] Request body: {json.dumps(payload, indent=2)}")
+            self._debug_headers()
 
-        response = await self.client.post("search", json=payload)
+            response = await self.client.post("search", json=payload)
 
-        self._debug(f"[Qveris API] Response status: {response.status_code}")
-        data = self._unwrap_envelope(self._parse_response_json(response))
-        response.raise_for_status()
-        return SearchResponse(**data)
+            self._debug(f"[Qveris API] Response status: {response.status_code}")
+            data = self._unwrap_envelope(self._parse_response_json(response))
+            response.raise_for_status()
+            result = SearchResponse(**data)
+            set_span_attributes(
+                span,
+                {
+                    ATTR_SEARCH_ID: result.search_id,
+                    ATTR_RESULT_COUNT: result.total if result.total is not None else len(result.results or []),
+                    ATTR_ELAPSED_MS: result.elapsed_time_ms,
+                },
+            )
+            return result
 
     async def search_tools(self, query: str, limit: int = 20, session_id: Optional[str] = None) -> SearchResponse:
         """Deprecated alias for `discover(...)`."""
@@ -174,16 +209,27 @@ class QverisClient:
         if session_id:
             payload["session_id"] = session_id
 
-        self._debug(f"[Qveris API] POST {url}")
-        self._debug(f"[Qveris API] Request body: {json.dumps(payload, indent=2)}")
-        self._debug_headers()
+        with start_span(
+            "qveris.inspect",
+            {
+                ATTR_OPERATION: "inspect",
+                ATTR_TOOL_ID_COUNT: len(ids),
+                ATTR_SEARCH_ID: search_id,
+                ATTR_SESSION_ID: session_id,
+            },
+        ) as span:
+            self._debug(f"[Qveris API] POST {url}")
+            self._debug(f"[Qveris API] Request body: {json.dumps(payload, indent=2)}")
+            self._debug_headers()
 
-        response = await self.client.post("tools/by-ids", json=payload)
+            response = await self.client.post("tools/by-ids", json=payload)
 
-        self._debug(f"[Qveris API] Response status: {response.status_code}")
-        data = self._unwrap_envelope(self._parse_response_json(response))
-        response.raise_for_status()
-        return SearchResponse(**data)
+            self._debug(f"[Qveris API] Response status: {response.status_code}")
+            data = self._unwrap_envelope(self._parse_response_json(response))
+            response.raise_for_status()
+            result = SearchResponse(**data)
+            set_span_attributes(span, {ATTR_RESULT_COUNT: len(result.results or [])})
+            return result
 
     async def get_tools_by_ids(
         self,
@@ -229,20 +275,39 @@ class QverisClient:
         if max_response_size is not None:
             payload["max_response_size"] = max_response_size
 
-        self._debug(f"[Qveris API] POST {url}")
-        self._debug(f"[Qveris API] Request body: {json.dumps(payload, indent=2)}")
-        self._debug_headers()
+        with start_span(
+            "qveris.call",
+            {
+                ATTR_OPERATION: "call",
+                ATTR_TOOL_ID: tool_id,
+                ATTR_SEARCH_ID: search_id,
+                ATTR_SESSION_ID: session_id,
+            },
+        ) as span:
+            self._debug(f"[Qveris API] POST {url}")
+            self._debug(f"[Qveris API] Request body: {json.dumps(payload, indent=2)}")
+            self._debug_headers()
 
-        response = await self.client.post(
-            "tools/execute",
-            params={"tool_id": tool_id},
-            json=payload,
-        )
+            response = await self.client.post(
+                "tools/execute",
+                params={"tool_id": tool_id},
+                json=payload,
+            )
 
-        self._debug(f"[Qveris API] Response status: {response.status_code}")
-        data = self._unwrap_envelope(self._parse_response_json(response))
-        response.raise_for_status()
-        return ToolExecutionResponse(**data)
+            self._debug(f"[Qveris API] Response status: {response.status_code}")
+            data = self._unwrap_envelope(self._parse_response_json(response))
+            response.raise_for_status()
+            result = ToolExecutionResponse(**data)
+            set_span_attributes(
+                span,
+                {
+                    ATTR_EXECUTION_ID: result.execution_id,
+                    ATTR_SUCCESS: result.success,
+                    ATTR_ELAPSED_MS: result.elapsed_time_ms,
+                    ATTR_CREDITS: _pre_settlement_credits(result),
+                },
+            )
+            return result
 
     async def execute_tool(
         self,
