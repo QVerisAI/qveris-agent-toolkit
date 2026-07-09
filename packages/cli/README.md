@@ -416,6 +416,15 @@ set QVERIS_BASE_URL=https://custom.endpoint/api/v1
 qveris discover "weather" --base-url https://qveris.cn/api/v1
 ```
 
+### Rate limiting & retries
+
+Rate-limited (`429`) and transient (`503`) responses are retried automatically: the CLI honors the `Retry-After` header when present, otherwise backs off exponentially with jitter. Retries default to 3 and are bounded so a command never hangs.
+
+```bash
+# Tune or disable via env
+export QVERIS_MAX_RETRIES=5   # default 3; 0 disables
+```
+
 ### Config File
 
 Located at:
