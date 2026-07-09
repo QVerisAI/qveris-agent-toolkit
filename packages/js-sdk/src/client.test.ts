@@ -347,4 +347,63 @@ describe('Qveris client', () => {
     expect(error).toBeInstanceOf(QverisApiError);
     expect((error as QverisApiError).observability?.error_type).toBe('invalid_json');
   });
+
+  describe('rate-limit retries', () => {
+    function rateLimited(retryAfter?: string): Response {
+      const headers = new Headers();
+      if (retryAfter) headers.set('Retry-After', retryAfter);
+      return {
+        ok: false,
+        status: 429,
+        statusText: 'Too Many Requests',
+        json: () => Promise.resolve({ error: 'rate limited' }),
+        headers,
+      } as unknown as Response;
+    }
+
+    it('retries a 429 then succeeds, counting the backoff', async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(rateLimited('1'))
+        .mockResolvedValueOnce(jsonResponse(SAMPLE_DISCOVER_RESPONSE));
+      globalThis.fetch = fetchMock;
+
+      const client = new Qveris({ apiKey: API_KEY });
+      vi.spyOn(client as unknown as { sleep: () => Promise<void> }, 'sleep').mockResolvedValue(undefined);
+
+      const result = await client.discover('weather');
+
+      expect(result.search_id).toBe('search-123');
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(client.rateLimitRetryCount).toBe(1);
+    });
+
+    it('gives up after maxRetries and throws the final 429', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(rateLimited());
+      globalThis.fetch = fetchMock;
+
+      const client = new Qveris({ apiKey: API_KEY, maxRetries: 2 });
+      vi.spyOn(client as unknown as { sleep: () => Promise<void> }, 'sleep').mockResolvedValue(undefined);
+
+      const error = await client.discover('weather').catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(QverisApiError);
+      expect((error as QverisApiError).status).toBe(429);
+      expect(fetchMock).toHaveBeenCalledTimes(3); // maxRetries + 1
+      expect(client.rateLimitRetryCount).toBe(2);
+    });
+
+    it('maxRetries=0 disables retrying', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(rateLimited());
+      globalThis.fetch = fetchMock;
+
+      const client = new Qveris({ apiKey: API_KEY, maxRetries: 0 });
+
+      const error = await client.discover('weather').catch((e: unknown) => e);
+
+      expect((error as QverisApiError).status).toBe(429);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(client.rateLimitRetryCount).toBe(0);
+    });
+  });
 });

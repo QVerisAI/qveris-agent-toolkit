@@ -12,6 +12,14 @@
  */
 
 import { QverisApiError } from './errors.js';
+import {
+  computeRetryDelayMs,
+  DEFAULT_BASE_DELAY_MS,
+  DEFAULT_MAX_DELAY_MS,
+  parseRetryAfterMs,
+  resolveMaxRetries,
+  RETRYABLE_STATUS,
+} from './retry.js';
 import type {
   ApiEnvelope,
   ApiError,
@@ -117,6 +125,8 @@ export class Qveris {
   private readonly apiKey: string;
   private readonly baseUrl: string;
   private readonly defaultTimeoutMs: number;
+  private readonly maxRetries: number;
+  private rateLimitRetries = 0;
 
   constructor(config: QverisClientConfig) {
     if (!config.apiKey) {
@@ -129,6 +139,22 @@ export class Qveris {
     this.apiKey = config.apiKey;
     this.baseUrl = resolveBaseUrl(config.apiKey, config.baseUrl);
     this.defaultTimeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    this.maxRetries = resolveMaxRetries(config.maxRetries);
+  }
+
+  /**
+   * How many times the client has backed off on a rate-limited (429) /
+   * transient (503) response so far. Rate-limit backoff is retried pressure,
+   * not failure — observe this rather than counting the retried responses.
+   */
+  get rateLimitRetryCount(): number {
+    return this.rateLimitRetries;
+  }
+
+  /** Sleep for `ms` (a seam so tests can stub out the wait). */
+  private async sleep(ms: number): Promise<void> {
+    if (ms <= 0) return;
+    await new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -256,7 +282,6 @@ export class Qveris {
         }
       }
     }
-    const controller = new AbortController();
     const resolvedTimeoutMs = timeoutMs ?? this.defaultTimeoutMs;
     const queryParams = Object.fromEntries(url.searchParams.entries());
     const requestContext: ApiObservability = {
@@ -268,93 +293,113 @@ export class Qveris {
       ...(Object.keys(queryParams).length > 0 && { query_params: queryParams }),
       timeout_ms: resolvedTimeoutMs,
     };
-    const timeout = setTimeout(() => controller.abort(), resolvedTimeoutMs);
 
-    try {
-      const response = await fetch(url.toString(), {
-        method,
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: body ? JSON.stringify(body) : undefined,
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        const status = response.status;
-        let errorMessage: string;
-        let errorDetails: unknown;
-
-        try {
-          const errorBody = (await response.json()) as Record<string, unknown>;
-          errorMessage =
-            (errorBody.error_message as string) ||
-            (errorBody.message as string) ||
-            (errorBody.error as string) ||
-            response.statusText;
-          errorDetails = errorBody;
-        } catch {
-          errorMessage = response.statusText || `HTTP ${status}`;
-        }
-
-        if (status === 402) {
-          const pricingHost = this.baseUrl.includes('qveris.cn')
-            ? 'https://qveris.cn'
-            : 'https://qveris.ai';
-          errorMessage = `Insufficient credits. ${errorMessage}. Purchase credits at ${pricingHost}/pricing`;
-        }
-
-        throw new QverisApiError({
-          status,
-          message: errorMessage,
-          ...(errorDetails !== undefined && { details: errorDetails }),
-          observability: withErrorContext(
-            requestContext,
-            'http_error',
-            status,
-            extractRequestId(response),
-          ),
-        });
-      }
-
-      let payload: unknown;
+    // Retry rate-limited (429) / transient (503) responses: honor Retry-After,
+    // otherwise exponential backoff with jitter, bounded by maxRetries. Each
+    // attempt is a fresh fetch with its own timeout.
+    for (let attempt = 0; ; attempt++) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), resolvedTimeoutMs);
+      let retryDelayMs: number | null = null;
       try {
-        payload = await response.json();
-      } catch {
-        throw new QverisApiError({
-          status: response.status,
-          message: 'Invalid or empty JSON response from API',
-          observability: withErrorContext(
-            requestContext,
-            'invalid_json',
-            response.status,
-            extractRequestId(response),
-          ),
+        const response = await fetch(url.toString(), {
+          method,
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: body ? JSON.stringify(body) : undefined,
+          signal: controller.signal,
         });
-      }
 
-      return this.unwrapEnvelope<T>(payload, requestContext);
-    } catch (err: unknown) {
-      if (err instanceof QverisApiError) {
-        throw err;
-      }
-      if (err instanceof Error && err.name === 'AbortError') {
+        if (RETRYABLE_STATUS.has(response.status) && attempt < this.maxRetries) {
+          retryDelayMs = computeRetryDelayMs({
+            retryAfterMs: parseRetryAfterMs(response.headers.get('retry-after')),
+            attempt,
+            baseDelayMs: DEFAULT_BASE_DELAY_MS,
+            maxDelayMs: DEFAULT_MAX_DELAY_MS,
+          });
+          // Discard the body so the connection is released before we retry.
+          await response.body?.cancel().catch(() => undefined);
+          this.rateLimitRetries++;
+        } else if (!response.ok) {
+          const status = response.status;
+          let errorMessage: string;
+          let errorDetails: unknown;
+
+          try {
+            const errorBody = (await response.json()) as Record<string, unknown>;
+            errorMessage =
+              (errorBody.error_message as string) ||
+              (errorBody.message as string) ||
+              (errorBody.error as string) ||
+              response.statusText;
+            errorDetails = errorBody;
+          } catch {
+            errorMessage = response.statusText || `HTTP ${status}`;
+          }
+
+          if (status === 402) {
+            const pricingHost = this.baseUrl.includes('qveris.cn')
+              ? 'https://qveris.cn'
+              : 'https://qveris.ai';
+            errorMessage = `Insufficient credits. ${errorMessage}. Purchase credits at ${pricingHost}/pricing`;
+          }
+
+          throw new QverisApiError({
+            status,
+            message: errorMessage,
+            ...(errorDetails !== undefined && { details: errorDetails }),
+            observability: withErrorContext(
+              requestContext,
+              'http_error',
+              status,
+              extractRequestId(response),
+            ),
+          });
+        } else {
+          let payload: unknown;
+          try {
+            payload = await response.json();
+          } catch {
+            throw new QverisApiError({
+              status: response.status,
+              message: 'Invalid or empty JSON response from API',
+              observability: withErrorContext(
+                requestContext,
+                'invalid_json',
+                response.status,
+                extractRequestId(response),
+              ),
+            });
+          }
+
+          return this.unwrapEnvelope<T>(payload, requestContext);
+        }
+      } catch (err: unknown) {
+        if (err instanceof QverisApiError) {
+          throw err;
+        }
+        if (err instanceof Error && err.name === 'AbortError') {
+          throw new QverisApiError({
+            status: 408,
+            message: 'Request timed out. Check connectivity or increase timeout.',
+            observability: withErrorContext(requestContext, 'timeout', 0),
+            ...(errorCause(err) && { cause: errorCause(err) }),
+          });
+        }
         throw new QverisApiError({
-          status: 408,
-          message: 'Request timed out. Check connectivity or increase timeout.',
-          observability: withErrorContext(requestContext, 'timeout', 0),
+          status: 0,
+          message: err instanceof Error && err.message ? err.message : 'Network request failed',
+          observability: withErrorContext(requestContext, 'network_error', 0),
           ...(errorCause(err) && { cause: errorCause(err) }),
         });
+      } finally {
+        clearTimeout(timeout);
       }
-      throw new QverisApiError({
-        status: 0,
-        message: err instanceof Error && err.message ? err.message : 'Network request failed',
-        observability: withErrorContext(requestContext, 'network_error', 0),
-        ...(errorCause(err) && { cause: errorCause(err) }),
-      });
-    } finally {
-      clearTimeout(timeout);
+
+      // Only reached on the retry path (success returns, errors throw above).
+      await this.sleep(retryDelayMs ?? 0);
     }
   }
 
