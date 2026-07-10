@@ -51,7 +51,7 @@ dev = [
     "opentelemetry-sdk>=1.20.0",  # in-memory span exporter used by the tests
     # Pinned so regenerated models stay byte-stable with the checked-in
     # qveris/generated/openapi_models.py and the drift CI (issue #37 phase 2).
-    "datamodel-code-generator==0.26.3",
+    "datamodel-code-generator==0.68.1",
 ]
 
 [project.urls]
