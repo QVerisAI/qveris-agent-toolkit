@@ -28,12 +28,15 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
   CallToolRequestSchema,
+  ListResourcesRequestSchema,
+  ListResourceTemplatesRequestSchema,
   ListToolsRequestSchema,
+  ReadResourceRequestSchema,
   SUPPORTED_PROTOCOL_VERSIONS,
   type CallToolResult,
 } from '@modelcontextprotocol/sdk/types.js';
 import { resolveTransportConfig, startHttpServer } from './http.js';
-import type { ServerCardInfo } from './server-card.js';
+import { buildServerCard, type ServerCardInfo } from './server-card.js';
 import { realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { v4 as uuidv4 } from 'uuid';
@@ -45,6 +48,7 @@ import { getToolsByIdsSchema, executeGetToolsByIds, type GetToolsByIdsInput } fr
 import { usageHistorySchema, executeUsageHistory, type UsageHistoryInput } from './tools/usage-history.js';
 import { creditsLedgerSchema, executeCreditsLedger, type CreditsLedgerInput } from './tools/credits-ledger.js';
 import type { ApiError } from './types.js';
+import { TOOL_OUTPUT_SCHEMAS } from './output-schemas.js';
 
 // ============================================================================
 // Server Configuration
@@ -88,6 +92,7 @@ export function listQverisMcpTools() {
         'Use this to find tools before inspecting or calling them. ' +
         'Results may include billing_rule metadata for rule-level pricing.',
       inputSchema: searchToolsSchema,
+      outputSchema: TOOL_OUTPUT_SCHEMAS.discover,
     },
     {
       name: 'inspect',
@@ -96,6 +101,7 @@ export function listQverisMcpTools() {
         'Returns parameters, success rate, latency, examples, and billing_rule when available. ' +
         'Use tool_ids from a previous discover call.',
       inputSchema: getToolsByIdsSchema,
+      outputSchema: TOOL_OUTPUT_SCHEMAS.inspect,
     },
     {
       name: 'call',
@@ -105,18 +111,21 @@ export function listQverisMcpTools() {
         'Pass parameters to the tool through params_to_tool. ' +
         'The response may include pre-settlement billing; use usage_history or credits_ledger for final charge status.',
       inputSchema: executeToolSchema,
+      outputSchema: TOOL_OUTPUT_SCHEMAS.call,
     },
     {
       name: 'usage_history',
       description:
         'Context-safe usage audit query. Defaults to aggregated summary, supports precise search by execution_id/search_id/charge_outcome/credit range, and writes large exports to a local JSONL file instead of returning all rows.',
       inputSchema: usageHistorySchema,
+      outputSchema: TOOL_OUTPUT_SCHEMAS.usage_history,
     },
     {
       name: 'credits_ledger',
       description:
         'Context-safe final credits ledger query. Defaults to aggregated summary, supports precise search by entry type/direction/credit range, and writes large exports to a local JSONL file instead of returning all rows.',
       inputSchema: creditsLedgerSchema,
+      outputSchema: TOOL_OUTPUT_SCHEMAS.credits_ledger,
     },
     // Deprecated aliases (backward compatibility)
     {
@@ -186,12 +195,16 @@ function compactObject(input: Record<string, unknown>): Record<string, unknown> 
 /**
  * Route one MCP tool call to the matching Qveris operation.
  */
+/** Asks the human to approve a charged call; resolve false to cancel it. */
+export type ConfirmCall = (info: { toolId: string }) => Promise<boolean>;
+
 export async function executeQverisMcpTool(
   client: QverisClient | undefined,
   defaultSessionId: string,
   rawName: string,
   args: unknown,
   warn: (message: string) => void = (message) => process.stderr.write(message),
+  confirmCall?: ConfirmCall,
 ): Promise<CallToolResult> {
   // Tool listing works without credentials, but calls need a key. When the
   // server started without QVERIS_API_KEY the client is undefined; return an
@@ -250,6 +263,7 @@ export async function executeQverisMcpTool(
             text: JSON.stringify(result, null, 2),
           },
         ],
+        structuredContent: result as unknown as Record<string, unknown>,
       };
     }
 
@@ -281,6 +295,7 @@ export async function executeQverisMcpTool(
             text: JSON.stringify(result, null, 2),
           },
         ],
+        structuredContent: result as unknown as Record<string, unknown>,
       };
     }
 
@@ -308,6 +323,23 @@ export async function executeQverisMcpTool(
         };
       }
 
+      // Human-in-the-loop billing consent (MCP elicitation), when enabled and
+      // the client supports it. Declining cancels the charged call.
+      if (confirmCall && !(await confirmCall({ toolId: input.tool_id }))) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                error: 'Call cancelled: the user declined the billing confirmation.',
+                tool_id: input.tool_id,
+              }),
+            },
+          ],
+          isError: true,
+        };
+      }
+
       const result = await executeExecuteTool(client, input, defaultSessionId);
 
       return {
@@ -317,6 +349,7 @@ export async function executeQverisMcpTool(
             text: JSON.stringify(result, null, 2),
           },
         ],
+        structuredContent: result as unknown as Record<string, unknown>,
       };
     }
 
@@ -331,6 +364,7 @@ export async function executeQverisMcpTool(
             text: JSON.stringify(result, null, 2),
           },
         ],
+        structuredContent: result as unknown as Record<string, unknown>,
       };
     }
 
@@ -345,6 +379,7 @@ export async function executeQverisMcpTool(
             text: JSON.stringify(result, null, 2),
           },
         ],
+        structuredContent: result as unknown as Record<string, unknown>,
       };
     }
 
@@ -411,6 +446,14 @@ export async function executeQverisMcpTool(
  * and Streamable HTTP paths (and tests) can construct a server the same way; in
  * HTTP mode one server is created per client session.
  */
+const CARD_RESOURCE_URI = 'qveris://server-card';
+const CAPABILITY_URI_PREFIX = 'qveris://capability/';
+
+function confirmCallsEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  const v = env.QVERIS_MCP_CONFIRM_CALLS?.trim().toLowerCase();
+  return v !== undefined && ['1', 'true', 'yes', 'on'].includes(v);
+}
+
 export function createQverisServer(client: QverisClient | undefined, defaultSessionId: string): Server {
   const server = new Server(
     {
@@ -420,6 +463,7 @@ export function createQverisServer(client: QverisClient | undefined, defaultSess
     {
       capabilities: {
         tools: {},
+        resources: {},
       },
     },
   );
@@ -431,10 +475,77 @@ export function createQverisServer(client: QverisClient | undefined, defaultSess
     };
   });
 
+  // Human-in-the-loop billing consent for charged calls: only when explicitly
+  // enabled (headless agents stay unaffected) AND the client supports
+  // elicitation. Declining or cancelling the form cancels the call.
+  const confirmCall: ConfirmCall | undefined = confirmCallsEnabled()
+    ? async ({ toolId }) => {
+        if (!server.getClientCapabilities()?.elicitation) return true;
+        const answer = await server.elicitInput({
+          message: `QVeris is about to call \"${toolId}\". This may consume credits (pre-settlement billing is returned with the result). Proceed?`,
+          requestedSchema: {
+            type: 'object',
+            properties: {
+              confirm: { type: 'boolean', title: 'Proceed with this charged call?' },
+            },
+            required: ['confirm'],
+          },
+        });
+        return answer.action === 'accept' && answer.content?.confirm === true;
+      }
+    : undefined;
+
   // Routes tool execution to the appropriate handler; deprecated aliases warn.
   server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
     const { name, arguments: args } = request.params;
-    return executeQverisMcpTool(client, defaultSessionId, name, args);
+    return executeQverisMcpTool(client, defaultSessionId, name, args, undefined, confirmCall);
+  });
+
+  // --- Resources: the Server Card plus per-capability metadata docs ---------
+
+  server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+    resources: [
+      {
+        uri: CARD_RESOURCE_URI,
+        name: 'QVeris Server Card',
+        description: 'Identity and connection metadata for this MCP server (SEP-2127).',
+        mimeType: 'application/mcp-server-card+json',
+      },
+    ],
+  }));
+
+  server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => ({
+    resourceTemplates: [
+      {
+        uriTemplate: `${CAPABILITY_URI_PREFIX}{tool_id}`,
+        name: 'QVeris capability metadata',
+        description:
+          'Full metadata for one capability (parameters, examples, stats, billing) — the same payload the inspect tool returns.',
+        mimeType: 'application/json',
+      },
+    ],
+  }));
+
+  server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+    const uri = request.params.uri;
+    if (uri === CARD_RESOURCE_URI) {
+      const card = buildServerCard(buildServerCardInfo());
+      return {
+        contents: [{ uri, mimeType: 'application/mcp-server-card+json', text: JSON.stringify(card, null, 2) }],
+      };
+    }
+    if (uri.startsWith(CAPABILITY_URI_PREFIX)) {
+      const toolId = decodeURIComponent(uri.slice(CAPABILITY_URI_PREFIX.length));
+      if (!toolId) throw new Error('Missing tool_id in capability URI');
+      if (!client) {
+        throw new Error('QVERIS_API_KEY is not set; capability metadata requires an API key.');
+      }
+      const detail = await client.getToolsByIds({ tool_ids: [toolId] });
+      return {
+        contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(detail, null, 2) }],
+      };
+    }
+    throw new Error(`Unknown resource: ${uri}`);
   });
 
   return server;

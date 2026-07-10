@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Fuller MCP spec surface ([#158]):
+  - **Output schemas + structured content** — every tool declares `outputSchema` (loose, additive-friendly) and returns `structuredContent` alongside the JSON text, so clients consume typed results instead of re-parsing strings.
+  - **Elicitation billing consent** — with `QVERIS_MCP_CONFIRM_CALLS=true` and an elicitation-capable client, a charged `call` asks the user to confirm first; declining cancels the call before any credits are spent. Off by default (headless agents unaffected); clients without elicitation proceed as before.
+  - **Resources** — `qveris://server-card` (SEP-2127 card, also without a remote in stdio mode) and the `qveris://capability/{tool_id}` template serving full capability metadata, so users can browse/attach capability docs without a tool call.
+
 ## [0.8.0] - 2026-07-09
 
 ### Added
@@ -108,6 +115,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [0.3.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.2.0...mcp-v0.3.0
 [0.2.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.1.2...mcp-v0.2.0
 [0.1.2]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/mcp-v0.1.2
+[#158]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/158
 [#145]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/145
 [#140]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/140
 [#139]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/139
