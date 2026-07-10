@@ -69,6 +69,9 @@ packages = ["qveris"]
 [tool.ruff]
 line-length = 120
 target-version = "py38"
+# Never touch generated artifacts: they must stay byte-identical to what the
+# pinned generator produces (the regen-and-diff CI enforces this).
+exclude = ["qveris/generated"]
 
 [tool.ruff.lint]
 # Correctness-focused start: pycodestyle errors, pyflakes, and bugbear-free
