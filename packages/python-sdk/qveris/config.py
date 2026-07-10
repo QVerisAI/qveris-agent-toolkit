@@ -67,17 +67,18 @@ class QverisConfig(BaseSettings):
     - `qveris.client.api.QverisClient` (API key, base URL)
     - `qveris.agent.core.Agent` (loop controls like history pruning and max iterations)
     """
+
     # Qveris Settings. The env source reads ONLY the ``QVERIS_``-prefixed names;
     # an explicit ``QverisConfig(api_key=...)`` still wins over the env var via
     # the custom init source below (see settings_customise_sources / #136).
-    api_key: Optional[str] = Field(default=None, validation_alias='QVERIS_API_KEY')
-    base_url: str = Field(default="https://qveris.ai/api/v1/", validation_alias='QVERIS_BASE_URL')
+    api_key: Optional[str] = Field(default=None, validation_alias="QVERIS_API_KEY")
+    base_url: str = Field(default="https://qveris.ai/api/v1/", validation_alias="QVERIS_BASE_URL")
 
     # Transport settings. On a 429 (or 503) the client honors Retry-After and
     # otherwise backs off exponentially with jitter, up to this many retries.
     max_retries: int = Field(
         default=3,
-        validation_alias='QVERIS_MAX_RETRIES',
+        validation_alias="QVERIS_MAX_RETRIES",
         description="Max automatic retries for rate-limited (429) / transient (503) responses.",
     )
 
@@ -99,7 +100,7 @@ class QverisConfig(BaseSettings):
         # base_url -> BASE_URL), which under case_sensitive=False silently hijacks
         # the config from common environment names. Constructor-by-name still
         # works via the aliased init source below (#136).
-        extra="ignore"
+        extra="ignore",
     )
 
     @classmethod

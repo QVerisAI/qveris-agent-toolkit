@@ -165,29 +165,14 @@ describe('MCP public tool interface', () => {
     } as unknown as QverisClient;
 
     const missingQuery = await executeQverisMcpTool(client, 'session-1', 'discover', {});
-    const missingCallParams = await executeQverisMcpTool(
-      client,
-      'session-1',
-      'call',
-      { tool_id: 'weather.tool.v1' },
-    );
-    const invalidCallParams = await executeQverisMcpTool(
-      client,
-      'session-1',
-      'call',
-      {
-        tool_id: 'weather.tool.v1',
-        search_id: 'search-1',
-        params_to_tool: '{"city":"London"}',
-      },
-    );
+    const missingCallParams = await executeQverisMcpTool(client, 'session-1', 'call', { tool_id: 'weather.tool.v1' });
+    const invalidCallParams = await executeQverisMcpTool(client, 'session-1', 'call', {
+      tool_id: 'weather.tool.v1',
+      search_id: 'search-1',
+      params_to_tool: '{"city":"London"}',
+    });
     const unknown = await executeQverisMcpTool(client, 'session-1', 'not_a_tool', {});
-    const apiError = await executeQverisMcpTool(
-      client,
-      'session-1',
-      'discover',
-      { query: 'weather' },
-    );
+    const apiError = await executeQverisMcpTool(client, 'session-1', 'discover', { query: 'weather' });
 
     expect(missingQuery.isError).toBe(true);
     expect(payload(missingQuery).error).toContain('query');
@@ -243,16 +228,11 @@ describe('MCP public tool interface', () => {
       getCreditsLedger: vi.fn(),
     } as unknown as QverisClient;
 
-    const result = await executeQverisMcpTool(
-      client,
-      'session-1',
-      'call',
-      {
-        tool_id: 'weather.forecast.v1',
-        search_id: 'search-1',
-        params_to_tool: { city: 'London' },
-      },
-    );
+    const result = await executeQverisMcpTool(client, 'session-1', 'call', {
+      tool_id: 'weather.forecast.v1',
+      search_id: 'search-1',
+      params_to_tool: { city: 'London' },
+    });
 
     expect(result.isError).toBe(true);
     expect(payload(result)).toMatchObject({
@@ -279,9 +259,5 @@ describe('MCP public tool interface', () => {
 });
 
 function hasErrorCode(error: unknown, code: string): boolean {
-  return (
-    error instanceof Error &&
-    'code' in error &&
-    (error as NodeJS.ErrnoException).code === code
-  );
+  return error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code === code;
 }

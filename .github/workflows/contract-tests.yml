@@ -24,6 +24,9 @@ on:
       - "packages/mcp/package-lock.json"
       - "packages/mcp/tsconfig.json"
       - "packages/openclaw-qveris-plugin/**"
+      - ".prettierrc.json"
+      - ".prettierignore"
+      - "packages/*/eslint.config.mjs"
       - ".github/workflows/contract-tests.yml"
   push:
     branches:
@@ -45,6 +48,9 @@ on:
       - "packages/mcp/package-lock.json"
       - "packages/mcp/tsconfig.json"
       - "packages/openclaw-qveris-plugin/**"
+      - ".prettierrc.json"
+      - ".prettierignore"
+      - "packages/*/eslint.config.mjs"
       - ".github/workflows/contract-tests.yml"
 
 permissions:
@@ -155,3 +161,32 @@ jobs:
         run: npm test
       - name: Verify npm package contents
         run: npm run check:pack
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: packages/python-sdk/uv.lock
+      - name: Lint mcp
+        working-directory: packages/mcp
+        run: npm ci && npm run lint
+      - name: Lint js-sdk
+        working-directory: packages/js-sdk
+        run: npm ci && npm run lint
+      - name: Lint cli
+        working-directory: packages/cli
+        run: npm ci && npm run lint
+      - name: Lint openclaw plugin
+        working-directory: packages/openclaw-qveris-plugin
+        run: npm ci && npm run lint
+      - name: Lint python-sdk (ruff)
+        working-directory: packages/python-sdk
+        run: |
+          uv run --extra dev ruff check qveris tests examples
+          uv run --extra dev ruff format --check qveris tests examples

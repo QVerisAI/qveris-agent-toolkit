@@ -8,7 +8,10 @@ export function resolveParams(value) {
 
   if (value === "-") {
     if (process.stdin.isTTY) {
-      throw new CliError("PARAMS_INVALID_JSON", "No data piped to stdin. Usage: echo '{...}' | qveris call ... --params -");
+      throw new CliError(
+        "PARAMS_INVALID_JSON",
+        "No data piped to stdin. Usage: echo '{...}' | qveris call ... --params -",
+      );
     }
     try {
       // Use fd 0 (stdin) which works cross-platform (Linux, macOS, Windows)
@@ -22,7 +25,7 @@ export function resolveParams(value) {
     const filePath = value.slice(1);
     try {
       raw = readFileSync(filePath, "utf-8");
-    } catch (err) {
+    } catch {
       throw new CliError("PARAMS_INVALID_JSON", `Cannot read params file: ${filePath}`);
     }
   }

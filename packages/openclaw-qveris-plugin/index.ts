@@ -7,9 +7,8 @@ export default definePluginEntry({
   name: "QVeris Plugin",
   description: "QVeris capability discovery, tool inspection, and tool calling",
   register(api: OpenClawPluginApi) {
-    api.registerTool(
-      (ctx) => createQverisTools({ api, ctx }),
-      { names: ["qveris_discover", "qveris_call", "qveris_inspect"] },
-    );
+    api.registerTool((ctx) => createQverisTools({ api, ctx }), {
+      names: ["qveris_discover", "qveris_call", "qveris_inspect"],
+    });
   },
 });

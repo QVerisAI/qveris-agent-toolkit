@@ -57,6 +57,7 @@ from openai.types.chat import ChatCompletionToolParam
 from ..config import AgentConfig
 from ..types import ChatResponse, Message, StreamEvent
 
+
 class LLMProvider(Protocol):
     """
     Interface for LLM providers (OpenAI, Anthropic, local runtimes, etc.).
@@ -67,11 +68,9 @@ class LLMProvider(Protocol):
     - **tool-aware**: accept OpenAI-style tool schemas and surface tool calls when the model requests them
     - **eventful**: in streaming mode, yield `StreamEvent`s (content/tool_call/metrics...)
     """
+
     async def chat_stream(
-        self,
-        messages: List[Message],
-        tools: List[ChatCompletionToolParam],
-        config: AgentConfig
+        self, messages: List[Message], tools: List[ChatCompletionToolParam], config: AgentConfig
     ) -> AsyncGenerator[StreamEvent, None]:
         """
         Stream chat completions from the LLM.
@@ -90,10 +89,7 @@ class LLMProvider(Protocol):
         ...
 
     async def chat(
-        self,
-        messages: List[Message],
-        tools: List[ChatCompletionToolParam],
-        config: AgentConfig
+        self, messages: List[Message], tools: List[ChatCompletionToolParam], config: AgentConfig
     ) -> ChatResponse:
         """
         Non-streaming chat completion from the LLM.

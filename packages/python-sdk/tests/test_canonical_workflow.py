@@ -79,7 +79,7 @@ async def test_handle_tool_call_supports_inspect_alias_and_object_params() -> No
         if request.url.path == "/api/v1/tools/by-ids":
             return httpx.Response(
                 200,
-            json={"results": [{"tool_id": "weather.tool.v1", "description": "Weather"}]},
+                json={"results": [{"tool_id": "weather.tool.v1", "description": "Weather"}]},
             )
         return httpx.Response(
             200,

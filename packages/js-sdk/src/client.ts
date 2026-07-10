@@ -300,12 +300,13 @@ export class Qveris {
     for (let attempt = 0; ; attempt++) {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), resolvedTimeoutMs);
+      // eslint-disable-next-line no-useless-assignment -- TS definite-assignment needs the init across try/finally
       let retryDelayMs: number | null = null;
       try {
         const response = await fetch(url.toString(), {
           method,
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
+            Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
           body: body ? JSON.stringify(body) : undefined,
@@ -342,9 +343,7 @@ export class Qveris {
           }
 
           if (status === 402) {
-            const pricingHost = this.baseUrl.includes('qveris.cn')
-              ? 'https://qveris.cn'
-              : 'https://qveris.ai';
+            const pricingHost = this.baseUrl.includes('qveris.cn') ? 'https://qveris.cn' : 'https://qveris.ai';
             errorMessage = `Insufficient credits. ${errorMessage}. Purchase credits at ${pricingHost}/pricing`;
           }
 
@@ -352,12 +351,7 @@ export class Qveris {
             status,
             message: errorMessage,
             ...(errorDetails !== undefined && { details: errorDetails }),
-            observability: withErrorContext(
-              requestContext,
-              'http_error',
-              status,
-              extractRequestId(response),
-            ),
+            observability: withErrorContext(requestContext, 'http_error', status, extractRequestId(response)),
           });
         } else {
           let payload: unknown;
@@ -450,10 +444,7 @@ function withErrorContext(
 function extractRequestId(response: Response): string | undefined {
   const headers = response.headers;
   return (
-    headers?.get('x-request-id') ??
-    headers?.get('x-qveris-request-id') ??
-    headers?.get('x-correlation-id') ??
-    undefined
+    headers?.get('x-request-id') ?? headers?.get('x-qveris-request-id') ?? headers?.get('x-correlation-id') ?? undefined
   );
 }
 

@@ -10,10 +10,7 @@ import path from "node:path";
 import test from "node:test";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const specPath = path.resolve(
-  here,
-  "../../../docs/openapi/qveris-public-api.openapi.json",
-);
+const specPath = path.resolve(here, "../../../docs/openapi/qveris-public-api.openapi.json");
 
 const spec = JSON.parse(readFileSync(specPath, "utf8"));
 

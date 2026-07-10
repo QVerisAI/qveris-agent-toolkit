@@ -102,170 +102,183 @@ function response(payload) {
 
 test("discover, inspect, call, and history commands cover session-based workflow", async () => {
   await withTempConfig(async (configDir) => {
-    await withMockFetch((request) => {
-      if (request.url.pathname.endsWith("/search")) {
-        assert.deepEqual(request.body, { query: "weather forecast", limit: 2 });
-        return response({
-          search_id: "search-1",
-          total: 1,
-          results: [{ tool_id: "weather.tool.v1", name: "Weather", description: "Forecast" }],
-        });
-      }
-      if (request.url.pathname.endsWith("/tools/by-ids")) {
-        assert.deepEqual(request.body, { tool_ids: ["weather.tool.v1"], search_id: "search-1" });
-        return response({
-          search_id: "search-1",
-          results: [{ tool_id: "weather.tool.v1", name: "Weather", description: "Forecast", params: [] }],
-        });
-      }
-      if (request.url.pathname.endsWith("/tools/execute")) {
-        assert.equal(request.url.searchParams.get("tool_id"), "weather.tool.v1");
-        assert.deepEqual(request.body, {
-          search_id: "search-1",
-          parameters: { city: "London" },
-          max_response_size: 123,
-        });
-        return response({
-          execution_id: "exec-1",
-          success: true,
-          result: { data: { temperature: 18 } },
-          billing: { summary: "3 credits" },
-        });
-      }
-      throw new Error(`unexpected path ${request.url.pathname}`);
-    }, async () => {
-      const flags = {
-        apiKey: "sk-test",
-        baseUrl: "https://unit.test/api/v1",
-        json: true,
-        timeout: "1",
-      };
+    await withMockFetch(
+      (request) => {
+        if (request.url.pathname.endsWith("/search")) {
+          assert.deepEqual(request.body, { query: "weather forecast", limit: 2 });
+          return response({
+            search_id: "search-1",
+            total: 1,
+            results: [{ tool_id: "weather.tool.v1", name: "Weather", description: "Forecast" }],
+          });
+        }
+        if (request.url.pathname.endsWith("/tools/by-ids")) {
+          assert.deepEqual(request.body, { tool_ids: ["weather.tool.v1"], search_id: "search-1" });
+          return response({
+            search_id: "search-1",
+            results: [{ tool_id: "weather.tool.v1", name: "Weather", description: "Forecast", params: [] }],
+          });
+        }
+        if (request.url.pathname.endsWith("/tools/execute")) {
+          assert.equal(request.url.searchParams.get("tool_id"), "weather.tool.v1");
+          assert.deepEqual(request.body, {
+            search_id: "search-1",
+            parameters: { city: "London" },
+            max_response_size: 123,
+          });
+          return response({
+            execution_id: "exec-1",
+            success: true,
+            result: { data: { temperature: 18 } },
+            billing: { summary: "3 credits" },
+          });
+        }
+        throw new Error(`unexpected path ${request.url.pathname}`);
+      },
+      async () => {
+        const flags = {
+          apiKey: "sk-test",
+          baseUrl: "https://unit.test/api/v1",
+          json: true,
+          timeout: "1",
+        };
 
-      const discover = await captureOutput(() => runDiscover("weather forecast", { ...flags, limit: "2" }));
-      assert.equal(jsonFromStdout(discover.stdout).search_id, "search-1");
-      const session = JSON.parse(readFileSync(join(configDir, "qveris", ".session.json"), "utf-8"));
-      assert.equal(session.results[0].tool_id, "weather.tool.v1");
+        const discover = await captureOutput(() => runDiscover("weather forecast", { ...flags, limit: "2" }));
+        assert.equal(jsonFromStdout(discover.stdout).search_id, "search-1");
+        const session = JSON.parse(readFileSync(join(configDir, "qveris", ".session.json"), "utf-8"));
+        assert.equal(session.results[0].tool_id, "weather.tool.v1");
 
-      const inspect = await captureOutput(() => runInspect(["1"], flags));
-      assert.equal(jsonFromStdout(inspect.stdout).results[0].tool_id, "weather.tool.v1");
+        const inspect = await captureOutput(() => runInspect(["1"], flags));
+        assert.equal(jsonFromStdout(inspect.stdout).results[0].tool_id, "weather.tool.v1");
 
-      const call = await captureOutput(() => runCall("1", {
-        ...flags,
-        params: '{"city":"London"}',
-        maxSize: "123",
-      }));
-      assert.equal(jsonFromStdout(call.stdout).execution_id, "exec-1");
+        const call = await captureOutput(() =>
+          runCall("1", {
+            ...flags,
+            params: '{"city":"London"}',
+            maxSize: "123",
+          }),
+        );
+        assert.equal(jsonFromStdout(call.stdout).execution_id, "exec-1");
 
-      const history = await captureOutput(() => runHistory({ json: true }));
-      assert.equal(jsonFromStdout(history.stdout).discoveryId, "search-1");
-    });
+        const history = await captureOutput(() => runHistory({ json: true }));
+        assert.equal(jsonFromStdout(history.stdout).discoveryId, "search-1");
+      },
+    );
   });
 });
 
 test("call dry-run validates resolved tool, params, and max size without network", async () => {
   await withTempConfig(async () => {
     let called = false;
-    await withMockFetch(() => {
-      called = true;
-      return response({});
-    }, async () => {
-      const output = await captureOutput(() => runCall("tool.direct.v1", {
-        apiKey: "sk-test",
-        json: true,
-        dryRun: true,
-        params: '{"symbol":"AAPL"}',
-        maxSize: "2048",
-      }));
-      assert.equal(called, false);
-      assert.deepEqual(jsonFromStdout(output.stdout), {
-        dry_run: true,
-        tool_id: "tool.direct.v1",
-        discovery_id: null,
-        parameters: { symbol: "AAPL" },
-        max_response_size: 2048,
-      });
-    });
+    await withMockFetch(
+      () => {
+        called = true;
+        return response({});
+      },
+      async () => {
+        const output = await captureOutput(() =>
+          runCall("tool.direct.v1", {
+            apiKey: "sk-test",
+            json: true,
+            dryRun: true,
+            params: '{"symbol":"AAPL"}',
+            maxSize: "2048",
+          }),
+        );
+        assert.equal(called, false);
+        assert.deepEqual(jsonFromStdout(output.stdout), {
+          dry_run: true,
+          tool_id: "tool.direct.v1",
+          discovery_id: null,
+          parameters: { symbol: "AAPL" },
+          max_response_size: 2048,
+        });
+      },
+    );
   });
 });
 
 test("credits, usage, and ledger commands cover account audit interfaces", async () => {
   await withTempConfig(async () => {
-    await withMockFetch((request) => {
-      if (request.url.pathname.endsWith("/auth/credits")) {
-        return response({ status: "success", data: { remaining_credits: 997 } });
-      }
-      if (request.url.pathname.endsWith("/auth/usage/history/v2")) {
-        assert.equal(request.url.searchParams.get("summary"), "true");
-        assert.equal(request.url.searchParams.get("execution_id"), "exec-1");
-        return response({
-          status: "success",
-          data: {
-            items: [],
-            total: 0,
-            page: 1,
-            page_size: 10,
-            summary: {
-              start_date: "2026-05-01",
-              end_date: "2026-05-02",
-              bucket: "day",
-              total_count: 1,
-              success_count: 1,
-              failure_count: 0,
-              charge_outcome_counts: { charged: 1 },
-              pre_settlement_credits: 3,
-              settled_credits: 3,
-              buckets: [],
-              max_charge_items: [],
+    await withMockFetch(
+      (request) => {
+        if (request.url.pathname.endsWith("/auth/credits")) {
+          return response({ status: "success", data: { remaining_credits: 997 } });
+        }
+        if (request.url.pathname.endsWith("/auth/usage/history/v2")) {
+          assert.equal(request.url.searchParams.get("summary"), "true");
+          assert.equal(request.url.searchParams.get("execution_id"), "exec-1");
+          return response({
+            status: "success",
+            data: {
+              items: [],
+              total: 0,
+              page: 1,
+              page_size: 10,
+              summary: {
+                start_date: "2026-05-01",
+                end_date: "2026-05-02",
+                bucket: "day",
+                total_count: 1,
+                success_count: 1,
+                failure_count: 0,
+                charge_outcome_counts: { charged: 1 },
+                pre_settlement_credits: 3,
+                settled_credits: 3,
+                buckets: [],
+                max_charge_items: [],
+              },
             },
-          },
-        });
-      }
-      if (request.url.pathname.endsWith("/auth/credits/ledger")) {
-        assert.equal(request.url.searchParams.get("summary"), "true");
-        assert.equal(request.url.searchParams.get("direction"), "consume");
-        return response({
-          status: "success",
-          data: {
-            items: [],
-            total: 0,
-            page: 1,
-            page_size: 10,
-            summary: {
-              start_date: "2026-05-01",
-              end_date: "2026-05-02",
-              bucket: "day",
-              total_entries: 1,
-              consumed_credits: 3,
-              granted_credits: 0,
-              net_amount_credits: -3,
-              buckets: [],
-              max_amount_items: [],
+          });
+        }
+        if (request.url.pathname.endsWith("/auth/credits/ledger")) {
+          assert.equal(request.url.searchParams.get("summary"), "true");
+          assert.equal(request.url.searchParams.get("direction"), "consume");
+          return response({
+            status: "success",
+            data: {
+              items: [],
+              total: 0,
+              page: 1,
+              page_size: 10,
+              summary: {
+                start_date: "2026-05-01",
+                end_date: "2026-05-02",
+                bucket: "day",
+                total_entries: 1,
+                consumed_credits: 3,
+                granted_credits: 0,
+                net_amount_credits: -3,
+                buckets: [],
+                max_amount_items: [],
+              },
             },
-          },
-        });
-      }
-      throw new Error(`unexpected path ${request.url.pathname}`);
-    }, async () => {
-      const flags = {
-        apiKey: "sk-test",
-        baseUrl: "https://unit.test/api/v1",
-        json: true,
-        timeout: "1",
-        startDate: "2026-05-01",
-        endDate: "2026-05-02",
-        bucket: "day",
-        limit: "10",
-      };
+          });
+        }
+        throw new Error(`unexpected path ${request.url.pathname}`);
+      },
+      async () => {
+        const flags = {
+          apiKey: "sk-test",
+          baseUrl: "https://unit.test/api/v1",
+          json: true,
+          timeout: "1",
+          startDate: "2026-05-01",
+          endDate: "2026-05-02",
+          bucket: "day",
+          limit: "10",
+        };
 
-      const credits = await captureOutput(() => runCredits(flags));
-      assert.equal(jsonFromStdout(credits.stdout).remaining_credits, 997);
+        const credits = await captureOutput(() => runCredits(flags));
+        assert.equal(jsonFromStdout(credits.stdout).remaining_credits, 997);
 
-      const usage = await captureOutput(() => runUsage({ ...flags, executionId: "exec-1" }));
-      assert.equal(jsonFromStdout(usage.stdout).summary.total_events, 1);
+        const usage = await captureOutput(() => runUsage({ ...flags, executionId: "exec-1" }));
+        assert.equal(jsonFromStdout(usage.stdout).summary.total_events, 1);
 
-      const ledger = await captureOutput(() => runLedger({ ...flags, direction: "consume" }));
-      assert.equal(jsonFromStdout(ledger.stdout).summary.consumed_credits, 3);
-    });
+        const ledger = await captureOutput(() => runLedger({ ...flags, direction: "consume" }));
+        assert.equal(jsonFromStdout(ledger.stdout).summary.consumed_credits, 3);
+      },
+    );
   });
 });
 
@@ -294,31 +307,34 @@ test("login, whoami, logout, and doctor cover auth diagnostics workflow", async 
     const previousExitCode = process.exitCode;
     process.exitCode = undefined;
     try {
-      await withMockFetch((request) => {
-        assert.equal(request.url.pathname, "/api/v1/search");
-        assert.deepEqual(request.body, { query: "test", limit: 1 });
-        return response({ search_id: "search-ok", results: [] });
-      }, async (requests) => {
-        const flags = {
-          token: "sk-test-auth",
-          baseUrl: "https://unit.test/api/v1",
-          noBrowser: true,
-        };
+      await withMockFetch(
+        (request) => {
+          assert.equal(request.url.pathname, "/api/v1/search");
+          assert.deepEqual(request.body, { query: "test", limit: 1 });
+          return response({ search_id: "search-ok", results: [] });
+        },
+        async (requests) => {
+          const flags = {
+            token: "sk-test-auth",
+            baseUrl: "https://unit.test/api/v1",
+            noBrowser: true,
+          };
 
-        const login = await captureOutput(() => runLogin(flags));
-        assert.match(login.stdout, /Authenticated as/);
+          const login = await captureOutput(() => runLogin(flags));
+          assert.match(login.stdout, /Authenticated as/);
 
-        const whoami = await captureOutput(() => runWhoami({ baseUrl: flags.baseUrl }));
-        assert.match(whoami.stdout, /Authenticated/);
+          const whoami = await captureOutput(() => runWhoami({ baseUrl: flags.baseUrl }));
+          assert.match(whoami.stdout, /Authenticated/);
 
-        const doctor = await captureOutput(() => runDoctor({ baseUrl: flags.baseUrl }));
-        assert.match(doctor.stdout, /All checks passed/);
+          const doctor = await captureOutput(() => runDoctor({ baseUrl: flags.baseUrl }));
+          assert.match(doctor.stdout, /All checks passed/);
 
-        const logout = await captureOutput(() => runLogout());
-        assert.match(logout.stdout, /API key removed/);
-        assert.equal(requests.length, 3);
-        assert.equal(process.exitCode, undefined);
-      });
+          const logout = await captureOutput(() => runLogout());
+          assert.match(logout.stdout, /API key removed/);
+          assert.equal(requests.length, 3);
+          assert.equal(process.exitCode, undefined);
+        },
+      );
     } finally {
       process.exitCode = previousExitCode;
     }

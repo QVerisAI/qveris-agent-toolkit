@@ -23,14 +23,22 @@
     "prepack": "npm run build",
     "test:integration": "node scripts/run-integration-tests.mjs",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . && prettier --check \"src/**/*.ts\" \"index.ts\" \"scripts/**/*.mjs\"",
+    "lint:fix": "eslint . --fix && prettier --write \"src/**/*.ts\" \"index.ts\" \"scripts/**/*.mjs\""
   },
   "dependencies": {
     "@sinclair/typebox": "0.34.50"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.6.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.7.0",
     "openclaw": "^2026.6.4",
+    "prettier": "^3.9.5",
     "typescript": "^5.7.2",
+    "typescript-eslint": "^8.63.0",
     "vitest": "^2.1.0"
   },
   "peerDependencies": {

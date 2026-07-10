@@ -125,8 +125,10 @@ class QverisClient:
 
     def _unwrap_envelope(self, data: Any) -> Any:
         """Accept both raw payloads and standard {status, data} API envelopes."""
-        if isinstance(data, dict) and "data" in data and (
-            "status" in data or "status_code" in data or "message" in data
+        if (
+            isinstance(data, dict)
+            and "data" in data
+            and ("status" in data or "status_code" in data or "message" in data)
         ):
             status = data.get("status") or data.get("status_code")
             if self._is_failure_status(status):

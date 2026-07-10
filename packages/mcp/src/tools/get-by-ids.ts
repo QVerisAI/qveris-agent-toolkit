@@ -49,8 +49,7 @@ export const getToolsByIdsSchema = {
         type: 'string',
       },
       description:
-        'Array of tool IDs to retrieve information for. ' +
-        'These IDs should come from previous discover results.',
+        'Array of tool IDs to retrieve information for. ' + 'These IDs should come from previous discover results.',
       minItems: 1,
     },
     search_id: {
@@ -80,7 +79,7 @@ export const getToolsByIdsSchema = {
 export async function executeGetToolsByIds(
   client: QverisClient,
   input: GetToolsByIdsInput,
-  defaultSessionId: string
+  defaultSessionId: string,
 ): Promise<SearchResponse> {
   const response = await client.getToolsByIds({
     tool_ids: input.tool_ids,
@@ -90,4 +89,3 @@ export async function executeGetToolsByIds(
 
   return response;
 }
-

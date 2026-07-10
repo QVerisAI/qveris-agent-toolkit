@@ -79,8 +79,7 @@ async def test_agent_runs_builtin_tool_loop_and_records_reusable_history() -> No
 
     try:
         events = [
-            event
-            async for event in agent.run([Message(role="user", content="Find a weather API")], stream=False)
+            event async for event in agent.run([Message(role="user", content="Find a weather API")], stream=False)
         ]
     finally:
         await agent.close()
@@ -124,10 +123,7 @@ async def test_agent_routes_unhandled_tool_calls_to_extra_handler() -> None:
     agent.extra_tool_handler = extra_tool_handler
 
     try:
-        events = [
-            event
-            async for event in agent.run([Message(role="user", content="Use a local tool")], stream=False)
-        ]
+        events = [event async for event in agent.run([Message(role="user", content="Use a local tool")], stream=False)]
     finally:
         await agent.close()
 
@@ -152,24 +148,28 @@ class BudgetScenarioLLM:
         self.calls += 1
         if self.calls == 1:
             return ChatResponse(
-                tool_calls=[{
-                    "id": "c1",
-                    "type": "function",
-                    "function": {"name": "discover", "arguments": json.dumps({"query": "x", "limit": 1})},
-                }]
+                tool_calls=[
+                    {
+                        "id": "c1",
+                        "type": "function",
+                        "function": {"name": "discover", "arguments": json.dumps({"query": "x", "limit": 1})},
+                    }
+                ]
             )
         if self.calls == 2:
             return ChatResponse(
-                tool_calls=[{
-                    "id": "c2",
-                    "type": "function",
-                    "function": {
-                        "name": "call",
-                        "arguments": json.dumps(
-                            {"tool_id": "pricey.tool.v1", "search_id": "s1", "params_to_tool": {}}
-                        ),
-                    },
-                }]
+                tool_calls=[
+                    {
+                        "id": "c2",
+                        "type": "function",
+                        "function": {
+                            "name": "call",
+                            "arguments": json.dumps(
+                                {"tool_id": "pricey.tool.v1", "search_id": "s1", "params_to_tool": {}}
+                            ),
+                        },
+                    }
+                ]
             )
         return ChatResponse(content="done")
 
@@ -205,10 +205,7 @@ async def _run_budget_agent(budget_credits):
     client = BudgetScenarioClient()
     agent.client = client
     try:
-        events = [
-            event
-            async for event in agent.run([Message(role="user", content="do it")], stream=False)
-        ]
+        events = [event async for event in agent.run([Message(role="user", content="do it")], stream=False)]
     finally:
         await agent.close()
     return agent, client, events

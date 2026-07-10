@@ -209,9 +209,7 @@ async def test_call_contract_parses_execution_outcome_and_billing() -> None:
                 "billing": {
                     "summary": "3 credits per successful request",
                     "list_amount_credits": 3,
-                    "charge_lines": [
-                        {"component_key": "request", "amount_credits": 3, "unit": "request"}
-                    ],
+                    "charge_lines": [{"component_key": "request", "amount_credits": 3, "unit": "request"}],
                 },
                 "remaining_credits": 997,
             },

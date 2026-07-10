@@ -1,7 +1,18 @@
 const COMMANDS = [
-  "discover", "inspect", "call",
-  "login", "logout", "whoami", "credits", "usage", "ledger",
-  "config", "interactive", "history", "doctor", "completions",
+  "discover",
+  "inspect",
+  "call",
+  "login",
+  "logout",
+  "whoami",
+  "credits",
+  "usage",
+  "ledger",
+  "config",
+  "interactive",
+  "history",
+  "doctor",
+  "completions",
 ];
 
 export async function runCompletions(shell) {
@@ -52,7 +63,5 @@ _qveris`;
 }
 
 function fishCompletions() {
-  return COMMANDS.map(
-    (c) => `complete -c qveris -n '__fish_use_subcommand' -a '${c}' -d '${c} command'`
-  ).join("\n");
+  return COMMANDS.map((c) => `complete -c qveris -n '__fish_use_subcommand' -a '${c}' -d '${c} command'`).join("\n");
 }

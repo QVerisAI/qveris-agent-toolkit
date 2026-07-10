@@ -41,17 +41,25 @@
     "test:coverage": "vitest run --coverage",
     "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit",
-    "gen:openapi": "bash ../../scripts/regenerate-openapi-artifacts.sh"
+    "gen:openapi": "bash ../../scripts/regenerate-openapi-artifacts.sh",
+    "lint": "eslint . && prettier --check \"src/**/*.ts\"",
+    "lint:fix": "eslint . --fix && prettier --write \"src/**/*.ts\""
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "uuid": "^11.0.3"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^22.10.1",
     "@types/uuid": "^11.0.0",
+    "eslint": "^10.6.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.7.0",
     "openapi-typescript": "7.4.4",
+    "prettier": "^3.9.5",
     "typescript": "^5.7.2",
+    "typescript-eslint": "^8.63.0",
     "vitest": "^2.1.0"
   },
   "engines": {

@@ -8,11 +8,16 @@ const ALLOWED_KEYS = ["api_key", "base_url", "default_limit", "default_max_size"
 
 export async function runConfig(subcommand, args, flags) {
   switch (subcommand) {
-    case "set": return configSet(args[0], args[1], flags);
-    case "get": return configGet(args[0], flags);
-    case "list": return configList(flags);
-    case "reset": return configReset(flags);
-    case "path": return configPath(flags);
+    case "set":
+      return configSet(args[0], args[1], flags);
+    case "get":
+      return configGet(args[0], flags);
+    case "list":
+      return configList(flags);
+    case "reset":
+      return configReset(flags);
+    case "path":
+      return configPath(flags);
     default:
       console.error(`  Unknown config subcommand: ${subcommand}`);
       console.error(`  Usage: qveris config <set|get|list|reset|path>`);

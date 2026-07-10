@@ -88,7 +88,7 @@ export function formatDiscoverResult(result) {
 // ── inspect ───────────────────────────────────────────────────────────
 
 export function formatInspectResult(tools) {
-  const list = Array.isArray(tools) ? tools : tools?.results ?? tools?.tools ?? [tools];
+  const list = Array.isArray(tools) ? tools : (tools?.results ?? tools?.tools ?? [tools]);
   const remaining = tools?.remaining_credits;
   const lines = [];
 
@@ -129,9 +129,7 @@ export function formatInspectResult(tools) {
     lines.push(`  Success:    ${green(successRate)}`);
     lines.push(`  Billing:    ${yellow(billingText || "N/A")}`);
     const expectedCost =
-      typeof t.expected_cost === "string" || typeof t.expected_cost === "number"
-        ? String(t.expected_cost).trim()
-        : "";
+      typeof t.expected_cost === "string" || typeof t.expected_cost === "number" ? String(t.expected_cost).trim() : "";
     if (expectedCost) lines.push(`  Est. cost:  ${yellow(`${expectedCost} credits`)}`);
     if (t.has_last_execution) lines.push(`  Verified:   ${green("\u2713 has execution history")}`);
     if (docsUrl) lines.push(`  Docs:       ${cyan(docsUrl)}`);
@@ -260,9 +258,10 @@ export function formatCallResult(result) {
     // Truncated content preview
     if (data.truncated_content) {
       lines.push(`\n${bold("Preview:")}`);
-      const raw = typeof data.truncated_content === "string"
-        ? data.truncated_content
-        : JSON.stringify(data.truncated_content, null, 2);
+      const raw =
+        typeof data.truncated_content === "string"
+          ? data.truncated_content
+          : JSON.stringify(data.truncated_content, null, 2);
       const previewLines = raw.slice(0, 800).split("\n").slice(0, 15);
       for (const l of previewLines) lines.push(dim(`  ${l}`));
       if (raw.length > 800) lines.push(dim("  ..."));

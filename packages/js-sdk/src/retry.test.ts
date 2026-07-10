@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  computeRetryDelayMs,
-  DEFAULT_MAX_RETRIES,
-  parseRetryAfterMs,
-  resolveMaxRetries,
-} from './retry.js';
+import { computeRetryDelayMs, DEFAULT_MAX_RETRIES, parseRetryAfterMs, resolveMaxRetries } from './retry.js';
 
 describe('parseRetryAfterMs', () => {
   it('parses delta-seconds into milliseconds', () => {
@@ -40,8 +35,7 @@ describe('computeRetryDelayMs', () => {
 
   it('backs off exponentially with full jitter when no Retry-After', () => {
     // random()=1 -> factor (0.5 + 0.5*1) = 1 (full capped delay).
-    const full = (attempt: number) =>
-      computeRetryDelayMs({ ...base, retryAfterMs: null, attempt, random: () => 1 });
+    const full = (attempt: number) => computeRetryDelayMs({ ...base, retryAfterMs: null, attempt, random: () => 1 });
     expect(full(0)).toBe(500);
     expect(full(1)).toBe(1_000);
     expect(full(2)).toBe(2_000);
@@ -51,9 +45,7 @@ describe('computeRetryDelayMs', () => {
   });
 
   it('never overflows at a huge attempt', () => {
-    expect(
-      computeRetryDelayMs({ ...base, retryAfterMs: null, attempt: 5000, random: () => 1 }),
-    ).toBe(60_000);
+    expect(computeRetryDelayMs({ ...base, retryAfterMs: null, attempt: 5000, random: () => 1 })).toBe(60_000);
   });
 });
 

@@ -61,7 +61,11 @@ export function resolveBaseUrl({ baseUrlFlag, apiKey } = {}) {
     return { baseUrl: baseUrlFlag.replace(/\/+$/, ""), region: "custom", source: "flag" };
   }
   if (process.env.QVERIS_BASE_URL) {
-    return { baseUrl: process.env.QVERIS_BASE_URL.replace(/\/+$/, ""), region: "custom", source: "env (QVERIS_BASE_URL)" };
+    return {
+      baseUrl: process.env.QVERIS_BASE_URL.replace(/\/+$/, ""),
+      region: "custom",
+      source: "env (QVERIS_BASE_URL)",
+    };
   }
 
   // 2. Explicit region env var

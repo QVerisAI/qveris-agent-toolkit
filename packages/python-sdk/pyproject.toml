@@ -42,6 +42,7 @@ otel = [
 ]
 dev = [
     "pytest",
+    "ruff>=0.8.0",
     "pytest-asyncio",
     "python-dotenv",
     "rich>=13.0.0",
@@ -64,3 +65,19 @@ packages = ["qveris"]
 # sdist); it lands as qveris/CHANGELOG.md in site-packages.
 [tool.hatch.build.targets.wheel.force-include]
 "CHANGELOG.md" = "qveris/CHANGELOG.md"
+
+[tool.ruff]
+line-length = 120
+target-version = "py38"
+
+[tool.ruff.lint]
+# Correctness-focused start: pycodestyle errors, pyflakes, and bugbear-free
+# basics. Import sorting and broader style rules can tighten later.
+select = ["E", "F", "W"]
+ignore = [
+    "E501", # line length is advisory here; formatter handles the hard cases
+]
+
+[tool.ruff.format]
+# Matches the existing style (double quotes, 4-space indents).
+quote-style = "double"

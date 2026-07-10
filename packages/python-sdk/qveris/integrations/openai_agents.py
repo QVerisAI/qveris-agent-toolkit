@@ -27,8 +27,7 @@ from typing import Any, Dict, List, Optional
 from ..client.api import QverisClient
 
 _INSTALL_HINT = (
-    "The OpenAI Agents integration requires 'openai-agents'. "
-    "Install it with: pip install qveris[openai-agents]"
+    "The OpenAI Agents integration requires 'openai-agents'. Install it with: pip install qveris[openai-agents]"
 )
 
 

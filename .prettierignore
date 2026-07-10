@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+package-lock.json
+**/generated/
+*.md
+docs/
+skills/
+recipes/
+agent/
+ecosystem/
+.github/

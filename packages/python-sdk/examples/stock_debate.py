@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 import sys
 
@@ -17,20 +16,23 @@ from rich.theme import Theme
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass
 
 # Setup Rich Console with same theme as interactive_chat.py
-custom_theme = Theme({
-    "info": "cyan",
-    "warning": "yellow",
-    "error": "red",
-    "tool": "magenta",
-    "reasoning": "dim italic blue",
-    "user": "green bold",
-    "assistant": "white"
-})
+custom_theme = Theme(
+    {
+        "info": "cyan",
+        "warning": "yellow",
+        "error": "red",
+        "tool": "magenta",
+        "reasoning": "dim italic blue",
+        "user": "green bold",
+        "assistant": "white",
+    }
+)
 console = Console(theme=custom_theme)
 
 # OpenRouter model names
@@ -43,12 +45,7 @@ MAX_ROUNDS = 10
 def print_agent_response(agent_name: str, model: str, content: str, color: str, round_num: int):
     """Display agent response in a styled panel."""
     title = f"[bold]{agent_name}[/bold] ({model}) - Round {round_num}"
-    panel = Panel(
-        Text(content or "(No response)"),
-        title=title,
-        border_style=color,
-        padding=(1, 2)
-    )
+    panel = Panel(Text(content or "(No response)"), title=title, border_style=color, padding=(1, 2))
     console.print(panel)
     console.print()
 
@@ -61,7 +58,9 @@ def label_latest_assistant_message(messages: list[Message], agent_name: str) -> 
             return
 
 
-async def run_agent_turn(agent: Agent, messages: list[Message], agent_name: str, color: str) -> tuple[str, list[Message]]:
+async def run_agent_turn(
+    agent: Agent, messages: list[Message], agent_name: str, color: str
+) -> tuple[str, list[Message]]:
     """
     Run a single agent turn using NON-STREAMING via unified run() API.
     Returns final content and updated conversation history. Tool calls are displayed as they occur.
@@ -73,8 +72,8 @@ async def run_agent_turn(agent: Agent, messages: list[Message], agent_name: str,
             final_content = event.content  # Non-streaming: full content in one piece
 
         elif event.type == "tool_call" and event.tool_call:
-            tool_name = event.tool_call['function']['name']
-            tool_args = event.tool_call['function']['arguments']
+            tool_name = event.tool_call["function"]["name"]
+            tool_args = event.tool_call["function"]["arguments"]
 
             # Shorten args for display
             display_args = tool_args[:100] + "..." if len(tool_args) > 100 else tool_args
@@ -93,12 +92,14 @@ async def run_agent_turn(agent: Agent, messages: list[Message], agent_name: str,
                 if tool_name == "search_tools":
                     total = result.get("total", 0)
                     tools = result.get("results", [])[:3]
-                    tool_ids = [t.get("tool_id","?") for t in tools]
-                    console.print(f"[info]✓ Found {total} tools:[/info] {', '.join(tool_ids)}{'...' if total > 3 else ''}")
+                    tool_ids = [t.get("tool_id", "?") for t in tools]
+                    console.print(
+                        f"[info]✓ Found {total} tools:[/info] {', '.join(tool_ids)}{'...' if total > 3 else ''}"
+                    )
                 elif tool_name == "execute_tool":
                     success = result.get("success", False)
                     if success:
-                        console.print(f"[info]✓ Tool executed successfully[/info]")
+                        console.print("[info]✓ Tool executed successfully[/info]")
                     else:
                         console.print(f"[warning]⚠ Tool returned: {str(result)[:200]}[/warning]")
                 else:
@@ -111,11 +112,13 @@ async def run_agent_turn(agent: Agent, messages: list[Message], agent_name: str,
 
 
 async def main():
-    console.print(Panel.fit(
-        "[bold cyan]NVIDIA Stock Analysis Debate[/bold cyan]\n"
-        f"[dim]GPT-5.2 vs Gemini-3-Pro • Max {MAX_ROUNDS} rounds[/dim]",
-        border_style="cyan"
-    ))
+    console.print(
+        Panel.fit(
+            "[bold cyan]NVIDIA Stock Analysis Debate[/bold cyan]\n"
+            f"[dim]GPT-5.2 vs Gemini-3-Pro • Max {MAX_ROUNDS} rounds[/dim]",
+            border_style="cyan",
+        )
+    )
     console.print()
 
     config = QverisConfig()
@@ -133,8 +136,8 @@ async def main():
                 "Keep responses concise (2-3 paragraphs max). "
                 "Maximum 1 search_tools call and 1 execute_tool call per round."
                 "End with a clear stance: BULLISH or BEARISH for the next 24 hours."
-            )
-        )
+            ),
+        ),
     )
 
     # Agent 2: Gemini-3-Pro
@@ -150,8 +153,8 @@ async def main():
                 "Keep responses concise (2-3 paragraphs max). "
                 "Maximum 1 search_tools call and 1 execute_tool call per round."
                 "End with a clear stance: BULLISH or BEARISH for the next 24 hours."
-            )
-        )
+            ),
+        ),
     )
 
     # Initial prompt
@@ -197,10 +200,11 @@ async def main():
 
             # Prepare prompt for next agent
             if round_num < MAX_ROUNDS:
-                conversation.append(Message(
-                    role="user",
-                    content=f"[Moderator]: {other_name}, please respond to {agent_name}'s analysis."
-                ))
+                conversation.append(
+                    Message(
+                        role="user", content=f"[Moderator]: {other_name}, please respond to {agent_name}'s analysis."
+                    )
+                )
 
             # Switch agents
             current_agent = "gemini" if current_agent == "gpt" else "gpt"
@@ -209,11 +213,11 @@ async def main():
 
     # Final summary
     console.print()
-    console.print(Panel.fit(
-        f"[bold green]Debate Complete![/bold green]\n"
-        f"[dim]Total rounds: {round_num}[/dim]",
-        border_style="green"
-    ))
+    console.print(
+        Panel.fit(
+            f"[bold green]Debate Complete![/bold green]\n[dim]Total rounds: {round_num}[/dim]", border_style="green"
+        )
+    )
 
 
 if __name__ == "__main__":

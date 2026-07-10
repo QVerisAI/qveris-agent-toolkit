@@ -92,24 +92,14 @@ test("mcp live probe wraps Windows command shims through cmd.exe without shell o
   );
 
   assert.equal(spec.command.endsWith("cmd.exe"), true);
-  assert.deepEqual(spec.args, [
-    "/d",
-    "/s",
-    "/c",
-    "\"\"npx\" \"fake server.mjs\" \"--package=@qverisai/mcp\"\"",
-  ]);
+  assert.deepEqual(spec.args, ["/d", "/s", "/c", '""npx" "fake server.mjs" "--package=@qverisai/mcp""']);
 });
 
 test("mcp live probe safely quotes Windows command shim arguments", () => {
   const spec = mcpSpawnCommand(
     {
       command: "C:\\Tools\\npm shim\\npx.cmd",
-      args: [
-        "--name=foo\"bar",
-        "C:\\temp\\tail\\",
-        "100% ready",
-        "safe&literal",
-      ],
+      args: ['--name=foo"bar', "C:\\temp\\tail\\", "100% ready", "safe&literal"],
     },
     "win32",
   );
@@ -119,7 +109,7 @@ test("mcp live probe safely quotes Windows command shim arguments", () => {
     "/d",
     "/s",
     "/c",
-    "\"\"C:\\Tools\\npm shim\\npx.cmd\" \"--name=foo\\\"bar\" \"C:\\temp\\tail\\\\\" \"100%% ready\" \"safe&literal\"\"",
+    '""C:\\Tools\\npm shim\\npx.cmd" "--name=foo\\"bar" "C:\\temp\\tail\\\\" "100%% ready" "safe&literal""',
   ]);
 });
 
@@ -132,18 +122,13 @@ test("mcp live probe preserves percent signs for non-batch Windows commands", ()
     "win32",
   );
 
-  assert.deepEqual(spec.args, [
-    "/d",
-    "/s",
-    "/c",
-    "\"\"node\" \"100% ready\"\"",
-  ]);
+  assert.deepEqual(spec.args, ["/d", "/s", "/c", '""node" "100% ready""']);
 });
 
 test("mcp live probe rejects Windows control characters before cmd.exe wrapping", () => {
   assert.throws(
     () => mcpSpawnCommand({ command: "npx", args: ["safe\nunsafe"] }, "win32"),
-    /cannot contain CR, LF, or NUL/
+    /cannot contain CR, LF, or NUL/,
   );
 });
 
@@ -163,20 +148,17 @@ test("mcp probe timeout parsing always returns a valid duration", () => {
 test("mcp command env extraction handles shell quoted values", () => {
   assert.equal(
     extractEnvAssignmentValue("claude mcp add --env QVERIS_API_KEY='sk-test' -- npx", "QVERIS_API_KEY"),
-    "sk-test"
+    "sk-test",
   );
   assert.equal(
     extractEnvAssignmentValue("claude mcp add --env QVERIS_API_KEY='sk'\\''quoted' -- npx", "QVERIS_API_KEY"),
-    "sk'quoted"
+    "sk'quoted",
   );
   assert.equal(
     extractEnvAssignmentValue('claude mcp add --env QVERIS_API_KEY="sk ""quoted""" -- cmd /c npx', "QVERIS_API_KEY"),
-    'sk "quoted"'
+    'sk "quoted"',
   );
-  assert.equal(
-    extractEnvAssignmentValue("NOT_QVERIS_API_KEY=bad QVERIS_API_KEY=sk-real", "QVERIS_API_KEY"),
-    "sk-real"
-  );
+  assert.equal(extractEnvAssignmentValue("NOT_QVERIS_API_KEY=bad QVERIS_API_KEY=sk-real", "QVERIS_API_KEY"), "sk-real");
 });
 
 test("mcp configure emits valid JSON fragments for each supported target", () => {
@@ -257,11 +239,18 @@ test("mcp configure write merges cursor config and validate reads it back", () =
   const dir = mkdtempSync(join(tmpdir(), "qveris-cli-mcp-"));
   try {
     const path = join(dir, "cursor-mcp.json");
-    writeFileSync(path, JSON.stringify({
-      mcpServers: {
-        existing: { command: "node", args: ["server.js"], env: { TOKEN: "keep" } },
-      },
-    }, null, 2) + "\n");
+    writeFileSync(
+      path,
+      JSON.stringify(
+        {
+          mcpServers: {
+            existing: { command: "node", args: ["server.js"], env: { TOKEN: "keep" } },
+          },
+        },
+        null,
+        2,
+      ) + "\n",
+    );
 
     const configureResult = runCli([
       "mcp",
@@ -297,7 +286,7 @@ test("mcp configure write merges cursor config and validate reads it back", () =
         ["qveris_entry", true],
         ["uses_qveris_mcp", true],
         ["api_key_env", true],
-      ]
+      ],
     );
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -442,7 +431,9 @@ test("mcp validate probe verifies visible stdio tools", () => {
   try {
     const serverPath = join(dir, "fake-mcp-server.mjs");
     const configPath = join(dir, "generic-mcp.json");
-    writeFileSync(serverPath, `
+    writeFileSync(
+      serverPath,
+      `
 import readline from "node:readline";
 
 function writeChunked(message) {
@@ -474,12 +465,20 @@ rl.on("line", (line) => {
     });
   }
 });
-`);
-    writeFileSync(configPath, JSON.stringify({
-      command: process.execPath,
-      args: [serverPath, "--package=@qverisai/mcp"],
-      env: { QVERIS_API_KEY: "sk-test" },
-    }, null, 2) + "\n");
+`,
+    );
+    writeFileSync(
+      configPath,
+      JSON.stringify(
+        {
+          command: process.execPath,
+          args: [serverPath, "--package=@qverisai/mcp"],
+          env: { QVERIS_API_KEY: "sk-test" },
+        },
+        null,
+        2,
+      ) + "\n",
+    );
 
     const result = runCli([
       "mcp",

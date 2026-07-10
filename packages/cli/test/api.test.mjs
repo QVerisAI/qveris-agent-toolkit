@@ -31,53 +31,56 @@ function jsonResponse(payload, init = {}) {
 
 test("API client maps discover, inspect, call, credits, usage, and ledger endpoints", async () => {
   const requests = [];
-  await withMockFetch((url, options) => {
-    requests.push({
-      method: options.method,
-      path: url.pathname,
-      query: Object.fromEntries(url.searchParams.entries()),
-      body: options.body ? JSON.parse(options.body) : undefined,
-      authorization: options.headers.Authorization,
-    });
-    return jsonResponse({ ok: true, path: url.pathname });
-  }, async () => {
-    await discoverTools({
-      apiKey: "sk-test",
-      baseUrl: "https://unit.test/api/v1",
-      query: "weather",
-      limit: 2,
-      timeoutMs: 1000,
-    });
-    await inspectToolsByIds({
-      apiKey: "sk-test",
-      baseUrl: "https://unit.test/api/v1",
-      toolIds: ["tool-1"],
-      discoveryId: "search-1",
-      timeoutMs: 1000,
-    });
-    await callTool({
-      apiKey: "sk-test",
-      baseUrl: "https://unit.test/api/v1",
-      toolId: "tool-1",
-      discoveryId: "search-1",
-      parameters: { city: "London" },
-      maxResponseSize: 123,
-      timeoutMs: 1000,
-    });
-    await getCredits({ apiKey: "sk-test", baseUrl: "https://unit.test/api/v1", timeoutMs: 1000 });
-    await getUsageHistory({
-      apiKey: "sk-test",
-      baseUrl: "https://unit.test/api/v1",
-      query: { execution_id: "exec-1", summary: true },
-      timeoutMs: 1000,
-    });
-    await getCreditsLedger({
-      apiKey: "sk-test",
-      baseUrl: "https://unit.test/api/v1",
-      query: { direction: "consume", min_credits: 5 },
-      timeoutMs: 1000,
-    });
-  });
+  await withMockFetch(
+    (url, options) => {
+      requests.push({
+        method: options.method,
+        path: url.pathname,
+        query: Object.fromEntries(url.searchParams.entries()),
+        body: options.body ? JSON.parse(options.body) : undefined,
+        authorization: options.headers.Authorization,
+      });
+      return jsonResponse({ ok: true, path: url.pathname });
+    },
+    async () => {
+      await discoverTools({
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        query: "weather",
+        limit: 2,
+        timeoutMs: 1000,
+      });
+      await inspectToolsByIds({
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        toolIds: ["tool-1"],
+        discoveryId: "search-1",
+        timeoutMs: 1000,
+      });
+      await callTool({
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        toolId: "tool-1",
+        discoveryId: "search-1",
+        parameters: { city: "London" },
+        maxResponseSize: 123,
+        timeoutMs: 1000,
+      });
+      await getCredits({ apiKey: "sk-test", baseUrl: "https://unit.test/api/v1", timeoutMs: 1000 });
+      await getUsageHistory({
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        query: { execution_id: "exec-1", summary: true },
+        timeoutMs: 1000,
+      });
+      await getCreditsLedger({
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        query: { direction: "consume", min_credits: 5 },
+        timeoutMs: 1000,
+      });
+    },
+  );
 
   assert.deepEqual(requests, [
     {
@@ -126,25 +129,31 @@ test("API client maps discover, inspect, call, credits, usage, and ledger endpoi
 });
 
 test("API client converts HTTP failures into CLI errors", async () => {
-  await withMockFetch(() => jsonResponse({ message: "bad key" }, { status: 401 }), async () => {
-    await assert.rejects(
-      discoverTools({ apiKey: "sk-test", baseUrl: "https://unit.test/api/v1", query: "x" }),
-      (err) => err instanceof CliError && err.code === "AUTH_INVALID_KEY"
-    );
-  });
+  await withMockFetch(
+    () => jsonResponse({ message: "bad key" }, { status: 401 }),
+    async () => {
+      await assert.rejects(
+        discoverTools({ apiKey: "sk-test", baseUrl: "https://unit.test/api/v1", query: "x" }),
+        (err) => err instanceof CliError && err.code === "AUTH_INVALID_KEY",
+      );
+    },
+  );
 
-  await withMockFetch(() => jsonResponse({ message: "not enough credits" }, { status: 402 }), async () => {
-    await assert.rejects(
-      callTool({
-        apiKey: "sk-test",
-        baseUrl: "https://unit.test/api/v1",
-        toolId: "tool-1",
-        discoveryId: "search-1",
-        parameters: {},
-      }),
-      (err) => err instanceof CliError && err.code === "CREDITS_INSUFFICIENT" && err.hint.includes("/pricing")
-    );
-  });
+  await withMockFetch(
+    () => jsonResponse({ message: "not enough credits" }, { status: 402 }),
+    async () => {
+      await assert.rejects(
+        callTool({
+          apiKey: "sk-test",
+          baseUrl: "https://unit.test/api/v1",
+          toolId: "tool-1",
+          discoveryId: "search-1",
+          parameters: {},
+        }),
+        (err) => err instanceof CliError && err.code === "CREDITS_INSUFFICIENT" && err.hint.includes("/pricing"),
+      );
+    },
+  );
 });
 
 test("unwrapApiResponse accepts raw payloads and unwraps success envelopes", () => {
@@ -152,6 +161,6 @@ test("unwrapApiResponse accepts raw payloads and unwraps success envelopes", () 
   assert.deepEqual(unwrapApiResponse({ status: "success", data: { items: [2] } }), { items: [2] });
   assert.throws(
     () => unwrapApiResponse({ status: "failure", message: "boom", data: null }),
-    (err) => err instanceof CliError && err.code === "API_ERROR"
+    (err) => err instanceof CliError && err.code === "API_ERROR",
   );
 });

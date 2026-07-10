@@ -18,11 +18,15 @@ export function generateSnippet(lang, { toolId, discoveryId, parameters, maxResp
 }
 
 function generateCurl({ baseUrl, toolId, discoveryId, parameters, maxResponseSize }) {
-  const body = JSON.stringify({
-    search_id: discoveryId,
-    parameters,
-    max_response_size: maxResponseSize,
-  }, null, 2);
+  const body = JSON.stringify(
+    {
+      search_id: discoveryId,
+      parameters,
+      max_response_size: maxResponseSize,
+    },
+    null,
+    2,
+  );
 
   // Use heredoc to avoid single-quote escaping issues in parameters
   return `curl -sS -X POST "${baseUrl}/tools/execute?tool_id=${toolId}" \\

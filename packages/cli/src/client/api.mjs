@@ -38,7 +38,7 @@ async function requestJson(
   for (let attempt = 0; ; attempt++) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
-    let retryDelayMs = null;
+    let retryDelayMs;
 
     try {
       const response = await fetch(url.toString(), {
@@ -67,7 +67,9 @@ async function requestJson(
         try {
           jsonBody = JSON.parse(rawText);
           errorDetail = jsonBody.error_message || jsonBody.message || null;
-        } catch { /* not JSON */ }
+        } catch {
+          /* not JSON */
+        }
         if (status === 401 || status === 403) throw new CliError("AUTH_INVALID_KEY", errorDetail);
         if (status === 402) {
           const pricingHost = baseUrl.includes("qveris.cn") ? "https://qveris.cn" : "https://qveris.ai";
@@ -159,12 +161,7 @@ export async function getCredits({ apiKey, baseUrl: baseUrlFlag, timeoutMs = 300
   });
 }
 
-export async function getUsageHistory({
-  apiKey,
-  baseUrl: baseUrlFlag,
-  query = {},
-  timeoutMs = 30000,
-}) {
+export async function getUsageHistory({ apiKey, baseUrl: baseUrlFlag, query = {}, timeoutMs = 30000 }) {
   const baseUrl = getBaseUrl(baseUrlFlag, apiKey);
   return requestJson("/auth/usage/history/v2", {
     method: "GET",
@@ -175,12 +172,7 @@ export async function getUsageHistory({
   });
 }
 
-export async function getCreditsLedger({
-  apiKey,
-  baseUrl: baseUrlFlag,
-  query = {},
-  timeoutMs = 30000,
-}) {
+export async function getCreditsLedger({ apiKey, baseUrl: baseUrlFlag, query = {}, timeoutMs = 30000 }) {
   const baseUrl = getBaseUrl(baseUrlFlag, apiKey);
   return requestJson("/auth/credits/ledger", {
     method: "GET",

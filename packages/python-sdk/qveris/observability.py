@@ -96,9 +96,7 @@ def start_span(name: str, attributes: Optional[Dict[str, Any]] = None) -> Iterat
 
     try:
         # Disable the SDK's own exception recording; we record once, manually.
-        span_cm = _tracer.start_as_current_span(
-            name, record_exception=False, set_status_on_exception=False
-        )
+        span_cm = _tracer.start_as_current_span(name, record_exception=False, set_status_on_exception=False)
         span = span_cm.__enter__()
     except Exception:  # pragma: no cover - tracer setup fault -> run untraced
         yield None

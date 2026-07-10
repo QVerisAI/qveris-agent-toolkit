@@ -50,9 +50,7 @@ def test_core_contract_model_present_and_pydantic(name):
         f"{name} missing from generated contract — the public OpenAPI spec or "
         f"the pinned generator drifted; regenerate qveris/generated/openapi_models.py"
     )
-    assert isinstance(model, type) and issubclass(model, BaseModel), (
-        f"{name} is not a pydantic BaseModel"
-    )
+    assert isinstance(model, type) and issubclass(model, BaseModel), f"{name} is not a pydantic BaseModel"
 
 
 def test_search_request_contract_shape():

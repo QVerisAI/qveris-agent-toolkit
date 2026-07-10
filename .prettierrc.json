@@ -1,0 +1,10 @@
+{
+  "printWidth": 120,
+  "singleQuote": true,
+  "overrides": [
+    {
+      "files": ["packages/cli/**", "packages/openclaw-qveris-plugin/**"],
+      "options": { "singleQuote": false }
+    }
+  ]
+}

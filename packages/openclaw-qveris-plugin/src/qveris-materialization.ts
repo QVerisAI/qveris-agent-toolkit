@@ -165,10 +165,7 @@ function inferFieldType(value: unknown): string {
   return typeof value;
 }
 
-export function inferJsonAnalysis(
-  text: string,
-  maxPreviewChars: number,
-): ContentAnalysis & { preview?: string } {
+export function inferJsonAnalysis(text: string, maxPreviewChars: number): ContentAnalysis & { preview?: string } {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
@@ -265,10 +262,7 @@ function countLines(text: string, options?: { nonEmptyOnly?: boolean }): number 
   return count;
 }
 
-export function inferCsvAnalysis(
-  text: string,
-  maxPreviewChars: number,
-): ContentAnalysis & { preview?: string } {
+export function inferCsvAnalysis(text: string, maxPreviewChars: number): ContentAnalysis & { preview?: string } {
   const firstLines = readLines(text, { maxLines: 5, nonEmptyOnly: true });
   if (firstLines.length === 0) return { line_count: 0 };
 
@@ -282,10 +276,7 @@ export function inferCsvAnalysis(
   return { line_count: countLines(text, { nonEmptyOnly: true }), column_names: columnNames, preview };
 }
 
-export function inferTextAnalysis(
-  text: string,
-  maxPreviewChars: number,
-): ContentAnalysis & { preview?: string } {
+export function inferTextAnalysis(text: string, maxPreviewChars: number): ContentAnalysis & { preview?: string } {
   let preview = text.slice(0, maxPreviewChars);
   if (text.length > maxPreviewChars) preview += "...";
   return { line_count: countLines(text), preview };
@@ -363,18 +354,14 @@ async function fetchQverisResultData(params: {
     }
 
     const headerMime = res.headers.get("content-type");
-    const category = classifyContentCategory(
-      headerMime ? headerMime.split(";")[0].trim() : undefined,
-    );
+    const category = classifyContentCategory(headerMime ? headerMime.split(";")[0].trim() : undefined);
     const { buffer, truncated, bytesRead } = await readResponseBuffer(res, {
       maxBytes: params.maxBytes,
     });
 
     // Decode to text only for non-binary categories
     const text =
-      category === "image" || category === "audio" || category === "video"
-        ? undefined
-        : tryDecodeUtf8(buffer);
+      category === "image" || category === "audio" || category === "video" ? undefined : tryDecodeUtf8(buffer);
 
     return { raw: buffer, text, headerMime, bytesRead, truncatedOnDownload: truncated };
   } finally {
@@ -404,8 +391,7 @@ export async function saveQverisFullResult(params: {
     });
   } catch (err) {
     const isTimeout =
-      (err instanceof DOMException && err.name === "AbortError") ||
-      (err instanceof Error && err.name === "AbortError");
+      (err instanceof DOMException && err.name === "AbortError") || (err instanceof Error && err.name === "AbortError");
     return {
       status: "failed",
       reason: isTimeout ? "download_timeout" : "download_error",
@@ -413,9 +399,7 @@ export async function saveQverisFullResult(params: {
     };
   }
 
-  let mimeType: string | undefined = downloaded.headerMime
-    ? downloaded.headerMime.split(";")[0].trim()
-    : undefined;
+  let mimeType: string | undefined = downloaded.headerMime ? downloaded.headerMime.split(";")[0].trim() : undefined;
 
   // Heuristic: reclassify application/octet-stream as JSON when content looks like JSON
   if ((!mimeType || mimeType === "application/octet-stream") && downloaded.text) {
@@ -481,11 +465,7 @@ export async function saveQverisFullResult(params: {
   };
 
   try {
-    await fs.writeFile(
-      path.join(absDir, "manifest.json"),
-      JSON.stringify(manifest, null, 2) + "\n",
-      { flag: "w" },
-    );
+    await fs.writeFile(path.join(absDir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n", { flag: "w" });
   } catch {
     // Non-fatal: manifest.json is for debugging only
   }

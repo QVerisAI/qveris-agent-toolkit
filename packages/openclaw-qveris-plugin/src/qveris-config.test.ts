@@ -71,15 +71,11 @@ describe("config resolution", () => {
   });
 
   it("builds cn base URL from region", () => {
-    expect(resolveQverisBaseUrl({ region: "cn" })).toBe(
-      `https://${QVERIS_REGION_DOMAINS.cn}/api/v1`,
-    );
+    expect(resolveQverisBaseUrl({ region: "cn" })).toBe(`https://${QVERIS_REGION_DOMAINS.cn}/api/v1`);
   });
 
   it("uses explicit baseUrl when provided", () => {
-    expect(resolveQverisBaseUrl({ baseUrl: "https://proxy.example/qveris" })).toBe(
-      "https://proxy.example/qveris",
-    );
+    expect(resolveQverisBaseUrl({ baseUrl: "https://proxy.example/qveris" })).toBe("https://proxy.example/qveris");
   });
 
   it("resolveDiscoverTimeoutSeconds returns default when not set", () => {
@@ -121,18 +117,14 @@ describe("config resolution", () => {
   it("subdomain of region domain is allowed for cn region", () => {
     const domains = resolveFullContentAllowedDomains({ region: "cn" });
     const ossHostname = `oss.${QVERIS_REGION_DOMAINS.cn}`;
-    const allowed = domains.some(
-      (d) => ossHostname === d || ossHostname.endsWith(`.${d}`),
-    );
+    const allowed = domains.some((d) => ossHostname === d || ossHostname.endsWith(`.${d}`));
     expect(allowed).toBe(true);
   });
 
   it("subdomain of region domain is allowed for global region", () => {
     const domains = resolveFullContentAllowedDomains(undefined);
     const ossHostname = `oss.${QVERIS_REGION_DOMAINS.global}`;
-    const allowed = domains.some(
-      (d) => ossHostname === d || ossHostname.endsWith(`.${d}`),
-    );
+    const allowed = domains.some((d) => ossHostname === d || ossHostname.endsWith(`.${d}`));
     expect(allowed).toBe(true);
   });
 });

@@ -39,31 +39,11 @@ import { pathToFileURL } from 'node:url';
 import { v4 as uuidv4 } from 'uuid';
 
 import { createClientFromEnv, QverisClient } from './api/client.js';
-import {
-  searchToolsSchema,
-  executeSearchTools,
-  type SearchToolsInput,
-} from './tools/search.js';
-import {
-  executeToolSchema,
-  executeExecuteTool,
-  type ExecuteToolInput,
-} from './tools/execute.js';
-import {
-  getToolsByIdsSchema,
-  executeGetToolsByIds,
-  type GetToolsByIdsInput,
-} from './tools/get-by-ids.js';
-import {
-  usageHistorySchema,
-  executeUsageHistory,
-  type UsageHistoryInput,
-} from './tools/usage-history.js';
-import {
-  creditsLedgerSchema,
-  executeCreditsLedger,
-  type CreditsLedgerInput,
-} from './tools/credits-ledger.js';
+import { searchToolsSchema, executeSearchTools, type SearchToolsInput } from './tools/search.js';
+import { executeToolSchema, executeExecuteTool, type ExecuteToolInput } from './tools/execute.js';
+import { getToolsByIdsSchema, executeGetToolsByIds, type GetToolsByIdsInput } from './tools/get-by-ids.js';
+import { usageHistorySchema, executeUsageHistory, type UsageHistoryInput } from './tools/usage-history.js';
+import { creditsLedgerSchema, executeCreditsLedger, type CreditsLedgerInput } from './tools/credits-ledger.js';
 import type { ApiError } from './types.js';
 
 // ============================================================================
@@ -79,18 +59,14 @@ const SERVER_VERSION: string = pkg.version;
 
 /** Discovery metadata (Server Card + Catalog) derived from package.json. */
 function buildServerCardInfo(): ServerCardInfo {
-  const repoUrl: string | undefined = pkg.repository?.url
-    ?.replace(/^git\+/, '')
-    .replace(/\.git$/, '');
+  const repoUrl: string | undefined = pkg.repository?.url?.replace(/^git\+/, '').replace(/\.git$/, '');
   return {
     name: pkg.mcpName ?? 'io.github.QVerisAI/mcp',
     version: SERVER_VERSION,
     description: pkg.description,
     title: 'QVeris',
     websiteUrl: pkg.homepage,
-    repository: repoUrl
-      ? { source: 'github', url: repoUrl, subfolder: pkg.repository?.directory }
-      : undefined,
+    repository: repoUrl ? { source: 'github', url: repoUrl, subfolder: pkg.repository?.directory } : undefined,
     protocolVersions: SUPPORTED_PROTOCOL_VERSIONS,
   };
 }
@@ -204,9 +180,7 @@ function inferProviderId(toolId: string | undefined): string | undefined {
 }
 
 function compactObject(input: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(input).filter(([, value]) => value !== undefined),
-  );
+  return Object.fromEntries(Object.entries(input).filter(([, value]) => value !== undefined));
 }
 
 /**
@@ -412,9 +386,7 @@ export async function executeQverisMcpTool(
 
     // Handle other errors (including fetch network errors).
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    const errorCause = error instanceof Error && error.cause instanceof Error
-      ? error.cause.message
-      : undefined;
+    const errorCause = error instanceof Error && error.cause instanceof Error ? error.cause.message : undefined;
 
     return {
       content: [
@@ -439,10 +411,7 @@ export async function executeQverisMcpTool(
  * and Streamable HTTP paths (and tests) can construct a server the same way; in
  * HTTP mode one server is created per client session.
  */
-export function createQverisServer(
-  client: QverisClient | undefined,
-  defaultSessionId: string,
-): Server {
+export function createQverisServer(client: QverisClient | undefined, defaultSessionId: string): Server {
   const server = new Server(
     {
       name: SERVER_NAME,
@@ -452,7 +421,7 @@ export function createQverisServer(
       capabilities: {
         tools: {},
       },
-    }
+    },
   );
 
   // Lists available tools (discover/inspect/call plus deprecated aliases).
@@ -488,23 +457,15 @@ export async function main(): Promise<void> {
   try {
     client = createClientFromEnv();
   } catch (error) {
-    console.error(
-      error instanceof Error ? error.message : 'Failed to initialize Qveris client'
-    );
-    console.error(
-      'Starting without credentials: tool listing is available; set QVERIS_API_KEY to enable tool calls.'
-    );
+    console.error(error instanceof Error ? error.message : 'Failed to initialize Qveris client');
+    console.error('Starting without credentials: tool listing is available; set QVERIS_API_KEY to enable tool calls.');
   }
 
   const transportConfig = resolveTransportConfig(process.env, process.argv.slice(2));
 
   // Streamable HTTP: one Qveris server per MCP session, keyed by Mcp-Session-Id.
   if (transportConfig.mode === 'http') {
-    await startHttpServer(
-      transportConfig,
-      (sessionId) => createQverisServer(client, sessionId),
-      buildServerCardInfo(),
-    );
+    await startHttpServer(transportConfig, (sessionId) => createQverisServer(client, sessionId), buildServerCardInfo());
     return;
   }
 
@@ -523,12 +484,7 @@ export async function main(): Promise<void> {
  * Type guard for API errors.
  */
 function isApiError(error: unknown): error is ApiError {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'status' in error &&
-    'message' in error
-  );
+  return typeof error === 'object' && error !== null && 'status' in error && 'message' in error;
 }
 
 export function isEntrypoint(argvEntry: string | undefined, moduleUrl = import.meta.url): boolean {
@@ -552,4 +508,3 @@ if (isEntrypoint(process.argv[1])) {
     process.exit(1);
   });
 }
-

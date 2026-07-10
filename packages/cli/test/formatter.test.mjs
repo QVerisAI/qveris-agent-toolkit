@@ -86,9 +86,7 @@ test("formatDiscoverResult renders why_recommended as a why line", () => {
 });
 
 test("formatDiscoverResult truncates long why_recommended text", () => {
-  const output = formatDiscoverResult(
-    discoverResultWithTool({ why_recommended: "x".repeat(200) }),
-  );
+  const output = formatDiscoverResult(discoverResultWithTool({ why_recommended: "x".repeat(200) }));
   assert.ok(output.includes(`why: ${"x".repeat(160)}...`));
   assert.ok(!output.includes("x".repeat(161)));
 });
@@ -105,10 +103,7 @@ test("formatInspectResult renders object categories as names", () => {
     {
       tool_id: "provider.tool.retrieve.v1.abc123",
       name: "Sample Tool",
-      categories: [
-        { slug: "market_data", name: "Market Data" },
-        "forex",
-      ],
+      categories: [{ slug: "market_data", name: "Market Data" }, "forex"],
     },
   ]);
   assert.ok(!output.includes("[object Object]"));
@@ -138,33 +133,25 @@ test("formatInspectResult renders capability lines with coverage tags", () => {
 
 test("formatInspectResult caps capability tag list at 8 entries", () => {
   const tag = Array.from({ length: 11 }, (_, i) => ({ id: `M${i}` }));
-  const output = formatInspectResult([
-    { tool_id: "t.v1", name: "Sample Tool", capabilities: [{ id: "CAP.X", tag }] },
-  ]);
+  const output = formatInspectResult([{ tool_id: "t.v1", name: "Sample Tool", capabilities: [{ id: "CAP.X", tag }] }]);
   assert.ok(output.includes("Capability: CAP.X (M0, M1, M2, M3, M4, M5, M6, M7, +3 more)"));
 });
 
 test("formatInspectResult omits capability lines when missing or malformed", () => {
   for (const capabilities of [undefined, [], "nope", [null, {}, { id: "  " }]]) {
-    const output = formatInspectResult([
-      { tool_id: "t.v1", name: "Sample Tool", capabilities },
-    ]);
+    const output = formatInspectResult([{ tool_id: "t.v1", name: "Sample Tool", capabilities }]);
     assert.ok(!output.includes("Capability:"));
   }
 });
 
 test("formatInspectResult renders expected_cost as Est. cost row", () => {
-  const output = formatInspectResult([
-    { tool_id: "t.v1", name: "Sample Tool", expected_cost: "24.2" },
-  ]);
+  const output = formatInspectResult([{ tool_id: "t.v1", name: "Sample Tool", expected_cost: "24.2" }]);
   assert.ok(output.includes("Est. cost:  24.2 credits"));
 });
 
 test("formatInspectResult omits Est. cost row when expected_cost is absent or empty", () => {
   for (const expected_cost of [undefined, null, "", "   ", {}]) {
-    const output = formatInspectResult([
-      { tool_id: "t.v1", name: "Sample Tool", expected_cost },
-    ]);
+    const output = formatInspectResult([{ tool_id: "t.v1", name: "Sample Tool", expected_cost }]);
     assert.ok(!output.includes("Est. cost:"));
   }
 });

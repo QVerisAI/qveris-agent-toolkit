@@ -13,9 +13,7 @@ describe('QverisClient', () => {
     });
 
     it('should throw error when API key is missing', () => {
-      expect(() => new QverisClient({ apiKey: '' })).toThrow(
-        'Qveris API key is required'
-      );
+      expect(() => new QverisClient({ apiKey: '' })).toThrow('Qveris API key is required');
     });
 
     it('should accept custom base URL', () => {
@@ -70,7 +68,7 @@ describe('QverisClient', () => {
             query: 'weather API',
             limit: 10,
           }),
-        })
+        }),
       );
 
       expect(result).toEqual(mockResponse);
@@ -94,7 +92,7 @@ describe('QverisClient', () => {
             query: 'email',
             session_id: 'session-abc',
           }),
-        })
+        }),
       );
     });
 
@@ -130,9 +128,7 @@ describe('QverisClient', () => {
     });
 
     it('should convert fetch network failures to observable ApiError', async () => {
-      fetchMock.mockRejectedValueOnce(
-        new Error('fetch failed', { cause: new Error('ECONNRESET') })
-      );
+      fetchMock.mockRejectedValueOnce(new Error('fetch failed', { cause: new Error('ECONNRESET') }));
 
       await expect(client.searchTools({ query: 'test' })).rejects.toMatchObject({
         status: 0,
@@ -212,7 +208,7 @@ describe('QverisClient', () => {
           body: JSON.stringify({
             tool_ids: ['weather-tool-1'],
           }),
-        })
+        }),
       );
 
       expect(result).toEqual(mockResponse);
@@ -241,7 +237,7 @@ describe('QverisClient', () => {
             search_id: 'search-456',
             session_id: 'session-abc',
           }),
-        })
+        }),
       );
     });
 
@@ -276,9 +272,7 @@ describe('QverisClient', () => {
         json: async () => ({ message: 'Invalid tool_ids' }),
       });
 
-      await expect(
-        client.getToolsByIds({ tool_ids: [] })
-      ).rejects.toMatchObject({
+      await expect(client.getToolsByIds({ tool_ids: [] })).rejects.toMatchObject({
         status: 400,
         message: 'Invalid tool_ids',
         details: { message: 'Invalid tool_ids' },
@@ -295,9 +289,7 @@ describe('QverisClient', () => {
         },
       });
 
-      await expect(
-        client.getToolsByIds({ tool_ids: ['tool-1'] })
-      ).rejects.toMatchObject({
+      await expect(client.getToolsByIds({ tool_ids: ['tool-1'] })).rejects.toMatchObject({
         status: 500,
         message: 'Internal Server Error',
       });
@@ -346,7 +338,7 @@ describe('QverisClient', () => {
             search_id: 'search-123',
             parameters: { city: 'London' },
           }),
-        })
+        }),
       );
 
       expect(result).toEqual(mockResponse);
@@ -371,7 +363,7 @@ describe('QverisClient', () => {
 
       expect(fetchMock).toHaveBeenCalledWith(
         'https://qveris.ai/api/v1/tools/execute?tool_id=tool%2Fwith%2Fslashes',
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -401,7 +393,7 @@ describe('QverisClient', () => {
             parameters: {},
             max_response_size: 102400,
           }),
-        })
+        }),
       );
     });
   });
@@ -449,7 +441,7 @@ describe('QverisClient', () => {
         expect.objectContaining({
           method: 'GET',
           body: undefined,
-        })
+        }),
       );
       expect(result).toEqual(mockResponse);
     });
@@ -479,7 +471,7 @@ describe('QverisClient', () => {
         expect.objectContaining({
           method: 'GET',
           body: undefined,
-        })
+        }),
       );
     });
   });
@@ -505,9 +497,7 @@ describe('createClientFromEnv', () => {
 
   it('should throw error when QVERIS_API_KEY is not set', () => {
     delete process.env.QVERIS_API_KEY;
-    expect(() => createClientFromEnv()).toThrow(
-      'QVERIS_API_KEY environment variable is required'
-    );
+    expect(() => createClientFromEnv()).toThrow('QVERIS_API_KEY environment variable is required');
   });
 });
 
@@ -543,7 +533,9 @@ describe('QverisClient rate-limit retries', () => {
   }
 
   it('retries a 429 then succeeds, counting the backoff', async () => {
-    fetchMock.mockResolvedValueOnce(rateLimited()).mockResolvedValueOnce(ok({ search_id: 's1', results: [], total: 0 }));
+    fetchMock
+      .mockResolvedValueOnce(rateLimited())
+      .mockResolvedValueOnce(ok({ search_id: 's1', results: [], total: 0 }));
 
     const client = new QverisClient({ apiKey: 'test-api-key' });
     const result = await client.searchTools({ query: 'weather' });
@@ -589,4 +581,3 @@ describe('QverisClient rate-limit retries', () => {
     expect(client.rateLimitRetryCount).toBe(1);
   });
 });
-

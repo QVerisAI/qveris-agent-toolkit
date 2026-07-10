@@ -71,7 +71,7 @@ describe('inspect (get_tools_by_ids)', () => {
           tool_ids: ['weather-tool-1', 'email-tool-2'],
           search_id: 'search-123',
         },
-        'default-session'
+        'default-session',
       );
 
       expect(getToolsByIdsMock).toHaveBeenCalledWith({
@@ -100,7 +100,7 @@ describe('inspect (get_tools_by_ids)', () => {
         {
           tool_ids: ['tool-1'],
         },
-        'default-session'
+        'default-session',
       );
 
       expect(getToolsByIdsMock).toHaveBeenCalledWith({
@@ -122,7 +122,7 @@ describe('inspect (get_tools_by_ids)', () => {
           tool_ids: ['tool-1'],
           session_id: 'custom-session',
         },
-        'default-session'
+        'default-session',
       );
 
       expect(getToolsByIdsMock).toHaveBeenCalledWith({
@@ -144,7 +144,7 @@ describe('inspect (get_tools_by_ids)', () => {
           tool_ids: ['tool-1', 'tool-2'],
           search_id: 'search-456',
         },
-        'default-session'
+        'default-session',
       );
 
       expect(getToolsByIdsMock).toHaveBeenCalledWith({
@@ -172,7 +172,7 @@ describe('inspect (get_tools_by_ids)', () => {
         {
           tool_ids: ['single-tool'],
         },
-        'default-session'
+        'default-session',
       );
 
       expect(result.results).toHaveLength(1);
@@ -196,7 +196,7 @@ describe('inspect (get_tools_by_ids)', () => {
         {
           tool_ids: toolIds,
         },
-        'default-session'
+        'default-session',
       );
 
       expect(result.results).toHaveLength(5);
@@ -207,14 +207,9 @@ describe('inspect (get_tools_by_ids)', () => {
       const error = { status: 404, message: 'Tool not found' };
       getToolsByIdsMock.mockRejectedValueOnce(error);
 
-      await expect(
-        executeGetToolsByIds(
-          mockClient,
-          { tool_ids: ['non-existent-tool'] },
-          'session'
-        )
-      ).rejects.toEqual(error);
+      await expect(executeGetToolsByIds(mockClient, { tool_ids: ['non-existent-tool'] }, 'session')).rejects.toEqual(
+        error,
+      );
     });
   });
 });
-

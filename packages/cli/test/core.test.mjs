@@ -60,7 +60,12 @@ test("region and API key resolution cover flags, env, key prefixes, and placehol
 
 test("legacy command and flag aliases normalize without changing usage search-id", () => {
   assert.deepEqual(normalizeLegacyArgs(["search", "weather"]).args, ["discover", "weather"]);
-  assert.deepEqual(normalizeLegacyArgs(["execute", "1", "--search-id", "s"]).args, ["call", "1", "--discovery-id", "s"]);
+  assert.deepEqual(normalizeLegacyArgs(["execute", "1", "--search-id", "s"]).args, [
+    "call",
+    "1",
+    "--discovery-id",
+    "s",
+  ]);
   assert.deepEqual(normalizeLegacyArgs(["usage", "--search-id", "s"]).args, ["usage", "--search-id", "s"]);
 });
 

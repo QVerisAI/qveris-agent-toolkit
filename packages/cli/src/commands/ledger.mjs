@@ -81,16 +81,18 @@ export async function runLedger(flags) {
       return;
     }
 
-    const summaryResponse = unwrapApiResponse(await getCreditsLedger({
-      apiKey,
-      baseUrl: flags.baseUrl,
-      query: buildLedgerQuery(flags, {
-        page: 1,
-        pageSize: limit,
-        mode: "summary",
+    const summaryResponse = unwrapApiResponse(
+      await getCreditsLedger({
+        apiKey,
+        baseUrl: flags.baseUrl,
+        query: buildLedgerQuery(flags, {
+          page: 1,
+          pageSize: limit,
+          mode: "summary",
+        }),
+        timeoutMs,
       }),
-      timeoutMs,
-    }));
+    );
     if (summaryResponse?.summary) {
       spinner.stop();
       const rows = extractItems(summaryResponse);
@@ -146,12 +148,14 @@ async function collectLedgerRows({ apiKey, flags, timeoutMs, limit, maxRows, sto
 
   while (rows.length < limit && scannedRows < maxRows) {
     const query = buildLedgerQuery(flags, { page, pageSize: Math.min(DEFAULT_PAGE_SIZE, maxRows - scannedRows) });
-    const response = unwrapApiResponse(await getCreditsLedger({
-      apiKey,
-      baseUrl: flags.baseUrl,
-      query,
-      timeoutMs,
-    }));
+    const response = unwrapApiResponse(
+      await getCreditsLedger({
+        apiKey,
+        baseUrl: flags.baseUrl,
+        query,
+        timeoutMs,
+      }),
+    );
     const items = extractItems(response);
     if (total === undefined) total = extractTotal(response, undefined);
     if (items.length === 0) break;
