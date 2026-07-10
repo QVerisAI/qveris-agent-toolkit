@@ -25,13 +25,15 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . && prettier --check \"src/**/*.ts\" \"index.ts\" \"scripts/**/*.mjs\"",
-    "lint:fix": "eslint . --fix && prettier --write \"src/**/*.ts\" \"index.ts\" \"scripts/**/*.mjs\""
+    "lint:fix": "eslint . --fix && prettier --write \"src/**/*.ts\" \"index.ts\" \"scripts/**/*.mjs\"",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@sinclair/typebox": "0.34.50"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@vitest/coverage-v8": "^2.1.9",
     "eslint": "^10.6.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.7.0",

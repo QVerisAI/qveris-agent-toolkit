@@ -9,7 +9,8 @@
   "scripts": {
     "test": "node --test",
     "lint": "eslint . && prettier --check \"src/**/*.mjs\" \"bin/**/*.mjs\" \"test/**/*.mjs\"",
-    "lint:fix": "eslint . --fix && prettier --write \"src/**/*.mjs\" \"bin/**/*.mjs\" \"test/**/*.mjs\""
+    "lint:fix": "eslint . --fix && prettier --write \"src/**/*.mjs\" \"bin/**/*.mjs\" \"test/**/*.mjs\"",
+    "test:coverage": "c8 node --test"
   },
   "engines": {
     "node": ">=18"
@@ -40,6 +41,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "c8": "^11.0.0",
     "eslint": "^10.6.0",
     "globals": "^17.7.0",
     "prettier": "^3.9.5"

@@ -18,8 +18,20 @@
     <a href="https://github.com/QVerisAI/qveris-agent-toolkit">
       <img src="https://img.shields.io/github/stars/QVerisAI/qveris-agent-toolkit?style=social" alt="GitHub stars" />
     </a>
+    <a href="https://github.com/QVerisAI/qveris-agent-toolkit/actions/workflows/contract-tests.yml">
+      <img src="https://github.com/QVerisAI/qveris-agent-toolkit/actions/workflows/contract-tests.yml/badge.svg?branch=main" alt="CI" />
+    </a>
+    <a href="https://www.npmjs.com/package/@qverisai/cli">
+      <img src="https://img.shields.io/npm/v/@qverisai/cli?label=cli" alt="cli npm version" />
+    </a>
     <a href="https://www.npmjs.com/package/@qverisai/mcp">
-      <img src="https://img.shields.io/npm/v/@qverisai/mcp?label=@qverisai/mcp" alt="npm version" />
+      <img src="https://img.shields.io/npm/v/@qverisai/mcp?label=mcp" alt="mcp npm version" />
+    </a>
+    <a href="https://www.npmjs.com/package/@qverisai/sdk">
+      <img src="https://img.shields.io/npm/v/@qverisai/sdk?label=js-sdk" alt="js-sdk npm version" />
+    </a>
+    <a href="https://pypi.org/project/qveris/">
+      <img src="https://img.shields.io/pypi/v/qveris?label=python-sdk" alt="PyPI version" />
     </a>
     <a href="https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/LICENSE">
       <img src="https://img.shields.io/github/license/QVerisAI/qveris-agent-toolkit" alt="license" />
