@@ -19,10 +19,18 @@ Each package releases independently via an annotated git tag; the matching GitHu
 
    ```bash
    # Example for the MCP server (stops at the next heading or the link
-   # definitions, so it also works for the oldest section in the file)
-   git tag -a mcp-v0.8.0 -F <(awk '/^## \[0.8.0\]/{p=1; next} /^## \[/ || /^\[/{p=0} p' packages/mcp/CHANGELOG.md)
+   # definitions, so it also works for the oldest section in the file).
+   # --cleanup=verbatim keeps the "### Added" headings — git's default cleanup
+   # strips lines starting with '#' as comments.
+   git tag -a --cleanup=verbatim mcp-v0.8.0 -F <(awk '/^## \[0.8.0\]/{p=1; next} /^## \[/ || /^\[/{p=0} p' packages/mcp/CHANGELOG.md)
    git push origin mcp-v0.8.0
    ```
+
+   > **Releasing several packages at once? Push each tag separately.** GitHub
+   > does not create push events when more than three tags are pushed in a
+   > single `git push`, so a combined push silently triggers **zero** publish
+   > workflows (observed in the 2026-07-09 release wave). One `git push origin
+   > <tag>` per package is the reliable form.
 
 5. The publish workflow verifies **version == tag** and **CHANGELOG has the section**, runs the full test matrix (ubuntu + windows), publishes, and creates the GitHub Release.
 
