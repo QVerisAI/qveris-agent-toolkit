@@ -125,7 +125,7 @@ jobs:
           printf '\nSee [README](packages/mcp/README.md) for configuration.\n' >> "$NOTES"
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: "QVeris MCP Server v${{ env.VERSION }}"
           body_path: ${{ runner.temp }}/release-notes.md
