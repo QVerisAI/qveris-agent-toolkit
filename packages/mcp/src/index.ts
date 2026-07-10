@@ -482,7 +482,7 @@ export function createQverisServer(client: QverisClient | undefined, defaultSess
     ? async ({ toolId }) => {
         if (!server.getClientCapabilities()?.elicitation) return true;
         const answer = await server.elicitInput({
-          message: `QVeris is about to call \"${toolId}\". This may consume credits (pre-settlement billing is returned with the result). Proceed?`,
+          message: `QVeris is about to call "${toolId}". This may consume credits (pre-settlement billing is returned with the result). Proceed?`,
           requestedSchema: {
             type: 'object',
             properties: {
