@@ -47,7 +47,8 @@
     "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . && prettier --check \"src/**/*.ts\"",
-    "lint:fix": "eslint . --fix && prettier --write \"src/**/*.ts\""
+    "lint:fix": "eslint . --fix && prettier --write \"src/**/*.ts\"",
+    "test:coverage": "vitest run --coverage"
   },
   "peerDependencies": {
     "ai": ">=4.0.0",
@@ -64,6 +65,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.10.1",
+    "@vitest/coverage-v8": "^2.1.9",
     "ai": "^7.0.0",
     "eslint": "^10.6.0",
     "eslint-config-prettier": "^10.1.8",

@@ -53,6 +53,7 @@
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.10.1",
     "@types/uuid": "^11.0.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "eslint": "^10.6.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.7.0",

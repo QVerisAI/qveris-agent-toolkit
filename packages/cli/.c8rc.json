@@ -1,0 +1,10 @@
+{
+  "include": ["src/**"],
+  "check-coverage": true,
+  "lines": 68,
+  "statements": 68,
+  "branches": 63,
+  "functions": 80,
+  "reporter": ["text"],
+  "//": "Ratchet: just below measured (2026-07-10: 70.21/65.46/82.81). Raise as coverage improves."
+}

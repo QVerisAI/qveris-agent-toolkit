@@ -7,6 +7,14 @@ function fixture(name: string): string {
 export default {
   test: {
     environment: "node",
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json", "html"],
+      include: ["src/**/*.ts", "index.ts"],
+      exclude: ["src/**/*.test.ts"],
+      // Ratchet: just below measured (2026-07-10: 80.1/75.85/90.56).
+      thresholds: { lines: 78, statements: 78, branches: 73, functions: 88 },
+    },
   },
   resolve: {
     alias: {

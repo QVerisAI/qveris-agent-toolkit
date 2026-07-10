@@ -190,3 +190,30 @@ jobs:
         run: |
           uv run --extra dev ruff check qveris tests examples
           uv run --extra dev ruff format --check qveris tests examples
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: packages/python-sdk/uv.lock
+      - name: mcp coverage (thresholds in vitest.config.ts)
+        working-directory: packages/mcp
+        run: npm ci && npm run test:coverage
+      - name: js-sdk coverage
+        working-directory: packages/js-sdk
+        run: npm ci && npm run test:coverage
+      - name: openclaw plugin coverage
+        working-directory: packages/openclaw-qveris-plugin
+        run: npm ci && npm run test:coverage
+      - name: cli coverage (thresholds in .c8rc.json)
+        working-directory: packages/cli
+        run: npm ci && npm run test:coverage
+      - name: python-sdk coverage
+        working-directory: packages/python-sdk
+        run: uv run --extra dev pytest -q --cov=qveris --cov-fail-under=82
