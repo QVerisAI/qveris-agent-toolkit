@@ -260,7 +260,7 @@ export async function executeQverisMcpTool(
         content: [
           {
             type: 'text',
-            text: JSON.stringify(result, null, 2),
+            text: JSON.stringify(result),
           },
         ],
         structuredContent: result as unknown as Record<string, unknown>,
@@ -292,7 +292,7 @@ export async function executeQverisMcpTool(
         content: [
           {
             type: 'text',
-            text: JSON.stringify(result, null, 2),
+            text: JSON.stringify(result),
           },
         ],
         structuredContent: result as unknown as Record<string, unknown>,
@@ -346,7 +346,7 @@ export async function executeQverisMcpTool(
         content: [
           {
             type: 'text',
-            text: JSON.stringify(result, null, 2),
+            text: JSON.stringify(result),
           },
         ],
         structuredContent: result as unknown as Record<string, unknown>,
@@ -361,7 +361,7 @@ export async function executeQverisMcpTool(
         content: [
           {
             type: 'text',
-            text: JSON.stringify(result, null, 2),
+            text: JSON.stringify(result),
           },
         ],
         structuredContent: result as unknown as Record<string, unknown>,
@@ -376,7 +376,7 @@ export async function executeQverisMcpTool(
         content: [
           {
             type: 'text',
-            text: JSON.stringify(result, null, 2),
+            text: JSON.stringify(result),
           },
         ],
         structuredContent: result as unknown as Record<string, unknown>,
@@ -531,7 +531,7 @@ export function createQverisServer(client: QverisClient | undefined, defaultSess
     if (uri === CARD_RESOURCE_URI) {
       const card = buildServerCard(buildServerCardInfo());
       return {
-        contents: [{ uri, mimeType: 'application/mcp-server-card+json', text: JSON.stringify(card, null, 2) }],
+        contents: [{ uri, mimeType: 'application/mcp-server-card+json', text: JSON.stringify(card) }],
       };
     }
     if (uri.startsWith(CAPABILITY_URI_PREFIX)) {
@@ -542,7 +542,7 @@ export function createQverisServer(client: QverisClient | undefined, defaultSess
       }
       const detail = await client.getToolsByIds({ tool_ids: [toolId] });
       return {
-        contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(detail, null, 2) }],
+        contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(detail) }],
       };
     }
     throw new Error(`Unknown resource: ${uri}`);
