@@ -46,8 +46,8 @@ class _InspectArgs(BaseModel):
 
 class _CallArgs(BaseModel):
     tool_id: str = Field(description="The capability tool_id, from discover or inspect.")
-    search_id: str = Field(description="The search_id from the discover response.")
     params_to_tool: Dict[str, Any] = Field(description="Parameters to pass to the capability.")
+    search_id: Optional[str] = Field(default=None, description="The search_id from the discover response, if available.")
     max_response_size: Optional[int] = Field(
         default=None, description="Max response size in bytes; -1 means unlimited."
     )
@@ -92,15 +92,16 @@ def get_qveris_tools(
 
     async def _call(
         tool_id: str,
-        search_id: str,
         params_to_tool: Dict[str, Any],
+        search_id: Optional[str] = None,
         max_response_size: Optional[int] = None,
     ) -> str:
         args: Dict[str, Any] = {
             "tool_id": tool_id,
-            "search_id": search_id,
             "params_to_tool": params_to_tool,
         }
+        if search_id is not None:
+            args["search_id"] = search_id
         if max_response_size is not None:
             args["max_response_size"] = max_response_size
         return await _route("call", args)

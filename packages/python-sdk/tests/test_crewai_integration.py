@@ -1,6 +1,5 @@
 import asyncio
-import json
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import pytest
 
@@ -8,71 +7,28 @@ pytest.importorskip("crewai", reason="CrewAI integration requires crewai (Python
 
 from qveris.integrations.crewai import aclose, get_qveris_tools  # noqa: E402
 
+from adapter_conformance import AdapterConformance  # noqa: E402
 
-class FakeClient:
-    def __init__(self) -> None:
-        self.calls: List[Dict[str, Any]] = []
 
-    async def handle_tool_call(
-        self, func_name: str, func_args: Dict[str, Any], session_id: Optional[str] = None
-    ) -> Tuple[Any, bool, bool]:
-        self.calls.append({"name": func_name, "args": func_args, "session_id": session_id})
-        if func_name == "discover":
-            return {"search_id": "s1", "results": [{"tool_id": "t1"}]}, False, True
-        if func_name == "inspect":
-            return {"results": [{"tool_id": "t1"}]}, False, True
-        return {"execution_id": "e1", "success": True}, False, True
+class TestCrewAIAdapterConformance(AdapterConformance):
+    """Shared invariants (see adapter_conformance.py) for the CrewAI adapter."""
+
+    def make_tools(self, client: Any, session_id: Optional[str] = None) -> List[Any]:
+        return get_qveris_tools(client, session_id=session_id)
+
+    def make_tools_no_client(self) -> Any:
+        return get_qveris_tools()  # type: ignore[call-arg]
+
+    def invoke(self, tool: Any, args: Dict[str, Any]) -> str:
+        # CrewAI tools are synchronous; they bridge to the async client internally.
+        return tool._run(**args)
+
+
+# --- CrewAI-specific behavior: the sync/async bridge loop ---------------------
 
 
 def _tool(tools, name):
     return next(t for t in tools if t.name == name)
-
-
-def test_get_qveris_tools_exposes_three_named_tools() -> None:
-    tools = get_qveris_tools(FakeClient())
-    assert [t.name for t in tools] == ["qveris_discover", "qveris_inspect", "qveris_call"]
-    for tool in tools:
-        assert tool.description
-        assert tool.args_schema is not None
-
-
-def test_discover_tool_routes_to_handle_tool_call() -> None:
-    client = FakeClient()
-    discover = _tool(get_qveris_tools(client, session_id="sess-1"), "qveris_discover")
-
-    # _run bridges the async client synchronously (no running loop in this test).
-    out = discover._run(query="weather forecast API", limit=3)
-
-    assert client.calls == [
-        {"name": "discover", "args": {"query": "weather forecast API", "limit": 3}, "session_id": "sess-1"}
-    ]
-    assert json.loads(out)["search_id"] == "s1"
-
-
-def test_call_tool_threads_ids_and_omits_absent_max_response_size() -> None:
-    client = FakeClient()
-    call = _tool(get_qveris_tools(client), "qveris_call")
-
-    out = call._run(tool_id="t1", search_id="s1", params_to_tool={"city": "London"})
-
-    assert client.calls[0]["name"] == "call"
-    assert client.calls[0]["args"] == {
-        "tool_id": "t1",
-        "search_id": "s1",
-        "params_to_tool": {"city": "London"},
-    }
-    assert "max_response_size" not in client.calls[0]["args"]
-    assert json.loads(out)["execution_id"] == "e1"
-
-
-def test_inspect_tool_passes_tool_ids_and_search_id() -> None:
-    client = FakeClient()
-    inspect = _tool(get_qveris_tools(client), "qveris_inspect")
-
-    inspect._run(tool_ids=["t1", "t2"], search_id="s1")
-
-    assert client.calls[0]["name"] == "inspect"
-    assert client.calls[0]["args"] == {"tool_ids": ["t1", "t2"], "search_id": "s1"}
 
 
 def test_all_tool_calls_run_on_one_shared_event_loop() -> None:
@@ -94,16 +50,6 @@ def test_all_tool_calls_run_on_one_shared_event_loop() -> None:
 
     assert len(loop_ids) == 3
     assert len(set(loop_ids)) == 1  # all three on one stable bridge loop
-
-
-def test_call_tool_omits_absent_search_id() -> None:
-    client = FakeClient()
-    call = _tool(get_qveris_tools(client), "qveris_call")
-
-    call._run(tool_id="t1", params_to_tool={})
-
-    assert "search_id" not in client.calls[0]["args"]
-    assert client.calls[0]["args"] == {"tool_id": "t1", "params_to_tool": {}}
 
 
 def test_arun_dispatches_work_onto_the_bridge_loop() -> None:
