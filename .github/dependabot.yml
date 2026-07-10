@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+  - package-ecosystem: npm
+    directory: /packages/mcp
+    schedule: { interval: weekly }
+  - package-ecosystem: npm
+    directory: /packages/js-sdk
+    schedule: { interval: weekly }
+  - package-ecosystem: npm
+    directory: /packages/cli
+    schedule: { interval: weekly }
+  - package-ecosystem: npm
+    directory: /packages/openclaw-qveris-plugin
+    schedule: { interval: weekly }
+  - package-ecosystem: pip
+    directory: /packages/python-sdk
+    schedule: { interval: weekly }
