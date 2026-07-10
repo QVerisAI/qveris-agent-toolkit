@@ -18,12 +18,7 @@
  */
 
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
-import {
-  createServer,
-  type IncomingMessage,
-  type Server as HttpServer,
-  type ServerResponse,
-} from 'node:http';
+import { createServer, type IncomingMessage, type Server as HttpServer, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -123,7 +118,10 @@ function hasFlag(argv: string[], name: string): boolean {
 const IPV4_LOOPBACK = /^127(?:\.(?:0|[1-9]\d?|1\d\d|2[0-4]\d|25[0-5])){3}$/;
 
 function isLoopbackHost(host: string): boolean {
-  const h = host.trim().toLowerCase().replace(/^\[|\]$/g, ''); // strip IPv6 brackets
+  const h = host
+    .trim()
+    .toLowerCase()
+    .replace(/^\[|\]$/g, ''); // strip IPv6 brackets
   return h === 'localhost' || h === '::1' || IPV4_LOOPBACK.test(h);
 }
 
@@ -134,10 +132,7 @@ function isLoopbackHost(host: string): boolean {
  * or an HTTP port/host is explicitly set; otherwise the transport stays stdio
  * so existing local configs are unaffected.
  */
-export function resolveTransportConfig(
-  env: NodeJS.ProcessEnv,
-  argv: string[] = [],
-): TransportConfig {
+export function resolveTransportConfig(env: NodeJS.ProcessEnv, argv: string[] = []): TransportConfig {
   const portFlag = readFlag(argv, '--port');
   const hostFlag = readFlag(argv, '--host');
   const pathFlag = readFlag(argv, '--path');
@@ -154,8 +149,7 @@ export function resolveTransportConfig(
     hostFlag !== undefined ||
     envHost !== undefined;
 
-  const mode: TransportConfig['mode'] =
-    envTransport === 'stdio' ? 'stdio' : httpRequested ? 'http' : 'stdio';
+  const mode: TransportConfig['mode'] = envTransport === 'stdio' ? 'stdio' : httpRequested ? 'http' : 'stdio';
 
   const rawPort = portFlag || envPort;
   const parsedPort = Number(rawPort);
@@ -190,8 +184,7 @@ export function resolveTransportConfig(
 function requestOrigin(req: IncomingMessage, publicUrl: string | undefined): string {
   if (publicUrl) return publicUrl;
   const forwarded = req.headers['x-forwarded-proto'];
-  const proto =
-    (typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : undefined) || 'http';
+  const proto = (typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : undefined) || 'http';
   const host = req.headers.host ?? 'localhost';
   return `${proto}://${host}`;
 }
@@ -317,11 +310,7 @@ export async function startHttpServer(
   // allowedHosts. Build the effective list once the real port is known so DNS
   // rebinding protection works even when config.port is 0 (ephemeral).
   const effectiveAllowedHosts = (): string[] => {
-    const base = [
-      `${config.host}:${boundPort}`,
-      `localhost:${boundPort}`,
-      `127.0.0.1:${boundPort}`,
-    ];
+    const base = [`${config.host}:${boundPort}`, `localhost:${boundPort}`, `127.0.0.1:${boundPort}`];
     return [...new Set([...base, ...config.allowedHosts])];
   };
 
@@ -422,8 +411,7 @@ export async function startHttpServer(
       }
 
       const sessionId = req.headers['mcp-session-id'];
-      const existing =
-        typeof sessionId === 'string' ? transports.get(sessionId) : undefined;
+      const existing = typeof sessionId === 'string' ? transports.get(sessionId) : undefined;
       if (typeof sessionId === 'string' && existing) lastSeen.set(sessionId, Date.now());
 
       if (req.method === 'POST') {
@@ -454,11 +442,7 @@ export async function startHttpServer(
             return;
           }
           if (!isInitializeRequest(body)) {
-            writeJson(
-              res,
-              400,
-              jsonRpcError(null, -32000, 'Missing session ID: first request must be initialize'),
-            );
+            writeJson(res, 400, jsonRpcError(null, -32000, 'Missing session ID: first request must be initialize'));
             return;
           }
           transport = await createTransport();
@@ -543,9 +527,7 @@ export async function startHttpServer(
   }, SWEEP_INTERVAL_MS);
   sweep.unref();
 
-  logger(
-    `[qveris] Qveris MCP Server started (streamable-http) on http://${config.host}:${boundPort}${config.path}\n`,
-  );
+  logger(`[qveris] Qveris MCP Server started (streamable-http) on http://${config.host}:${boundPort}${config.path}\n`);
 
   const close = async (): Promise<void> => {
     clearInterval(sweep);

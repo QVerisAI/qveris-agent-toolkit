@@ -27,7 +27,10 @@ function prompt(question) {
     // Fallback for non-TTY (piped input): read without masking
     if (!process.stdin.isTTY) {
       const rl = createInterface({ input: process.stdin, output: process.stderr });
-      rl.question("", (answer) => { rl.close(); pResolve(answer.trim()); });
+      rl.question("", (answer) => {
+        rl.close();
+        pResolve(answer.trim());
+      });
       return;
     }
 
@@ -35,12 +38,22 @@ function prompt(question) {
 
     const cleanup = () => {
       process.stdin.removeListener("data", onData);
-      try { process.stdin.setRawMode(false); } catch { /* already restored */ }
+      try {
+        process.stdin.setRawMode(false);
+      } catch {
+        /* already restored */
+      }
       process.stdin.pause();
     };
 
     // Safety net: restore terminal if process exits unexpectedly
-    const onExit = () => { try { process.stdin.setRawMode(false); } catch {} };
+    const onExit = () => {
+      try {
+        process.stdin.setRawMode(false);
+      } catch {
+        /* not a TTY */
+      }
+    };
     process.once("exit", onExit);
 
     process.stdin.setRawMode(true);
@@ -98,7 +111,10 @@ function promptRegion() {
 
     if (!process.stdin.isTTY) {
       const rl = createInterface({ input: process.stdin, output: process.stderr });
-      rl.question("  Enter 1 or 2: ", (answer) => { rl.close(); pResolve(answer.trim()); });
+      rl.question("  Enter 1 or 2: ", (answer) => {
+        rl.close();
+        pResolve(answer.trim());
+      });
       return;
     }
 
@@ -106,10 +122,20 @@ function promptRegion() {
 
     const cleanup = () => {
       process.stdin.removeListener("data", onData);
-      try { process.stdin.setRawMode(false); } catch {}
+      try {
+        process.stdin.setRawMode(false);
+      } catch {
+        /* not a TTY */
+      }
       process.stdin.pause();
     };
-    const onExit = () => { try { process.stdin.setRawMode(false); } catch {} };
+    const onExit = () => {
+      try {
+        process.stdin.setRawMode(false);
+      } catch {
+        /* not a TTY */
+      }
+    };
     process.once("exit", onExit);
 
     process.stdin.setRawMode(true);
@@ -118,7 +144,13 @@ function promptRegion() {
 
     const onData = (chunk) => {
       const ch = chunk[0];
-      if (ch === "\x03") { cleanup(); process.removeListener("exit", onExit); process.stderr.write("\n"); pReject(new Error("Aborted")); return; }
+      if (ch === "\x03") {
+        cleanup();
+        process.removeListener("exit", onExit);
+        process.stderr.write("\n");
+        pReject(new Error("Aborted"));
+        return;
+      }
       if (ch === "1" || ch === "2") {
         cleanup();
         process.removeListener("exit", onExit);
@@ -142,7 +174,11 @@ export async function runLogin(flags) {
   }
 
   // Determine region: if already set via flag/env, use that; otherwise ask the user.
-  const { region: presetRegion, baseUrl: presetBaseUrl, source: regionSource } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
+  const {
+    region: presetRegion,
+    baseUrl: presetBaseUrl,
+    source: regionSource,
+  } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
   let region;
   let baseUrl = presetBaseUrl;
   if (regionSource !== "default") {

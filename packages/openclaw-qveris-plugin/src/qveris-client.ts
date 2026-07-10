@@ -4,9 +4,7 @@
 export function buildApiError(label: string, res: Response, detail: string): Error {
   const retryAfter = res.headers.get("Retry-After");
   const retryTag = retryAfter ? ` [retry-after:${retryAfter}]` : "";
-  return new Error(
-    `QVeris ${label} failed (${res.status}): ${detail || res.statusText}${retryTag}`,
-  );
+  return new Error(`QVeris ${label} failed (${res.status}): ${detail || res.statusText}${retryTag}`);
 }
 
 // ============================================================================
@@ -136,23 +134,20 @@ export async function qverisCall(params: {
   const timeoutId = setTimeout(() => controller.abort(), params.timeoutSeconds * 1000);
 
   try {
-    const res = await fetch(
-      `${params.baseUrl}/tools/execute?tool_id=${encodeURIComponent(params.toolId)}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${params.apiKey}`,
-        },
-        body: JSON.stringify({
-          parameters: params.parameters,
-          max_response_size: params.maxResponseSize,
-          search_id: params.searchId ?? null,
-          session_id: params.sessionId,
-        }),
-        signal: controller.signal,
+    const res = await fetch(`${params.baseUrl}/tools/execute?tool_id=${encodeURIComponent(params.toolId)}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${params.apiKey}`,
       },
-    );
+      body: JSON.stringify({
+        parameters: params.parameters,
+        max_response_size: params.maxResponseSize,
+        search_id: params.searchId ?? null,
+        session_id: params.sessionId,
+      }),
+      signal: controller.signal,
+    });
 
     if (!res.ok) {
       const detail = await res.text().catch(() => "");

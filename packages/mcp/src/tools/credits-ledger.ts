@@ -24,7 +24,7 @@ import {
   type LedgerFilterInput,
 } from './audit-utils.js';
 
-export interface CreditsLedgerInput extends LedgerFilterInput {}
+export type CreditsLedgerInput = LedgerFilterInput;
 
 export const creditsLedgerSchema = {
   type: 'object' as const,
@@ -32,7 +32,8 @@ export const creditsLedgerSchema = {
     mode: {
       type: 'string',
       enum: ['summary', 'search', 'export_file'],
-      description: 'summary returns aggregates, search returns capped rows, export_file writes JSONL locally. Default: summary.',
+      description:
+        'summary returns aggregates, search returns capped rows, export_file writes JSONL locally. Default: summary.',
       default: 'summary',
     },
     start_date: { type: 'string', description: 'Start date in YYYY-MM-DD. Defaults to yesterday UTC.' },

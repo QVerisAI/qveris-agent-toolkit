@@ -46,7 +46,10 @@ function configure(args, flags) {
 
   if (flags.write) {
     if (target === "claude-code") {
-      throw new CliError("API_ERROR", "claude-code target produces shell commands; use --print and run the generated command.");
+      throw new CliError(
+        "API_ERROR",
+        "claude-code target produces shell commands; use --print and run the generated command.",
+      );
     }
     const written = writeTargetConfig(target, outputPath, fragment);
     const validation = validateConfigObject(target, written.config);
@@ -57,9 +60,10 @@ function configure(args, flags) {
     return;
   }
 
-  const validation = target === "claude-code"
-    ? validateClaudeCodeCommand(fragment)
-    : validateConfigObject(target, fragmentToConfig(target, fragment));
+  const validation =
+    target === "claude-code"
+      ? validateClaudeCodeCommand(fragment)
+      : validateConfigObject(target, fragmentToConfig(target, fragment));
   const payload = { ...printable, wrote: false, validation };
   if (flags.json) outputJson(payload);
   else printConfigureResult(payload);
@@ -72,7 +76,11 @@ async function validate(args, flags) {
       target,
       ok: true,
       checks: [
-        { name: "manual_command", ok: true, message: "Claude Code uses `claude mcp add`; run `qveris mcp configure --target claude-code --print`." },
+        {
+          name: "manual_command",
+          ok: true,
+          message: "Claude Code uses `claude mcp add`; run `qveris mcp configure --target claude-code --print`.",
+        },
       ],
       expected_tools: EXPECTED_TOOLS,
     };
@@ -98,7 +106,10 @@ async function validate(args, flags) {
 function resolveTarget(args, flags) {
   const target = (flags.target || args[0] || "cursor").toLowerCase();
   if (!TARGETS.has(target)) {
-    throw new CliError("API_ERROR", `Unknown MCP target "${target}". Expected one of: ${Array.from(TARGETS).join(", ")}`);
+    throw new CliError(
+      "API_ERROR",
+      `Unknown MCP target "${target}". Expected one of: ${Array.from(TARGETS).join(", ")}`,
+    );
   }
   return target;
 }
@@ -242,7 +253,9 @@ function validateConfigObject(target, config) {
   checks.push(check("config_present", Boolean(config && typeof config === "object"), "Config JSON is readable"));
   checks.push(check("qveris_entry", Boolean(server), "QVeris MCP entry exists"));
   checks.push(check("uses_qveris_mcp", serverUsesMcpPackage(server), "Config runs @qverisai/mcp"));
-  checks.push(check("api_key_env", hasUsableApiKey(server, target), "QVERIS_API_KEY is configured and is not a placeholder"));
+  checks.push(
+    check("api_key_env", hasUsableApiKey(server, target), "QVERIS_API_KEY is configured and is not a placeholder"),
+  );
 
   if (target === "opencode") {
     checks.push(check("tools_enabled", config?.tools?.["qveris*"] === true, "OpenCode qveris tools are enabled"));
@@ -256,11 +269,23 @@ function validateOpenClawConfig(config) {
   const entry = config?.plugins?.entries?.qveris;
   const checks = [
     check("config_present", Boolean(config && typeof config === "object"), "Config JSON is readable"),
-    check("plugin_allowed", Array.isArray(config?.plugins?.allow) && config.plugins.allow.includes("qveris"), "OpenClaw allows the qveris plugin"),
+    check(
+      "plugin_allowed",
+      Array.isArray(config?.plugins?.allow) && config.plugins.allow.includes("qveris"),
+      "OpenClaw allows the qveris plugin",
+    ),
     check("qveris_entry", Boolean(entry), "QVeris OpenClaw plugin entry exists"),
     check("plugin_enabled", entry?.enabled === true, "QVeris OpenClaw plugin is enabled"),
-    check("api_key_config", hasUsableApiKey(entry, "openclaw"), "OpenClaw qveris apiKey is configured and is not a placeholder"),
-    check("tools_enabled", Array.isArray(config?.tools?.alsoAllow) && config.tools.alsoAllow.includes("qveris"), "OpenClaw qveris tools are enabled"),
+    check(
+      "api_key_config",
+      hasUsableApiKey(entry, "openclaw"),
+      "OpenClaw qveris apiKey is configured and is not a placeholder",
+    ),
+    check(
+      "tools_enabled",
+      Array.isArray(config?.tools?.alsoAllow) && config.tools.alsoAllow.includes("qveris"),
+      "OpenClaw qveris tools are enabled",
+    ),
   ];
 
   return { ok: checks.every((item) => item.ok), checks, expected_tools: EXPECTED_TOOLS };
@@ -287,7 +312,11 @@ async function probeVisibleTools(target, config, flags) {
     return {
       ok: false,
       checks: [
-        check("tools_visible", false, "Live stdio probe is not available for OpenClaw plugin configs; use the OpenClaw plugin manager to confirm tool visibility."),
+        check(
+          "tools_visible",
+          false,
+          "Live stdio probe is not available for OpenClaw plugin configs; use the OpenClaw plugin manager to confirm tool visibility.",
+        ),
       ],
       tool_names: [],
     };
@@ -298,9 +327,7 @@ async function probeVisibleTools(target, config, flags) {
   if (!spec) {
     return {
       ok: false,
-      checks: [
-        check("tools_visible", false, "No stdio server command is available to probe"),
-      ],
+      checks: [check("tools_visible", false, "No stdio server command is available to probe")],
       tool_names: [],
     };
   }
@@ -318,7 +345,7 @@ async function probeVisibleTools(target, config, flags) {
           missing.length === 0,
           missing.length === 0
             ? "Live MCP probe can see discover, inspect, and call"
-            : `Live MCP probe is missing tools: ${missing.join(", ")}`
+            : `Live MCP probe is missing tools: ${missing.join(", ")}`,
         ),
       ],
       tool_names: toolNames,
@@ -470,17 +497,12 @@ function isWindowsExecutable(command) {
 
 function isWindowsBatchCommand(command) {
   const name = String(command).split(/[\\/]/).pop() || "";
-  return (
-    /\.(?:cmd|bat)$/i.test(name) ||
-    /^(?:corepack|npm|npx|pnpm|yarn)$/i.test(name)
-  );
+  return /\.(?:cmd|bat)$/i.test(name) || /^(?:corepack|npm|npx|pnpm|yarn)$/i.test(name);
 }
 
 function wrapWindowsCommandLine(parts) {
   const escapePercent = isWindowsBatchCommand(parts[0]);
-  const commandLine = parts
-    .map((part) => quoteWindowsCommandArgument(part, escapePercent))
-    .join(" ");
+  const commandLine = parts.map((part) => quoteWindowsCommandArgument(part, escapePercent)).join(" ");
   return `"${commandLine}"`;
 }
 
@@ -490,7 +512,7 @@ function quoteWindowsCommandArgument(value, escapePercent = false) {
     throw new Error("MCP command arguments cannot contain CR, LF, or NUL characters.");
   }
   const text = escapePercent ? raw.replaceAll("%", "%%") : raw;
-  let quoted = "\"";
+  let quoted = '"';
   let backslashes = 0;
 
   for (const char of text) {
@@ -498,7 +520,7 @@ function quoteWindowsCommandArgument(value, escapePercent = false) {
       backslashes += 1;
       continue;
     }
-    if (char === "\"") {
+    if (char === '"') {
       quoted += "\\".repeat(backslashes * 2 + 1);
       quoted += char;
       backslashes = 0;
@@ -510,7 +532,7 @@ function quoteWindowsCommandArgument(value, escapePercent = false) {
   }
 
   quoted += "\\".repeat(backslashes * 2);
-  quoted += "\"";
+  quoted += '"';
   return quoted;
 }
 
@@ -530,9 +552,8 @@ function serverUsesMcpPackage(server) {
 
 function hasUsableApiKey(server, target) {
   if (!server) return false;
-  const value = target === "openclaw"
-    ? server.config?.apiKey
-    : server.env?.QVERIS_API_KEY || server.environment?.QVERIS_API_KEY;
+  const value =
+    target === "openclaw" ? server.config?.apiKey : server.env?.QVERIS_API_KEY || server.environment?.QVERIS_API_KEY;
   if (typeof value !== "string" || !value.trim()) return false;
   return !isPlaceholderApiKey(value);
 }
@@ -559,7 +580,8 @@ function defaultConfigPath(target) {
   if (target === "generic") return join(process.cwd(), "qveris-mcp.json");
   if (target === "claude-desktop") {
     if (os === "darwin") return join(home, "Library", "Application Support", "Claude", "claude_desktop_config.json");
-    if (os === "win32") return join(process.env.APPDATA || join(home, "AppData", "Roaming"), "Claude", "claude_desktop_config.json");
+    if (os === "win32")
+      return join(process.env.APPDATA || join(home, "AppData", "Roaming"), "Claude", "claude_desktop_config.json");
     return join(home, ".config", "Claude", "claude_desktop_config.json");
   }
   return "";
@@ -578,7 +600,9 @@ function printConfigureResult(payload) {
   console.log("\n" + JSON.stringify(payload.config, null, 2));
   if (!payload.wrote && payload.target !== "claude-code") {
     console.log(`\n  ${dim("Write placeholder config with:")} qveris mcp configure --target ${payload.target} --write`);
-    console.log(`  ${dim("Write working config with current key:")} qveris mcp configure --target ${payload.target} --write --include-key`);
+    console.log(
+      `  ${dim("Write working config with current key:")} qveris mcp configure --target ${payload.target} --write --include-key`,
+    );
   }
   if (payload.validation) printValidation(payload.validation);
 }
@@ -591,10 +615,12 @@ function redactWrittenPayload(payload) {
 function redactConfigSecrets(value) {
   if (Array.isArray(value)) return value.map((item) => redactConfigSecrets(item));
   if (!value || typeof value !== "object") return value;
-  return Object.fromEntries(Object.entries(value).map(([key, nested]) => [
-    key,
-    isSecretConfigKey(key) ? "********" : redactConfigSecrets(nested),
-  ]));
+  return Object.fromEntries(
+    Object.entries(value).map(([key, nested]) => [
+      key,
+      isSecretConfigKey(key) ? "********" : redactConfigSecrets(nested),
+    ]),
+  );
 }
 
 function isSecretConfigKey(key) {
@@ -619,7 +645,7 @@ function buildClaudeCodeEnvArgs(env, os) {
 }
 
 export function shellQuoteForPlatform(value, os = platform()) {
-  if (os === "win32") return `"${String(value).replaceAll("\"", "\"\"")}"`;
+  if (os === "win32") return `"${String(value).replaceAll('"', '""')}"`;
   return `'${String(value).replaceAll("'", "'\\''")}'`;
 }
 
@@ -653,10 +679,10 @@ function readShellToken(command, start) {
       continue;
     }
 
-    if (quote === "\"") {
-      if (char === "\"") {
-        if (command[i + 1] === "\"") {
-          value += "\"";
+    if (quote === '"') {
+      if (char === '"') {
+        if (command[i + 1] === '"') {
+          value += '"';
           i += 1;
         } else {
           quote = null;
@@ -670,7 +696,7 @@ function readShellToken(command, start) {
       continue;
     }
 
-    if (char === "'" || char === "\"") quote = char;
+    if (char === "'" || char === '"') quote = char;
     else if (char === "\\" && i + 1 < command.length) {
       value += command[i + 1];
       i += 1;

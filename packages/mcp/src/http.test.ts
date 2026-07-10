@@ -30,10 +30,7 @@ describe('resolveTransportConfig', () => {
   });
 
   it('lets QVERIS_MCP_TRANSPORT=stdio win over an http port', () => {
-    const config = resolveTransportConfig(
-      { QVERIS_MCP_TRANSPORT: 'stdio', QVERIS_MCP_HTTP_PORT: '8080' },
-      [],
-    );
+    const config = resolveTransportConfig({ QVERIS_MCP_TRANSPORT: 'stdio', QVERIS_MCP_HTTP_PORT: '8080' }, []);
     expect(config.mode).toBe('stdio');
   });
 
@@ -114,26 +111,14 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
     protocolVersions: ['2025-11-25'],
   };
 
-  async function startServer(
-    extraEnv: Record<string, string> = {},
-    cardInfo?: typeof CARD_INFO,
-  ): Promise<void> {
-    const config = resolveTransportConfig(
-      { QVERIS_MCP_TRANSPORT: 'http', QVERIS_MCP_HTTP_PORT: '0', ...extraEnv },
-      [],
-    );
+  async function startServer(extraEnv: Record<string, string> = {}, cardInfo?: typeof CARD_INFO): Promise<void> {
+    const config = resolveTransportConfig({ QVERIS_MCP_TRANSPORT: 'http', QVERIS_MCP_HTTP_PORT: '0', ...extraEnv }, []);
     // Server has no QVERIS_API_KEY, so tool listing works but calls return an
     // actionable error — exactly the credential-less path we want to exercise.
-    running = await startHttpServer(
-      config,
-      (sessionId) => createQverisServer(undefined, sessionId),
-      cardInfo,
-    );
+    running = await startHttpServer(config, (sessionId) => createQverisServer(undefined, sessionId), cardInfo);
   }
 
-  async function connectClient(
-    bearer?: string,
-  ): Promise<{ client: Client; transport: StreamableHTTPClientTransport }> {
+  async function connectClient(bearer?: string): Promise<{ client: Client; transport: StreamableHTTPClientTransport }> {
     if (!running) await startServer();
     const url = new URL(`http://127.0.0.1:${running!.port}/mcp`);
     const transport = new StreamableHTTPClientTransport(url, {
@@ -154,9 +139,7 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
     const { client } = await connectClient();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
-    expect(names).toEqual(
-      expect.arrayContaining(['discover', 'inspect', 'call', 'usage_history', 'credits_ledger']),
-    );
+    expect(names).toEqual(expect.arrayContaining(['discover', 'inspect', 'call', 'usage_history', 'credits_ledger']));
     await client.close();
   });
 
@@ -244,9 +227,9 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
       { QVERIS_MCP_TRANSPORT: 'http', QVERIS_MCP_HTTP_HOST: '0.0.0.0', QVERIS_MCP_HTTP_PORT: '0' },
       [],
     );
-    await expect(
-      startHttpServer(config, (sessionId) => createQverisServer(undefined, sessionId)),
-    ).rejects.toThrow(/non-loopback/);
+    await expect(startHttpServer(config, (sessionId) => createQverisServer(undefined, sessionId))).rejects.toThrow(
+      /non-loopback/,
+    );
   });
 
   it('treats a 127.x hostname as non-loopback (precise address check, not a prefix)', async () => {
@@ -256,9 +239,9 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
       { QVERIS_MCP_TRANSPORT: 'http', QVERIS_MCP_HTTP_HOST: '127.example.com', QVERIS_MCP_HTTP_PORT: '0' },
       [],
     );
-    await expect(
-      startHttpServer(config, (sessionId) => createQverisServer(undefined, sessionId)),
-    ).rejects.toThrow(/non-loopback/);
+    await expect(startHttpServer(config, (sessionId) => createQverisServer(undefined, sessionId))).rejects.toThrow(
+      /non-loopback/,
+    );
   });
 
   it('allows a non-loopback bind once a token is set', async () => {

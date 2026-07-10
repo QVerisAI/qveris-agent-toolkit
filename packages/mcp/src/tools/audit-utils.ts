@@ -44,12 +44,7 @@ export interface LedgerFilterInput extends CommonAuditInput {
 }
 
 export function unwrapEnvelope<T>(response: ApiEnvelope<T> | T): T {
-  if (
-    response &&
-    typeof response === 'object' &&
-    'status' in response &&
-    'data' in response
-  ) {
+  if (response && typeof response === 'object' && 'status' in response && 'data' in response) {
     const envelope = response as ApiEnvelope<T>;
     if (envelope.status === 'failure') {
       throw new Error(envelope.message || 'QVeris API request failed');
@@ -82,9 +77,7 @@ export function chooseBucket(input: CommonAuditInput): Bucket {
   const { start_date, end_date } = resolveDateRange(input);
   const start = Date.parse(`${start_date}T00:00:00Z`);
   const end = Date.parse(`${end_date}T23:59:59Z`);
-  const days = Number.isFinite(start) && Number.isFinite(end)
-    ? Math.max(1, Math.ceil((end - start) / 86400000))
-    : 1;
+  const days = Number.isFinite(start) && Number.isFinite(end) ? Math.max(1, Math.ceil((end - start) / 86400000)) : 1;
   if (days <= 2) return 'hour';
   if (days <= 60) return 'day';
   return 'week';
@@ -113,13 +106,15 @@ export function ledgerAmount(row: CreditsLedgerItem): number {
 }
 
 export function matchesUsage(row: UsageEventItem, input: UsageFilterInput): boolean {
-  return matchesAmount(usageAmount(row), input) &&
+  return (
+    matchesAmount(usageAmount(row), input) &&
     matchesField(row.execution_id, input.execution_id) &&
     matchesField(row.search_id, input.search_id) &&
     matchesField(row.event_type, input.event_type) &&
     matchesField(row.kind, input.kind) &&
     matchesField(row.charge_outcome, input.charge_outcome) &&
-    matchesBoolean(row.success, input.success);
+    matchesBoolean(row.success, input.success)
+  );
 }
 
 export function matchesLedger(row: CreditsLedgerItem, input: LedgerFilterInput): boolean {
@@ -127,8 +122,7 @@ export function matchesLedger(row: CreditsLedgerItem, input: LedgerFilterInput):
   const direction = input.direction || 'any';
   if (direction === 'consume' && !(amount < 0)) return false;
   if (direction === 'grant' && !(amount > 0)) return false;
-  return matchesAmount(Math.abs(amount), input) &&
-    matchesField(row.entry_type, input.entry_type);
+  return matchesAmount(Math.abs(amount), input) && matchesField(row.entry_type, input.entry_type);
 }
 
 export function pickUsage(row: UsageEventItem): Record<string, unknown> {
@@ -238,7 +232,7 @@ export function summarizeUsageFromServer(
   }
 
   const maxChargeItems = Array.isArray(serverSummary.max_charge_items)
-    ? serverSummary.max_charge_items as UsageEventItem[]
+    ? (serverSummary.max_charge_items as UsageEventItem[])
     : [];
   return {
     mode: 'summary',
@@ -338,7 +332,7 @@ export function summarizeLedgerFromServer(
   }
 
   const maxAmountItems = Array.isArray(serverSummary.max_amount_items)
-    ? serverSummary.max_amount_items as CreditsLedgerItem[]
+    ? (serverSummary.max_amount_items as CreditsLedgerItem[])
     : [];
   return {
     mode: 'summary',
@@ -361,10 +355,17 @@ export function summarizeLedgerFromServer(
   };
 }
 
-export function writeJsonlExport(kind: string, rows: unknown[], metadata: Record<string, unknown>): Record<string, unknown> {
+export function writeJsonlExport(
+  kind: string,
+  rows: unknown[],
+  metadata: Record<string, unknown>,
+): Record<string, unknown> {
   const dir = join(process.cwd(), '.qveris', 'exports');
   mkdirSync(dir, { recursive: true });
-  const timestamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  const timestamp = new Date()
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}Z$/, 'Z');
   const filePath = join(dir, `${kind}_${timestamp}.jsonl`);
   writeFileSync(filePath, rows.map((row) => JSON.stringify(row)).join('\n') + (rows.length ? '\n' : ''), 'utf-8');
   return {
@@ -405,7 +406,7 @@ function isoWeek(date: Date): string {
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
   return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 }
 
@@ -464,7 +465,5 @@ function dateOnly(value: unknown): string {
 }
 
 function recordValue(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : {};
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 }

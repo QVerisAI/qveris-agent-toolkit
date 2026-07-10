@@ -38,10 +38,7 @@ export interface AdapterConformanceOptions {
   /** Display name for the describe block. */
   adapterName: string;
   /** The adapter's getQverisTools(client, options?). */
-  getTools: (
-    client: FakeQveris,
-    options?: { sessionId?: string },
-  ) => Record<string, { description?: string }>;
+  getTools: (client: FakeQveris, options?: { sessionId?: string }) => Record<string, { description?: string }>;
   /** Invoke a tool produced by the adapter with raw tool arguments. */
   invoke: (tool: unknown, args: Record<string, unknown>) => Promise<unknown>;
 }

@@ -45,7 +45,12 @@ async def test_discover_emits_span_with_attributes(spans: InMemorySpanExporter) 
     def handler(_request: httpx.Request) -> httpx.Response:
         return httpx.Response(
             200,
-            json={"search_id": "s1", "total": 2, "results": [{"tool_id": "t1"}, {"tool_id": "t2"}], "elapsed_time_ms": 12.5},
+            json={
+                "search_id": "s1",
+                "total": 2,
+                "results": [{"tool_id": "t1"}, {"tool_id": "t2"}],
+                "elapsed_time_ms": 12.5,
+            },
         )
 
     client = make_client(handler)

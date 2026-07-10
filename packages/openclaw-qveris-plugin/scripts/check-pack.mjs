@@ -4,9 +4,7 @@ import { readFileSync } from "node:fs";
 const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
 const extensions = packageJson.openclaw?.extensions;
 if (!Array.isArray(extensions) || !extensions.includes("./dist/index.js")) {
-  fail("package.json openclaw.extensions must include the compiled runtime entry:", [
-    'expected "./dist/index.js"',
-  ]);
+  fail("package.json openclaw.extensions must include the compiled runtime entry:", ['expected "./dist/index.js"']);
 }
 if (extensions.some((entry) => typeof entry === "string" && /\.tsx?$/.test(entry))) {
   fail("package.json openclaw.extensions must not point at TypeScript source entries for npm packages:", extensions);
@@ -44,8 +42,7 @@ const forbiddenPatterns = [
 ];
 
 const envAccessPattern = /\b(?:process\.env|Deno\.env|Bun\.env|import\.meta\.env)\b/;
-const networkSendPattern =
-  /\b(?:globalThis\.)?fetch\s*\(|\bhttps?\.request\s*\(|\bXMLHttpRequest\b|\baxios\s*\./;
+const networkSendPattern = /\b(?:globalThis\.)?fetch\s*\(|\bhttps?\.request\s*\(|\bXMLHttpRequest\b|\baxios\s*\./;
 
 function fail(message, details = []) {
   console.error(message);

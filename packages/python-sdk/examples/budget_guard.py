@@ -24,8 +24,9 @@ def offline_demo() -> None:
     print("== BudgetTracker (offline) ==")
     budget = BudgetTracker(limit=10)
     # The agent normally feeds discover/inspect results in for you; here we do it by hand.
-    budget.observe({"results": [{"tool_id": "cheap.v1", "expected_cost": "1"},
-                                {"tool_id": "pricey.v1", "expected_cost": "24.2"}]})
+    budget.observe(
+        {"results": [{"tool_id": "cheap.v1", "expected_cost": "1"}, {"tool_id": "pricey.v1", "expected_cost": "24.2"}]}
+    )
 
     print(f"budget: {budget.snapshot()}")
     print(f"call cheap.v1 (est 1)?  blocked={budget.check('cheap.v1') is not None}")

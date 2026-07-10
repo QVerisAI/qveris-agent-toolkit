@@ -161,11 +161,7 @@ class BudgetTracker:
         charge = self._charge_of(execution)
         if charge:
             self.spent += charge
-        if (
-            not self._warned
-            and self.limit is not None
-            and self.spent >= self.limit * self.warn_ratio
-        ):
+        if not self._warned and self.limit is not None and self.spent >= self.limit * self.warn_ratio:
             self._warned = True
             return self.snapshot()
         return None

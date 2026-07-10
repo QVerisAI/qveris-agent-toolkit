@@ -19,8 +19,7 @@
  * @module @qverisai/mcp/server-card
  */
 
-export const SERVER_CARD_SCHEMA_URL =
-  'https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json';
+export const SERVER_CARD_SCHEMA_URL = 'https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json';
 export const SERVER_CARD_MEDIA_TYPE = 'application/mcp-server-card+json';
 export const CATALOG_PATH = '/.well-known/mcp/catalog.json';
 export const CATALOG_SPEC_VERSION = 'draft';

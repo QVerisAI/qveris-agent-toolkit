@@ -60,11 +60,7 @@ describe('discover (search_tools)', () => {
 
       searchToolsMock.mockResolvedValueOnce(mockResponse);
 
-      const result = await executeSearchTools(
-        mockClient,
-        { query: 'weather API', limit: 5 },
-        'default-session'
-      );
+      const result = await executeSearchTools(mockClient, { query: 'weather API', limit: 5 }, 'default-session');
 
       expect(searchToolsMock).toHaveBeenCalledWith({
         query: 'weather API',
@@ -81,11 +77,7 @@ describe('discover (search_tools)', () => {
         results: [],
       });
 
-      await executeSearchTools(
-        mockClient,
-        { query: 'test' },
-        'default-session'
-      );
+      await executeSearchTools(mockClient, { query: 'test' }, 'default-session');
 
       expect(searchToolsMock).toHaveBeenCalledWith({
         query: 'test',
@@ -100,11 +92,7 @@ describe('discover (search_tools)', () => {
         results: [],
       });
 
-      await executeSearchTools(
-        mockClient,
-        { query: 'test', session_id: 'custom-session' },
-        'default-session'
-      );
+      await executeSearchTools(mockClient, { query: 'test', session_id: 'custom-session' }, 'default-session');
 
       expect(searchToolsMock).toHaveBeenCalledWith({
         query: 'test',
@@ -117,10 +105,7 @@ describe('discover (search_tools)', () => {
       const error = { status: 500, message: 'Server error' };
       searchToolsMock.mockRejectedValueOnce(error);
 
-      await expect(
-        executeSearchTools(mockClient, { query: 'test' }, 'session')
-      ).rejects.toEqual(error);
+      await expect(executeSearchTools(mockClient, { query: 'test' }, 'session')).rejects.toEqual(error);
     });
   });
 });
-

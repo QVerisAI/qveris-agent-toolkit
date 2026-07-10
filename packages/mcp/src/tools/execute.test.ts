@@ -72,7 +72,7 @@ describe('call (execute_tool)', () => {
           search_id: 'search-123',
           params_to_tool: { city: 'Tokyo', units: 'metric' },
         },
-        'default-session'
+        'default-session',
       );
 
       expect(executeToolMock).toHaveBeenCalledWith('weather-tool', {
@@ -102,7 +102,7 @@ describe('call (execute_tool)', () => {
           params_to_tool: {},
           session_id: 'custom-session',
         },
-        'default-session'
+        'default-session',
       );
 
       expect(executeToolMock).toHaveBeenCalledWith('tool-1', {
@@ -130,7 +130,7 @@ describe('call (execute_tool)', () => {
           params_to_tool: {},
           max_response_size: 102400,
         },
-        'default-session'
+        'default-session',
       );
 
       expect(executeToolMock).toHaveBeenCalledWith('tool-1', {
@@ -152,10 +152,10 @@ describe('call (execute_tool)', () => {
               search_id: 'search-123',
               params_to_tool: paramsToTool as unknown as Record<string, unknown>,
             },
-            'default-session'
-          )
+            'default-session',
+          ),
         ).rejects.toThrow('params_to_tool must be a JSON object');
-      }
+      },
     );
 
     it('should allow null-prototype params_to_tool objects', async () => {
@@ -169,7 +169,7 @@ describe('call (execute_tool)', () => {
           search_id: 'search-123',
           params_to_tool: params,
         },
-        'default-session'
+        'default-session',
       );
 
       expect(mockClient.executeTool).toHaveBeenCalledWith('tool-1', {
@@ -205,7 +205,7 @@ describe('call (execute_tool)', () => {
           search_id: 'search-123',
           params_to_tool: complexParams,
         },
-        'default-session'
+        'default-session',
       );
 
       expect(executeToolMock).toHaveBeenCalledWith('search-products', {
@@ -228,10 +228,9 @@ describe('call (execute_tool)', () => {
             search_id: 'search-123',
             params_to_tool: {},
           },
-          'session'
-        )
+          'session',
+        ),
       ).rejects.toEqual(error);
     });
   });
 });
-

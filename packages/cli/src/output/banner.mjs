@@ -33,9 +33,7 @@ function solidBlockLines() {
 
 function colorDepth() {
   try {
-    return typeof process.stdout.getColorDepth === "function"
-      ? process.stdout.getColorDepth()
-      : 8;
+    return typeof process.stdout.getColorDepth === "function" ? process.stdout.getColorDepth() : 8;
   } catch {
     return 8;
   }
@@ -138,6 +136,7 @@ function shortenPath(p) {
 
 /** Strip SGR ANSI sequences (truecolor / 16-color). */
 function stripAnsi(s) {
+  // eslint-disable-next-line no-control-regex -- stripping ANSI SGR requires matching ESC
   return s.replace(/\x1b\[[0-9;]*m/g, "");
 }
 
@@ -150,7 +149,8 @@ function displayWidth(str) {
   for (const ch of str) {
     const cp = ch.codePointAt(0);
     if (RE_HAN.test(ch) || RE_HANGUL.test(ch)) w += 2;
-    else if (cp >= 0xff01 && cp <= 0xff60) w += 2; // fullwidth forms
+    else if (cp >= 0xff01 && cp <= 0xff60)
+      w += 2; // fullwidth forms
     else w += 1;
   }
   return w;

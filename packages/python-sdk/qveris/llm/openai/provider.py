@@ -1,32 +1,25 @@
-import json
-import os
-from typing import List, AsyncGenerator, Any, Dict, Optional
+from typing import List, AsyncGenerator, Optional
 from openai import AsyncOpenAI
-from openai.types.chat import ChatCompletionChunk, ChatCompletionToolParam
+from openai.types.chat import ChatCompletionToolParam
 from ..base import LLMProvider
 from .config import OpenAIConfig
 from ...types import Message, StreamEvent, ChatResponse
 from ...config import AgentConfig
+
 
 class OpenAIProvider(LLMProvider):
     def __init__(self, config: Optional[OpenAIConfig] = None):
         self.config = config or OpenAIConfig()
 
         # AsyncOpenAI automatically picks up HTTP_PROXY/HTTPS_PROXY from env
-        self.client = AsyncOpenAI(
-            api_key=self.config.api_key,
-            base_url=self.config.base_url
-        )
+        self.client = AsyncOpenAI(api_key=self.config.api_key, base_url=self.config.base_url)
 
     async def close(self) -> None:
         """Close the underlying async HTTP client."""
         await self.client.close()
 
     async def chat_stream(
-        self,
-        messages: List[Message],
-        tools: List[ChatCompletionToolParam],
-        config: AgentConfig
+        self, messages: List[Message], tools: List[ChatCompletionToolParam], config: AgentConfig
     ) -> AsyncGenerator[StreamEvent, None]:
 
         # Convert Pydantic messages to OpenAI format
@@ -56,7 +49,7 @@ class OpenAIProvider(LLMProvider):
             tool_choice="auto" if openai_tools else None,
             stream=True,
             stream_options={"include_usage": True},
-            temperature=config.temperature
+            temperature=config.temperature,
         )
 
         tool_calls_buffer = []
@@ -69,12 +62,12 @@ class OpenAIProvider(LLMProvider):
                 yield StreamEvent(type="content", content=delta.content)
 
             # 2. Yield Reasoning (Standard OpenAI/DeepSeek)
-            if hasattr(delta, 'reasoning') and delta.reasoning:
-                 yield StreamEvent(type="reasoning", content=delta.reasoning)
+            if hasattr(delta, "reasoning") and delta.reasoning:
+                yield StreamEvent(type="reasoning", content=delta.reasoning)
 
             # 3. Yield Reasoning Details (OpenRouter/Gemini)
             # Check if reasoning_details exists on delta (it might be dynamic)
-            if delta and hasattr(delta, 'reasoning_details') and delta.reasoning_details:
+            if delta and hasattr(delta, "reasoning_details") and delta.reasoning_details:
                 details = delta.reasoning_details
                 if not isinstance(details, list):
                     details = [details]
@@ -87,34 +80,36 @@ class OpenAIProvider(LLMProvider):
                 for tc in delta.tool_calls:
                     if tc.index is not None:
                         if len(tool_calls_buffer) <= tc.index:
-                            tool_calls_buffer.append({
-                                "id": tc.id or "",
-                                "type": "function",
-                                "function": {
-                                    "name": tc.function.name or "",
-                                    "arguments": tc.function.arguments or ""
+                            tool_calls_buffer.append(
+                                {
+                                    "id": tc.id or "",
+                                    "type": "function",
+                                    "function": {
+                                        "name": tc.function.name or "",
+                                        "arguments": tc.function.arguments or "",
+                                    },
                                 }
-                            })
+                            )
                         else:
                             if tc.function.arguments:
                                 tool_calls_buffer[tc.index]["function"]["arguments"] += tc.function.arguments
 
             # 5. Yield Usage/Metrics
             if chunk.usage:
-                yield StreamEvent(type="metrics", metrics={
-                    "input_tokens": chunk.usage.prompt_tokens,
-                    "output_tokens": chunk.usage.completion_tokens,
-                    "total_tokens": chunk.usage.total_tokens
-                })
+                yield StreamEvent(
+                    type="metrics",
+                    metrics={
+                        "input_tokens": chunk.usage.prompt_tokens,
+                        "output_tokens": chunk.usage.completion_tokens,
+                        "total_tokens": chunk.usage.total_tokens,
+                    },
+                )
 
         for tc in tool_calls_buffer:
             yield StreamEvent(type="tool_call", tool_call=tc)
 
     async def chat(
-        self,
-        messages: List[Message],
-        tools: List[ChatCompletionToolParam],
-        config: AgentConfig
+        self, messages: List[Message], tools: List[ChatCompletionToolParam], config: AgentConfig
     ) -> ChatResponse:
         """Non-streaming chat completion."""
 
@@ -140,7 +135,7 @@ class OpenAIProvider(LLMProvider):
             tools=openai_tools,
             tool_choice="auto" if openai_tools else None,
             stream=False,
-            temperature=config.temperature
+            temperature=config.temperature,
         )
 
         if not response.choices:
@@ -155,10 +150,7 @@ class OpenAIProvider(LLMProvider):
                 {
                     "id": tc.id,
                     "type": "function",
-                    "function": {
-                        "name": tc.function.name,
-                        "arguments": tc.function.arguments
-                    }
+                    "function": {"name": tc.function.name, "arguments": tc.function.arguments},
                 }
                 for tc in message.tool_calls
             ]
@@ -169,17 +161,14 @@ class OpenAIProvider(LLMProvider):
             metrics = {
                 "input_tokens": response.usage.prompt_tokens,
                 "output_tokens": response.usage.completion_tokens,
-                "total_tokens": response.usage.total_tokens
+                "total_tokens": response.usage.total_tokens,
             }
 
         # Extract reasoning_details for Gemini thought signatures
         reasoning_details = None
-        if hasattr(message, 'reasoning_details') and message.reasoning_details:
+        if hasattr(message, "reasoning_details") and message.reasoning_details:
             reasoning_details = message.reasoning_details
 
         return ChatResponse(
-            content=message.content,
-            tool_calls=tool_calls,
-            metrics=metrics,
-            reasoning_details=reasoning_details
+            content=message.content, tool_calls=tool_calls, metrics=metrics, reasoning_details=reasoning_details
         )

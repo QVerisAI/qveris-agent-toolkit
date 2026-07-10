@@ -4,11 +4,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-runtime";
 import plugin from "../index.js";
-import {
-  inferCsvAnalysis,
-  inferJsonAnalysis,
-  inferTextAnalysis,
-} from "./qveris-materialization.js";
+import { inferCsvAnalysis, inferJsonAnalysis, inferTextAnalysis } from "./qveris-materialization.js";
 import { createQverisTools } from "./qveris-tools.js";
 
 // ---------------------------------------------------------------------------
@@ -227,7 +223,7 @@ describe("createQverisTools", () => {
     const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() });
     const callTool = tools!.find((t) => t.name === "qveris_call")!;
 
-    const result = await callTool.execute("call-1", {
+    await callTool.execute("call-1", {
       tool_id: "unknown-tool-xyz",
       params_to_tool: '{"city": "London"}',
     });
@@ -717,7 +713,8 @@ describe("qveris_call materialization", () => {
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       if (typeof url === "string" && url.includes("/search")) {
         return Promise.resolve({
-          ok: true, status: 200,
+          ok: true,
+          status: 200,
           json: () => Promise.resolve(makeDiscoverResponse("tool-x")),
           text: () => Promise.resolve(""),
           headers: new Headers(),
@@ -725,7 +722,8 @@ describe("qveris_call materialization", () => {
       }
       if (typeof url === "string" && url.includes("/tools/execute")) {
         return Promise.resolve({
-          ok: true, status: 200,
+          ok: true,
+          status: 200,
           json: () => Promise.resolve(TRUNCATED_CALL_RESPONSE),
           text: () => Promise.resolve(JSON.stringify(TRUNCATED_CALL_RESPONSE)),
           headers: new Headers(),
@@ -734,7 +732,12 @@ describe("qveris_call materialization", () => {
       if (typeof url === "string" && url.includes("oss.qveris.ai")) {
         return Promise.reject(new DOMException("The operation was aborted", "AbortError"));
       }
-      return Promise.resolve({ ok: false, status: 404, text: () => Promise.resolve("not found"), headers: new Headers() });
+      return Promise.resolve({
+        ok: false,
+        status: 404,
+        text: () => Promise.resolve("not found"),
+        headers: new Headers(),
+      });
     });
     globalThis.fetch = fetchMock;
     const tools = createQverisTools({
@@ -756,13 +759,28 @@ describe("qveris_call materialization", () => {
   it("blocks download from non-whitelisted domain", async () => {
     const blockedResponse = {
       ...TRUNCATED_CALL_RESPONSE,
-      result: { ...TRUNCATED_CALL_RESPONSE.result, full_content_file_url: "https://evil-bucket.s3.amazonaws.com/data.json" },
+      result: {
+        ...TRUNCATED_CALL_RESPONSE.result,
+        full_content_file_url: "https://evil-bucket.s3.amazonaws.com/data.json",
+      },
     };
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       if (typeof url === "string" && url.includes("/search")) {
-        return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(makeDiscoverResponse("tool-x")), text: () => Promise.resolve(""), headers: new Headers() });
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve(makeDiscoverResponse("tool-x")),
+          text: () => Promise.resolve(""),
+          headers: new Headers(),
+        });
       }
-      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(blockedResponse), text: () => Promise.resolve(JSON.stringify(blockedResponse)), headers: new Headers() });
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(blockedResponse),
+        text: () => Promise.resolve(JSON.stringify(blockedResponse)),
+        headers: new Headers(),
+      });
     });
     globalThis.fetch = fetchMock;
     const tools = createQverisTools({
@@ -787,9 +805,21 @@ describe("qveris_call materialization", () => {
     };
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       if (typeof url === "string" && url.includes("/search")) {
-        return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(makeDiscoverResponse("tool-x")), text: () => Promise.resolve(""), headers: new Headers() });
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve(makeDiscoverResponse("tool-x")),
+          text: () => Promise.resolve(""),
+          headers: new Headers(),
+        });
       }
-      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(httpResponse), text: () => Promise.resolve(JSON.stringify(httpResponse)), headers: new Headers() });
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(httpResponse),
+        text: () => Promise.resolve(JSON.stringify(httpResponse)),
+        headers: new Headers(),
+      });
     });
     globalThis.fetch = fetchMock;
     const tools = createQverisTools({
@@ -842,10 +872,27 @@ describe("qveris_call materialization", () => {
 
   it("materializes binary content (image/png)", async () => {
     const pngSignature = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0xff, 0xfe, 0x00, 0x01]);
-    const binaryResponse = { ...TRUNCATED_CALL_RESPONSE, result: { ...TRUNCATED_CALL_RESPONSE.result, full_content_file_url: "https://oss.qveris.ai/images/chart.png" } };
+    const binaryResponse = {
+      ...TRUNCATED_CALL_RESPONSE,
+      result: { ...TRUNCATED_CALL_RESPONSE.result, full_content_file_url: "https://oss.qveris.ai/images/chart.png" },
+    };
     const fetchMock = vi.fn().mockImplementation((url: string) => {
-      if (typeof url === "string" && url.includes("/search")) return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(makeDiscoverResponse("img-tool")), text: () => Promise.resolve(""), headers: new Headers() });
-      if (typeof url === "string" && url.includes("/tools/execute")) return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(binaryResponse), text: () => Promise.resolve(JSON.stringify(binaryResponse)), headers: new Headers() });
+      if (typeof url === "string" && url.includes("/search"))
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve(makeDiscoverResponse("img-tool")),
+          text: () => Promise.resolve(""),
+          headers: new Headers(),
+        });
+      if (typeof url === "string" && url.includes("/tools/execute"))
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve(binaryResponse),
+          text: () => Promise.resolve(JSON.stringify(binaryResponse)),
+          headers: new Headers(),
+        });
       if (typeof url === "string" && url.includes("oss.qveris.ai")) {
         return Promise.resolve({
           ok: true,
@@ -882,8 +929,22 @@ describe("qveris_call materialization", () => {
   it("rejects download when content is truncated by byte limit", async () => {
     const largeContent = "x".repeat(200);
     const fetchMock = vi.fn().mockImplementation((url: string) => {
-      if (typeof url === "string" && url.includes("/search")) return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(makeDiscoverResponse("big-tool")), text: () => Promise.resolve(""), headers: new Headers() });
-      if (typeof url === "string" && url.includes("/tools/execute")) return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(TRUNCATED_CALL_RESPONSE), text: () => Promise.resolve(JSON.stringify(TRUNCATED_CALL_RESPONSE)), headers: new Headers() });
+      if (typeof url === "string" && url.includes("/search"))
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve(makeDiscoverResponse("big-tool")),
+          text: () => Promise.resolve(""),
+          headers: new Headers(),
+        });
+      if (typeof url === "string" && url.includes("/tools/execute"))
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve(TRUNCATED_CALL_RESPONSE),
+          text: () => Promise.resolve(JSON.stringify(TRUNCATED_CALL_RESPONSE)),
+          headers: new Headers(),
+        });
       if (typeof url === "string" && url.includes("oss.qveris.ai")) {
         const encoder = new TextEncoder();
         const fullBytes = encoder.encode(largeContent);
@@ -918,15 +979,43 @@ describe("qveris_call materialization", () => {
   });
 
   it("reclassifies application/octet-stream as JSON when content looks like JSON", async () => {
-    const octetStreamResponse = { ...TRUNCATED_CALL_RESPONSE, result: { ...TRUNCATED_CALL_RESPONSE.result, full_content_file_url: "https://oss.qveris.ai/data/result.bin" } };
+    const octetStreamResponse = {
+      ...TRUNCATED_CALL_RESPONSE,
+      result: { ...TRUNCATED_CALL_RESPONSE.result, full_content_file_url: "https://oss.qveris.ai/data/result.bin" },
+    };
     const fetchMock = vi.fn().mockImplementation((url: string) => {
-      if (typeof url === "string" && url.includes("/search")) return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(makeDiscoverResponse("generic-tool")), text: () => Promise.resolve(""), headers: new Headers() });
-      if (typeof url === "string" && url.includes("/tools/execute")) return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(octetStreamResponse), text: () => Promise.resolve(JSON.stringify(octetStreamResponse)), headers: new Headers() });
+      if (typeof url === "string" && url.includes("/search"))
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve(makeDiscoverResponse("generic-tool")),
+          text: () => Promise.resolve(""),
+          headers: new Headers(),
+        });
+      if (typeof url === "string" && url.includes("/tools/execute"))
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve(octetStreamResponse),
+          text: () => Promise.resolve(JSON.stringify(octetStreamResponse)),
+          headers: new Headers(),
+        });
       if (typeof url === "string" && url.includes("oss.qveris.ai")) {
         const encoded = new TextEncoder().encode(FULL_CONTENT_JSON);
-        return Promise.resolve({ ok: true, status: 200, arrayBuffer: () => Promise.resolve(encoded.buffer.slice(0) as ArrayBuffer), text: () => Promise.resolve(FULL_CONTENT_JSON), headers: new Headers({ "content-type": "application/octet-stream" }) });
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          arrayBuffer: () => Promise.resolve(encoded.buffer.slice(0) as ArrayBuffer),
+          text: () => Promise.resolve(FULL_CONTENT_JSON),
+          headers: new Headers({ "content-type": "application/octet-stream" }),
+        });
       }
-      return Promise.resolve({ ok: false, status: 404, text: () => Promise.resolve("not found"), headers: new Headers() });
+      return Promise.resolve({
+        ok: false,
+        status: 404,
+        text: () => Promise.resolve("not found"),
+        headers: new Headers(),
+      });
     });
     globalThis.fetch = fetchMock;
     const tools = createQverisTools({
@@ -948,15 +1037,43 @@ describe("qveris_call materialization", () => {
 
   it("handles CSV content", async () => {
     const csvContent = "name,age,city\nAlice,30,NYC\nBob,25,LA\nCharlie,35,SF";
-    const csvResponse = { ...TRUNCATED_CALL_RESPONSE, result: { ...TRUNCATED_CALL_RESPONSE.result, full_content_file_url: "https://oss.qveris.ai/data.csv" } };
+    const csvResponse = {
+      ...TRUNCATED_CALL_RESPONSE,
+      result: { ...TRUNCATED_CALL_RESPONSE.result, full_content_file_url: "https://oss.qveris.ai/data.csv" },
+    };
     const fetchMock = vi.fn().mockImplementation((url: string) => {
-      if (typeof url === "string" && url.includes("/search")) return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(makeDiscoverResponse("csv-tool")), text: () => Promise.resolve(""), headers: new Headers() });
-      if (typeof url === "string" && url.includes("/tools/execute")) return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(csvResponse), text: () => Promise.resolve(JSON.stringify(csvResponse)), headers: new Headers() });
+      if (typeof url === "string" && url.includes("/search"))
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve(makeDiscoverResponse("csv-tool")),
+          text: () => Promise.resolve(""),
+          headers: new Headers(),
+        });
+      if (typeof url === "string" && url.includes("/tools/execute"))
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve(csvResponse),
+          text: () => Promise.resolve(JSON.stringify(csvResponse)),
+          headers: new Headers(),
+        });
       if (typeof url === "string" && url.includes("oss.qveris.ai")) {
         const encoded = new TextEncoder().encode(csvContent);
-        return Promise.resolve({ ok: true, status: 200, arrayBuffer: () => Promise.resolve(encoded.buffer.slice(0) as ArrayBuffer), text: () => Promise.resolve(csvContent), headers: new Headers({ "content-type": "text/csv" }) });
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          arrayBuffer: () => Promise.resolve(encoded.buffer.slice(0) as ArrayBuffer),
+          text: () => Promise.resolve(csvContent),
+          headers: new Headers({ "content-type": "text/csv" }),
+        });
       }
-      return Promise.resolve({ ok: false, status: 404, text: () => Promise.resolve("not found"), headers: new Headers() });
+      return Promise.resolve({
+        ok: false,
+        status: 404,
+        text: () => Promise.resolve("not found"),
+        headers: new Headers(),
+      });
     });
     globalThis.fetch = fetchMock;
     const tools = createQverisTools({
@@ -1003,16 +1120,39 @@ describe("qveris_call materialization", () => {
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       observedApiUrls.push(url);
       if (typeof url === "string" && url.includes("/search")) {
-        return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(cnDiscoverResponse), text: () => Promise.resolve(""), headers: new Headers() });
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve(cnDiscoverResponse),
+          text: () => Promise.resolve(""),
+          headers: new Headers(),
+        });
       }
       if (typeof url === "string" && url.includes("/tools/execute")) {
-        return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(cnInvokeResponse), text: () => Promise.resolve(JSON.stringify(cnInvokeResponse)), headers: new Headers() });
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve(cnInvokeResponse),
+          text: () => Promise.resolve(JSON.stringify(cnInvokeResponse)),
+          headers: new Headers(),
+        });
       }
       if (typeof url === "string" && url.includes("oss.qveris.cn")) {
         const encoded = new TextEncoder().encode(cnFullContent);
-        return Promise.resolve({ ok: true, status: 200, arrayBuffer: () => Promise.resolve(encoded.buffer.slice(0) as ArrayBuffer), text: () => Promise.resolve(cnFullContent), headers: new Headers({ "content-type": "application/json" }) });
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          arrayBuffer: () => Promise.resolve(encoded.buffer.slice(0) as ArrayBuffer),
+          text: () => Promise.resolve(cnFullContent),
+          headers: new Headers({ "content-type": "application/json" }),
+        });
       }
-      return Promise.resolve({ ok: false, status: 404, text: () => Promise.resolve("not found"), headers: new Headers() });
+      return Promise.resolve({
+        ok: false,
+        status: 404,
+        text: () => Promise.resolve("not found"),
+        headers: new Headers(),
+      });
     });
     globalThis.fetch = fetchMock;
 

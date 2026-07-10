@@ -96,9 +96,7 @@ class RetryPolicy:
         self.retries = 0
         self.total_backoff_seconds = 0.0
 
-    async def send(
-        self, client: httpx.AsyncClient, method: str, url: str, **kwargs: Any
-    ) -> httpx.Response:
+    async def send(self, client: httpx.AsyncClient, method: str, url: str, **kwargs: Any) -> httpx.Response:
         """Send a request through ``client``, retrying 429/503 with backoff."""
         attempt = 0
         while True:

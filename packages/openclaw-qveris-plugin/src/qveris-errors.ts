@@ -11,13 +11,7 @@ export const QVERIS_WORKFLOW_NOTE =
 /** Structured error returned to the model instead of throwing */
 export interface QverisErrorResult {
   success: false;
-  error_type:
-    | "timeout"
-    | "http_error"
-    | "network_error"
-    | "json_parse_error"
-    | "rate_limited"
-    | "tool_not_discovered";
+  error_type: "timeout" | "http_error" | "network_error" | "json_parse_error" | "rate_limited" | "tool_not_discovered";
   status?: number;
   detail: string;
   retry_hint?: string;

@@ -43,7 +43,7 @@ export async function runInit(queryArg, flags) {
   let discovery;
   let discoveryId;
   let selected;
-  let candidateTools = [];
+  let candidateTools;
   const query = flags.query || queryArg || DEFAULT_QUERY;
   const limit = parseInt(flags.limit, 10) || DEFAULT_LIMIT;
   const maxResponseSize = resolveInitMaxResponseSize(flags);
@@ -52,12 +52,13 @@ export async function runInit(queryArg, flags) {
   if (flags.resume) {
     const session = readSession();
     if (!session?.discoveryId || !Array.isArray(session.results) || session.results.length === 0) {
-      throw new CliError("SESSION_EXPIRED", "No resumable init session found. Run 'qveris init' without --resume first.");
+      throw new CliError(
+        "SESSION_EXPIRED",
+        "No resumable init session found. Run 'qveris init' without --resume first.",
+      );
     }
     discoveryId = session.discoveryId;
-    candidateTools = flags.toolId
-      ? [{ tool_id: flags.toolId, name: flags.toolId }]
-      : session.results;
+    candidateTools = flags.toolId ? [{ tool_id: flags.toolId, name: flags.toolId }] : session.results;
     discovery = {
       search_id: discoveryId,
       query: session.query,
@@ -73,12 +74,13 @@ export async function runInit(queryArg, flags) {
     discovery = await discoverTools({ apiKey, baseUrl, query, limit, timeoutMs });
     const results = discovery.results ?? [];
     if (results.length === 0) {
-      throw new CliError("TOOL_NOT_FOUND", `No capabilities matched "${query}". Try 'qveris init --query <broader-query>'.`);
+      throw new CliError(
+        "TOOL_NOT_FOUND",
+        `No capabilities matched "${query}". Try 'qveris init --query <broader-query>'.`,
+      );
     }
     discoveryId = discovery.search_id;
-    candidateTools = flags.toolId
-      ? [{ tool_id: flags.toolId, name: flags.toolId }]
-      : results;
+    candidateTools = flags.toolId ? [{ tool_id: flags.toolId, name: flags.toolId }] : results;
     writeSession({
       discoveryId,
       query,
@@ -108,7 +110,7 @@ export async function runInit(queryArg, flags) {
     "inspect",
     "running",
     candidateToolIds.length === 1 ? "Inspecting selected capability" : "Inspecting candidate capabilities",
-    { tool_ids: candidateToolIds }
+    { tool_ids: candidateToolIds },
   );
   const inspected = await inspectToolsByIds({
     apiKey,
@@ -123,21 +125,37 @@ export async function runInit(queryArg, flags) {
   updateLast(steps, "ok", "Inspection completed", {
     tool_id: inspectedTool.tool_id || selected.tool_id,
     tool_name: inspectedTool.name || selected.name,
-    selected_reason: flagParameters && !flags.toolId ? "params_match" : flags.toolId ? "explicit_tool" : "first_candidate",
+    selected_reason:
+      flagParameters && !flags.toolId ? "params_match" : flags.toolId ? "explicit_tool" : "first_candidate",
     has_sample_parameters: Boolean(getSampleParameters(inspectedTool)),
   });
 
   const { parameters, source: paramsSource } = getInitParameters(flags, inspectedTool, flagParameters);
-  record(steps, "call", flags.dryRun ? "skipped" : "running", flags.dryRun ? "Dry run requested" : "Calling selected capability", {
-    tool_id: selected.tool_id,
-    params_source: paramsSource,
-    max_response_size: maxResponseSize,
-  });
+  record(
+    steps,
+    "call",
+    flags.dryRun ? "skipped" : "running",
+    flags.dryRun ? "Dry run requested" : "Calling selected capability",
+    {
+      tool_id: selected.tool_id,
+      params_source: paramsSource,
+      max_response_size: maxResponseSize,
+    },
+  );
 
   const nextCommands = buildNextCommands({ selected, discoveryId, parameters });
 
   if (flags.dryRun) {
-    const payload = buildPayload({ steps, discovery, inspectedTool, parameters, callResult: null, nextCommands, startedAt, dryRun: true });
+    const payload = buildPayload({
+      steps,
+      discovery,
+      inspectedTool,
+      parameters,
+      callResult: null,
+      nextCommands,
+      startedAt,
+      dryRun: true,
+    });
     if (flags.json) outputJson(payload);
     else printHumanSummary(payload);
     return;
@@ -175,7 +193,16 @@ export async function runInit(queryArg, flags) {
     ledger: finalNextCommands.ledger,
   });
 
-  const payload = buildPayload({ steps, discovery, inspectedTool, parameters, callResult, nextCommands, startedAt, dryRun: false });
+  const payload = buildPayload({
+    steps,
+    discovery,
+    inspectedTool,
+    parameters,
+    callResult,
+    nextCommands,
+    startedAt,
+    dryRun: false,
+  });
   if (flags.json) outputJson(payload);
   else printHumanSummary(payload);
 }
@@ -234,7 +261,7 @@ function mergeCandidateTools(discoveredTools, inspectedTools) {
   const inspectedById = new Map(
     normalizeToolList(inspectedTools)
       .filter((tool) => tool?.tool_id)
-      .map((tool) => [tool.tool_id, tool])
+      .map((tool) => [tool.tool_id, tool]),
   );
   return discoveredTools.map((tool) => ({
     ...tool,
@@ -264,7 +291,10 @@ function scoreParameterMatch(tool, parameters) {
   if (schema.length === 0) return 0;
 
   const provided = new Set(Object.keys(parameters ?? {}));
-  const required = schema.filter((param) => param?.required).map((param) => param.name).filter(Boolean);
+  const required = schema
+    .filter((param) => param?.required)
+    .map((param) => param.name)
+    .filter(Boolean);
   const allNames = schema.map((param) => param?.name).filter(Boolean);
   const missingRequired = required.filter((name) => !provided.has(name));
   if (missingRequired.length > 0) return Number.NEGATIVE_INFINITY;
@@ -275,13 +305,16 @@ function scoreParameterMatch(tool, parameters) {
 }
 
 function summarizeRequiredParams(tools) {
-  return tools.slice(0, 5).map((tool, index) => {
-    const required = (Array.isArray(tool?.params) ? tool.params : [])
-      .filter((param) => param?.required)
-      .map((param) => param.name)
-      .filter(Boolean);
-    return `${index + 1}. ${tool.tool_id}: ${required.length ? required.join(", ") : "no required params"}`;
-  }).join("; ");
+  return tools
+    .slice(0, 5)
+    .map((tool, index) => {
+      const required = (Array.isArray(tool?.params) ? tool.params : [])
+        .filter((param) => param?.required)
+        .map((param) => param.name)
+        .filter(Boolean);
+      return `${index + 1}. ${tool.tool_id}: ${required.length ? required.join(", ") : "no required params"}`;
+    })
+    .join("; ");
 }
 
 export function resolveInitMaxResponseSize(flags) {
@@ -322,12 +355,14 @@ function buildPayload({ steps, discovery, inspectedTool, parameters, callResult,
       provider_name: inspectedTool?.provider_name,
     },
     parameters,
-    call: callResult ? {
-      success: callResult.success,
-      execution_id: callResult.execution_id,
-      elapsed_time_ms: callResult.elapsed_time_ms ?? callResult.execution_time,
-      billing: callResult.billing ?? callResult.pre_settlement_bill,
-    } : null,
+    call: callResult
+      ? {
+          success: callResult.success,
+          execution_id: callResult.execution_id,
+          elapsed_time_ms: callResult.elapsed_time_ms ?? callResult.execution_time,
+          billing: callResult.billing ?? callResult.pre_settlement_bill,
+        }
+      : null,
     next_commands: callResult?.execution_id
       ? { ...nextCommands, usage: nextCommands.usage.replace("<execution_id>", callResult.execution_id) }
       : nextCommands,

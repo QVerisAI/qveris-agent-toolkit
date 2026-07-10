@@ -56,7 +56,12 @@ export async function runCall(idOrIndex, flags) {
       console.log(`  Discovery ID: ${dim(discoveryId)}`);
       console.log(`  Max size:     ${maxSize}`);
       console.log(`  Parameters:`);
-      console.log(JSON.stringify(parameters, null, 2).split("\n").map((l) => `    ${l}`).join("\n"));
+      console.log(
+        JSON.stringify(parameters, null, 2)
+          .split("\n")
+          .map((l) => `    ${l}`)
+          .join("\n"),
+      );
     }
     return;
   }

@@ -61,8 +61,7 @@ export const executeToolSchema = {
   properties: {
     tool_id: {
       type: 'string',
-      description:
-        'The ID of the remote tool to execute. Must come from a previous discover call.',
+      description: 'The ID of the remote tool to execute. Must come from a previous discover call.',
     },
     search_id: {
       type: 'string',
@@ -107,7 +106,7 @@ export const executeToolSchema = {
 export async function executeExecuteTool(
   client: QverisClient,
   input: ExecuteToolInput,
-  defaultSessionId: string
+  defaultSessionId: string,
 ): Promise<ExecuteResponse> {
   if (!isParamsObject(input.params_to_tool)) {
     throw new Error('params_to_tool must be a JSON object.');
@@ -130,4 +129,3 @@ function isParamsObject(value: unknown): value is Record<string, unknown> {
   const prototype = Object.getPrototypeOf(value);
   return prototype === Object.prototype || prototype === null;
 }
-

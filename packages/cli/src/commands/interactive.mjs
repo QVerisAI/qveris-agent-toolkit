@@ -42,7 +42,10 @@ export async function runInteractive(flags) {
 
   rl.on("line", async (line) => {
     const input = line.trim();
-    if (!input) { rl.prompt(); return; }
+    if (!input) {
+      rl.prompt();
+      return;
+    }
 
     rl.pause(); // Prevent race conditions on rapid input
 
@@ -55,36 +58,76 @@ export async function runInteractive(flags) {
         case "discover":
         case "search": {
           const query = rest.join(" ");
-          if (!query) { console.log("  Usage: discover <query>"); break; }
+          if (!query) {
+            console.log("  Usage: discover <query>");
+            break;
+          }
           const sp = createSpinner("Discovering...");
-          const result = await discoverTools({ apiKey, baseUrl: resolvedBaseUrl, query, limit, timeoutMs: discoverTimeout });
+          const result = await discoverTools({
+            apiKey,
+            baseUrl: resolvedBaseUrl,
+            query,
+            limit,
+            timeoutMs: discoverTimeout,
+          });
           sp.stop();
           state.discoveryId = result.search_id;
           state.results = (result.results ?? []).map((t, i) => ({
-            index: i + 1, tool_id: t.tool_id, name: t.name, provider_name: t.provider_name,
+            index: i + 1,
+            tool_id: t.tool_id,
+            name: t.name,
+            provider_name: t.provider_name,
           }));
           // Persist session so index shortcuts work in subsequent non-interactive calls
-          writeSession({ discoveryId: result.search_id, query, region, baseUrl: resolvedBaseUrl, results: state.results });
+          writeSession({
+            discoveryId: result.search_id,
+            query,
+            region,
+            baseUrl: resolvedBaseUrl,
+            results: state.results,
+          });
           console.log(formatDiscoverResult(result));
           break;
         }
         case "inspect": {
           const toolId = resolveId(rest[0], state);
-          if (!toolId) { console.log("  Usage: inspect <index|tool_id>"); break; }
+          if (!toolId) {
+            console.log("  Usage: inspect <index|tool_id>");
+            break;
+          }
           const sp2 = createSpinner("Inspecting...");
-          const result = await inspectToolsByIds({ apiKey, baseUrl: resolvedBaseUrl, toolIds: [toolId], discoveryId: state.discoveryId, timeoutMs: discoverTimeout });
+          const result = await inspectToolsByIds({
+            apiKey,
+            baseUrl: resolvedBaseUrl,
+            toolIds: [toolId],
+            discoveryId: state.discoveryId,
+            timeoutMs: discoverTimeout,
+          });
           sp2.stop();
           console.log(formatInspectResult(result));
           break;
         }
         case "call": {
           const toolId = resolveId(rest[0], state);
-          if (!toolId) { console.log("  Usage: call <index|tool_id> <json_params>"); break; }
-          if (!state.discoveryId) { console.log("  Run 'discover' first."); break; }
+          if (!toolId) {
+            console.log("  Usage: call <index|tool_id> <json_params>");
+            break;
+          }
+          if (!state.discoveryId) {
+            console.log("  Run 'discover' first.");
+            break;
+          }
           const paramsStr = rest.slice(1).join(" ") || "{}";
           const parameters = resolveParams(paramsStr);
           const sp3 = createSpinner("Calling...");
-          const result = await callTool({ apiKey, baseUrl: resolvedBaseUrl, toolId, discoveryId: state.discoveryId, parameters, timeoutMs: callTimeout });
+          const result = await callTool({
+            apiKey,
+            baseUrl: resolvedBaseUrl,
+            toolId,
+            discoveryId: state.discoveryId,
+            parameters,
+            timeoutMs: callTimeout,
+          });
           sp3.stop();
           console.log(formatCallResult(result));
           if (result.success) {
@@ -93,13 +136,19 @@ export async function runInteractive(flags) {
           break;
         }
         case "codegen": {
-          if (!state.lastCallContext) { console.log("  No successful call yet."); break; }
+          if (!state.lastCallContext) {
+            console.log("  No successful call yet.");
+            break;
+          }
           const lang = rest[0] || "curl";
           console.log(`\n${generateSnippet(lang, state.lastCallContext)}\n`);
           break;
         }
         case "history": {
-          if (!state.discoveryId) { console.log("  No session."); break; }
+          if (!state.discoveryId) {
+            console.log("  No session.");
+            break;
+          }
           console.log(`\n  Discovery ID: ${dim(state.discoveryId)}`);
           for (const r of state.results) {
             console.log(`    ${dim(String(r.index))}  ${cyan(r.tool_id)}`);
@@ -150,12 +199,28 @@ function parseArgs(input) {
   let escape = false;
 
   for (const ch of input) {
-    if (escape) { current += ch; escape = false; continue; }
-    if (ch === "\\" && !inSingle) { escape = true; continue; }
-    if (ch === '"' && !inSingle) { inDouble = !inDouble; continue; }
-    if (ch === "'" && !inDouble) { inSingle = !inSingle; continue; }
+    if (escape) {
+      current += ch;
+      escape = false;
+      continue;
+    }
+    if (ch === "\\" && !inSingle) {
+      escape = true;
+      continue;
+    }
+    if (ch === '"' && !inSingle) {
+      inDouble = !inDouble;
+      continue;
+    }
+    if (ch === "'" && !inDouble) {
+      inSingle = !inSingle;
+      continue;
+    }
     if ((ch === " " || ch === "\t") && !inDouble && !inSingle) {
-      if (current) { args.push(current); current = ""; }
+      if (current) {
+        args.push(current);
+        current = "";
+      }
       continue;
     }
     current += ch;

@@ -81,7 +81,7 @@ export const searchToolsSchema = {
 export async function executeSearchTools(
   client: QverisClient,
   input: SearchToolsInput,
-  defaultSessionId: string
+  defaultSessionId: string,
 ): Promise<SearchResponse> {
   const response = await client.searchTools({
     query: input.query,
@@ -91,4 +91,3 @@ export async function executeSearchTools(
 
   return response;
 }
-

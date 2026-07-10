@@ -53,6 +53,7 @@ from .memory import prune_tool_history
 # Called only when the tool call is NOT a built-in Qveris tool.
 ExtraToolHandler = Callable[[str, Dict[str, Any]], Awaitable[Any]]
 
+
 class Agent:
     """
     Qveris agent orchestrator.
@@ -86,6 +87,7 @@ class Agent:
         - A session id is created at construction time; call `new_session()` to reset it.
         - This class is safe to reuse across multiple conversations; pass your own `messages` list.
     """
+
     def __init__(
         self,
         config: Optional[QverisConfig] = None,
@@ -155,8 +157,7 @@ class Agent:
             return StreamEvent(type="error", error=f"Failed to connect to LLM service: {error}")
         if isinstance(error, httpx.HTTPStatusError):
             return StreamEvent(
-                type="error",
-                error=f"LLM HTTP error {error.response.status_code}: {error.response.text[:200]}"
+                type="error", error=f"LLM HTTP error {error.response.status_code}: {error.response.text[:200]}"
             )
         if isinstance(error, AuthenticationError):
             return StreamEvent(type="error", error=f"LLM authentication failed: {error}")
@@ -191,11 +192,7 @@ class Agent:
         """
         return self.budget.snapshot() if self.budget.enabled else None
 
-    async def run(
-        self,
-        messages: List[Message],
-        stream: bool = True
-    ) -> AsyncGenerator[StreamEvent, None]:
+    async def run(self, messages: List[Message], stream: bool = True) -> AsyncGenerator[StreamEvent, None]:
         """
         Run the agent loop and yield events as they occur.
 
@@ -220,7 +217,7 @@ class Agent:
         # Add System Prompt
         system_prompt = DEFAULT_SYSTEM_PROMPT
         if self.agent_config.additional_system_prompt:
-            system_prompt += '\n' + self.agent_config.additional_system_prompt
+            system_prompt += "\n" + self.agent_config.additional_system_prompt
 
         inserted_system_prompt = False
         if not current_messages or current_messages[0].role != "system":
@@ -255,9 +252,7 @@ class Agent:
                 if stream:
                     # Streaming mode: yield delta chunks
                     llm_stream = self.llm.chat_stream(
-                        messages=messages_to_send,
-                        tools=self.tools,
-                        config=self.agent_config
+                        messages=messages_to_send, tools=self.tools, config=self.agent_config
                     )
 
                     async for event in llm_stream:
@@ -278,9 +273,7 @@ class Agent:
                 else:
                     # Non-streaming mode: get complete response, yield as single event
                     response: ChatResponse = await self.llm.chat(
-                        messages=messages_to_send,
-                        tools=self.tools,
-                        config=self.agent_config
+                        messages=messages_to_send, tools=self.tools, config=self.agent_config
                     )
 
                     # Yield complete content as single event
@@ -310,13 +303,15 @@ class Agent:
 
             # Handle tool calls
             if tool_calls:
-                current_messages.append(Message(
-                    role="assistant",
-                    content=content_accumulated if content_accumulated else None,
-                    tool_calls=tool_calls,
-                    # Preserve reasoning_details for Gemini thought signatures
-                    reasoning_details=reasoning_details_accumulated if reasoning_details_accumulated else None
-                ))
+                current_messages.append(
+                    Message(
+                        role="assistant",
+                        content=content_accumulated if content_accumulated else None,
+                        tool_calls=tool_calls,
+                        # Preserve reasoning_details for Gemini thought signatures
+                        reasoning_details=reasoning_details_accumulated if reasoning_details_accumulated else None,
+                    )
+                )
 
                 for tc in tool_calls:
                     func_name = tc["function"]["name"]
@@ -327,20 +322,22 @@ class Agent:
                         func_args = json.loads(func_args_str)
                     except json.JSONDecodeError:
                         error_msg = f"Invalid JSON arguments: {func_args_str}"
-                        current_messages.append(Message(
-                            role="tool",
-                            tool_call_id=call_id,
-                            name=func_name,
-                            content=json.dumps({"error": error_msg})
-                        ))
+                        current_messages.append(
+                            Message(
+                                role="tool",
+                                tool_call_id=call_id,
+                                name=func_name,
+                                content=json.dumps({"error": error_msg}),
+                            )
+                        )
                         yield StreamEvent(
                             type="tool_result",
                             tool_result={
                                 "call_id": call_id,
                                 "name": func_name,
                                 "result": {"error": error_msg},
-                                "is_error": True
-                            }
+                                "is_error": True,
+                            },
                         )
                         continue
 
@@ -366,9 +363,7 @@ class Agent:
                     else:
                         # Execute Tool
                         result, is_error, handled = await self.client.handle_tool_call(
-                            func_name=func_name,
-                            func_args=func_args,
-                            session_id=self.session_id
+                            func_name=func_name, func_args=func_args, session_id=self.session_id
                         )
 
                         # Learn cost estimates from discover/inspect; accumulate
@@ -397,41 +392,36 @@ class Agent:
                     # Yield tool_result event
                     yield StreamEvent(
                         type="tool_result",
-                        tool_result={
-                            "call_id": call_id,
-                            "name": func_name,
-                            "result": result,
-                            "is_error": is_error
-                        }
+                        tool_result={"call_id": call_id, "name": func_name, "result": result, "is_error": is_error},
                     )
 
-                    current_messages.append(Message(
-                        role="tool",
-                        tool_call_id=call_id,
-                        name=func_name,
-                        content=json.dumps(result, default=str)
-                    ))
+                    current_messages.append(
+                        Message(
+                            role="tool", tool_call_id=call_id, name=func_name, content=json.dumps(result, default=str)
+                        )
+                    )
 
                 self._record_last_messages(current_messages, inserted_system_prompt)
                 continue
 
             else:
                 if content_accumulated or reasoning_details_accumulated:
-                    current_messages.append(Message(
-                        role="assistant",
-                        content=content_accumulated if content_accumulated else None,
-                        reasoning_details=(
-                            reasoning_details_accumulated if reasoning_details_accumulated else None
+                    current_messages.append(
+                        Message(
+                            role="assistant",
+                            content=content_accumulated if content_accumulated else None,
+                            reasoning_details=(
+                                reasoning_details_accumulated if reasoning_details_accumulated else None
+                            ),
                         )
-                    ))
+                    )
                 self._record_last_messages(current_messages, inserted_system_prompt)
                 should_continue = False
 
         if should_continue:
             self._record_last_messages(current_messages, inserted_system_prompt)
             yield StreamEvent(
-                type="error",
-                error=f"Agent stopped after reaching max_iterations={self.config.max_iterations}"
+                type="error", error=f"Agent stopped after reaching max_iterations={self.config.max_iterations}"
             )
 
     async def run_to_completion(self, messages: List[Message]) -> str:

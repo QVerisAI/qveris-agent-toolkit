@@ -3,11 +3,7 @@ import { Type } from "@sinclair/typebox";
 import { jsonResult, readNumberParam, readStringParam } from "openclaw/plugin-sdk/agent-runtime";
 import type { AnyAgentTool } from "openclaw/plugin-sdk/plugin-entry";
 import type { OpenClawPluginApi, OpenClawPluginToolContext } from "openclaw/plugin-sdk/plugin-runtime";
-import {
-  makeDiscoverCache,
-  makeDiscoverResultTracker,
-  makeToolRolodex,
-} from "./qveris-cache.js";
+import { makeDiscoverCache, makeDiscoverResultTracker, makeToolRolodex } from "./qveris-cache.js";
 import {
   resolveAutoMaterialize,
   resolveCallTimeoutSeconds,
@@ -60,7 +56,7 @@ const QverisCallSchema = Type.Object(
         "JSON dictionary of parameters to pass to the tool. " +
         "IMPORTANT: Use sample_parameters from the qveris_discover results as your template. " +
         "Common mistakes to avoid: " +
-        "(1) numbers must be unquoted (limit: 10, not \"10\"); " +
+        '(1) numbers must be unquoted (limit: 10, not "10"); ' +
         "(2) dates must be ISO 8601 (2025-01-15, not 01/15/2025); " +
         '(3) use identifiers not natural language (symbol: "AAPL", not "Apple stock price"); ' +
         "(4) never omit required params listed in the discovery results. " +
@@ -154,9 +150,7 @@ export function createQverisTools(options: {
         required: p.required,
         description: p.description?.en ?? Object.values(p.description ?? {})[0],
       })),
-      examples: tool.examples?.sample_parameters
-        ? { sample_parameters: tool.examples.sample_parameters }
-        : undefined,
+      examples: tool.examples?.sample_parameters ? { sample_parameters: tool.examples.sample_parameters } : undefined,
       stats: tool.stats,
       why_recommended: tool.why_recommended,
       expected_cost: tool.expected_cost,
@@ -237,8 +231,7 @@ export function createQverisTools(options: {
       const toolId = readStringParam(params, "tool_id", { required: true });
       const searchId = resolveKnownSearchId(toolId);
       const paramsToToolRaw = readStringParam(params, "params_to_tool", { required: true });
-      const maxSize =
-        readNumberParam(params, "max_response_size", { integer: true }) ?? maxResponseSize;
+      const maxSize = readNumberParam(params, "max_response_size", { integer: true }) ?? maxResponseSize;
       const timeoutOverride = readNumberParam(params, "timeout_seconds");
 
       let toolParams: Record<string, unknown>;
@@ -250,7 +243,7 @@ export function createQverisTools(options: {
             error_type: "json_parse_error",
             detail: "params_to_tool must be a JSON object.",
             retry_hint:
-              "Use sample_parameters from the qveris_discover result as a template and pass a JSON object such as {\"city\":\"London\"}.",
+              'Use sample_parameters from the qveris_discover result as a template and pass a JSON object such as {"city":"London"}.',
             note: QVERIS_WORKFLOW_NOTE,
           } satisfies QverisErrorResult);
         }
@@ -260,8 +253,7 @@ export function createQverisTools(options: {
           success: false,
           error_type: "json_parse_error",
           detail: `Invalid JSON in params_to_tool: ${parseError instanceof Error ? parseError.message : "Unknown parse error"}`,
-          retry_hint:
-            "Use sample_parameters from the qveris_discover result as a template and ensure valid JSON.",
+          retry_hint: "Use sample_parameters from the qveris_discover result as a template and ensure valid JSON.",
           note: QVERIS_WORKFLOW_NOTE,
         } satisfies QverisErrorResult);
       }
@@ -281,8 +273,7 @@ export function createQverisTools(options: {
       } catch (err) {
         const failCount = (callFailureCount.get(toolId) ?? 0) + 1;
         callFailureCount.set(toolId, failCount);
-        const recoveryStep =
-          failCount === 1 ? "fix_params" : failCount === 2 ? "simplify" : "switch_tool";
+        const recoveryStep = failCount === 1 ? "fix_params" : failCount === 2 ? "simplify" : "switch_tool";
         const classified = classifyQverisError(err);
         return jsonResult({ ...classified, recovery_step: recoveryStep, attempt_number: failCount });
       }
@@ -301,8 +292,7 @@ export function createQverisTools(options: {
       } else {
         const failCount = (callFailureCount.get(toolId) ?? 0) + 1;
         callFailureCount.set(toolId, failCount);
-        const recoveryStep =
-          failCount === 1 ? "fix_params" : failCount === 2 ? "simplify" : "switch_tool";
+        const recoveryStep = failCount === 1 ? "fix_params" : failCount === 2 ? "simplify" : "switch_tool";
         return jsonResult({
           execution_id: result.execution_id,
           success: false,
@@ -356,8 +346,7 @@ export function createQverisTools(options: {
           result: resultData,
           cost: result.cost ?? result.credits_used,
           truncated: true,
-          truncation_hint:
-            "Auto-materialization failed. Use web_fetch on full_content_file_url to download manually.",
+          truncation_hint: "Auto-materialization failed. Use web_fetch on full_content_file_url to download manually.",
           materialized_content: materialized,
         });
       }

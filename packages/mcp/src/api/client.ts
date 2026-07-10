@@ -157,13 +157,14 @@ export class QverisClient {
     for (let attempt = 0; ; attempt++) {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), resolvedTimeoutMs);
+      // eslint-disable-next-line no-useless-assignment -- TS definite-assignment needs the init across try/finally
       let retryDelayMs: number | null = null;
 
       try {
         const response = await fetch(url.toString(), {
           method,
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
+            Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
           body: body ? JSON.stringify(body) : undefined,
@@ -209,18 +210,13 @@ export class QverisClient {
             status,
             message: errorMessage,
             ...(errorDetails !== undefined && { details: errorDetails }),
-            observability: withErrorContext(
-              requestContext,
-              'http_error',
-              status,
-              extractRequestId(response),
-            ),
+            observability: withErrorContext(requestContext, 'http_error', status, extractRequestId(response)),
           };
 
           throw error;
         } else {
           try {
-            return await response.json() as T;
+            return (await response.json()) as T;
           } catch {
             const error: ApiError = {
               status: response.status,
@@ -287,18 +283,9 @@ export class QverisClient {
    * This is the Call action; the response may include pre-settlement billing.
    * Uses a longer timeout (120s) by default.
    */
-  async executeTool(
-    toolId: string,
-    request: ExecuteRequest
-  ): Promise<ExecuteResponse> {
+  async executeTool(toolId: string, request: ExecuteRequest): Promise<ExecuteResponse> {
     const endpoint = `/tools/execute?tool_id=${encodeURIComponent(toolId)}`;
-    return this.request<ExecuteResponse>(
-      'call',
-      'POST',
-      endpoint,
-      request,
-      EXECUTE_TIMEOUT_MS,
-    );
+    return this.request<ExecuteResponse>('call', 'POST', endpoint, request, EXECUTE_TIMEOUT_MS);
   }
 
   /**
@@ -311,9 +298,7 @@ export class QverisClient {
   /**
    * Query request-level usage audit history.
    */
-  async getUsageHistory(
-    request: UsageHistoryRequest
-  ): Promise<ApiEnvelope<UsageEventsResponse> | UsageEventsResponse> {
+  async getUsageHistory(request: UsageHistoryRequest): Promise<ApiEnvelope<UsageEventsResponse> | UsageEventsResponse> {
     return this.request<ApiEnvelope<UsageEventsResponse> | UsageEventsResponse>(
       'usage_history',
       'GET',
@@ -328,7 +313,7 @@ export class QverisClient {
    * Query final credits ledger entries.
    */
   async getCreditsLedger(
-    request: CreditsLedgerRequest
+    request: CreditsLedgerRequest,
   ): Promise<ApiEnvelope<CreditsLedgerResponse> | CreditsLedgerResponse> {
     return this.request<ApiEnvelope<CreditsLedgerResponse> | CreditsLedgerResponse>(
       'credits_ledger',
@@ -352,8 +337,8 @@ export function createClientFromEnv(): QverisClient {
   if (!apiKey) {
     throw new Error(
       'QVERIS_API_KEY environment variable is required.\n' +
-      'Global: https://qveris.ai/account?page=api-keys\n' +
-      'China:  https://qveris.cn/account?page=api-keys'
+        'Global: https://qveris.ai/account?page=api-keys\n' +
+        'China:  https://qveris.cn/account?page=api-keys',
     );
   }
 
@@ -382,20 +367,12 @@ function withErrorContext(
 function extractRequestId(response: Response): string | undefined {
   const headers = response.headers;
   return (
-    headers?.get('x-request-id') ??
-    headers?.get('x-qveris-request-id') ??
-    headers?.get('x-correlation-id') ??
-    undefined
+    headers?.get('x-request-id') ?? headers?.get('x-qveris-request-id') ?? headers?.get('x-correlation-id') ?? undefined
   );
 }
 
 function isApiError(error: unknown): error is ApiError {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'status' in error &&
-    'message' in error
-  );
+  return typeof error === 'object' && error !== null && 'status' in error && 'message' in error;
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {

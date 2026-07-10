@@ -87,7 +87,7 @@ test("init helpers respect max size and escape single quotes in shell hints", ()
   assert.equal(resolveInitMaxResponseSize({ maxSize: "65536" }), 65536);
   assert.throws(
     () => resolveInitMaxResponseSize({ maxSize: "abc" }),
-    (err) => err instanceof CliError && err.message.includes("Invalid --max-size")
+    (err) => err instanceof CliError && err.message.includes("Invalid --max-size"),
   );
 
   const quoted = shellSingleQuote(JSON.stringify({ city: "L'Ondon" }));
@@ -98,7 +98,7 @@ test("init helpers respect max size and escape single quotes in shell hints", ()
       discoveryId: "search-1",
       parameters: { city: "L'Ondon" },
     }).retry,
-    `qveris call weather.tool.v1 --discovery-id search-1 --params ${quoted}`
+    `qveris call weather.tool.v1 --discovery-id search-1 --params ${quoted}`,
   );
 
   assert.equal(
@@ -107,232 +107,253 @@ test("init helpers respect max size and escape single quotes in shell hints", ()
         { tool_id: "icons", params: [{ name: "set", required: true }] },
         { tool_id: "weather", params: [{ name: "city", required: true }] },
       ],
-      { parameters: { city: "London" } }
+      { parameters: { city: "London" } },
     ).tool_id,
-    "weather"
+    "weather",
   );
 });
 
 test("init dry run records the provided max response size", async () => {
   await withTempConfig(async () => {
-    await withMockFetch((request) => {
-      if (request.url.pathname.endsWith("/search")) {
-        return response({
-          search_id: "search-1",
-          total: 1,
-          results: [{ tool_id: "weather.tool.v1", name: "Weather" }],
-        });
-      }
-      if (request.url.pathname.endsWith("/tools/by-ids")) {
-        return response({
-          results: [
-            {
-              tool_id: "weather.tool.v1",
-              name: "Weather",
-              examples: { sample_parameters: { city: "London" } },
-            },
-          ],
-        });
-      }
-      throw new Error(`unexpected path ${request.url.pathname}`);
-    }, async () => {
-      const stdout = await captureStdout(() => runInit(null, {
-        apiKey: "sk-test",
-        baseUrl: "https://unit.test/api/v1",
-        json: true,
-        dryRun: true,
-        maxSize: "65536",
-      }));
-      const payload = JSON.parse(stdout);
-      const callStep = payload.steps.find((step) => step.name === "call");
-      assert.equal(callStep.max_response_size, 65536);
-    });
+    await withMockFetch(
+      (request) => {
+        if (request.url.pathname.endsWith("/search")) {
+          return response({
+            search_id: "search-1",
+            total: 1,
+            results: [{ tool_id: "weather.tool.v1", name: "Weather" }],
+          });
+        }
+        if (request.url.pathname.endsWith("/tools/by-ids")) {
+          return response({
+            results: [
+              {
+                tool_id: "weather.tool.v1",
+                name: "Weather",
+                examples: { sample_parameters: { city: "London" } },
+              },
+            ],
+          });
+        }
+        throw new Error(`unexpected path ${request.url.pathname}`);
+      },
+      async () => {
+        const stdout = await captureStdout(() =>
+          runInit(null, {
+            apiKey: "sk-test",
+            baseUrl: "https://unit.test/api/v1",
+            json: true,
+            dryRun: true,
+            maxSize: "65536",
+          }),
+        );
+        const payload = JSON.parse(stdout);
+        const callStep = payload.steps.find((step) => step.name === "call");
+        assert.equal(callStep.max_response_size, 65536);
+      },
+    );
   });
 });
 
 test("init selects a candidate whose required params match provided params", async () => {
   await withTempConfig(async () => {
-    await withMockFetch((request) => {
-      if (request.url.pathname.endsWith("/search")) {
-        return response({
-          search_id: "search-1",
-          total: 2,
-          results: [
-            { tool_id: "weather.icons.v1", name: "Icons" },
-            { tool_id: "weather.city.v1", name: "City Weather" },
-          ],
-        });
-      }
-      if (request.url.pathname.endsWith("/tools/by-ids")) {
-        assert.deepEqual(request.body.tool_ids, ["weather.icons.v1", "weather.city.v1"]);
-        return response({
-          results: [
-            {
-              tool_id: "weather.icons.v1",
-              name: "Icons",
-              params: [
-                { name: "set", required: true },
-                { name: "timeOfDay", required: true },
-              ],
-              examples: { sample_parameters: { set: "land", timeOfDay: "day" } },
-            },
-            {
-              tool_id: "weather.city.v1",
-              name: "City Weather",
-              params: [{ name: "city", required: true }],
-              examples: { sample_parameters: { city: "London" } },
-            },
-          ],
-        });
-      }
-      throw new Error(`unexpected path ${request.url.pathname}`);
-    }, async () => {
-      const stdout = await captureStdout(() => runInit(null, {
-        apiKey: "sk-test",
-        baseUrl: "https://unit.test/api/v1",
-        json: true,
-        dryRun: true,
-        params: '{"city":"London"}',
-      }));
-      const payload = JSON.parse(stdout);
-      const inspectStep = payload.steps.find((step) => step.name === "inspect");
-      const callStep = payload.steps.find((step) => step.name === "call");
+    await withMockFetch(
+      (request) => {
+        if (request.url.pathname.endsWith("/search")) {
+          return response({
+            search_id: "search-1",
+            total: 2,
+            results: [
+              { tool_id: "weather.icons.v1", name: "Icons" },
+              { tool_id: "weather.city.v1", name: "City Weather" },
+            ],
+          });
+        }
+        if (request.url.pathname.endsWith("/tools/by-ids")) {
+          assert.deepEqual(request.body.tool_ids, ["weather.icons.v1", "weather.city.v1"]);
+          return response({
+            results: [
+              {
+                tool_id: "weather.icons.v1",
+                name: "Icons",
+                params: [
+                  { name: "set", required: true },
+                  { name: "timeOfDay", required: true },
+                ],
+                examples: { sample_parameters: { set: "land", timeOfDay: "day" } },
+              },
+              {
+                tool_id: "weather.city.v1",
+                name: "City Weather",
+                params: [{ name: "city", required: true }],
+                examples: { sample_parameters: { city: "London" } },
+              },
+            ],
+          });
+        }
+        throw new Error(`unexpected path ${request.url.pathname}`);
+      },
+      async () => {
+        const stdout = await captureStdout(() =>
+          runInit(null, {
+            apiKey: "sk-test",
+            baseUrl: "https://unit.test/api/v1",
+            json: true,
+            dryRun: true,
+            params: '{"city":"London"}',
+          }),
+        );
+        const payload = JSON.parse(stdout);
+        const inspectStep = payload.steps.find((step) => step.name === "inspect");
+        const callStep = payload.steps.find((step) => step.name === "call");
 
-      assert.equal(payload.selected_tool.tool_id, "weather.city.v1");
-      assert.equal(inspectStep.selected_reason, "params_match");
-      assert.equal(callStep.tool_id, "weather.city.v1");
-      assert.match(payload.next_commands.retry, /qveris call weather\.city\.v1/);
-    });
+        assert.equal(payload.selected_tool.tool_id, "weather.city.v1");
+        assert.equal(inspectStep.selected_reason, "params_match");
+        assert.equal(callStep.tool_id, "weather.city.v1");
+        assert.match(payload.next_commands.retry, /qveris call weather\.city\.v1/);
+      },
+    );
   });
 });
 
 test("init human summary prints selected tool after inspection", async () => {
   await withTempConfig(async () => {
-    await withMockFetch((request) => {
-      if (request.url.pathname.endsWith("/search")) {
-        return response({
-          search_id: "search-1",
-          total: 1,
-          results: [{ tool_id: "weather.tool.v1", name: "Weather" }],
-        });
-      }
-      if (request.url.pathname.endsWith("/tools/by-ids")) {
-        return response({
-          results: [
-            {
-              tool_id: "weather.tool.v1",
-              name: "Weather",
-              params: [{ name: "city", required: true }],
-              examples: { sample_parameters: { city: "London" } },
-            },
-          ],
-        });
-      }
-      throw new Error(`unexpected path ${request.url.pathname}`);
-    }, async () => {
-      const stdout = await captureStdout(() => runInit(null, {
-        apiKey: "sk-test",
-        baseUrl: "https://unit.test/api/v1",
-        dryRun: true,
-      }));
+    await withMockFetch(
+      (request) => {
+        if (request.url.pathname.endsWith("/search")) {
+          return response({
+            search_id: "search-1",
+            total: 1,
+            results: [{ tool_id: "weather.tool.v1", name: "Weather" }],
+          });
+        }
+        if (request.url.pathname.endsWith("/tools/by-ids")) {
+          return response({
+            results: [
+              {
+                tool_id: "weather.tool.v1",
+                name: "Weather",
+                params: [{ name: "city", required: true }],
+                examples: { sample_parameters: { city: "London" } },
+              },
+            ],
+          });
+        }
+        throw new Error(`unexpected path ${request.url.pathname}`);
+      },
+      async () => {
+        const stdout = await captureStdout(() =>
+          runInit(null, {
+            apiKey: "sk-test",
+            baseUrl: "https://unit.test/api/v1",
+            dryRun: true,
+          }),
+        );
 
-      assert.match(stdout, /search_id\s+search-1/);
-      assert.match(stdout, /inspect[\s\S]*selected\s+weather\.tool\.v1/);
-    });
+        assert.match(stdout, /search_id\s+search-1/);
+        assert.match(stdout, /inspect[\s\S]*selected\s+weather\.tool\.v1/);
+      },
+    );
   });
 });
 
 test("init call uses max size and failure hint remains copyable with single quotes", async () => {
   await withTempConfig(async () => {
-    await withMockFetch((request) => {
-      if (request.url.pathname.endsWith("/search")) {
-        return response({
-          search_id: "search-1",
-          total: 1,
-          results: [{ tool_id: "weather.tool.v1", name: "Weather" }],
-        });
-      }
-      if (request.url.pathname.endsWith("/tools/by-ids")) {
-        return response({
-          results: [
-            {
-              tool_id: "weather.tool.v1",
-              name: "Weather",
-              examples: { sample_parameters: { city: "L'Ondon" } },
-            },
-          ],
-        });
-      }
-      if (request.url.pathname.endsWith("/tools/execute")) {
-        assert.equal(request.body.max_response_size, 65536);
-        return response({
-          execution_id: "exec-1",
-          success: false,
-          error_message: "bad params",
-        });
-      }
-      throw new Error(`unexpected path ${request.url.pathname}`);
-    }, async () => {
-      await assert.rejects(
-        () => runInit(null, {
-          apiKey: "sk-test",
-          baseUrl: "https://unit.test/api/v1",
-          json: true,
-          maxSize: "65536",
-        }),
-        (err) => (
-          err instanceof CliError &&
-          err.code === "TOOL_CALL_FAILED" &&
-          err.hint.includes(`--params '{"city":"L'\\''Ondon"}'`)
-        )
-      );
-    });
+    await withMockFetch(
+      (request) => {
+        if (request.url.pathname.endsWith("/search")) {
+          return response({
+            search_id: "search-1",
+            total: 1,
+            results: [{ tool_id: "weather.tool.v1", name: "Weather" }],
+          });
+        }
+        if (request.url.pathname.endsWith("/tools/by-ids")) {
+          return response({
+            results: [
+              {
+                tool_id: "weather.tool.v1",
+                name: "Weather",
+                examples: { sample_parameters: { city: "L'Ondon" } },
+              },
+            ],
+          });
+        }
+        if (request.url.pathname.endsWith("/tools/execute")) {
+          assert.equal(request.body.max_response_size, 65536);
+          return response({
+            execution_id: "exec-1",
+            success: false,
+            error_message: "bad params",
+          });
+        }
+        throw new Error(`unexpected path ${request.url.pathname}`);
+      },
+      async () => {
+        await assert.rejects(
+          () =>
+            runInit(null, {
+              apiKey: "sk-test",
+              baseUrl: "https://unit.test/api/v1",
+              json: true,
+              maxSize: "65536",
+            }),
+          (err) =>
+            err instanceof CliError &&
+            err.code === "TOOL_CALL_FAILED" &&
+            err.hint.includes(`--params '{"city":"L'\\''Ondon"}'`),
+        );
+      },
+    );
   });
 });
 
 test("init provider failures keep provider recovery hint", async () => {
   await withTempConfig(async () => {
-    await withMockFetch((request) => {
-      if (request.url.pathname.endsWith("/search")) {
-        return response({
-          search_id: "search-1",
-          total: 1,
-          results: [{ tool_id: "weather.tool.v1", name: "Weather" }],
-        });
-      }
-      if (request.url.pathname.endsWith("/tools/by-ids")) {
-        return response({
-          results: [
-            {
-              tool_id: "weather.tool.v1",
-              name: "Weather",
-              examples: { sample_parameters: { city: "London" } },
-            },
-          ],
-        });
-      }
-      if (request.url.pathname.endsWith("/tools/execute")) {
-        return response({
-          execution_id: "exec-1",
-          success: false,
-          error_message: "upstream provider temporarily unavailable",
-        });
-      }
-      throw new Error(`unexpected path ${request.url.pathname}`);
-    }, async () => {
-      await assert.rejects(
-        () => runInit(null, {
-          apiKey: "sk-test",
-          baseUrl: "https://unit.test/api/v1",
-          json: true,
-        }),
-        (err) => (
-          err instanceof CliError &&
-          err.code === "PROVIDER_FAILURE" &&
-          err.hint.includes("Try another discovered capability") &&
-          !err.hint.includes("--params")
-        )
-      );
-    });
+    await withMockFetch(
+      (request) => {
+        if (request.url.pathname.endsWith("/search")) {
+          return response({
+            search_id: "search-1",
+            total: 1,
+            results: [{ tool_id: "weather.tool.v1", name: "Weather" }],
+          });
+        }
+        if (request.url.pathname.endsWith("/tools/by-ids")) {
+          return response({
+            results: [
+              {
+                tool_id: "weather.tool.v1",
+                name: "Weather",
+                examples: { sample_parameters: { city: "London" } },
+              },
+            ],
+          });
+        }
+        if (request.url.pathname.endsWith("/tools/execute")) {
+          return response({
+            execution_id: "exec-1",
+            success: false,
+            error_message: "upstream provider temporarily unavailable",
+          });
+        }
+        throw new Error(`unexpected path ${request.url.pathname}`);
+      },
+      async () => {
+        await assert.rejects(
+          () =>
+            runInit(null, {
+              apiKey: "sk-test",
+              baseUrl: "https://unit.test/api/v1",
+              json: true,
+            }),
+          (err) =>
+            err instanceof CliError &&
+            err.code === "PROVIDER_FAILURE" &&
+            err.hint.includes("Try another discovered capability") &&
+            !err.hint.includes("--params"),
+        );
+      },
+    );
   });
 });

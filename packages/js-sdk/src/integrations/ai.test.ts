@@ -4,8 +4,7 @@ import { getQverisTools } from './ai.js';
 import { describeQverisAdapterConformance, FakeQveris } from './adapter-conformance.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const invoke = (t: any, args: Record<string, unknown>) =>
-  t.execute(args, { toolCallId: 'c1', messages: [] });
+const invoke = (t: any, args: Record<string, unknown>) => t.execute(args, { toolCallId: 'c1', messages: [] });
 
 // Shared invariants — mirrors the Python adapter_conformance suite.
 describeQverisAdapterConformance({

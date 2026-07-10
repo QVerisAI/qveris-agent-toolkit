@@ -35,19 +35,31 @@ export async function main(argv) {
     switch (command) {
       case "discover": {
         const query = rest.join(" ");
-        if (!query) { console.error("  Usage: qveris discover <query>"); process.exitCode = 2; return; }
+        if (!query) {
+          console.error("  Usage: qveris discover <query>");
+          process.exitCode = 2;
+          return;
+        }
         const { runDiscover } = await import("./commands/discover.mjs");
         await runDiscover(query, flags);
         break;
       }
       case "inspect": {
-        if (rest.length === 0) { console.error("  Usage: qveris inspect <tool_id|index> [...]"); process.exitCode = 2; return; }
+        if (rest.length === 0) {
+          console.error("  Usage: qveris inspect <tool_id|index> [...]");
+          process.exitCode = 2;
+          return;
+        }
         const { runInspect } = await import("./commands/inspect.mjs");
         await runInspect(rest, flags);
         break;
       }
       case "call": {
-        if (rest.length === 0) { console.error("  Usage: qveris call <tool_id|index> [--params <json>]"); process.exitCode = 2; return; }
+        if (rest.length === 0) {
+          console.error("  Usage: qveris call <tool_id|index> [--params <json>]");
+          process.exitCode = 2;
+          return;
+        }
         const { runCall } = await import("./commands/call.mjs");
         await runCall(rest[0], flags);
         break;
@@ -90,7 +102,11 @@ export async function main(argv) {
       case "config": {
         const subcommand = rest[0];
         const subArgs = rest.slice(1);
-        if (!subcommand) { console.error("  Usage: qveris config <set|get|list|reset|path>"); process.exitCode = 2; return; }
+        if (!subcommand) {
+          console.error("  Usage: qveris config <set|get|list|reset|path>");
+          process.exitCode = 2;
+          return;
+        }
         const { runConfig } = await import("./commands/config.mjs");
         await runConfig(subcommand, subArgs, flags);
         break;
@@ -98,7 +114,11 @@ export async function main(argv) {
       case "mcp": {
         const subcommand = rest[0];
         const subArgs = rest.slice(1);
-        if (!subcommand) { console.error("  Usage: qveris mcp <configure|validate> [target]"); process.exitCode = 2; return; }
+        if (!subcommand) {
+          console.error("  Usage: qveris mcp <configure|validate> [target]");
+          process.exitCode = 2;
+          return;
+        }
         const { runMcp } = await import("./commands/mcp.mjs");
         await runMcp(subcommand, subArgs, flags);
         break;
@@ -139,15 +159,33 @@ const SHORT_BOOLS = { j: "json", v: "verbose", V: "version", h: "help" };
 
 // --key=value long flag mapping (flag name -> flags property)
 const VALUE_FLAGS = {
-  "api-key": "apiKey", "base-url": "baseUrl", timeout: "timeout",
-  limit: "limit", "discovery-id": "discoveryId", params: "params",
-  "max-size": "maxSize", codegen: "codegen", token: "token",
-  query: "query", "tool-id": "toolId", target: "target", output: "output",
-  mode: "mode", "start-date": "startDate", "end-date": "endDate",
-  bucket: "bucket", "execution-id": "executionId", "search-id": "searchId",
-  "event-type": "eventType", kind: "kind", success: "success",
-  "charge-outcome": "chargeOutcome", "entry-type": "entryType",
-  direction: "direction", "min-credits": "minCredits", "max-credits": "maxCredits",
+  "api-key": "apiKey",
+  "base-url": "baseUrl",
+  timeout: "timeout",
+  limit: "limit",
+  "discovery-id": "discoveryId",
+  params: "params",
+  "max-size": "maxSize",
+  codegen: "codegen",
+  token: "token",
+  query: "query",
+  "tool-id": "toolId",
+  target: "target",
+  output: "output",
+  mode: "mode",
+  "start-date": "startDate",
+  "end-date": "endDate",
+  bucket: "bucket",
+  "execution-id": "executionId",
+  "search-id": "searchId",
+  "event-type": "eventType",
+  kind: "kind",
+  success: "success",
+  "charge-outcome": "chargeOutcome",
+  "entry-type": "entryType",
+  direction: "direction",
+  "min-credits": "minCredits",
+  "max-credits": "maxCredits",
 };
 
 function takeNext(args, i, flag) {
@@ -177,16 +215,27 @@ function extractGlobalFlags(args) {
       const eqIdx = arg.indexOf("=");
       const key = arg.slice(2, eqIdx);
       const val = arg.slice(eqIdx + 1);
-      if (VALUE_FLAGS[key]) { flags[VALUE_FLAGS[key]] = val; continue; }
+      if (VALUE_FLAGS[key]) {
+        flags[VALUE_FLAGS[key]] = val;
+        continue;
+      }
       // Boolean flags with =value (unusual but handle gracefully)
-      if (key === "json") { flags.json = true; continue; }
+      if (key === "json") {
+        flags.json = true;
+        continue;
+      }
     }
 
     // Handle combined short flags: -jv → -j + -v
     if (arg.startsWith("-") && !arg.startsWith("--") && arg.length > 2) {
       const chars = arg.slice(1);
       let allBool = true;
-      for (const ch of chars) { if (!SHORT_BOOLS[ch]) { allBool = false; break; } }
+      for (const ch of chars) {
+        if (!SHORT_BOOLS[ch]) {
+          allBool = false;
+          break;
+        }
+      }
       if (allBool) {
         for (const ch of chars) flags[SHORT_BOOLS[ch]] = true;
         continue;
@@ -194,88 +243,133 @@ function extractGlobalFlags(args) {
     }
 
     switch (arg) {
-      case "--json": case "-j":
-        flags.json = true; break;
+      case "--json":
+      case "-j":
+        flags.json = true;
+        break;
       case "--no-color":
-        flags.noColor = true; break;
-      case "--verbose": case "-v":
-        flags.verbose = true; break;
-      case "--help": case "-h":
-        flags.help = true; break;
-      case "--version": case "-V":
-        flags.version = true; break;
+        flags.noColor = true;
+        break;
+      case "--verbose":
+      case "-v":
+        flags.verbose = true;
+        break;
+      case "--help":
+      case "-h":
+        flags.help = true;
+        break;
+      case "--version":
+      case "-V":
+        flags.version = true;
+        break;
       case "--dry-run":
-        flags.dryRun = true; break;
+        flags.dryRun = true;
+        break;
       case "--write":
-        flags.write = true; break;
+        flags.write = true;
+        break;
       case "--print":
-        flags.print = true; break;
+        flags.print = true;
+        break;
       case "--include-key":
-        flags.includeKey = true; break;
+        flags.includeKey = true;
+        break;
       case "--validate":
-        flags.validate = true; break;
+        flags.validate = true;
+        break;
       case "--probe":
-        flags.probe = true; break;
+        flags.probe = true;
+        break;
       case "--resume":
-        flags.resume = true; break;
+        flags.resume = true;
+        break;
       case "--no-browser":
-        flags.noBrowser = true; break;
+        flags.noBrowser = true;
+        break;
       case "--clear":
-        flags.clear = true; break;
+        flags.clear = true;
+        break;
       case "--api-key":
-        flags.apiKey = takeNext(args, i++, arg); break;
+        flags.apiKey = takeNext(args, i++, arg);
+        break;
       case "--base-url":
-        flags.baseUrl = takeNext(args, i++, arg); break;
+        flags.baseUrl = takeNext(args, i++, arg);
+        break;
       case "--timeout":
-        flags.timeout = takeNext(args, i++, arg); break;
+        flags.timeout = takeNext(args, i++, arg);
+        break;
       case "--limit":
-        flags.limit = takeNext(args, i++, arg); break;
+        flags.limit = takeNext(args, i++, arg);
+        break;
       case "--discovery-id":
-        flags.discoveryId = takeNext(args, i++, arg); break;
+        flags.discoveryId = takeNext(args, i++, arg);
+        break;
       case "--params":
-        flags.params = takeNext(args, i++, arg); break;
+        flags.params = takeNext(args, i++, arg);
+        break;
       case "--max-size":
-        flags.maxSize = takeNext(args, i++, arg); break;
+        flags.maxSize = takeNext(args, i++, arg);
+        break;
       case "--codegen":
-        flags.codegen = takeNext(args, i++, arg); break;
+        flags.codegen = takeNext(args, i++, arg);
+        break;
       case "--token":
-        flags.token = takeNext(args, i++, arg); break;
+        flags.token = takeNext(args, i++, arg);
+        break;
       case "--target":
-        flags.target = takeNext(args, i++, arg); break;
+        flags.target = takeNext(args, i++, arg);
+        break;
       case "--output":
-        flags.output = takeNext(args, i++, arg); break;
+        flags.output = takeNext(args, i++, arg);
+        break;
       case "--query":
-        flags.query = takeNext(args, i++, arg); break;
+        flags.query = takeNext(args, i++, arg);
+        break;
       case "--tool-id":
-        flags.toolId = takeNext(args, i++, arg); break;
+        flags.toolId = takeNext(args, i++, arg);
+        break;
       case "--mode":
-        flags.mode = takeNext(args, i++, arg); break;
+        flags.mode = takeNext(args, i++, arg);
+        break;
       case "--start-date":
-        flags.startDate = takeNext(args, i++, arg); break;
+        flags.startDate = takeNext(args, i++, arg);
+        break;
       case "--end-date":
-        flags.endDate = takeNext(args, i++, arg); break;
+        flags.endDate = takeNext(args, i++, arg);
+        break;
       case "--bucket":
-        flags.bucket = takeNext(args, i++, arg); break;
+        flags.bucket = takeNext(args, i++, arg);
+        break;
       case "--execution-id":
-        flags.executionId = takeNext(args, i++, arg); break;
+        flags.executionId = takeNext(args, i++, arg);
+        break;
       case "--search-id":
-        flags.searchId = takeNext(args, i++, arg); break;
+        flags.searchId = takeNext(args, i++, arg);
+        break;
       case "--event-type":
-        flags.eventType = takeNext(args, i++, arg); break;
+        flags.eventType = takeNext(args, i++, arg);
+        break;
       case "--kind":
-        flags.kind = takeNext(args, i++, arg); break;
+        flags.kind = takeNext(args, i++, arg);
+        break;
       case "--success":
-        flags.success = takeNext(args, i++, arg); break;
+        flags.success = takeNext(args, i++, arg);
+        break;
       case "--charge-outcome":
-        flags.chargeOutcome = takeNext(args, i++, arg); break;
+        flags.chargeOutcome = takeNext(args, i++, arg);
+        break;
       case "--entry-type":
-        flags.entryType = takeNext(args, i++, arg); break;
+        flags.entryType = takeNext(args, i++, arg);
+        break;
       case "--direction":
-        flags.direction = takeNext(args, i++, arg); break;
+        flags.direction = takeNext(args, i++, arg);
+        break;
       case "--min-credits":
-        flags.minCredits = takeNext(args, i++, arg); break;
+        flags.minCredits = takeNext(args, i++, arg);
+        break;
       case "--max-credits":
-        flags.maxCredits = takeNext(args, i++, arg); break;
+        flags.maxCredits = takeNext(args, i++, arg);
+        break;
       default:
         flags._positional.push(arg);
     }

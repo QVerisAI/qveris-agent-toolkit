@@ -29,10 +29,7 @@ const SAMPLE_DISCOVER_RESPONSE = {
       name: 'Weather Forecast',
       description: 'Forecast by location',
       provider_name: 'Weather',
-      categories: [
-        { slug: 'weather', name: 'Weather', description: 'Weather related tools.' },
-        'legacy-string-tag',
-      ],
+      categories: [{ slug: 'weather', name: 'Weather', description: 'Weather related tools.' }, 'legacy-string-tag'],
       capabilities: [
         {
           id: 'WX.FORECAST.DAILY',
@@ -176,9 +173,7 @@ describe('Qveris client', () => {
     });
 
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe(
-      'https://qveris.ai/api/v1/tools/execute?tool_id=weather.forecast.v1',
-    );
+    expect(url).toBe('https://qveris.ai/api/v1/tools/execute?tool_id=weather.forecast.v1');
     expect(JSON.parse(init.body)).toEqual({
       parameters: { city: 'London' },
       search_id: 'search-123',

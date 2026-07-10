@@ -7,7 +7,9 @@
     "qveris": "./bin/qveris.mjs"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "lint": "eslint . && prettier --check \"src/**/*.mjs\" \"bin/**/*.mjs\" \"test/**/*.mjs\"",
+    "lint:fix": "eslint . --fix && prettier --write \"src/**/*.mjs\" \"bin/**/*.mjs\" \"test/**/*.mjs\""
   },
   "engines": {
     "node": ">=18"
@@ -35,5 +37,11 @@
   "license": "MIT",
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.6.0",
+    "globals": "^17.7.0",
+    "prettier": "^3.9.5"
   }
 }

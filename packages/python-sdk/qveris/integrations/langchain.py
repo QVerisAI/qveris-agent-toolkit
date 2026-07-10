@@ -28,10 +28,7 @@ from pydantic import BaseModel, Field
 
 from ..client.api import QverisClient
 
-_INSTALL_HINT = (
-    "The LangChain integration requires 'langchain-core'. "
-    "Install it with: pip install qveris[langchain]"
-)
+_INSTALL_HINT = "The LangChain integration requires 'langchain-core'. Install it with: pip install qveris[langchain]"
 
 
 class _DiscoverArgs(BaseModel):
@@ -41,13 +38,17 @@ class _DiscoverArgs(BaseModel):
 
 class _InspectArgs(BaseModel):
     tool_ids: List[str] = Field(description="Tool IDs returned by discover.")
-    search_id: Optional[str] = Field(default=None, description="The search_id from the discover response, if available.")
+    search_id: Optional[str] = Field(
+        default=None, description="The search_id from the discover response, if available."
+    )
 
 
 class _CallArgs(BaseModel):
     tool_id: str = Field(description="The capability tool_id, from discover or inspect.")
     params_to_tool: Dict[str, Any] = Field(description="Parameters to pass to the capability.")
-    search_id: Optional[str] = Field(default=None, description="The search_id from the discover response, if available.")
+    search_id: Optional[str] = Field(
+        default=None, description="The search_id from the discover response, if available."
+    )
     max_response_size: Optional[int] = Field(
         default=None, description="Max response size in bytes; -1 means unlimited."
     )

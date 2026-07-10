@@ -42,9 +42,8 @@ export function chooseBucket(startDate, endDate, requestedBucket) {
   if (["hour", "day", "week"].includes(requestedBucket)) return requestedBucket;
   const start = Date.parse(`${startDate}T00:00:00Z`);
   const end = Date.parse(`${endDate}T23:59:59Z`);
-  const days = Number.isFinite(start) && Number.isFinite(end)
-    ? Math.max(1, Math.ceil((end - start) / (24 * 60 * 60 * 1000)))
-    : 1;
+  const days =
+    Number.isFinite(start) && Number.isFinite(end) ? Math.max(1, Math.ceil((end - start) / (24 * 60 * 60 * 1000))) : 1;
   if (days <= 2) return "hour";
   if (days <= 60) return "day";
   return "week";
@@ -109,13 +108,15 @@ export function extractTotal(response, fallbackCount) {
 
 export function matchesUsageFilters(row, flags) {
   const amount = usageAmount(row);
-  return matchesAmount(amount, flags) &&
+  return (
+    matchesAmount(amount, flags) &&
     matchesField(row.execution_id, flags.executionId) &&
     matchesField(row.search_id, flags.searchId) &&
     matchesField(row.event_type, flags.eventType) &&
     matchesField(row.charge_outcome, flags.chargeOutcome) &&
     matchesField(row.kind, flags.kind) &&
-    matchesBoolean(row.success, parseBooleanFlag(flags.success));
+    matchesBoolean(row.success, parseBooleanFlag(flags.success))
+  );
 }
 
 export function matchesLedgerFilters(row, flags) {
@@ -332,11 +333,17 @@ export function formatUsageSummary(summary, { scannedRows, total, partial }) {
   const lines = [];
   lines.push(`\n  ${bold("Usage History Summary")}`);
   lines.push(`  ${dim("Range:")} ${summary.start_date} to ${summary.end_date}  ${dim("bucket:")} ${summary.bucket}`);
-  lines.push(`  ${dim("Events:")} ${bold(String(summary.total_events))}  ${green(String(summary.succeeded))} succeeded  ${summary.failed ? red(String(summary.failed)) : "0"} failed`);
-  lines.push(`  ${dim("Credits:")} requested ${yellow(String(summary.requested_amount_credits))}  actual ${yellow(String(summary.actual_amount_credits))}`);
+  lines.push(
+    `  ${dim("Events:")} ${bold(String(summary.total_events))}  ${green(String(summary.succeeded))} succeeded  ${summary.failed ? red(String(summary.failed)) : "0"} failed`,
+  );
+  lines.push(
+    `  ${dim("Credits:")} requested ${yellow(String(summary.requested_amount_credits))}  actual ${yellow(String(summary.actual_amount_credits))}`,
+  );
   lines.push(`  ${dim("Charge outcomes:")} ${formatCounts(summary.charge_outcomes) || "none"}`);
   if (partial) {
-    lines.push(`  ${yellow("Partial summary:")} scanned ${scannedRows} of ${total ?? "unknown"} matching rows. Use --mode export-file for full analysis.`);
+    lines.push(
+      `  ${yellow("Partial summary:")} scanned ${scannedRows} of ${total ?? "unknown"} matching rows. Use --mode export-file for full analysis.`,
+    );
   }
   appendBuckets(lines, summary.buckets, (value) => `${value.events} events, ${value.actual_amount_credits} credits`);
   appendUsageRows(lines, summary.top_charges, "Top charges");
@@ -346,7 +353,9 @@ export function formatUsageSummary(summary, { scannedRows, total, partial }) {
 export function formatUsageRows(rows, { total, partial }) {
   const lines = [];
   lines.push(`\n  ${bold("Usage History Results")}`);
-  lines.push(`  ${dim("Shown:")} ${rows.length}${total !== undefined ? ` of ${total}` : ""}${partial ? `  ${yellow("(truncated)")}` : ""}`);
+  lines.push(
+    `  ${dim("Shown:")} ${rows.length}${total !== undefined ? ` of ${total}` : ""}${partial ? `  ${yellow("(truncated)")}` : ""}`,
+  );
   appendUsageRows(lines, rows.map(pickUsageRow), "Records");
   if (partial) lines.push(`  ${dim("Use --mode export-file for full matching records.")}`);
   return lines.join("\n");
@@ -357,10 +366,14 @@ export function formatLedgerSummary(summary, { scannedRows, total, partial }) {
   lines.push(`\n  ${bold("Credits Ledger Summary")}`);
   lines.push(`  ${dim("Range:")} ${summary.start_date} to ${summary.end_date}  ${dim("bucket:")} ${summary.bucket}`);
   lines.push(`  ${dim("Entries:")} ${bold(String(summary.total_entries))}`);
-  lines.push(`  ${dim("Credits:")} consumed ${yellow(String(summary.consumed_credits))}  granted ${green(String(summary.granted_credits))}  net ${yellow(String(summary.net_credits))}`);
+  lines.push(
+    `  ${dim("Credits:")} consumed ${yellow(String(summary.consumed_credits))}  granted ${green(String(summary.granted_credits))}  net ${yellow(String(summary.net_credits))}`,
+  );
   lines.push(`  ${dim("Entry types:")} ${formatEntryTypes(summary.entry_types) || "none"}`);
   if (partial) {
-    lines.push(`  ${yellow("Partial summary:")} scanned ${scannedRows} of ${total ?? "unknown"} matching rows. Use --mode export-file for full analysis.`);
+    lines.push(
+      `  ${yellow("Partial summary:")} scanned ${scannedRows} of ${total ?? "unknown"} matching rows. Use --mode export-file for full analysis.`,
+    );
   }
   appendBuckets(lines, summary.buckets, (value) => `${value.entries} entries, net ${value.net_credits}`);
   appendLedgerRows(lines, summary.top_debits, "Top debits");
@@ -370,7 +383,9 @@ export function formatLedgerSummary(summary, { scannedRows, total, partial }) {
 export function formatLedgerRows(rows, { total, partial }) {
   const lines = [];
   lines.push(`\n  ${bold("Credits Ledger Results")}`);
-  lines.push(`  ${dim("Shown:")} ${rows.length}${total !== undefined ? ` of ${total}` : ""}${partial ? `  ${yellow("(truncated)")}` : ""}`);
+  lines.push(
+    `  ${dim("Shown:")} ${rows.length}${total !== undefined ? ` of ${total}` : ""}${partial ? `  ${yellow("(truncated)")}` : ""}`,
+  );
   appendLedgerRows(lines, rows.map(pickLedgerRow), "Records");
   if (partial) lines.push(`  ${dim("Use --mode export-file for full matching records.")}`);
   return lines.join("\n");
@@ -379,7 +394,10 @@ export function formatLedgerRows(rows, { total, partial }) {
 export function writeJsonlExport(kind, rows, metadata) {
   const dir = join(process.cwd(), ".qveris", "exports");
   mkdirSync(dir, { recursive: true });
-  const timestamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  const timestamp = new Date()
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}Z$/, "Z");
   const path = join(dir, `${kind}_${timestamp}.jsonl`);
   const body = rows.map((row) => JSON.stringify(row)).join("\n") + (rows.length ? "\n" : "");
   writeFileSync(path, body, "utf-8");
@@ -403,7 +421,9 @@ export function formatExportMetadata(metadata) {
 }
 
 function appendBuckets(lines, buckets, render) {
-  const entries = Object.entries(buckets || {}).sort(([a], [b]) => a.localeCompare(b)).slice(0, 12);
+  const entries = Object.entries(buckets || {})
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(0, 12);
   if (entries.length === 0) return;
   lines.push("");
   lines.push(`  ${bold("Buckets:")}`);
@@ -418,7 +438,9 @@ function appendUsageRows(lines, rows, title) {
   lines.push(`  ${bold(title + ":")}`);
   for (const row of rows) {
     const status = row.success ? green("succeeded") : red("failed");
-    lines.push(`    ${dim(formatDateTime(row.created_at))}  ${status}  ${yellow(String(row.actual_amount_credits ?? row.amount ?? 0))} cr  ${row.charge_outcome || "unknown"}  ${row.target || ""}`);
+    lines.push(
+      `    ${dim(formatDateTime(row.created_at))}  ${status}  ${yellow(String(row.actual_amount_credits ?? row.amount ?? 0))} cr  ${row.charge_outcome || "unknown"}  ${row.target || ""}`,
+    );
     if (row.execution_id) lines.push(`      ${dim("execution:")} ${row.execution_id}`);
     if (row.billing_summary) lines.push(`      ${dim(row.billing_summary)}`);
     if (row.error_message) lines.push(`      ${red(row.error_message)}`);
@@ -432,7 +454,9 @@ function appendLedgerRows(lines, rows, title) {
   for (const row of rows) {
     const amount = row.amount_credits;
     const amountText = amount < 0 ? red(String(amount)) : green(String(amount));
-    lines.push(`    ${dim(formatDateTime(row.created_at))}  ${amountText} cr  ${row.entry_type || "unknown"}  ${row.source_ref_id || ""}`);
+    lines.push(
+      `    ${dim(formatDateTime(row.created_at))}  ${amountText} cr  ${row.entry_type || "unknown"}  ${row.source_ref_id || ""}`,
+    );
     if (row.billing_summary) lines.push(`      ${dim(row.billing_summary)}`);
     if (row.bucket_deductions?.length) {
       lines.push(`      ${dim("buckets:")} ${row.bucket_deductions.map(formatBucketDeduction).join(", ")}`);
@@ -472,7 +496,7 @@ function isoWeek(date) {
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  const weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
   return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
 }
 

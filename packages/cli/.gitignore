@@ -1,0 +1,8 @@
+# Dependencies
+node_modules/
+
+# Test coverage
+coverage/
+
+# Pack artifacts
+*.tgz

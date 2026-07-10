@@ -38,13 +38,7 @@ export function parseRetryAfterMs(value, now = Date.now()) {
  * `retryAfterMs` (capped at `maxDelayMs`), otherwise exponential backoff
  * `baseDelayMs * 2**attempt` with full jitter, capped at `maxDelayMs`.
  */
-export function computeRetryDelayMs({
-  retryAfterMs,
-  attempt,
-  baseDelayMs,
-  maxDelayMs,
-  random = Math.random,
-}) {
+export function computeRetryDelayMs({ retryAfterMs, attempt, baseDelayMs, maxDelayMs, random = Math.random }) {
   if (retryAfterMs != null) return Math.min(retryAfterMs, maxDelayMs);
   const capped = Math.min(baseDelayMs * 2 ** Math.min(attempt, MAX_BACKOFF_EXPONENT), maxDelayMs);
   return capped * (0.5 + 0.5 * random());
