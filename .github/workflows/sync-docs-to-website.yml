@@ -80,13 +80,13 @@ jobs:
 
       - name: Checkout toolkit
         if: steps.guard.outputs.skip != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: qveris-agent-toolkit
 
       - name: Checkout website (release/test)
         if: steps.guard.outputs.skip != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: ${{ env.WEBSITE_REPO }}
           ref: ${{ env.WEBSITE_BASE }}
