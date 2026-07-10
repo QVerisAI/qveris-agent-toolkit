@@ -21,13 +21,17 @@
     "build": "node scripts/build.mjs",
     "check:pack": "node scripts/check-pack.mjs",
     "prepack": "npm run build",
-    "test:integration": "node scripts/run-integration-tests.mjs"
+    "test:integration": "node scripts/run-integration-tests.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@sinclair/typebox": "0.34.48"
   },
   "devDependencies": {
-    "openclaw": "workspace:*"
+    "openclaw": "^2026.6.4",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.0"
   },
   "peerDependencies": {
     "openclaw": ">=2026.3.22"

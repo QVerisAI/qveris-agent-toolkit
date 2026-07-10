@@ -11,11 +11,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
-    "target": "es2023",
-    "paths": {
-      "openclaw/plugin-sdk": ["../openclaw/src/plugin-sdk/index.ts"],
-      "openclaw/plugin-sdk/*": ["../openclaw/src/plugin-sdk/*.ts"]
-    }
+    "target": "es2023"
   },
   "include": ["**/*.ts"]
 }

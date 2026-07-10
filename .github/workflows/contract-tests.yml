@@ -18,6 +18,7 @@ on:
       - "packages/mcp/package.json"
       - "packages/mcp/package-lock.json"
       - "packages/mcp/tsconfig.json"
+      - "packages/openclaw-qveris-plugin/**"
       - ".github/workflows/contract-tests.yml"
   push:
     branches:
@@ -33,6 +34,7 @@ on:
       - "packages/mcp/package.json"
       - "packages/mcp/package-lock.json"
       - "packages/mcp/tsconfig.json"
+      - "packages/openclaw-qveris-plugin/**"
       - ".github/workflows/contract-tests.yml"
 
 permissions:
@@ -50,9 +52,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: CLI ↔ OpenAPI contract test
+      - name: CLI tests (full suite, includes the OpenAPI contract test)
         working-directory: packages/cli
-        run: node --test test/openapi-contract.test.mjs
+        run: node --test
 
   python-contract:
     strategy:
@@ -65,15 +67,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Python SDK ↔ generated-contract test
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: packages/python-sdk/uv.lock
+      - name: Python SDK tests (full suite, includes the contract tests)
         working-directory: packages/python-sdk
-        # PYTHONPATH is set via env (not inline) so the step works under both
-        # bash (ubuntu) and pwsh (windows) default shells.
-        env:
-          PYTHONPATH: .
-        run: |
-          python -m pip install --quiet pytest "pydantic>=2.0.0"
-          python -m pytest tests/test_openapi_contract.py -q
+        run: uv run --extra dev pytest -q
 
   js-sdk-tests:
     strategy:
@@ -120,3 +120,28 @@ jobs:
         run: npm run typecheck
       - name: MCP server tests
         run: npm test
+
+  openclaw-plugin-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: packages/openclaw-qveris-plugin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: packages/openclaw-qveris-plugin/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Type check
+        run: npm run typecheck
+      - name: Plugin tests
+        run: npm test
+      - name: Verify npm package contents
+        run: npm run check:pack
