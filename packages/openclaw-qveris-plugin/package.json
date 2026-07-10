@@ -31,7 +31,7 @@
   "devDependencies": {
     "openclaw": "^2026.6.4",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.0"
+    "vitest": "^4.1.10"
   },
   "peerDependencies": {
     "openclaw": ">=2026.3.22"
