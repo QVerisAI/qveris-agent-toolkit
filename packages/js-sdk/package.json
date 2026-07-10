@@ -63,7 +63,7 @@
     "@types/node": "^22.10.1",
     "ai": "^7.0.0",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.0",
+    "vitest": "^4.1.10",
     "zod": "^4.0.0"
   },
   "engines": {
