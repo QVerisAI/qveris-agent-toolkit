@@ -22,5 +22,5 @@ execFileSync(
     "--target=node20",
     "--packages=external",
   ],
-  { stdio: "inherit" },
+  { stdio: "inherit", shell: process.platform === "win32" },
 );

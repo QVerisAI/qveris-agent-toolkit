@@ -55,11 +55,15 @@ function fail(message, details = []) {
   process.exit(1);
 }
 
-execFileSync("npm", ["run", "build"], { stdio: "inherit" });
+// On Windows npm/npx are .cmd shims that can only be spawned through a shell.
+const shell = process.platform === "win32";
+
+execFileSync("npm", ["run", "build"], { stdio: "inherit", shell });
 
 const raw = execFileSync("npm", ["pack", "--dry-run", "--json", "--ignore-scripts"], {
   encoding: "utf8",
   stdio: ["ignore", "pipe", "pipe"],
+  shell,
 });
 
 const [pack] = JSON.parse(raw);
