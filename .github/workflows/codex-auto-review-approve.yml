@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ask Codex to review this PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.REPO_ACCESS_TOKEN }}
           script: |
@@ -51,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Approve when Codex reports no blocking issues
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           CODEX_REVIEW_AUTHOR_PATTERN: ${{ vars.CODEX_REVIEW_AUTHOR_PATTERN }}
         with:
@@ -111,7 +111,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Approve when Codex leaves a clean summary comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           CODEX_COMMENT_AUTHOR_PATTERN: ${{ vars.CODEX_COMMENT_AUTHOR_PATTERN }}
         with:
