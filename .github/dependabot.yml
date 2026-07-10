@@ -3,18 +3,63 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
+    groups:
+      actions:
+        patterns: ["*"]
+
   - package-ecosystem: npm
     directory: /packages/mcp
     schedule: { interval: weekly }
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+    ignore:
+      # Majors are deliberate, human-driven upgrades — not bot PRs.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      # Pinned exactly: regenerated openapi types must stay byte-stable with the
+      # checked-in src/generated/openapi.d.ts and the drift CI.
+      - dependency-name: "openapi-typescript"
+
   - package-ecosystem: npm
     directory: /packages/js-sdk
     schedule: { interval: weekly }
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: npm
     directory: /packages/cli
     schedule: { interval: weekly }
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: npm
     directory: /packages/openclaw-qveris-plugin
     schedule: { interval: weekly }
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: pip
     directory: /packages/python-sdk
     schedule: { interval: weekly }
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      # Pinned exactly: regenerated models must stay byte-stable with the
+      # checked-in qveris/generated/openapi_models.py and the drift CI (#37).
+      - dependency-name: "datamodel-code-generator"
