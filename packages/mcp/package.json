@@ -52,7 +52,7 @@
     "@types/uuid": "^10.0.0",
     "openapi-typescript": "7.4.4",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.0"
+    "vitest": "^4.1.10"
   },
   "engines": {
     "node": ">=18.2.0"
