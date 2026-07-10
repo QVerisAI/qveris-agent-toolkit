@@ -1,0 +1,44 @@
+name: Bug report
+description: Something in a toolkit package doesn't work as documented
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      options:
+        - "@qverisai/cli"
+        - "@qverisai/mcp"
+        - "@qverisai/sdk (JS)"
+        - "qveris (Python SDK)"
+        - "OpenClaw plugin"
+        - "docs / skills / recipes"
+        - "other"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Package version (e.g. 0.8.0) — `qveris --version`, `pip show qveris`, etc.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Minimal commands/code. Redact your API key.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: OS, Node/Python version, region (global/cn). `qveris doctor` output is ideal (it redacts the key).

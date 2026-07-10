@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/QVerisAI/qveris-agent-toolkit/security/advisories/new
+    about: Please report vulnerabilities privately — never as a public issue.
+  - name: QVeris platform questions
+    url: https://qveris.ai
+    about: Questions about the QVeris platform/API (keys, billing, capabilities) rather than this toolkit.
