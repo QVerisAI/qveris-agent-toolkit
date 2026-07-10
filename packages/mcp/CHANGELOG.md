@@ -13,6 +13,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   - **Elicitation billing consent** — with `QVERIS_MCP_CONFIRM_CALLS=true` and an elicitation-capable client, a charged `call` asks the user to confirm first; declining cancels the call before any credits are spent. Off by default (headless agents unaffected); clients without elicitation proceed as before.
   - **Resources** — `qveris://server-card` (SEP-2127 card, also without a remote in stdio mode) and the `qveris://capability/{tool_id}` template serving full capability metadata, so users can browse/attach capability docs without a tool call.
 
+### Changed
+
+- Tool results and resource reads serialize as compact JSON instead of pretty-printed — indentation was ~35% of a `qveris_discover` payload in tokens, with no information loss. Matches the HTTP discovery endpoints, which were already compact. ([#120])
+
 ## [0.8.0] - 2026-07-09
 
 ### Added
@@ -117,6 +121,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [0.1.2]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/mcp-v0.1.2
 [#158]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/158
 [#145]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/145
+[#120]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/120
 [#140]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/140
 [#139]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/139
 [#126]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/126
