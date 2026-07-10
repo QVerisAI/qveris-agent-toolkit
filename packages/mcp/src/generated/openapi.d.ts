@@ -4,2155 +4,2155 @@
  */
 
 export interface paths {
-  '/auth/account/settlement-history': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/account/settlement-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Account Settlement History
+         * @description 获取账号中心结算历史轻量 feed。
+         *
+         *     This first implementation serves the immutable ledger summary path used
+         *     after readiness confirms the ledger is complete for the requested range.
+         */
+        get: operations["get_account_settlement_history_api_v1_auth_account_settlement_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Get Account Settlement History
-     * @description 获取账号中心结算历史轻量 feed。
-     *
-     *     This first implementation serves the immutable ledger summary path used
-     *     after readiness confirms the ledger is complete for the requested range.
-     */
-    get: operations['get_account_settlement_history_api_v1_auth_account_settlement_history_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/credits': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/credits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Current User Credits
+         * @description 查询当前用户的积分信息，包括各类积分明细和剩余总积分。支持 API Key 和 JWT 认证。
+         */
+        get: operations["get_current_user_credits_api_v1_auth_credits_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Get Current User Credits
-     * @description 查询当前用户的积分信息，包括各类积分明细和剩余总积分。支持 API Key 和 JWT 认证。
-     */
-    get: operations['get_current_user_credits_api_v1_auth_credits_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/credits/ledger': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/credits/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Query credits ledger
+         * @description Query immutable final credit balance movements. Usage audit explains request outcomes; the credits ledger explains signed balance changes. Negative `amount_credits` values consume credits and positive values grant credits.
+         */
+        get: operations["get_credits_ledger_api_v1_auth_credits_ledger_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Query credits ledger
-     * @description Query immutable final credit balance movements. Usage audit explains request outcomes; the credits ledger explains signed balance changes. Negative `amount_credits` values consume credits and positive values grant credits.
-     */
-    get: operations['get_credits_ledger_api_v1_auth_credits_ledger_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/credits/ledger-readiness': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/credits/ledger-readiness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Credits Ledger Readiness
+         * @description Check whether this user's account history can safely switch to credits_ledger.
+         */
+        get: operations["get_credits_ledger_readiness_api_v1_auth_credits_ledger_readiness_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Get Credits Ledger Readiness
-     * @description Check whether this user's account history can safely switch to credits_ledger.
-     */
-    get: operations['get_credits_ledger_readiness_api_v1_auth_credits_ledger_readiness_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/credits/ledger/export': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/credits/ledger/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Credits Ledger
+         * @description 导出用户 credits ledger 账本，供账号中心和运营审计使用。
+         */
+        get: operations["export_credits_ledger_api_v1_auth_credits_ledger_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Export Credits Ledger
-     * @description 导出用户 credits ledger 账本，供账号中心和运营审计使用。
-     */
-    get: operations['export_credits_ledger_api_v1_auth_credits_ledger_export_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/credits/ledger/{entry_id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/credits/ledger/{entry_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Credits Ledger Entry
+         * @description 获取单条 credits ledger detail，用于账单详情展开和审计追溯。
+         */
+        get: operations["get_credits_ledger_entry_api_v1_auth_credits_ledger__entry_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Get Credits Ledger Entry
-     * @description 获取单条 credits ledger detail，用于账单详情展开和审计追溯。
-     */
-    get: operations['get_credits_ledger_entry_api_v1_auth_credits_ledger__entry_id__get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/usage/credits-spent': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/usage/credits-spent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Usage Credits Spent
+         * @description Return the total credits spent by the current user in the given date range.
+         *
+         *     Uses a single server-side SUM query — no pagination limit — so results are
+         *     accurate even for high-volume users with thousands of events in the window.
+         */
+        get: operations["get_usage_credits_spent_api_v1_auth_usage_credits_spent_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Get Usage Credits Spent
-     * @description Return the total credits spent by the current user in the given date range.
-     *
-     *     Uses a single server-side SUM query — no pagination limit — so results are
-     *     accurate even for high-volume users with thousands of events in the window.
-     */
-    get: operations['get_usage_credits_spent_api_v1_auth_usage_credits_spent_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/usage/history/v2': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/usage/history/v2": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Query usage audit history
+         * @description Query canonical usage events to confirm request success, failure, and final charge outcome. Agent, CLI, and MCP clients should prefer precise filters such as `execution_id` or `summary=true` with a bounded `limit` instead of dumping full history.
+         */
+        get: operations["get_usage_history_v2_api_v1_auth_usage_history_v2_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Query usage audit history
-     * @description Query canonical usage events to confirm request success, failure, and final charge outcome. Agent, CLI, and MCP clients should prefer precise filters such as `execution_id` or `summary=true` with a bounded `limit` instead of dumping full history.
-     */
-    get: operations['get_usage_history_v2_api_v1_auth_usage_history_v2_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/usage/history/v2/export': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/usage/history/v2/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Usage History V2
+         * @description 导出 request-level usage audit，供用户与支持审计使用。
+         */
+        get: operations["export_usage_history_v2_api_v1_auth_usage_history_v2_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Export Usage History V2
-     * @description 导出 request-level usage audit，供用户与支持审计使用。
-     */
-    get: operations['export_usage_history_v2_api_v1_auth_usage_history_v2_export_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/usage/history/v2/summary': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/usage/history/v2/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Usage History V2 Summary
+         * @description 获取轻量 usage events summary，用于账号页列表快速渲染。
+         */
+        get: operations["get_usage_history_v2_summary_api_v1_auth_usage_history_v2_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Get Usage History V2 Summary
-     * @description 获取轻量 usage events summary，用于账号页列表快速渲染。
-     */
-    get: operations['get_usage_history_v2_summary_api_v1_auth_usage_history_v2_summary_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/usage/history/v2/{event_id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/usage/history/v2/{event_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Usage History V2 Entry
+         * @description 获取单条 usage event 详情。
+         */
+        get: operations["get_usage_history_v2_entry_api_v1_auth_usage_history_v2__event_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Get Usage History V2 Entry
-     * @description 获取单条 usage event 详情。
-     */
-    get: operations['get_usage_history_v2_entry_api_v1_auth_usage_history_v2__event_id__get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/verify-token': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/verify-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify Token
+         * @description 验证JWT token是否有效和是否过期
+         *
+         *     Args:
+         *         token: JWT访问令牌
+         *
+         *     Returns:
+         *         TokenVerificationResponse: 包含token验证结果的响应
+         */
+        post: operations["verify_token_api_v1_auth_verify_token_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Verify Token
-     * @description 验证JWT token是否有效和是否过期
-     *
-     *     Args:
-     *         token: JWT访问令牌
-     *
-     *     Returns:
-     *         TokenVerificationResponse: 包含token验证结果的响应
-     */
-    post: operations['verify_token_api_v1_auth_verify_token_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/credits': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/credits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Current User Credits
+         * @description 查询当前用户的积分信息，包括各类积分明细和剩余总积分。支持 API Key 和 JWT 认证。
+         */
+        get: operations["get_current_user_credits_api_v1_credits_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Get Current User Credits
-     * @description 查询当前用户的积分信息，包括各类积分明细和剩余总积分。支持 API Key 和 JWT 认证。
-     */
-    get: operations['get_current_user_credits_api_v1_credits_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/providers': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Providers
+         * @description Get providers from the real API with optional filtering and pagination
+         */
+        get: operations["get_providers_api_v1_providers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Get Providers
-     * @description Get providers from the real API with optional filtering and pagination
-     */
-    get: operations['get_providers_api_v1_providers_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/providers/categories': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/providers/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Provider Categories
+         * @description Get provider category slugs from Quaestio category facets.
+         */
+        get: operations["get_provider_categories_api_v1_providers_categories_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Get Provider Categories
-     * @description Get provider category slugs from Quaestio category facets.
-     */
-    get: operations['get_provider_categories_api_v1_providers_categories_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/search': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Discover capabilities
+         * @description Find ranked capabilities from a natural-language query. Discover is free. Results may include `expected_cost` and `billing_rule` so clients can estimate a later Call.
+         */
+        post: operations["search_api_v1_search_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Discover capabilities
-     * @description Find ranked capabilities from a natural-language query. Discover is free. Results may include `expected_cost` and `billing_rule` so clients can estimate a later Call.
-     */
-    post: operations['search_api_v1_search_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/tools/by-ids': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/tools/by-ids": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Inspect capabilities by id
+         * @description Fetch full capability metadata for one or more tool ids. Inspect is free and returns the same capability shape as Discover, including parameter schema, examples, quality signals, and cost estimates.
+         */
+        post: operations["get_tools_by_ids_api_v1_tools_by_ids_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Inspect capabilities by id
-     * @description Fetch full capability metadata for one or more tool ids. Inspect is free and returns the same capability shape as Discover, including parameter schema, examples, quality signals, and cost estimates.
-     */
-    post: operations['get_tools_by_ids_api_v1_tools_by_ids_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/tools/execute': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/tools/execute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Call a capability
+         * @description Execute a selected capability. Call may consume credits according to the capability `billing_rule`; the response can include a pre-settlement `billing` statement, while final settlement is available through usage audit and credits ledger endpoints.
+         */
+        post: operations["execute_api_v1_tools_execute_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Call a capability
-     * @description Execute a selected capability. Call may consume credits according to the capability `billing_rule`; the response can include a pre-settlement `billing` statement, while final settlement is available through usage audit and credits ledger endpoints.
-     */
-    post: operations['execute_api_v1_tools_execute_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    /** APIResponse[CreditsLedgerItem] */
-    APIResponse_CreditsLedgerItem_: {
-      /** Status */
-      status: string;
-      /** Message */
-      message: string;
-      /**
-       * Status Code
-       * @default 0
-       */
-      status_code: number;
-      data?: components['schemas']['CreditsLedgerItem'] | null;
-      /** Message Key */
-      message_key?: string | null;
+    schemas: {
+        /** APIResponse[CreditsLedgerItem] */
+        APIResponse_CreditsLedgerItem_: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+            /**
+             * Status Code
+             * @default 0
+             */
+            status_code: number;
+            data?: components["schemas"]["CreditsLedgerItem"] | null;
+            /** Message Key */
+            message_key?: string | null;
+        };
+        /** APIResponse[CreditsLedgerReadinessResponse] */
+        APIResponse_CreditsLedgerReadinessResponse_: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+            /**
+             * Status Code
+             * @default 0
+             */
+            status_code: number;
+            data?: components["schemas"]["CreditsLedgerReadinessResponse"] | null;
+            /** Message Key */
+            message_key?: string | null;
+        };
+        /** APIResponse[CreditsLedgerResponse] */
+        APIResponse_CreditsLedgerResponse_: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+            /**
+             * Status Code
+             * @default 0
+             */
+            status_code: number;
+            data?: components["schemas"]["CreditsLedgerResponse"] | null;
+            /** Message Key */
+            message_key?: string | null;
+        };
+        /** APIResponse[SettlementHistoryResponse] */
+        APIResponse_SettlementHistoryResponse_: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+            /**
+             * Status Code
+             * @default 0
+             */
+            status_code: number;
+            data?: components["schemas"]["SettlementHistoryResponse"] | null;
+            /** Message Key */
+            message_key?: string | null;
+        };
+        /** APIResponse[TokenVerificationResponse] */
+        APIResponse_TokenVerificationResponse_: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+            /**
+             * Status Code
+             * @default 0
+             */
+            status_code: number;
+            data?: components["schemas"]["TokenVerificationResponse"] | null;
+            /** Message Key */
+            message_key?: string | null;
+        };
+        /** APIResponse[UsageCreditsSpentResponse] */
+        APIResponse_UsageCreditsSpentResponse_: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+            /**
+             * Status Code
+             * @default 0
+             */
+            status_code: number;
+            data?: components["schemas"]["UsageCreditsSpentResponse"] | null;
+            /** Message Key */
+            message_key?: string | null;
+        };
+        /** APIResponse[UsageEventItem] */
+        APIResponse_UsageEventItem_: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+            /**
+             * Status Code
+             * @default 0
+             */
+            status_code: number;
+            data?: components["schemas"]["UsageEventItem"] | null;
+            /** Message Key */
+            message_key?: string | null;
+        };
+        /** APIResponse[UsageEventSummaryResponse] */
+        APIResponse_UsageEventSummaryResponse_: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+            /**
+             * Status Code
+             * @default 0
+             */
+            status_code: number;
+            data?: components["schemas"]["UsageEventSummaryResponse"] | null;
+            /** Message Key */
+            message_key?: string | null;
+        };
+        /** APIResponse[UsageEventsResponse] */
+        APIResponse_UsageEventsResponse_: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+            /**
+             * Status Code
+             * @default 0
+             */
+            status_code: number;
+            data?: components["schemas"]["UsageEventsResponse"] | null;
+            /** Message Key */
+            message_key?: string | null;
+        };
+        /** APIResponse[dict] */
+        APIResponse_dict_: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+            /**
+             * Status Code
+             * @default 0
+             */
+            status_code: number;
+            /** Data */
+            data?: {
+                [key: string]: unknown;
+            } | null;
+            /** Message Key */
+            message_key?: string | null;
+        };
+        /** CreditsLedgerItem */
+        CreditsLedgerItem: {
+            /** Id */
+            id: string;
+            /** Entry Type */
+            entry_type: string;
+            /** Amount Credits */
+            amount_credits: number;
+            /** Source System */
+            source_system: string;
+            /** Source Ref Type */
+            source_ref_type?: string | null;
+            /** Source Ref Id */
+            source_ref_id?: string | null;
+            /** Execution Id */
+            execution_id?: string | null;
+            /** Pre Settlement Bill */
+            pre_settlement_bill?: {
+                [key: string]: unknown;
+            } | null;
+            /** Settlement Result */
+            settlement_result?: {
+                [key: string]: unknown;
+            } | null;
+            /** Balance Before */
+            balance_before?: {
+                [key: string]: unknown;
+            } | null;
+            /** Balance After */
+            balance_after?: {
+                [key: string]: unknown;
+            } | null;
+            /** Ledger Metadata */
+            ledger_metadata?: {
+                [key: string]: unknown;
+            } | null;
+            /** Description */
+            description?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** CreditsLedgerReadinessEntity */
+        CreditsLedgerReadinessEntity: {
+            /** Entity Type */
+            entity_type: string;
+            /** Legacy Count */
+            legacy_count: number;
+            /** Legacy Amount Credits */
+            legacy_amount_credits: number;
+            /** Ledger Count */
+            ledger_count: number;
+            /** Ledger Amount Credits */
+            ledger_amount_credits: number;
+            /** Missing Count */
+            missing_count: number;
+            /** Extra Count */
+            extra_count: number;
+            /** Amount Delta Credits */
+            amount_delta_credits: number;
+            /** Ready */
+            ready: boolean;
+        };
+        /** CreditsLedgerReadinessResponse */
+        CreditsLedgerReadinessResponse: {
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+            /** Start Date */
+            start_date?: string | null;
+            /** End Date */
+            end_date?: string | null;
+            /** Scope */
+            scope: string;
+            /** Recommended Read Mode */
+            recommended_read_mode: string;
+            /** Ready */
+            ready: boolean;
+            /** Legacy Total Count */
+            legacy_total_count: number;
+            /** Legacy Total Amount Credits */
+            legacy_total_amount_credits: number;
+            /** Ledger Total Count */
+            ledger_total_count: number;
+            /** Ledger Total Amount Credits */
+            ledger_total_amount_credits: number;
+            /** Entities */
+            entities: components["schemas"]["CreditsLedgerReadinessEntity"][];
+        };
+        /** CreditsLedgerResponse */
+        CreditsLedgerResponse: {
+            /** Items */
+            items: components["schemas"]["CreditsLedgerItem"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            summary?: components["schemas"]["CreditsLedgerSummary"] | null;
+        };
+        /** CreditsLedgerSummary */
+        CreditsLedgerSummary: {
+            /** Start Date */
+            start_date?: string | null;
+            /** End Date */
+            end_date?: string | null;
+            /** Bucket */
+            bucket: string;
+            /** Total Entries */
+            total_entries: number;
+            /** Consume Count */
+            consume_count: number;
+            /** Grant Count */
+            grant_count: number;
+            /** Consumed Credits */
+            consumed_credits: number;
+            /** Granted Credits */
+            granted_credits: number;
+            /** Net Amount Credits */
+            net_amount_credits: number;
+            /** Max Amount Items */
+            max_amount_items: components["schemas"]["CreditsLedgerItem"][];
+            /** Buckets */
+            buckets: components["schemas"]["CreditsLedgerSummaryBucket"][];
+        };
+        /** CreditsLedgerSummaryBucket */
+        CreditsLedgerSummaryBucket: {
+            /**
+             * Bucket Start
+             * Format: date-time
+             */
+            bucket_start: string;
+            /** Entry Count */
+            entry_count: number;
+            /** Consume Count */
+            consume_count: number;
+            /** Grant Count */
+            grant_count: number;
+            /** Consumed Credits */
+            consumed_credits: number;
+            /** Granted Credits */
+            granted_credits: number;
+            /** Net Amount Credits */
+            net_amount_credits: number;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        /** SettlementHistoryItem */
+        SettlementHistoryItem: {
+            /** Id */
+            id: string;
+            /** Source */
+            source: string;
+            /** Entry Type */
+            entry_type: string;
+            /** Amount Credits */
+            amount_credits: number;
+            /** Source System */
+            source_system: string;
+            /** Source Ref Type */
+            source_ref_type?: string | null;
+            /** Source Ref Id */
+            source_ref_id?: string | null;
+            /** Execution Id */
+            execution_id?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Display Target */
+            display_target?: string | null;
+            /** Billing Summary */
+            billing_summary?: string | null;
+            /** Billing Snapshot Status */
+            billing_snapshot_status?: string | null;
+            /**
+             * Details Available
+             * @default true
+             */
+            details_available: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** SettlementHistoryResponse */
+        SettlementHistoryResponse: {
+            /** Items */
+            items: components["schemas"]["SettlementHistoryItem"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+            /** Has More */
+            has_more: boolean;
+            /** Page Size */
+            page_size: number;
+        };
+        /** TokenVerificationResponse */
+        TokenVerificationResponse: {
+            /** Is Valid */
+            is_valid: boolean;
+            /** Is Expired */
+            is_expired: boolean;
+            /** Payload */
+            payload?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** UsageCreditsSpentResponse */
+        UsageCreditsSpentResponse: {
+            /** Total Credits */
+            total_credits: number;
+            /** Start Date */
+            start_date?: string | null;
+            /** End Date */
+            end_date?: string | null;
+        };
+        /** UsageEventItem */
+        UsageEventItem: {
+            /** Id */
+            id: string;
+            /** Event Type */
+            event_type: string;
+            /** Source System */
+            source_system: string;
+            /** Source Ref Type */
+            source_ref_type?: string | null;
+            /** Source Ref Id */
+            source_ref_id?: string | null;
+            /** Session Id */
+            session_id?: string | null;
+            /** Search Id */
+            search_id?: string | null;
+            /** Execution Id */
+            execution_id?: string | null;
+            /** Tool Id */
+            tool_id?: string | null;
+            /** Model */
+            model?: string | null;
+            /** Query */
+            query?: string | null;
+            /** Success */
+            success: boolean;
+            /** Charge Outcome */
+            charge_outcome: string;
+            /** Error Message */
+            error_message?: string | null;
+            /** Duration Ms */
+            duration_ms?: number | null;
+            /** Request Payload */
+            request_payload?: {
+                [key: string]: unknown;
+            } | null;
+            /** Response Payload Summary */
+            response_payload_summary?: {
+                [key: string]: unknown;
+            } | null;
+            /** Execution Outcome */
+            execution_outcome?: {
+                [key: string]: unknown;
+            } | null;
+            /** Outcome Schema Version */
+            outcome_schema_version?: string | null;
+            /** Transport Success */
+            transport_success?: boolean | null;
+            /** Provider Success */
+            provider_success?: boolean | null;
+            /** Result Valid */
+            result_valid?: boolean | null;
+            /** Billable Success */
+            billable_success?: boolean | null;
+            /** Outcome */
+            outcome?: string | null;
+            /** Outcome Status */
+            outcome_status?: string | null;
+            /** Reason Code */
+            reason_code?: string | null;
+            /** Outcome Message */
+            outcome_message?: string | null;
+            /** Provider Status Code */
+            provider_status_code?: string | null;
+            /** Provider Status Message */
+            provider_status_message?: string | null;
+            /** Http Status Code */
+            http_status_code?: number | null;
+            /** Valid Result Count */
+            valid_result_count?: number | null;
+            /** Raw Result Count */
+            raw_result_count?: number | null;
+            /** Chargeable Quantity */
+            chargeable_quantity?: number | null;
+            /** Retryable */
+            retryable?: boolean | null;
+            /** Display Severity */
+            display_severity?: string | null;
+            /** Billing Snapshot Status */
+            billing_snapshot_status?: string | null;
+            /** Billing Rule Snapshot */
+            billing_rule_snapshot?: {
+                [key: string]: unknown;
+            } | null;
+            /** Pre Settlement Bill */
+            pre_settlement_bill?: {
+                [key: string]: unknown;
+            } | null;
+            /** Settlement Result */
+            settlement_result?: {
+                [key: string]: unknown;
+            } | null;
+            /** Requested Amount Credits */
+            requested_amount_credits?: number | null;
+            /** Actual Amount Credits */
+            actual_amount_credits?: number | null;
+            /** Credits Ledger Entry Id */
+            credits_ledger_entry_id?: string | null;
+            /** Display Target */
+            display_target?: string | null;
+            /** Billing Unit */
+            billing_unit?: string | null;
+            /** Unit Price Credits */
+            unit_price_credits?: number | null;
+            /** Quantity */
+            quantity?: number | null;
+            /** List Amount Credits */
+            list_amount_credits?: number | null;
+            /** Minimum Charge Credits */
+            minimum_charge_credits?: number | null;
+            /** Pricing Profile Id */
+            pricing_profile_id?: string | null;
+            /** Billing Summary */
+            billing_summary?: string | null;
+            /** Pre Settlement Amount Credits */
+            pre_settlement_amount_credits?: number | null;
+            /** Settled Amount Credits */
+            settled_amount_credits?: number | null;
+            /** Pricing Context Id */
+            pricing_context_id?: string | null;
+            /** Harbor Snapshot Id */
+            harbor_snapshot_id?: string | null;
+            /** Harbor Snapshot Version */
+            harbor_snapshot_version?: string | null;
+            /** Resolver Version */
+            resolver_version?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** UsageEventSummaryItem */
+        UsageEventSummaryItem: {
+            /** Id */
+            id: string;
+            /** Event Type */
+            event_type: string;
+            /** Source System */
+            source_system: string;
+            /** Source Ref Type */
+            source_ref_type?: string | null;
+            /** Source Ref Id */
+            source_ref_id?: string | null;
+            /** Session Id */
+            session_id?: string | null;
+            /** Search Id */
+            search_id?: string | null;
+            /** Execution Id */
+            execution_id?: string | null;
+            /** Tool Id */
+            tool_id?: string | null;
+            /** Model */
+            model?: string | null;
+            /** Query */
+            query?: string | null;
+            /** Success */
+            success: boolean;
+            /** Charge Outcome */
+            charge_outcome: string;
+            /** Error Message */
+            error_message?: string | null;
+            /** Duration Ms */
+            duration_ms?: number | null;
+            /** Transport Success */
+            transport_success?: boolean | null;
+            /** Provider Success */
+            provider_success?: boolean | null;
+            /** Result Valid */
+            result_valid?: boolean | null;
+            /** Billable Success */
+            billable_success?: boolean | null;
+            /** Outcome */
+            outcome?: string | null;
+            /** Outcome Status */
+            outcome_status?: string | null;
+            /** Reason Code */
+            reason_code?: string | null;
+            /** Outcome Message */
+            outcome_message?: string | null;
+            /** Provider Status Code */
+            provider_status_code?: string | null;
+            /** Provider Status Message */
+            provider_status_message?: string | null;
+            /** Http Status Code */
+            http_status_code?: number | null;
+            /** Valid Result Count */
+            valid_result_count?: number | null;
+            /** Raw Result Count */
+            raw_result_count?: number | null;
+            /** Chargeable Quantity */
+            chargeable_quantity?: number | null;
+            /** Retryable */
+            retryable?: boolean | null;
+            /** Display Severity */
+            display_severity?: string | null;
+            /** Billing Snapshot Status */
+            billing_snapshot_status?: string | null;
+            /** Requested Amount Credits */
+            requested_amount_credits?: number | null;
+            /** Actual Amount Credits */
+            actual_amount_credits?: number | null;
+            /** Credits Ledger Entry Id */
+            credits_ledger_entry_id?: string | null;
+            /** Display Target */
+            display_target?: string | null;
+            /** Billing Unit */
+            billing_unit?: string | null;
+            /** Unit Price Credits */
+            unit_price_credits?: number | null;
+            /** Quantity */
+            quantity?: number | null;
+            /** List Amount Credits */
+            list_amount_credits?: number | null;
+            /** Minimum Charge Credits */
+            minimum_charge_credits?: number | null;
+            /** Pricing Profile Id */
+            pricing_profile_id?: string | null;
+            /** Billing Summary */
+            billing_summary?: string | null;
+            /** Pre Settlement Amount Credits */
+            pre_settlement_amount_credits?: number | null;
+            /** Settled Amount Credits */
+            settled_amount_credits?: number | null;
+            /** Pricing Context Id */
+            pricing_context_id?: string | null;
+            /** Harbor Snapshot Id */
+            harbor_snapshot_id?: string | null;
+            /** Harbor Snapshot Version */
+            harbor_snapshot_version?: string | null;
+            /** Resolver Version */
+            resolver_version?: string | null;
+            /**
+             * Details Available
+             * @default true
+             */
+            details_available: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** UsageEventSummaryResponse */
+        UsageEventSummaryResponse: {
+            /** Items */
+            items: components["schemas"]["UsageEventSummaryItem"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+            /** Has More */
+            has_more: boolean;
+            /** Page Size */
+            page_size: number;
+        };
+        /** UsageEventsResponse */
+        UsageEventsResponse: {
+            /** Items */
+            items: components["schemas"]["UsageEventItem"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            summary?: components["schemas"]["UsageEventsSummary"] | null;
+        };
+        /** UsageEventsSummary */
+        UsageEventsSummary: {
+            /** Start Date */
+            start_date?: string | null;
+            /** End Date */
+            end_date?: string | null;
+            /** Bucket */
+            bucket: string;
+            /** Total Count */
+            total_count: number;
+            /** Success Count */
+            success_count: number;
+            /** Failure Count */
+            failure_count: number;
+            /** Charge Outcome Counts */
+            charge_outcome_counts: {
+                [key: string]: number;
+            };
+            /** Pre Settlement Credits */
+            pre_settlement_credits: number;
+            /** Settled Credits */
+            settled_credits: number;
+            /** Max Charge Items */
+            max_charge_items: components["schemas"]["UsageEventItem"][];
+            /** Buckets */
+            buckets: components["schemas"]["UsageEventsSummaryBucket"][];
+        };
+        /** UsageEventsSummaryBucket */
+        UsageEventsSummaryBucket: {
+            /**
+             * Bucket Start
+             * Format: date-time
+             */
+            bucket_start: string;
+            /** Total Count */
+            total_count: number;
+            /** Success Count */
+            success_count: number;
+            /** Failure Count */
+            failure_count: number;
+            /** Charged Count */
+            charged_count: number;
+            /** Included Count */
+            included_count: number;
+            /** Failed Not Charged Count */
+            failed_not_charged_count: number;
+            /** Failed Charged Review Count */
+            failed_charged_review_count: number;
+            /** Pre Settlement Credits */
+            pre_settlement_credits: number;
+            /** Settled Credits */
+            settled_credits: number;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+            /** Input */
+            input?: unknown;
+            /** Context */
+            ctx?: Record<string, never>;
+        };
+        /** PublicApiError */
+        PublicApiError: {
+            status?: string;
+            status_code?: number;
+            message?: string;
+            error?: string;
+            error_message?: string;
+            remaining_credits?: number | null;
+            search_id?: string | null;
+            execution_id?: string | null;
+            total?: number;
+            results?: Record<string, never>[];
+        } & {
+            [key: string]: unknown;
+        };
+        /** PublicSearchRequest */
+        PublicSearchRequest: {
+            /** @description Natural-language capability query. */
+            query: string;
+            /**
+             * @description Maximum number of ranked results to return.
+             * @default 20
+             */
+            limit: number;
+            /** @description Optional tracking and pricing-context identifier. It does not promise a cache hit. */
+            session_id?: string;
+        };
+        /** PublicToolsByIdsRequest */
+        PublicToolsByIdsRequest: {
+            /** @description Capability ids returned by Discover. */
+            tool_ids: string[];
+            /** @description Search id that returned these capabilities, when available. */
+            search_id?: string;
+            /** @description Optional tracking and pricing-context identifier. It does not promise a cache hit. */
+            session_id?: string;
+        };
+        /** PublicExecuteToolRequest */
+        PublicExecuteToolRequest: {
+            /** @description Capability id. Optional when supplied as the `tool_id` query parameter. */
+            tool_id?: string;
+            /** @description Search id that returned the selected capability. */
+            search_id?: string;
+            /** @description Optional tracking and pricing-context identifier. If omitted, the service may use the execution id. */
+            session_id?: string;
+            /** @description Capability-specific parameters validated by the selected tool schema. */
+            parameters: {
+                [key: string]: unknown;
+            };
+            /**
+             * @description Maximum response payload bytes before truncation. Use -1 for no limit.
+             * @default 20480
+             */
+            max_response_size: number;
+        };
+        /** PublicToolParameter */
+        PublicToolParameter: {
+            name: string;
+            type: string;
+            required: boolean;
+            description?: string;
+            enum?: string[];
+        };
+        /** PublicToolStats */
+        PublicToolStats: {
+            avg_execution_time_ms?: number;
+            success_rate?: number;
+        };
+        /**
+         * PublicBillingRule
+         * @description Capability billing rule used for pre-call estimation. Final settlement is reflected in usage audit and credits ledger endpoints.
+         */
+        PublicBillingRule: {
+            [key: string]: unknown;
+        };
+        /**
+         * PublicToolCategory
+         * @description Category/tag attached to a capability.
+         */
+        PublicToolCategory: {
+            slug?: string;
+            name?: string;
+            description?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * PublicCapabilityTag
+         * @description Coverage tag attached to a capability descriptor (e.g. market coverage).
+         */
+        PublicCapabilityTag: {
+            id?: string;
+            name?: string;
+            type?: string;
+            description?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * PublicToolCapability
+         * @description Standardized capability descriptor attached to a capability result (e.g. MKT.BARS.ADJUSTED with market coverage tags).
+         */
+        PublicToolCapability: {
+            id?: string;
+            tag?: components["schemas"]["PublicCapabilityTag"][];
+        } & {
+            [key: string]: unknown;
+        };
+        /** PublicCapabilityResult */
+        PublicCapabilityResult: {
+            tool_id: string;
+            name?: string;
+            tool_name?: string;
+            description?: string;
+            provider_id?: string;
+            provider_name?: string;
+            provider_description?: string;
+            category?: string;
+            /** @description Categories/tags attached to the capability. Current responses return category objects; legacy responses returned plain strings. */
+            categories?: (components["schemas"]["PublicToolCategory"] | string)[];
+            /** @description Standardized capability descriptors with coverage tags. */
+            capabilities?: components["schemas"]["PublicToolCapability"][];
+            region?: string;
+            score?: number;
+            /** @description Human-readable explanation of why this capability was recommended for the query. Returned by Discover. */
+            why_recommended?: string;
+            params?: components["schemas"]["PublicToolParameter"][];
+            examples?: {
+                [key: string]: unknown;
+            };
+            stats?: components["schemas"]["PublicToolStats"];
+            /** @description Pre-call cost estimate returned by Discover/Inspect when available. */
+            expected_cost?: string;
+            /** @description Legacy cost estimate. Prefer `expected_cost` and `billing_rule` for pre-call display. */
+            cost?: number | string;
+            billing_rule?: components["schemas"]["PublicBillingRule"];
+            calls_count?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** PublicSearchResponse */
+        PublicSearchResponse: {
+            query?: string;
+            search_id: string;
+            total: number;
+            results: components["schemas"]["PublicCapabilityResult"][];
+            elapsed_time_ms?: number;
+            remaining_credits?: number | null;
+            error_message?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** PublicExecuteResult */
+        PublicExecuteResult: {
+            data?: {
+                [key: string]: unknown;
+            };
+            message?: string;
+            truncated_content?: string;
+            /** Format: uri */
+            full_content_file_url?: string;
+            content_schema?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        /** PublicCompactBillingStatement */
+        PublicCompactBillingStatement: {
+            summary?: string;
+            list_amount_credits?: number;
+            final_amount_credits?: number;
+        } & {
+            [key: string]: unknown;
+        };
+        /** PublicExecuteToolResponse */
+        PublicExecuteToolResponse: {
+            execution_id: string;
+            result: components["schemas"]["PublicExecuteResult"];
+            success: boolean;
+            error_message?: string | null;
+            execution_time?: number;
+            elapsed_time_ms?: number;
+            billing?: components["schemas"]["PublicCompactBillingStatement"];
+            cost?: number;
+            remaining_credits?: number | null;
+        } & {
+            [key: string]: unknown;
+        };
     };
-    /** APIResponse[CreditsLedgerReadinessResponse] */
-    APIResponse_CreditsLedgerReadinessResponse_: {
-      /** Status */
-      status: string;
-      /** Message */
-      message: string;
-      /**
-       * Status Code
-       * @default 0
-       */
-      status_code: number;
-      data?: components['schemas']['CreditsLedgerReadinessResponse'] | null;
-      /** Message Key */
-      message_key?: string | null;
-    };
-    /** APIResponse[CreditsLedgerResponse] */
-    APIResponse_CreditsLedgerResponse_: {
-      /** Status */
-      status: string;
-      /** Message */
-      message: string;
-      /**
-       * Status Code
-       * @default 0
-       */
-      status_code: number;
-      data?: components['schemas']['CreditsLedgerResponse'] | null;
-      /** Message Key */
-      message_key?: string | null;
-    };
-    /** APIResponse[SettlementHistoryResponse] */
-    APIResponse_SettlementHistoryResponse_: {
-      /** Status */
-      status: string;
-      /** Message */
-      message: string;
-      /**
-       * Status Code
-       * @default 0
-       */
-      status_code: number;
-      data?: components['schemas']['SettlementHistoryResponse'] | null;
-      /** Message Key */
-      message_key?: string | null;
-    };
-    /** APIResponse[TokenVerificationResponse] */
-    APIResponse_TokenVerificationResponse_: {
-      /** Status */
-      status: string;
-      /** Message */
-      message: string;
-      /**
-       * Status Code
-       * @default 0
-       */
-      status_code: number;
-      data?: components['schemas']['TokenVerificationResponse'] | null;
-      /** Message Key */
-      message_key?: string | null;
-    };
-    /** APIResponse[UsageCreditsSpentResponse] */
-    APIResponse_UsageCreditsSpentResponse_: {
-      /** Status */
-      status: string;
-      /** Message */
-      message: string;
-      /**
-       * Status Code
-       * @default 0
-       */
-      status_code: number;
-      data?: components['schemas']['UsageCreditsSpentResponse'] | null;
-      /** Message Key */
-      message_key?: string | null;
-    };
-    /** APIResponse[UsageEventItem] */
-    APIResponse_UsageEventItem_: {
-      /** Status */
-      status: string;
-      /** Message */
-      message: string;
-      /**
-       * Status Code
-       * @default 0
-       */
-      status_code: number;
-      data?: components['schemas']['UsageEventItem'] | null;
-      /** Message Key */
-      message_key?: string | null;
-    };
-    /** APIResponse[UsageEventSummaryResponse] */
-    APIResponse_UsageEventSummaryResponse_: {
-      /** Status */
-      status: string;
-      /** Message */
-      message: string;
-      /**
-       * Status Code
-       * @default 0
-       */
-      status_code: number;
-      data?: components['schemas']['UsageEventSummaryResponse'] | null;
-      /** Message Key */
-      message_key?: string | null;
-    };
-    /** APIResponse[UsageEventsResponse] */
-    APIResponse_UsageEventsResponse_: {
-      /** Status */
-      status: string;
-      /** Message */
-      message: string;
-      /**
-       * Status Code
-       * @default 0
-       */
-      status_code: number;
-      data?: components['schemas']['UsageEventsResponse'] | null;
-      /** Message Key */
-      message_key?: string | null;
-    };
-    /** APIResponse[dict] */
-    APIResponse_dict_: {
-      /** Status */
-      status: string;
-      /** Message */
-      message: string;
-      /**
-       * Status Code
-       * @default 0
-       */
-      status_code: number;
-      /** Data */
-      data?: {
-        [key: string]: unknown;
-      } | null;
-      /** Message Key */
-      message_key?: string | null;
-    };
-    /** CreditsLedgerItem */
-    CreditsLedgerItem: {
-      /** Id */
-      id: string;
-      /** Entry Type */
-      entry_type: string;
-      /** Amount Credits */
-      amount_credits: number;
-      /** Source System */
-      source_system: string;
-      /** Source Ref Type */
-      source_ref_type?: string | null;
-      /** Source Ref Id */
-      source_ref_id?: string | null;
-      /** Execution Id */
-      execution_id?: string | null;
-      /** Pre Settlement Bill */
-      pre_settlement_bill?: {
-        [key: string]: unknown;
-      } | null;
-      /** Settlement Result */
-      settlement_result?: {
-        [key: string]: unknown;
-      } | null;
-      /** Balance Before */
-      balance_before?: {
-        [key: string]: unknown;
-      } | null;
-      /** Balance After */
-      balance_after?: {
-        [key: string]: unknown;
-      } | null;
-      /** Ledger Metadata */
-      ledger_metadata?: {
-        [key: string]: unknown;
-      } | null;
-      /** Description */
-      description?: string | null;
-      /**
-       * Created At
-       * Format: date-time
-       */
-      created_at: string;
-    };
-    /** CreditsLedgerReadinessEntity */
-    CreditsLedgerReadinessEntity: {
-      /** Entity Type */
-      entity_type: string;
-      /** Legacy Count */
-      legacy_count: number;
-      /** Legacy Amount Credits */
-      legacy_amount_credits: number;
-      /** Ledger Count */
-      ledger_count: number;
-      /** Ledger Amount Credits */
-      ledger_amount_credits: number;
-      /** Missing Count */
-      missing_count: number;
-      /** Extra Count */
-      extra_count: number;
-      /** Amount Delta Credits */
-      amount_delta_credits: number;
-      /** Ready */
-      ready: boolean;
-    };
-    /** CreditsLedgerReadinessResponse */
-    CreditsLedgerReadinessResponse: {
-      /**
-       * Checked At
-       * Format: date-time
-       */
-      checked_at: string;
-      /** Start Date */
-      start_date?: string | null;
-      /** End Date */
-      end_date?: string | null;
-      /** Scope */
-      scope: string;
-      /** Recommended Read Mode */
-      recommended_read_mode: string;
-      /** Ready */
-      ready: boolean;
-      /** Legacy Total Count */
-      legacy_total_count: number;
-      /** Legacy Total Amount Credits */
-      legacy_total_amount_credits: number;
-      /** Ledger Total Count */
-      ledger_total_count: number;
-      /** Ledger Total Amount Credits */
-      ledger_total_amount_credits: number;
-      /** Entities */
-      entities: components['schemas']['CreditsLedgerReadinessEntity'][];
-    };
-    /** CreditsLedgerResponse */
-    CreditsLedgerResponse: {
-      /** Items */
-      items: components['schemas']['CreditsLedgerItem'][];
-      /** Total */
-      total: number;
-      /** Page */
-      page: number;
-      /** Page Size */
-      page_size: number;
-      summary?: components['schemas']['CreditsLedgerSummary'] | null;
-    };
-    /** CreditsLedgerSummary */
-    CreditsLedgerSummary: {
-      /** Start Date */
-      start_date?: string | null;
-      /** End Date */
-      end_date?: string | null;
-      /** Bucket */
-      bucket: string;
-      /** Total Entries */
-      total_entries: number;
-      /** Consume Count */
-      consume_count: number;
-      /** Grant Count */
-      grant_count: number;
-      /** Consumed Credits */
-      consumed_credits: number;
-      /** Granted Credits */
-      granted_credits: number;
-      /** Net Amount Credits */
-      net_amount_credits: number;
-      /** Max Amount Items */
-      max_amount_items: components['schemas']['CreditsLedgerItem'][];
-      /** Buckets */
-      buckets: components['schemas']['CreditsLedgerSummaryBucket'][];
-    };
-    /** CreditsLedgerSummaryBucket */
-    CreditsLedgerSummaryBucket: {
-      /**
-       * Bucket Start
-       * Format: date-time
-       */
-      bucket_start: string;
-      /** Entry Count */
-      entry_count: number;
-      /** Consume Count */
-      consume_count: number;
-      /** Grant Count */
-      grant_count: number;
-      /** Consumed Credits */
-      consumed_credits: number;
-      /** Granted Credits */
-      granted_credits: number;
-      /** Net Amount Credits */
-      net_amount_credits: number;
-    };
-    /** HTTPValidationError */
-    HTTPValidationError: {
-      /** Detail */
-      detail?: components['schemas']['ValidationError'][];
-    };
-    /** SettlementHistoryItem */
-    SettlementHistoryItem: {
-      /** Id */
-      id: string;
-      /** Source */
-      source: string;
-      /** Entry Type */
-      entry_type: string;
-      /** Amount Credits */
-      amount_credits: number;
-      /** Source System */
-      source_system: string;
-      /** Source Ref Type */
-      source_ref_type?: string | null;
-      /** Source Ref Id */
-      source_ref_id?: string | null;
-      /** Execution Id */
-      execution_id?: string | null;
-      /** Description */
-      description?: string | null;
-      /** Display Target */
-      display_target?: string | null;
-      /** Billing Summary */
-      billing_summary?: string | null;
-      /** Billing Snapshot Status */
-      billing_snapshot_status?: string | null;
-      /**
-       * Details Available
-       * @default true
-       */
-      details_available: boolean;
-      /**
-       * Created At
-       * Format: date-time
-       */
-      created_at: string;
-    };
-    /** SettlementHistoryResponse */
-    SettlementHistoryResponse: {
-      /** Items */
-      items: components['schemas']['SettlementHistoryItem'][];
-      /** Next Cursor */
-      next_cursor?: string | null;
-      /** Has More */
-      has_more: boolean;
-      /** Page Size */
-      page_size: number;
-    };
-    /** TokenVerificationResponse */
-    TokenVerificationResponse: {
-      /** Is Valid */
-      is_valid: boolean;
-      /** Is Expired */
-      is_expired: boolean;
-      /** Payload */
-      payload?: {
-        [key: string]: unknown;
-      } | null;
-    };
-    /** UsageCreditsSpentResponse */
-    UsageCreditsSpentResponse: {
-      /** Total Credits */
-      total_credits: number;
-      /** Start Date */
-      start_date?: string | null;
-      /** End Date */
-      end_date?: string | null;
-    };
-    /** UsageEventItem */
-    UsageEventItem: {
-      /** Id */
-      id: string;
-      /** Event Type */
-      event_type: string;
-      /** Source System */
-      source_system: string;
-      /** Source Ref Type */
-      source_ref_type?: string | null;
-      /** Source Ref Id */
-      source_ref_id?: string | null;
-      /** Session Id */
-      session_id?: string | null;
-      /** Search Id */
-      search_id?: string | null;
-      /** Execution Id */
-      execution_id?: string | null;
-      /** Tool Id */
-      tool_id?: string | null;
-      /** Model */
-      model?: string | null;
-      /** Query */
-      query?: string | null;
-      /** Success */
-      success: boolean;
-      /** Charge Outcome */
-      charge_outcome: string;
-      /** Error Message */
-      error_message?: string | null;
-      /** Duration Ms */
-      duration_ms?: number | null;
-      /** Request Payload */
-      request_payload?: {
-        [key: string]: unknown;
-      } | null;
-      /** Response Payload Summary */
-      response_payload_summary?: {
-        [key: string]: unknown;
-      } | null;
-      /** Execution Outcome */
-      execution_outcome?: {
-        [key: string]: unknown;
-      } | null;
-      /** Outcome Schema Version */
-      outcome_schema_version?: string | null;
-      /** Transport Success */
-      transport_success?: boolean | null;
-      /** Provider Success */
-      provider_success?: boolean | null;
-      /** Result Valid */
-      result_valid?: boolean | null;
-      /** Billable Success */
-      billable_success?: boolean | null;
-      /** Outcome */
-      outcome?: string | null;
-      /** Outcome Status */
-      outcome_status?: string | null;
-      /** Reason Code */
-      reason_code?: string | null;
-      /** Outcome Message */
-      outcome_message?: string | null;
-      /** Provider Status Code */
-      provider_status_code?: string | null;
-      /** Provider Status Message */
-      provider_status_message?: string | null;
-      /** Http Status Code */
-      http_status_code?: number | null;
-      /** Valid Result Count */
-      valid_result_count?: number | null;
-      /** Raw Result Count */
-      raw_result_count?: number | null;
-      /** Chargeable Quantity */
-      chargeable_quantity?: number | null;
-      /** Retryable */
-      retryable?: boolean | null;
-      /** Display Severity */
-      display_severity?: string | null;
-      /** Billing Snapshot Status */
-      billing_snapshot_status?: string | null;
-      /** Billing Rule Snapshot */
-      billing_rule_snapshot?: {
-        [key: string]: unknown;
-      } | null;
-      /** Pre Settlement Bill */
-      pre_settlement_bill?: {
-        [key: string]: unknown;
-      } | null;
-      /** Settlement Result */
-      settlement_result?: {
-        [key: string]: unknown;
-      } | null;
-      /** Requested Amount Credits */
-      requested_amount_credits?: number | null;
-      /** Actual Amount Credits */
-      actual_amount_credits?: number | null;
-      /** Credits Ledger Entry Id */
-      credits_ledger_entry_id?: string | null;
-      /** Display Target */
-      display_target?: string | null;
-      /** Billing Unit */
-      billing_unit?: string | null;
-      /** Unit Price Credits */
-      unit_price_credits?: number | null;
-      /** Quantity */
-      quantity?: number | null;
-      /** List Amount Credits */
-      list_amount_credits?: number | null;
-      /** Minimum Charge Credits */
-      minimum_charge_credits?: number | null;
-      /** Pricing Profile Id */
-      pricing_profile_id?: string | null;
-      /** Billing Summary */
-      billing_summary?: string | null;
-      /** Pre Settlement Amount Credits */
-      pre_settlement_amount_credits?: number | null;
-      /** Settled Amount Credits */
-      settled_amount_credits?: number | null;
-      /** Pricing Context Id */
-      pricing_context_id?: string | null;
-      /** Harbor Snapshot Id */
-      harbor_snapshot_id?: string | null;
-      /** Harbor Snapshot Version */
-      harbor_snapshot_version?: string | null;
-      /** Resolver Version */
-      resolver_version?: string | null;
-      /**
-       * Created At
-       * Format: date-time
-       */
-      created_at: string;
-    };
-    /** UsageEventSummaryItem */
-    UsageEventSummaryItem: {
-      /** Id */
-      id: string;
-      /** Event Type */
-      event_type: string;
-      /** Source System */
-      source_system: string;
-      /** Source Ref Type */
-      source_ref_type?: string | null;
-      /** Source Ref Id */
-      source_ref_id?: string | null;
-      /** Session Id */
-      session_id?: string | null;
-      /** Search Id */
-      search_id?: string | null;
-      /** Execution Id */
-      execution_id?: string | null;
-      /** Tool Id */
-      tool_id?: string | null;
-      /** Model */
-      model?: string | null;
-      /** Query */
-      query?: string | null;
-      /** Success */
-      success: boolean;
-      /** Charge Outcome */
-      charge_outcome: string;
-      /** Error Message */
-      error_message?: string | null;
-      /** Duration Ms */
-      duration_ms?: number | null;
-      /** Transport Success */
-      transport_success?: boolean | null;
-      /** Provider Success */
-      provider_success?: boolean | null;
-      /** Result Valid */
-      result_valid?: boolean | null;
-      /** Billable Success */
-      billable_success?: boolean | null;
-      /** Outcome */
-      outcome?: string | null;
-      /** Outcome Status */
-      outcome_status?: string | null;
-      /** Reason Code */
-      reason_code?: string | null;
-      /** Outcome Message */
-      outcome_message?: string | null;
-      /** Provider Status Code */
-      provider_status_code?: string | null;
-      /** Provider Status Message */
-      provider_status_message?: string | null;
-      /** Http Status Code */
-      http_status_code?: number | null;
-      /** Valid Result Count */
-      valid_result_count?: number | null;
-      /** Raw Result Count */
-      raw_result_count?: number | null;
-      /** Chargeable Quantity */
-      chargeable_quantity?: number | null;
-      /** Retryable */
-      retryable?: boolean | null;
-      /** Display Severity */
-      display_severity?: string | null;
-      /** Billing Snapshot Status */
-      billing_snapshot_status?: string | null;
-      /** Requested Amount Credits */
-      requested_amount_credits?: number | null;
-      /** Actual Amount Credits */
-      actual_amount_credits?: number | null;
-      /** Credits Ledger Entry Id */
-      credits_ledger_entry_id?: string | null;
-      /** Display Target */
-      display_target?: string | null;
-      /** Billing Unit */
-      billing_unit?: string | null;
-      /** Unit Price Credits */
-      unit_price_credits?: number | null;
-      /** Quantity */
-      quantity?: number | null;
-      /** List Amount Credits */
-      list_amount_credits?: number | null;
-      /** Minimum Charge Credits */
-      minimum_charge_credits?: number | null;
-      /** Pricing Profile Id */
-      pricing_profile_id?: string | null;
-      /** Billing Summary */
-      billing_summary?: string | null;
-      /** Pre Settlement Amount Credits */
-      pre_settlement_amount_credits?: number | null;
-      /** Settled Amount Credits */
-      settled_amount_credits?: number | null;
-      /** Pricing Context Id */
-      pricing_context_id?: string | null;
-      /** Harbor Snapshot Id */
-      harbor_snapshot_id?: string | null;
-      /** Harbor Snapshot Version */
-      harbor_snapshot_version?: string | null;
-      /** Resolver Version */
-      resolver_version?: string | null;
-      /**
-       * Details Available
-       * @default true
-       */
-      details_available: boolean;
-      /**
-       * Created At
-       * Format: date-time
-       */
-      created_at: string;
-    };
-    /** UsageEventSummaryResponse */
-    UsageEventSummaryResponse: {
-      /** Items */
-      items: components['schemas']['UsageEventSummaryItem'][];
-      /** Next Cursor */
-      next_cursor?: string | null;
-      /** Has More */
-      has_more: boolean;
-      /** Page Size */
-      page_size: number;
-    };
-    /** UsageEventsResponse */
-    UsageEventsResponse: {
-      /** Items */
-      items: components['schemas']['UsageEventItem'][];
-      /** Total */
-      total: number;
-      /** Page */
-      page: number;
-      /** Page Size */
-      page_size: number;
-      summary?: components['schemas']['UsageEventsSummary'] | null;
-    };
-    /** UsageEventsSummary */
-    UsageEventsSummary: {
-      /** Start Date */
-      start_date?: string | null;
-      /** End Date */
-      end_date?: string | null;
-      /** Bucket */
-      bucket: string;
-      /** Total Count */
-      total_count: number;
-      /** Success Count */
-      success_count: number;
-      /** Failure Count */
-      failure_count: number;
-      /** Charge Outcome Counts */
-      charge_outcome_counts: {
-        [key: string]: number;
-      };
-      /** Pre Settlement Credits */
-      pre_settlement_credits: number;
-      /** Settled Credits */
-      settled_credits: number;
-      /** Max Charge Items */
-      max_charge_items: components['schemas']['UsageEventItem'][];
-      /** Buckets */
-      buckets: components['schemas']['UsageEventsSummaryBucket'][];
-    };
-    /** UsageEventsSummaryBucket */
-    UsageEventsSummaryBucket: {
-      /**
-       * Bucket Start
-       * Format: date-time
-       */
-      bucket_start: string;
-      /** Total Count */
-      total_count: number;
-      /** Success Count */
-      success_count: number;
-      /** Failure Count */
-      failure_count: number;
-      /** Charged Count */
-      charged_count: number;
-      /** Included Count */
-      included_count: number;
-      /** Failed Not Charged Count */
-      failed_not_charged_count: number;
-      /** Failed Charged Review Count */
-      failed_charged_review_count: number;
-      /** Pre Settlement Credits */
-      pre_settlement_credits: number;
-      /** Settled Credits */
-      settled_credits: number;
-    };
-    /** ValidationError */
-    ValidationError: {
-      /** Location */
-      loc: (string | number)[];
-      /** Message */
-      msg: string;
-      /** Error Type */
-      type: string;
-      /** Input */
-      input?: unknown;
-      /** Context */
-      ctx?: Record<string, never>;
-    };
-    /** PublicApiError */
-    PublicApiError: {
-      status?: string;
-      status_code?: number;
-      message?: string;
-      error?: string;
-      error_message?: string;
-      remaining_credits?: number | null;
-      search_id?: string | null;
-      execution_id?: string | null;
-      total?: number;
-      results?: Record<string, never>[];
-    } & {
-      [key: string]: unknown;
-    };
-    /** PublicSearchRequest */
-    PublicSearchRequest: {
-      /** @description Natural-language capability query. */
-      query: string;
-      /**
-       * @description Maximum number of ranked results to return.
-       * @default 20
-       */
-      limit: number;
-      /** @description Optional tracking and pricing-context identifier. It does not promise a cache hit. */
-      session_id?: string;
-    };
-    /** PublicToolsByIdsRequest */
-    PublicToolsByIdsRequest: {
-      /** @description Capability ids returned by Discover. */
-      tool_ids: string[];
-      /** @description Search id that returned these capabilities, when available. */
-      search_id?: string;
-      /** @description Optional tracking and pricing-context identifier. It does not promise a cache hit. */
-      session_id?: string;
-    };
-    /** PublicExecuteToolRequest */
-    PublicExecuteToolRequest: {
-      /** @description Capability id. Optional when supplied as the `tool_id` query parameter. */
-      tool_id?: string;
-      /** @description Search id that returned the selected capability. */
-      search_id?: string;
-      /** @description Optional tracking and pricing-context identifier. If omitted, the service may use the execution id. */
-      session_id?: string;
-      /** @description Capability-specific parameters validated by the selected tool schema. */
-      parameters: {
-        [key: string]: unknown;
-      };
-      /**
-       * @description Maximum response payload bytes before truncation. Use -1 for no limit.
-       * @default 20480
-       */
-      max_response_size: number;
-    };
-    /** PublicToolParameter */
-    PublicToolParameter: {
-      name: string;
-      type: string;
-      required: boolean;
-      description?: string;
-      enum?: string[];
-    };
-    /** PublicToolStats */
-    PublicToolStats: {
-      avg_execution_time_ms?: number;
-      success_rate?: number;
-    };
-    /**
-     * PublicBillingRule
-     * @description Capability billing rule used for pre-call estimation. Final settlement is reflected in usage audit and credits ledger endpoints.
-     */
-    PublicBillingRule: {
-      [key: string]: unknown;
-    };
-    /**
-     * PublicToolCategory
-     * @description Category/tag attached to a capability.
-     */
-    PublicToolCategory: {
-      slug?: string;
-      name?: string;
-      description?: string;
-    } & {
-      [key: string]: unknown;
-    };
-    /**
-     * PublicCapabilityTag
-     * @description Coverage tag attached to a capability descriptor (e.g. market coverage).
-     */
-    PublicCapabilityTag: {
-      id?: string;
-      name?: string;
-      type?: string;
-      description?: string;
-    } & {
-      [key: string]: unknown;
-    };
-    /**
-     * PublicToolCapability
-     * @description Standardized capability descriptor attached to a capability result (e.g. MKT.BARS.ADJUSTED with market coverage tags).
-     */
-    PublicToolCapability: {
-      id?: string;
-      tag?: components['schemas']['PublicCapabilityTag'][];
-    } & {
-      [key: string]: unknown;
-    };
-    /** PublicCapabilityResult */
-    PublicCapabilityResult: {
-      tool_id: string;
-      name?: string;
-      tool_name?: string;
-      description?: string;
-      provider_id?: string;
-      provider_name?: string;
-      provider_description?: string;
-      category?: string;
-      /** @description Categories/tags attached to the capability. Current responses return category objects; legacy responses returned plain strings. */
-      categories?: (components['schemas']['PublicToolCategory'] | string)[];
-      /** @description Standardized capability descriptors with coverage tags. */
-      capabilities?: components['schemas']['PublicToolCapability'][];
-      region?: string;
-      score?: number;
-      /** @description Human-readable explanation of why this capability was recommended for the query. Returned by Discover. */
-      why_recommended?: string;
-      params?: components['schemas']['PublicToolParameter'][];
-      examples?: {
-        [key: string]: unknown;
-      };
-      stats?: components['schemas']['PublicToolStats'];
-      /** @description Pre-call cost estimate returned by Discover/Inspect when available. */
-      expected_cost?: string;
-      /** @description Legacy cost estimate. Prefer `expected_cost` and `billing_rule` for pre-call display. */
-      cost?: number | string;
-      billing_rule?: components['schemas']['PublicBillingRule'];
-      calls_count?: string;
-    } & {
-      [key: string]: unknown;
-    };
-    /** PublicSearchResponse */
-    PublicSearchResponse: {
-      query?: string;
-      search_id: string;
-      total: number;
-      results: components['schemas']['PublicCapabilityResult'][];
-      elapsed_time_ms?: number;
-      remaining_credits?: number | null;
-      error_message?: string | null;
-    } & {
-      [key: string]: unknown;
-    };
-    /** PublicExecuteResult */
-    PublicExecuteResult: {
-      data?: {
-        [key: string]: unknown;
-      };
-      message?: string;
-      truncated_content?: string;
-      /** Format: uri */
-      full_content_file_url?: string;
-      content_schema?: {
-        [key: string]: unknown;
-      };
-    } & {
-      [key: string]: unknown;
-    };
-    /** PublicCompactBillingStatement */
-    PublicCompactBillingStatement: {
-      summary?: string;
-      list_amount_credits?: number;
-      final_amount_credits?: number;
-    } & {
-      [key: string]: unknown;
-    };
-    /** PublicExecuteToolResponse */
-    PublicExecuteToolResponse: {
-      execution_id: string;
-      result: components['schemas']['PublicExecuteResult'];
-      success: boolean;
-      error_message?: string | null;
-      execution_time?: number;
-      elapsed_time_ms?: number;
-      billing?: components['schemas']['PublicCompactBillingStatement'];
-      cost?: number;
-      remaining_credits?: number | null;
-    } & {
-      [key: string]: unknown;
-    };
-  };
-  responses: never;
-  parameters: never;
-  requestBodies: never;
-  headers: never;
-  pathItems: never;
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  get_account_settlement_history_api_v1_auth_account_settlement_history_get: {
-    parameters: {
-      query?: {
-        /** @description 开始日期 (YYYY-MM-DD) */
-        start_date?: string | null;
-        /** @description 结束日期 (YYYY-MM-DD) */
-        end_date?: string | null;
-        /** @description 账本范围 */
-        scope?: string;
-        /** @description 下一页游标 */
-        cursor?: string | null;
-        /** @description 每页数量 */
-        page_size?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
+    get_account_settlement_history_api_v1_auth_account_settlement_history_get: {
+        parameters: {
+            query?: {
+                /** @description 开始日期 (YYYY-MM-DD) */
+                start_date?: string | null;
+                /** @description 结束日期 (YYYY-MM-DD) */
+                end_date?: string | null;
+                /** @description 账本范围 */
+                scope?: string;
+                /** @description 下一页游标 */
+                cursor?: string | null;
+                /** @description 每页数量 */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_SettlementHistoryResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    get_current_user_credits_api_v1_auth_credits_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['APIResponse_SettlementHistoryResponse_'];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_dict_"];
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
     };
-  };
-  get_current_user_credits_api_v1_auth_credits_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    get_credits_ledger_api_v1_auth_credits_ledger_get: {
+        parameters: {
+            query?: {
+                /**
+                 * @description 开始日期 (YYYY-MM-DD)
+                 * @example 2026-05-01
+                 */
+                start_date?: string | null;
+                /**
+                 * @description 结束日期 (YYYY-MM-DD)
+                 * @example 2026-05-16
+                 */
+                end_date?: string | null;
+                /**
+                 * @description 账本事件类型
+                 * @example consume_tool_execute
+                 */
+                entry_type?: string | null;
+                /**
+                 * @description 预定义账本范围，例如 account_history
+                 * @example account_history
+                 */
+                scope?: string | null;
+                /**
+                 * @description 页码
+                 * @example 1
+                 */
+                page?: number;
+                /**
+                 * @description 每页数量
+                 * @example 50
+                 */
+                page_size?: number;
+                /** @example 1 */
+                min_credits?: number | null;
+                /** @example 25 */
+                max_credits?: number | null;
+                /** @example consume */
+                direction?: string;
+                /** @example day */
+                bucket?: string | null;
+                /** @example true */
+                summary?: boolean;
+                /** @example 5 */
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_CreditsLedgerResponse_"];
+                };
+            };
+            /** @description Invalid ledger query */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_dict_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    get_credits_ledger_readiness_api_v1_auth_credits_ledger_readiness_get: {
+        parameters: {
+            query?: {
+                /** @description 开始日期 (YYYY-MM-DD) */
+                start_date?: string | null;
+                /** @description 结束日期 (YYYY-MM-DD) */
+                end_date?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['APIResponse_dict_'];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_CreditsLedgerReadinessResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-      };
     };
-  };
-  get_credits_ledger_api_v1_auth_credits_ledger_get: {
-    parameters: {
-      query?: {
-        /**
-         * @description 开始日期 (YYYY-MM-DD)
-         * @example 2026-05-01
-         */
-        start_date?: string | null;
-        /**
-         * @description 结束日期 (YYYY-MM-DD)
-         * @example 2026-05-16
-         */
-        end_date?: string | null;
-        /**
-         * @description 账本事件类型
-         * @example consume_tool_execute
-         */
-        entry_type?: string | null;
-        /**
-         * @description 预定义账本范围，例如 account_history
-         * @example account_history
-         */
-        scope?: string | null;
-        /**
-         * @description 页码
-         * @example 1
-         */
-        page?: number;
-        /**
-         * @description 每页数量
-         * @example 50
-         */
-        page_size?: number;
-        /** @example 1 */
-        min_credits?: number | null;
-        /** @example 25 */
-        max_credits?: number | null;
-        /** @example consume */
-        direction?: string;
-        /** @example day */
-        bucket?: string | null;
-        /** @example true */
-        summary?: boolean;
-        /** @example 5 */
-        limit?: number | null;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
+    export_credits_ledger_api_v1_auth_credits_ledger_export_get: {
+        parameters: {
+            query?: {
+                /** @description 开始日期 (YYYY-MM-DD) */
+                start_date?: string | null;
+                /** @description 结束日期 (YYYY-MM-DD) */
+                end_date?: string | null;
+                /** @description 账本导出范围 */
+                scope?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CSV export. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    get_credits_ledger_entry_api_v1_auth_credits_ledger__entry_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['APIResponse_CreditsLedgerResponse_'];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_CreditsLedgerItem_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-      };
-      /** @description Invalid ledger query */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['APIResponse_dict_'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
     };
-  };
-  get_credits_ledger_readiness_api_v1_auth_credits_ledger_readiness_get: {
-    parameters: {
-      query?: {
-        /** @description 开始日期 (YYYY-MM-DD) */
-        start_date?: string | null;
-        /** @description 结束日期 (YYYY-MM-DD) */
-        end_date?: string | null;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
+    get_usage_credits_spent_api_v1_auth_usage_credits_spent_get: {
+        parameters: {
+            query?: {
+                /** @description 开始日期 (YYYY-MM-DD) */
+                start_date?: string | null;
+                /** @description 结束日期 (YYYY-MM-DD) */
+                end_date?: string | null;
+                /** @description 事件分组过滤 */
+                kind?: string | null;
+                /** @description 收费结果过滤 */
+                charge_outcome?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_UsageCreditsSpentResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    get_usage_history_v2_api_v1_auth_usage_history_v2_get: {
+        parameters: {
+            query?: {
+                /**
+                 * @description 开始日期 (YYYY-MM-DD)
+                 * @example 2026-05-01
+                 */
+                start_date?: string | null;
+                /**
+                 * @description 结束日期 (YYYY-MM-DD)
+                 * @example 2026-05-16
+                 */
+                end_date?: string | null;
+                /**
+                 * @description 事件类型过滤
+                 * @example tool_execute
+                 */
+                event_type?: string | null;
+                /**
+                 * @description 事件分组过滤
+                 * @example call
+                 */
+                kind?: string | null;
+                /**
+                 * @description 是否成功
+                 * @example true
+                 */
+                success?: boolean | null;
+                /**
+                 * @description 是否可计费
+                 * @example true
+                 */
+                billable_success?: boolean | null;
+                /**
+                 * @description 执行 outcome 过滤
+                 * @example completed
+                 */
+                outcome?: string | null;
+                /**
+                 * @description 执行 reason_code 过滤
+                 * @example provider_success
+                 */
+                reason_code?: string | null;
+                /**
+                 * @description 是否存在 execution_outcome
+                 * @example true
+                 */
+                has_execution_outcome?: boolean | null;
+                /**
+                 * @description 收费结果过滤
+                 * @example charged
+                 */
+                charge_outcome?: string | null;
+                /**
+                 * @description 异常类型过滤
+                 * @example missing_ledger_link
+                 */
+                anomaly?: string | null;
+                /**
+                 * @description search_id 聚焦过滤
+                 * @example srch_01HZX9QK7J3M9T
+                 */
+                search_id?: string | null;
+                /**
+                 * @description execution_id 聚焦过滤
+                 * @example exec_01HZX9R2R4S2E
+                 */
+                execution_id?: string | null;
+                /**
+                 * @description 页码
+                 * @example 1
+                 */
+                page?: number;
+                /**
+                 * @description 每页数量
+                 * @example 50
+                 */
+                page_size?: number;
+                /** @description 是否在列表中返回完整审计详情字段 */
+                include_details?: boolean;
+                /** @example 1 */
+                min_credits?: number | null;
+                /** @example 25 */
+                max_credits?: number | null;
+                /** @example day */
+                bucket?: string | null;
+                /** @example true */
+                summary?: boolean;
+                /** @example 5 */
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['APIResponse_CreditsLedgerReadinessResponse_'];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_UsageEventsResponse_"];
+                };
+            };
+            /** @description Invalid audit query */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_dict_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
     };
-  };
-  export_credits_ledger_api_v1_auth_credits_ledger_export_get: {
-    parameters: {
-      query?: {
-        /** @description 开始日期 (YYYY-MM-DD) */
-        start_date?: string | null;
-        /** @description 结束日期 (YYYY-MM-DD) */
-        end_date?: string | null;
-        /** @description 账本导出范围 */
-        scope?: string | null;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
+    export_usage_history_v2_api_v1_auth_usage_history_v2_export_get: {
+        parameters: {
+            query?: {
+                /** @description 开始日期 (YYYY-MM-DD) */
+                start_date?: string | null;
+                /** @description 结束日期 (YYYY-MM-DD) */
+                end_date?: string | null;
+                /** @description 事件类型过滤 */
+                event_type?: string | null;
+                /** @description 事件分组过滤 */
+                kind?: string | null;
+                /** @description 是否成功 */
+                success?: boolean | null;
+                /** @description 是否可计费 */
+                billable_success?: boolean | null;
+                /** @description 执行 outcome 过滤 */
+                outcome?: string | null;
+                /** @description 执行 reason_code 过滤 */
+                reason_code?: string | null;
+                /** @description 是否存在 execution_outcome */
+                has_execution_outcome?: boolean | null;
+                /** @description 收费结果过滤 */
+                charge_outcome?: string | null;
+                /** @description 异常类型过滤 */
+                anomaly?: string | null;
+                /** @description search_id 聚焦过滤 */
+                search_id?: string | null;
+                /** @description execution_id 聚焦过滤 */
+                execution_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CSV export. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description CSV export. */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    get_usage_history_v2_summary_api_v1_auth_usage_history_v2_summary_get: {
+        parameters: {
+            query?: {
+                /** @description 开始日期 (YYYY-MM-DD) */
+                start_date?: string | null;
+                /** @description 结束日期 (YYYY-MM-DD) */
+                end_date?: string | null;
+                /** @description 事件类型过滤 */
+                event_type?: string | null;
+                /** @description 事件分组过滤 */
+                kind?: string | null;
+                /** @description 是否成功 */
+                success?: boolean | null;
+                /** @description 是否可计费 */
+                billable_success?: boolean | null;
+                /** @description 执行 outcome 过滤 */
+                outcome?: string | null;
+                /** @description 执行 reason_code 过滤 */
+                reason_code?: string | null;
+                /** @description 是否存在 execution_outcome */
+                has_execution_outcome?: boolean | null;
+                /** @description 收费结果过滤 */
+                charge_outcome?: string | null;
+                /** @description 异常类型过滤 */
+                anomaly?: string | null;
+                /** @description search_id 聚焦过滤 */
+                search_id?: string | null;
+                /** @description execution_id 聚焦过滤 */
+                execution_id?: string | null;
+                /** @description 下一页游标 */
+                cursor?: string | null;
+                /** @description 每页数量 */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'text/csv': string;
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_UsageEventSummaryResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-      };
     };
-  };
-  get_credits_ledger_entry_api_v1_auth_credits_ledger__entry_id__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        entry_id: string;
-      };
-      cookie?: never;
+    get_usage_history_v2_entry_api_v1_auth_usage_history_v2__event_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_UsageEventItem_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    verify_token_api_v1_auth_verify_token_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['APIResponse_CreditsLedgerItem_'];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_TokenVerificationResponse_"];
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
     };
-  };
-  get_usage_credits_spent_api_v1_auth_usage_credits_spent_get: {
-    parameters: {
-      query?: {
-        /** @description 开始日期 (YYYY-MM-DD) */
-        start_date?: string | null;
-        /** @description 结束日期 (YYYY-MM-DD) */
-        end_date?: string | null;
-        /** @description 事件分组过滤 */
-        kind?: string | null;
-        /** @description 收费结果过滤 */
-        charge_outcome?: string | null;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
+    get_current_user_credits_api_v1_credits_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_dict_"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    get_providers_api_v1_providers_get: {
+        parameters: {
+            query?: {
+                categories?: string | null;
+                skip?: number;
+                limit?: number;
+                query?: string | null;
+                sort_by?: string | null;
+                sort_order?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['APIResponse_UsageCreditsSpentResponse_'];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
     };
-  };
-  get_usage_history_v2_api_v1_auth_usage_history_v2_get: {
-    parameters: {
-      query?: {
-        /**
-         * @description 开始日期 (YYYY-MM-DD)
-         * @example 2026-05-01
-         */
-        start_date?: string | null;
-        /**
-         * @description 结束日期 (YYYY-MM-DD)
-         * @example 2026-05-16
-         */
-        end_date?: string | null;
-        /**
-         * @description 事件类型过滤
-         * @example tool_execute
-         */
-        event_type?: string | null;
-        /**
-         * @description 事件分组过滤
-         * @example call
-         */
-        kind?: string | null;
-        /**
-         * @description 是否成功
-         * @example true
-         */
-        success?: boolean | null;
-        /**
-         * @description 是否可计费
-         * @example true
-         */
-        billable_success?: boolean | null;
-        /**
-         * @description 执行 outcome 过滤
-         * @example completed
-         */
-        outcome?: string | null;
-        /**
-         * @description 执行 reason_code 过滤
-         * @example provider_success
-         */
-        reason_code?: string | null;
-        /**
-         * @description 是否存在 execution_outcome
-         * @example true
-         */
-        has_execution_outcome?: boolean | null;
-        /**
-         * @description 收费结果过滤
-         * @example charged
-         */
-        charge_outcome?: string | null;
-        /**
-         * @description 异常类型过滤
-         * @example missing_ledger_link
-         */
-        anomaly?: string | null;
-        /**
-         * @description search_id 聚焦过滤
-         * @example srch_01HZX9QK7J3M9T
-         */
-        search_id?: string | null;
-        /**
-         * @description execution_id 聚焦过滤
-         * @example exec_01HZX9R2R4S2E
-         */
-        execution_id?: string | null;
-        /**
-         * @description 页码
-         * @example 1
-         */
-        page?: number;
-        /**
-         * @description 每页数量
-         * @example 50
-         */
-        page_size?: number;
-        /** @description 是否在列表中返回完整审计详情字段 */
-        include_details?: boolean;
-        /** @example 1 */
-        min_credits?: number | null;
-        /** @example 25 */
-        max_credits?: number | null;
-        /** @example day */
-        bucket?: string | null;
-        /** @example true */
-        summary?: boolean;
-        /** @example 5 */
-        limit?: number | null;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
+    get_provider_categories_api_v1_providers_categories_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    search_api_v1_search_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['APIResponse_UsageEventsResponse_'];
+        requestBody: {
+            content: {
+                /** @example {
+                 *       "query": "weather forecast API",
+                 *       "limit": 10,
+                 *       "session_id": "sess_7Q9m"
+                 *     } */
+                "application/json": components["schemas"]["PublicSearchRequest"];
+            };
         };
-      };
-      /** @description Invalid audit query */
-      400: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    /** @description Maximum requests allowed in the current rate-limit window. */
+                    "X-RateLimit-Limit"?: number;
+                    /** @description Requests remaining in the current rate-limit window. */
+                    "X-RateLimit-Remaining"?: number;
+                    /** @description Unix epoch seconds when the current rate-limit window resets. */
+                    "X-RateLimit-Reset"?: number;
+                    /** @description Seconds until the client should retry after a rate-limit response. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicSearchResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    /** @description Maximum requests allowed in the current rate-limit window. */
+                    "X-RateLimit-Limit"?: number;
+                    /** @description Requests remaining in the current rate-limit window. */
+                    "X-RateLimit-Remaining"?: number;
+                    /** @description Unix epoch seconds when the current rate-limit window resets. */
+                    "X-RateLimit-Reset"?: number;
+                    /** @description Seconds until the client should retry after a rate-limit response. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description Insufficient credits */
+            402: {
+                headers: {
+                    /** @description Maximum requests allowed in the current rate-limit window. */
+                    "X-RateLimit-Limit"?: number;
+                    /** @description Requests remaining in the current rate-limit window. */
+                    "X-RateLimit-Remaining"?: number;
+                    /** @description Unix epoch seconds when the current rate-limit window resets. */
+                    "X-RateLimit-Reset"?: number;
+                    /** @description Seconds until the client should retry after a rate-limit response. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicSearchResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    /** @description Maximum requests allowed in the current rate-limit window. */
+                    "X-RateLimit-Limit"?: number;
+                    /** @description Requests remaining in the current rate-limit window. */
+                    "X-RateLimit-Remaining"?: number;
+                    /** @description Unix epoch seconds when the current rate-limit window resets. */
+                    "X-RateLimit-Reset"?: number;
+                    /** @description Seconds until the client should retry after a rate-limit response. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
         };
-        content: {
-          'application/json': components['schemas']['APIResponse_dict_'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
     };
-  };
-  export_usage_history_v2_api_v1_auth_usage_history_v2_export_get: {
-    parameters: {
-      query?: {
-        /** @description 开始日期 (YYYY-MM-DD) */
-        start_date?: string | null;
-        /** @description 结束日期 (YYYY-MM-DD) */
-        end_date?: string | null;
-        /** @description 事件类型过滤 */
-        event_type?: string | null;
-        /** @description 事件分组过滤 */
-        kind?: string | null;
-        /** @description 是否成功 */
-        success?: boolean | null;
-        /** @description 是否可计费 */
-        billable_success?: boolean | null;
-        /** @description 执行 outcome 过滤 */
-        outcome?: string | null;
-        /** @description 执行 reason_code 过滤 */
-        reason_code?: string | null;
-        /** @description 是否存在 execution_outcome */
-        has_execution_outcome?: boolean | null;
-        /** @description 收费结果过滤 */
-        charge_outcome?: string | null;
-        /** @description 异常类型过滤 */
-        anomaly?: string | null;
-        /** @description search_id 聚焦过滤 */
-        search_id?: string | null;
-        /** @description execution_id 聚焦过滤 */
-        execution_id?: string | null;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
+    get_tools_by_ids_api_v1_tools_by_ids_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /** @example {
+                 *       "tool_ids": [
+                 *         "openweathermap.weather.execute.v1"
+                 *       ],
+                 *       "search_id": "srch_01HZX9QK7J3M9T",
+                 *       "session_id": "sess_7Q9m"
+                 *     } */
+                "application/json": components["schemas"]["PublicToolsByIdsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicSearchResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+            /** @description Upstream timeout */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description CSV export. */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    execute_api_v1_tools_execute_post: {
+        parameters: {
+            query?: {
+                /** @description Tool ID (optional if provided in request body) */
+                tool_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'text/csv': string;
+        requestBody: {
+            content: {
+                /** @example {
+                 *       "search_id": "srch_01HZX9QK7J3M9T",
+                 *       "session_id": "sess_7Q9m",
+                 *       "parameters": {
+                 *         "city": "London",
+                 *         "units": "metric"
+                 *       },
+                 *       "max_response_size": 20480
+                 *     } */
+                "application/json": components["schemas"]["PublicExecuteToolRequest"];
+            };
         };
-      };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    /** @description Maximum requests allowed in the current rate-limit window. */
+                    "X-RateLimit-Limit"?: number;
+                    /** @description Requests remaining in the current rate-limit window. */
+                    "X-RateLimit-Remaining"?: number;
+                    /** @description Unix epoch seconds when the current rate-limit window resets. */
+                    "X-RateLimit-Reset"?: number;
+                    /** @description Seconds until the client should retry after a rate-limit response. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicExecuteToolResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    /** @description Maximum requests allowed in the current rate-limit window. */
+                    "X-RateLimit-Limit"?: number;
+                    /** @description Requests remaining in the current rate-limit window. */
+                    "X-RateLimit-Remaining"?: number;
+                    /** @description Unix epoch seconds when the current rate-limit window resets. */
+                    "X-RateLimit-Reset"?: number;
+                    /** @description Seconds until the client should retry after a rate-limit response. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Insufficient credits */
+            402: {
+                headers: {
+                    /** @description Maximum requests allowed in the current rate-limit window. */
+                    "X-RateLimit-Limit"?: number;
+                    /** @description Requests remaining in the current rate-limit window. */
+                    "X-RateLimit-Remaining"?: number;
+                    /** @description Unix epoch seconds when the current rate-limit window resets. */
+                    "X-RateLimit-Reset"?: number;
+                    /** @description Seconds until the client should retry after a rate-limit response. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicExecuteToolResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicExecuteToolResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    /** @description Maximum requests allowed in the current rate-limit window. */
+                    "X-RateLimit-Limit"?: number;
+                    /** @description Requests remaining in the current rate-limit window. */
+                    "X-RateLimit-Remaining"?: number;
+                    /** @description Unix epoch seconds when the current rate-limit window resets. */
+                    "X-RateLimit-Reset"?: number;
+                    /** @description Seconds until the client should retry after a rate-limit response. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+        };
     };
-  };
-  get_usage_history_v2_summary_api_v1_auth_usage_history_v2_summary_get: {
-    parameters: {
-      query?: {
-        /** @description 开始日期 (YYYY-MM-DD) */
-        start_date?: string | null;
-        /** @description 结束日期 (YYYY-MM-DD) */
-        end_date?: string | null;
-        /** @description 事件类型过滤 */
-        event_type?: string | null;
-        /** @description 事件分组过滤 */
-        kind?: string | null;
-        /** @description 是否成功 */
-        success?: boolean | null;
-        /** @description 是否可计费 */
-        billable_success?: boolean | null;
-        /** @description 执行 outcome 过滤 */
-        outcome?: string | null;
-        /** @description 执行 reason_code 过滤 */
-        reason_code?: string | null;
-        /** @description 是否存在 execution_outcome */
-        has_execution_outcome?: boolean | null;
-        /** @description 收费结果过滤 */
-        charge_outcome?: string | null;
-        /** @description 异常类型过滤 */
-        anomaly?: string | null;
-        /** @description search_id 聚焦过滤 */
-        search_id?: string | null;
-        /** @description execution_id 聚焦过滤 */
-        execution_id?: string | null;
-        /** @description 下一页游标 */
-        cursor?: string | null;
-        /** @description 每页数量 */
-        page_size?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['APIResponse_UsageEventSummaryResponse_'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  get_usage_history_v2_entry_api_v1_auth_usage_history_v2__event_id__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        event_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['APIResponse_UsageEventItem_'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  verify_token_api_v1_auth_verify_token_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['APIResponse_TokenVerificationResponse_'];
-        };
-      };
-    };
-  };
-  get_current_user_credits_api_v1_credits_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['APIResponse_dict_'];
-        };
-      };
-    };
-  };
-  get_providers_api_v1_providers_get: {
-    parameters: {
-      query?: {
-        categories?: string | null;
-        skip?: number;
-        limit?: number;
-        query?: string | null;
-        sort_by?: string | null;
-        sort_order?: string;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': unknown;
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  get_provider_categories_api_v1_providers_categories_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': unknown;
-        };
-      };
-    };
-  };
-  search_api_v1_search_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        /** @example {
-         *       "query": "weather forecast API",
-         *       "limit": 10,
-         *       "session_id": "sess_7Q9m"
-         *     } */
-        'application/json': components['schemas']['PublicSearchRequest'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          /** @description Maximum requests allowed in the current rate-limit window. */
-          'X-RateLimit-Limit'?: number;
-          /** @description Requests remaining in the current rate-limit window. */
-          'X-RateLimit-Remaining'?: number;
-          /** @description Unix epoch seconds when the current rate-limit window resets. */
-          'X-RateLimit-Reset'?: number;
-          /** @description Seconds until the client should retry after a rate-limit response. */
-          'Retry-After'?: number;
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PublicSearchResponse'];
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          /** @description Maximum requests allowed in the current rate-limit window. */
-          'X-RateLimit-Limit'?: number;
-          /** @description Requests remaining in the current rate-limit window. */
-          'X-RateLimit-Remaining'?: number;
-          /** @description Unix epoch seconds when the current rate-limit window resets. */
-          'X-RateLimit-Reset'?: number;
-          /** @description Seconds until the client should retry after a rate-limit response. */
-          'Retry-After'?: number;
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PublicApiError'];
-        };
-      };
-      /** @description Insufficient credits */
-      402: {
-        headers: {
-          /** @description Maximum requests allowed in the current rate-limit window. */
-          'X-RateLimit-Limit'?: number;
-          /** @description Requests remaining in the current rate-limit window. */
-          'X-RateLimit-Remaining'?: number;
-          /** @description Unix epoch seconds when the current rate-limit window resets. */
-          'X-RateLimit-Reset'?: number;
-          /** @description Seconds until the client should retry after a rate-limit response. */
-          'Retry-After'?: number;
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PublicSearchResponse'];
-        };
-      };
-      /** @description Too Many Requests */
-      429: {
-        headers: {
-          /** @description Maximum requests allowed in the current rate-limit window. */
-          'X-RateLimit-Limit'?: number;
-          /** @description Requests remaining in the current rate-limit window. */
-          'X-RateLimit-Remaining'?: number;
-          /** @description Unix epoch seconds when the current rate-limit window resets. */
-          'X-RateLimit-Reset'?: number;
-          /** @description Seconds until the client should retry after a rate-limit response. */
-          'Retry-After'?: number;
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PublicApiError'];
-        };
-      };
-    };
-  };
-  get_tools_by_ids_api_v1_tools_by_ids_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        /** @example {
-         *       "tool_ids": [
-         *         "openweathermap.weather.execute.v1"
-         *       ],
-         *       "search_id": "srch_01HZX9QK7J3M9T",
-         *       "session_id": "sess_7Q9m"
-         *     } */
-        'application/json': components['schemas']['PublicToolsByIdsRequest'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PublicSearchResponse'];
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PublicApiError'];
-        };
-      };
-      /** @description Upstream timeout */
-      504: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PublicApiError'];
-        };
-      };
-    };
-  };
-  execute_api_v1_tools_execute_post: {
-    parameters: {
-      query?: {
-        /** @description Tool ID (optional if provided in request body) */
-        tool_id?: string | null;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        /** @example {
-         *       "search_id": "srch_01HZX9QK7J3M9T",
-         *       "session_id": "sess_7Q9m",
-         *       "parameters": {
-         *         "city": "London",
-         *         "units": "metric"
-         *       },
-         *       "max_response_size": 20480
-         *     } */
-        'application/json': components['schemas']['PublicExecuteToolRequest'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          /** @description Maximum requests allowed in the current rate-limit window. */
-          'X-RateLimit-Limit'?: number;
-          /** @description Requests remaining in the current rate-limit window. */
-          'X-RateLimit-Remaining'?: number;
-          /** @description Unix epoch seconds when the current rate-limit window resets. */
-          'X-RateLimit-Reset'?: number;
-          /** @description Seconds until the client should retry after a rate-limit response. */
-          'Retry-After'?: number;
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PublicExecuteToolResponse'];
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          /** @description Maximum requests allowed in the current rate-limit window. */
-          'X-RateLimit-Limit'?: number;
-          /** @description Requests remaining in the current rate-limit window. */
-          'X-RateLimit-Remaining'?: number;
-          /** @description Unix epoch seconds when the current rate-limit window resets. */
-          'X-RateLimit-Reset'?: number;
-          /** @description Seconds until the client should retry after a rate-limit response. */
-          'Retry-After'?: number;
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Insufficient credits */
-      402: {
-        headers: {
-          /** @description Maximum requests allowed in the current rate-limit window. */
-          'X-RateLimit-Limit'?: number;
-          /** @description Requests remaining in the current rate-limit window. */
-          'X-RateLimit-Remaining'?: number;
-          /** @description Unix epoch seconds when the current rate-limit window resets. */
-          'X-RateLimit-Reset'?: number;
-          /** @description Seconds until the client should retry after a rate-limit response. */
-          'Retry-After'?: number;
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PublicExecuteToolResponse'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PublicExecuteToolResponse'];
-        };
-      };
-      /** @description Too Many Requests */
-      429: {
-        headers: {
-          /** @description Maximum requests allowed in the current rate-limit window. */
-          'X-RateLimit-Limit'?: number;
-          /** @description Requests remaining in the current rate-limit window. */
-          'X-RateLimit-Remaining'?: number;
-          /** @description Unix epoch seconds when the current rate-limit window resets. */
-          'X-RateLimit-Reset'?: number;
-          /** @description Seconds until the client should retry after a rate-limit response. */
-          'Retry-After'?: number;
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PublicApiError'];
-        };
-      };
-    };
-  };
 }
