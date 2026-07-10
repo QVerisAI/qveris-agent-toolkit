@@ -61,7 +61,7 @@ function parseToolResult(result: unknown): Record<string, unknown> {
   return JSON.parse(String(result)) as Record<string, unknown>;
 }
 
-function parseRequestBody(body: BodyInit | null | undefined): Record<string, unknown> {
+function parseRequestBody(body: unknown): Record<string, unknown> {
   if (typeof body === "string") return JSON.parse(body) as Record<string, unknown>;
   if (body == null) return {};
   throw new Error(`Unsupported mocked request body type: ${typeof body}`);
@@ -488,7 +488,7 @@ describe("createQverisTools", () => {
       tool_id: "openweathermap.weather.execute.v1",
       params_to_tool: '{"city": "London"}',
     });
-    const executeCall = fetchMock.mock.calls.find(([u]: [string]) => u.includes("/tools/execute"));
+    const executeCall = fetchMock.mock.calls.find(([u]) => String(u).includes("/tools/execute"));
     expect(executeCall).toBeDefined();
     const body = JSON.parse(executeCall![1].body);
     expect(body.search_id).toBeNull();
