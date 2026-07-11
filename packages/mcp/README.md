@@ -225,7 +225,13 @@ For backward compatibility, the old tool names are still supported but emit a de
 | `get_tools_by_ids` | `inspect` |
 | `execute_tool` | `call` |
 
-## Session Management
+## Beyond tools: schemas, consent, resources
+
+- Every tool declares an `outputSchema` and returns `structuredContent` alongside the JSON text (MCP 2025-06-18), so clients get typed results.
+- With `QVERIS_MCP_CONFIRM_CALLS=true`, a charged `call` first asks the user to confirm via MCP **elicitation** (billing consent); declining cancels the call before any credits are spent. Off by default.
+- **Resources**: read `qveris://server-card` for the server's identity card, or `qveris://capability/{tool_id}` for a capability's full metadata (parameters, examples, stats, billing) without spending a tool call.
+
+## Session Management
 
 Providing a consistent `session_id` in a same user session in any tool call enables:
 - Consistent user tracking across multiple tool calls
@@ -322,6 +328,7 @@ npx -y @qverisai/mcp
 | `QVERIS_MCP_HTTP_ALLOW_UNAUTHENTICATED` | | `true` to allow a non-loopback bind without a token (auth delegated externally) |
 | `QVERIS_MCP_MAX_BODY_BYTES` | | Max request body size in bytes (default `4194304`) |
 | `QVERIS_MCP_SESSION_TIMEOUT_MS` | | Idle session TTL in ms (default `300000`) |
+| `QVERIS_MCP_CONFIRM_CALLS` | | `true` to ask the user (via MCP elicitation) before each charged `call`; clients without elicitation proceed as before |
 | `QVERIS_MCP_PUBLIC_URL` | | Public origin advertised in discovery documents (e.g. `https://mcp.example.com`) |
 
 ## Region

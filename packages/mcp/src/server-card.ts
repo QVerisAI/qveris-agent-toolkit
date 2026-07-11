@@ -73,19 +73,20 @@ export interface McpCatalog {
  * @param remoteUrl - The absolute Streamable HTTP endpoint URL clients connect
  *   to (e.g. `https://mcp.example.com/mcp`).
  */
-export function buildServerCard(info: ServerCardInfo, remoteUrl: string): ServerCard {
-  const remote: ServerCardRemote = { type: 'streamable-http', url: remoteUrl };
-  if (info.protocolVersions && info.protocolVersions.length > 0) {
-    remote.supportedProtocolVersions = info.protocolVersions;
-  }
-
+export function buildServerCard(info: ServerCardInfo, remoteUrl?: string): ServerCard {
   const card: ServerCard = {
     $schema: SERVER_CARD_SCHEMA_URL,
     name: info.name,
     version: info.version,
     description: info.description,
-    remotes: [remote],
   };
+  if (remoteUrl) {
+    const remote: ServerCardRemote = { type: 'streamable-http', url: remoteUrl };
+    if (info.protocolVersions && info.protocolVersions.length > 0) {
+      remote.supportedProtocolVersions = info.protocolVersions;
+    }
+    card.remotes = [remote];
+  }
   if (info.title) card.title = info.title;
   if (info.websiteUrl) card.websiteUrl = info.websiteUrl;
   if (info.repository) card.repository = info.repository;
