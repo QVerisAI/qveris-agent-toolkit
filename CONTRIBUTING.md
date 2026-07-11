@@ -17,7 +17,7 @@ Thanks for your interest in the QVeris Agent Toolkit! This monorepo hosts five i
 
 From the repo root, the `package.json` task runner fans out across every package
 (it delegates to each package's own scripts; there are no root dependencies or
-workspaces). Node `>=18.2.0` (see `.nvmrc`); the Python SDK uses `uv`.
+workspaces). Requires Node `>=18.2.0` (dev uses the version pinned in `.nvmrc`); the Python SDK uses `uv`.
 
 ```bash
 npm run install:all   # install all package deps (npm ci + uv sync)
