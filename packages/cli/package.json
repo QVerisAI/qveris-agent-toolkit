@@ -13,7 +13,7 @@
     "test:coverage": "c8 node --test"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=18.2.0"
   },
   "files": [
     "bin/",

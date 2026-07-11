@@ -1,0 +1,12 @@
+# Normalize line endings: text is LF in the repo, auto-converted on checkout.
+# Prevents the CRLF drift that has crept into a few committed files.
+* text=auto eol=lf
+
+# Explicit binaries (never normalize).
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
