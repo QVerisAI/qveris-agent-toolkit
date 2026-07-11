@@ -19,5 +19,8 @@ return an actionable error — so this runs unconfigured. The `call` step is
 additionally gated behind `RUN_QVERIS_CALLS=1` so it never spends credits by
 accident.
 
+By default it spawns the published `@qverisai/mcp`. To drive a local build,
+override the command: `QVERIS_MCP_COMMAND=node QVERIS_MCP_ARGS=dist/index.js`.
+
 To wire the server into an agent host instead of driving it from code, see the
 client-config snippets in the [package README](../README.md).

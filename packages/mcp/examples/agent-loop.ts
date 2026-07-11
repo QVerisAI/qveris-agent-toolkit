@@ -21,6 +21,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 
 type DiscoverResult = { search_id?: string; results?: Array<{ tool_id: string; name?: string }> };
 type InspectResult = { results?: Array<{ params?: Array<{ name?: string }> }> };
+type ToolCallResult = Awaited<ReturnType<Client['callTool']>>;
 
 /** Forward only defined environment variables (the transport wants string values). */
 function childEnv(): Record<string, string> {
@@ -29,13 +30,31 @@ function childEnv(): Record<string, string> {
   );
 }
 
+/**
+ * Read a tool result as typed data. Prefer `structuredContent` (present when the
+ * tool declares an outputSchema, as QVeris's do), and fall back to parsing the
+ * text block so the example stays robust against servers that omit it.
+ */
+function readResult<T>(result: ToolCallResult): T | undefined {
+  if (result.structuredContent !== undefined) {
+    return result.structuredContent as T;
+  }
+  const first = Array.isArray(result.content) ? result.content[0] : undefined;
+  if (first?.type === 'text') {
+    return JSON.parse(first.text) as T;
+  }
+  return undefined;
+}
+
 async function main(): Promise<void> {
   const hasKey = Boolean(process.env.QVERIS_API_KEY);
 
-  // The subprocess inherits QVERIS_API_KEY through its environment.
+  // The subprocess inherits QVERIS_API_KEY through its environment. Override the
+  // command to test a local build, e.g.
+  // QVERIS_MCP_COMMAND=node QVERIS_MCP_ARGS=dist/index.js.
   const transport = new StdioClientTransport({
-    command: 'npx',
-    args: ['-y', '@qverisai/mcp'],
+    command: process.env.QVERIS_MCP_COMMAND ?? 'npx',
+    args: process.env.QVERIS_MCP_ARGS ? process.env.QVERIS_MCP_ARGS.split(' ') : ['-y', '@qverisai/mcp'],
     env: childEnv(),
   });
   const client = new Client({ name: 'qveris-agent-loop-example', version: '0.1.0' });
@@ -55,7 +74,7 @@ async function main(): Promise<void> {
       name: 'discover',
       arguments: { query: 'public company stock quote and market data API', limit: 5 },
     });
-    const found = discovered.structuredContent as DiscoverResult | undefined;
+    const found = readResult<DiscoverResult>(discovered);
     const top = found?.results?.[0];
     console.log(`search_id: ${found?.search_id ?? 'n/a'}; matches: ${found?.results?.length ?? 0}`);
     if (!top) return;
@@ -65,7 +84,7 @@ async function main(): Promise<void> {
       name: 'inspect',
       arguments: { tool_ids: [top.tool_id], search_id: found?.search_id },
     });
-    const detail = (inspected.structuredContent as InspectResult | undefined)?.results?.[0];
+    const detail = readResult<InspectResult>(inspected)?.results?.[0];
     const paramNames =
       (detail?.params ?? [])
         .map((param) => param.name)

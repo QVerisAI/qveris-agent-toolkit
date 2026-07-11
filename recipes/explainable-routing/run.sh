@@ -25,17 +25,21 @@ discovered="$("${qv[@]}" discover "$query" --limit 5 --json)"
 search_id="$(jq -r '.search_id' <<<"$discovered")"
 
 echo "Candidates (why_recommended / expected_cost / success_rate):"
-jq -r '.results[]
+jq -r '(.results // [])[]
   | "  \(.tool_id)\tcost=\(.expected_cost // "n/a")\tsuccess=\(.stats.success_rate // "n/a")\twhy=\(.why_recommended // "n/a")"' \
   <<<"$discovered"
 
 # Routing rule: among candidates within 1.5x of the cheapest estimate, take the
-# most reliable one. This is the choice we can explain and defend.
+# most reliable one. This is the choice we can explain and defend. Guard against
+# a missing/empty results array so an empty match set exits cleanly, not crashes.
 choice="$(jq -c '
-  .results as $r
-  | ($r | map((.expected_cost // 0 | tonumber? // 0)) | min) as $mincost
-  | [ $r[] | select((.expected_cost // 0 | tonumber? // 0) <= ($mincost * 1.5)) ]
-  | sort_by(.stats.success_rate // 0) | reverse | .[0] // empty' <<<"$discovered")"
+  (.results // []) as $r
+  | if ($r | length) == 0 then empty
+    else
+      ($r | map((.expected_cost // 0 | tonumber? // 0)) | min) as $mincost
+      | [ $r[] | select((.expected_cost // 0 | tonumber? // 0) <= ($mincost * 1.5)) ]
+      | sort_by(.stats.success_rate // 0) | reverse | .[0]
+    end // empty' <<<"$discovered")"
 
 if [[ -z "$choice" ]]; then
   echo "No capabilities matched: $query"
