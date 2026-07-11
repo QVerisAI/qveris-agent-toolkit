@@ -18,8 +18,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 
-const REPO_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const EN = 'docs/en-US';
 const ZH = 'docs/zh-CN';
 const CN = 'docs/cn/zh-CN';

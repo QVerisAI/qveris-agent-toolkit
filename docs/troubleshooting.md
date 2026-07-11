@@ -53,8 +53,10 @@ parameters you plan to pass. Broaden the query and raise `--limit` / `limit`.
 failure.
 
 **Large responses look truncated.**
-Responses are capped by `max_response_size` (`--max-size` in the CLI, default
-20480 bytes; `-1` for unlimited). Raise it if you need the full payload.
+Responses are capped by `max_response_size` (`--max-size` in the CLI). The
+default is 20480 bytes for `--json`/non-interactive use, but only 4096 bytes in
+an interactive terminal — so a truncated result in a TTY is hitting the 4 KB
+cap. Raise it (`-1` for unlimited) if you need the full payload.
 
 ## MCP server
 
@@ -66,4 +68,4 @@ and regenerate it with `qveris mcp configure --target <client> --write`.
 ## Environment
 
 **Node version errors.**
-The packages require Node `>=18.2.0` (see `.nvmrc`). Check with `node -v`.
+The packages require Node `>=18.2.0`. Check with `node -v`.
