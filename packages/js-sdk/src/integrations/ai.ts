@@ -9,7 +9,7 @@
  *
  * @example
  * ```typescript
- * import { generateText } from 'ai';
+ * import { generateText, stepCountIs } from 'ai';
  * import { openai } from '@ai-sdk/openai';
  * import { Qveris } from '@qverisai/sdk';
  * import { getQverisTools } from '@qverisai/sdk/ai';
@@ -18,7 +18,7 @@
  * const { text } = await generateText({
  *   model: openai('gpt-4o'),
  *   tools: getQverisTools(qveris),
- *   maxSteps: 6,
+ *   stopWhen: stepCountIs(6),
  *   prompt: 'Find a stock quote capability and quote AAPL.',
  * });
  * ```

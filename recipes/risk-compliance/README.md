@@ -15,7 +15,7 @@ qveris init --query "sanctions screening or adverse media compliance API" --para
 qveris init \
   --query "sanctions screening or adverse media compliance API" \
   --params '{"name":"Acme Trading Ltd"}' \
-  --max-response-size 20480 \
+  --max-size 20480 \
   --json
 ```
 

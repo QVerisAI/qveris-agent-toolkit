@@ -282,7 +282,7 @@ This repository (`QVerisAI/qveris-agent-toolkit`) is the primary monorepo for QV
 
 ### Recipes and ecosystem manifests
 
-Use [`recipes/`](recipes) for copy-paste workflow templates across finance research, risk/compliance, crypto monitoring, data analysis, and developer automation.
+Use [`recipes/`](recipes) for copy-paste workflow templates across finance research, risk/compliance, crypto monitoring, data analysis, and developer automation. The flagship recipes ship a runnable `run.sh`, and each package has runnable examples: [js-sdk](packages/js-sdk/examples), [MCP](packages/mcp/examples), [CLI](packages/cli/examples), and [Python SDK](packages/python-sdk/examples).
 
 Use [`ecosystem/`](ecosystem) for the versioned QVeris manifest schema, marketplace-ready listing fields, permission declarations, contribution guide, and compatibility matrix.
 

@@ -17,7 +17,7 @@ Use the first-call flow when you want QVeris to discover, inspect, select, and c
 qveris init \
   --query "public company stock quote and market data API" \
   --params '{"symbol":"AAPL"}' \
-  --max-response-size 20480 \
+  --max-size 20480 \
   --json
 ```
 

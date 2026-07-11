@@ -24,6 +24,11 @@ on:
       - "packages/mcp/package-lock.json"
       - "packages/mcp/tsconfig.json"
       - "packages/openclaw-qveris-plugin/**"
+      - "packages/js-sdk/examples/**"
+      - "packages/js-sdk/tsconfig.examples.json"
+      - "packages/mcp/examples/**"
+      - "packages/mcp/tsconfig.examples.json"
+      - "packages/cli/examples/**"
       - ".prettierrc.json"
       - ".prettierignore"
       - "packages/*/eslint.config.mjs"
@@ -48,6 +53,11 @@ on:
       - "packages/mcp/package-lock.json"
       - "packages/mcp/tsconfig.json"
       - "packages/openclaw-qveris-plugin/**"
+      - "packages/js-sdk/examples/**"
+      - "packages/js-sdk/tsconfig.examples.json"
+      - "packages/mcp/examples/**"
+      - "packages/mcp/tsconfig.examples.json"
+      - "packages/cli/examples/**"
       - ".prettierrc.json"
       - ".prettierignore"
       - "packages/*/eslint.config.mjs"
@@ -111,6 +121,8 @@ jobs:
         run: npm ci
       - name: Type check
         run: npm run typecheck
+      - name: Type check examples
+        run: npm run typecheck:examples
       - name: JS SDK client tests
         run: npm test
 
@@ -134,6 +146,8 @@ jobs:
         run: npm ci
       - name: Type check
         run: npm run typecheck
+      - name: Type check examples
+        run: npm run typecheck:examples
       - name: MCP server tests
         run: npm test
 
@@ -217,3 +231,14 @@ jobs:
       - name: python-sdk coverage
         working-directory: packages/python-sdk
         run: uv run --extra dev pytest -q --cov=qveris --cov-fail-under=82
+
+  # Shellcheck the CLI scripting examples. The TypeScript examples are type
+  # checked in the js-sdk-tests / mcp-tests jobs; the Python examples are linted
+  # by the ruff step above; the recipe run.sh scripts are checked in
+  # ecosystem-validate.yml (which triggers on recipes/**).
+  examples:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Shellcheck CLI example scripts
+        run: shellcheck packages/cli/examples/*.sh

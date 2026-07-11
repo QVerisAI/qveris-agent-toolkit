@@ -39,3 +39,6 @@ jobs:
 
       - name: Test manifest validator
         run: node scripts/test-ecosystem-validator.mjs
+
+      - name: Shellcheck runnable recipe scripts
+        run: shellcheck recipes/*/run.sh

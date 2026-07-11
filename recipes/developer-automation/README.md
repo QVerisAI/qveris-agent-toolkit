@@ -15,7 +15,7 @@ qveris init --query "GitHub repository metadata API" --params '{"owner":"QVerisA
 qveris init \
   --query "GitHub repository metadata API" \
   --params '{"owner":"QVerisAI","repo":"qveris-agent-toolkit"}' \
-  --max-response-size 20480 \
+  --max-size 20480 \
   --json
 ```
 

@@ -15,7 +15,7 @@ qveris init --query "cryptocurrency market price and volume API" --params '{"sym
 qveris init \
   --query "cryptocurrency market price and volume API" \
   --params '{"symbol":"BTC","currency":"USD"}' \
-  --max-response-size 20480 \
+  --max-size 20480 \
   --json
 ```
 

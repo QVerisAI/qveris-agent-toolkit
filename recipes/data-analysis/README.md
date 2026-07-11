@@ -15,7 +15,7 @@ qveris init --query "company domain enrichment API" --params '{"domain":"qveris.
 qveris init \
   --query "company domain enrichment API" \
   --params '{"domain":"qveris.ai"}' \
-  --max-response-size 20480 \
+  --max-size 20480 \
   --json
 ```
 

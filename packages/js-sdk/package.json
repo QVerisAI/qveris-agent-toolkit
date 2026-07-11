@@ -46,8 +46,9 @@
     "test:watch": "vitest",
     "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . && prettier --check \"src/**/*.ts\"",
-    "lint:fix": "eslint . --fix && prettier --write \"src/**/*.ts\"",
+    "typecheck:examples": "tsc -p tsconfig.examples.json --noEmit",
+    "lint": "eslint . && prettier --check \"src/**/*.ts\" \"examples/**/*.ts\"",
+    "lint:fix": "eslint . --fix && prettier --write \"src/**/*.ts\" \"examples/**/*.ts\"",
     "test:coverage": "vitest run --coverage"
   },
   "peerDependencies": {
