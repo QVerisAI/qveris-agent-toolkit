@@ -231,7 +231,7 @@ For backward compatibility, the old tool names are still supported but emit a de
 - With `QVERIS_MCP_CONFIRM_CALLS=true`, a charged `call` first asks the user to confirm via MCP **elicitation** (billing consent); declining cancels the call before any credits are spent. Off by default.
 - **Resources**: read `qveris://server-card` for the server's identity card, or `qveris://capability/{tool_id}` for a capability's full metadata (parameters, examples, stats, billing) without spending a tool call.
 
-## Session Management
+## Session Management
 
 Providing a consistent `session_id` in a same user session in any tool call enables:
 - Consistent user tracking across multiple tool calls
@@ -358,6 +358,14 @@ To override manually, set environment variables in your MCP client config:
 ```
 
 **Priority:** `QVERIS_BASE_URL` > `QVERIS_REGION` > API key prefix auto-detection > default (global)
+
+## Examples
+
+[`examples/agent-loop.ts`](examples/agent-loop.ts) drives this server over stdio
+the way an agent runtime does: spawn it, list the tools, then run
+discover → inspect → call by calling those tools. It is safe to run without an
+API key (tool listing works unconfigured), and the call step is gated behind
+`RUN_QVERIS_CALLS=1`.
 
 ## Requirements
 

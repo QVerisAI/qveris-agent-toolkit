@@ -41,9 +41,10 @@
     "test:coverage": "vitest run --coverage",
     "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit",
+    "typecheck:examples": "tsc -p tsconfig.examples.json --noEmit",
     "gen:openapi": "bash ../../scripts/regenerate-openapi-artifacts.sh",
-    "lint": "eslint . && prettier --check \"src/**/*.ts\"",
-    "lint:fix": "eslint . --fix && prettier --write \"src/**/*.ts\""
+    "lint": "eslint . && prettier --check \"src/**/*.ts\" \"examples/**/*.ts\"",
+    "lint:fix": "eslint . --fix && prettier --write \"src/**/*.ts\" \"examples/**/*.ts\""
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",

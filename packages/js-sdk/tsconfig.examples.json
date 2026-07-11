@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@qverisai/sdk": ["./src/index.ts"],
+      "@qverisai/sdk/ai": ["./src/integrations/ai.ts"]
+    }
+  },
+  "include": ["examples/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

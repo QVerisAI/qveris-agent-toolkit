@@ -99,7 +99,7 @@ npm install @qverisai/sdk ai zod
 ```
 
 ```typescript
-import { generateText } from 'ai';
+import { generateText, stepCountIs } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { Qveris } from '@qverisai/sdk';
 import { getQverisTools } from '@qverisai/sdk/ai';
@@ -108,10 +108,17 @@ const qveris = new Qveris({ apiKey: process.env.QVERIS_API_KEY! });
 const { text } = await generateText({
   model: openai('gpt-4o'),
   tools: getQverisTools(qveris), // qveris_discover / qveris_inspect / qveris_call
-  maxSteps: 6,
+  stopWhen: stepCountIs(6),
   prompt: 'Find a stock quote capability and quote AAPL.',
 });
 ```
+
+## Examples
+
+Runnable scripts in [`examples/`](examples): the discover → inspect → call
+quickstart, a Vercel AI SDK agent, and rate-limit/observability. Each is safe to
+run without an API key (it explains how to set one), and any credit-spending
+call is gated behind `RUN_QVERIS_CALLS=1`.
 
 ## Version history note
 

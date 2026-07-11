@@ -83,6 +83,12 @@
       "path": "README.md#python-sdk",
       "language": "python",
       "command": "python explainable_routing.py"
+    },
+    {
+      "name": "CLI runnable recipe",
+      "path": "run.sh",
+      "language": "shell",
+      "command": "./run.sh"
     }
   ]
 }
