@@ -7,7 +7,6 @@
  * rather than treating the retried responses as errors.
  *
  *   QVERIS_API_KEY=sk-... npx tsx examples/retry-and-observability.ts
- *   QVERIS_API_KEY=sk-... QVERIS_MAX_RETRIES=5 npx tsx examples/retry-and-observability.ts
  */
 
 import { getClientOrExplain } from './_shared.js';
@@ -17,8 +16,8 @@ async function main(): Promise<void> {
   if (!getClientOrExplain()) return;
 
   // Configure backoff explicitly. `maxRetries` bounds how many times a 429/503
-  // is retried before the error surfaces; 0 disables retries entirely. The
-  // QVERIS_MAX_RETRIES environment variable does the same without code.
+  // is retried before the error surfaces; 0 disables retries entirely. (Unlike
+  // the CLI, the SDK reads this from the constructor only, not from the env.)
   const qveris = Qveris.fromEnv({ maxRetries: 5, timeoutMs: 15_000 });
 
   const startedAt = Date.now();

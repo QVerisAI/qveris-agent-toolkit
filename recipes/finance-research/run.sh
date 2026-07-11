@@ -29,9 +29,10 @@ if [[ "${RUN_QVERIS_CALLS:-}" != "1" ]]; then
 fi
 
 # One-shot first call: discover -> inspect -> select -> call in one command.
-result="$("${qv[@]}" init --query "$query" --params '{"symbol":"AAPL"}' --max-response-size 20480 --json)"
-execution_id="$(jq -r '.execution_id // empty' <<<"$result")"
-echo "$result" | jq '{tool_id, execution_id, success}'
+# init nests its output: selected_tool.tool_id and call.{execution_id,success}.
+result="$("${qv[@]}" init --query "$query" --params '{"symbol":"AAPL"}' --max-size 20480 --json)"
+execution_id="$(jq -r '.call.execution_id // empty' <<<"$result")"
+echo "$result" | jq '{tool_id: .selected_tool.tool_id, execution_id: .call.execution_id, success: .call.success}'
 
 # Audit the settled charge. --mode search filters to this execution; the records
 # come back under .items.
