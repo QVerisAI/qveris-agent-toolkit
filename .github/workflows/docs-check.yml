@@ -1,0 +1,36 @@
+name: Docs checks
+
+# Guard the docs locale structure (en-US / zh-CN / cn/zh-CN) against silent
+# drift. See #162 and scripts/check-doc-locales.mjs.
+
+on:
+  pull_request:
+    paths:
+      - "docs/en-US/**"
+      - "docs/zh-CN/**"
+      - "docs/cn/**"
+      - "scripts/check-doc-locales.mjs"
+      - ".github/workflows/docs-check.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/en-US/**"
+      - "docs/zh-CN/**"
+      - "docs/cn/**"
+      - "scripts/check-doc-locales.mjs"
+      - ".github/workflows/docs-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  locales:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+      - name: Check doc locale consistency
+        run: node scripts/check-doc-locales.mjs
