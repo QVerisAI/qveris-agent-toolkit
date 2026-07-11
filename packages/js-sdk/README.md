@@ -52,6 +52,29 @@ const ledger = await qveris.ledger({ direction: 'consume', summary: true });
 const credits = await qveris.credits();
 ```
 
+## API reference
+
+Construct with `new Qveris({ apiKey })` or `Qveris.fromEnv(overrides?)` (reads
+`QVERIS_API_KEY`, auto-detects the region from the key prefix).
+
+| Method | Billed | Returns | Notes |
+| --- | --- | --- | --- |
+| `discover(query, options?)` | Free | `SearchResponse` | `options`: `limit`, `sessionId`, `timeoutMs`. Results carry `why_recommended`, `expected_cost`, `stats`. |
+| `inspect(toolIds, options?)` | Free | `SearchResponse` | `toolIds` is one id or an array; `options`: `searchId`, `sessionId`, `timeoutMs`. An empty array resolves locally with no request. |
+| `call(toolId, options)` | Credits | `ExecuteResponse` | `options`: `parameters` (required), `searchId`, `maxResponseSize`, `sessionId`, `timeoutMs`. |
+| `credits()` | Free | `CreditsResponse` | Current balance and bucket details. |
+| `usage(filters?)` | Free | `UsageEventsResponse` | Request-level audit; filter by `execution_id`, `search_id`, dates, `summary`, `limit`. |
+| `ledger(filters?)` | Free | `CreditsLedgerResponse` | Settled credit movements; filter by `direction`, dates, `summary`, `limit`. |
+
+Read-only members: `qveris.rateLimitRetryCount` (see [Rate limiting](#rate-limiting--retries)).
+
+Key response fields:
+
+- **`SearchResponse`** — `search_id`, `total`, `results: ToolInfo[]` (`tool_id`, `name`, `description`, `params`, `examples.sample_parameters`, `stats.success_rate`, `stats.avg_execution_time_ms`, `expected_cost`, `why_recommended`).
+- **`ExecuteResponse`** — `execution_id`, `success`, `result`, `billing` (pre-settlement estimate; the final charge is in `usage()` / `ledger()`).
+
+All types are exported from the package root (`import type { SearchResponse, ExecuteResponse, ToolInfo } from '@qverisai/sdk'`).
+
 ## Configuration
 
 | Option / env var | Description |

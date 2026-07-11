@@ -68,8 +68,8 @@
 ### ⚙️ I'm a developer integrating via CLI / MCP / API / SDK
 
 > → **[QVeris CLI](packages/cli)** — `npm install -g @qverisai/cli` or `curl -fsSL https://qveris.ai/cli/install | bash`
-> → [MCP Server Doc](docs/mcp-server.md)
-> → [REST API Doc](docs/rest-api.md)
+> → [MCP Server Doc](docs/en-US/mcp-server.md)
+> → [REST API Doc](docs/en-US/rest-api.md)
 > → [Python SDK](packages/python-sdk)
 
 ---
@@ -203,10 +203,12 @@ Full CLI documentation: [packages/cli/README.md](packages/cli/README.md)
 | Method | Use case | Docs |
 |--------|----------|------|
 | **CLI** (recommended) | Claude Code / OpenClaw / any agent with exec | [CLI docs](packages/cli/README.md) |
-| MCP Server | Cursor / Claude Desktop / MCP-only clients | [MCP docs](docs/mcp-server.md) |
+| MCP Server | Cursor / Claude Desktop / MCP-only clients | [MCP docs](docs/en-US/mcp-server.md) |
 | Python SDK | Python projects, agent frameworks | [Python SDK docs](packages/python-sdk/README.md) |
 | TypeScript SDK | Node.js / TypeScript projects | [JS SDK docs](packages/js-sdk/README.md) |
-| REST API | Any language, custom integrations | [REST API docs](docs/rest-api.md) |
+| REST API | Any language, custom integrations | [REST API docs](docs/en-US/rest-api.md) |
+
+Stuck? See [Troubleshooting & FAQ](docs/troubleshooting.md).
 
 ### Core protocol
 
