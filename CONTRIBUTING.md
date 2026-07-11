@@ -15,7 +15,19 @@ Thanks for your interest in the QVeris Agent Toolkit! This monorepo hosts five i
 
 ## Dev setup & running tests
 
-Each package is self-contained:
+From the repo root, the `package.json` task runner fans out across every package
+(it delegates to each package's own scripts; there are no root dependencies or
+workspaces). Node `>=18.2.0` (see `.nvmrc`); the Python SDK uses `uv`.
+
+```bash
+npm run install:all   # install all package deps (npm ci + uv sync)
+npm run lint          # lint every package (eslint/prettier + ruff)
+npm run typecheck     # typecheck the TS packages
+npm test              # run every package's test suite
+npm run build         # build the TS packages
+```
+
+Or work in a single package (each is self-contained):
 
 ```bash
 # TS/JS packages (mcp, js-sdk, openclaw-qveris-plugin)
