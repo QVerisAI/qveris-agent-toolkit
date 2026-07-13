@@ -22,7 +22,7 @@ The typical agent workflow is: `qveris_discover` → `qveris_inspect` (optional)
 ## Requirements
 
 - OpenClaw >= 2026.3.22
-- A QVeris API key — sign up at [qveris.ai](https://qveris.ai) (global) or [qveris.cn](https://qveris.cn) (China)
+- A QVeris API key — sign up at [qveris.ai](https://qveris.ai)
 
 ---
 
@@ -74,8 +74,7 @@ Add the following to your `openclaw.json`:
       qveris: {
         enabled: true,
         config: {
-          apiKey: "qv-your-api-key-here",  // or use QVERIS_API_KEY env var
-          region: "cn"                      // "global" (qveris.ai) or "cn" (qveris.cn)
+          apiKey: "qv-your-api-key-here"  // or use QVERIS_API_KEY env var
         }
       }
     }
@@ -111,8 +110,7 @@ All fields under `plugins.entries.qveris.config`:
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `apiKey` | `string` | — | QVeris API key. Sensitive — use env var `QVERIS_API_KEY` as alternative. |
-| `region` | `"global"` \| `"cn"` | `"global"` | API region. `global` → `qveris.ai`, `cn` → `qveris.cn`. |
-| `baseUrl` | `string` | *(derived from region)* | Override API base URL. Use only when pointing at a private/staging endpoint. |
+| `baseUrl` | `string` | *(automatic)* | Override API base URL. Use only when pointing at a private/staging endpoint. |
 | `searchTimeoutSeconds` | `number` | `5` | Timeout for `qveris_discover` calls. |
 | `executeTimeoutSeconds` | `number` | `60` | Default timeout for `qveris_call`. Can be overridden per-call via the `timeout_seconds` parameter. |
 | `searchLimit` | `number` | `10` | Max number of tools returned by `qveris_discover`. |
@@ -121,18 +119,15 @@ All fields under `plugins.entries.qveris.config`:
 | `fullContentMaxBytes` | `number` | `10485760` (10 MB) | Max size for full-content downloads. |
 | `fullContentTimeoutSeconds` | `number` | `30` | Timeout for full-content downloads. |
 
-### Region and base URL
+### API endpoint override
 
-| Region | API base URL | Full-content download domain |
-|--------|-------------|------------------------------|
-| `global` | `https://qveris.ai/api/v1` | `qveris.ai` |
-| `cn` | `https://qveris.cn/api/v1` | `qveris.cn` |
+The plugin resolves its endpoint automatically. Set `baseUrl` only when the active deployment supplies an explicit API root.
 
 ---
 
 ## Minimal vs full config examples
 
-### Minimal (global region, env var key)
+### Minimal (environment-variable key)
 
 ```bash
 export QVERIS_API_KEY=qv-...
@@ -143,26 +138,6 @@ export QVERIS_API_KEY=qv-...
   plugins: {
     allow: ["qveris"],
     entries: { qveris: { enabled: true } }
-  },
-  tools: { alsoAllow: ["qveris"] }
-}
-```
-
-### China region
-
-```json5
-{
-  plugins: {
-    allow: ["qveris"],
-    entries: {
-      qveris: {
-        enabled: true,
-        config: {
-          apiKey: "qv-...",
-          region: "cn"
-        }
-      }
-    }
   },
   tools: { alsoAllow: ["qveris"] }
 }
@@ -179,7 +154,6 @@ export QVERIS_API_KEY=qv-...
         enabled: true,
         config: {
           apiKey: "qv-...",
-          region: "global",
           autoMaterializeFullContent: true,
           fullContentMaxBytes: 20971520,    // 20 MB
           fullContentTimeoutSeconds: 60,

@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- Made API endpoint selection deterministic: `--base-url` overrides `QVERIS_BASE_URL`, which overrides the built-in default. API keys no longer influence the endpoint, invalid URLs fail before network access, and public CLI output no longer exposes deployment-routing controls.
+
 ### Changed
 
 - Raised `engines.node` to `>=18.2.0`, aligning every package on the toolkit's minimum-supported Node (the MCP server requires 18.2 for `closeAllConnections`). ([#161])

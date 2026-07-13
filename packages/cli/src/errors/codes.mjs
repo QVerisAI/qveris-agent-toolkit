@@ -17,6 +17,11 @@ export const ERROR_CODES = {
     hint: "Upgrade to Node.js 18 or newer",
     exit: EX_CONFIG,
   },
+  BASE_URL_INVALID: {
+    message: "Invalid API base URL",
+    hint: "Set QVERIS_BASE_URL to a complete HTTP(S) URL such as https://host.example/api/v1",
+    exit: EX_CONFIG,
+  },
   AUTH_INVALID_KEY: {
     message: "Authentication failed",
     hint: "Check your key at https://qveris.ai/account",

@@ -6,7 +6,7 @@ import test from "node:test";
 
 import { normalizeLegacyArgs } from "../src/compat/aliases.mjs";
 import { resolveApiKey } from "../src/client/auth.mjs";
-import { resolveBaseUrl } from "../src/config/region.mjs";
+import { normalizeBaseUrl, resolveBaseUrl } from "../src/config/endpoint.mjs";
 import {
   buildLedgerQuery,
   buildLedgerSummary,
@@ -43,19 +43,34 @@ function withTempConfig(fn) {
     });
 }
 
-test("region and API key resolution cover flags, env, key prefixes, and placeholders", async () => {
+test("endpoint resolution uses flag, environment, then default without key or region inference", async () => {
   await withTempConfig(() => {
     assert.equal(resolveApiKey("sk-flag").trim(), "sk-flag");
     assert.throws(() => resolveApiKey("YOUR_QVERIS_API_KEY"), /placeholder/);
-    process.env.QVERIS_API_KEY = "sk-cn-env";
-    assert.equal(resolveApiKey(), "sk-cn-env");
-    assert.deepEqual(resolveBaseUrl({ apiKey: "sk-cn-env" }), {
-      baseUrl: "https://qveris.cn/api/v1",
-      region: "cn",
-      source: "auto (key prefix)",
+    process.env.QVERIS_REGION = "cn";
+    assert.deepEqual(resolveBaseUrl({ apiKey: "sk-cn-test" }), {
+      baseUrl: "https://qveris.ai/api/v1",
+      source: "default",
     });
-    assert.equal(resolveBaseUrl({ baseUrlFlag: "https://custom.test/api/v1/" }).baseUrl, "https://custom.test/api/v1");
+
+    process.env.QVERIS_BASE_URL = "https://env.test/api/v1///";
+    assert.deepEqual(resolveBaseUrl(), {
+      baseUrl: "https://env.test/api/v1",
+      source: "env (QVERIS_BASE_URL)",
+    });
+    assert.deepEqual(resolveBaseUrl({ baseUrlFlag: "http://localhost:3000/api/v1/" }), {
+      baseUrl: "http://localhost:3000/api/v1",
+      source: "flag",
+    });
   });
+});
+
+test("endpoint normalization rejects unsafe or invalid base URLs", () => {
+  assert.equal(normalizeBaseUrl(" https://unit.test/api/v1/ "), "https://unit.test/api/v1");
+  assert.throws(() => normalizeBaseUrl("not-a-url"), /Invalid API base URL/);
+  assert.throws(() => normalizeBaseUrl("ftp://unit.test/api/v1"), /HTTP\(S\)/);
+  assert.throws(() => normalizeBaseUrl("https://user:secret@unit.test/api/v1"), /without credentials/);
+  assert.throws(() => normalizeBaseUrl("https://unit.test/api/v1?target=other"), /query parameters/);
 });
 
 test("legacy command and flag aliases normalize without changing usage search-id", () => {
@@ -173,17 +188,18 @@ test("ledger query, filtering, and summary cover consume/grant accounting", () =
 
 test("code generation covers curl, JavaScript, Python, and unsupported languages", async () => {
   await withTempConfig(() => {
-    process.env.QVERIS_BASE_URL = "https://unit.test/api/v1";
+    process.env.QVERIS_BASE_URL = "https://env.test/api/v1";
     const input = {
+      baseUrl: "https://flag.test/api/v1/",
       toolId: "weather.tool.v1",
       discoveryId: "search-1",
       parameters: { city: "London" },
       maxResponseSize: 4096,
     };
 
-    assert.match(generateSnippet("curl", input), /tools\/execute\?tool_id=weather\.tool\.v1/);
-    assert.match(generateSnippet("js", input), /fetch\(/);
-    assert.match(generateSnippet("python", input), /requests\.post/);
+    assert.match(generateSnippet("curl", input), /https:\/\/flag\.test\/api\/v1\/tools\/execute/);
+    assert.match(generateSnippet("js", input), /https:\/\/flag\.test\/api\/v1\/tools\/execute/);
+    assert.match(generateSnippet("python", input), /https:\/\/flag\.test\/api\/v1\/tools\/execute/);
     assert.match(generateSnippet("ruby", input), /Unsupported language/);
   });
 });

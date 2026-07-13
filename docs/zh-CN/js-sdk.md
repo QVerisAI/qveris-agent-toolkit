@@ -30,7 +30,7 @@ const qveris = Qveris.fromEnv();
 const explicit = new Qveris({ apiKey: 'sk-...' });
 ```
 
-默认 API 基础地址为 `https://qveris.ai/api/v1`。区域解析优先级为：显式 `baseUrl` > `QVERIS_BASE_URL` > `QVERIS_REGION`（`global` | `cn`）> 密钥前缀自动识别（`sk-cn-…` → 中国）。如需指向自定义端点，可覆盖：
+SDK 会自动解析 API 地址。如需指向自定义端点，可显式传入 `baseUrl` 或设置 `QVERIS_BASE_URL`；构造参数的优先级最高：
 
 ```typescript
 const client = new Qveris({ apiKey: 'sk-...', baseUrl: 'https://qveris.ai/api/v1' });
@@ -77,10 +77,10 @@ console.log(usage.total, ledger.total);
 | 字段 | 环境变量 | 默认值 | 说明 |
 |------|---------|--------|------|
 | `apiKey` | `QVERIS_API_KEY` | —（必填） | API 密钥，以 `Authorization: Bearer ...` 发送 |
-| `baseUrl` | `QVERIS_BASE_URL` | 按区域解析 | API 基础地址（优先级最高） |
+| `baseUrl` | `QVERIS_BASE_URL` | 自动解析 | API 基础地址（优先级最高） |
 | `timeoutMs` | — | `30000` | 默认请求超时（`call` 默认 `120000`） |
 
-未显式给出 `baseUrl` 时，`QVERIS_REGION`（`global` | `cn`）强制指定区域。`Qveris.fromEnv(overrides?)` 从 `QVERIS_API_KEY` 构建客户端，并接受相同的非密钥选项。
+`Qveris.fromEnv(overrides?)` 从 `QVERIS_API_KEY` 构建客户端，并接受相同的非密钥选项。
 
 ## API 参考
 

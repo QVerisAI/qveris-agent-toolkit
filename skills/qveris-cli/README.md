@@ -81,23 +81,15 @@ qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
 
 ---
 
-## Region Configuration
+## API Endpoint Override
 
-Region is auto-detected from API key prefix:
+The CLI uses its built-in API endpoint unless you explicitly pass `--base-url` or set `QVERIS_BASE_URL`. API keys do not select or replace the endpoint.
 
-| Key prefix | Region | Base URL |
-|---|---|---|
-| `sk-xxx` | Global | `https://qveris.ai/api/v1` |
-| `sk-cn-xxx` | China | `https://qveris.cn/api/v1` |
-
-For non-interactive/agent usage:
 ```bash
-# Key prefix auto-detection (recommended)
-qveris login --token "sk-cn-xxx"
-
-# Or via environment
-export QVERIS_REGION=cn
+qveris discover "weather forecast API" --base-url "$QVERIS_BASE_URL"
 ```
+
+Use the complete HTTP(S) API root supplied by the active deployment. Resolution order is `--base-url` > `QVERIS_BASE_URL` > built-in default.
 
 ---
 
@@ -183,7 +175,7 @@ qveris login --token "sk-xxx"
 # Run diagnostics
 qveris doctor
 
-# Check region/base URL
+# Check the effective API endpoint
 qveris whoami
 ```
 

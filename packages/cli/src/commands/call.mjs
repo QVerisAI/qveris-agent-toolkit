@@ -6,6 +6,7 @@ import { formatCallResult } from "../output/formatter.mjs";
 import { outputJson } from "../output/json.mjs";
 import { createSpinner } from "../output/spinner.mjs";
 import { generateSnippet } from "../output/codegen.mjs";
+import { resolveBaseUrl } from "../config/endpoint.mjs";
 import { CliError } from "../errors/handler.mjs";
 import { bold, dim, cyan } from "../output/colors.mjs";
 
@@ -32,6 +33,7 @@ export async function runCall(idOrIndex, flags) {
   const apiKey = resolveApiKey(flags.apiKey);
   const timeoutMs = (parseInt(flags.timeout, 10) || 60) * 1000;
   const maxSize = resolveMaxSize(flags);
+  const { baseUrl } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
 
   const resolved = resolveToolId(idOrIndex);
   const toolId = resolved.toolId;
@@ -71,7 +73,7 @@ export async function runCall(idOrIndex, flags) {
   try {
     const result = await callTool({
       apiKey,
-      baseUrl: flags.baseUrl,
+      baseUrl,
       toolId,
       discoveryId,
       parameters,
@@ -89,6 +91,7 @@ export async function runCall(idOrIndex, flags) {
 
     if (flags.codegen && result.success) {
       const snippet = generateSnippet(flags.codegen, {
+        baseUrl,
         toolId,
         discoveryId,
         parameters,

@@ -2,7 +2,7 @@ import { resolveApiKey } from "../client/auth.mjs";
 import { callTool, discoverTools, inspectToolsByIds } from "../client/api.mjs";
 import { nodeCheck } from "../client/preflight.mjs";
 import { resolve } from "../config/resolve.mjs";
-import { resolveBaseUrl } from "../config/region.mjs";
+import { resolveBaseUrl } from "../config/endpoint.mjs";
 import { CliError } from "../errors/handler.mjs";
 import { bold, cyan, dim, green, red, yellow } from "../output/colors.mjs";
 import { outputJson } from "../output/json.mjs";
@@ -31,13 +31,12 @@ export async function runInit(queryArg, flags) {
 
   const timeoutMs = (parseInt(flags.timeout, 10) || 60) * 1000;
   const apiKey = getInitApiKey(flags);
-  const { region, baseUrl, source: regionSource } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl, apiKey });
+  const { baseUrl, source: endpointSource } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
   record(steps, "auth", "ok", "API key resolved", {
     source: resolve("api_key", flags.apiKey || flags.token).source,
     key: maskKey(apiKey),
-    region,
     base_url: baseUrl,
-    region_source: regionSource,
+    endpoint_source: endpointSource,
   });
 
   let discovery;
@@ -84,7 +83,6 @@ export async function runInit(queryArg, flags) {
     writeSession({
       discoveryId,
       query,
-      region,
       baseUrl,
       results: results.map((t, i) => ({
         index: i + 1,
@@ -384,7 +382,7 @@ function printHumanSummary(payload) {
     const icon = step.status === "ok" ? green("\u2713") : step.status === "skipped" ? yellow("!") : red("\u2718");
     console.log(`  ${icon} ${i + 1}/5 ${bold(step.name)} ${dim(step.message)}`);
     if (step.name === "auth") {
-      console.log(`      ${dim("key")} ${step.key}  ${dim("region")} ${step.region}  ${dim(step.base_url)}`);
+      console.log(`      ${dim("key")} ${step.key}  ${dim("endpoint")} ${step.base_url}`);
     }
     if (step.name === "discover") {
       console.log(`      ${dim("search_id")} ${step.search_id || payload.discovery.search_id}`);

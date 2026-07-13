@@ -128,6 +128,43 @@ test("API client maps discover, inspect, call, credits, usage, and ledger endpoi
   ]);
 });
 
+test("QVERIS_BASE_URL controls every API call and normalizes trailing slashes", async () => {
+  const previous = process.env.QVERIS_BASE_URL;
+  const paths = [];
+  try {
+    for (const baseUrl of ["https://api.qveris.cloud/api/v1/", "https://test.qveris.cn/api/v1///"]) {
+      process.env.QVERIS_BASE_URL = baseUrl;
+      await withMockFetch(
+        (url) => {
+          paths.push(url.toString());
+          return jsonResponse({ ok: true });
+        },
+        async () => {
+          await discoverTools({ apiKey: "sk-test", query: "weather" });
+          await inspectToolsByIds({ apiKey: "sk-test", toolIds: ["tool-1"] });
+          await callTool({ apiKey: "sk-test", toolId: "tool-1", parameters: {} });
+          await getCredits({ apiKey: "sk-test" });
+          await getUsageHistory({ apiKey: "sk-test" });
+          await getCreditsLedger({ apiKey: "sk-test" });
+        },
+      );
+    }
+  } finally {
+    if (previous === undefined) delete process.env.QVERIS_BASE_URL;
+    else process.env.QVERIS_BASE_URL = previous;
+  }
+
+  assert.equal(paths.length, 12);
+  assert.equal(
+    paths.slice(0, 6).every((url) => url.startsWith("https://api.qveris.cloud/api/v1/")),
+    true,
+  );
+  assert.equal(
+    paths.slice(6).every((url) => url.startsWith("https://test.qveris.cn/api/v1/")),
+    true,
+  );
+});
+
 test("API client converts HTTP failures into CLI errors", async () => {
   await withMockFetch(
     () => jsonResponse({ message: "bad key" }, { status: 401 }),

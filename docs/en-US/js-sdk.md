@@ -30,7 +30,7 @@ const qveris = Qveris.fromEnv();
 const explicit = new Qveris({ apiKey: 'sk-...' });
 ```
 
-The default API base URL is `https://qveris.ai/api/v1`. The region is resolved with the following precedence: explicit `baseUrl` > `QVERIS_BASE_URL` > `QVERIS_REGION` (`global` | `cn`) > key-prefix auto-detect (`sk-cn-…` → China). Override it when targeting a custom endpoint:
+The SDK resolves the API endpoint automatically. To target a custom endpoint, pass `baseUrl` explicitly or set `QVERIS_BASE_URL`; the explicit constructor option has the highest priority:
 
 ```typescript
 const client = new Qveris({ apiKey: 'sk-...', baseUrl: 'https://qveris.ai/api/v1' });
@@ -77,10 +77,10 @@ There is no connection to close — the client is stateless over `fetch`.
 | Field | Env var | Default | Description |
 |-------|---------|---------|-------------|
 | `apiKey` | `QVERIS_API_KEY` | — (required) | API key, sent as `Authorization: Bearer ...` |
-| `baseUrl` | `QVERIS_BASE_URL` | region-resolved | API base URL (highest priority) |
+| `baseUrl` | `QVERIS_BASE_URL` | Automatically resolved | API base URL (highest priority) |
 | `timeoutMs` | — | `30000` | Default request timeout (`call` defaults to `120000`) |
 
-`QVERIS_REGION` (`global` | `cn`) forces the region when no explicit `baseUrl` is given. `Qveris.fromEnv(overrides?)` builds the client from `QVERIS_API_KEY` and accepts the same non-key options.
+`Qveris.fromEnv(overrides?)` builds the client from `QVERIS_API_KEY` and accepts the same non-key options.
 
 ## API reference
 

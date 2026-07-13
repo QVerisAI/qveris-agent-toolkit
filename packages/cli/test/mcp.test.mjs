@@ -196,6 +196,8 @@ test("mcp configure emits valid JSON fragments for each supported target", () =>
     } else if (target === "openclaw") {
       assert.deepEqual(payload.config.plugins.allow, ["qveris"]);
       assert.equal(payload.config.plugins.entries.qveris.config.apiKey, "sk-test");
+      assert.equal(payload.config.plugins.entries.qveris.config.baseUrl, "https://unit.test/api/v1");
+      assert.equal(payload.config.plugins.entries.qveris.config.region, undefined);
       assert.deepEqual(payload.config.tools.alsoAllow, ["qveris"]);
     } else if (target === "generic") {
       assert.equal(payload.config.command, "npx");

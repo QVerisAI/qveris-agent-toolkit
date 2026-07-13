@@ -130,7 +130,7 @@ The CLI (`@qverisai/cli` v0.5.0) is the most efficient way for agents to access 
 curl -fsSL https://qveris.ai/cli/install | bash
 # or: npm install -g @qverisai/cli
 
-# Authenticate (interactive region selection + browser-based key retrieval)
+# Authenticate (browser-assisted API key retrieval)
 qveris login
 
 # Agent workflow
@@ -149,18 +149,18 @@ qveris call 1 --params '{"city":"London"}' --codegen curl
 
 | Command | Description |
 |---------|-------------|
-| `qveris login` | Interactive login with region selection and browser-based key retrieval |
+| `qveris login` | Browser-assisted API key retrieval and validation |
 | `qveris logout` | Remove stored API key |
 | `qveris discover <query>` | Find capabilities by natural language |
 | `qveris inspect <id\|index>` | View full tool details, parameters, examples |
 | `qveris call <id\|index>` | Execute a capability with parameters |
 | `qveris config <subcommand>` | Manage settings (set, get, list, reset, path) |
 | `qveris interactive` | Launch REPL mode (discover/inspect/call loop) |
-| `qveris doctor` | Self-check diagnostics (Node.js, API key, region, connectivity) |
+| `qveris doctor` | Self-check diagnostics (Node.js, API key, endpoint, connectivity) |
 | `qveris credits` | Check credit balance |
 | `qveris usage` | Summarize/search/export request-level charge outcomes |
 | `qveris ledger` | Summarize/search/export final credit balance movements |
-| `qveris whoami` | Show auth status, key source, and region |
+| `qveris whoami` | Show auth status, key source, and API endpoint |
 | `qveris completions <shell>` | Generate shell completions (bash/zsh/fish) |
 
 **Key Flags:**
@@ -178,12 +178,12 @@ qveris call 1 --params '{"city":"London"}' --codegen curl
 **Session & Index Shortcuts:**
 - After `discover`, results are stored in a session file (~/.config/qveris/.session.json, 30-min TTL)
 - Use numeric indices (`qveris inspect 1`, `qveris call 2`) to reference results from last discover
-- Session tracks discovery ID, query, region, and result list
+- Session tracks discovery ID, query, API endpoint, and result list
 
-**Multi-Region Support:**
-- Region auto-detected from API key prefix (`sk-cn-xxx` → China, `sk-xxx` → Global)
-- Override with `--base-url`, `QVERIS_BASE_URL`, or `QVERIS_REGION` env
-- `qveris login` offers interactive region selection when no region is pre-configured
+**API Endpoint Override:**
+- The CLI uses a built-in endpoint by default
+- Override with `--base-url` or `QVERIS_BASE_URL`
+- API keys never select or replace the endpoint
 
 **Why CLI over MCP for agents:**
 - **Zero token cost** — runs as subprocess, tool schemas never enter the prompt
@@ -222,10 +222,9 @@ npx @qverisai/mcp
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `QVERIS_API_KEY` | Yes | API authentication key |
-| `QVERIS_REGION` | No | Force region: `global` or `cn` |
 | `QVERIS_BASE_URL` | No | Custom API endpoint override |
 
-Region is auto-detected from API key prefix when not explicitly set.
+API keys do not influence endpoint selection.
 
 For Claude Desktop users, add to `claude_desktop_config.json`:
 
@@ -253,9 +252,7 @@ For Claude Desktop users, add to `claude_desktop_config.json`:
 
 ### REST API Quick Reference
 
-**Base URL:** `https://qveris.ai/api/v1` (Global) or `https://qveris.cn/api/v1` (China)
-
-Region is auto-detected from API key prefix: `sk-cn-xxx` → China, `sk-xxx` → Global.
+**Base URL:** `https://qveris.ai/api/v1` by default. Set `QVERIS_BASE_URL` when an explicit deployment endpoint is required.
 
 **Authentication:** Bearer token in Authorization header
 
@@ -338,13 +335,13 @@ Follow the [setup guide (SETUP.md)](https://github.com/QVerisAI/qveris-agent-too
 ### Prerequisites
 
 - Node.js 18+ (for MCP server)
-- Valid QVERIS_API_KEY from https://qveris.ai/account?page=api-keys (Global) or https://qveris.cn/account?page=api-keys (China)
+- Valid QVERIS_API_KEY from https://qveris.ai/account?page=api-keys
 
 ### Installation Safety
 
 - Installation does **not** modify your shell startup files (unless explicitly requested)
 - All capability calls run in **sandbox**
-- You can review call logs and credit usage anytime at https://qveris.ai/account (or https://qveris.cn/account)
+- You can review call logs and credit usage anytime at https://qveris.ai/account
 
 ---
 
@@ -391,7 +388,7 @@ Every call records:
 - Pre-settlement billing and final charge outcome
 - Success/failure status
 
-View full audit trail: https://qveris.ai/account (or https://qveris.cn/account)
+View full audit trail: https://qveris.ai/account
 
 ---
 
@@ -417,7 +414,7 @@ Full reference: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/
 
 **Authentication:** Bearer token
 
-**Base URL:** https://qveris.ai/api/v1 (Global) or https://qveris.cn/api/v1 (China)
+**Base URL:** https://qveris.ai/api/v1
 
 ### Python SDK
 
@@ -524,9 +521,9 @@ Model improvement is a tailwind for QVeris, not a headwind.
 
 ### Primary Resources
 
-- **Website:** https://qveris.ai (Global) / https://qveris.cn (China)
+- **Website:** https://qveris.ai
 - **GitHub:** https://github.com/QVerisAI/qveris-agent-toolkit
-- **Get API Key:** https://qveris.ai/account?page=api-keys (Global) / https://qveris.cn/account?page=api-keys (China) — free, 1,000 credits on signup
+- **Get API Key:** https://qveris.ai/account?page=api-keys — free, 1,000 credits on signup
 - **Playground:** https://qveris.ai/playground (test capabilities in browser)
 - **Pricing:** https://qveris.ai/pricing
 

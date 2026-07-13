@@ -4,14 +4,7 @@ You are an AI agent. A user has given you this document and a **QVeris API key**
 
 **Cost:** Discover (finding capabilities) is free. Call (invoking capabilities) is priced by the capability billing rule, and final settlement is visible in usage history and the credits ledger. Free tier includes 1,000 credits. More at https://qveris.ai/pricing
 
-**Regions:** QVeris operates in two regions. The API key prefix determines the region automatically:
-
-| Region | API Key Prefix | Base URL | Get Key |
-|--------|---------------|----------|---------|
-| Global | `sk-xxx` | `https://qveris.ai/api/v1` | https://qveris.ai/account?page=api-keys |
-| China  | `sk-cn-xxx` | `https://qveris.cn/api/v1` | https://qveris.cn/account?page=api-keys |
-
-All client tools (MCP server, CLI) auto-detect the region from the key prefix. No extra configuration needed.
+**API endpoint:** Client tools use a built-in endpoint by default. When the active deployment requires an explicit override, set `QVERIS_BASE_URL` to the complete API root supplied by the deployment administrator. API keys never select or replace the endpoint.
 
 **Safety:** Install does not modify shell startup files. Configuration is session-scoped. All capability calls run in sandbox with full audit trail. Your owner can review usage at any time.
 
@@ -24,7 +17,7 @@ Replace every occurrence of `YOUR_QVERIS_API_KEY` below with the API key the use
 - Placeholder text: `YOUR_QVERIS_API_KEY`, `your-api-key-here`, `sk-1_xxx`
 - Truncated: `sk-1_wqP`, `sk-1_`
 
-> You need a valid QVeris API key. Get one at https://qveris.ai (global) or https://qveris.cn (China)
+> You need a valid QVeris API key. Get one at https://qveris.ai
 
 Do not proceed with setup until a valid API key is available.
 
@@ -62,17 +55,16 @@ curl -fsSL https://qveris.ai/cli/install | bash
 npm install -g @qverisai/cli
 ```
 
-Authenticate with interactive region selection:
+Authenticate interactively:
 
 ```bash
 qveris login
 ```
 
 The `login` command will:
-1. Prompt for region selection (Global or China) if not pre-configured
-2. Open a browser to retrieve your API key
-3. Accept masked key input and validate it
-4. Save credentials to `~/.config/qveris/config.json`
+1. Open a browser to retrieve your API key
+2. Accept masked key input and validate it
+3. Save credentials to `~/.config/qveris/config.json`
 
 Alternatively, set the API key directly:
 
@@ -83,8 +75,8 @@ qveris config set api_key YOUR_QVERIS_API_KEY
 Verify the setup:
 
 ```bash
-qveris doctor    # Check Node.js, API key, region, connectivity
-qveris whoami    # Show auth status and region
+qveris doctor    # Check Node.js, API key, endpoint, connectivity
+qveris whoami    # Show auth status and endpoint
 qveris credits   # Check credit balance
 ```
 
@@ -234,8 +226,7 @@ openclaw plugins install @qverisai/qveris
       "qveris": {
         "enabled": true,
         "config": {
-          "apiKey": "YOUR_QVERIS_API_KEY",
-          "region": "global"
+          "apiKey": "YOUR_QVERIS_API_KEY"
         }
       }
     }

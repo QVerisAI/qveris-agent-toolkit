@@ -4,7 +4,7 @@ import { homedir, platform } from "node:os";
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 import { isPlaceholderApiKey, resolveApiKey } from "../client/auth.mjs";
-import { resolveBaseUrl, detectRegionFromKey } from "../config/region.mjs";
+import { resolveBaseUrl } from "../config/endpoint.mjs";
 import { CliError } from "../errors/handler.mjs";
 import { bold, cyan, dim, green, red, yellow } from "../output/colors.mjs";
 import { outputJson } from "../output/json.mjs";
@@ -30,18 +30,18 @@ function configure(args, flags) {
   const target = resolveTarget(args, flags);
   const includeKey = Boolean(flags.includeKey);
   const apiKey = includeKey ? resolveApiKey(flags.apiKey || flags.token) : API_KEY_PLACEHOLDER;
-  const { baseUrl, region } = resolveBaseUrl({
+  const { baseUrl, source: endpointSource } = resolveBaseUrl({
     baseUrlFlag: flags.baseUrl,
-    apiKey: includeKey ? apiKey : undefined,
   });
+  const includeBaseUrl = endpointSource !== "default";
   const outputPath = flags.output || defaultConfigPath(target);
-  const fragment = buildTargetFragment(target, { apiKey, baseUrl, includeKey });
+  const fragment = buildTargetFragment(target, { apiKey, baseUrl, includeBaseUrl });
   const printable = buildPrintablePayload(target, {
     fragment,
     outputPath,
     includeKey,
     baseUrl,
-    region: includeKey ? region : "auto",
+    endpointSource,
   });
 
   if (flags.write) {
@@ -114,9 +114,9 @@ function resolveTarget(args, flags) {
   return target;
 }
 
-function buildTargetFragment(target, { apiKey, baseUrl, includeKey }) {
+function buildTargetFragment(target, { apiKey, baseUrl, includeBaseUrl }) {
   const env = { QVERIS_API_KEY: apiKey };
-  if (baseUrl && (includeKey || baseUrl !== "https://qveris.ai/api/v1")) env.QVERIS_BASE_URL = baseUrl;
+  if (includeBaseUrl) env.QVERIS_BASE_URL = baseUrl;
   const stdioServer = {
     command: "npx",
     args: ["-y", "@qverisai/mcp"],
@@ -142,7 +142,6 @@ function buildTargetFragment(target, { apiKey, baseUrl, includeKey }) {
   }
 
   if (target === "openclaw") {
-    const region = includeKey ? detectRegionFromKey(apiKey) : "global";
     return {
       plugins: {
         allow: ["qveris"],
@@ -151,8 +150,7 @@ function buildTargetFragment(target, { apiKey, baseUrl, includeKey }) {
             enabled: true,
             config: {
               apiKey,
-              region,
-              ...(baseUrl ? { baseUrl } : {}),
+              ...(includeBaseUrl ? { baseUrl } : {}),
             },
           },
         },
@@ -173,7 +171,7 @@ function buildTargetFragment(target, { apiKey, baseUrl, includeKey }) {
   return stdioServer;
 }
 
-function buildPrintablePayload(target, { fragment, outputPath, includeKey, baseUrl, region }) {
+function buildPrintablePayload(target, { fragment, outputPath, includeKey, baseUrl, endpointSource }) {
   return {
     target,
     mode: "stdio",
@@ -182,7 +180,7 @@ function buildPrintablePayload(target, { fragment, outputPath, includeKey, baseU
     includes_real_api_key: includeKey,
     expected_tools: EXPECTED_TOOLS,
     base_url: baseUrl,
-    region,
+    endpoint_source: endpointSource,
     config: fragment,
   };
 }

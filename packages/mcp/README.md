@@ -19,7 +19,7 @@ This SDK provides a [Model Context Protocol (MCP)](https://modelcontextprotocol.
 
 ### 1. Get Your API Key
 
-Visit [QVeris](https://qveris.ai) (Global) or [QVeris](https://qveris.cn) (China) to get your API key.
+Visit [QVeris](https://qveris.ai) to get your API key.
 
 ### 2. Configure Your MCP Client
 
@@ -314,7 +314,6 @@ npx -y @qverisai/mcp
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `QVERIS_API_KEY` | ✓ | Your QVeris API key |
-| `QVERIS_REGION` | | Force region: `global` or `cn` (auto-detected from key prefix if not set) |
 | `QVERIS_BASE_URL` | | Override API base URL (highest priority, for custom endpoints) |
 | `QVERIS_MAX_RETRIES` | | Retries for rate-limited (429) / transient (503) responses (default 3; `0` disables). Honors `Retry-After`, else backs off with jitter. |
 | `QVERIS_MCP_TRANSPORT` | | `stdio` (default) or `http` |
@@ -332,16 +331,9 @@ npx -y @qverisai/mcp
 | `QVERIS_MCP_CONFIRM_CALLS` | | `true` to ask the user (via MCP elicitation) before each charged `call`; clients without elicitation proceed as before |
 | `QVERIS_MCP_PUBLIC_URL` | | Public origin advertised in discovery documents (e.g. `https://mcp.example.com`) |
 
-## Region
+## API Endpoint Override
 
-Region is auto-detected from your API key prefix — no extra configuration needed.
-
-| Key prefix | Region | API endpoint |
-|------------|--------|--------------|
-| `sk-xxx` | Global | `https://qveris.ai/api/v1` |
-| `sk-cn-xxx` | China | `https://qveris.cn/api/v1` |
-
-To override manually, set environment variables in your MCP client config:
+The server resolves its API endpoint automatically. To target a custom deployment, set `QVERIS_BASE_URL` in your MCP client config:
 
 ```json
 {
@@ -351,14 +343,14 @@ To override manually, set environment variables in your MCP client config:
       "args": ["-y", "@qverisai/mcp"],
       "env": {
         "QVERIS_API_KEY": "your-api-key",
-        "QVERIS_REGION": "cn"
+        "QVERIS_BASE_URL": "https://qveris.ai/api/v1"
       }
     }
   }
 }
 ```
 
-**Priority:** `QVERIS_BASE_URL` > `QVERIS_REGION` > API key prefix auto-detection > default (global)
+An explicit `QVERIS_BASE_URL` takes priority over automatic endpoint resolution.
 
 ## Examples
 
@@ -371,7 +363,7 @@ API key (tool listing works unconfigured), and the call step is gated behind
 ## Requirements
 
 - Node.js 18.0.0 or higher
-- A valid QVeris API key ([qveris.ai](https://qveris.ai) or [qveris.cn](https://qveris.cn))
+- A valid QVeris API key ([qveris.ai](https://qveris.ai))
 
 ## Development
 

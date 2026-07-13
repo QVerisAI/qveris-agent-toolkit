@@ -1,4 +1,4 @@
-import { resolveBaseUrl } from "../config/region.mjs";
+import { resolveBaseUrl } from "../config/endpoint.mjs";
 import { CliError } from "../errors/handler.mjs";
 import {
   computeRetryDelayMs,
