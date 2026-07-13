@@ -6,9 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-07-13
+
 ### Added
 
-- An embedding API for independently operated Streamable HTTP services: asynchronous per-session server factories can require a caller bearer, receive it only during session construction, and rely on fingerprint binding to reject later credential changes. Credential validation and client policy stay outside the toolkit.
+- An embedding API for independently operated Streamable HTTP services: asynchronous per-session server factories can require a caller bearer, receive it only during session construction, and rely on fingerprint binding to reject later credential changes. Credential validation and client policy stay outside the toolkit. ([#201])
 - Fuller MCP spec surface ([#158]):
   - **Output schemas + structured content** — every tool declares `outputSchema` (loose, additive-friendly) and returns `structuredContent` alongside the JSON text, so clients consume typed results instead of re-parsing strings.
   - **Elicitation billing consent** — with `QVERIS_MCP_CONFIRM_CALLS=true` and an elicitation-capable client, a charged `call` asks the user to confirm first; declining cancels the call before any credits are spent. Off by default (headless agents unaffected); clients without elicitation proceed as before.
@@ -106,7 +108,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Handle empty/non-JSON success responses gracefully; `params_to_tool` documented as an object.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.8.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.9.0...HEAD
+[0.9.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.8.0...mcp-v0.9.0
 [0.8.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.7.5...mcp-v0.8.0
 [0.7.5]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.7.4...mcp-v0.7.5
 [0.7.4]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.7.3...mcp-v0.7.4
@@ -120,6 +123,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [0.3.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.2.0...mcp-v0.3.0
 [0.2.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.1.2...mcp-v0.2.0
 [0.1.2]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/mcp-v0.1.2
+[#201]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/201
 [#158]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/158
 [#145]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/145
 [#120]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/120
