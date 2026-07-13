@@ -9,10 +9,10 @@
  * {@link StreamableHTTPServerTransport} (and its own Qveris {@link Server}),
  * keyed by the `Mcp-Session-Id` header the SDK assigns on `initialize`.
  *
- * Inbound auth is an optional shared bearer token (`QVERIS_MCP_HTTP_AUTH_TOKEN`).
- * When binding a non-loopback host the server refuses to start unless a token is
- * set (or auth is explicitly delegated to an external layer). OAuth 2.1 and the
- * `.well-known` Server Card are tracked as follow-ups to issue #107.
+ * Embedders may require a bearer per session and receive it only in the
+ * asynchronous server factory. The transport binds an irreversible credential
+ * fingerprint to the MCP session so later requests cannot switch identities.
+ * Validation and client construction remain the embedding service's policy.
  *
  * @module @qverisai/mcp/http
  */
@@ -50,6 +50,8 @@ export interface TransportConfig {
   enableJsonResponse: boolean;
   /** Shared bearer token required on the MCP endpoint; unset = no inbound auth. */
   authToken?: string;
+  /** Require a caller bearer and bind it to each new MCP session. Embedders set this directly. */
+  requireSessionBearer?: boolean;
   /** Allow a non-loopback bind without a token (auth delegated externally). */
   allowUnauthenticated: boolean;
   /** Max accepted request body size in bytes (413 beyond it). */
@@ -58,6 +60,34 @@ export interface TransportConfig {
   sessionTimeoutMs: number;
   /** Public origin (e.g. behind a TLS proxy) used in discovery documents. */
   publicUrl?: string;
+}
+
+/** Credential context supplied only while constructing a new MCP session. */
+export interface HttpSessionAuth {
+  /** Present only when requireSessionBearer is enabled. Never logged or persisted by the transport. */
+  bearerToken?: string;
+}
+
+/** The embedding service rejected the credential supplied for a new session. */
+export class SessionAuthenticationError extends Error {
+  override readonly name = 'SessionAuthenticationError';
+}
+
+/** The embedding service could not validate a supplied credential safely. */
+export class SessionAuthenticationUnavailableError extends Error {
+  override readonly name = 'SessionAuthenticationUnavailableError';
+}
+
+/** The embedding service rate-limited creation of a new authenticated session. */
+export class SessionRateLimitError extends Error {
+  override readonly name = 'SessionRateLimitError';
+  readonly retryAfterSeconds: number;
+
+  constructor(message: string, retryAfterSeconds = 60) {
+    super(message);
+    this.retryAfterSeconds =
+      Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0 ? Math.min(86_400, Math.ceil(retryAfterSeconds)) : 60;
+  }
 }
 
 const DEFAULT_PORT = 3000;
@@ -172,6 +202,7 @@ export function resolveTransportConfig(env: NodeJS.ProcessEnv, argv: string[] = 
     enableDnsRebindingProtection: parseBool(env.QVERIS_MCP_DNS_REBINDING_PROTECTION, true),
     enableJsonResponse: parseBool(env.QVERIS_MCP_HTTP_JSON, false),
     authToken: env.QVERIS_MCP_HTTP_AUTH_TOKEN?.trim() || undefined,
+    requireSessionBearer: false,
     allowUnauthenticated: parseBool(env.QVERIS_MCP_HTTP_ALLOW_UNAUTHENTICATED, false),
     maxBodyBytes: parsePositiveInt(env.QVERIS_MCP_MAX_BODY_BYTES, DEFAULT_MAX_BODY_BYTES),
     sessionTimeoutMs: parsePositiveInt(env.QVERIS_MCP_SESSION_TIMEOUT_MS, DEFAULT_SESSION_TIMEOUT_MS),
@@ -223,15 +254,29 @@ function jsonRpcError(id: unknown, code: number, message: string) {
 
 /** Constant-time bearer check against the configured token. */
 function bearerMatches(authHeader: string | undefined, token: string): boolean {
-  if (!authHeader) return false;
-  const prefix = 'bearer ';
-  if (!authHeader.toLowerCase().startsWith(prefix)) return false;
-  const provided = authHeader.slice(prefix.length).trim();
+  const provided = readBearerToken(authHeader);
+  if (!provided) return false;
   // Compare fixed-length SHA-256 digests so the comparison is constant-time
   // *and* doesn't leak the expected token's length via an early length check.
   const providedHash = createHash('sha256').update(provided).digest();
   const expectedHash = createHash('sha256').update(token).digest();
   return timingSafeEqual(providedHash, expectedHash);
+}
+
+function readBearerToken(authHeader: string | undefined): string | undefined {
+  if (!authHeader) return undefined;
+  const match = /^Bearer\s+(.+)$/i.exec(authHeader);
+  const token = match?.[1]?.trim();
+  return token || undefined;
+}
+
+function credentialFingerprint(token: string): Buffer {
+  return createHash('sha256').update(token).digest();
+}
+
+function credentialMatches(fingerprint: Buffer | undefined, token: string | undefined): boolean {
+  if (!fingerprint || !token) return false;
+  return timingSafeEqual(fingerprint, credentialFingerprint(token));
 }
 
 /** Handle to a running HTTP server. */
@@ -258,19 +303,25 @@ export interface RunningHttpServer {
  */
 export async function startHttpServer(
   config: TransportConfig,
-  makeServer: (sessionId: string) => Server,
+  makeServer: (sessionId: string, auth: HttpSessionAuth) => Server | Promise<Server>,
   cardInfo?: ServerCardInfo,
   logger: (message: string) => void = (message) => process.stderr.write(message),
 ): Promise<RunningHttpServer> {
   const nonLoopback = !isLoopbackHost(config.host);
-  if (nonLoopback && !config.authToken && !config.allowUnauthenticated) {
+  if (config.requireSessionBearer && config.authToken) {
+    throw new Error('Shared authToken cannot be combined with per-session bearer authentication.');
+  }
+  if (config.requireSessionBearer && config.allowUnauthenticated) {
+    throw new Error('allowUnauthenticated cannot be enabled with per-session bearer authentication.');
+  }
+  if (nonLoopback && !config.requireSessionBearer && !config.authToken && !config.allowUnauthenticated) {
     throw new Error(
       `Refusing to start: HTTP transport is binding a non-loopback host (${config.host}) with no authentication. ` +
         `Set QVERIS_MCP_HTTP_AUTH_TOKEN to require a bearer token, or set ` +
         `QVERIS_MCP_HTTP_ALLOW_UNAUTHENTICATED=true if an external layer (proxy/gateway) authenticates requests.`,
     );
   }
-  if (nonLoopback && !config.authToken) {
+  if (nonLoopback && !config.requireSessionBearer && !config.authToken) {
     logger(
       '[qveris] WARNING: HTTP transport exposed on a non-loopback host without an auth token. ' +
         'Ensure an external auth layer protects the endpoint.\n',
@@ -290,6 +341,7 @@ export async function startHttpServer(
   }
 
   const transports = new Map<string, StreamableHTTPServerTransport>();
+  const sessionCredentialFingerprints = new Map<string, Buffer>();
   const lastSeen = new Map<string, number>();
   const inflight = new Map<string, number>(); // requests currently being handled per session
   let boundPort = config.port;
@@ -317,10 +369,12 @@ export async function startHttpServer(
   const evict = (sessionId: string): void => {
     lastSeen.delete(sessionId);
     inflight.delete(sessionId);
+    sessionCredentialFingerprints.delete(sessionId);
     if (transports.get(sessionId)) transports.delete(sessionId);
   };
 
-  const createTransport = async (): Promise<StreamableHTTPServerTransport> => {
+  const createTransport = async (auth: HttpSessionAuth): Promise<StreamableHTTPServerTransport> => {
+    const fingerprint = auth.bearerToken ? credentialFingerprint(auth.bearerToken) : undefined;
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
       enableJsonResponse: config.enableJsonResponse,
@@ -329,6 +383,7 @@ export async function startHttpServer(
       allowedOrigins: config.allowedOrigins,
       onsessioninitialized: (sessionId) => {
         transports.set(sessionId, transport);
+        if (fingerprint) sessionCredentialFingerprints.set(sessionId, fingerprint);
         lastSeen.set(sessionId, Date.now());
         logger(`[qveris] MCP session initialized: ${sessionId}\n`);
       },
@@ -340,9 +395,16 @@ export async function startHttpServer(
         logger(`[qveris] MCP session closed: ${sessionId}\n`);
       }
     };
-    const server = makeServer(randomUUID());
-    await server.connect(transport);
-    return transport;
+    let server: Server | undefined;
+    try {
+      server = await makeServer(randomUUID(), auth);
+      await server.connect(transport);
+      return transport;
+    } catch (error) {
+      await transport.close().catch(() => undefined);
+      if (server) await server.close().catch(() => undefined);
+      throw error;
+    }
   };
 
   const handler = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
@@ -410,8 +472,29 @@ export async function startHttpServer(
         return;
       }
 
+      const sessionBearer = config.requireSessionBearer ? readBearerToken(req.headers['authorization']) : undefined;
+      if (config.requireSessionBearer && !sessionBearer) {
+        req.resume();
+        writeJson(res, 401, jsonRpcError(null, -32001, 'Bearer credential required'), {
+          'WWW-Authenticate': 'Bearer',
+        });
+        return;
+      }
+
       const sessionId = req.headers['mcp-session-id'];
       const existing = typeof sessionId === 'string' ? transports.get(sessionId) : undefined;
+      if (
+        config.requireSessionBearer &&
+        existing &&
+        typeof sessionId === 'string' &&
+        !credentialMatches(sessionCredentialFingerprints.get(sessionId), sessionBearer)
+      ) {
+        req.resume();
+        writeJson(res, 401, jsonRpcError(null, -32001, 'Session credential mismatch'), {
+          'WWW-Authenticate': 'Bearer',
+        });
+        return;
+      }
       if (typeof sessionId === 'string' && existing) lastSeen.set(sessionId, Date.now());
 
       if (req.method === 'POST') {
@@ -445,7 +528,29 @@ export async function startHttpServer(
             writeJson(res, 400, jsonRpcError(null, -32000, 'Missing session ID: first request must be initialize'));
             return;
           }
-          transport = await createTransport();
+          try {
+            transport = await createTransport({ bearerToken: sessionBearer });
+          } catch (error) {
+            if (error instanceof SessionAuthenticationError) {
+              writeJson(res, 401, jsonRpcError(null, -32001, 'Invalid session credential'), {
+                'WWW-Authenticate': 'Bearer',
+              });
+              return;
+            }
+            if (error instanceof SessionAuthenticationUnavailableError) {
+              writeJson(res, 503, jsonRpcError(null, -32002, 'Credential validation temporarily unavailable'), {
+                'Retry-After': '5',
+              });
+              return;
+            }
+            if (error instanceof SessionRateLimitError) {
+              writeJson(res, 429, jsonRpcError(null, -32003, 'Session creation rate limit exceeded'), {
+                'Retry-After': String(error.retryAfterSeconds),
+              });
+              return;
+            }
+            throw error;
+          }
         }
 
         // Guard only requests against an existing session (a known id); a fresh
@@ -535,6 +640,7 @@ export async function startHttpServer(
       await transport.close().catch(() => undefined);
     }
     transports.clear();
+    sessionCredentialFingerprints.clear();
     lastSeen.clear();
     inflight.clear();
     await new Promise<void>((resolve) => {

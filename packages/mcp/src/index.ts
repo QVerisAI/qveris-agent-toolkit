@@ -59,10 +59,10 @@ import { createRequire } from 'node:module';
 const SERVER_NAME = 'qveris';
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
-const SERVER_VERSION: string = pkg.version;
+export const SERVER_VERSION: string = pkg.version;
 
 /** Discovery metadata (Server Card + Catalog) derived from package.json. */
-function buildServerCardInfo(): ServerCardInfo {
+export function getQverisServerCardInfo(): ServerCardInfo {
   const repoUrl: string | undefined = pkg.repository?.url?.replace(/^git\+/, '').replace(/\.git$/, '');
   return {
     name: pkg.mcpName ?? 'io.github.QVerisAI/mcp',
@@ -529,7 +529,7 @@ export function createQverisServer(client: QverisClient | undefined, defaultSess
   server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     const uri = request.params.uri;
     if (uri === CARD_RESOURCE_URI) {
-      const card = buildServerCard(buildServerCardInfo());
+      const card = buildServerCard(getQverisServerCardInfo());
       return {
         contents: [{ uri, mimeType: 'application/mcp-server-card+json', text: JSON.stringify(card) }],
       };
@@ -576,7 +576,11 @@ export async function main(): Promise<void> {
 
   // Streamable HTTP: one Qveris server per MCP session, keyed by Mcp-Session-Id.
   if (transportConfig.mode === 'http') {
-    await startHttpServer(transportConfig, (sessionId) => createQverisServer(client, sessionId), buildServerCardInfo());
+    await startHttpServer(
+      transportConfig,
+      (sessionId) => createQverisServer(client, sessionId),
+      getQverisServerCardInfo(),
+    );
     return;
   }
 
@@ -590,6 +594,14 @@ export async function main(): Promise<void> {
   console.error(`Qveris MCP Server v${SERVER_VERSION} started (stdio)`);
   console.error(`Session ID: ${defaultSessionId}`);
 }
+
+// Public embedding surface for independently operated HTTP services. The
+// toolkit owns protocol/session mechanics; embedders own credential policy,
+// client construction, deployment, and operations.
+export { QverisClient, resolveTransportConfig, startHttpServer };
+export { SessionAuthenticationError, SessionAuthenticationUnavailableError, SessionRateLimitError } from './http.js';
+export type { HttpSessionAuth, RunningHttpServer, TransportConfig } from './http.js';
+export type { ServerCardInfo } from './server-card.js';
 
 /**
  * Type guard for API errors.
