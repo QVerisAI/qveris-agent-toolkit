@@ -33,7 +33,7 @@ from qveris import QverisClient, QverisConfig
 client = QverisClient(QverisConfig(api_key="sk-..."))
 ```
 
-默认 API 基础地址为 `https://qveris.ai/api/v1/`。如需指向自定义端点，用环境变量 `QVERIS_BASE_URL` 或 `QverisConfig(base_url=...)` 覆盖。
+API 地址优先级为：`QverisConfig(base_url=...)` > `QVERIS_BASE_URL` > `https://qveris.ai/api/v1`。API key 不参与地址选择。覆盖值必须是无凭据、查询串和片段的 HTTP(S) URL。
 
 ## 快速开始
 
@@ -160,7 +160,7 @@ status = agent.budget_status()   # {"limit": 25, "spent": 12.0, "remaining": 13.
 | 字段 | 环境变量 | 默认值 | 说明 |
 |------|---------|--------|------|
 | `api_key` | `QVERIS_API_KEY` | `None` | API 密钥，以 `Authorization: Bearer ...` 发送 |
-| `base_url` | `QVERIS_BASE_URL` | `https://qveris.ai/api/v1/` | API 基础地址 |
+| `base_url` | `QVERIS_BASE_URL` | `https://qveris.ai/api/v1` | API 基础地址 |
 | `enable_history_pruning` | — | `True` | 裁剪/压缩旧的工具输出以节省 token（agent 循环） |
 | `max_iterations` | — | `50` | agent 工具循环的最大迭代次数 |
 

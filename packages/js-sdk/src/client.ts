@@ -2,7 +2,7 @@
  * QVeris API client.
  *
  * A lightweight, dependency-free typed client for the QVeris REST API using
- * native fetch (Node.js 18+). Handles authentication, region resolution,
+ * native fetch (Node.js 18+). Handles authentication, endpoint resolution,
  * success-envelope unwrapping, timeouts, and error normalization.
  *
  * The wire semantics mirror the Python SDK (`qveris` on PyPI) and the MCP
@@ -35,34 +35,44 @@ import type {
   UsageHistoryRequest,
 } from './types.js';
 
-/** Region-specific API base URLs */
-const REGION_URLS: Record<string, string> = {
-  global: 'https://qveris.ai/api/v1',
-  cn: 'https://qveris.cn/api/v1',
-};
-
-/**
- * Detect region from API key prefix.
- * sk-cn-xxx -> cn, sk-xxx -> global
- */
-function detectRegionFromKey(apiKey: string): string {
-  return apiKey.startsWith('sk-cn-') ? 'cn' : 'global';
-}
+const DEFAULT_BASE_URL = 'https://qveris.ai/api/v1';
 
 /**
  * Resolve the base URL for the QVeris API.
- * Priority: explicit baseUrl > QVERIS_BASE_URL env > QVERIS_REGION env > key prefix auto-detect > default
+ * Priority: explicit baseUrl > QVERIS_BASE_URL env > built-in default.
+ * API keys and QVERIS_REGION never affect endpoint selection.
  */
-function resolveBaseUrl(apiKey: string, explicitBaseUrl?: string): string {
-  if (explicitBaseUrl) return explicitBaseUrl.replace(/\/+$/, '');
-  if (typeof process !== 'undefined') {
-    if (process.env.QVERIS_BASE_URL) return process.env.QVERIS_BASE_URL.replace(/\/+$/, '');
-    if (process.env.QVERIS_REGION) {
-      const region = process.env.QVERIS_REGION.toLowerCase();
-      return REGION_URLS[region] ?? REGION_URLS.global;
-    }
+function resolveBaseUrl(explicitBaseUrl?: string): string {
+  if (explicitBaseUrl !== undefined) return normalizeBaseUrl(explicitBaseUrl);
+  if (typeof process !== 'undefined' && Object.prototype.hasOwnProperty.call(process.env, 'QVERIS_BASE_URL')) {
+    return normalizeBaseUrl(process.env.QVERIS_BASE_URL ?? '');
   }
-  return REGION_URLS[detectRegionFromKey(apiKey)];
+  return DEFAULT_BASE_URL;
+}
+
+function normalizeBaseUrl(value: string): string {
+  const candidate = value.trim();
+  if (!candidate) throw new Error('QVeris API base URL must not be empty');
+  if (/\s/.test(candidate) || candidate.includes('\\')) {
+    throw new Error('QVeris API base URL must be a valid HTTP(S) URL');
+  }
+
+  let url: URL;
+  try {
+    url = new URL(candidate);
+  } catch {
+    throw new Error('QVeris API base URL must be a valid HTTP(S) URL');
+  }
+
+  if (!['http:', 'https:'].includes(url.protocol) || !url.hostname) {
+    throw new Error('QVeris API base URL must be a valid HTTP(S) URL');
+  }
+  if (url.username || url.password || url.search || url.hash) {
+    throw new Error('QVeris API base URL must not contain credentials, a query, or a fragment');
+  }
+
+  url.pathname = url.pathname.replace(/\/+$/, '');
+  return url.toString().replace(/\/$/, '');
 }
 
 /** Default timeout: 30s for discover/inspect/audit, 120s for call */
@@ -130,14 +140,10 @@ export class Qveris {
 
   constructor(config: QverisClientConfig) {
     if (!config.apiKey) {
-      throw new Error(
-        'QVeris API key is required.\n' +
-          'Global: https://qveris.ai/account?page=api-keys\n' +
-          'China:  https://qveris.cn/account?page=api-keys',
-      );
+      throw new Error('QVeris API key is required.\n' + 'Create one at https://qveris.ai/account?page=api-keys');
     }
     this.apiKey = config.apiKey;
-    this.baseUrl = resolveBaseUrl(config.apiKey, config.baseUrl);
+    this.baseUrl = resolveBaseUrl(config.baseUrl);
     this.defaultTimeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.maxRetries = resolveMaxRetries(config.maxRetries);
   }
@@ -159,16 +165,13 @@ export class Qveris {
 
   /**
    * Create a client from the QVERIS_API_KEY environment variable.
-   * Region is auto-detected from the key prefix (sk-cn-xxx -> cn), or
-   * overridden via QVERIS_REGION / QVERIS_BASE_URL.
+   * An explicit baseUrl override takes priority over QVERIS_BASE_URL.
    */
   static fromEnv(overrides?: Omit<QverisClientConfig, 'apiKey'>): Qveris {
     const apiKey = process.env.QVERIS_API_KEY;
     if (!apiKey) {
       throw new Error(
-        'QVERIS_API_KEY environment variable is required.\n' +
-          'Global: https://qveris.ai/account?page=api-keys\n' +
-          'China:  https://qveris.cn/account?page=api-keys',
+        'QVERIS_API_KEY environment variable is required.\n' + 'Create one at https://qveris.ai/account?page=api-keys',
       );
     }
     return new Qveris({ apiKey, ...overrides });

@@ -15,7 +15,7 @@ Both classes inherit from `pydantic_settings.BaseSettings`, so values can be sup
 
 `QverisConfig`
 - `QVERIS_API_KEY`: Qveris API key (sent as `Authorization: Bearer ...`)
-- `QVERIS_BASE_URL`: API base URL (defaults to `https://qveris.ai/api/v1/`)
+- `QVERIS_BASE_URL`: API base URL (defaults to `https://qveris.ai/api/v1`)
 
 `AgentConfig`
 - no fixed env var aliases are defined here (pass values explicitly), but you can still rely on
@@ -25,8 +25,9 @@ Both classes inherit from `pydantic_settings.BaseSettings`, so values can be sup
 from __future__ import annotations
 
 from typing import Any, Dict, Optional, Tuple, Type
+from urllib.parse import urlsplit
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
 
 
@@ -72,7 +73,7 @@ class QverisConfig(BaseSettings):
     # an explicit ``QverisConfig(api_key=...)`` still wins over the env var via
     # the custom init source below (see settings_customise_sources / #136).
     api_key: Optional[str] = Field(default=None, validation_alias="QVERIS_API_KEY")
-    base_url: str = Field(default="https://qveris.ai/api/v1/", validation_alias="QVERIS_BASE_URL")
+    base_url: str = Field(default="https://qveris.ai/api/v1", validation_alias="QVERIS_BASE_URL")
 
     # Transport settings. On a 429 (or 503) the client honors Retry-After and
     # otherwise backs off exponentially with jitter, up to this many retries.
@@ -102,6 +103,28 @@ class QverisConfig(BaseSettings):
         # works via the aliased init source below (#136).
         extra="ignore",
     )
+
+    @field_validator("base_url")
+    @classmethod
+    def validate_base_url(cls, value: str) -> str:
+        candidate = value.strip()
+        if not candidate:
+            raise ValueError("Qveris API base URL must not be empty")
+        if any(char.isspace() for char in candidate) or "\\" in candidate:
+            raise ValueError("Qveris API base URL must be a valid HTTP(S) URL")
+
+        try:
+            parsed = urlsplit(candidate)
+            _ = parsed.port
+        except ValueError as exc:
+            raise ValueError("Qveris API base URL must be a valid HTTP(S) URL") from exc
+
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+            raise ValueError("Qveris API base URL must be a valid HTTP(S) URL")
+        if parsed.username or parsed.password or parsed.query or parsed.fragment:
+            raise ValueError("Qveris API base URL must not contain credentials, a query, or a fragment")
+
+        return candidate.rstrip("/")
 
     @classmethod
     def settings_customise_sources(

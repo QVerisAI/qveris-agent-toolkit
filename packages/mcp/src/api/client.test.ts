@@ -23,6 +23,60 @@ describe('QverisClient', () => {
       });
       expect(client).toBeInstanceOf(QverisClient);
     });
+
+    it.each([
+      '',
+      'ftp://example.test/api/v1',
+      'https://exa mple.test/api/v1',
+      'https://example.test\\@other.test/api/v1',
+      'https://user:pass@example.test/api/v1',
+      'https://example.test/api/v1?mode=test',
+      'https://example.test/api/v1#section',
+    ])('should reject unsafe base URL %j', (baseUrl) => {
+      expect(() => new QverisClient({ apiKey: 'test-key', baseUrl })).toThrow(/base URL/);
+    });
+  });
+
+  describe('endpoint resolution', () => {
+    const originalEnv = process.env;
+    let fetchMock: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      process.env = { ...originalEnv };
+      delete process.env.QVERIS_BASE_URL;
+      delete process.env.QVERIS_REGION;
+      fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ search_id: 'search-123', results: [], total: 0 }),
+      });
+      global.fetch = fetchMock;
+    });
+
+    afterEach(() => {
+      process.env = originalEnv;
+      vi.restoreAllMocks();
+    });
+
+    it('does not infer the endpoint from the API key or QVERIS_REGION', async () => {
+      process.env.QVERIS_REGION = 'cn';
+      await new QverisClient({ apiKey: 'sk-cn-test' }).searchTools({ query: 'weather' });
+      expect(fetchMock.mock.calls[0][0]).toBe('https://qveris.ai/api/v1/search');
+    });
+
+    it('uses QVERIS_BASE_URL when no explicit base URL is provided', async () => {
+      process.env.QVERIS_BASE_URL = 'https://env.example/api/v1///';
+      await new QverisClient({ apiKey: 'test-key' }).searchTools({ query: 'weather' });
+      expect(fetchMock.mock.calls[0][0]).toBe('https://env.example/api/v1/search');
+    });
+
+    it('prefers an explicit base URL over QVERIS_BASE_URL', async () => {
+      process.env.QVERIS_BASE_URL = 'https://env.example/api/v1';
+      await new QverisClient({
+        apiKey: 'test-key',
+        baseUrl: 'https://explicit.example/api/v1/',
+      }).searchTools({ query: 'weather' });
+      expect(fetchMock.mock.calls[0][0]).toBe('https://explicit.example/api/v1/search');
+    });
   });
 
   describe('searchTools', () => {

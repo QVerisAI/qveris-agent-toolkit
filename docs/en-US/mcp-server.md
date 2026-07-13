@@ -64,7 +64,7 @@ The MCP server reads configuration from environment variables:
 
 ```bash
 QVERIS_API_KEY=your-api-key          # Required
-QVERIS_BASE_URL=https://...          # Optional: override API base URL
+QVERIS_BASE_URL=https://qveris.ai/api/v1  # Optional: override API base URL
 ```
 
 ### Configure with QVeris CLI

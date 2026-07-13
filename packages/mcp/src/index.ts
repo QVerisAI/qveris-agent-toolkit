@@ -217,8 +217,7 @@ export async function executeQverisMcpTool(
           text: JSON.stringify({
             error:
               'QVERIS_API_KEY is not set. Tool listing works without a key, but tool calls require one. ' +
-              'Create a key (global: https://qveris.ai/account?page=api-keys, ' +
-              'China: https://qveris.cn/account?page=api-keys), set QVERIS_API_KEY, and restart the server.',
+              'Create a key at https://qveris.ai/account?page=api-keys, set QVERIS_API_KEY, and restart the server.',
           }),
         },
       ],

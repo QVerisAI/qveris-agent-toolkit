@@ -80,9 +80,11 @@ All types are exported from the package root (`import type { SearchResponse, Exe
 | Option / env var | Description |
 | --- | --- |
 | `apiKey` / `QVERIS_API_KEY` | Required. Create one at [qveris.ai](https://qveris.ai/account?page=api-keys) |
-| `baseUrl` / `QVERIS_BASE_URL` | Override API base URL (highest priority) |
+| `baseUrl` / `QVERIS_BASE_URL` | API endpoint: constructor option > environment variable > built-in default |
 | `timeoutMs` | Default request timeout (30s; `call` defaults to 120s) |
 | `maxRetries` | Retries for rate-limited (429) / transient (503) responses (default 3; `0` disables) |
+
+API keys never select the endpoint. Endpoint overrides must be HTTP(S) URLs without credentials, a query string, or a fragment.
 
 ## Rate limiting & retries
 

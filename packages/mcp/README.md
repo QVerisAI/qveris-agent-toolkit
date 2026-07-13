@@ -314,7 +314,7 @@ npx -y @qverisai/mcp
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `QVERIS_API_KEY` | ✓ | Your QVeris API key |
-| `QVERIS_BASE_URL` | | Override API base URL (highest priority, for custom endpoints) |
+| `QVERIS_BASE_URL` | | Override the built-in API base URL |
 | `QVERIS_MAX_RETRIES` | | Retries for rate-limited (429) / transient (503) responses (default 3; `0` disables). Honors `Retry-After`, else backs off with jitter. |
 | `QVERIS_MCP_TRANSPORT` | | `stdio` (default) or `http` |
 | `QVERIS_MCP_HTTP_PORT` | | HTTP port (default `3000`; setting it implies HTTP mode) |
@@ -333,7 +333,7 @@ npx -y @qverisai/mcp
 
 ## API Endpoint Override
 
-The server resolves its API endpoint automatically. To target a custom deployment, set `QVERIS_BASE_URL` in your MCP client config:
+The server uses its built-in API endpoint unless `QVERIS_BASE_URL` is set. API key prefixes and other environment variables do not select an endpoint. To target a custom endpoint, set `QVERIS_BASE_URL` in your MCP client config:
 
 ```json
 {
@@ -350,7 +350,7 @@ The server resolves its API endpoint automatically. To target a custom deploymen
 }
 ```
 
-An explicit `QVERIS_BASE_URL` takes priority over automatic endpoint resolution.
+The override must be an HTTP(S) URL without credentials, a query string, or a fragment.
 
 ## Examples
 

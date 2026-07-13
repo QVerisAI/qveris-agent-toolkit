@@ -51,13 +51,18 @@ const SAMPLE_DISCOVER_RESPONSE = {
 
 describe('Qveris client', () => {
   let originalFetch: typeof globalThis.fetch;
+  const originalEnv = process.env;
 
   beforeEach(() => {
     originalFetch = globalThis.fetch;
+    process.env = { ...originalEnv };
+    delete process.env.QVERIS_BASE_URL;
+    delete process.env.QVERIS_REGION;
   });
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
+    process.env = originalEnv;
     vi.restoreAllMocks();
   });
 
@@ -65,24 +70,45 @@ describe('Qveris client', () => {
     expect(() => new Qveris({ apiKey: '' })).toThrow(/API key is required/);
   });
 
-  it('resolves base URL from key prefix (sk-cn- -> qveris.cn)', async () => {
+  it('does not infer the endpoint from the API key or QVERIS_REGION', async () => {
     const fetchMock = mockFetch(SAMPLE_DISCOVER_RESPONSE);
     globalThis.fetch = fetchMock;
+    process.env.QVERIS_REGION = 'cn';
 
     await new Qveris({ apiKey: 'sk-cn-test' }).discover('weather');
-    expect(fetchMock.mock.calls[0][0]).toContain('https://qveris.cn/api/v1/search');
-
-    await new Qveris({ apiKey: API_KEY }).discover('weather');
-    expect(fetchMock.mock.calls[1][0]).toContain('https://qveris.ai/api/v1/search');
+    expect(fetchMock.mock.calls[0][0]).toBe('https://qveris.ai/api/v1/search');
   });
 
-  it('explicit baseUrl overrides key-prefix detection and strips trailing slashes', async () => {
+  it('uses QVERIS_BASE_URL and strips trailing slashes', async () => {
     const fetchMock = mockFetch(SAMPLE_DISCOVER_RESPONSE);
     globalThis.fetch = fetchMock;
+    process.env.QVERIS_BASE_URL = 'https://env.example/api/v1///';
 
-    const client = new Qveris({ apiKey: 'sk-cn-test', baseUrl: 'https://example.test/api/v1///' });
+    const client = new Qveris({ apiKey: API_KEY });
     await client.discover('weather');
-    expect(fetchMock.mock.calls[0][0]).toBe('https://example.test/api/v1/search');
+    expect(fetchMock.mock.calls[0][0]).toBe('https://env.example/api/v1/search');
+  });
+
+  it('explicit baseUrl overrides QVERIS_BASE_URL', async () => {
+    const fetchMock = mockFetch(SAMPLE_DISCOVER_RESPONSE);
+    globalThis.fetch = fetchMock;
+    process.env.QVERIS_BASE_URL = 'https://env.example/api/v1';
+
+    const client = new Qveris({ apiKey: API_KEY, baseUrl: 'https://explicit.example/api/v1/' });
+    await client.discover('weather');
+    expect(fetchMock.mock.calls[0][0]).toBe('https://explicit.example/api/v1/search');
+  });
+
+  it.each([
+    '',
+    'ftp://example.test/api/v1',
+    'https://exa mple.test/api/v1',
+    'https://example.test\\@other.test/api/v1',
+    'https://user:pass@example.test/api/v1',
+    'https://example.test/api/v1?mode=test',
+    'https://example.test/api/v1#section',
+  ])('rejects unsafe base URL %j', (baseUrl) => {
+    expect(() => new Qveris({ apiKey: API_KEY, baseUrl })).toThrow(/base URL/);
   });
 
   it('discover posts query/limit/session_id and parses the modern result shape', async () => {

@@ -528,7 +528,7 @@ export interface QverisClientConfig {
   /** API authentication token */
   apiKey: string;
 
-  /** Base URL for the API (defaults to production) */
+  /** API base URL. Overrides QVERIS_BASE_URL and the built-in default. */
   baseUrl?: string;
 
   /** Default request timeout in milliseconds */

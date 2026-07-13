@@ -30,7 +30,7 @@ const qveris = Qveris.fromEnv();
 const explicit = new Qveris({ apiKey: 'sk-...' });
 ```
 
-The SDK resolves the API endpoint automatically. To target a custom endpoint, pass `baseUrl` explicitly or set `QVERIS_BASE_URL`; the explicit constructor option has the highest priority:
+Endpoint priority is explicit `baseUrl` > `QVERIS_BASE_URL` > the built-in default. API keys never select the endpoint. To target a custom endpoint, pass `baseUrl` explicitly or set `QVERIS_BASE_URL`:
 
 ```typescript
 const client = new Qveris({ apiKey: 'sk-...', baseUrl: 'https://qveris.ai/api/v1' });
@@ -77,7 +77,7 @@ There is no connection to close — the client is stateless over `fetch`.
 | Field | Env var | Default | Description |
 |-------|---------|---------|-------------|
 | `apiKey` | `QVERIS_API_KEY` | — (required) | API key, sent as `Authorization: Bearer ...` |
-| `baseUrl` | `QVERIS_BASE_URL` | Automatically resolved | API base URL (highest priority) |
+| `baseUrl` | `QVERIS_BASE_URL` | `https://qveris.ai/api/v1` | API base URL; constructor option has highest priority |
 | `timeoutMs` | — | `30000` | Default request timeout (`call` defaults to `120000`) |
 
 `Qveris.fromEnv(overrides?)` builds the client from `QVERIS_API_KEY` and accepts the same non-key options.
