@@ -3,7 +3,14 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { createQverisServer } from './index.js';
-import { resolveTransportConfig, startHttpServer, type RunningHttpServer } from './http.js';
+import {
+  resolveTransportConfig,
+  SessionAuthenticationError,
+  SessionAuthenticationUnavailableError,
+  SessionRateLimitError,
+  startHttpServer,
+  type RunningHttpServer,
+} from './http.js';
 
 describe('resolveTransportConfig', () => {
   it('defaults to stdio with no flags or env', () => {
@@ -42,6 +49,7 @@ describe('resolveTransportConfig', () => {
     expect(config.enableDnsRebindingProtection).toBe(true);
     expect(config.enableJsonResponse).toBe(false);
     expect(config.authToken).toBeUndefined();
+    expect(config.requireSessionBearer).toBe(false);
     expect(config.allowUnauthenticated).toBe(false);
     expect(config.maxBodyBytes).toBe(4 * 1024 * 1024);
     expect(config.sessionTimeoutMs).toBe(5 * 60 * 1000);
@@ -111,12 +119,31 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
     protocolVersions: ['2025-11-25'],
   };
 
-  async function startServer(extraEnv: Record<string, string> = {}, cardInfo?: typeof CARD_INFO): Promise<void> {
-    const config = resolveTransportConfig({ QVERIS_MCP_TRANSPORT: 'http', QVERIS_MCP_HTTP_PORT: '0', ...extraEnv }, []);
+  async function startServer(
+    extraEnv: Record<string, string> = {},
+    cardInfo?: typeof CARD_INFO,
+    makeServer: Parameters<typeof startHttpServer>[1] = (sessionId) => createQverisServer(undefined, sessionId),
+    requireSessionBearer = false,
+  ): Promise<void> {
+    const config = {
+      ...resolveTransportConfig({ QVERIS_MCP_TRANSPORT: 'http', QVERIS_MCP_HTTP_PORT: '0', ...extraEnv }, []),
+      requireSessionBearer,
+    };
     // Server has no QVERIS_API_KEY, so tool listing works but calls return an
     // actionable error — exactly the credential-less path we want to exercise.
-    running = await startHttpServer(config, (sessionId) => createQverisServer(undefined, sessionId), cardInfo);
+    running = await startHttpServer(config, makeServer, cardInfo);
   }
+
+  const initializeBody = {
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'initialize',
+    params: {
+      protocolVersion: '2025-11-25',
+      capabilities: {},
+      clientInfo: { name: 'raw-test-client', version: '0.0.0' },
+    },
+  };
 
   async function connectClient(bearer?: string): Promise<{ client: Client; transport: StreamableHTTPClientTransport }> {
     if (!running) await startServer();
@@ -199,6 +226,147 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
     await health.text();
   });
 
+  it('passes each required bearer only to its own session factory', async () => {
+    const sessionKeys: string[] = [];
+    await startServer(
+      {},
+      undefined,
+      (sessionId, auth) => {
+        sessionKeys.push(auth.bearerToken ?? '');
+        return createQverisServer(undefined, sessionId);
+      },
+      true,
+    );
+
+    const first = await connectClient('user-key-a');
+    const second = await connectClient('user-key-b');
+    expect(first.transport.sessionId).not.toBe(second.transport.sessionId);
+    expect(sessionKeys).toEqual(['user-key-a', 'user-key-b']);
+    await first.client.close();
+    await second.client.close();
+  });
+
+  it('requires a bearer when the embedding service enables session auth', async () => {
+    await startServer({}, undefined, undefined, true);
+    const res = await fetch(`http://127.0.0.1:${running!.port}/mcp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream' },
+      body: JSON.stringify(initializeBody),
+    });
+    expect(res.status).toBe(401);
+    expect(res.headers.get('www-authenticate')).toBe('Bearer');
+    await res.text();
+  });
+
+  it('rejects a credential change on an established session', async () => {
+    await startServer({}, undefined, undefined, true);
+    const { client, transport } = await connectClient('user-key-a');
+    const res = await fetch(`http://127.0.0.1:${running!.port}/mcp`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer user-key-b',
+        'Mcp-Session-Id': transport.sessionId!,
+        'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream',
+      },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list' }),
+    });
+    expect(res.status).toBe(401);
+    expect((await res.json()) as object).toMatchObject({ error: { message: 'Session credential mismatch' } });
+    await client.close();
+  });
+
+  it('maps rejected and unavailable credential validation safely', async () => {
+    await startServer(
+      {},
+      undefined,
+      () => {
+        throw new SessionAuthenticationError('upstream details must not escape');
+      },
+      true,
+    );
+    const rejected = await fetch(`http://127.0.0.1:${running!.port}/mcp`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer invalid-key',
+        'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream',
+      },
+      body: JSON.stringify(initializeBody),
+    });
+    expect(rejected.status).toBe(401);
+    expect(await rejected.text()).not.toContain('upstream details');
+    await running?.close();
+    running = undefined;
+
+    await startServer(
+      {},
+      undefined,
+      () => {
+        throw new SessionAuthenticationUnavailableError('internal network details');
+      },
+      true,
+    );
+    const unavailable = await fetch(`http://127.0.0.1:${running!.port}/mcp`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer user-key',
+        'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream',
+      },
+      body: JSON.stringify(initializeBody),
+    });
+    expect(unavailable.status).toBe(503);
+    expect(unavailable.headers.get('retry-after')).toBe('5');
+    expect(await unavailable.text()).not.toContain('internal network details');
+  });
+
+  it('maps embedding-service session limits to a retryable response', async () => {
+    await startServer(
+      {},
+      undefined,
+      () => {
+        throw new SessionRateLimitError('internal limiter details', 17);
+      },
+      true,
+    );
+    const res = await fetch(`http://127.0.0.1:${running!.port}/mcp`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer caller-credential',
+        'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream',
+      },
+      body: JSON.stringify(initializeBody),
+    });
+    expect(res.status).toBe(429);
+    expect(res.headers.get('retry-after')).toBe('17');
+    expect(await res.text()).not.toContain('internal limiter details');
+  });
+
+  it('normalizes invalid embedding-service retry windows before writing the header', async () => {
+    await startServer(
+      {},
+      undefined,
+      () => {
+        throw new SessionRateLimitError('internal limiter details', Number.NaN);
+      },
+      true,
+    );
+    const res = await fetch(`http://127.0.0.1:${running!.port}/mcp`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer caller-credential',
+        'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream',
+      },
+      body: JSON.stringify(initializeBody),
+    });
+    expect(res.status).toBe(429);
+    expect(res.headers.get('retry-after')).toBe('60');
+    await res.text();
+  });
+
   it('returns 413 for an oversized request body', async () => {
     await startServer({ QVERIS_MCP_MAX_BODY_BYTES: '512' });
     const res = await fetch(`http://127.0.0.1:${running!.port}/mcp`, {
@@ -249,6 +417,45 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
     const res = await fetch(`http://127.0.0.1:${running!.port}/health`);
     expect(res.status).toBe(200);
     await res.text();
+  });
+
+  it('allows a non-loopback bind with mandatory per-session bearer auth', async () => {
+    await startServer({ QVERIS_MCP_HTTP_HOST: '0.0.0.0' }, undefined, undefined, true);
+    const res = await fetch(`http://127.0.0.1:${running!.port}/health`);
+    expect(res.status).toBe(200);
+    await res.text();
+  });
+
+  it('rejects auth options that conflict with per-session bearer auth', async () => {
+    const withSharedToken = {
+      ...resolveTransportConfig(
+        {
+          QVERIS_MCP_TRANSPORT: 'http',
+          QVERIS_MCP_HTTP_PORT: '0',
+          QVERIS_MCP_HTTP_AUTH_TOKEN: 'shared-token',
+        },
+        [],
+      ),
+      requireSessionBearer: true,
+    };
+    await expect(
+      startHttpServer(withSharedToken, (sessionId) => createQverisServer(undefined, sessionId)),
+    ).rejects.toThrow(/cannot be combined/);
+
+    const withUnauthenticated = {
+      ...resolveTransportConfig(
+        {
+          QVERIS_MCP_TRANSPORT: 'http',
+          QVERIS_MCP_HTTP_PORT: '0',
+          QVERIS_MCP_HTTP_ALLOW_UNAUTHENTICATED: 'true',
+        },
+        [],
+      ),
+      requireSessionBearer: true,
+    };
+    await expect(
+      startHttpServer(withUnauthenticated, (sessionId) => createQverisServer(undefined, sessionId)),
+    ).rejects.toThrow(/cannot be enabled/);
   });
 
   it('serves the Server Card unauthenticated with the right media type and CORS', async () => {
