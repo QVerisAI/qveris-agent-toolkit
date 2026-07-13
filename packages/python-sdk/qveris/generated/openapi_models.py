@@ -72,6 +72,22 @@ class CreditsLedgerSummaryBucket(BaseModel):
     net_amount_credits: float = Field(..., title='Net Amount Credits')
 
 
+class PublicApiMetadata(BaseModel):
+    """
+    Unauthenticated metadata used by API clients for compatibility checks.
+    """
+
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    contract_version: str = Field(
+        ...,
+        description='Version of the published QVeris REST API contract.',
+        examples=['2026-07-13'],
+        title='Contract Version',
+    )
+
+
 class SettlementHistoryItem(BaseModel):
     id: str = Field(..., title='Id')
     source: str = Field(..., title='Source')
