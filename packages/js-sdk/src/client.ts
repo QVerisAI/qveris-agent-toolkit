@@ -44,8 +44,8 @@ const DEFAULT_BASE_URL = 'https://qveris.ai/api/v1';
  */
 function resolveBaseUrl(explicitBaseUrl?: string): string {
   if (explicitBaseUrl !== undefined) return normalizeBaseUrl(explicitBaseUrl);
-  if (typeof process !== 'undefined' && Object.prototype.hasOwnProperty.call(process.env, 'QVERIS_BASE_URL')) {
-    return normalizeBaseUrl(process.env.QVERIS_BASE_URL ?? '');
+  if (typeof process !== 'undefined' && typeof process.env?.QVERIS_BASE_URL === 'string') {
+    return normalizeBaseUrl(process.env.QVERIS_BASE_URL);
   }
   return DEFAULT_BASE_URL;
 }

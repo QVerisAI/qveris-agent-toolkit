@@ -89,6 +89,11 @@ describe('Qveris client', () => {
     expect(fetchMock.mock.calls[0][0]).toBe('https://env.example/api/v1/search');
   });
 
+  it('rejects an explicitly empty QVERIS_BASE_URL', () => {
+    process.env.QVERIS_BASE_URL = '';
+    expect(() => new Qveris({ apiKey: API_KEY })).toThrow(/base URL must not be empty/);
+  });
+
   it('explicit baseUrl overrides QVERIS_BASE_URL', async () => {
     const fetchMock = mockFetch(SAMPLE_DISCOVER_RESPONSE);
     globalThis.fetch = fetchMock;

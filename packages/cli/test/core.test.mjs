@@ -53,6 +53,9 @@ test("endpoint resolution uses flag, environment, then default without key or re
       source: "default",
     });
 
+    process.env.QVERIS_BASE_URL = "";
+    assert.throws(() => resolveBaseUrl(), /non-empty HTTP\(S\) URL/);
+
     process.env.QVERIS_BASE_URL = "https://env.test/api/v1///";
     assert.deepEqual(resolveBaseUrl(), {
       baseUrl: "https://env.test/api/v1",

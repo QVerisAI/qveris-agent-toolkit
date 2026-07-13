@@ -60,7 +60,7 @@ export function resolveBaseUrl({ baseUrlFlag } = {}) {
   if (baseUrlFlag !== undefined && baseUrlFlag !== null) {
     return { baseUrl: normalizeBaseUrl(baseUrlFlag), source: "flag" };
   }
-  if (Object.prototype.hasOwnProperty.call(process.env, "QVERIS_BASE_URL")) {
+  if (typeof process.env.QVERIS_BASE_URL === "string") {
     return {
       baseUrl: normalizeBaseUrl(process.env.QVERIS_BASE_URL),
       source: "env (QVERIS_BASE_URL)",
