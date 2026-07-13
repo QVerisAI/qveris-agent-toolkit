@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "QVeris Public REST API",
-    "version": "2026-05-12",
+    "version": "2026-07-13",
     "summary": "External REST API for enterprise integration.",
     "description": "OpenAPI 3.1 schema for the formally released public `/api/v1` REST API surface. It covers search, provider discovery, tool metadata lookup/execution, credits, and account audit endpoints. Unreleased API families are intentionally excluded from this customer-facing schema."
   },
@@ -111,6 +111,16 @@
                   "$ref": "#/components/schemas/APIResponse_SettlementHistoryResponse_"
                 }
               }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
             }
           },
           "422": {
@@ -119,6 +129,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
                 }
               }
             }
@@ -131,8 +151,8 @@
           "global"
         ],
         "x-qveris-source": {
-          "file": "backend/routers/auth.py",
-          "line": 3470
+          "file": "backend/routers/auth_usage.py",
+          "line": 1371
         },
         "x-qveris-response-model": "APIResponse[SettlementHistoryResponse]"
       }
@@ -154,6 +174,16 @@
                   "$ref": "#/components/schemas/APIResponse_dict_"
                 }
               }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
             }
           }
         },
@@ -170,7 +200,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/auth.py",
-          "line": 1245
+          "line": 399
         },
         "x-qveris-response-model": "APIResponse[dict]"
       }
@@ -432,6 +462,16 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
             }
           },
           "422": {
@@ -440,6 +480,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
                 }
               }
             }
@@ -458,6 +508,16 @@
                   "data": null
                 }
               }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
             }
           }
         },
@@ -468,8 +528,8 @@
           "global"
         ],
         "x-qveris-source": {
-          "file": "backend/routers/auth.py",
-          "line": 3568
+          "file": "backend/routers/auth_usage.py",
+          "line": 1469
         },
         "x-qveris-response-model": "APIResponse[CreditsLedgerResponse]"
       }
@@ -534,6 +594,16 @@
                   "$ref": "#/components/schemas/APIResponse_CreditsLedgerReadinessResponse_"
                 }
               }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
             }
           },
           "422": {
@@ -542,6 +612,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
                 }
               }
             }
@@ -554,8 +634,8 @@
           "global"
         ],
         "x-qveris-source": {
-          "file": "backend/routers/auth.py",
-          "line": 3872
+          "file": "backend/routers/auth_usage.py",
+          "line": 1806
         },
         "x-qveris-response-model": "APIResponse[CreditsLedgerReadinessResponse]"
       }
@@ -640,6 +720,16 @@
                   "format": "binary"
                 }
               }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
             }
           }
         },
@@ -650,8 +740,8 @@
           "global"
         ],
         "x-qveris-source": {
-          "file": "backend/routers/auth.py",
-          "line": 3744
+          "file": "backend/routers/auth_usage.py",
+          "line": 1645
         }
       }
     },
@@ -688,6 +778,16 @@
                   "$ref": "#/components/schemas/APIResponse_CreditsLedgerItem_"
                 }
               }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
             }
           },
           "422": {
@@ -696,6 +796,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
                 }
               }
             }
@@ -708,8 +818,8 @@
           "global"
         ],
         "x-qveris-source": {
-          "file": "backend/routers/auth.py",
-          "line": 3820
+          "file": "backend/routers/auth_usage.py",
+          "line": 1754
         },
         "x-qveris-response-model": "APIResponse[CreditsLedgerItem]"
       }
@@ -810,6 +920,16 @@
                   "$ref": "#/components/schemas/APIResponse_UsageCreditsSpentResponse_"
                 }
               }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
             }
           },
           "422": {
@@ -818,6 +938,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
                 }
               }
             }
@@ -830,8 +960,8 @@
           "global"
         ],
         "x-qveris-source": {
-          "file": "backend/routers/auth.py",
-          "line": 3239
+          "file": "backend/routers/auth_usage.py",
+          "line": 1140
         },
         "x-qveris-response-model": "APIResponse[UsageCreditsSpentResponse]"
       }
@@ -1262,6 +1392,16 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
             }
           },
           "422": {
@@ -1270,6 +1410,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
                 }
               }
             }
@@ -1288,6 +1438,16 @@
                   "data": null
                 }
               }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
             }
           }
         },
@@ -1298,8 +1458,8 @@
           "global"
         ],
         "x-qveris-source": {
-          "file": "backend/routers/auth.py",
-          "line": 2925
+          "file": "backend/routers/auth_usage.py",
+          "line": 826
         },
         "x-qveris-response-model": "APIResponse[UsageEventsResponse]"
       }
@@ -1563,6 +1723,16 @@
                   "format": "binary"
                 }
               }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
             }
           }
         },
@@ -1573,8 +1743,8 @@
           "global"
         ],
         "x-qveris-source": {
-          "file": "backend/routers/auth.py",
-          "line": 3309
+          "file": "backend/routers/auth_usage.py",
+          "line": 1210
         }
       }
     },
@@ -1868,6 +2038,16 @@
                   "$ref": "#/components/schemas/APIResponse_UsageEventSummaryResponse_"
                 }
               }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
             }
           },
           "422": {
@@ -1876,6 +2056,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
                 }
               }
             }
@@ -1888,8 +2078,8 @@
           "global"
         ],
         "x-qveris-source": {
-          "file": "backend/routers/auth.py",
-          "line": 3128
+          "file": "backend/routers/auth_usage.py",
+          "line": 1029
         },
         "x-qveris-response-model": "APIResponse[UsageEventSummaryResponse]"
       }
@@ -1928,6 +2118,16 @@
                   "$ref": "#/components/schemas/APIResponse_UsageEventItem_"
                 }
               }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
             }
           },
           "422": {
@@ -1936,6 +2136,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
                 }
               }
             }
@@ -1948,8 +2158,8 @@
           "global"
         ],
         "x-qveris-source": {
-          "file": "backend/routers/auth.py",
-          "line": 3428
+          "file": "backend/routers/auth_usage.py",
+          "line": 1329
         },
         "x-qveris-response-model": "APIResponse[UsageEventItem]"
       }
@@ -1971,6 +2181,16 @@
                   "$ref": "#/components/schemas/APIResponse_TokenVerificationResponse_"
                 }
               }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
             }
           }
         },
@@ -1987,7 +2207,7 @@
         ],
         "x-qveris-source": {
           "file": "backend/routers/auth.py",
-          "line": 4005
+          "line": 746
         },
         "x-qveris-response-model": "APIResponse[TokenVerificationResponse]"
       }
@@ -2009,6 +2229,16 @@
                   "$ref": "#/components/schemas/APIResponse_dict_"
                 }
               }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
             }
           }
         },
@@ -2028,6 +2258,50 @@
           "line": 28
         },
         "x-qveris-response-model": "APIResponse[dict]"
+      }
+    },
+    "/meta": {
+      "get": {
+        "tags": [
+          "Metadata"
+        ],
+        "summary": "Api Metadata",
+        "description": "Return the published API contract version without authentication.",
+        "operationId": "api_metadata_api_v1_meta_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiMetadata"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "x-qveris-regions": [
+          "cn",
+          "global"
+        ],
+        "x-qveris-source": {
+          "file": "backend/main.py",
+          "line": 315
+        },
+        "x-qveris-response-model": "PublicApiMetadata",
+        "security": []
       }
     },
     "/providers": {
@@ -2130,6 +2404,16 @@
               "application/json": {
                 "schema": {}
               }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
             }
           },
           "422": {
@@ -2138,6 +2422,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
                 }
               }
             }
@@ -2169,6 +2463,16 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
               }
             }
           }
@@ -2224,6 +2528,14 @@
                 "description": "Seconds until the client should retry after a rate-limit response.",
                 "schema": {
                   "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
                 }
               }
             },
@@ -2293,6 +2605,14 @@
                 "schema": {
                   "type": "integer"
                 }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
               }
             },
             "content": {
@@ -2333,6 +2653,14 @@
                 "description": "Seconds until the client should retry after a rate-limit response.",
                 "schema": {
                   "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
                 }
               }
             },
@@ -2377,6 +2705,14 @@
                 "description": "Seconds until the client should retry after a rate-limit response.",
                 "schema": {
                   "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
                 }
               }
             },
@@ -2475,6 +2811,16 @@
                   "remaining_credits": 995
                 }
               }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
             }
           },
           "401": {
@@ -2490,6 +2836,16 @@
                   "message": "Invalid API key"
                 }
               }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
+              }
             }
           },
           "504": {
@@ -2502,6 +2858,16 @@
                 "example": {
                   "error": "Request timeout",
                   "remaining_credits": 995
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
                 }
               }
             }
@@ -2626,6 +2992,14 @@
                 "schema": {
                   "type": "integer"
                 }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
               }
             }
           },
@@ -2655,6 +3029,14 @@
                 "schema": {
                   "type": "integer"
                 }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
               }
             }
           },
@@ -2683,6 +3065,14 @@
                 "description": "Seconds until the client should retry after a rate-limit response.",
                 "schema": {
                   "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
                 }
               }
             },
@@ -2730,6 +3120,14 @@
                 "schema": {
                   "type": "integer"
                 }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
+                }
               }
             },
             "content": {
@@ -2760,6 +3158,16 @@
                   "success": false,
                   "error_message": "Missing required parameter: tool_id. Provide it as query (?tool_id=xxx) or in JSON body.",
                   "execution_time": 0.01
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-13"
                 }
               }
             }
@@ -3689,6 +4097,25 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "PublicApiMetadata": {
+        "properties": {
+          "contract_version": {
+            "type": "string",
+            "title": "Contract Version",
+            "description": "Version of the published QVeris REST API contract.",
+            "examples": [
+              "2026-07-13"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "contract_version"
+        ],
+        "title": "PublicApiMetadata",
+        "description": "Unauthenticated metadata used by API clients for compatibility checks."
       },
       "SettlementHistoryItem": {
         "properties": {
@@ -5828,6 +6255,10 @@
   ],
   "tags": [
     {
+      "name": "Metadata",
+      "description": "Unauthenticated API contract metadata for client compatibility checks."
+    },
+    {
       "name": "Discovery",
       "description": "Search and provider discovery APIs that are released for enterprise integration."
     },
@@ -5840,8 +6271,8 @@
       "description": "Credits, usage audit, and billing ledger APIs."
     }
   ],
-  "x-qveris-route-count": 18,
-  "x-qveris-public-operation-count": 18,
+  "x-qveris-route-count": 19,
+  "x-qveris-public-operation-count": 19,
   "x-qveris-private-operation-count": 0,
   "x-qveris-generation-source": "Filtered from qveris-internal-api.openapi.json"
 }

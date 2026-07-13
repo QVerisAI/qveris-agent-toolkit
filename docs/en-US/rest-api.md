@@ -1,6 +1,6 @@
 # QVeris REST API Documentation
 
-Version: 2026-05-12
+Version: 2026-07-13
 
 The public REST API exposes the core agent path:
 
