@@ -6,7 +6,7 @@
 
 - 已安装 Node.js（用于运行 MCP 服务器）
 - 已安装 Claude Code
-- QVeris API 密钥（从 [https://qveris.ai](https://qveris.ai) 获取）
+- QVeris API 密钥（在[控制台/API密钥](/account?page=api-keys)中创建）
 
 ## 1. MCP 服务器配置
 

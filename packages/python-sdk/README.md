@@ -170,7 +170,7 @@ agent = Agent(llm_provider=MyProvider())
 
 `discover` / `inspect` / `call` emit one OpenTelemetry span each, so you can trace QVeris activity and correlate it with the usage/ledger records. Tracing is **dependency-free and best-effort**:
 
-- If `opentelemetry-api` is not importable (install it with `pip install qveris[otel]`), the helpers are a no-op — no overhead, no behavior change.
+- If `opentelemetry-api` is not importable (install it with `pip install 'qveris[otel]'`), the helpers are a no-op — no overhead, no behavior change.
 - If it is importable but no tracer provider is configured, spans go to OpenTelemetry's default no-op provider (near-zero cost, nothing exported).
 - Configure a provider + OTLP exporter and the spans flow to Jaeger/Tempo/any OTLP backend.
 - A fault in the tracer itself (broken provider/sampler/exporter) degrades to a no-op — it never breaks a `discover`/`inspect`/`call`.
@@ -178,7 +178,7 @@ agent = Agent(llm_provider=MyProvider())
 Span attributes live under a `qveris.` namespace: `operation`, `tool_id` / `tool_id_count`, `search_id`, `execution_id`, `elapsed_time_ms`, `success`, and `credits` (pre-settlement). The natural-language query and tool parameters are intentionally **not** recorded. A failed `call` is marked as an error span.
 
 ```python
-# pip install qveris[otel] opentelemetry-sdk opentelemetry-exporter-otlp
+# pip install 'qveris[otel]' opentelemetry-sdk opentelemetry-exporter-otlp
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor

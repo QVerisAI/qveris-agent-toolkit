@@ -20,7 +20,7 @@ The SDK reads your API key from the `QVERIS_API_KEY` environment variable:
 export QVERIS_API_KEY="sk-..."
 ```
 
-Get a key at [qveris.ai](https://qveris.ai). Create the client from the environment, or pass configuration explicitly:
+Create a key in [Dashboard / API Keys](/account?page=api-keys). Create the client from the environment, or pass configuration explicitly:
 
 ```typescript
 import { Qveris } from '@qverisai/sdk';
@@ -192,4 +192,4 @@ try {
 - Package: [`@qverisai/sdk` on npm](https://www.npmjs.com/package/@qverisai/sdk)
 - Source: [`packages/js-sdk`](https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/js-sdk)
 - REST API: [rest-api.md](rest-api.md)
-- Get an API key: [qveris.ai](https://qveris.ai)
+- Get an API key: [Dashboard / API Keys](/account?page=api-keys)

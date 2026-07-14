@@ -6,7 +6,7 @@
 
 - 已安装 Node.js
 - 已安装 OpenCode（[安装指南](https://opencode.ai/docs/)）
-- QVeris API 密钥（从 [https://qveris.cn](https://qveris.cn) 获取）
+- QVeris API 密钥（在[控制台/API密钥](/account?page=api-keys)中创建）
 
 ## 1. MCP 服务器配置
 

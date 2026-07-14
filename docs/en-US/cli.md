@@ -608,9 +608,9 @@ For backward compatibility, the following aliases are supported with deprecation
 
 ## Links
 
-- Website: [qveris.ai](https://qveris.ai)
+- Website: [QVeris website](/)
 - GitHub: [QVerisAI/qveris-agent-toolkit](https://github.com/QVerisAI/qveris-agent-toolkit)
 - npm: [@qverisai/cli](https://www.npmjs.com/package/@qverisai/cli)
 - REST API: [docs/en-US/rest-api.md](rest-api.md)
 - MCP Server: [docs/en-US/mcp-server.md](mcp-server.md)
-- Get API Key: [qveris.ai/account](https://qveris.ai/account?page=api-keys)
+- Get API Key: [Dashboard / API Keys](/account?page=api-keys)

@@ -20,7 +20,7 @@ SDK 从环境变量 `QVERIS_API_KEY` 读取 API 密钥：
 export QVERIS_API_KEY="sk-..."
 ```
 
-在 [qveris.ai](https://qveris.ai) 获取密钥。可从环境变量创建客户端，也可以显式传入配置：
+在[控制台/API密钥](/account?page=api-keys)中创建密钥。可从环境变量创建客户端，也可以显式传入配置：
 
 ```typescript
 import { Qveris } from '@qverisai/sdk';
@@ -192,4 +192,4 @@ try {
 - 包：[npm 上的 `@qverisai/sdk`](https://www.npmjs.com/package/@qverisai/sdk)
 - 源码：[`packages/js-sdk`](https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/js-sdk)
 - REST API：[rest-api.md](rest-api.md)
-- 获取 API 密钥：[qveris.ai](https://qveris.ai)
+- 获取 API 密钥：[控制台/API密钥](/account?page=api-keys)
