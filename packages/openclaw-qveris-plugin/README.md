@@ -1,7 +1,7 @@
 # QVeris Plugin for OpenClaw
 
 [![npm version](https://img.shields.io/npm/v/@qverisai/qveris?label=npm)](https://www.npmjs.com/package/@qverisai/qveris)
-[![OpenClaw](https://img.shields.io/badge/OpenClaw-%3E%3D2026.3.22-blue)](https://github.com/openclaw/openclaw)
+[![OpenClaw](https://img.shields.io/badge/OpenClaw-%3E%3D2026.6.11-blue)](https://github.com/openclaw/openclaw)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
@@ -21,7 +21,8 @@ The typical agent workflow is: `qveris_discover` → `qveris_inspect` (optional)
 
 ## Requirements
 
-- OpenClaw >= 2026.3.22
+- Node.js >= 22.19.0
+- OpenClaw >= 2026.6.11
 - A QVeris API key — sign up at [qveris.ai](https://qveris.ai) (global) or [qveris.cn](https://qveris.cn) (China)
 
 ---
@@ -38,7 +39,7 @@ openclaw plugins install @qverisai/qveris
 
 ```bash
 # From the repo root
-openclaw plugins install -l ./extensions/qveris
+openclaw plugins install -l ./packages/openclaw-qveris-plugin
 ```
 
 ### Package safety checks
