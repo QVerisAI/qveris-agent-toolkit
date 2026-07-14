@@ -29,12 +29,8 @@ export function resolveQverisApiKey(pluginConfig: Record<string, unknown> | unde
   );
 }
 
-function hasOwn(config: Record<string, unknown> | undefined, key: string): boolean {
-  return config !== undefined && Object.prototype.hasOwnProperty.call(config, key);
-}
-
 function rejectLegacyRegion(pluginConfig: Record<string, unknown> | undefined): void {
-  if (hasOwn(pluginConfig, "region")) {
+  if (pluginConfig?.region !== undefined && pluginConfig.region !== null) {
     throw new Error("QVeris region is no longer supported; remove it and set baseUrl or QVERIS_BASE_URL explicitly");
   }
 }
@@ -73,8 +69,8 @@ function normalizeQverisBaseUrl(value: unknown): string {
 /** Priority: plugin config > QVERIS_BASE_URL > built-in default. */
 export function resolveQverisBaseUrl(pluginConfig: Record<string, unknown> | undefined): string {
   rejectLegacyRegion(pluginConfig);
-  if (hasOwn(pluginConfig, "baseUrl")) {
-    return normalizeQverisBaseUrl(pluginConfig?.baseUrl);
+  if (pluginConfig?.baseUrl !== undefined && pluginConfig.baseUrl !== null) {
+    return normalizeQverisBaseUrl(pluginConfig.baseUrl);
   }
   if (typeof process.env.QVERIS_BASE_URL === "string") {
     return normalizeQverisBaseUrl(process.env.QVERIS_BASE_URL);

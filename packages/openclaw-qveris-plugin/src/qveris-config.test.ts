@@ -75,6 +75,11 @@ describe("config resolution", () => {
     expect(resolveQverisBaseUrl({ baseUrl: "https://config.example/api/v1" })).toBe("https://config.example/api/v1");
   });
 
+  it.each([undefined, null])("treats an optional baseUrl value of %s as unset", (baseUrl) => {
+    vi.stubEnv("QVERIS_BASE_URL", "https://env.example/api/v1");
+    expect(resolveQverisBaseUrl({ baseUrl })).toBe("https://env.example/api/v1");
+  });
+
   it("does not derive the endpoint from API key metadata", () => {
     expect(resolveQverisBaseUrl({ apiKey: "sk-cn-example" })).toBe(DEFAULT_QVERIS_BASE_URL);
   });
@@ -87,6 +92,10 @@ describe("config resolution", () => {
 
   it.each(["global", "cn"])("rejects the legacy region setting %s with migration guidance", (region) => {
     expect(() => resolveQverisBaseUrl({ region })).toThrow(/region is no longer supported.*baseUrl.*QVERIS_BASE_URL/);
+  });
+
+  it.each([undefined, null])("treats an optional legacy region value of %s as unset", (region) => {
+    expect(resolveQverisBaseUrl({ region })).toBe(DEFAULT_QVERIS_BASE_URL);
   });
 
   it.each([
