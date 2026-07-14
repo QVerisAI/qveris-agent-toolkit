@@ -132,6 +132,7 @@ qveris mcp validate --target cursor --probe
 For environment-specific setup guides, see:
 
 - [SETUP.md](../../agent/SETUP.md)
+- [Codex and ChatGPT desktop setup](codex-setup.md)
 - [Claude Code setup](claude-code-setup.md)
 - [OpenCode setup](opencode-setup.md)
 - [IDE / CLI setup](ide-cli-setup.md)
