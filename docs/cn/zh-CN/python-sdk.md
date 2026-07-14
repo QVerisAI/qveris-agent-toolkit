@@ -272,10 +272,10 @@ pip install 'qveris[langchain]'
 ```
 
 ```python
-from qveris import QverisClient
+from qveris import QverisClient, QverisConfig
 from qveris.integrations.langchain import get_qveris_tools
 
-client = QverisClient()
+client = QverisClient(QverisConfig(base_url="https://qveris.cn/api/v1"))
 tools = get_qveris_tools(client)  # 3 个异步工具：qveris_discover / qveris_inspect / qveris_call
 # 把 `tools` 绑定到 LangChain 或 LangGraph agent，用完 `await client.close()`
 ```
@@ -290,10 +290,10 @@ pip install 'qveris[openai-agents]'
 
 ```python
 from agents import Agent, Runner
-from qveris import QverisClient
+from qveris import QverisClient, QverisConfig
 from qveris.integrations.openai_agents import get_qveris_tools
 
-client = QverisClient()
+client = QverisClient(QverisConfig(base_url="https://qveris.cn/api/v1"))
 agent = Agent(name="Assistant", tools=get_qveris_tools(client))
 result = await Runner.run(agent, "Find a stock quote capability and quote AAPL.")
 await client.close()
@@ -307,10 +307,10 @@ pip install 'qveris[crewai]'
 
 ```python
 from crewai import Agent
-from qveris import QverisClient
+from qveris import QverisClient, QverisConfig
 from qveris.integrations.crewai import get_qveris_tools, aclose
 
-client = QverisClient()
+client = QverisClient(QverisConfig(base_url="https://qveris.cn/api/v1"))
 agent = Agent(role="Researcher", goal="...", backstory="...", tools=get_qveris_tools(client))
 # 同步运行你的 crew（crew.kickoff()），然后：
 aclose(client)
