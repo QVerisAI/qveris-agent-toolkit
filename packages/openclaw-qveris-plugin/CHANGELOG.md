@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ### Changed
 
+- Endpoint selection now uses `config.baseUrl`, then `QVERIS_BASE_URL`, then the built-in default. API keys and the deprecated `region` setting never reroute requests; unsafe endpoint overrides are rejected. ([#206])
 - Raised the supported host to OpenClaw `>=2026.6.11` and Node.js `>=22.19.0`, matching the plugin API used by the current code. The full-toolkit development requirement is now Node.js `>=22.22.2`; plugin CI and builds use Node.js 22. ([#210])
 - Pinned the tested OpenClaw host and plugin SDK metadata to `2026.6.11`, and aligned the peer, plugin API, and installer compatibility floors. ([#210])
 - Upgraded the Vitest, coverage, Vite, and esbuild development toolchain to audited releases. Published runtime dependencies are unchanged. ([#211])
@@ -30,6 +31,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 [Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.6.4...HEAD
 [2026.6.4]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/qveris-plugin-v2026.6.4
+[#206]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/206
 [#210]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/210
 [#211]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/211
 [#152]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/152

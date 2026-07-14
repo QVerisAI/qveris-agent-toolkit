@@ -1,13 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-runtime";
 import {
+  DEFAULT_QVERIS_BASE_URL,
   resolveQverisApiKey,
   resolveQverisBaseUrl,
-  resolveQverisRegion,
   resolveDiscoverTimeoutSeconds,
   resolveCallTimeoutSeconds,
   resolveFullContentAllowedDomains,
-  QVERIS_REGION_DOMAINS,
 } from "./config.js";
 import { createQverisTools } from "./qveris-tools.js";
 
@@ -57,25 +56,60 @@ describe("config resolution", () => {
     expect(tools).toBeNull();
   });
 
-  it("resolves global region by default", () => {
-    expect(resolveQverisRegion(undefined)).toBe("global");
-    expect(resolveQverisRegion({})).toBe("global");
+  it("uses the built-in base URL by default", () => {
+    expect(resolveQverisBaseUrl(undefined)).toBe(DEFAULT_QVERIS_BASE_URL);
   });
 
-  it("resolves cn region when configured", () => {
-    expect(resolveQverisRegion({ region: "cn" })).toBe("cn");
+  it("uses QVERIS_BASE_URL when no plugin override is configured", () => {
+    vi.stubEnv("QVERIS_BASE_URL", "https://proxy.example/qveris/");
+    expect(resolveQverisBaseUrl(undefined)).toBe("https://proxy.example/qveris");
   });
 
-  it("builds global base URL from region domain", () => {
-    expect(resolveQverisBaseUrl(undefined)).toBe(`https://${QVERIS_REGION_DOMAINS.global}/api/v1`);
+  it("validates QVERIS_BASE_URL instead of silently falling back", () => {
+    vi.stubEnv("QVERIS_BASE_URL", "");
+    expect(() => resolveQverisBaseUrl(undefined)).toThrow(/must not be empty/);
   });
 
-  it("builds cn base URL from region", () => {
-    expect(resolveQverisBaseUrl({ region: "cn" })).toBe(`https://${QVERIS_REGION_DOMAINS.cn}/api/v1`);
+  it("prefers plugin baseUrl over QVERIS_BASE_URL", () => {
+    vi.stubEnv("QVERIS_BASE_URL", "https://env.example/api/v1");
+    expect(resolveQverisBaseUrl({ baseUrl: "https://config.example/api/v1" })).toBe("https://config.example/api/v1");
   });
 
-  it("uses explicit baseUrl when provided", () => {
-    expect(resolveQverisBaseUrl({ baseUrl: "https://proxy.example/qveris" })).toBe("https://proxy.example/qveris");
+  it.each([undefined, null])("treats an optional baseUrl value of %s as unset", (baseUrl) => {
+    vi.stubEnv("QVERIS_BASE_URL", "https://env.example/api/v1");
+    expect(resolveQverisBaseUrl({ baseUrl })).toBe("https://env.example/api/v1");
+  });
+
+  it("does not derive the endpoint from API key metadata", () => {
+    expect(resolveQverisBaseUrl({ apiKey: "sk-cn-example" })).toBe(DEFAULT_QVERIS_BASE_URL);
+  });
+
+  it("normalizes surrounding whitespace and trailing slashes", () => {
+    expect(resolveQverisBaseUrl({ baseUrl: "  https://proxy.example/qveris///  " })).toBe(
+      "https://proxy.example/qveris",
+    );
+  });
+
+  it.each(["global", "cn"])("rejects the legacy region setting %s with migration guidance", (region) => {
+    expect(() => resolveQverisBaseUrl({ region })).toThrow(/region is no longer supported.*baseUrl.*QVERIS_BASE_URL/);
+  });
+
+  it.each([undefined, null])("treats an optional legacy region value of %s as unset", (region) => {
+    expect(resolveQverisBaseUrl({ region })).toBe(DEFAULT_QVERIS_BASE_URL);
+  });
+
+  it.each([
+    ["empty", ""],
+    ["non-string", 42],
+    ["unsupported scheme", "ftp://qveris.ai/api/v1"],
+    ["protocol-relative", "//qveris.ai/api/v1"],
+    ["whitespace", "https://qveris.ai/a b"],
+    ["backslash", "https://qveris.ai\\api\\v1"],
+    ["credentials", "https://user:pass@qveris.ai/api/v1"],
+    ["query", "https://qveris.ai/api/v1?mode=test"],
+    ["fragment", "https://qveris.ai/api/v1#test"],
+  ])("rejects an invalid %s base URL", (_label, baseUrl) => {
+    expect(() => resolveQverisBaseUrl({ baseUrl })).toThrow(/QVeris API base URL/);
   });
 
   it("resolveDiscoverTimeoutSeconds returns default when not set", () => {
@@ -94,37 +128,20 @@ describe("config resolution", () => {
     expect(resolveCallTimeoutSeconds({ executeTimeoutSeconds: 120 })).toBe(120);
   });
 
-  it("full-content allowed domains includes region domain", () => {
-    const domains = resolveFullContentAllowedDomains(undefined);
-    expect(domains).toContain(QVERIS_REGION_DOMAINS.global);
+  it("allows the public domain matching the default endpoint", () => {
+    expect(resolveFullContentAllowedDomains(undefined)).toEqual(["qveris.ai"]);
   });
 
-  it("full-content allowed domains for cn region contains qveris.cn only", () => {
-    const domains = resolveFullContentAllowedDomains({ region: "cn" });
-    expect(domains).toContain(QVERIS_REGION_DOMAINS.cn);
-    expect(domains).not.toContain(QVERIS_REGION_DOMAINS.global);
+  it("allows the public domain matching QVERIS_BASE_URL", () => {
+    vi.stubEnv("QVERIS_BASE_URL", "https://qveris.cn/api/v1");
+    expect(resolveFullContentAllowedDomains(undefined)).toEqual(["qveris.cn"]);
   });
 
-  it("full-content allowed domains extends to baseUrl qveris domain", () => {
-    const domains = resolveFullContentAllowedDomains({
-      region: "global",
-      baseUrl: "https://qveris.cn/api/v1",
-    });
-    expect(domains).toContain(QVERIS_REGION_DOMAINS.global);
-    expect(domains).toContain(QVERIS_REGION_DOMAINS.cn);
+  it("allows the parent public domain for an explicit subdomain endpoint", () => {
+    expect(resolveFullContentAllowedDomains({ baseUrl: "https://api.qveris.cn/api/v1" })).toEqual(["qveris.cn"]);
   });
 
-  it("subdomain of region domain is allowed for cn region", () => {
-    const domains = resolveFullContentAllowedDomains({ region: "cn" });
-    const ossHostname = `oss.${QVERIS_REGION_DOMAINS.cn}`;
-    const allowed = domains.some((d) => ossHostname === d || ossHostname.endsWith(`.${d}`));
-    expect(allowed).toBe(true);
-  });
-
-  it("subdomain of region domain is allowed for global region", () => {
-    const domains = resolveFullContentAllowedDomains(undefined);
-    const ossHostname = `oss.${QVERIS_REGION_DOMAINS.global}`;
-    const allowed = domains.some((d) => ossHostname === d || ossHostname.endsWith(`.${d}`));
-    expect(allowed).toBe(true);
+  it("does not expand full-content trust for an unknown custom endpoint", () => {
+    expect(resolveFullContentAllowedDomains({ baseUrl: "https://proxy.example/qveris" })).toEqual([]);
   });
 });

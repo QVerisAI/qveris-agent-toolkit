@@ -17,9 +17,9 @@
       "sensitive": true,
       "placeholder": "qv-..."
     },
-    "region": {
-      "label": "QVeris Region",
-      "help": "API region: global (qveris.ai) or cn (qveris.cn)."
+    "baseUrl": {
+      "label": "QVeris API Base URL",
+      "help": "Optional explicit API endpoint (fallback: QVERIS_BASE_URL, then the public default)."
     }
   },
   "configSchema": {
@@ -27,7 +27,11 @@
     "additionalProperties": false,
     "properties": {
       "apiKey": { "type": ["string", "object"] },
-      "region": { "type": "string", "enum": ["global", "cn"] },
+      "region": {
+        "type": "string",
+        "deprecated": true,
+        "description": "Deprecated and rejected at runtime. Remove this field and set baseUrl or QVERIS_BASE_URL explicitly."
+      },
       "baseUrl": { "type": "string" },
       "autoMaterializeFullContent": { "type": "boolean" },
       "fullContentMaxBytes": { "type": "number" },

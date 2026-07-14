@@ -1,12 +1,9 @@
 import { normalizeSecretInput } from "openclaw/plugin-sdk/provider-auth";
 import { normalizeResolvedSecretInputString } from "openclaw/plugin-sdk/secret-input";
 
-export type QverisRegion = "global" | "cn";
+export const DEFAULT_QVERIS_BASE_URL = "https://qveris.ai/api/v1";
 
-export const QVERIS_REGION_DOMAINS: Record<QverisRegion, string> = {
-  global: "qveris.ai",
-  cn: "qveris.cn",
-};
+const QVERIS_PUBLIC_DOMAINS = ["qveris.ai", "qveris.cn"] as const;
 
 const DEFAULT_DISCOVER_TIMEOUT_SECONDS = 5;
 const DEFAULT_CALL_TIMEOUT_SECONDS = 60;
@@ -32,43 +29,59 @@ export function resolveQverisApiKey(pluginConfig: Record<string, unknown> | unde
   );
 }
 
-export function resolveQverisRegion(pluginConfig: Record<string, unknown> | undefined): QverisRegion {
-  return pluginConfig?.region === "cn" ? "cn" : "global";
+function rejectLegacyRegion(pluginConfig: Record<string, unknown> | undefined): void {
+  if (pluginConfig?.region !== undefined && pluginConfig.region !== null) {
+    throw new Error("QVeris region is no longer supported; remove it and set baseUrl or QVERIS_BASE_URL explicitly");
+  }
 }
 
+function normalizeQverisBaseUrl(value: unknown): string {
+  if (typeof value !== "string") {
+    throw new Error("QVeris API base URL must be a string");
+  }
+
+  const candidate = value.trim();
+  if (!candidate) {
+    throw new Error("QVeris API base URL must not be empty");
+  }
+  if (!/^https?:\/\/[^/?#\s\\]/i.test(candidate) || /\s/.test(candidate) || candidate.includes("\\")) {
+    throw new Error("QVeris API base URL must be a valid HTTP(S) URL");
+  }
+
+  let url: URL;
+  try {
+    url = new URL(candidate);
+  } catch {
+    throw new Error("QVeris API base URL must be a valid HTTP(S) URL");
+  }
+
+  if (!new Set(["http:", "https:"]).has(url.protocol) || !url.hostname) {
+    throw new Error("QVeris API base URL must be a valid HTTP(S) URL");
+  }
+  if (url.username || url.password || candidate.includes("?") || candidate.includes("#")) {
+    throw new Error("QVeris API base URL must not contain credentials, a query, or a fragment");
+  }
+
+  url.pathname = url.pathname.replace(/\/+$/, "");
+  return url.toString().replace(/\/$/, "");
+}
+
+/** Priority: plugin config > QVERIS_BASE_URL > built-in default. */
 export function resolveQverisBaseUrl(pluginConfig: Record<string, unknown> | undefined): string {
-  const explicit = typeof pluginConfig?.baseUrl === "string" ? pluginConfig.baseUrl.trim() : "";
-  if (explicit) {
-    return explicit;
+  rejectLegacyRegion(pluginConfig);
+  if (pluginConfig?.baseUrl !== undefined && pluginConfig.baseUrl !== null) {
+    return normalizeQverisBaseUrl(pluginConfig.baseUrl);
   }
-  const region = resolveQverisRegion(pluginConfig);
-  return `https://${QVERIS_REGION_DOMAINS[region]}/api/v1`;
+  if (typeof process.env.QVERIS_BASE_URL === "string") {
+    return normalizeQverisBaseUrl(process.env.QVERIS_BASE_URL);
+  }
+  return DEFAULT_QVERIS_BASE_URL;
 }
 
-/**
- * Returns the allowed domains for full-content downloads.
- * Includes the region domain plus the baseUrl domain if it resolves to a known QVeris domain.
- */
+/** Returns the trusted public QVeris domain matching the resolved API endpoint. */
 export function resolveFullContentAllowedDomains(pluginConfig: Record<string, unknown> | undefined): string[] {
-  const region = resolveQverisRegion(pluginConfig);
-  const domains = new Set<string>([QVERIS_REGION_DOMAINS[region]]);
-
-  const explicit = typeof pluginConfig?.baseUrl === "string" ? pluginConfig.baseUrl.trim() : "";
-  if (explicit) {
-    try {
-      const host = new URL(explicit).hostname.toLowerCase();
-      const allKnownDomains = Object.values(QVERIS_REGION_DOMAINS);
-      for (const d of allKnownDomains) {
-        if (host === d || host.endsWith(`.${d}`)) {
-          domains.add(d);
-        }
-      }
-    } catch {
-      // invalid baseUrl — ignore, region domain still in set
-    }
-  }
-
-  return [...domains];
+  const host = new URL(resolveQverisBaseUrl(pluginConfig)).hostname.toLowerCase();
+  return QVERIS_PUBLIC_DOMAINS.filter((domain) => host === domain || host.endsWith(`.${domain}`));
 }
 
 export function resolveDiscoverTimeoutSeconds(pluginConfig: Record<string, unknown> | undefined): number {
