@@ -10,7 +10,7 @@ QVeris 已集成到多种 IDE 和 CLI 编程工具中。通过自动配置 QVeri
 
 对于 CLI 编程工具，请访问以下对应页面查看配置说明。
 
-- [Codex 与 ChatGPT 桌面端](codex-setup.md)
+- [Codex 与 ChatGPT 桌面端](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/zh-CN/codex-setup.md)
 - [Claude Code](claude-code-setup.md)
 - [OpenCode](opencode-setup.md)
 
@@ -28,15 +28,15 @@ QVeris 已集成到多种 IDE 和 CLI 编程工具中。通过自动配置 QVeri
 
 Codex：
 ```
-请按照 https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/zh-CN/codex-setup.md 帮我完成配置。API 密钥是 sk-xxxxxxxxxxxxx
+请按照 <https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/zh-CN/codex-setup.md> 帮我完成配置。API 密钥是 sk-xxxxxxxxxxxxx
 ```
 
 Claude Code：
 ```
-请按照 https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/zh-CN/claude-code-setup.md 帮我完成配置。API 密钥是 sk-xxxxxxxxxxxxx
+请按照 <https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/zh-CN/claude-code-setup.md> 帮我完成配置。API 密钥是 sk-xxxxxxxxxxxxx
 ```
 
 OpenCode：
 ```
-请按照 https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/zh-CN/opencode-setup.md 帮我完成配置。API 密钥是 sk-xxxxxxxxxxxxx
+请按照 <https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/zh-CN/opencode-setup.md> 帮我完成配置。API 密钥是 sk-xxxxxxxxxxxxx
 ```
