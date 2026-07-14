@@ -6,7 +6,7 @@ This guide explains how to configure QVeris MCP server and skills in Claude Code
 
 - Node.js installed (for running MCP servers)
 - Claude Code installed
-- QVeris API key (get one from [https://qveris.ai](https://qveris.ai))
+- QVeris API key (create one in [Dashboard / API Keys](/account?page=api-keys))
 
 ## 1. MCP Server Configuration
 

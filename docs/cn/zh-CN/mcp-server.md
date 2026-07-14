@@ -10,7 +10,7 @@
 - `inspect` — 获取工具详情（参数、成功率、示例）
 - `call` — 执行工具并传入参数
 - `usage_history` — 上下文安全的调用审计摘要 / 精确查询 / 文件导出
-- `credits_ledger` — 上下文安全的最终 credits 账本摘要 / 精确查询 / 文件导出
+- `credits_ledger` — 上下文安全的最终积分账本摘要 / 精确查询 / 文件导出
 
 换言之，MCP 服务器是本仓库其他文档所描述的 QVeris 核心协议的 Agent 侧传输层。
 

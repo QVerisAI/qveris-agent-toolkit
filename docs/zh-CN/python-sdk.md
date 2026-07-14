@@ -25,7 +25,7 @@ SDK 从环境变量 `QVERIS_API_KEY` 读取 API 密钥：
 export QVERIS_API_KEY="sk-..."
 ```
 
-在 [qveris.ai](https://qveris.ai) 获取密钥。也可以显式传入配置：
+在[控制台/API密钥](/account?page=api-keys)中创建密钥。也可以显式传入配置：
 
 ```python
 from qveris import QverisClient, QverisConfig
@@ -260,7 +260,7 @@ if handled and not is_error:
 **LangChain**
 
 ```bash
-pip install qveris[langchain]
+pip install 'qveris[langchain]'
 ```
 
 ```python
@@ -277,7 +277,7 @@ tools = get_qveris_tools(client)  # 3 个异步工具：qveris_discover / qveris
 **OpenAI Agents SDK**
 
 ```bash
-pip install qveris[openai-agents]
+pip install 'qveris[openai-agents]'
 ```
 
 ```python
@@ -294,7 +294,7 @@ await client.close()
 **CrewAI**
 
 ```bash
-pip install qveris[crewai]
+pip install 'qveris[crewai]'
 ```
 
 ```python
@@ -369,4 +369,4 @@ agent = Agent(llm_provider=MyProvider())
 - 包：[PyPI 上的 `qveris`](https://pypi.org/project/qveris/)
 - 源码：[`packages/python-sdk`](https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/python-sdk)
 - REST API：[rest-api.md](rest-api.md)
-- 获取 API 密钥：[qveris.ai](https://qveris.ai)
+- 获取 API 密钥：[控制台/API密钥](/account?page=api-keys)

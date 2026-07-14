@@ -6,7 +6,7 @@ This guide explains how to configure the QVeris MCP server and skills in [OpenCo
 
 - Node.js installed
 - OpenCode installed ([installation guide](https://opencode.ai/docs/))
-- QVeris API key (get one from [https://qveris.ai](https://qveris.ai))
+- QVeris API key (create one in [Dashboard / API Keys](/account?page=api-keys))
 
 ## 1. MCP Server Configuration
 

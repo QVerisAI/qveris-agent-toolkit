@@ -4,7 +4,7 @@ QVeris has integration in various IDEs and CLI coding tools. They can ease the d
 
 ## GUI IDEs
 
-For GUI IDEs, follow the instructions at [https://qveris.ai/plugins](https://qveris.ai/plugins) to install the plugins.
+For GUI IDEs, follow the instructions on the [Plugins page](/plugins) to install the plugins.
 
 ## CLI Coding Tools
 

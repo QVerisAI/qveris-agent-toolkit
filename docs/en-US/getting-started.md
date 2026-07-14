@@ -10,7 +10,7 @@
 
 QVeris works well in agent loops (Discover → Inspect → Call → feed results back to the model) and supports multiple integration styles.
 
-**Cost:** Discover is free. Call is priced by each capability's billing rule, with final settlement visible in usage history and the credits ledger. Free tier includes 1,000 credits. Details at [qveris.ai/pricing](https://qveris.ai/pricing).
+**Cost:** Discover is free. Call is priced by each capability's billing rule, with final settlement visible in usage history and the credits ledger. Free tier includes 1,000 credits. See [Pricing](/pricing) for details.
 
 ---
 
@@ -93,7 +93,7 @@ For the full guide (client, agent, typed models, integration patterns), see [Pyt
 
 Set environment variables:
 
-- `QVERIS_API_KEY` (from [QVeris](https://qveris.ai))
+- `QVERIS_API_KEY` (create one in [Dashboard / API Keys](/account?page=api-keys))
 - `OPENAI_API_KEY` (or your OpenAI-compatible provider key)
 - `OPENAI_BASE_URL` (optional; for OpenAI-compatible providers)
 
@@ -377,7 +377,7 @@ Supported environments: Claude Code, OpenCode, Cursor, Trae, VS Code, and OpenCl
 
 ### How to get an API key
 
-1. Go to [QVeris](https://qveris.ai)
+1. Open [Dashboard / API Keys](/account?page=api-keys)
 2. Sign in / create an account (free, 1,000 credits on signup)
 3. Create an API key
 4. Use it as:
