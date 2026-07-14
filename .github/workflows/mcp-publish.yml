@@ -78,6 +78,12 @@ jobs:
             echo "::error::Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"
             exit 1
           fi
+          MANIFEST_VERSION=$(node -p "require('./server.json').version")
+          MANIFEST_PACKAGE_VERSION=$(node -p "require('./server.json').packages[0].version")
+          if [ "$PKG_VERSION" != "$MANIFEST_VERSION" ] || [ "$PKG_VERSION" != "$MANIFEST_PACKAGE_VERSION" ]; then
+            echo "::error::server.json versions ($MANIFEST_VERSION, $MANIFEST_PACKAGE_VERSION) do not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
           echo "VERSION=$PKG_VERSION" >> "$GITHUB_ENV"
 
       - name: Verify CHANGELOG has an entry for this version
@@ -130,3 +136,59 @@ jobs:
           name: "QVeris MCP Server v${{ env.VERSION }}"
           body_path: ${{ runner.temp }}/release-notes.md
           generate_release_notes: true
+
+  publish-registry:
+    needs: publish
+    # Keep Registry retries independent from npm publishing and Release creation.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # MCP Registry GitHub OIDC authentication
+    defaults:
+      run:
+        working-directory: packages/mcp
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
+      - name: Verify Registry manifest
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#mcp-v}"
+          node -e '
+            const manifest = require("./server.json");
+            const tagVersion = process.argv[1];
+            const packageEntry = manifest.packages?.find((entry) => entry.identifier === "@qverisai/mcp");
+            if (manifest.version !== tagVersion || packageEntry?.version !== tagVersion) {
+              throw new Error(`server.json versions must match tag ${tagVersion}`);
+            }
+            const names = packageEntry.environmentVariables?.map(({ name }) => name) ?? [];
+            if (!names.includes("QVERIS_API_KEY") || !names.includes("QVERIS_BASE_URL")) {
+              throw new Error("server.json must declare QVERIS_API_KEY and QVERIS_BASE_URL");
+            }
+            if (names.includes("QVERIS_REGION")) {
+              throw new Error("server.json must not declare legacy QVERIS_REGION");
+            }
+          ' "$TAG_VERSION"
+
+      - name: Install mcp-publisher
+        env:
+          MCP_PUBLISHER_VERSION: v1.7.9
+          MCP_PUBLISHER_SHA256: ab128162b0616090b47cf245afe0a23f3ef08936fdce19074f5ba0a4469281ac
+        run: |
+          curl -fsSLo mcp-publisher.tar.gz \
+            "https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}/mcp-publisher_linux_amd64.tar.gz"
+          echo "${MCP_PUBLISHER_SHA256}  mcp-publisher.tar.gz" | sha256sum --check
+          tar -xzf mcp-publisher.tar.gz mcp-publisher
+
+      - name: Authenticate to MCP Registry
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish to MCP Registry
+        run: ./mcp-publisher publish

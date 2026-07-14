@@ -32,7 +32,7 @@ Each package releases independently via an annotated git tag; the matching GitHu
    > workflows (observed in the 2026-07-09 release wave). One `git push origin
    > <tag>` per package is the reliable form.
 
-5. The publish workflow verifies **version == tag** and **CHANGELOG has the section**, runs the full test matrix (ubuntu + windows), publishes, and creates the GitHub Release.
+5. The publish workflow verifies **version == tag** and **CHANGELOG has the section**, runs the full test matrix (ubuntu + windows), publishes, and creates the GitHub Release. Python releases also require a current `uv.lock`. MCP releases verify `server.json` uses the same version and publish its metadata to the official MCP Registry with GitHub OIDC.
 
 ## Notes
 

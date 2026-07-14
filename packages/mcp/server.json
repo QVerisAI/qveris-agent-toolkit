@@ -8,13 +8,13 @@
     "subfolder": "packages/mcp"
   },
   "websiteUrl": "https://qveris.ai",
-  "version": "0.7.5",
+  "version": "0.10.0",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@qverisai/mcp",
-      "version": "0.7.5",
+      "version": "0.10.0",
       "transport": {
         "type": "stdio"
       },
