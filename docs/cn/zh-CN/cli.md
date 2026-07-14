@@ -315,7 +315,7 @@ qveris usage --mode export-file --start-date 2026-05-01 --end-date 2026-05-04
 
 ### `qveris ledger`
 
-查询最终 credits 账本，默认使用 `summary` 聚合模式。
+查询最终积分账本，默认使用 `summary` 聚合模式。
 `summary` 模式会优先请求服务端 `summary=true` 聚合摘要；若旧部署暂不支持，则回退到有上限的客户端聚合。
 
 ```bash

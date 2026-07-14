@@ -7,7 +7,7 @@ per-surface docs in [`docs/en-US`](en-US) and the runnable
 ## Authentication
 
 **`QVERIS_API_KEY is not set` / 401 / "API key is required".**
-Create a key in [Dashboard / API Keys](/account?page=api-keys), then export it:
+Create a key at [qveris.ai/account?page=api-keys](https://qveris.ai/account?page=api-keys), then export it:
 
 ```bash
 export QVERIS_API_KEY="sk-..."
