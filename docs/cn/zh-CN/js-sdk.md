@@ -142,7 +142,10 @@ import { openai } from '@ai-sdk/openai';
 import { Qveris } from '@qverisai/sdk';
 import { getQverisTools } from '@qverisai/sdk/ai';
 
-const qveris = new Qveris({ apiKey: process.env.QVERIS_API_KEY! });
+const qveris = new Qveris({
+  apiKey: process.env.QVERIS_API_KEY!,
+  baseUrl: 'https://qveris.cn/api/v1',
+});
 const { text } = await generateText({
   model: openai('gpt-4o'),
   tools: getQverisTools(qveris), // qveris_discover / qveris_inspect / qveris_call
