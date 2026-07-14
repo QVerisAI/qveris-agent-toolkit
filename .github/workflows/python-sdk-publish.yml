@@ -41,6 +41,9 @@ jobs:
           enable-cache: true
           cache-dependency-glob: packages/python-sdk/uv.lock
 
+      - name: Verify lockfile is current
+        run: uv lock --check
+
       - name: Run tests
         run: uv run --extra dev pytest
 

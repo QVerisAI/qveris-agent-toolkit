@@ -6,13 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-07-14
+
 ### Changed
 
+- Replaced legacy region and API-key-prefix routing with deterministic endpoint selection: `QVERIS_BASE_URL` overrides the built-in default, and endpoint overrides are validated before use. The official MCP Registry manifest now declares only `QVERIS_API_KEY` and the optional `QVERIS_BASE_URL`. ([#204])
 - Upgraded the Vitest and coverage toolchain to audited Node.js 18-compatible releases and pinned the Vite 6 security floor used by tests. Published runtime dependencies are unchanged. ([#211])
-
-### Fixed
-
-- API endpoint selection is deterministic: `QVERIS_BASE_URL` overrides the built-in default, while API key metadata and legacy routing settings no longer reroute requests. Endpoint overrides are validated before use. ([#204])
 
 ## [0.9.0] - 2026-07-13
 
@@ -116,7 +115,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Handle empty/non-JSON success responses gracefully; `params_to_tool` documented as an object.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.9.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.10.0...HEAD
+[0.10.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.9.0...mcp-v0.10.0
 [0.9.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.8.0...mcp-v0.9.0
 [0.8.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.7.5...mcp-v0.8.0
 [0.7.5]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.7.4...mcp-v0.7.5

@@ -6,12 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
-### Fixed
-
-- API endpoint selection is deterministic: explicit `baseUrl` overrides `QVERIS_BASE_URL`, which overrides the built-in default. API key metadata and legacy routing settings no longer reroute requests, and endpoint overrides are validated before use. ([#204])
+## [0.4.0] - 2026-07-14
 
 ### Changed
 
+- Changed the public endpoint configuration contract to deterministic selection: explicit `baseUrl` overrides `QVERIS_BASE_URL`, which overrides the built-in default. API keys and legacy region settings no longer reroute requests, and endpoint overrides are validated before use. ([#204])
 - Upgraded the Vitest and coverage toolchain to audited Node.js 18-compatible releases and pinned the Vite 6 security floor used by tests. Published runtime dependencies are unchanged. ([#211])
 - Raised `engines.node` to `>=18.2.0`, aligning every package on the toolkit's minimum-supported Node (the MCP server requires 18.2 for `closeAllConnections`). ([#161])
 
@@ -34,7 +33,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - `0.1.x` under this npm name was an early MCP-focused SDK, superseded by `@qverisai/mcp`.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.3.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.4.0...HEAD
+[0.4.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.3.0...js-sdk-v0.4.0
 [0.3.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.2.0...js-sdk-v0.3.0
 [0.2.0]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/js-sdk-v0.2.0
 [#204]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/204

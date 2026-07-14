@@ -6,12 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
-### Fixed
-
-- Made API endpoint selection deterministic: `--base-url` overrides `QVERIS_BASE_URL`, which overrides the built-in default. API keys no longer influence the endpoint, invalid URLs fail before network access, and public CLI output no longer exposes deployment-routing controls.
+## [0.8.0] - 2026-07-14
 
 ### Changed
 
+- Replaced legacy region and API-key-prefix routing with deterministic endpoint selection: `--base-url` overrides `QVERIS_BASE_URL`, which overrides the built-in default. Invalid URLs fail before network access, and public CLI output no longer exposes deployment-routing controls. ([#204])
 - Raised `engines.node` to `>=18.2.0`, aligning every package on the toolkit's minimum-supported Node (the MCP server requires 18.2 for `closeAllConnections`). ([#161])
 
 ## [0.7.0] - 2026-07-09
@@ -71,7 +70,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial release: `discover` / `inspect` / `call` from the terminal against the QVeris API.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.7.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.8.0...HEAD
+[0.8.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.7.0...cli-v0.8.0
 [0.7.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.6.1...cli-v0.7.0
 [0.6.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.6.0...cli-v0.6.1
 [0.6.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.5.0...cli-v0.6.0
@@ -79,6 +79,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [0.3.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.2.0...cli-v0.3.0
 [0.2.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.1.0...cli-v0.2.0
 [0.1.0]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/cli-v0.1.0
+[#204]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/204
 [#161]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/161
 [#144]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/144
 [#131]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/131
