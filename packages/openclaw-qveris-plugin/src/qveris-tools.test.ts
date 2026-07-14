@@ -1093,7 +1093,7 @@ describe("qveris_call materialization", () => {
     expect(analysis?.column_names).toEqual(["name", "age", "city"]);
   });
 
-  it("cn region routes API calls to qveris.cn and accepts oss.qveris.cn materialization URL", async () => {
+  it("an explicit baseUrl routes API calls and scopes full-content materialization", async () => {
     const CN_OSS_URL = "https://oss.qveris.cn/full-content/exec-cn-1.json";
     const cnInvokeResponse = {
       execution_id: "exec-cn-1",
@@ -1157,7 +1157,11 @@ describe("qveris_call materialization", () => {
     globalThis.fetch = fetchMock;
 
     const tools = createQverisTools({
-      api: fakeApi({ apiKey: "qv_test_key", region: "cn", autoMaterializeFullContent: true }),
+      api: fakeApi({
+        apiKey: "qv_test_key",
+        baseUrl: "https://qveris.cn/api/v1",
+        autoMaterializeFullContent: true,
+      }),
       ctx: fakeCtx({ workspaceDir: tmpDir }),
     });
 
@@ -1168,14 +1172,14 @@ describe("qveris_call materialization", () => {
     const result = await callTool.execute("c1", { tool_id: "cn-tool-x", params_to_tool: '{"q":"test"}' });
     const parsed = parseToolResult(result);
 
-    // All API calls must go to qveris.cn, not qveris.ai
+    // All API calls must use the explicit endpoint.
     const apiCalls = observedApiUrls.filter((u) => u.includes("/search") || u.includes("/tools/execute"));
     for (const apiUrl of apiCalls) {
       expect(apiUrl).toContain("qveris.cn");
       expect(apiUrl).not.toContain("qveris.ai");
     }
 
-    // Materialization from oss.qveris.cn must succeed
+    // Materialization from the endpoint's trusted public domain must succeed.
     expect(parsed.success).toBe(true);
     const mc = parsed.materialized_content as Record<string, unknown>;
     expect(mc.status).toBe("ready");
