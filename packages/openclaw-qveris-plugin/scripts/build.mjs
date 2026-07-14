@@ -19,4 +19,5 @@ await build({
   platform: "node",
   target: "node22",
   packages: "external",
+  logLevel: "info",
 });
