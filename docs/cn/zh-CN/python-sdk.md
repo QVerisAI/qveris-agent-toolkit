@@ -62,7 +62,7 @@ async def main():
         params = (
             selected.examples.sample_parameters
             if selected.examples and selected.examples.sample_parameters
-            else {"city": "London"}
+            else {"city": "北京"}
         )
         result = await client.call(
             selected.tool_id,

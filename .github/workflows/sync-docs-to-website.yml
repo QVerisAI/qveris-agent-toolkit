@@ -13,10 +13,8 @@ on:
     paths:
       # Toolkit-owned docs. The website's docs/.source-manifest.json
       # (sources.toolkit_owned.paths) is the authority for what sync-docs.mjs
-      # actually mirrors; this trigger must be a SUPERSET of it so a toolkit
-      # edit reliably starts the sync. Paths the manifest does not list yet
-      # (python-sdk, the docs/cn/zh-CN CN-region variants) are included here so
-      # they trigger as soon as the website manifest is updated to mirror them.
+      # actually mirrors; this trigger must be a SUPERSET of it so every
+      # toolkit-owned documentation edit reliably starts the sync.
       - "docs/en-US/cli.md"
       - "docs/zh-CN/cli.md"
       - "docs/cn/zh-CN/cli.md"
@@ -34,8 +32,7 @@ on:
       - "docs/en-US/getting-started.md"
       - "docs/zh-CN/getting-started.md"
       - "docs/cn/zh-CN/getting-started.md"
-      # SDK docs (added after the manifest's last policy update; the website
-      # manifest must list these before sync-docs.mjs will mirror them).
+      # SDK docs mirrored by the website source manifest.
       - "docs/en-US/python-sdk.md"
       - "docs/zh-CN/python-sdk.md"
       - "docs/cn/zh-CN/python-sdk.md"

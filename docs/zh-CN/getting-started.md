@@ -112,7 +112,7 @@ async def main():
         selected = inspected.results[0]
         result = await client.call(
             selected.tool_id,
-            {"city": "London"},
+            {"city": "北京"},
             search_id=discovered.search_id,
         )
         print(result.execution_id, result.success, result.billing)
@@ -329,7 +329,7 @@ resp = requests.post(
     },
     json={
         "search_id": search_id,
-        "parameters": {"city": "London", "units": "metric"},
+        "parameters": {"city": "北京", "units": "metric"},
         "max_response_size": 20480,
     },
     timeout=60,
