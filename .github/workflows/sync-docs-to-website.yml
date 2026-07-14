@@ -26,6 +26,8 @@ on:
       - "docs/cn/zh-CN/ide-cli-setup.md"
       - "docs/en-US/claude-code-setup.md"
       - "docs/zh-CN/claude-code-setup.md"
+      - "docs/en-US/codex-setup.md"
+      - "docs/zh-CN/codex-setup.md"
       - "docs/en-US/opencode-setup.md"
       - "docs/zh-CN/opencode-setup.md"
       - "docs/cn/zh-CN/opencode-setup.md"

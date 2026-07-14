@@ -132,6 +132,7 @@ qveris mcp validate --target cursor --probe
 各环境的详细配置指南，请参考：
 
 - [智能体安装指南](../../agent/SETUP.md)
+- [Codex 与 ChatGPT 桌面端配置](codex-setup.md)
 - [Claude Code 配置](claude-code-setup.md)
 - [OpenCode 配置](opencode-setup.md)
 - [IDE / CLI 配置](ide-cli-setup.md)
