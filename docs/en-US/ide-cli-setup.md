@@ -10,7 +10,7 @@ For GUI IDEs, follow the instructions on the [Plugins page](/plugins) to install
 
 For CLI coding tools, follow the instructions at the following corresponding pages.
 
-- [Codex and ChatGPT desktop](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/codex-setup.md)
+- [Codex and ChatGPT desktop](codex-setup.md)
 - [Claude Code](claude-code-setup.md)
 - [OpenCode](opencode-setup.md)
 
