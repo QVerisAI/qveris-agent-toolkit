@@ -111,7 +111,9 @@ describe('Qveris client', () => {
     'https://example.test\\@other.test/api/v1',
     'https://user:pass@example.test/api/v1',
     'https://example.test/api/v1?mode=test',
+    'https://example.test/api/v1?',
     'https://example.test/api/v1#section',
+    'https://example.test/api/v1#',
   ])('rejects unsafe base URL %j', (baseUrl) => {
     expect(() => new Qveris({ apiKey: API_KEY, baseUrl })).toThrow(/base URL/);
   });

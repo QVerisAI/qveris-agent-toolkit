@@ -65,7 +65,7 @@ function normalizeBaseUrl(value: string): string {
   if (!['http:', 'https:'].includes(url.protocol) || !url.hostname) {
     throw new Error('Qveris API base URL must be a valid HTTP(S) URL');
   }
-  if (url.username || url.password || url.search || url.hash) {
+  if (url.username || url.password || candidate.includes('?') || candidate.includes('#')) {
     throw new Error('Qveris API base URL must not contain credentials, a query, or a fragment');
   }
 

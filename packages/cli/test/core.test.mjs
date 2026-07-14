@@ -72,8 +72,11 @@ test("endpoint normalization rejects unsafe or invalid base URLs", () => {
   assert.equal(normalizeBaseUrl(" https://unit.test/api/v1/ "), "https://unit.test/api/v1");
   assert.throws(() => normalizeBaseUrl("not-a-url"), /Invalid API base URL/);
   assert.throws(() => normalizeBaseUrl("ftp://unit.test/api/v1"), /HTTP\(S\)/);
+  assert.throws(() => normalizeBaseUrl("https://unit.test\\@other.test/api/v1"), /valid HTTP\(S\)/);
   assert.throws(() => normalizeBaseUrl("https://user:secret@unit.test/api/v1"), /without credentials/);
   assert.throws(() => normalizeBaseUrl("https://unit.test/api/v1?target=other"), /query parameters/);
+  assert.throws(() => normalizeBaseUrl("https://unit.test/api/v1?"), /query parameters/);
+  assert.throws(() => normalizeBaseUrl("https://unit.test/api/v1#"), /fragments/);
 });
 
 test("legacy command and flag aliases normalize without changing usage search-id", () => {

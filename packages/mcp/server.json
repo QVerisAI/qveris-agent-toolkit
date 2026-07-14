@@ -26,14 +26,8 @@
           "isSecret": true
         },
         {
-          "name": "QVERIS_REGION",
-          "description": "Force region: 'global' or 'cn' (auto-detected from key prefix if not set)",
-          "isRequired": false,
-          "isSecret": false
-        },
-        {
           "name": "QVERIS_BASE_URL",
-          "description": "Override API base URL (highest priority, for custom endpoints)",
+          "description": "Override the built-in API base URL with a complete HTTP(S) API root",
           "isRequired": false,
           "isSecret": false
         }

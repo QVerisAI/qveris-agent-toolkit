@@ -121,7 +121,7 @@ class QverisConfig(BaseSettings):
 
         if parsed.scheme not in {"http", "https"} or not parsed.hostname:
             raise ValueError("Qveris API base URL must be a valid HTTP(S) URL")
-        if parsed.username or parsed.password or parsed.query or parsed.fragment:
+        if parsed.username or parsed.password or "?" in candidate or "#" in candidate:
             raise ValueError("Qveris API base URL must not contain credentials, a query, or a fragment")
 
         return candidate.rstrip("/")

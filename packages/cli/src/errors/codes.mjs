@@ -19,7 +19,7 @@ export const ERROR_CODES = {
   },
   BASE_URL_INVALID: {
     message: "Invalid API base URL",
-    hint: "Set QVERIS_BASE_URL to a complete HTTP(S) URL such as https://host.example/api/v1",
+    hint: "Set QVERIS_BASE_URL to the complete HTTP(S) API root supplied by your QVeris service",
     exit: EX_CONFIG,
   },
   AUTH_INVALID_KEY: {

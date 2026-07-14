@@ -82,7 +82,9 @@ def test_qveris_config_normalizes_base_url(monkeypatch: pytest.MonkeyPatch) -> N
         "https://example.test\\@other.test/api/v1",
         "https://user:pass@example.test/api/v1",
         "https://example.test/api/v1?mode=test",
+        "https://example.test/api/v1?",
         "https://example.test/api/v1#section",
+        "https://example.test/api/v1#",
     ],
 )
 def test_qveris_config_rejects_unsafe_base_url(base_url: str) -> None:

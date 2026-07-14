@@ -27,14 +27,25 @@ export function normalizeBaseUrl(value) {
     throw new CliError("BASE_URL_INVALID", "Invalid API base URL: expected a non-empty HTTP(S) URL");
   }
 
+  const candidate = value.trim();
+  if (/\s/.test(candidate) || candidate.includes("\\")) {
+    throw new CliError("BASE_URL_INVALID", "Invalid API base URL: expected a valid HTTP(S) URL");
+  }
+
   let url;
   try {
-    url = new URL(value.trim());
+    url = new URL(candidate);
   } catch {
     throw new CliError("BASE_URL_INVALID", `Invalid API base URL: ${value}`);
   }
 
-  if (!new Set(["http:", "https:"]).has(url.protocol) || url.username || url.password || url.search || url.hash) {
+  if (
+    !new Set(["http:", "https:"]).has(url.protocol) ||
+    url.username ||
+    url.password ||
+    candidate.includes("?") ||
+    candidate.includes("#")
+  ) {
     throw new CliError(
       "BASE_URL_INVALID",
       "Invalid API base URL: use an HTTP(S) URL without credentials, query parameters, or fragments",
