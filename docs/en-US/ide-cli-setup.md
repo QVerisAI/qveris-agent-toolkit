@@ -10,7 +10,7 @@ For GUI IDEs, follow the instructions on the [Plugins page](/plugins) to install
 
 For CLI coding tools, follow the instructions at the following corresponding pages.
 
-- [Codex and ChatGPT desktop](codex-setup.md)
+- [Codex and ChatGPT desktop](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/codex-setup.md)
 - [Claude Code](claude-code-setup.md)
 - [OpenCode](opencode-setup.md)
 
@@ -28,15 +28,15 @@ Most capable coding agents can finish the setup and resolve issues automatically
 
 For Codex:
 ```
-Configure this for me https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/codex-setup.md. The API key is sk-xxxxxxxxxxxxx
+Configure this for me <https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/codex-setup.md>. The API key is sk-xxxxxxxxxxxxx
 ```
 
 For Claude Code:
 ```
-Configure this for me https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/claude-code-setup.md. The API key is sk-xxxxxxxxxxxxx
+Configure this for me <https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/claude-code-setup.md>. The API key is sk-xxxxxxxxxxxxx
 ```
 
 For OpenCode:
 ```
-Configure this for me https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/opencode-setup.md. The API key is sk-xxxxxxxxxxxxx
+Configure this for me <https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/opencode-setup.md>. The API key is sk-xxxxxxxxxxxxx
 ```
