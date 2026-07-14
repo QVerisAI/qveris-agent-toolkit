@@ -10,14 +10,16 @@ Thanks for your interest in the QVeris Agent Toolkit! This monorepo hosts five i
 | `packages/mcp` | `@qverisai/mcp` MCP server (stdio + streamable HTTP) | TS strict, vitest |
 | `packages/js-sdk` | `@qverisai/sdk` typed REST client + Vercel AI adapter | TS strict, vitest |
 | `packages/python-sdk` | `qveris` on PyPI (client, Agent runtime, framework adapters) | Python ≥3.8, uv + pytest |
-| `packages/openclaw-qveris-plugin` | OpenClaw plugin | TS, vitest |
+| `packages/openclaw-qveris-plugin` | OpenClaw plugin | Node ≥22.19, TS, vitest |
 | `skills/`, `recipes/`, `agent/`, `ecosystem/` | Agent-facing docs, recipes, manifests | see `ecosystem/CONTRIBUTING.md` for manifest contributions |
 
 ## Dev setup & running tests
 
 From the repo root, the `package.json` task runner fans out across every package
 (it delegates to each package's own scripts; there are no root dependencies or
-workspaces). Requires Node `>=18.2.0` (dev uses the version pinned in `.nvmrc`); the Python SDK uses `uv`.
+workspaces). Running the full toolkit requires Node `>=22.22.2` because it includes
+the OpenClaw development toolchain; development uses that version from `.nvmrc`. The CLI, MCP,
+and JavaScript SDK retain their package-level Node 18 support. The Python SDK uses `uv`.
 
 ```bash
 npm run install:all   # install all package deps (npm ci + uv sync)

@@ -4,7 +4,7 @@
   "description": "OpenClaw QVeris plugin — capability discovery, tool inspection, and tool calling",
   "type": "module",
   "engines": {
-    "node": ">=18.2.0"
+    "node": ">=22.19.0"
   },
   "files": [
     "index.ts",
@@ -37,17 +37,18 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@vitest/coverage-v8": "^2.1.9",
+    "esbuild": "0.28.0",
     "eslint": "^10.6.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.7.0",
-    "openclaw": "^2026.6.4",
+    "openclaw": "2026.6.11",
     "prettier": "^3.9.5",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.63.0",
     "vitest": "^2.1.0"
   },
   "peerDependencies": {
-    "openclaw": ">=2026.3.22"
+    "openclaw": ">=2026.6.11"
   },
   "peerDependenciesMeta": {
     "openclaw": {
@@ -59,14 +60,15 @@
       "./dist/index.js"
     ],
     "compat": {
-      "pluginApi": ">=2026.3.22"
+      "pluginApi": ">=2026.6.11"
     },
     "build": {
-      "openclawVersion": "2026.3.24"
+      "openclawVersion": "2026.6.11",
+      "pluginSdkVersion": "2026.6.11"
     },
     "install": {
       "npmSpec": "@qverisai/qveris",
-      "minHostVersion": ">=2026.3.22"
+      "minHostVersion": ">=2026.6.11"
     },
     "release": {
       "publishToNpm": true
