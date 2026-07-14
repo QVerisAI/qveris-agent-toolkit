@@ -1,14 +1,14 @@
 import { resolveApiKey } from "../client/auth.mjs";
 import { getCredits, unwrapApiResponse } from "../client/api.mjs";
-import { resolveBaseUrl, getSiteUrl } from "../config/region.mjs";
+import { resolveBaseUrl, getSiteUrl } from "../config/endpoint.mjs";
 import { bold, dim, cyan, yellow, green } from "../output/colors.mjs";
 import { outputJson } from "../output/json.mjs";
 import { createSpinner } from "../output/spinner.mjs";
 
 export async function runCredits(flags) {
   const apiKey = resolveApiKey(flags.apiKey);
-  const { region, baseUrl } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl, apiKey });
-  const accountUrl = `${getSiteUrl(region, baseUrl)}/account`;
+  const { baseUrl } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
+  const accountUrl = `${getSiteUrl(baseUrl)}/account`;
 
   const spinner = flags.json ? { stop() {} } : createSpinner("Checking credits...");
 

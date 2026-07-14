@@ -33,6 +33,7 @@ curl -fsSL https://qveris.cn/cli/install | bash
 **快速上手**
 
 ```bash
+export QVERIS_BASE_URL="https://qveris.cn/api/v1"
 qveris login                              # 登录认证
 qveris discover "weather forecast"        # 发现能力
 qveris inspect 1                          # 查看详情
@@ -62,7 +63,8 @@ CLI 还支持交互模式（`qveris interactive`）、代码生成（`--codegen 
       "command": "npx",
       "args": ["-y", "@qverisai/mcp"],
       "env": {
-        "QVERIS_API_KEY": "your-api-key-here"
+        "QVERIS_API_KEY": "your-api-key-here",
+        "QVERIS_BASE_URL": "https://qveris.cn/api/v1"
       }
     }
   }
@@ -94,6 +96,7 @@ pip install qveris
 设置环境变量：
 
 - `QVERIS_API_KEY`（从 [QVeris](https://qveris.cn) 获取）
+- `QVERIS_BASE_URL=https://qveris.cn/api/v1`
 - `OPENAI_API_KEY`（或你的 OpenAI 兼容服务商密钥）
 - `OPENAI_BASE_URL`（可选；用于 OpenAI 兼容服务商）
 
@@ -150,6 +153,11 @@ npm install @qverisai/sdk
 ```
 
 这是一个零依赖的类型化客户端（原生 `fetch`，Node.js 18+）。完整指南（配置、API 参考、类型化响应、错误处理）见 [TypeScript SDK](js-sdk.md)。
+
+```bash
+export QVERIS_API_KEY="your-api-key"
+export QVERIS_BASE_URL="https://qveris.cn/api/v1"
+```
 
 ```typescript
 import { Qveris } from '@qverisai/sdk';

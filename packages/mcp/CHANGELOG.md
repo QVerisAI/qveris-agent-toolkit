@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- API endpoint selection is deterministic: `QVERIS_BASE_URL` overrides the built-in default, while API key metadata and legacy routing settings no longer reroute requests. Endpoint overrides are validated before use. ([#204])
+
 ## [0.9.0] - 2026-07-13
 
 ### Added
@@ -124,6 +128,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [0.2.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.1.2...mcp-v0.2.0
 [0.1.2]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/mcp-v0.1.2
 [#201]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/201
+[#204]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/204
 [#158]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/158
 [#145]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/145
 [#120]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/120

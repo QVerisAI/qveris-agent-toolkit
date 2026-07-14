@@ -3,7 +3,6 @@ import { DEFAULTS } from "./defaults.mjs";
 
 const ENV_MAP = {
   api_key: "QVERIS_API_KEY",
-  base_url: "QVERIS_BASE_URL",
   default_limit: "QVERIS_DEFAULT_LIMIT",
   default_max_size: "QVERIS_DEFAULT_MAX_SIZE",
 };

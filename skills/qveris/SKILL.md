@@ -50,8 +50,7 @@ import requests
 import os
 
 API_KEY = os.environ.get("QVERIS_API_KEY", "<QVERIS_API_KEY from MCP config>")
-# Auto-detect region from key prefix: sk-cn-xxx → qveris.cn, sk-xxx → qveris.ai
-BASE_URL = "https://qveris.cn/api/v1" if API_KEY.startswith("sk-cn-") else "https://qveris.ai/api/v1"
+BASE_URL = os.environ.get("QVERIS_BASE_URL", "https://qveris.ai/api/v1").rstrip("/")
 
 def call_tool(tool_id: str, search_id: str, params: dict) -> dict:
     """Call a QVeris capability and return the result."""
@@ -92,7 +91,7 @@ print(result)  # {"data": {"temperature": 15.5, "humidity": 72}}
 
 ### API Reference
 
-**Base URL:** `https://qveris.ai/api/v1` (global) or `https://qveris.cn/api/v1` (China, key prefix `sk-cn-`)
+**Base URL:** `https://qveris.ai/api/v1` by default. Set `QVERIS_BASE_URL` to the active deployment's API root when an explicit override is required.
 
 **Authentication:** `Authorization: Bearer YOUR_API_KEY`
 

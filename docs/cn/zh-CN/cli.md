@@ -36,6 +36,8 @@ npx @qverisai/cli discover "天气 API"
 ## 快速开始
 
 ```bash
+export QVERIS_BASE_URL="https://qveris.cn/api/v1"
+
 # 引导式首次调用
 qveris init
 
@@ -360,7 +362,7 @@ qveris> exit
 
 ### `qveris doctor`
 
-面向首次调用的自检诊断：依次检查 Node.js 版本、API 密钥、区域，再用一次免费的 `discover` 探测覆盖连通性、密钥有效性、剩余积分，以及响应结构是否符合 CLI 合同。每项失败都会给出可执行的修复建议。诊断不消耗积分（discover 免费）。加 `--json` 输出机器可读结果。
+面向首次调用的自检诊断：依次检查 Node.js 版本、API 密钥、API 地址，再用一次免费的 `discover` 探测覆盖连通性、密钥有效性、剩余积分，以及响应结构是否符合 CLI 合同。每项失败都会给出可执行的修复建议。诊断不消耗积分（discover 免费）。加 `--json` 输出机器可读结果。
 
 ### `qveris config`
 
@@ -378,7 +380,7 @@ qveris config <subcommand> [args]
 | `reset` | 重置为默认值 |
 | `path` | 打印配置文件路径 |
 
-**配置项：**`api_key`, `base_url`, `default_limit`, `default_max_size`, `color`, `output_format`
+**配置项：**`api_key`, `default_limit`, `default_max_size`, `color`, `output_format`
 
 ### `qveris completions`
 
@@ -431,7 +433,7 @@ qveris history [--clear]
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
 | `QVERIS_API_KEY` | API 认证密钥 | — |
-| `QVERIS_BASE_URL` | 覆盖 API 地址 | 从密钥自动设置 |
+| `QVERIS_BASE_URL` | 覆盖 API 地址 | 内置默认地址 |
 | `QVERIS_DEFAULT_LIMIT` | 默认 discover 限制 | 5 |
 | `QVERIS_DEFAULT_MAX_SIZE` | 默认响应大小限制 | 4096 |
 | `XDG_CONFIG_HOME` | 配置目录基础路径 | `~/.config` |
@@ -439,6 +441,8 @@ qveris history [--clear]
 | `FORCE_COLOR` | 强制颜色（即使管道） | — |
 
 **优先级：**`--flag` > 环境变量 > 配置文件 > 默认值
+
+API 地址单独遵循 `--base-url` > `QVERIS_BASE_URL` > 内置默认值。使用本站服务时，请设置 `QVERIS_BASE_URL=https://qveris.cn/api/v1`。API 密钥不会选择或替换地址；覆盖值必须是完整的 HTTP(S) URL，且不能包含凭据、查询参数或片段。
 
 ---
 

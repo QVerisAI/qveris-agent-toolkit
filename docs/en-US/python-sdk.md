@@ -33,7 +33,7 @@ from qveris import QverisClient, QverisConfig
 client = QverisClient(QverisConfig(api_key="sk-..."))
 ```
 
-The default API base URL is `https://qveris.ai/api/v1/`. Override it with the `QVERIS_BASE_URL` environment variable or `QverisConfig(base_url=...)` when targeting a custom endpoint.
+Endpoint priority is `QverisConfig(base_url=...)` > `QVERIS_BASE_URL` > `https://qveris.ai/api/v1`. API keys never select the endpoint. Overrides must be HTTP(S) URLs without credentials, a query string, or a fragment.
 
 ## Quickstart
 
@@ -160,7 +160,7 @@ status = agent.budget_status()   # {"limit": 25, "spent": 12.0, "remaining": 13.
 | Field | Env var | Default | Description |
 |-------|---------|---------|-------------|
 | `api_key` | `QVERIS_API_KEY` | `None` | API key, sent as `Authorization: Bearer ...` |
-| `base_url` | `QVERIS_BASE_URL` | `https://qveris.ai/api/v1/` | API base URL |
+| `base_url` | `QVERIS_BASE_URL` | `https://qveris.ai/api/v1` | API base URL |
 | `enable_history_pruning` | — | `True` | Prune/compress old tool outputs to save tokens (agent loop) |
 | `max_iterations` | — | `50` | Max agent tool-loop iterations |
 

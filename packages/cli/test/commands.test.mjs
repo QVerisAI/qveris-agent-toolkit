@@ -291,7 +291,17 @@ test("config command covers set, get, list, path, and reset", async () => {
     assert.deepEqual(jsonFromStdout(get.stdout), { key: "api_key", value: "sk-config" });
 
     const list = await captureOutput(() => runConfig("list", [], { json: true }));
-    assert.equal(jsonFromStdout(list.stdout).api_key.value, "***");
+    const listed = jsonFromStdout(list.stdout);
+    assert.equal(listed.api_key.value, "***");
+    assert.equal(listed.base_url, undefined);
+    assert.equal(listed._endpoint.base_url, "https://qveris.ai/api/v1");
+
+    const previousExitCode = process.exitCode;
+    process.exitCode = undefined;
+    const unsupportedBaseUrl = await captureOutput(() => runConfig("set", ["base_url", "https://unit.test"], {}));
+    assert.match(unsupportedBaseUrl.stderr, /Unknown config key: base_url/);
+    assert.equal(process.exitCode, 2);
+    process.exitCode = previousExitCode;
 
     const path = await captureOutput(() => runConfig("path", [], {}));
     assert.equal(path.stdout.trim(), getConfigPath());
@@ -364,6 +374,9 @@ test("completions and main cover shell metadata and top-level routing errors", a
 
     const help = await captureOutput(() => main(["node", "qveris", "--help", "--no-color"]));
     assert.match(help.stdout, /Core Commands:/);
+    assert.match(help.stdout, /QVERIS_BASE_URL\s+Override API base URL/);
+    assert.doesNotMatch(help.stdout, /QVERIS_REGION|key prefix|\(global\)|\bChina\b|中国区|全球区/);
+    assert.equal((help.stdout.match(/https:\/\/qveris\.(?:ai|cn)/g) || []).length, 1);
 
     const unknown = await captureOutput(() => main(["node", "qveris", "unknown"]));
     assert.match(unknown.stderr, /Unknown command: unknown/);

@@ -1,7 +1,10 @@
-import { resolve } from "../config/resolve.mjs";
+import { resolveBaseUrl } from "../config/endpoint.mjs";
 
-export function generateSnippet(lang, { toolId, discoveryId, parameters, maxResponseSize = 20480 }) {
-  const baseUrl = resolve("base_url").value;
+export function generateSnippet(
+  lang,
+  { baseUrl: baseUrlFlag, toolId, discoveryId, parameters, maxResponseSize = 20480 },
+) {
+  const { baseUrl } = resolveBaseUrl({ baseUrlFlag });
 
   switch (lang) {
     case "curl":

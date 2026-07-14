@@ -33,32 +33,44 @@ import {
   RETRYABLE_STATUS,
 } from '../retry.js';
 
-/** Region-specific API base URLs */
-const REGION_URLS: Record<string, string> = {
-  global: 'https://qveris.ai/api/v1',
-  cn: 'https://qveris.cn/api/v1',
-};
-
-/**
- * Detect region from API key prefix.
- * sk-cn-xxx -> cn, sk-xxx -> global
- */
-function detectRegionFromKey(apiKey: string): string {
-  return apiKey.startsWith('sk-cn-') ? 'cn' : 'global';
-}
+const DEFAULT_BASE_URL = 'https://qveris.ai/api/v1';
 
 /**
  * Resolve the base URL for the QVeris API.
- * Priority: explicit baseUrl > QVERIS_BASE_URL env > QVERIS_REGION env > key prefix auto-detect > default
+ * Priority: explicit baseUrl > QVERIS_BASE_URL env > built-in default.
+ * API keys and QVERIS_REGION never affect endpoint selection.
  */
-function resolveBaseUrl(apiKey: string, explicitBaseUrl?: string): string {
-  if (explicitBaseUrl) return explicitBaseUrl.replace(/\/+$/, '');
-  if (process.env.QVERIS_BASE_URL) return process.env.QVERIS_BASE_URL.replace(/\/+$/, '');
-  if (process.env.QVERIS_REGION) {
-    const region = process.env.QVERIS_REGION.toLowerCase();
-    return REGION_URLS[region] ?? REGION_URLS.global;
+function resolveBaseUrl(explicitBaseUrl?: string): string {
+  if (explicitBaseUrl !== undefined) return normalizeBaseUrl(explicitBaseUrl);
+  if (typeof process.env.QVERIS_BASE_URL === 'string') {
+    return normalizeBaseUrl(process.env.QVERIS_BASE_URL);
   }
-  return REGION_URLS[detectRegionFromKey(apiKey)];
+  return DEFAULT_BASE_URL;
+}
+
+function normalizeBaseUrl(value: string): string {
+  const candidate = value.trim();
+  if (!candidate) throw new Error('Qveris API base URL must not be empty');
+  if (!/^https?:\/\/[^/?#\s\\]/i.test(candidate) || /\s/.test(candidate) || candidate.includes('\\')) {
+    throw new Error('Qveris API base URL must be a valid HTTP(S) URL');
+  }
+
+  let url: URL;
+  try {
+    url = new URL(candidate);
+  } catch {
+    throw new Error('Qveris API base URL must be a valid HTTP(S) URL');
+  }
+
+  if (!['http:', 'https:'].includes(url.protocol) || !url.hostname) {
+    throw new Error('Qveris API base URL must be a valid HTTP(S) URL');
+  }
+  if (url.username || url.password || candidate.includes('?') || candidate.includes('#')) {
+    throw new Error('Qveris API base URL must not contain credentials, a query, or a fragment');
+  }
+
+  url.pathname = url.pathname.replace(/\/+$/, '');
+  return url.toString().replace(/\/$/, '');
 }
 
 /** Default timeout: 30s for search/inspect, 120s for execute */
@@ -98,8 +110,7 @@ export class QverisClient {
       throw new Error('Qveris API key is required');
     }
     this.apiKey = config.apiKey;
-    // Resolve base URL: explicit > env > key prefix auto-detect
-    this.baseUrl = resolveBaseUrl(config.apiKey, config.baseUrl);
+    this.baseUrl = resolveBaseUrl(config.baseUrl);
     this.defaultTimeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     // Retries for 429/503: explicit config wins, then the env var (the MCP
     // server itself is env-configured), then the default.
@@ -328,24 +339,20 @@ export class QverisClient {
 
 /**
  * Creates a Qveris client from environment variables.
- * Reads the API key from QVERIS_API_KEY. Region is auto-detected from key prefix
- * (sk-cn-xxx -> cn, sk-xxx -> global), or overridden via QVERIS_REGION or QVERIS_BASE_URL.
+ * Reads the API key from QVERIS_API_KEY and an optional endpoint override from
+ * QVERIS_BASE_URL.
  */
 export function createClientFromEnv(): QverisClient {
   const apiKey = process.env.QVERIS_API_KEY;
 
   if (!apiKey) {
     throw new Error(
-      'QVERIS_API_KEY environment variable is required.\n' +
-        'Global: https://qveris.ai/account?page=api-keys\n' +
-        'China:  https://qveris.cn/account?page=api-keys',
+      'QVERIS_API_KEY environment variable is required.\n' + 'Create one at https://qveris.ai/account?page=api-keys',
     );
   }
 
   const client = new QverisClient({ apiKey });
-  const region = detectRegionFromKey(apiKey);
-  const effectiveUrl = resolveBaseUrl(apiKey);
-  console.error(`Region: ${region} (${effectiveUrl})`);
+  console.error(`API endpoint: ${resolveBaseUrl()}`);
 
   return client;
 }

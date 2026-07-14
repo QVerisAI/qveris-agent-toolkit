@@ -64,7 +64,7 @@ MCP 服务器从以下环境变量读取配置：
 
 ```bash
 QVERIS_API_KEY=your-api-key          # 必填
-QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
+QVERIS_BASE_URL=https://qveris.ai/api/v1  # 可选：覆盖 API 地址
 ```
 
 ### 使用 QVeris CLI 配置

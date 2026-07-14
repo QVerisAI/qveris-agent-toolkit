@@ -29,6 +29,8 @@ from qveris import QverisClient, QverisConfig
 client = QverisClient(QverisConfig(api_key="sk-...", base_url="https://qveris.ai/api/v1"))
 ```
 
+Endpoint priority is `QverisConfig(base_url=...)` > `QVERIS_BASE_URL` > the built-in default. API keys never select the endpoint. Overrides must be HTTP(S) URLs without credentials, a query string, or a fragment.
+
 ## Canonical Workflow
 
 ```python

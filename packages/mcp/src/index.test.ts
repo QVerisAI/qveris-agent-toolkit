@@ -2,9 +2,9 @@ import { mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'n
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { executeQverisMcpTool, isEntrypoint, listQverisMcpTools } from './index.js';
+import { executeQverisMcpTool, initializeQverisClient, isEntrypoint, listQverisMcpTools } from './index.js';
 import type { QverisClient } from './api/client.js';
 import { creditsLedgerSchema } from './tools/credits-ledger.js';
 import { executeToolSchema } from './tools/execute.js';
@@ -15,6 +15,36 @@ import { usageHistorySchema } from './tools/usage-history.js';
 function payload(result: { content: Array<{ text: string }> }) {
   return JSON.parse(result.content[0].text);
 }
+
+const ORIGINAL_API_KEY = process.env.QVERIS_API_KEY;
+const ORIGINAL_BASE_URL = process.env.QVERIS_BASE_URL;
+
+afterEach(() => {
+  if (ORIGINAL_API_KEY === undefined) delete process.env.QVERIS_API_KEY;
+  else process.env.QVERIS_API_KEY = ORIGINAL_API_KEY;
+  if (ORIGINAL_BASE_URL === undefined) delete process.env.QVERIS_BASE_URL;
+  else process.env.QVERIS_BASE_URL = ORIGINAL_BASE_URL;
+  vi.restoreAllMocks();
+});
+
+describe('MCP API client initialization', () => {
+  it('starts without a client only when the API key is missing', () => {
+    delete process.env.QVERIS_API_KEY;
+    delete process.env.QVERIS_BASE_URL;
+    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    expect(initializeQverisClient()).toBeUndefined();
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('QVERIS_API_KEY environment variable is required'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('Starting without credentials'));
+  });
+
+  it('fails startup when a configured API endpoint is invalid', () => {
+    process.env.QVERIS_API_KEY = 'sk-test';
+    process.env.QVERIS_BASE_URL = 'not-a-url';
+
+    expect(() => initializeQverisClient()).toThrow(/base URL must be a valid HTTP\(S\) URL/);
+  });
+});
 
 describe('MCP public tool interface', () => {
   it('detects the process entrypoint when npm launches the bin through a symlink', () => {

@@ -26,6 +26,7 @@ test("runPreflight: healthy probe reports connectivity, credits, and contract co
   const c = byName(checks);
   assert.equal(c.node.status, "ok");
   assert.equal(c.api_key.status, "ok");
+  assert.equal(c.endpoint.status, "ok");
   assert.equal(c.connectivity.status, "ok");
   assert.equal(c.credits.status, "ok");
   assert.match(c.credits.detail, /42 credits/);
@@ -42,11 +43,31 @@ test("runPreflight: zero credits warns (not fails) with a purchase hint", async 
   assert.match(credits.hint, /pricing/);
 });
 
-test("runPreflight: zero-credits hint is region-aware (CN key → qveris.cn)", async () => {
+test("runPreflight: zero-credits hint follows an explicit endpoint, not the API key", async () => {
   const probe = async () => ({ search_id: "s1", results: [], remaining_credits: 0 });
-  const { checks } = await runPreflight({ apiKeyFlag: "sk-cn-test", probe });
+  const { checks } = await runPreflight({
+    apiKeyFlag: "sk-test",
+    baseUrlFlag: "https://test.qveris.cn/api/v1",
+    probe,
+  });
 
   assert.match(byName(checks).credits.hint, /qveris\.cn\/pricing/);
+});
+
+test("runPreflight: invalid base URL fails before probing", async () => {
+  let probed = false;
+  const { checks, ok } = await runPreflight({
+    apiKeyFlag: "sk-test",
+    baseUrlFlag: "not-a-url",
+    probe: async () => {
+      probed = true;
+      return {};
+    },
+  });
+
+  assert.equal(ok, false);
+  assert.equal(probed, false);
+  assert.equal(byName(checks).endpoint.status, "fail");
 });
 
 test("runPreflight: a non-string API key is treated as missing, not crashed", async () => {

@@ -411,7 +411,7 @@ qveris> exit
 
 ### `qveris doctor`
 
-Self-check diagnostics for a working first call. Checks Node.js version, API key, region, then a free `discover` probe covering connectivity, key validity, remaining credits, and response-shape conformance to the CLI contract. Each failure prints an actionable fix. Diagnostics consume no credits (discover is free). Add `--json` for machine-readable output.
+Self-check diagnostics for a working first call. Checks Node.js version, API key, API endpoint, then a free `discover` probe covering connectivity, key validity, remaining credits, and response-shape conformance to the CLI contract. Each failure prints an actionable fix. Diagnostics consume no credits (discover is free). Add `--json` for machine-readable output.
 
 ```bash
 qveris doctor
@@ -434,7 +434,7 @@ qveris config <subcommand> [args]
 | `reset` | Reset to defaults |
 | `path` | Print config file location |
 
-**Config keys:** `api_key`, `base_url`, `default_limit`, `default_max_size`, `color`, `output_format`
+**Config keys:** `api_key`, `default_limit`, `default_max_size`, `color`, `output_format`
 
 ### `qveris completions`
 
@@ -487,7 +487,7 @@ Use `--` to end option parsing: `qveris discover -- --literal-query`.
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `QVERIS_API_KEY` | API authentication key | — |
-| `QVERIS_BASE_URL` | Override API base URL | auto from key |
+| `QVERIS_BASE_URL` | Override API base URL | Built-in default |
 | `QVERIS_DEFAULT_LIMIT` | Default discover limit | 5 |
 | `QVERIS_DEFAULT_MAX_SIZE` | Default response size limit | 4096 |
 | `XDG_CONFIG_HOME` | Config directory base | `~/.config` |
@@ -495,6 +495,8 @@ Use `--` to end option parsing: `qveris discover -- --literal-query`.
 | `FORCE_COLOR` | Force colors even in pipes | — |
 
 **Priority:** `--flag` > environment variable > config file > default
+
+For the API endpoint specifically, resolution is `--base-url` > `QVERIS_BASE_URL` > built-in default. API keys never select or replace the endpoint. Override values must be complete HTTP(S) URLs without credentials, query parameters, or fragments.
 
 ---
 

@@ -141,9 +141,9 @@ qveris call 1 --params '{"set":"land","first":"sct","timeOfDay":"day"}'
 
 | Command | Description |
 |---------|-------------|
-| `qveris login` | Authenticate with API key (interactive region selection, opens browser, or `--token` for direct input) |
+| `qveris login` | Authenticate with an API key (opens the account page, or accepts `--token` for direct input) |
 | `qveris logout` | Remove stored key |
-| `qveris whoami` | Show current auth status, key source, and region |
+| `qveris whoami` | Show current auth status, key source, and API endpoint |
 | `qveris credits` | Check credit balance |
 | `qveris usage` | Context-safe usage audit summary/search/export |
 | `qveris ledger` | Context-safe credits ledger summary/search/export |
@@ -153,7 +153,7 @@ qveris call 1 --params '{"set":"land","first":"sct","timeOfDay":"day"}'
 | Command | Description |
 |---------|-------------|
 | `qveris interactive` | Launch REPL mode (discover/inspect/call/codegen in one session) |
-| `qveris doctor` | Self-check: Node.js version, API key, region, connectivity |
+| `qveris doctor` | Self-check: Node.js version, API key, API endpoint, connectivity |
 | `qveris config <subcommand>` | Manage CLI settings (set, get, list, reset, path) |
 | `qveris mcp configure` | Generate MCP client config for Cursor, Claude Desktop, OpenCode, OpenClaw, or generic stdio; generate a `claude mcp add` command for Claude Code |
 | `qveris mcp validate` | Validate an MCP config file, with optional live stdio tool probing |
@@ -375,46 +375,16 @@ qveris discover "weather" --api-key "sk-1_..."
 
 **Resolution order:** `--api-key` flag > `QVERIS_API_KEY` env > config file
 
-### Region
+### API Endpoint
 
-The API region is auto-detected from your key prefix:
-
-| Key prefix | Region | Base URL |
-|------------|--------|----------|
-| `sk-xxx` | Global | `https://qveris.ai/api/v1` |
-| `sk-cn-xxx` | China | `https://qveris.cn/api/v1` |
-
-No extra configuration needed. `qveris login` prompts for region selection interactively on first use.
-
-**Agent / script usage:** Use `--token` with a region-prefixed key, or set environment variables:
+The CLI uses a built-in API endpoint by default. When an explicit endpoint is required, set `QVERIS_BASE_URL` to the complete API root supplied by your QVeris service, or pass `--base-url` for one command.
 
 ```bash
-# Key prefix auto-detection (recommended)
-qveris login --token "sk-cn-xxx"
-
-# Or environment variable
-# Linux / macOS
-export QVERIS_REGION=cn
-
-# Windows (PowerShell)
-$env:QVERIS_REGION="cn"
-
-# Windows (CMD)
-set QVERIS_REGION=cn
-
-# Or custom base URL
-# Linux / macOS
-export QVERIS_BASE_URL=https://custom.endpoint/api/v1
-
-# Windows (PowerShell)
-$env:QVERIS_BASE_URL="https://custom.endpoint/api/v1"
-
-# Windows (CMD)
-set QVERIS_BASE_URL=https://custom.endpoint/api/v1
-
-# Or per-command
-qveris discover "weather" --base-url https://qveris.cn/api/v1
+# Reuse an endpoint supplied by your environment
+qveris discover "weather" --base-url "$QVERIS_BASE_URL"
 ```
+
+Resolution order: `--base-url` > `QVERIS_BASE_URL` > built-in default. API keys never change the selected endpoint. Values must be complete HTTP(S) URLs without credentials, query parameters, or fragments; trailing slashes are normalized automatically.
 
 ### Rate limiting & retries
 
@@ -458,6 +428,7 @@ qveris completions fish | source
 |------|-------|-------------|
 | `--json` | `-j` | Output raw JSON (for piping/agent use) |
 | `--api-key <key>` | | Override API key |
+| `--base-url <url>` | | Override API base URL for this command |
 | `--timeout <seconds>` | | Request timeout |
 | `--max-size <bytes>` | | Response size limit (-1 = unlimited) |
 | `--target <target>` | | MCP target |
@@ -517,9 +488,9 @@ QVeris CLI uses only Node.js built-in APIs. No `chalk`, no `commander`, no `yarg
 
 ## Links
 
-- Website: https://qveris.ai (global) / https://qveris.cn (China)
+- Website: https://qveris.ai
 - API Docs: https://qveris.ai/docs
-- Get API Key: https://qveris.ai/account?page=api-keys (global) / https://qveris.cn/account?page=api-keys (China)
+- Get API Key: https://qveris.ai/account?page=api-keys
 - GitHub: https://github.com/QVerisAI/qveris-agent-toolkit
 
 ## License

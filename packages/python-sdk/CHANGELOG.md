@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- API endpoint overrides are normalized and validated as safe HTTP(S) URLs. Explicit `base_url` continues to override `QVERIS_BASE_URL`, and API keys never select the endpoint. ([#204])
 - LangChain adapter: `search_id` is now optional in `qveris_call` and omitted from the request when absent — consistent with the OpenAI-Agents, CrewAI, and Vercel-AI adapters (the earlier consistency fix missed this adapter; caught by the new cross-adapter conformance suite). ([#157])
 
 ## [0.3.0] - 2026-07-09
@@ -46,6 +47,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [0.3.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.2.1...python-sdk-v0.3.0
 [0.2.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.2.0...python-sdk-v0.2.1
 [0.2.0]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/python-sdk-v0.2.0
+[#204]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/204
 [#157]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/157
 [#142]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/142
 [#141]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/141

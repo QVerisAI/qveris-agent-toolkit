@@ -54,7 +54,45 @@ def test_qveris_config_ignores_generic_env_names(monkeypatch: pytest.MonkeyPatch
     config = QverisConfig()
 
     assert config.api_key is None
-    assert config.base_url == "https://qveris.ai/api/v1/"
+    assert config.base_url == "https://qveris.ai/api/v1"
+
+
+def test_qveris_config_does_not_infer_endpoint_from_key_or_region(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("QVERIS_BASE_URL", raising=False)
+    monkeypatch.setenv("QVERIS_REGION", "cn")
+
+    config = QverisConfig(api_key="sk-cn-test")
+
+    assert config.base_url == "https://qveris.ai/api/v1"
+
+
+def test_qveris_config_normalizes_base_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("QVERIS_BASE_URL", "https://env.example/api/v1///")
+
+    assert QverisConfig().base_url == "https://env.example/api/v1"
+    assert QverisConfig(base_url=" https://explicit.example/api/v1/ ").base_url == ("https://explicit.example/api/v1")
+
+
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "",
+        "ftp://example.test/api/v1",
+        "https:/example.test/api/v1",
+        "https:example.test/api/v1",
+        "https:///example.test/api/v1",
+        "https://exa mple.test/api/v1",
+        "https://example.test\\@other.test/api/v1",
+        "https://user:pass@example.test/api/v1",
+        "https://example.test/api/v1?mode=test",
+        "https://example.test/api/v1?",
+        "https://example.test/api/v1#section",
+        "https://example.test/api/v1#",
+    ],
+)
+def test_qveris_config_rejects_unsafe_base_url(base_url: str) -> None:
+    with pytest.raises(ValueError, match="base URL"):
+        QverisConfig(base_url=base_url)
 
 
 @pytest.mark.asyncio

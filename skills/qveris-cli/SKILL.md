@@ -5,7 +5,7 @@ description: "Use QVeris CLI to discover and call third-party API tools. Use whe
 
 ## Quick first run
 
-New to QVeris? With your `QVERIS_API_KEY` set (create one at [qveris.ai](https://qveris.ai/account?page=api-keys) or [qveris.cn](https://qveris.cn/account?page=api-keys)), one command walks the whole loop end to end — auth, discover, inspect, a real call, and the exact usage/ledger commands to reconcile billing — no install needed:
+New to QVeris? With your `QVERIS_API_KEY` set (create one at [qveris.ai](https://qveris.ai/account?page=api-keys)), one command walks the whole loop end to end — auth, discover, inspect, a real call, and the exact usage/ledger commands to reconcile billing — no install needed:
 
 ```bash
 export QVERIS_API_KEY="sk-..."

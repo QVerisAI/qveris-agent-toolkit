@@ -278,7 +278,7 @@ The session tracks the discovery ID, so `inspect` and `call` automatically link 
 
 ### Diagnostics
 
-Run `qveris doctor` to check setup: Node.js version, API key validity, region detection, and API connectivity.
+Run `qveris doctor` to check setup: Node.js version, API key validity, endpoint resolution, and API connectivity.
 
 ---
 
@@ -294,14 +294,7 @@ Run `qveris doctor` to check setup: Node.js version, API key validity, region de
 
 ## API Quick Reference
 
-**Base URL**:
-
-| Region | Base URL | Key prefix |
-|--------|----------|------------|
-| Global | `https://qveris.ai/api/v1` | `sk-xxx` |
-| China  | `https://qveris.cn/api/v1` | `sk-cn-xxx` |
-
-Region is auto-detected from the API key prefix. Override with `QVERIS_REGION=cn` or `QVERIS_BASE_URL=...` if needed.
+**Base URL:** `https://qveris.ai/api/v1` by default. When an explicit endpoint is required, set `QVERIS_BASE_URL` to the complete API root supplied by the active deployment.
 
 **Auth**: `Authorization: Bearer ${QVERIS_API_KEY}`
 

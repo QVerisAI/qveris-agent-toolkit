@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- API endpoint selection is deterministic: explicit `baseUrl` overrides `QVERIS_BASE_URL`, which overrides the built-in default. API key metadata and legacy routing settings no longer reroute requests, and endpoint overrides are validated before use. ([#204])
+
 ### Changed
 
 - Raised `engines.node` to `>=18.2.0`, aligning every package on the toolkit's minimum-supported Node (the MCP server requires 18.2 for `closeAllConnections`). ([#161])
@@ -32,6 +36,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.3.0...HEAD
 [0.3.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.2.0...js-sdk-v0.3.0
 [0.2.0]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/js-sdk-v0.2.0
+[#204]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/204
 [#161]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/161
 [#143]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/143
 [#134]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/134

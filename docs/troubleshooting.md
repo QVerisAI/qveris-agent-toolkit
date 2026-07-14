@@ -7,18 +7,14 @@ per-surface docs in [`docs/en-US`](en-US) and the runnable
 ## Authentication
 
 **`QVERIS_API_KEY is not set` / 401 / "API key is required".**
-Create a key at [qveris.ai/account?page=api-keys](https://qveris.ai/account?page=api-keys)
-(global) or [qveris.cn/account?page=api-keys](https://qveris.cn/account?page=api-keys)
-(China), then export it:
+Create a key at [qveris.ai/account?page=api-keys](https://qveris.ai/account?page=api-keys), then export it:
 
 ```bash
 export QVERIS_API_KEY="sk-..."
 ```
 
-**Wrong region / cross-region key errors.**
-The region is auto-detected from the key prefix (`sk-cn-…` → China, otherwise
-global). Override with `QVERIS_REGION=global|cn` or `QVERIS_BASE_URL`. A global
-key will not work against `qveris.cn` and vice versa.
+**Wrong API endpoint.**
+Set `QVERIS_BASE_URL` to the complete API root supplied by the active deployment. The CLI also accepts `--base-url` for a one-command override.
 
 ## Billing
 

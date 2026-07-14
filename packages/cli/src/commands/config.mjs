@@ -1,10 +1,10 @@
 import { getConfigPath, getConfigValue, setConfigValue, writeConfig } from "../config/store.mjs";
-import { resolve, resolveAll } from "../config/resolve.mjs";
-import { resolveBaseUrl } from "../config/region.mjs";
+import { resolveAll } from "../config/resolve.mjs";
+import { resolveBaseUrl } from "../config/endpoint.mjs";
 import { bold, dim, cyan } from "../output/colors.mjs";
 import { outputJson } from "../output/json.mjs";
 
-const ALLOWED_KEYS = ["api_key", "base_url", "default_limit", "default_max_size", "color", "output_format"];
+const ALLOWED_KEYS = ["api_key", "default_limit", "default_max_size", "color", "output_format"];
 
 export async function runConfig(subcommand, args, flags) {
   switch (subcommand) {
@@ -71,26 +71,27 @@ function configGet(key, flags) {
 function configList(flags) {
   const all = resolveAll();
 
-  // Resolve effective region
-  const { value: apiKey } = resolve("api_key", flags.apiKey);
-  const { region, source: regionSource, baseUrl } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl, apiKey });
+  const { baseUrl, source: endpointSource } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
 
   if (flags.json) {
     const obj = {};
-    for (const [k, v] of Object.entries(all)) {
+    for (const k of ALLOWED_KEYS) {
+      const v = all[k];
+      if (!v) continue;
       obj[k] = { value: k === "api_key" && v.value ? mask(v.value) : v.value, source: v.source };
     }
-    obj._region = { region, source: regionSource, baseUrl };
+    obj._endpoint = { base_url: baseUrl, source: endpointSource };
     outputJson(obj);
     return;
   }
 
   console.log(`\n  ${bold("Key")}                 ${bold("Value")}                    ${bold("Source")}`);
-  for (const [key, { value, source }] of Object.entries(all)) {
+  for (const key of ALLOWED_KEYS) {
+    const { value, source } = all[key] || { value: undefined, source: "none" };
     const display = key === "api_key" && value ? mask(value) : String(value ?? dim("(not set)"));
     console.log(`  ${cyan(key.padEnd(20))}${display.padEnd(25)}${dim(source)}`);
   }
-  console.log(`\n  ${bold("Effective region:")} ${region} ${dim(`(${regionSource})`)} → ${dim(baseUrl)}`);
+  console.log(`\n  ${bold("Effective endpoint:")} ${dim(baseUrl)} ${dim(`(${endpointSource})`)}`);
   console.log();
 }
 

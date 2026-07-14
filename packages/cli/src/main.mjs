@@ -438,8 +438,7 @@ function printUsage(flags = {}) {
 
   ${bold("Environment Variables:")}
     QVERIS_API_KEY         API key
-    QVERIS_REGION          Region override (global | cn)
-    QVERIS_BASE_URL        Custom API base URL
+    QVERIS_BASE_URL        Override API base URL
 
   ${bold("Examples:")}
     qveris init
@@ -455,6 +454,6 @@ function printUsage(flags = {}) {
     qveris ledger --mode search --min-credits 50 --direction consume
     qveris interactive
 
-  ${dim("https://qveris.ai (global) / https://qveris.cn (China)")}
+  ${dim("https://qveris.ai/docs")}
 `);
 }

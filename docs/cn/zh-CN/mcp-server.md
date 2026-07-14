@@ -64,7 +64,7 @@ MCP 服务器从以下环境变量读取配置：
 
 ```bash
 QVERIS_API_KEY=your-api-key          # 必填
-QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
+QVERIS_BASE_URL=https://qveris.cn/api/v1  # 必填：设置 API 地址
 ```
 
 ### 使用 QVeris CLI 配置
@@ -72,6 +72,8 @@ QVERIS_BASE_URL=https://...          # 可选：覆盖 API 地址
 可以用 CLI 生成客户端配置，无需手写 JSON。默认会打印带有 `YOUR_QVERIS_API_KEY` 占位符的安全配置；占位符输出会故意无法通过 API key 校验，直到你替换占位符或使用 `--include-key`。
 
 ```bash
+export QVERIS_BASE_URL="https://qveris.cn/api/v1"
+
 # 打印安全的 Cursor 配置
 qveris mcp configure --target cursor
 
@@ -102,7 +104,8 @@ qveris mcp validate --target cursor --probe
       "command": "npx",
       "args": ["-y", "@qverisai/mcp"],
       "env": {
-        "QVERIS_API_KEY": "your-api-key-here"
+        "QVERIS_API_KEY": "your-api-key-here",
+        "QVERIS_BASE_URL": "https://qveris.cn/api/v1"
       }
     }
   }

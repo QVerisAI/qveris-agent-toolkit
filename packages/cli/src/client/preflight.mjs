@@ -1,13 +1,12 @@
 import { resolve } from "../config/resolve.mjs";
-import { resolveBaseUrl, getSiteUrl } from "../config/region.mjs";
+import { resolveBaseUrl, getSiteUrl } from "../config/endpoint.mjs";
 import { discoverTools } from "./api.mjs";
 import { ERROR_CODES } from "../errors/codes.mjs";
 
 /**
  * OpenAPI contract version the CLI is built against (docs/openapi info.version).
- * A true server-vs-client version comparison depends on the backend exposing a
- * runtime contract version (WonderfulValley/qveris-website#1684); until then we
- * report this and verify the probe response conforms to the expected shape.
+ * Until the API exposes a runtime contract version, report the bundled version
+ * and verify that the probe response conforms to the expected shape.
  */
 export const CLI_CONTRACT_VERSION = "2026-05-12";
 
@@ -42,7 +41,7 @@ async function defaultProbe({ apiKey, baseUrl }) {
 }
 
 /**
- * No-network checks: Node version, API key presence, region resolution.
+ * No-network checks: Node version, API key presence, endpoint resolution.
  * Returns the checks plus the resolved apiKey/baseUrl for callers that continue
  * on to network work (e.g. `qveris init`).
  */
@@ -52,14 +51,21 @@ export function localPreflight({ apiKeyFlag, baseUrlFlag, nodeVersion = process.
   const { value: apiKey, source } = resolve("api_key", apiKeyFlag);
   if (!apiKey || typeof apiKey !== "string" || !apiKey.trim()) {
     checks.push(check("api_key", "fail", ERROR_CODES.AUTH_MISSING_KEY.message, ERROR_CODES.AUTH_MISSING_KEY.hint));
-    return { checks, ok: false, apiKey: null, baseUrl: null, region: null };
+    return { checks, ok: false, apiKey: null, baseUrl: null };
   }
   checks.push(check("api_key", "ok", `API key configured (${maskKey(apiKey)} via ${source})`));
 
-  const { baseUrl, region, source: regionSource } = resolveBaseUrl({ baseUrlFlag, apiKey });
-  checks.push(check("region", "ok", `Region ${region} (${regionSource}) → ${baseUrl}`));
+  let endpoint;
+  try {
+    endpoint = resolveBaseUrl({ baseUrlFlag });
+  } catch (err) {
+    checks.push(check("endpoint", "fail", err.message, err.hint));
+    return { checks, ok: false, apiKey, baseUrl: null };
+  }
+  const { baseUrl, source: endpointSource } = endpoint;
+  checks.push(check("endpoint", "ok", `API endpoint ${baseUrl} (${endpointSource})`));
 
-  return { checks, ok: checks.every((c) => c.status !== "fail"), apiKey, baseUrl, region };
+  return { checks, ok: checks.every((c) => c.status !== "fail"), apiKey, baseUrl };
 }
 
 /**
@@ -102,7 +108,7 @@ export async function runPreflight({
         "credits",
         positive ? "ok" : "warn",
         `${response.remaining_credits} credits remaining`,
-        positive ? null : `Purchase credits at ${getSiteUrl(local.region, local.baseUrl)}/pricing`,
+        positive ? null : `Purchase credits at ${getSiteUrl(local.baseUrl)}/pricing`,
       ),
     );
   }

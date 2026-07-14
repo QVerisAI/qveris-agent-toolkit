@@ -37,6 +37,8 @@ client = QverisClient(QverisConfig(
 ))
 ```
 
+地址优先级为：显式 `base_url` > `QVERIS_BASE_URL`。API key 不参与地址选择；请按上面的示例设置地址。覆盖值必须是无凭据、查询串和片段的 HTTP(S) URL。
+
 ## 快速开始
 
 核心流程是 **discover（发现）→ inspect（检查）→ call（调用）**，之后可选 **audit（审计）**。所有方法都是 `async`。
@@ -166,7 +168,7 @@ status = agent.budget_status()   # {"limit": 25, "spent": 12.0, "remaining": 13.
 | 字段 | 环境变量 | 默认值 | 说明 |
 |------|---------|--------|------|
 | `api_key` | `QVERIS_API_KEY` | `None` | API 密钥，以 `Authorization: Bearer ...` 发送 |
-| `base_url` | `QVERIS_BASE_URL` | `https://qveris.cn/api/v1` | API 基础地址 |
+| `base_url` | `QVERIS_BASE_URL` | 按上文设置 | API 基础地址 |
 | `enable_history_pruning` | — | `True` | 裁剪/压缩旧的工具输出以节省 token（agent 循环） |
 | `max_iterations` | — | `50` | agent 工具循环的最大迭代次数 |
 

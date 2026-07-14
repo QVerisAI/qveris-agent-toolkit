@@ -30,9 +30,8 @@
 - CLI v0.5.0 (recommended for agents): npm install -g @qverisai/cli — zero prompt tokens, deterministic output, 10,000+ tools without prompt bloat
 - MCP Server v0.6.0: npx @qverisai/mcp — for IDE integrations (Cursor, Claude Desktop, OpenCode)
 - Python SDK: pip install qveris
-- REST API (Global): https://qveris.ai/api/v1
-- REST API (China): https://qveris.cn/api/v1
-- Region auto-detected from API key prefix: sk-cn-xxx → China, sk-xxx → Global
+- REST API: https://qveris.ai/api/v1
+- Explicit endpoint override: QVERIS_BASE_URL
 
 ## QVeris CLI — token-efficient agent tool use
 - Agents call tools via subprocess (qveris discover/inspect/call/usage/ledger), not prompt injection
@@ -40,8 +39,8 @@
 - Zero external dependencies — only Node.js built-ins, instant install via npx
 - Deterministic output schema: same command, same format, every time
 - 10,000+ real-world, verified tools accessible without adding any schema to the prompt
-- `qveris login` — interactive region selection + browser-based key retrieval
-- `qveris doctor` — self-check diagnostics (Node.js, API key, region, connectivity)
+- `qveris login` — browser-assisted API key retrieval and validation
+- `qveris doctor` — self-check diagnostics (Node.js, API key, endpoint, connectivity)
 - `qveris interactive` — REPL mode for discover/inspect/call loop
 - `--json` flag for structured agent output, `--dry-run` to validate without credits
 - `--codegen curl|js|python` to generate code snippets from successful calls
@@ -58,7 +57,7 @@
 - `credits_ledger` — summarize/search/export final credit balance movements
 - Deprecated aliases still supported: search_tools → discover, get_tools_by_ids → inspect, execute_tool → call
 - Auto-generates session ID (UUID v4) per server instance
-- Region auto-detected from API key prefix; override with QVERIS_REGION or QVERIS_BASE_URL
+- API keys do not select endpoints; use QVERIS_BASE_URL for an explicit override
 
 ## Pricing
 - Pay-as-you-go, not subscription
@@ -85,8 +84,8 @@
 - Upstream contributions: openclaw/openclaw, openclaw/clawhub
 
 ## Links
-- Website: https://qveris.ai (Global) / https://qveris.cn (China)
-- Playground: https://qveris.ai/playground (Global) / https://qveris.cn/playground (China)
-- Pricing: https://qveris.ai/pricing (Global) / https://qveris.cn/pricing (China)
-- Get API Key: https://qveris.ai/account?page=api-keys (Global) / https://qveris.cn/account?page=api-keys (China)
+- Website: https://qveris.ai
+- Playground: https://qveris.ai/playground
+- Pricing: https://qveris.ai/pricing
+- Get API Key: https://qveris.ai/account?page=api-keys
 - GitHub: https://github.com/QVerisAI/qveris-agent-toolkit
