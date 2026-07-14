@@ -4,7 +4,7 @@ QVeris 已集成到多种 IDE 和 CLI 编程工具中。通过自动配置 QVeri
 
 ## 图形界面 IDE
 
-对于图形界面 IDE，请访问 [https://qveris.ai/plugins](https://qveris.ai/plugins) 按照说明安装对应插件。
+对于图形界面 IDE，请按照[插件页面](/plugins)的说明安装对应插件。
 
 ## CLI 编程工具
 

@@ -31,6 +31,9 @@ on:
       - "docs/en-US/opencode-setup.md"
       - "docs/zh-CN/opencode-setup.md"
       - "docs/cn/zh-CN/opencode-setup.md"
+      - "docs/en-US/getting-started.md"
+      - "docs/zh-CN/getting-started.md"
+      - "docs/cn/zh-CN/getting-started.md"
       # SDK docs (added after the manifest's last policy update; the website
       # manifest must list these before sync-docs.mjs will mirror them).
       - "docs/en-US/python-sdk.md"

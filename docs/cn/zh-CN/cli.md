@@ -315,7 +315,7 @@ qveris usage --mode export-file --start-date 2026-05-01 --end-date 2026-05-04
 
 ### `qveris ledger`
 
-查询最终 credits 账本，默认使用 `summary` 聚合模式。
+查询最终积分账本，默认使用 `summary` 聚合模式。
 `summary` 模式会优先请求服务端 `summary=true` 聚合摘要；若旧部署暂不支持，则回退到有上限的客户端聚合。
 
 ```bash
@@ -554,9 +554,9 @@ qveris call "$TOOL" --discovery-id "$SEARCH_ID" --params '{"city":"London"}' --j
 
 ## 链接
 
-- 官网：[qveris.cn](https://qveris.cn)
+- 官网：[QVeris 官网](/)
 - GitHub：[QVerisAI/qveris-agent-toolkit](https://github.com/QVerisAI/qveris-agent-toolkit)
 - npm：[@qverisai/cli](https://www.npmjs.com/package/@qverisai/cli)
 - REST API：[docs/cn/zh-CN/rest-api.md](rest-api.md)
 - MCP 服务器：[docs/cn/zh-CN/mcp-server.md](mcp-server.md)
-- 获取 API 密钥：[qveris.cn/account](https://qveris.cn/account?page=api-keys)
+- 获取 API 密钥：[控制台/API密钥](/account?page=api-keys)

@@ -25,7 +25,7 @@ The SDK reads your API key from the `QVERIS_API_KEY` environment variable:
 export QVERIS_API_KEY="sk-..."
 ```
 
-Get a key at [qveris.ai](https://qveris.ai). You can also pass configuration explicitly:
+Create a key in [Dashboard / API Keys](/account?page=api-keys). You can also pass configuration explicitly:
 
 ```python
 from qveris import QverisClient, QverisConfig
@@ -260,7 +260,7 @@ Expose the QVeris discover/inspect/call workflow as tools for popular agent fram
 **LangChain**
 
 ```bash
-pip install qveris[langchain]
+pip install 'qveris[langchain]'
 ```
 
 ```python
@@ -277,7 +277,7 @@ The tools are async (use `ainvoke` / an async agent executor).
 **OpenAI Agents SDK**
 
 ```bash
-pip install qveris[openai-agents]
+pip install 'qveris[openai-agents]'
 ```
 
 ```python
@@ -294,7 +294,7 @@ await client.close()
 **CrewAI**
 
 ```bash
-pip install qveris[crewai]
+pip install 'qveris[crewai]'
 ```
 
 ```python
@@ -369,4 +369,4 @@ Capability examples run `discover`/`inspect` when `QVERIS_API_KEY` is set, and o
 - Package: [`qveris` on PyPI](https://pypi.org/project/qveris/)
 - Source: [`packages/python-sdk`](https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/python-sdk)
 - REST API: [rest-api.md](rest-api.md)
-- Get an API key: [qveris.ai](https://qveris.ai)
+- Get an API key: [Dashboard / API Keys](/account?page=api-keys)

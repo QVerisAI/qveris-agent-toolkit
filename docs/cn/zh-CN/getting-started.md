@@ -10,7 +10,7 @@
 
 QVeris 在 Agent 循环中表现出色（发现 → 检查 → 调用 → 将结果反馈给模型），支持多种集成方式。
 
-**费用：** 发现（Discover）免费。调用（Call）按能力的计费规则定价，最终结算结果可在调用历史和 credits 账本中查看。免费套餐含 1,000 积分。详情见 [qveris.cn/pricing](https://qveris.cn/pricing)。
+**费用：** 发现（Discover）免费。调用（Call）按能力的计费规则定价，最终结算结果可在调用历史和积分账本中查看。免费套餐含 1,000 积分。详情见[定价页面](/pricing)。
 
 ---
 
@@ -95,7 +95,7 @@ pip install qveris
 
 设置环境变量：
 
-- `QVERIS_API_KEY`（从 [QVeris](https://qveris.cn) 获取）
+- `QVERIS_API_KEY`（在[控制台/API密钥](/account?page=api-keys)中创建）
 - `QVERIS_BASE_URL=https://qveris.cn/api/v1`
 - `OPENAI_API_KEY`（或你的 OpenAI 兼容服务商密钥）
 - `OPENAI_BASE_URL`（可选；用于 OpenAI 兼容服务商）
@@ -387,7 +387,7 @@ console.log(data);
 
 ### 如何获取 API 密钥
 
-1. 访问 [QVeris](https://qveris.cn)
+1. 打开[控制台/API密钥](/account?page=api-keys)
 2. 登录 / 注册账号（免费）
 3. 创建 API 密钥
 4. 使用方式：
@@ -413,7 +413,7 @@ console.log(data);
 | ¥2,888 | 230,000 积分 |
 | ¥6,888 | 575,000 积分 |
 
-最低充值金额：¥10。购买积分永不过期。详情见 [qveris.cn/pricing](https://qveris.cn/pricing)。
+最低充值金额：¥10。购买积分永不过期。详情见[定价页面](/pricing)。
 
 ---
 
