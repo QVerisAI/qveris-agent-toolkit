@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- Upgraded the Vitest and coverage toolchain to audited Node.js 18-compatible releases and pinned the Vite 6 security floor used by tests. Published runtime dependencies are unchanged. ([#211])
+
 ### Fixed
 
 - API endpoint selection is deterministic: `QVERIS_BASE_URL` overrides the built-in default, while API key metadata and legacy routing settings no longer reroute requests. Endpoint overrides are validated before use. ([#204])
@@ -129,6 +133,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [0.1.2]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/mcp-v0.1.2
 [#201]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/201
 [#204]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/204
+[#211]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/211
 [#158]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/158
 [#145]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/145
 [#120]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/120

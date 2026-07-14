@@ -10,6 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 - Raised the supported host to OpenClaw `>=2026.6.11` and Node.js `>=22.19.0`, matching the plugin API used by the current code. The full-toolkit development requirement is now Node.js `>=22.22.2`; plugin CI and builds use Node.js 22. ([#210])
 - Pinned the tested OpenClaw host and plugin SDK metadata to `2026.6.11`, and aligned the peer, plugin API, and installer compatibility floors. ([#210])
+- Upgraded the Vitest, coverage, Vite, and esbuild development toolchain to audited releases. Published runtime dependencies are unchanged. ([#211])
 
 ### Fixed
 
@@ -30,6 +31,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 [Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.6.4...HEAD
 [2026.6.4]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/qveris-plugin-v2026.6.4
 [#210]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/210
+[#211]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/211
 [#152]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/152
 [#104]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/104
 [#90]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/90
