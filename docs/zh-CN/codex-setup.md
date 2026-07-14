@@ -68,7 +68,7 @@ Codex 会自动发现 `~/.agents/skills` 中的技能。如果技能没有出现
 **服务器无法启动：**
 
 - 检查 Node.js：`node --version`
-- 直接运行服务器：`npx -y @qverisai/mcp`
+- 直接运行服务器：`QVERIS_API_KEY=your-api-key-here npx -y @qverisai/mcp`
 - 检查 API 密钥是否有效，且首尾没有多余空格
 
 **技能没有出现：**

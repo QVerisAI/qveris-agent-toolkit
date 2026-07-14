@@ -68,7 +68,7 @@ Codex detects skills in `~/.agents/skills`. If the skill does not appear, restar
 **The server does not start:**
 
 - Verify Node.js: `node --version`
-- Run the server directly: `npx -y @qverisai/mcp`
+- Run the server directly: `QVERIS_API_KEY=your-api-key-here npx -y @qverisai/mcp`
 - Check that the API key is current and has no extra spaces
 
 **The skill does not appear:**

@@ -3,7 +3,7 @@ name: qveris
 description: "Discover, inspect, and call third-party API capabilities via the QVeris MCP server, then generate production code that calls the QVeris REST API for tasks like fetching weather data, stock prices, or public datasets. Use when the user needs to find an external API, integrate a web service, connect to a third-party REST endpoint, or retrieve data from an external source."
 ---
 
-For discovery query formulation, tool selection criteria, parameter handling, and error recovery, see [Agent Guidelines](../../agent/GUIDELINES.md).
+For more detailed discovery query formulation, tool selection criteria, parameter handling, and error recovery, see the [Agent Guidelines](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/GUIDELINES.md).
 
 When external functionality is needed, follow this two-phase workflow:
 
