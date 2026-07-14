@@ -377,7 +377,7 @@ qveris discover "weather" --api-key "sk-1_..."
 
 ### API Endpoint
 
-The CLI uses a built-in API endpoint by default. For testing or private deployments, set `QVERIS_BASE_URL` to the complete API root supplied by the deployment administrator, or pass `--base-url` for one command.
+The CLI uses a built-in API endpoint by default. When an explicit endpoint is required, set `QVERIS_BASE_URL` to the complete API root supplied by your QVeris service, or pass `--base-url` for one command.
 
 ```bash
 # Reuse an endpoint supplied by your environment

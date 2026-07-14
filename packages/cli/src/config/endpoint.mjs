@@ -3,7 +3,7 @@ import { CliError } from "../errors/handler.mjs";
 
 /**
  * Get the account site associated with a resolved API URL.
- * Unknown and private endpoints fall back to the public account site.
+ * Unknown endpoints fall back to the public account site.
  * @param {string} baseUrl
  * @returns {string}
  */
@@ -28,7 +28,7 @@ export function normalizeBaseUrl(value) {
   }
 
   const candidate = value.trim();
-  if (/\s/.test(candidate) || candidate.includes("\\")) {
+  if (!/^https?:\/\/[^/?#\s\\]/i.test(candidate) || /\s/.test(candidate) || candidate.includes("\\")) {
     throw new CliError("BASE_URL_INVALID", "Invalid API base URL: expected a valid HTTP(S) URL");
   }
 
@@ -61,8 +61,8 @@ export function normalizeBaseUrl(value) {
  *
  * Priority: --base-url flag > QVERIS_BASE_URL env > built-in default.
  *
- * API keys never influence endpoint selection. This keeps explicit test and
- * private-deployment overrides from being redirected to another endpoint.
+ * API keys never influence endpoint selection. This keeps explicit endpoint
+ * overrides from being redirected to another service.
  *
  * @param {{ baseUrlFlag?: string }} options
  * @returns {{ baseUrl: string, source: string }}

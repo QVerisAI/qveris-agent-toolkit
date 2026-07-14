@@ -559,17 +559,7 @@ export function createQverisServer(client: QverisClient | undefined, defaultSess
  * Streamable HTTP for remote deployment.
  */
 export async function main(): Promise<void> {
-  // Initialize the API client when credentials are available. The server still
-  // starts without QVERIS_API_KEY so MCP clients and registry scanners can list
-  // tools before credentials are configured; tool calls then return an
-  // actionable error until a key is set.
-  let client: QverisClient | undefined;
-  try {
-    client = createClientFromEnv();
-  } catch (error) {
-    console.error(error instanceof Error ? error.message : 'Failed to initialize Qveris client');
-    console.error('Starting without credentials: tool listing is available; set QVERIS_API_KEY to enable tool calls.');
-  }
+  const client = initializeQverisClient();
 
   const transportConfig = resolveTransportConfig(process.env, process.argv.slice(2));
 
@@ -592,6 +582,23 @@ export async function main(): Promise<void> {
   // Log startup to stderr (stdout is reserved for MCP protocol)
   console.error(`Qveris MCP Server v${SERVER_VERSION} started (stdio)`);
   console.error(`Session ID: ${defaultSessionId}`);
+}
+
+/**
+ * Initialize the API client without hiding invalid endpoint configuration.
+ * A missing key is intentionally non-fatal so registry scanners can list tools;
+ * any other configuration error must fail startup.
+ */
+export function initializeQverisClient(): QverisClient | undefined {
+  if (!process.env.QVERIS_API_KEY) {
+    console.error(
+      'QVERIS_API_KEY environment variable is required.\n' + 'Create one at https://qveris.ai/account?page=api-keys',
+    );
+    console.error('Starting without credentials: tool listing is available; set QVERIS_API_KEY to enable tool calls.');
+    return undefined;
+  }
+
+  return createClientFromEnv();
 }
 
 // Public embedding surface for independently operated HTTP services. The

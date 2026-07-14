@@ -27,6 +27,9 @@ describe('QverisClient', () => {
     it.each([
       '',
       'ftp://example.test/api/v1',
+      'https:/example.test/api/v1',
+      'https:example.test/api/v1',
+      'https:///example.test/api/v1',
       'https://exa mple.test/api/v1',
       'https://example.test\\@other.test/api/v1',
       'https://user:pass@example.test/api/v1',

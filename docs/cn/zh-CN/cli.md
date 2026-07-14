@@ -36,6 +36,8 @@ npx @qverisai/cli discover "天气 API"
 ## 快速开始
 
 ```bash
+export QVERIS_BASE_URL="https://qveris.cn/api/v1"
+
 # 引导式首次调用
 qveris init
 

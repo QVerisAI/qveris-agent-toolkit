@@ -13,6 +13,7 @@
 可以用 QVeris CLI 生成并写入配置：
 
 ```bash
+export QVERIS_BASE_URL="https://qveris.cn/api/v1"
 qveris mcp configure --target opencode --write --include-key
 qveris mcp validate --target opencode
 ```
@@ -41,7 +42,8 @@ qveris mcp validate --target opencode
       "type": "local",
       "command": ["npx", "-y", "@qverisai/mcp"],
       "environment": {
-        "QVERIS_API_KEY": "your-api-key-here"
+        "QVERIS_API_KEY": "your-api-key-here",
+        "QVERIS_BASE_URL": "https://qveris.cn/api/v1"
       },
       "enabled": true
     }

@@ -51,7 +51,7 @@ function resolveBaseUrl(explicitBaseUrl?: string): string {
 function normalizeBaseUrl(value: string): string {
   const candidate = value.trim();
   if (!candidate) throw new Error('Qveris API base URL must not be empty');
-  if (/\s/.test(candidate) || candidate.includes('\\')) {
+  if (!/^https?:\/\/[^/?#\s\\]/i.test(candidate) || /\s/.test(candidate) || candidate.includes('\\')) {
     throw new Error('Qveris API base URL must be a valid HTTP(S) URL');
   }
 
