@@ -122,14 +122,37 @@ qveris mcp validate --target cursor --probe
 
 ## Hosted MCP
 
-Hosted MCP 已列入规划，但当前接入路径不依赖托管端点。在正式发布托管端点前，请使用上文的 stdio server：`npx -y @qverisai/mcp`。
+QVeris 提供远程 Streamable HTTP MCP 托管服务，无需安装本地软件包或运行后台进程。如果端点暂时不可用，请在托管服务发布完成前继续使用上文的本地 stdio 软件包。
 
-托管 MCP 端点可用后，接入流程会是：
+```text
+https://mcp.qveris.cn/mcp
+```
 
-1. 创建或选择一个 QVeris API key。
-2. 从 QVeris 控制台或文档复制 hosted MCP URL。
-3. 按 MCP 客户端的远程 MCP 配置流程添加该 hosted URL。
-4. 运行 `qveris mcp validate --target <client>` 或使用客户端内置工具列表，确认 `discover`、`inspect`、`call` 可见。
+在支持远程 MCP 的客户端中添加服务地址，并在每次请求中发送 QVeris API 密钥：
+
+```json
+{
+  "mcpServers": {
+    "qveris": {
+      "type": "http",
+      "url": "https://mcp.qveris.cn/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_QVERIS_API_KEY"
+      }
+    }
+  }
+}
+```
+
+接入步骤：
+
+1. 在[控制台/API 密钥](/account?page=api-keys)创建密钥。
+2. 将服务地址和 Bearer 请求头添加到客户端。客户端支持时，请用密钥管理或环境变量保存 API 密钥，切勿提交到源代码仓库。
+3. 重新连接客户端，确认 `discover`、`inspect`、`call` 可见。
+
+服务会在会话启动时验证并绑定密钥。`401` 表示密钥缺失或无效；`503` 表示验证服务暂时不可用。更换密钥后请新建 MCP 会话。可前往[托管 MCP 页面](/hosted-mcp)复制配置。
+
+不支持远程 Streamable HTTP MCP 的客户端仍可使用本地 stdio 软件包。
 
 ---
 
