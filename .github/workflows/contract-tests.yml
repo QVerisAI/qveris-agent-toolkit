@@ -29,6 +29,7 @@ on:
       - "packages/mcp/examples/**"
       - "packages/mcp/tsconfig.examples.json"
       - "packages/cli/examples/**"
+      - "benchmarks/discover-call/**"
       - ".prettierrc.json"
       - ".prettierignore"
       - "packages/*/eslint.config.mjs"
@@ -58,6 +59,7 @@ on:
       - "packages/mcp/examples/**"
       - "packages/mcp/tsconfig.examples.json"
       - "packages/cli/examples/**"
+      - "benchmarks/discover-call/**"
       - ".prettierrc.json"
       - ".prettierignore"
       - "packages/*/eslint.config.mjs"
@@ -67,6 +69,29 @@ permissions:
   contents: read
 
 jobs:
+  discover-call-benchmark:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: benchmarks/discover-call
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: benchmarks/discover-call/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate task set and scorer fixtures
+        run: npm run validate
+      - name: Benchmark harness tests
+        run: npm test
+
   cli-contract:
     strategy:
       fail-fast: false

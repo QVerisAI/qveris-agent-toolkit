@@ -14,8 +14,8 @@
 // Warnings (exit 0):
 //   - Files in zh-CN with no China-region variant in docs/cn/zh-CN. The region
 //     variant is intentionally a subset, so unclassified gaps are reported.
-//   - Products that are intentionally unavailable on the China-facing site are
-//     allowlisted and must remain absent there.
+//   - Pages that are global-only or cover intentionally unavailable products
+//     are allowlisted and must remain absent from the China-facing subset.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -29,6 +29,7 @@ const CN = 'docs/cn/zh-CN';
 const CN_INTENTIONAL_OMISSIONS = new Set([
   'claude-code-setup.md',
   'codex-setup.md',
+  'discover-call-benchmark.md',
 ]);
 
 function mdFiles(rel) {

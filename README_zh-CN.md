@@ -217,6 +217,10 @@ Agent 通过三个动作与 QVeris 交互：
 | **Usage audit** | `GET /auth/usage/history/v2` | 查询调用状态、收费结果和实际扣费 |
 | **Credits ledger** | `GET /auth/credits/ledger` | 查询最终 credits 余额变动 |
 
+可复现的 [Discover → Call 准确率评测](docs/zh-CN/discover-call-benchmark.md)
+按模型分别衡量选择是否来自 discover、参数构造和真实执行成功率。任务集、runner、原始记录格式与
+确定性评分器均公开在 [`benchmarks/discover-call`](benchmarks/discover-call/README.md)。
+
 ### 能力概览
 
 - 10,000+ 能力，15+ 类目
