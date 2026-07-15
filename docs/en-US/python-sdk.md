@@ -183,6 +183,11 @@ agent = Agent(
 
 ## API reference
 
+The [source-generated API reference](python-sdk-api.md) lists the current
+public client, agent, configuration, and response-model signatures. Sphinx
+regenerates it from the Python objects and docstrings, and CI checks it for
+drift.
+
 ### `QverisClient`
 
 | Method | REST endpoint | Purpose |

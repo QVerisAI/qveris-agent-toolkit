@@ -84,6 +84,9 @@ console.log(usage.total, ledger.total);
 
 ## API 参考
 
+[根据源码生成的符号参考](js-sdk-api.md)列出当前包公开导出的全部 class、method、option、响应类型和
+AI SDK 集成。该页面直接根据 TypeScript 源码重新生成，并由 CI 检查是否漂移。
+
 ### `Qveris`
 
 | 方法 | REST 端点 | 用途 |

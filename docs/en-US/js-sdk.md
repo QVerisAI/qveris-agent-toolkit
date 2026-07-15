@@ -84,6 +84,11 @@ There is no connection to close — the client is stateless over `fetch`.
 
 ## API reference
 
+The [source-generated symbol reference](js-sdk-api.md) lists every public
+class, method, option, response type, and AI SDK integration exported by the
+current package. It is regenerated from TypeScript source and checked for drift
+in CI.
+
 ### `Qveris`
 
 | Method | REST endpoint | Purpose |
