@@ -17,6 +17,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ### Fixed
 
+- Declared the public repository metadata required for npm to verify the package's signed provenance bundle.
 - Builds now use the locked local `esbuild` dependency instead of downloading a build tool through `npx`; CI verifies the package can build in npm offline mode. ([#210])
 - Corrected the local source installation path in the README. ([#210])
 - The package is now installable and testable standalone: the `openclaw` dev dependency used the `workspace:*` protocol (a leftover from the OpenClaw monorepo) which made `npm install` fail; it now targets the published package. The three vitest suites (63 tests) and `tsc --noEmit` are wired into `npm test` / `npm run typecheck` and run in CI. ([#152])
