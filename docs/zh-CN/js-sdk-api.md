@@ -906,11 +906,13 @@ Request body for the Execute Tool API.
 Maximum size of response data in bytes.
 If the tool generates data longer than this, it will be truncated
 and a download URL will be provided for the full content.
+Minimum: -1 (`-1` means no limit).
 
 ###### 默认值
 
+```ts
 20480 (20KB)
-Minimum: -1 (`-1` means no limit).
+```
 
 ##### parameters
 
@@ -1169,12 +1171,12 @@ Request body for the Search Tools API.
 > `optional` **limit?**: `number`
 
 Maximum number of results to return.
+Minimum: 1. Maximum: 100.
 
 ###### 默认值
 
 ```ts
 20
-Minimum: 1. Maximum: 100.
 ```
 
 ##### query
