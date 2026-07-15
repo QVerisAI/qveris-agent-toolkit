@@ -9,6 +9,15 @@ on:
       - "docs/en-US/**"
       - "docs/zh-CN/**"
       - "docs/cn/**"
+      - "packages/js-sdk/src/**"
+      - "packages/js-sdk/docs-api/**"
+      - "packages/js-sdk/typedoc.json"
+      - "packages/js-sdk/package.json"
+      - "packages/js-sdk/package-lock.json"
+      - "packages/python-sdk/qveris/**"
+      - "packages/python-sdk/docs-api/**"
+      - "packages/python-sdk/pyproject.toml"
+      - "packages/python-sdk/uv.lock"
       - "scripts/check-doc-locales.mjs"
       - ".github/workflows/docs-check.yml"
   push:
@@ -18,6 +27,15 @@ on:
       - "docs/en-US/**"
       - "docs/zh-CN/**"
       - "docs/cn/**"
+      - "packages/js-sdk/src/**"
+      - "packages/js-sdk/docs-api/**"
+      - "packages/js-sdk/typedoc.json"
+      - "packages/js-sdk/package.json"
+      - "packages/js-sdk/package-lock.json"
+      - "packages/python-sdk/qveris/**"
+      - "packages/python-sdk/docs-api/**"
+      - "packages/python-sdk/pyproject.toml"
+      - "packages/python-sdk/uv.lock"
       - "scripts/check-doc-locales.mjs"
       - ".github/workflows/docs-check.yml"
 
@@ -25,6 +43,31 @@ permissions:
   contents: read
 
 jobs:
+  api-reference:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: packages/js-sdk/package-lock.json
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: packages/python-sdk/uv.lock
+      - name: Generate TypeScript API reference
+        working-directory: packages/js-sdk
+        run: npm ci && npm run docs:generate
+      - name: Generate Python API reference
+        working-directory: packages/python-sdk
+        run: uv run --extra dev python docs-api/generate.py
+      - name: Check generated reference drift
+        run: git diff --exit-code -- docs/en-US/js-sdk-api.md docs/zh-CN/js-sdk-api.md docs/en-US/python-sdk-api.md docs/zh-CN/python-sdk-api.md
+
   locales:
     runs-on: ubuntu-latest
     steps:

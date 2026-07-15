@@ -229,8 +229,8 @@ jobs:
       - name: Lint python-sdk (ruff)
         working-directory: packages/python-sdk
         run: |
-          uv run --extra dev ruff check qveris tests examples
-          uv run --extra dev ruff format --check qveris tests examples
+          uv run --extra dev ruff check qveris tests examples docs-api
+          uv run --extra dev ruff format --check qveris tests examples docs-api
 
   coverage:
     runs-on: ubuntu-latest

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["docs-api/entry.ts"],
+  "tsconfig": "docs-api/tsconfig.json",
+  "plugin": ["typedoc-plugin-markdown"],
+  "out": "../../docs/en-US",
+  "readme": "docs-api/README.md",
+  "mergeReadme": true,
+  "router": "module",
+  "entryFileName": "js-sdk-api",
+  "cleanOutputDir": false,
+  "disableSources": true,
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "treatWarningsAsErrors": true
+}

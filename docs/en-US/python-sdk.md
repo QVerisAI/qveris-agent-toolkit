@@ -1,6 +1,6 @@
 # QVeris Python SDK
 
-Async Python SDK to discover, inspect, call, and audit 10,000+ real-world API capabilities from your own agents and applications.
+QVeris Python SDK v0.3.1 is the latest tested release. Use its async client to discover, inspect, call, and audit 10,000+ real-world API capabilities from your own agents and applications.
 
 The SDK gives you two levels of control:
 
@@ -182,6 +182,11 @@ agent = Agent(
 ```
 
 ## API reference
+
+The [source-generated API reference](python-sdk-api.md) lists the current
+public client, agent, configuration, and response-model signatures. Sphinx
+regenerates it from the Python objects and docstrings, and CI checks it for
+drift.
 
 ### `QverisClient`
 
