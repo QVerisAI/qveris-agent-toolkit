@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-07-15
+
+### Changed
+
+- Releases now use PyPI Trusted Publishing with short-lived GitHub OIDC credentials and attestations for both wheel and source distributions. Package APIs and runtime behavior are unchanged. ([#222])
+
 ## [0.3.1] - 2026-07-14
 
 ### Fixed
@@ -45,11 +51,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Generated OpenAPI contract models with drift CI. ([#48])
 - `Agent` runtime: LLM tool loop over the QVeris workflow with streaming events.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.3.1...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.3.2...HEAD
+[0.3.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.3.1...python-sdk-v0.3.2
 [0.3.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.3.0...python-sdk-v0.3.1
 [0.3.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.2.1...python-sdk-v0.3.0
 [0.2.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.2.0...python-sdk-v0.2.1
 [0.2.0]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/python-sdk-v0.2.0
+[#222]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/222
 [#204]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/204
 [#157]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/157
 [#142]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/142
