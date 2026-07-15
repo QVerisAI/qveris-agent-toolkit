@@ -72,7 +72,7 @@ class QverisConfig(BaseSettings):
     # Qveris Settings. The env source reads ONLY the ``QVERIS_``-prefixed names;
     # an explicit ``QverisConfig(api_key=...)`` still wins over the env var via
     # the custom init source below (see settings_customise_sources / #136).
-    api_key: Optional[str] = Field(default=None, validation_alias="QVERIS_API_KEY")
+    api_key: Optional[str] = Field(default=None, validation_alias="QVERIS_API_KEY", repr=False)
     base_url: str = Field(default="https://qveris.ai/api/v1", validation_alias="QVERIS_BASE_URL")
 
     # Transport settings. On a 429 (or 503) the client honors Retry-After and

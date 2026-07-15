@@ -31,6 +31,27 @@ client = QverisClient(QverisConfig(api_key="sk-...", base_url="https://qveris.ai
 
 Endpoint priority is `QverisConfig(base_url=...)` > `QVERIS_BASE_URL` > the built-in default. API keys never select the endpoint. Overrides must be HTTP(S) URLs without credentials, a query string, or a fragment.
 
+Applications that manage short-lived credentials can pass an async provider
+instead of `api_key`:
+
+```python
+import os
+from qveris import CredentialContext, QverisClient, QverisConfig
+
+class EnvironmentCredentialProvider:
+    async def get_credential(self, context: CredentialContext) -> str:
+        return os.environ["QVERIS_API_KEY"]
+
+client = QverisClient(
+    QverisConfig(api_key=None),
+    credential_provider=EnvironmentCredentialProvider(),
+)
+```
+
+The provider receives the resolved API `resource` and requested `scopes`
+(currently empty). Configure either `api_key` or `credential_provider`, never
+both. A provider does not select or change the API endpoint.
+
 ## Canonical Workflow
 
 ```python

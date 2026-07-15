@@ -128,6 +128,86 @@ test("API client maps discover, inspect, call, credits, usage, and ledger endpoi
   ]);
 });
 
+test("API client gets async credentials for the configured resource", async () => {
+  const contexts = [];
+  const credentialProvider = {
+    async getCredential(context) {
+      contexts.push(context);
+      return "short-lived-token";
+    },
+  };
+
+  await withMockFetch(
+    (_url, options) => {
+      assert.equal(options.headers.Authorization, "Bearer short-lived-token");
+      return jsonResponse({ ok: true });
+    },
+    () =>
+      discoverTools({
+        credentialProvider,
+        baseUrl: "https://custom.example/api/v1/",
+        query: "weather",
+      }),
+  );
+
+  assert.deepEqual(contexts, [{ resource: "https://custom.example/api/v1", scopes: [] }]);
+});
+
+test("API request timeout starts after the credential resolves", async () => {
+  const credentialProvider = {
+    async getCredential() {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      return "short-lived-token";
+    },
+  };
+
+  await withMockFetch(
+    (_url, options) => {
+      assert.equal(options.signal.aborted, false);
+      return jsonResponse({ ok: true });
+    },
+    () =>
+      discoverTools({
+        credentialProvider,
+        query: "weather",
+        timeoutMs: 1,
+      }),
+  );
+});
+
+test("API client rejects ambiguous or invalid provider credentials without exposing values", async () => {
+  await assert.rejects(
+    discoverTools({
+      apiKey: "sk-test",
+      credentialProvider: { getCredential: async () => "short-lived-token" },
+      query: "weather",
+    }),
+    /either apiKey or credentialProvider/,
+  );
+
+  const secret = "secret-token";
+  await assert.rejects(
+    discoverTools({
+      credentialProvider: { getCredential: async () => `${secret}\nforged-header` },
+      query: "weather",
+    }),
+    (err) => err instanceof CliError && /invalid credential/.test(err.message) && !err.message.includes(secret),
+  );
+
+  await assert.rejects(
+    discoverTools({
+      credentialProvider: {
+        async getCredential() {
+          throw new Error(`failed while handling ${secret}`);
+        },
+      },
+      query: "weather",
+    }),
+    (err) =>
+      err instanceof CliError && /failed to provide a credential/.test(err.message) && !err.message.includes(secret),
+  );
+});
+
 test("QVERIS_BASE_URL controls every API call and normalizes trailing slashes", async () => {
   const previous = process.env.QVERIS_BASE_URL;
   const paths = [];
