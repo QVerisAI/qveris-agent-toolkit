@@ -50,15 +50,16 @@ jobs:
       - name: Compile package and examples
         run: uv run python -m compileall qveris examples
 
-  publish:
+  build:
     needs: test
     # Event-scoped: a workflow_dispatch (even one targeting a tag ref) runs
-    # tests only; publishing requires an actual tag push.
+    # tests only; building release artifacts requires an actual tag push.
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
-      contents: write # For creating GitHub Releases
-      id-token: write # For PyPI trusted publishing
+      contents: read
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
     defaults:
       run:
         working-directory: packages/python-sdk
@@ -78,7 +79,8 @@ jobs:
           enable-cache: true
           cache-dependency-glob: packages/python-sdk/uv.lock
 
-      - name: Verify package version matches tag
+      - name: Verify release metadata
+        id: metadata
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#python-sdk-v}"
           PKG_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
@@ -86,23 +88,54 @@ jobs:
             echo "::error::Tag version ($TAG_VERSION) does not match pyproject.toml version ($PKG_VERSION)"
             exit 1
           fi
-          echo "VERSION=$PKG_VERSION" >> "$GITHUB_ENV"
-
-      - name: Verify CHANGELOG has an entry for this version
-        run: |
-          if ! grep -qE "^## \[$VERSION\]" CHANGELOG.md; then
-            echo "::error::CHANGELOG.md has no '## [$VERSION]' section — move the Unreleased notes into a release section before tagging"
+          if ! grep -qE "^## \[$PKG_VERSION\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## [$PKG_VERSION]' section — move the Unreleased notes into a release section before tagging"
             exit 1
           fi
+          echo "version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Build package
         run: uv build
+
+      - name: Upload release distributions
+        uses: actions/upload-artifact@v7
+        with:
+          name: python-sdk-distributions
+          path: packages/python-sdk/dist/
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/qveris
+    permissions:
+      contents: write # For creating GitHub Releases
+      id-token: write # For PyPI trusted publishing
+    defaults:
+      run:
+        working-directory: packages/python-sdk
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Download release distributions
+        uses: actions/download-artifact@v8
+        with:
+          name: python-sdk-distributions
+          path: packages/python-sdk/dist/
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: packages/python-sdk/dist
-          password: ${{ secrets.PYPI_API_TOKEN }}
+          attestations: true
 
       # Release body = Install section + Highlights from the annotated tag
       # message (git tag -a python-sdk-vX.Y.Z -m "- bullet"), if any, +
