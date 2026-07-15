@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+## [2026.7.15] - 2026-07-15
+
 ### Changed
 
 - Endpoint selection now uses `config.baseUrl`, then `QVERIS_BASE_URL`, then the built-in default. API keys and the deprecated `region` setting never reroute requests; unsafe endpoint overrides are rejected. ([#206])
@@ -29,7 +31,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 - First published build with compiled `dist/` output. ([#90])
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.6.4...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.7.15...HEAD
+[2026.7.15]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.6.4...qveris-plugin-v2026.7.15
 [2026.6.4]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/qveris-plugin-v2026.6.4
 [#206]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/206
 [#210]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/210

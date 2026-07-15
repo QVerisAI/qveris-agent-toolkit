@@ -1,6 +1,6 @@
 {
   "name": "@qverisai/qveris",
-  "version": "2026.6.4",
+  "version": "2026.7.15",
   "description": "OpenClaw QVeris plugin — capability discovery, tool inspection, and tool calling",
   "type": "module",
   "engines": {
