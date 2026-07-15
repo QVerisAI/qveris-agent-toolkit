@@ -51,6 +51,10 @@ dev = [
     "openai-agents>=0.1.0; python_version >= '3.10'",  # for the OpenAI Agents integration tests
     "opentelemetry-api>=1.20.0",  # for the observability tests
     "opentelemetry-sdk>=1.20.0",  # in-memory span exporter used by the tests
+    # API reference generation runs in the Python 3.11 docs CI job. The SDK
+    # itself remains installable on Python 3.8+.
+    "sphinx==8.1.3; python_version >= '3.10'",
+    "sphinx-markdown-builder==0.6.10; python_version >= '3.10'",
     # Pinned so regenerated models stay byte-stable with the checked-in
     # qveris/generated/openapi_models.py and the drift CI (issue #37 phase 2).
     "datamodel-code-generator==0.26.3",

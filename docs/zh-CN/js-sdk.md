@@ -2,7 +2,7 @@
 
 类型化的 TypeScript/JavaScript SDK，让你在自己的智能体和应用中发现、检查、调用并审计 10,000+ 真实已验证的 API 能力。
 
-`@qverisai/sdk` 是对 QVeris REST API（`discover`、`inspect`、`call`、`credits`、`usage`、`ledger`）的轻量类型化封装。它**零运行时依赖**——使用平台原生 `fetch`（Node.js 18+）——并与 [Python SDK](python-sdk.md) 和 [MCP 服务器](mcp-server.md) 保持一致的通信语义。
+`@qverisai/sdk` v0.4.0 是最新测试版本。它是对 QVeris REST API（`discover`、`inspect`、`call`、`credits`、`usage`、`ledger`）的轻量类型化封装，**零运行时依赖**——使用平台原生 `fetch`（Node.js 18+）——并与 [Python SDK](python-sdk.md) 和 [MCP 服务器](mcp-server.md) 保持一致的通信语义。
 
 ## 安装
 
@@ -83,6 +83,9 @@ console.log(usage.total, ledger.total);
 `Qveris.fromEnv(overrides?)` 从 `QVERIS_API_KEY` 构建客户端，并接受相同的非密钥选项。
 
 ## API 参考
+
+[根据源码生成的符号参考](js-sdk-api.md)列出当前包公开导出的全部 class、method、option、响应类型和
+AI SDK 集成。该页面直接根据 TypeScript 源码重新生成，并由 CI 检查是否漂移。
 
 ### `Qveris`
 

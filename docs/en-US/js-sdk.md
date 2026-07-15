@@ -2,7 +2,7 @@
 
 Typed TypeScript/JavaScript SDK to discover, inspect, call, and audit 10,000+ real-world API capabilities from your own agents and applications.
 
-`@qverisai/sdk` is a thin, typed wrapper over the QVeris REST API (`discover`, `inspect`, `call`, `credits`, `usage`, `ledger`). It has **zero runtime dependencies** — it uses the platform `fetch` (Node.js 18+) — and mirrors the wire semantics of the [Python SDK](python-sdk.md) and the [MCP server](mcp-server.md).
+`@qverisai/sdk` v0.4.0 is the latest tested release. It is a thin, typed wrapper over the QVeris REST API (`discover`, `inspect`, `call`, `credits`, `usage`, `ledger`). It has **zero runtime dependencies** — it uses the platform `fetch` (Node.js 18+) — and mirrors the wire semantics of the [Python SDK](python-sdk.md) and the [MCP server](mcp-server.md).
 
 ## Installation
 
@@ -83,6 +83,11 @@ There is no connection to close — the client is stateless over `fetch`.
 `Qveris.fromEnv(overrides?)` builds the client from `QVERIS_API_KEY` and accepts the same non-key options.
 
 ## API reference
+
+The [source-generated symbol reference](js-sdk-api.md) lists every public
+class, method, option, response type, and AI SDK integration exported by the
+current package. It is regenerated from TypeScript source and checked for drift
+in CI.
 
 ### `Qveris`
 
