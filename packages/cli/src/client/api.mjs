@@ -1,4 +1,4 @@
-import { resolveBaseUrl } from "../config/endpoint.mjs";
+import { getSiteUrl, resolveBaseUrl } from "../config/endpoint.mjs";
 import { CliError } from "../errors/handler.mjs";
 import {
   computeRetryDelayMs,
@@ -70,11 +70,14 @@ async function requestJson(
         } catch {
           /* not JSON */
         }
-        if (status === 401 || status === 403) throw new CliError("AUTH_INVALID_KEY", errorDetail);
+        if (status === 401 || status === 403) {
+          const err = new CliError("AUTH_INVALID_KEY", errorDetail);
+          err.hint = `Check your key at ${getSiteUrl(baseUrl)}/account`;
+          throw err;
+        }
         if (status === 402) {
-          const pricingHost = baseUrl.includes("qveris.cn") ? "https://qveris.cn" : "https://qveris.ai";
           const err = new CliError("CREDITS_INSUFFICIENT", errorDetail);
-          err.hint = `Purchase credits at ${pricingHost}/pricing`;
+          err.hint = `Purchase credits at ${getSiteUrl(baseUrl)}/pricing`;
           throw err;
         }
         if (status === 429) throw new CliError("RATE_LIMITED", errorDetail);

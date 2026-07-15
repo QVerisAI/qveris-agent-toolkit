@@ -6,7 +6,7 @@ import test from "node:test";
 
 import { normalizeLegacyArgs } from "../src/compat/aliases.mjs";
 import { resolveApiKey } from "../src/client/auth.mjs";
-import { normalizeBaseUrl, resolveBaseUrl } from "../src/config/endpoint.mjs";
+import { getSiteUrl, normalizeBaseUrl, resolveBaseUrl } from "../src/config/endpoint.mjs";
 import {
   buildLedgerQuery,
   buildLedgerSummary,
@@ -80,6 +80,14 @@ test("endpoint normalization rejects unsafe or invalid base URLs", () => {
   assert.throws(() => normalizeBaseUrl("https://unit.test/api/v1?target=other"), /query parameters/);
   assert.throws(() => normalizeBaseUrl("https://unit.test/api/v1?"), /query parameters/);
   assert.throws(() => normalizeBaseUrl("https://unit.test/api/v1#"), /fragments/);
+});
+
+test("account site resolution preserves public boundaries and custom endpoint origins", () => {
+  assert.equal(getSiteUrl("https://qveris.ai/api/v1"), "https://qveris.ai");
+  assert.equal(getSiteUrl("https://api.qveris.ai/api/v1"), "https://qveris.ai");
+  assert.equal(getSiteUrl("https://qveris.cn/api/v1"), "https://qveris.cn");
+  assert.equal(getSiteUrl("https://api.qveris.cn/api/v1"), "https://qveris.cn");
+  assert.equal(getSiteUrl("https://enterprise.example:8443/api/v1"), "https://enterprise.example:8443");
 });
 
 test("legacy command and flag aliases normalize without changing usage search-id", () => {

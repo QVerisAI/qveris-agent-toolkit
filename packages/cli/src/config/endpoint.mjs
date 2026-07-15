@@ -3,18 +3,22 @@ import { CliError } from "../errors/handler.mjs";
 
 /**
  * Get the account site associated with a resolved API URL.
- * Unknown endpoints fall back to the public account site.
+ * Public API subdomains map to their canonical sites. Custom endpoints keep
+ * their own origin so recovery links never cross into an unrelated service.
  * @param {string} baseUrl
  * @returns {string}
  */
 export function getSiteUrl(baseUrl) {
   try {
-    const { hostname } = new URL(baseUrl);
+    const url = new URL(baseUrl);
+    const { hostname } = url;
     if (hostname === "qveris.cn" || hostname.endsWith(".qveris.cn")) return "https://qveris.cn";
+    if (hostname === "qveris.ai" || hostname.endsWith(".qveris.ai")) return "https://qveris.ai";
+    return url.origin;
   } catch {
     // resolveBaseUrl validates URLs before this helper is called.
+    return new URL(DEFAULT_BASE_URL).origin;
   }
-  return "https://qveris.ai";
 }
 
 /**

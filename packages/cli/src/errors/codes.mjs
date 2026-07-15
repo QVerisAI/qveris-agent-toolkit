@@ -24,7 +24,7 @@ export const ERROR_CODES = {
   },
   AUTH_INVALID_KEY: {
     message: "Authentication failed",
-    hint: "Check your key at https://qveris.ai/account",
+    hint: "Check the API key for the configured endpoint",
     exit: EX_NOPERM,
   },
   NET_TIMEOUT: {
@@ -69,7 +69,7 @@ export const ERROR_CODES = {
   },
   CREDITS_INSUFFICIENT: {
     message: "Insufficient credits",
-    hint: "Purchase credits at https://qveris.ai/pricing, then confirm balance with 'qveris credits'",
+    hint: "Purchase credits for the configured endpoint, then confirm balance with 'qveris credits'",
     exit: EX_NOPERM,
   },
   SESSION_EXPIRED: {
