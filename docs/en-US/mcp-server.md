@@ -141,14 +141,43 @@ For environment-specific setup guides, see:
 
 ## Hosted MCP
 
-Hosted MCP is planned but not required for the current onboarding path. Until a hosted endpoint is published, use the stdio server shown above with `npx -y @qverisai/mcp`.
+QVeris provides a remote Streamable HTTP MCP service. It requires no local package or background process. If the endpoint is not yet available, continue using the local stdio package shown above while the hosted service rollout completes.
 
-When a hosted MCP endpoint becomes available, the onboarding flow will be:
+```text
+https://mcp.qveris.ai/mcp
+```
 
-1. Create or select a QVeris API key.
-2. Copy the hosted MCP URL from the QVeris dashboard or docs.
-3. Add the hosted URL to your MCP client using its remote MCP configuration flow.
-4. Run `qveris mcp validate --target <client>` or the client's built-in tool list view and confirm `discover`, `inspect`, and `call` are visible.
+Add the endpoint to a remote-MCP-compatible client and send your QVeris API key on every request:
+
+```json
+{
+  "mcpServers": {
+    "qveris": {
+      "type": "http",
+      "url": "https://mcp.qveris.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_QVERIS_API_KEY"
+      }
+    }
+  }
+}
+```
+
+Claude Code can add it from the command line:
+
+```bash
+claude mcp add --transport http qveris https://mcp.qveris.ai/mcp --scope user --header "Authorization: Bearer YOUR_QVERIS_API_KEY"
+```
+
+Setup flow:
+
+1. Create a key on [Dashboard / API Keys](/account?page=api-keys).
+2. Add the endpoint and Bearer header to your client. Store the key in a secret or environment variable when supported; never commit it.
+3. Reconnect the client and confirm `discover`, `inspect`, and `call` are visible.
+
+The server validates the key when a session starts and binds that session to the credential. A `401` means the key is missing or invalid; a `503` means validation is temporarily unavailable. Start a new MCP session after changing the key. See the [Hosted MCP page](/hosted-mcp) for a copy-ready setup.
+
+The local stdio package remains available for clients that do not support remote Streamable HTTP MCP.
 
 ---
 
