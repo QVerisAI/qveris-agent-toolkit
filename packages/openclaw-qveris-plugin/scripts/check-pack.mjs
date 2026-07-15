@@ -2,6 +2,13 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
 const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
+const expectedRepositoryUrl = "https://github.com/QVerisAI/qveris-agent-toolkit";
+if (packageJson.repository?.url !== expectedRepositoryUrl) {
+  fail("package.json repository.url must match the public provenance repository:", [
+    `expected: ${expectedRepositoryUrl}`,
+    `received: ${packageJson.repository?.url ?? packageJson.repository}`,
+  ]);
+}
 const extensions = packageJson.openclaw?.extensions;
 if (!Array.isArray(extensions) || !extensions.includes("./dist/index.js")) {
   fail("package.json openclaw.extensions must include the compiled runtime entry:", ['expected "./dist/index.js"']);
