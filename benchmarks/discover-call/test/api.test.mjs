@@ -55,3 +55,37 @@ test('retries rate limits and transient unavailability before scoring a failure'
   assert.deepEqual(await client.discover({ query: 'weather', limit: 5 }), { results: [] });
   assert.deepEqual(delays, [0, 0]);
 });
+
+test('retries transient network failures before succeeding', async () => {
+  let attempts = 0;
+  const delays = [];
+  const client = createApiClient({
+    apiKey: 'test-key',
+    fetchImpl: async () => {
+      attempts++;
+      if (attempts < 3) throw new TypeError('transient network failure');
+      return new Response(JSON.stringify({ results: [] }));
+    },
+    sleep: async (ms) => delays.push(ms),
+  });
+
+  assert.deepEqual(await client.discover({ query: 'weather', limit: 5 }), { results: [] });
+  assert.equal(attempts, 3);
+  assert.deepEqual(delays, [500, 1000]);
+});
+
+test('cancels unsuccessful response bodies before reporting API errors', async () => {
+  let cancelled = false;
+  const client = createApiClient({
+    apiKey: 'test-key',
+    fetchImpl: async () => ({
+      ok: false,
+      status: 400,
+      headers: new Headers(),
+      body: { async cancel() { cancelled = true; } },
+    }),
+  });
+
+  await assert.rejects(client.discover({ query: 'weather', limit: 5 }), /HTTP 400/);
+  assert.equal(cancelled, true);
+});

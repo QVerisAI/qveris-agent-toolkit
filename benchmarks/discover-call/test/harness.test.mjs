@@ -90,3 +90,33 @@ test('validates task constraints and trial bounds', async () => {
     /trials/,
   );
 });
+
+test('keeps selected_tool explicit when inspection returns no tools', async () => {
+  let parameterizeInput;
+  await runBenchmark({
+    tasks: [task],
+    model: 'model-a',
+    trials: 1,
+    api: {
+      async discover() {
+        return { results: [{ tool_id: 'weather.forecast' }] };
+      },
+      async inspect() {
+        return { results: [] };
+      },
+      async call() {
+        throw new Error('not reached');
+      },
+    },
+    async invokeAdapter(payload) {
+      if (payload.stage === 'parameterize') {
+        parameterizeInput = payload.input;
+        return { parameters: {} };
+      }
+      return { tool_id: 'weather.forecast' };
+    },
+  });
+
+  assert.equal(Object.hasOwn(parameterizeInput, 'selected_tool'), true);
+  assert.equal(parameterizeInput.selected_tool, null);
+});

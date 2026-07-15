@@ -44,3 +44,11 @@ test('process adapter cannot read the QVeris API key', async () => {
 test('runner requires an immutable adapter revision before API setup', async () => {
   await assert.rejects(main(['--model', 'model-a', '--adapter', process.execPath]), /adapter-revision/);
 });
+
+test('process adapter reports startup failures without an unhandled stdin error', async () => {
+  const invoke = createProcessAdapter({
+    command: `missing-adapter-${process.pid}`,
+    timeoutMs: 5_000,
+  });
+  await assert.rejects(invoke({ stage: 'select' }), /could not be started/);
+});

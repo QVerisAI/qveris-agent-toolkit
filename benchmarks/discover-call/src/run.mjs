@@ -65,6 +65,7 @@ export function createProcessAdapter({ command, args = [], timeoutMs = 120_000 }
         stdio: ['pipe', 'pipe', 'pipe'],
         env: adapterEnv,
       });
+      child.stdin.on('error', () => {});
       let stdout = '';
       let stderr = '';
       const timer = setTimeout(() => {

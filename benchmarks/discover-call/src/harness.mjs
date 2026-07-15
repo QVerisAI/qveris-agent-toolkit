@@ -150,7 +150,7 @@ function adapterPayload({ stage, model, task, discovery, selectedTool, discovery
   const input =
     stage === 'select'
       ? { task_id: task.id, prompt: task.prompt, discovery }
-      : { task_id: task.id, prompt: task.prompt, selected_tool: selectedTool, discovery_id: discoveryId };
+      : { task_id: task.id, prompt: task.prompt, selected_tool: selectedTool ?? null, discovery_id: discoveryId };
   const responseSchema =
     stage === 'select'
       ? {

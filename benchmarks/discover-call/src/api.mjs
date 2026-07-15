@@ -29,7 +29,9 @@ export function createApiClient({
           signal: controller.signal,
         });
       } catch {
-        throw apiError('Network request failed');
+        if (attempt >= maxRetries) throw apiError('Network request failed');
+        await sleep(retryDelayMs(null, attempt));
+        continue;
       } finally {
         clearTimeout(timeout);
       }
@@ -37,7 +39,10 @@ export function createApiClient({
       await Promise.resolve(response.body?.cancel?.()).catch(() => undefined);
       await sleep(retryDelayMs(response.headers.get('retry-after'), attempt));
     }
-    if (!response.ok) throw apiError(`HTTP ${response.status}`);
+    if (!response.ok) {
+      await Promise.resolve(response.body?.cancel?.()).catch(() => undefined);
+      throw apiError(`HTTP ${response.status}`);
+    }
     let payload;
     try {
       payload = await response.json();
