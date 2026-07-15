@@ -171,7 +171,10 @@ test("API client converts HTTP failures into CLI errors", async () => {
     async () => {
       await assert.rejects(
         discoverTools({ apiKey: "sk-test", baseUrl: "https://unit.test/api/v1", query: "x" }),
-        (err) => err instanceof CliError && err.code === "AUTH_INVALID_KEY",
+        (err) =>
+          err instanceof CliError &&
+          err.code === "AUTH_INVALID_KEY" &&
+          err.hint === "Check your key at https://unit.test/account",
       );
     },
   );
@@ -187,7 +190,10 @@ test("API client converts HTTP failures into CLI errors", async () => {
           discoveryId: "search-1",
           parameters: {},
         }),
-        (err) => err instanceof CliError && err.code === "CREDITS_INSUFFICIENT" && err.hint.includes("/pricing"),
+        (err) =>
+          err instanceof CliError &&
+          err.code === "CREDITS_INSUFFICIENT" &&
+          err.hint === "Purchase credits at https://unit.test/pricing",
       );
     },
   );

@@ -35,6 +35,15 @@ function codeToName(code) {
   return "connectivity";
 }
 
+function endpointRecoveryHint(code, baseUrl) {
+  const siteUrl = getSiteUrl(baseUrl);
+  if (code === "AUTH_INVALID_KEY") return `Check your key at ${siteUrl}/account`;
+  if (code === "CREDITS_INSUFFICIENT") {
+    return `Purchase credits at ${siteUrl}/pricing, then confirm balance with 'qveris credits'`;
+  }
+  return null;
+}
+
 async function defaultProbe({ apiKey, baseUrl }) {
   // "test" matches the probe query login/whoami use to validate a key.
   return discoverTools({ apiKey, baseUrl, query: "test", limit: 1, timeoutMs: 10000 });
@@ -94,7 +103,11 @@ export async function runPreflight({
     response = await probe({ apiKey: local.apiKey, baseUrl: local.baseUrl });
   } catch (err) {
     // A diagnostic must never crash: anything (even a non-Error) can be thrown.
-    const hint = err?.hint || (err?.code ? ERROR_CODES[err.code]?.hint : null) || null;
+    const hint =
+      endpointRecoveryHint(err?.code, local.baseUrl) ||
+      err?.hint ||
+      (err?.code ? ERROR_CODES[err.code]?.hint : null) ||
+      null;
     checks.push(check(codeToName(err?.code), "fail", err?.message || String(err), hint));
     return { checks, ok: false, contractVersion: CLI_CONTRACT_VERSION };
   }

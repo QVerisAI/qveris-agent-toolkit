@@ -94,21 +94,48 @@ test("runPreflight: invalid key becomes an actionable fail from the error knowle
   assert.equal(ok, false);
   const fail = checks.find((x) => x.status === "fail");
   assert.equal(fail.name, "api_key_valid");
-  assert.ok(fail.hint); // ERROR_CODES.AUTH_INVALID_KEY.hint
+  assert.equal(fail.hint, "Check your key at https://qveris.ai/account");
+});
+
+test("runPreflight: invalid-key recovery follows public and custom endpoints", async () => {
+  const probe = async () => {
+    throw new CliError("AUTH_INVALID_KEY", "Authentication failed");
+  };
+  for (const [baseUrlFlag, expectedHint] of [
+    ["https://qveris.cn/api/v1", "Check your key at https://qveris.cn/account"],
+    ["https://enterprise.example:8443/api/v1", "Check your key at https://enterprise.example:8443/account"],
+  ]) {
+    const { checks } = await runPreflight({ apiKeyFlag: "sk-bad", baseUrlFlag, probe });
+    assert.equal(byName(checks).api_key_valid.hint, expectedHint);
+  }
 });
 
 test("runPreflight: insufficient credits maps to a credits fail with pricing hint", async () => {
   const probe = async () => {
-    const err = new CliError("CREDITS_INSUFFICIENT", "Insufficient credits");
-    err.hint = "Purchase credits at https://qveris.ai/pricing";
-    throw err;
+    throw new CliError("CREDITS_INSUFFICIENT", "Insufficient credits");
   };
   const { checks, ok } = await runPreflight({ apiKeyFlag: "sk-test", probe });
 
   assert.equal(ok, false);
   const fail = checks.find((x) => x.status === "fail");
   assert.equal(fail.name, "credits");
-  assert.match(fail.hint, /pricing/);
+  assert.equal(fail.hint, "Purchase credits at https://qveris.ai/pricing, then confirm balance with 'qveris credits'");
+});
+
+test("runPreflight: insufficient-credit recovery follows public and custom endpoints", async () => {
+  const probe = async () => {
+    throw new CliError("CREDITS_INSUFFICIENT", "Insufficient credits");
+  };
+  for (const [baseUrlFlag, expectedSite] of [
+    ["https://qveris.cn/api/v1", "https://qveris.cn"],
+    ["https://enterprise.example:8443/api/v1", "https://enterprise.example:8443"],
+  ]) {
+    const { checks } = await runPreflight({ apiKeyFlag: "sk-test", baseUrlFlag, probe });
+    assert.equal(
+      byName(checks).credits.hint,
+      `Purchase credits at ${expectedSite}/pricing, then confirm balance with 'qveris credits'`,
+    );
+  }
 });
 
 test("runPreflight: timeout maps to a connectivity fail with a hint", async () => {
