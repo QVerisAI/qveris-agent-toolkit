@@ -19,7 +19,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - An embedding API for independently operated Streamable HTTP services: asynchronous per-session server factories can require a caller bearer, receive it only during session construction, and rely on fingerprint binding to reject later credential changes. Credential validation and client policy stay outside the toolkit. ([#201])
 - Fuller MCP spec surface ([#158]):
-  - **Output schemas + structured content** — every tool declares `outputSchema` (loose, additive-friendly) and returns `structuredContent` alongside the JSON text, so clients consume typed results instead of re-parsing strings.
+  - **Output schemas + structured content** — all five canonical tools declare `outputSchema` (loose, additive-friendly) and return `structuredContent` alongside the JSON text, so clients consume typed results instead of re-parsing strings.
   - **Elicitation billing consent** — with `QVERIS_MCP_CONFIRM_CALLS=true` and an elicitation-capable client, a charged `call` asks the user to confirm first; declining cancels the call before any credits are spent. Off by default (headless agents unaffected); clients without elicitation proceed as before.
   - **Resources** — `qveris://server-card` (SEP-2127 card, also without a remote in stdio mode) and the `qveris://capability/{tool_id}` template serving full capability metadata, so users can browse/attach capability docs without a tool call.
 

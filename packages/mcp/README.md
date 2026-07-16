@@ -227,7 +227,7 @@ For backward compatibility, the old tool names are still supported but emit a de
 
 ## Beyond tools: schemas, consent, resources
 
-- Every tool declares an `outputSchema` and returns `structuredContent` alongside the JSON text (MCP 2025-06-18), so clients get typed results.
+- All five canonical tools declare an `outputSchema` and return `structuredContent` alongside the JSON text (MCP 2025-06-18), so clients get typed results. Deprecated aliases remain available only for backward compatibility.
 - With `QVERIS_MCP_CONFIRM_CALLS=true`, a charged `call` first asks the user to confirm via MCP **elicitation** (billing consent); declining cancels the call before any credits are spent. Off by default.
 - **Resources**: read `qveris://server-card` for the server's identity card, or `qveris://capability/{tool_id}` for a capability's full metadata (parameters, examples, stats, billing) without spending a tool call.
 
