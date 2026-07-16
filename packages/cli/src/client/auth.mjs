@@ -23,3 +23,41 @@ export function isPlaceholderApiKey(value) {
   const trimmed = value.trim();
   return PLACEHOLDER_PATTERNS.some((pattern) => pattern.test(trimmed));
 }
+
+export function createApiKeyCredentialProvider(apiKey) {
+  const value = typeof apiKey === "string" ? apiKey.trim() : "";
+  if (!value || /[\r\n]/.test(value)) {
+    throw new CliError("AUTH_MISSING_KEY");
+  }
+  return {
+    async getCredential() {
+      return value;
+    },
+  };
+}
+
+export function resolveCredentialProvider({ apiKey, credentialProvider } = {}) {
+  if (apiKey !== undefined && credentialProvider !== undefined) {
+    throw new CliError("API_ERROR", "Configure either apiKey or credentialProvider, not both");
+  }
+  if (credentialProvider !== undefined) {
+    if (typeof credentialProvider?.getCredential !== "function") {
+      throw new CliError("API_ERROR", "credentialProvider must implement getCredential()");
+    }
+    return credentialProvider;
+  }
+  return createApiKeyCredentialProvider(apiKey);
+}
+
+export async function getCredential(provider, context) {
+  let credential;
+  try {
+    credential = await provider.getCredential(context);
+  } catch {
+    throw new CliError("API_ERROR", "Credential provider failed to provide a credential");
+  }
+  if (typeof credential !== "string" || !credential.trim() || /[\r\n]/.test(credential)) {
+    throw new CliError("API_ERROR", "Credential provider returned an invalid credential");
+  }
+  return credential.trim();
+}

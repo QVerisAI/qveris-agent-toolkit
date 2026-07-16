@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Qveris } from './client.js';
+import type { QverisClientOptions } from './client.js';
+import { ApiKeyCredentialProvider } from './credentials.js';
 import { QverisApiError } from './errors.js';
 import type { ToolCategory, ToolCapability } from './types.js';
 
@@ -68,6 +70,90 @@ describe('Qveris client', () => {
 
   it('requires an API key', () => {
     expect(() => new Qveris({ apiKey: '' })).toThrow(/API key is required/);
+  });
+
+  it('does not serialize the static API key provider credential', () => {
+    const provider = new ApiKeyCredentialProvider(API_KEY);
+    expect(JSON.stringify(provider)).not.toContain(API_KEY);
+  });
+
+  it('rejects ambiguous API key and credential provider configuration', () => {
+    const ambiguous = {
+      apiKey: API_KEY,
+      credentialProvider: { getCredential: async () => 'provider-token' },
+    } as unknown as QverisClientOptions;
+    expect(() => new Qveris(ambiguous)).toThrow(/either apiKey or credentialProvider/);
+  });
+
+  it('rejects a null credential provider with a configuration error', () => {
+    const invalid = { credentialProvider: null } as unknown as QverisClientOptions;
+    expect(() => new Qveris(invalid)).toThrow(/credentialProvider must implement getCredential/);
+  });
+
+  it('gets an async credential for the configured API resource', async () => {
+    const fetchMock = mockFetch(SAMPLE_DISCOVER_RESPONSE);
+    globalThis.fetch = fetchMock;
+    const getCredential = vi.fn().mockResolvedValue('short-lived-token');
+
+    await new Qveris({
+      baseUrl: 'https://custom.example/api/v1/',
+      credentialProvider: { getCredential },
+    }).discover('weather');
+
+    expect(getCredential).toHaveBeenCalledWith({
+      resource: 'https://custom.example/api/v1',
+      scopes: [],
+    });
+    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer short-lived-token');
+  });
+
+  it('rejects an invalid provider credential without exposing it', async () => {
+    const fetchMock = vi.fn();
+    globalThis.fetch = fetchMock;
+    const client = new Qveris({
+      credentialProvider: { getCredential: async () => 'secret-token\nforged-header' },
+    });
+
+    await expect(client.discover('weather')).rejects.toThrow('invalid credential');
+    await expect(client.discover('weather')).rejects.not.toThrow('secret-token');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('normalizes provider failures without exposing their error text', async () => {
+    const client = new Qveris({
+      credentialProvider: {
+        getCredential: async () => {
+          throw new Error('failed while handling secret-token');
+        },
+      },
+    });
+
+    const error = await client.discover('weather').catch((cause: unknown) => cause);
+    expect(error).toBeInstanceOf(Error);
+    expect(error).not.toBeInstanceOf(QverisApiError);
+    expect((error as Error).message).toContain('failed to provide a credential');
+    expect((error as Error).message).not.toContain('secret-token');
+  });
+
+  it('starts the request timeout only after the credential resolves', async () => {
+    globalThis.fetch = mockFetch(SAMPLE_DISCOVER_RESPONSE);
+    let releaseCredential!: (credential: string) => void;
+    const credential = new Promise<string>((resolve) => {
+      releaseCredential = resolve;
+    });
+    const timeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+    const client = new Qveris({
+      credentialProvider: { getCredential: () => credential },
+      timeoutMs: 1,
+    });
+
+    const request = client.discover('weather');
+    await Promise.resolve();
+    expect(timeoutSpy).not.toHaveBeenCalled();
+
+    releaseCredential('short-lived-token');
+    await request;
+    expect(timeoutSpy).toHaveBeenCalledTimes(1);
   });
 
   it('does not infer the endpoint from the API key or QVERIS_REGION', async () => {
@@ -407,6 +493,23 @@ describe('Qveris client', () => {
       expect(result.search_id).toBe('search-123');
       expect(fetchMock).toHaveBeenCalledTimes(2);
       expect(client.rateLimitRetryCount).toBe(1);
+    });
+
+    it('resolves a fresh credential for each retry attempt', async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(rateLimited('1'))
+        .mockResolvedValueOnce(jsonResponse(SAMPLE_DISCOVER_RESPONSE));
+      globalThis.fetch = fetchMock;
+      const getCredential = vi.fn().mockResolvedValueOnce('token-1').mockResolvedValueOnce('token-2');
+      const client = new Qveris({ credentialProvider: { getCredential } });
+      vi.spyOn(client as unknown as { sleep: () => Promise<void> }, 'sleep').mockResolvedValue(undefined);
+
+      await client.discover('weather');
+
+      expect(getCredential).toHaveBeenCalledTimes(2);
+      expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer token-1');
+      expect(fetchMock.mock.calls[1][1].headers.Authorization).toBe('Bearer token-2');
     });
 
     it('gives up after maxRetries and throws the final 429', async () => {

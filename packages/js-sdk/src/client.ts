@@ -12,6 +12,8 @@
  */
 
 import { QverisApiError } from './errors.js';
+import { ApiKeyCredentialProvider, resolveCredential } from './credentials.js';
+import type { CredentialProvider } from './credentials.js';
 import {
   computeRetryDelayMs,
   DEFAULT_BASE_DELAY_MS,
@@ -34,6 +36,21 @@ import type {
   UsageEventsResponse,
   UsageHistoryRequest,
 } from './types.js';
+
+/** Configuration accepted by the QVeris REST client. */
+export type QverisClientOptions = Omit<QverisClientConfig, 'apiKey'> &
+  (
+    | {
+        /** API authentication token. Mutually exclusive with credentialProvider. */
+        apiKey: string;
+        credentialProvider?: never;
+      }
+    | {
+        apiKey?: never;
+        /** Async-capable credential source. Mutually exclusive with apiKey. */
+        credentialProvider: CredentialProvider;
+      }
+  );
 
 const DEFAULT_BASE_URL = 'https://qveris.ai/api/v1';
 
@@ -132,17 +149,26 @@ export interface CallOptions {
  * ```
  */
 export class Qveris {
-  private readonly apiKey: string;
+  private readonly credentialProvider: CredentialProvider;
   private readonly baseUrl: string;
   private readonly defaultTimeoutMs: number;
   private readonly maxRetries: number;
   private rateLimitRetries = 0;
 
-  constructor(config: QverisClientConfig) {
-    if (!config.apiKey) {
+  constructor(config: QverisClientOptions) {
+    if (config.apiKey !== undefined && config.credentialProvider !== undefined) {
+      throw new Error('Configure either apiKey or credentialProvider, not both.');
+    }
+    if (config.credentialProvider !== undefined) {
+      if (typeof config.credentialProvider?.getCredential !== 'function') {
+        throw new Error('QVeris credentialProvider must implement getCredential().');
+      }
+      this.credentialProvider = config.credentialProvider;
+    } else if (typeof config.apiKey === 'string' && config.apiKey.trim()) {
+      this.credentialProvider = new ApiKeyCredentialProvider(config.apiKey);
+    } else {
       throw new Error('QVeris API key is required.\n' + 'Create one at https://qveris.ai/account?page=api-keys');
     }
-    this.apiKey = config.apiKey;
     this.baseUrl = resolveBaseUrl(config.baseUrl);
     this.defaultTimeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.maxRetries = resolveMaxRetries(config.maxRetries);
@@ -167,7 +193,7 @@ export class Qveris {
    * Create a client from the QVERIS_API_KEY environment variable.
    * An explicit baseUrl override takes priority over QVERIS_BASE_URL.
    */
-  static fromEnv(overrides?: Omit<QverisClientConfig, 'apiKey'>): Qveris {
+  static fromEnv(overrides?: Omit<QverisClientOptions, 'apiKey' | 'credentialProvider'>): Qveris {
     const apiKey = process.env.QVERIS_API_KEY;
     if (!apiKey) {
       throw new Error(
@@ -301,6 +327,13 @@ export class Qveris {
     // otherwise exponential backoff with jitter, bounded by maxRetries. Each
     // attempt is a fresh fetch with its own timeout.
     for (let attempt = 0; ; attempt++) {
+      // Credential acquisition is not part of the API request timeout. Resolve
+      // it for every attempt so a retry can refresh a short-lived token, and
+      // let provider failures retain their authentication-specific error.
+      const credential = await resolveCredential(this.credentialProvider, {
+        resource: this.baseUrl,
+        scopes: [],
+      });
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), resolvedTimeoutMs);
       // eslint-disable-next-line no-useless-assignment -- TS definite-assignment needs the init across try/finally
@@ -309,7 +342,7 @@ export class Qveris {
         const response = await fetch(url.toString(), {
           method,
           headers: {
-            Authorization: `Bearer ${this.apiKey}`,
+            Authorization: `Bearer ${credential}`,
             'Content-Type': 'application/json',
           },
           body: body ? JSON.stringify(body) : undefined,

@@ -6,7 +6,9 @@ import pytest
 
 from qveris.client import CALL_TOOL_DEF, DISCOVER_TOOL_DEF, INSPECT_TOOL_DEF
 from qveris.client.api import QverisClient
+from qveris.client.retry import RetryPolicy
 from qveris.config import QverisConfig
+from qveris.credentials import ApiKeyCredentialProvider, CredentialContext
 
 
 def make_client(handler: Callable[[httpx.Request], httpx.Response]) -> QverisClient:
@@ -20,6 +22,147 @@ def make_client(handler: Callable[[httpx.Request], httpx.Response]) -> QverisCli
     return client
 
 
+@pytest.mark.asyncio
+async def test_api_key_provider_preserves_authorization_without_repr_leak() -> None:
+    requests = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, json={"search_id": "search-1", "results": []})
+
+    client = make_client(handler)
+    try:
+        await client.discover("weather")
+    finally:
+        await client.close()
+
+    assert requests[0].headers["Authorization"] == "Bearer sk-test"
+    assert "sk-test" not in repr(ApiKeyCredentialProvider("sk-test"))
+
+
+class RecordingCredentialProvider:
+    def __init__(self, credential: str = "short-lived-token") -> None:
+        self.credential = credential
+        self.contexts = []
+
+    async def get_credential(self, context: CredentialContext) -> str:
+        self.contexts.append(context)
+        return self.credential
+
+
+@pytest.mark.asyncio
+async def test_async_credential_provider_receives_api_resource() -> None:
+    requests = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, json={"search_id": "search-1", "results": []})
+
+    provider = RecordingCredentialProvider()
+    client = QverisClient(
+        QverisConfig(api_key=None, base_url="https://custom.example/api/v1"),
+        credential_provider=provider,
+    )
+    client.client = httpx.AsyncClient(
+        base_url=client.base_url,
+        headers=client.headers,
+        transport=httpx.MockTransport(handler),
+        timeout=60.0,
+    )
+    try:
+        await client.discover("weather")
+    finally:
+        await client.close()
+
+    assert provider.contexts == [CredentialContext(resource="https://custom.example/api/v1", scopes=())]
+    assert requests[0].headers["Authorization"] == "Bearer short-lived-token"
+
+
+def test_rejects_api_key_and_credential_provider_together() -> None:
+    with pytest.raises(ValueError, match="either api_key or credential_provider"):
+        QverisClient(QverisConfig(api_key="sk-test"), credential_provider=RecordingCredentialProvider())
+
+
+def test_requires_api_key_or_credential_provider(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("QVERIS_API_KEY", raising=False)
+    with pytest.raises(ValueError, match="API key or credential_provider is required"):
+        QverisClient(QverisConfig(api_key=None))
+
+
+def test_rejects_credential_provider_without_get_credential() -> None:
+    with pytest.raises(TypeError, match="credential_provider must implement get_credential"):
+        QverisClient(QverisConfig(api_key=None), credential_provider=object())
+
+
+@pytest.mark.asyncio
+async def test_resolves_a_fresh_credential_for_each_retry_attempt() -> None:
+    authorizations = []
+
+    class RotatingCredentialProvider:
+        def __init__(self) -> None:
+            self.contexts = []
+
+        async def get_credential(self, context: CredentialContext) -> str:
+            self.contexts.append(context)
+            return f"token-{len(self.contexts)}"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        authorizations.append(request.headers["Authorization"])
+        if len(authorizations) == 1:
+            return httpx.Response(429, json={"error": "rate limited"})
+        return httpx.Response(200, json={"search_id": "search-1", "results": []})
+
+    async def no_sleep(_delay: float) -> None:
+        return None
+
+    provider = RotatingCredentialProvider()
+    client = QverisClient(QverisConfig(api_key=None), credential_provider=provider)
+    client._retry = RetryPolicy(sleep=no_sleep, rng=lambda: 0.0)
+    client.client = httpx.AsyncClient(
+        base_url=client.base_url,
+        headers=client.headers,
+        transport=httpx.MockTransport(handler),
+        timeout=60.0,
+    )
+    try:
+        await client.discover("weather")
+    finally:
+        await client.close()
+
+    expected_context = CredentialContext(resource="https://qveris.ai/api/v1", scopes=())
+    assert provider.contexts == [expected_context, expected_context]
+    assert authorizations == ["Bearer token-1", "Bearer token-2"]
+
+
+@pytest.mark.asyncio
+async def test_invalid_provider_credential_is_not_exposed() -> None:
+    provider = RecordingCredentialProvider("secret-token\nforged-header")
+    client = QverisClient(QverisConfig(api_key=None), credential_provider=provider)
+    try:
+        with pytest.raises(ValueError, match="invalid credential") as exc_info:
+            await client.discover("weather")
+    finally:
+        await client.close()
+
+    assert "secret-token" not in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+async def test_provider_failure_text_is_not_exposed() -> None:
+    class FailingCredentialProvider:
+        async def get_credential(self, context: CredentialContext) -> str:
+            raise RuntimeError("failed while handling secret-token")
+
+    client = QverisClient(QverisConfig(api_key=None), credential_provider=FailingCredentialProvider())
+    try:
+        with pytest.raises(RuntimeError, match="failed to provide a credential") as exc_info:
+            await client.discover("weather")
+    finally:
+        await client.close()
+
+    assert "secret-token" not in str(exc_info.value)
+
+
 def test_qveris_config_constructor_values_override_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("QVERIS_API_KEY", "sk-env")
     monkeypatch.setenv("QVERIS_BASE_URL", "https://env.example/api/v1")
@@ -28,6 +171,7 @@ def test_qveris_config_constructor_values_override_env(monkeypatch: pytest.Monke
 
     assert config.api_key == "sk-test"
     assert config.base_url == "https://qveris.ai/api/v1"
+    assert "sk-test" not in repr(config)
 
 
 def test_qveris_config_reads_env_when_no_init_value(monkeypatch: pytest.MonkeyPatch) -> None:
