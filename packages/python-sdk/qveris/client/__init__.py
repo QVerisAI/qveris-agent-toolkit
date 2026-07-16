@@ -1,4 +1,5 @@
 from .api import QverisClient
+from ..credentials import ApiKeyCredentialProvider, CredentialContext, CredentialProvider
 from .tools import (
     CALL_TOOL_DEF,
     DEFAULT_SYSTEM_PROMPT,
@@ -11,6 +12,9 @@ from .tools import (
 
 __all__ = [
     "QverisClient",
+    "CredentialContext",
+    "CredentialProvider",
+    "ApiKeyCredentialProvider",
     "DEFAULT_SYSTEM_PROMPT",
     "DISCOVER_TOOL_DEF",
     "INSPECT_TOOL_DEF",

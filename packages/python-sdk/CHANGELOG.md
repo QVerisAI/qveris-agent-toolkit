@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Added an async `CredentialProvider` protocol and `ApiKeyCredentialProvider`. Existing `QverisConfig.api_key` behavior remains compatible, while applications can supply short-lived bearer credentials without changing endpoint selection. ([#226])
+
 ## [0.3.2] - 2026-07-15
 
 ### Changed
@@ -59,6 +63,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [0.2.0]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/python-sdk-v0.2.0
 [#222]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/222
 [#204]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/204
+[#226]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/226
 [#157]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/157
 [#142]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/142
 [#141]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/141

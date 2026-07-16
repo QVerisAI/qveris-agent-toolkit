@@ -30,6 +30,7 @@ from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Union
 import httpx
 
 from ..config import QverisConfig
+from ..credentials import ApiKeyCredentialProvider, CredentialContext, CredentialProvider, resolve_credential
 from ..observability import (
     ATTR_CREDITS,
     ATTR_ELAPSED_MS,
@@ -59,14 +60,28 @@ def _pre_settlement_credits(response: ToolExecutionResponse) -> Optional[float]:
 class QverisClient:
     """Async client for Qveris API."""
 
-    def __init__(self, config: Optional[QverisConfig] = None, debug_callback: Optional[Callable[[str], None]] = None):
+    def __init__(
+        self,
+        config: Optional[QverisConfig] = None,
+        debug_callback: Optional[Callable[[str], None]] = None,
+        *,
+        credential_provider: Optional[CredentialProvider] = None,
+    ):
         self.config = config or QverisConfig()
         self.debug_callback = debug_callback
+        if credential_provider is not None and self.config.api_key:
+            raise ValueError("Configure either api_key or credential_provider, not both")
+        if credential_provider is not None:
+            if not callable(getattr(credential_provider, "get_credential", None)):
+                raise TypeError("credential_provider must implement get_credential")
+            self.credential_provider = credential_provider
+        elif self.config.api_key:
+            self.credential_provider = ApiKeyCredentialProvider(self.config.api_key)
+        else:
+            raise ValueError("QVeris API key or credential_provider is required")
         self.headers = {
             "Content-Type": "application/json",
         }
-        if self.config.api_key:
-            self.headers["Authorization"] = f"Bearer {self.config.api_key}"
 
         # httpx automatically respects HTTP_PROXY/HTTPS_PROXY env vars (kept by
         # using the default transport). Retries are layered on top at the client
@@ -82,7 +97,18 @@ class QverisClient:
 
     async def _send(self, method: str, endpoint: str, **kwargs: Any) -> httpx.Response:
         """Send a request through the retry policy (429/503 backoff)."""
-        return await self._retry.send(self.client, method, endpoint, **kwargs)
+        request_headers = dict(kwargs.pop("headers", {}))
+
+        async def prepare_attempt() -> Dict[str, Any]:
+            credential = await resolve_credential(
+                self.credential_provider,
+                CredentialContext(resource=self.config.base_url, scopes=()),
+            )
+            headers = dict(request_headers)
+            headers["Authorization"] = f"Bearer {credential}"
+            return {"headers": headers}
+
+        return await self._retry.send(self.client, method, endpoint, prepare_attempt=prepare_attempt, **kwargs)
 
     @property
     def rate_limit_retries(self) -> int:
@@ -116,7 +142,9 @@ class QverisClient:
 
     def _debug_headers(self) -> None:
         """Log request headers with authorization redacted."""
-        headers = {k: v if k != "Authorization" else "Bearer ***" for k, v in self.headers.items()}
+        headers = dict(self.headers)
+        if self.credential_provider is not None:
+            headers["Authorization"] = "Bearer ***"
         self._debug(f"[Qveris API] Headers: {json.dumps(headers, indent=2)}")
 
     def _query_params(self, **kwargs: Any) -> Dict[str, Any]:

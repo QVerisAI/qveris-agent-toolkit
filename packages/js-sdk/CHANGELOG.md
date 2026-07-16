@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Added an async-capable `CredentialProvider` contract and `ApiKeyCredentialProvider`. Existing `apiKey` configuration remains the default-compatible path, while applications can supply short-lived bearer credentials without changing endpoint selection. ([#226])
+
 ## [0.4.0] - 2026-07-14
 
 ### Changed
@@ -38,6 +42,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [0.3.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.2.0...js-sdk-v0.3.0
 [0.2.0]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/js-sdk-v0.2.0
 [#204]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/204
+[#226]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/226
 [#211]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/211
 [#161]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/161
 [#143]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/143

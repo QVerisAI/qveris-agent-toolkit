@@ -8,6 +8,52 @@
 
 ## 类
 
+### ApiKeyCredentialProvider
+
+A credential provider backed by a static QVeris API key.
+
+#### 实现
+
+- [`CredentialProvider`](#credentialprovider)
+
+#### 构造函数
+
+##### 构造函数
+
+> **new ApiKeyCredentialProvider**(`apiKey`): [`ApiKeyCredentialProvider`](#apikeycredentialprovider)
+
+###### 参数
+
+###### apiKey
+
+`string`
+
+###### 返回
+
+[`ApiKeyCredentialProvider`](#apikeycredentialprovider)
+
+#### 方法
+
+##### getCredential()
+
+> **getCredential**(`_context`): `Promise`\<`string`\>
+
+###### 参数
+
+###### \_context
+
+[`CredentialContext`](#credentialcontext)
+
+###### 返回
+
+`Promise`\<`string`\>
+
+###### 实现了
+
+[`CredentialProvider`](#credentialprovider).[`getCredential`](#getcredential-1)
+
+***
+
 ### Qveris
 
 QVeris API client.
@@ -38,7 +84,7 @@ const outcome = await qveris.call(tool.tool_id, {
 
 ###### config
 
-[`QverisClientConfig`](#qverisclientconfig)
+[`QverisClientOptions`](#qverisclientoptions)
 
 ###### 返回
 
@@ -177,7 +223,7 @@ An explicit baseUrl override takes priority over QVERIS_BASE_URL.
 
 ###### overrides?
 
-`Omit`\<[`QverisClientConfig`](#qverisclientconfig), `"apiKey"`\>
+`Omit`\<[`QverisClientOptions`](#qverisclientoptions), `"apiKey"` \| `"credentialProvider"`\>
 
 ###### 返回
 
@@ -704,6 +750,48 @@ Per-request timeout override in milliseconds (default 120s)
 ##### summary?
 
 > `optional` **summary?**: `string` \| `null`
+
+***
+
+### CredentialContext
+
+Context supplied whenever the client requests a credential.
+
+#### 属性
+
+##### resource
+
+> **resource**: `string`
+
+API resource the credential will be sent to.
+
+##### scopes
+
+> **scopes**: readonly `string`[]
+
+Requested authorization scopes. Empty until a public scope contract is available.
+
+***
+
+### CredentialProvider
+
+Supplies a bearer credential for an API request.
+
+#### 方法
+
+##### getCredential()
+
+> **getCredential**(`context`): `string` \| `Promise`\<`string`\>
+
+###### 参数
+
+###### context
+
+[`CredentialContext`](#credentialcontext)
+
+###### 返回
+
+`string` \| `Promise`\<`string`\>
 
 ***
 
@@ -1770,6 +1858,14 @@ Error response from the Qveris API.
 > **ExecuteResult** = [`ExecuteResultData`](#executeresultdata) \| [`ExecuteResultTruncated`](#executeresulttruncated)
 
 Union type for execution results (either full data or truncated).
+
+***
+
+### QverisClientOptions
+
+> **QverisClientOptions** = `Omit`\<[`QverisClientConfig`](#qverisclientconfig), `"apiKey"`\> & \{ `apiKey`: `string`; `credentialProvider?`: `never`; \} \| \{ `apiKey?`: `never`; `credentialProvider`: [`CredentialProvider`](#credentialprovider); \}
+
+Configuration accepted by the QVeris REST client.
 
 ## 函数
 
