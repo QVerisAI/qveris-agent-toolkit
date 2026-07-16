@@ -3,6 +3,10 @@
 QVeris 评测完整的 Agent 工作流，而不是只使用无法验证的形容词，或只对搜索相关性打分。公开评测工具位于
 [`benchmarks/discover-call`](../../benchmarks/discover-call/README.md)。
 
+本评测的范围限定在契约层：对公开 discover → inspect → call 工作流做确定性打分，每次发版可复跑，
+任何持有 API Key 的人都能复现。长周期专业任务、judged 打分的领域级评测是另一套仪器，刻意不纳入
+本工具的范围。
+
 ## 方法
 
 每个任务和模型 trial 都按同一流程执行：调用 `discover`，让模型从实际返回结果中选择能力，调用

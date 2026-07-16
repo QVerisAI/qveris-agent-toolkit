@@ -4,6 +4,12 @@ QVeris evaluates the complete agent workflow instead of publishing an
 unverifiable adjective or scoring only search relevance. The public harness is
 in [`benchmarks/discover-call`](../../benchmarks/discover-call/README.md).
 
+This benchmark is scoped to the contract level: deterministic, per-release
+scoring of the public discover → inspect → call workflow, reproducible by
+anyone with an API key. Domain-level evaluation of long-horizon professional
+tasks with judged scoring is a separate instrument and is intentionally not
+part of this harness.
+
 ## Methodology
 
 For every task and model trial, the harness runs `discover`, asks the model to

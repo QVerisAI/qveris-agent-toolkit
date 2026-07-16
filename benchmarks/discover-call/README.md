@@ -4,6 +4,19 @@ This directory contains the reproducible evaluation harness tracked by issue
 #163. It measures whether an agent can use the public QVeris workflow correctly,
 without assuming that one catalog tool ID is the only valid answer.
 
+## Scope boundary
+
+This harness deliberately stays at the contract level: deterministic scoring of
+the public discover → inspect → call workflow, cheap enough to re-run per
+release and reproducible by anyone with an API key. It is the public instrument
+for published routing-layer numbers.
+
+Domain-level evaluation — long-horizon professional tasks, judged scoring,
+with/without-QVeris product comparisons — is a different instrument and is out
+of scope here. Do not grow this directory in that direction; new tasks belong
+in a versioned task-set revision (`tasks/v2.jsonl`, …) only if they still score
+deterministically at the contract level.
+
 ## What is measured
 
 Each task runs the same sequence:
