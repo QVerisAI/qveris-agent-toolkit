@@ -119,8 +119,10 @@ const VARIABLE_NAME = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
  *
  * The card is a public, unauthenticated discovery document: a secret may only
  * be *described* (name + required/secret flags), never carried. Secret header
- * values must be templates referencing a `{variable}`, and secret variables
- * must not embed a literal `value` or `default`.
+ * values must be templates referencing a `{variable}` — with nothing beyond a
+ * short alphabetic scheme prefix (e.g. `Bearer `) around the placeholders, so
+ * a literal credential can't ride alongside one — and secret variables must
+ * not embed a literal `value` or `default`.
  */
 function assertHeadersCarryNoSecrets(headers: ServerCardKeyValueInput[]): void {
   for (const header of headers) {
@@ -128,15 +130,29 @@ function assertHeadersCarryNoSecrets(headers: ServerCardKeyValueInput[]): void {
       if (header.default !== undefined) {
         throw new Error(`Server Card header "${header.name}": secret headers must not declare a literal default.`);
       }
-      if (header.value !== undefined && !TEMPLATE_PLACEHOLDER.test(header.value)) {
-        throw new Error(
-          `Server Card header "${header.name}": secret header values must reference a {variable} placeholder, ` +
-            `never a literal credential.`,
-        );
+      if (header.value !== undefined) {
+        if (!TEMPLATE_PLACEHOLDER.test(header.value)) {
+          throw new Error(
+            `Server Card header "${header.name}": secret header values must reference a {variable} placeholder, ` +
+              `never a literal credential.`,
+          );
+        }
+        // After stripping placeholders, only a single short alphabetic scheme
+        // token (e.g. "Bearer", "Basic") may remain: hyphens, digits, and
+        // multiple words are how literal credentials ride along a template.
+        const residue = header.value.replace(new RegExp(TEMPLATE_PLACEHOLDER, 'g'), ' ').trim();
+        if (!/^[A-Za-z]{0,16}$/.test(residue)) {
+          throw new Error(
+            `Server Card header "${header.name}": secret header values must only contain {variable} placeholders ` +
+              `and an optional short alphabetic scheme prefix (e.g. "Bearer {api_key}").`,
+          );
+        }
       }
     }
     for (const [name, variable] of Object.entries(header.variables ?? {})) {
-      if (variable.isSecret && (variable.value !== undefined || variable.default !== undefined)) {
+      // Untyped embedder config can carry null entries; skip them here — the
+      // schema validation tests reject them as structurally invalid anyway.
+      if (variable && variable.isSecret && (variable.value !== undefined || variable.default !== undefined)) {
         throw new Error(
           `Server Card header "${header.name}" variable "${name}": secret variables must not embed a ` +
             `literal value or default.`,

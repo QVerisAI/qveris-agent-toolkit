@@ -12,6 +12,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isDeepStrictEqual } from 'node:util';
 
 const SCHEMA_URL = 'https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json';
 const VENDORED_PATH = join(dirname(fileURLToPath(import.meta.url)), '../schemas/server-card.schema.json');
@@ -49,7 +50,8 @@ try {
   process.exit(0);
 }
 
-if (JSON.stringify(published) === JSON.stringify(vendored)) {
+// Key-order-insensitive comparison: upstream may serialize in another order.
+if (isDeepStrictEqual(published, vendored)) {
   annotate('notice', `Server Card schema URL is live and matches the vendored pinned copy: ${SCHEMA_URL}`);
 } else {
   annotate(

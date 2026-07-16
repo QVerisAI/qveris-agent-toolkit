@@ -80,6 +80,30 @@ describe('buildServerCard', () => {
     );
   });
 
+  it('rejects literal credentials riding alongside a valid placeholder', () => {
+    const bypassed = { name: 'Authorization', isSecret: true, value: 'Bearer {api_key} sk-real-key' };
+    expect(() => buildServerCard({ ...INFO, remoteHeaders: [bypassed] }, 'https://mcp.example.com/mcp')).toThrow(
+      /must only contain \{variable\} placeholders/,
+    );
+
+    const multiPlaceholder = { name: 'Authorization', isSecret: true, value: 'Bearer {scheme_a} {scheme_b}' };
+    expect(() =>
+      buildServerCard({ ...INFO, remoteHeaders: [multiPlaceholder] }, 'https://mcp.example.com/mcp'),
+    ).not.toThrow();
+  });
+
+  it('tolerates null variable entries from untyped embedder config', () => {
+    const withNullVariable = {
+      name: 'Authorization',
+      isSecret: true,
+      value: 'Bearer {api_key}',
+      variables: { api_key: null as unknown as Record<string, never> },
+    };
+    expect(() =>
+      buildServerCard({ ...INFO, remoteHeaders: [withNullVariable] }, 'https://mcp.example.com/mcp'),
+    ).not.toThrow();
+  });
+
   it('rejects secret headers and secret variables with literal defaults', () => {
     const headerDefault = { name: 'Authorization', isSecret: true, default: 'sk-real-key' };
     expect(() => buildServerCard({ ...INFO, remoteHeaders: [headerDefault] }, 'https://mcp.example.com/mcp')).toThrow(
