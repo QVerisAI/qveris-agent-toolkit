@@ -222,6 +222,11 @@ Agents interact with QVeris through three actions:
 | **Usage audit** | `GET /auth/usage/history/v2` | Check request status, charge outcome, and actual charge |
 | **Credits ledger** | `GET /auth/credits/ledger` | Check final credit balance movements |
 
+The reproducible [Discover → Call accuracy benchmark](docs/en-US/discover-call-benchmark.md)
+measures grounded selection, parameterization, and real execution success per
+model. Its task set, runner, raw-record format, and deterministic scorer are
+public under [`benchmarks/discover-call`](benchmarks/discover-call/README.md).
+
 ### Capability ecosystem
 
 - 10,000+ capabilities, 15+ categories

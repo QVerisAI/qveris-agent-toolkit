@@ -1,0 +1,130 @@
+# Discover → Call benchmark
+
+This directory contains the reproducible evaluation harness tracked by issue
+#163. It measures whether an agent can use the public QVeris workflow correctly,
+without assuming that one catalog tool ID is the only valid answer.
+
+## Scope boundary
+
+This harness deliberately stays at the contract level: deterministic scoring of
+the public discover → inspect → call workflow, cheap enough to re-run per
+release and reproducible by anyone with an API key. It is the public instrument
+for published routing-layer numbers.
+
+Domain-level evaluation — long-horizon professional tasks, judged scoring,
+with/without-QVeris product comparisons — is a different instrument and is out
+of scope here. Do not grow this directory in that direction; new tasks belong
+in a versioned task-set revision (`tasks/v2.jsonl`, …) only if they still score
+deterministically at the contract level.
+
+## What is measured
+
+Each task runs the same sequence:
+
+1. `discover` with a fixed natural-language query.
+2. Ask a model adapter to select one returned tool.
+3. `inspect` the selected tool.
+4. Ask the adapter to construct parameters from the inspected schema.
+5. Optionally execute the billed `call`.
+
+The scorer reports these metrics separately:
+
+- **selection grounded**: the selected tool was returned by `discover`;
+- **inspection grounded**: `inspect` returned the selected tool;
+- **required-parameter accuracy**: fraction of required schema parameters supplied;
+- **constraint accuracy**: fraction of task facts represented through accepted parameter aliases;
+- **call success**: successful real executions among attempted calls;
+- **workflow success**: all preceding checks equal 100% and the real call succeeds.
+
+The transport retries `429` and `503` responses before recording an API-stage
+failure, matching the public clients' transient-failure behavior. The summary
+reports failures by stage; all exhausted API failures remain in the strict
+workflow-success denominator.
+
+The summary includes a 95% Wilson interval for workflow success. Dry runs never
+count as workflow success, so a published success rate cannot be produced
+without exercising the full workflow.
+
+## Run
+
+Set `QVERIS_API_KEY`, then provide an adapter executable and an immutable model
+identifier. The adapter command is spawned directly without shell parsing.
+The harness removes `QVERIS_API_KEY` from the adapter environment; adapters
+must use separately named credentials for their model provider.
+
+```bash
+node src/run.mjs \
+  --model provider/model-version \
+  --adapter node \
+  --adapter-arg /absolute/path/to/model-adapter.mjs \
+  --adapter-revision adapter-git-sha-or-config-hash \
+  --trials 3 \
+  --execute \
+  --output runs/model-version.jsonl
+```
+
+`--execute` performs billed calls. Omit it while validating an adapter, but do
+not publish dry-run records as benchmark results.
+
+Score the records:
+
+```bash
+node src/score.mjs \
+  --runs runs/model-version.jsonl \
+  --output runs/model-version.summary.json
+```
+
+Validate the checked-in task set, fixtures, and scorer:
+
+```bash
+npm test
+npm run validate
+```
+
+## Adapter protocol
+
+The harness invokes the adapter once per decision stage. It writes one JSON
+object to stdin and expects exactly one JSON object on stdout. Each request
+contains canonical `messages` and a `response_schema`; model adapters must send
+both unchanged so model comparisons use the same prompt and output contract.
+Ground-truth scoring constraints are deliberately not exposed to adapters.
+
+Selection input uses `stage: "select"`; `input` contains the user prompt and the
+complete discovery response. Return:
+
+```json
+{"tool_id":"selected.tool.id"}
+```
+
+Parameterization input uses `stage: "parameterize"`; `input` contains the same
+user prompt and the inspected `selected_tool`. Return:
+
+```json
+{"parameters":{"city":"London"}}
+```
+
+Adapters may call any model provider, but must not alter canonical messages or
+print prompts, keys, tokens, or provider error bodies to stdout. A first-result
+heuristic adapter is included only as a transport example; it does not construct
+parameters and is not an official model result.
+
+## Publication rules
+
+An official result must include:
+
+- the raw JSONL records and generated summary;
+- the toolkit commit SHA and unchanged `tasks/v1.jsonl`;
+- an immutable model version, adapter source revision, trial count, and date;
+- the recorded API base URL, discovery limit, and task-set SHA-256;
+- at least three trials per task;
+- `--execute` records for every reported workflow-success denominator;
+- failures retained in the denominator; no selective reruns or task removal;
+- no API keys, access tokens, private prompts, or raw provider error bodies.
+
+The scorer rejects missing tasks, unequal trial counts, duplicate trials, and
+non-consecutive trial numbering for every model. It also rejects duplicate run
+IDs and aggregation across different adapter, toolkit, task-set, endpoint,
+discovery-limit, or execution settings.
+
+The checked-in fixture validates the scorer only. It is synthetic and must not
+be presented as product performance.
