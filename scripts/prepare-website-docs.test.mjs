@@ -91,6 +91,7 @@ test("website staging holds published docs between releases and advances on new 
     git(toolkit, "commit", "-m", "next sdk release")
     git(toolkit, "tag", "python-sdk-v0.3.3")
     git(toolkit, "tag", "js-sdk-v0.4.1")
+    await fs.rm(path.join(website, "docs/en-US/python-sdk.md"))
 
     const nextResult = spawnSync(
       process.execPath,
@@ -105,6 +106,31 @@ test("website staging holds published docs between releases and advances on new 
     assert.equal(
       await fs.readFile(path.join(output, "docs/en-US/js-sdk-api.md"), "utf8"),
       "<!-- qveris-sdk-release: js-sdk-v0.4.1 -->\nnext release docs/en-US/js-sdk-api.md\n",
+    )
+
+    const missingGit = spawnSync(
+      process.execPath,
+      [SCRIPT, "--toolkit-dir", toolkit, "--website-dir", website, "--output-dir", output],
+      { encoding: "utf8", env: { ...process.env, PATH: "/path-that-does-not-exist" } },
+    )
+    assert.equal(missingGit.status, 1)
+    assert.match(missingGit.stderr, /spawnSync git ENOENT/)
+    assert.doesNotMatch(missingGit.stderr, /TypeError/)
+
+    await fs.rm(path.join(toolkit, "docs/en-US/js-sdk-api.md"))
+    git(toolkit, "add", "-u")
+    git(toolkit, "commit", "-m", "release without generated reference")
+    git(toolkit, "tag", "js-sdk-v0.4.2")
+    await fs.rm(path.join(website, "docs/en-US/js-sdk-api.md"))
+    const missingEverywhere = spawnSync(
+      process.execPath,
+      [SCRIPT, "--toolkit-dir", toolkit, "--website-dir", website, "--output-dir", output],
+      { encoding: "utf8" },
+    )
+    assert.equal(missingEverywhere.status, 1)
+    assert.match(
+      missingEverywhere.stderr,
+      /js-sdk-v0\.4\.2 does not contain docs\/en-US\/js-sdk-api\.md and no published website snapshot exists/,
     )
   } finally {
     await fs.rm(root, { recursive: true, force: true })

@@ -62,10 +62,11 @@ function runGit(toolkitDir, args) {
     encoding: "utf8",
     maxBuffer: 20 * 1024 * 1024,
   })
+  if (result.error) throw result.error
   if (result.status !== 0) {
-    throw new Error(`git ${args.join(" ")} failed: ${result.stderr.trim()}`)
+    throw new Error(`git ${args.join(" ")} failed: ${(result.stderr ?? "").trim()}`)
   }
-  return result.stdout
+  return result.stdout ?? ""
 }
 
 function latestTag(toolkitDir, pattern) {
@@ -83,7 +84,17 @@ function readTagFile(toolkitDir, tag, relPath) {
     encoding: "utf8",
     maxBuffer: 20 * 1024 * 1024,
   })
+  if (result.error) throw result.error
   return result.status === 0 ? result.stdout : null
+}
+
+async function readOptionalFile(root, relPath) {
+  try {
+    return await fs.readFile(path.join(root, relPath), "utf8")
+  } catch (error) {
+    if (error?.code === "ENOENT") return null
+    throw error
+  }
 }
 
 async function copyRequiredFile(fromRoot, toRoot, relPath) {
@@ -132,12 +143,12 @@ async function main() {
     releaseTags[release.outputName] = tag
 
     for (const relPath of release.paths) {
-      const publishedContent = await fs.readFile(path.join(websiteDir, relPath), "utf8")
-      const publishedTag = markedRelease(publishedContent) ?? release.bootstrapTag
+      const publishedContent = await readOptionalFile(websiteDir, relPath)
+      const publishedTag = publishedContent === null ? null : (markedRelease(publishedContent) ?? release.bootstrapTag)
 
       // Between SDK releases, keep the website's known-published snapshot.
       // Toolkit main may already contain the next release's APIs and guides.
-      if (publishedTag === tag) {
+      if (publishedContent !== null && publishedTag === tag) {
         await writeFile(outputDir, relPath, withReleaseMarker(publishedContent, tag))
         continue
       }
@@ -146,6 +157,9 @@ async function main() {
       if (taggedContent === null) {
         // Older release tags predate generated API-reference files. Preserve
         // the published snapshot until a later tag contains a replacement.
+        if (publishedContent === null) {
+          throw new Error(`${tag} does not contain ${relPath} and no published website snapshot exists`)
+        }
         await writeFile(outputDir, relPath, withReleaseMarker(publishedContent, tag))
         console.warn(`${tag} does not contain ${relPath}; preserving the published website snapshot`)
         continue
