@@ -17,6 +17,8 @@ const PYTHON_PATHS = [
 ]
 const JS_GUIDES = ["docs/en-US/js-sdk.md", "docs/zh-CN/js-sdk.md", "docs/cn/zh-CN/js-sdk.md"]
 const JS_API = ["docs/en-US/js-sdk-api.md", "docs/zh-CN/js-sdk-api.md"]
+const NEW_PYTHON_PATH = "docs/en-US/python-sdk-migration.md"
+const SDK_PATHS = [...PYTHON_PATHS, NEW_PYTHON_PATH, ...JS_GUIDES, ...JS_API]
 
 async function write(root, relPath, content) {
   const target = path.join(root, relPath)
@@ -43,7 +45,7 @@ test("website staging holds published docs between releases and advances on new 
     await write(toolkit, "README.md", "toolkit\n")
     await write(toolkit, "packages/cli/package.json", "{}\n")
     await write(toolkit, "docs/en-US/getting-started.md", "main setup v1\n")
-    for (const relPath of PYTHON_PATHS) await write(toolkit, relPath, `released ${relPath}\n`)
+    for (const relPath of [...PYTHON_PATHS, NEW_PYTHON_PATH]) await write(toolkit, relPath, `released ${relPath}\n`)
     for (const relPath of JS_GUIDES) await write(toolkit, relPath, `released ${relPath}\n`)
     git(toolkit, "add", ".")
     git(toolkit, "commit", "-m", "release docs")
@@ -51,13 +53,19 @@ test("website staging holds published docs between releases and advances on new 
     git(toolkit, "tag", "js-sdk-v0.4.0")
 
     await write(toolkit, "docs/en-US/getting-started.md", "main setup v2\n")
-    for (const relPath of [...PYTHON_PATHS, ...JS_GUIDES]) await write(toolkit, relPath, `unreleased ${relPath}\n`)
+    for (const relPath of [...PYTHON_PATHS, NEW_PYTHON_PATH, ...JS_GUIDES]) {
+      await write(toolkit, relPath, `unreleased ${relPath}\n`)
+    }
     for (const relPath of JS_API) await write(toolkit, relPath, `unreleased ${relPath}\n`)
     git(toolkit, "add", ".")
     git(toolkit, "commit", "-m", "unreleased sdk docs")
 
-    await write(website, "docs/.source-manifest.json", '{"schema_version":1}\n')
-    for (const relPath of [...PYTHON_PATHS, ...JS_GUIDES, ...JS_API]) {
+    await write(
+      website,
+      "docs/.source-manifest.json",
+      `${JSON.stringify({ sources: { toolkit_owned: { paths: [...SDK_PATHS, "docs/en-US/getting-started.md"] } } })}\n`,
+    )
+    for (const relPath of SDK_PATHS) {
       await write(website, relPath, `published ${relPath}\n`)
     }
 
@@ -81,10 +89,14 @@ test("website staging holds published docs between releases and advances on new 
       await fs.readFile(path.join(output, "docs/en-US/js-sdk-api.md"), "utf8"),
       "<!-- qveris-sdk-release: js-sdk-v0.4.0 -->\npublished docs/en-US/js-sdk-api.md\n",
     )
+    assert.equal(
+      await fs.readFile(path.join(output, NEW_PYTHON_PATH), "utf8"),
+      `<!-- qveris-sdk-release: python-sdk-v0.3.2 -->\npublished ${NEW_PYTHON_PATH}\n`,
+    )
     assert.match(await fs.readFile(githubOutput, "utf8"), /python_tag=python-sdk-v0\.3\.2/)
     assert.match(await fs.readFile(githubOutput, "utf8"), /js_tag=js-sdk-v0\.4\.0/)
 
-    for (const relPath of [...PYTHON_PATHS, ...JS_GUIDES, ...JS_API]) {
+    for (const relPath of SDK_PATHS) {
       await write(toolkit, relPath, `next release ${relPath}\n`)
     }
     git(toolkit, "add", ".")
@@ -132,6 +144,14 @@ test("website staging holds published docs between releases and advances on new 
       missingEverywhere.stderr,
       /js-sdk-v0\.4\.2 does not contain docs\/en-US\/js-sdk-api\.md and no published website snapshot exists/,
     )
+
+    const overlappingOutput = spawnSync(
+      process.execPath,
+      [SCRIPT, "--toolkit-dir", toolkit, "--website-dir", website, "--output-dir", root],
+      { encoding: "utf8" },
+    )
+    assert.equal(overlappingOutput.status, 1)
+    assert.match(overlappingOutput.stderr, /output-dir must be a separate, non-root staging directory/)
   } finally {
     await fs.rm(root, { recursive: true, force: true })
   }

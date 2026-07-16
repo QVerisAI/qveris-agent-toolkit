@@ -10,25 +10,13 @@ const SDK_RELEASES = [
     outputName: "python_tag",
     tagPattern: "python-sdk-v*",
     bootstrapTag: "python-sdk-v0.3.2",
-    paths: [
-      "docs/en-US/python-sdk.md",
-      "docs/zh-CN/python-sdk.md",
-      "docs/cn/zh-CN/python-sdk.md",
-      "docs/en-US/python-sdk-api.md",
-      "docs/zh-CN/python-sdk-api.md",
-    ],
+    pathPrefix: "python-sdk",
   },
   {
     outputName: "js_tag",
     tagPattern: "js-sdk-v*",
     bootstrapTag: "js-sdk-v0.4.0",
-    paths: [
-      "docs/en-US/js-sdk.md",
-      "docs/zh-CN/js-sdk.md",
-      "docs/cn/zh-CN/js-sdk.md",
-      "docs/en-US/js-sdk-api.md",
-      "docs/zh-CN/js-sdk-api.md",
-    ],
+    pathPrefix: "js-sdk",
   },
 ]
 
@@ -79,13 +67,12 @@ function latestTag(toolkitDir, pattern) {
 }
 
 function readTagFile(toolkitDir, tag, relPath) {
-  const result = spawnSync("git", ["show", `${tag}:${relPath}`], {
-    cwd: toolkitDir,
-    encoding: "utf8",
-    maxBuffer: 20 * 1024 * 1024,
-  })
-  if (result.error) throw result.error
-  return result.status === 0 ? result.stdout : null
+  const matches = runGit(toolkitDir, ["ls-tree", "-r", "--name-only", tag, "--", relPath])
+    .split("\n")
+    .map((value) => value.trim())
+    .filter(Boolean)
+  if (!matches.includes(relPath)) return null
+  return runGit(toolkitDir, ["show", `${tag}:${relPath}`])
 }
 
 async function readOptionalFile(root, relPath) {
@@ -118,18 +105,58 @@ function withReleaseMarker(content, tag) {
   return `<!-- qveris-sdk-release: ${tag} -->\n${content.replace(RELEASE_MARKER, "")}`
 }
 
+function pathsOverlap(left, right) {
+  const relative = path.relative(left, right)
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative))
+}
+
+async function loadToolkitOwnedPaths(websiteDir) {
+  const manifestPath = path.join(websiteDir, "docs", ".source-manifest.json")
+  const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"))
+  const paths = manifest?.sources?.toolkit_owned?.paths
+  if (!Array.isArray(paths)) {
+    throw new Error("website docs/.source-manifest.json must define sources.toolkit_owned.paths")
+  }
+  for (const relPath of paths) {
+    const normalized = typeof relPath === "string" ? path.normalize(relPath) : ""
+    if (
+      typeof relPath !== "string" ||
+      relPath.trim() === "" ||
+      path.isAbsolute(relPath) ||
+      normalized === ".." ||
+      normalized.startsWith(`..${path.sep}`)
+    ) {
+      throw new Error(`Invalid toolkit-owned docs path: ${String(relPath)}`)
+    }
+  }
+  return paths
+}
+
+function sdkPaths(toolkitOwnedPaths, prefix) {
+  return toolkitOwnedPaths.filter((relPath) => {
+    const basename = path.basename(relPath)
+    return basename === `${prefix}.md` || (basename.startsWith(`${prefix}-`) && basename.endsWith(".md"))
+  })
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2))
   const toolkitDir = path.resolve(args.toolkitDir)
   const websiteDir = path.resolve(args.websiteDir)
   const outputDir = path.resolve(args.outputDir)
 
-  if (outputDir === toolkitDir || outputDir === websiteDir || outputDir === path.parse(outputDir).root) {
+  if (
+    outputDir === path.parse(outputDir).root ||
+    pathsOverlap(outputDir, toolkitDir) ||
+    pathsOverlap(toolkitDir, outputDir) ||
+    pathsOverlap(outputDir, websiteDir) ||
+    pathsOverlap(websiteDir, outputDir)
+  ) {
     throw new Error("--output-dir must be a separate, non-root staging directory")
   }
 
   await fs.access(path.join(toolkitDir, ".git"))
-  await fs.access(path.join(websiteDir, "docs", ".source-manifest.json"))
+  const toolkitOwnedPaths = await loadToolkitOwnedPaths(websiteDir)
 
   await fs.rm(outputDir, { recursive: true, force: true })
   await fs.mkdir(outputDir, { recursive: true })
@@ -140,9 +167,13 @@ async function main() {
   const releaseTags = {}
   for (const release of SDK_RELEASES) {
     const tag = latestTag(toolkitDir, release.tagPattern)
+    const releasePaths = sdkPaths(toolkitOwnedPaths, release.pathPrefix)
+    if (releasePaths.length === 0) {
+      throw new Error(`website source manifest contains no ${release.pathPrefix} Markdown paths`)
+    }
     releaseTags[release.outputName] = tag
 
-    for (const relPath of release.paths) {
+    for (const relPath of releasePaths) {
       const publishedContent = await readOptionalFile(websiteDir, relPath)
       const publishedTag = publishedContent === null ? null : (markedRelease(publishedContent) ?? release.bootstrapTag)
 
