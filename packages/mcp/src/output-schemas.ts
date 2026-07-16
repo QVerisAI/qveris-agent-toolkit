@@ -54,7 +54,7 @@ const auditResponseSchema = {
   additionalProperties: true,
 } as const;
 
-/** outputSchema per canonical tool name. */
+/** outputSchema per canonical tool name (deprecated aliases share them). */
 export const TOOL_OUTPUT_SCHEMAS: Record<string, object> = {
   discover: searchResponseSchema,
   inspect: searchResponseSchema,

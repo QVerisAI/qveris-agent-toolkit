@@ -1,5 +1,5 @@
 .DS_Store
 .cursor/
 node_modules/
-.claude/
-AGENTS.md
+/.claude/
+/AGENTS.md
