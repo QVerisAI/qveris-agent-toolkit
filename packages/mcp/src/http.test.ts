@@ -11,6 +11,7 @@ import {
   startHttpServer,
   type RunningHttpServer,
 } from './http.js';
+import { bearerAuthHeaderInput } from './server-card.js';
 
 describe('resolveTransportConfig', () => {
   it('defaults to stdio with no flags or env', () => {
@@ -474,6 +475,30 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
     expect(card.name).toBe('io.github.QVerisAI/mcp');
     expect(card.version).toBe('9.9.9');
     expect((card.remotes as Array<{ url: string }>)[0].url).toBe(`http://127.0.0.1:${running!.port}/mcp`);
+  });
+
+  it('serves a hosted Server Card with a Bearer header template and no secret material', async () => {
+    const hosted = {
+      ...CARD_INFO,
+      remoteHeaders: [bearerAuthHeaderInput({ variableDescription: 'QVeris API key.' })],
+    };
+    await startServer({ QVERIS_MCP_HTTP_AUTH_TOKEN: 'tok-secret' }, hosted);
+    const res = await fetch(`http://127.0.0.1:${running!.port}/mcp/server-card`);
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    const card = JSON.parse(body) as {
+      remotes: Array<{ headers?: Array<Record<string, unknown>> }>;
+    };
+    expect(card.remotes[0].headers?.[0]).toMatchObject({
+      name: 'Authorization',
+      isRequired: true,
+      isSecret: true,
+      value: 'Bearer {api_key}',
+    });
+    // The public card must never carry credential material — neither the
+    // transport auth token nor a literal bearer value in any header value.
+    expect(body).not.toContain('tok-secret');
+    expect(body).not.toMatch(/"value":"Bearer (?!\{)/);
   });
 
   it('serves the MCP Catalog pointing at the Server Card', async () => {

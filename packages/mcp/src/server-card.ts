@@ -35,11 +35,55 @@ export interface ServerCardInfo {
   repository?: { source: string; url: string; subfolder?: string };
   /** Protocol versions the server negotiates (from the MCP SDK). */
   protocolVersions?: string[];
+  /**
+   * Header inputs advertised on the card's remote, e.g. a Bearer template
+   * built with {@link bearerAuthHeaderInput}. Only used when a remote URL is
+   * passed to {@link buildServerCard}; secret inputs must stay templated —
+   * {@link buildServerCard} rejects literal secret material.
+   */
+  remoteHeaders?: ServerCardKeyValueInput[];
+}
+
+/**
+ * A user-supplied or pre-set input value, used for {@link ServerCardRemote}
+ * URL variables and header values (schema `$defs/Input`).
+ */
+export interface ServerCardInput {
+  /** Allowed values for the input. If provided, the user must select one. */
+  choices?: string[];
+  /** Default value. SHOULD be a valid value for the input. */
+  default?: string;
+  /** Human-readable explanation of the input. */
+  description?: string;
+  /** Input format hint. */
+  format?: 'boolean' | 'filepath' | 'number' | 'string';
+  /** Whether the input must be supplied for the connection to succeed. */
+  isRequired?: boolean;
+  /** Whether the input is a secret (clients must handle it securely). */
+  isSecret?: boolean;
+  /** Placeholder shown during configuration. */
+  placeholder?: string;
+  /** Pre-set value; `{curly_braces}` identifiers substitute from `variables`. */
+  value?: string;
+}
+
+/**
+ * A named {@link ServerCardInput} — used for HTTP headers — whose `value` may
+ * reference `{variable}` placeholders (schema `$defs/KeyValueInput`).
+ */
+export interface ServerCardKeyValueInput extends ServerCardInput {
+  name: string;
+  /** Variables referenced as `{placeholders}` inside `value`. */
+  variables?: Record<string, ServerCardInput>;
 }
 
 export interface ServerCardRemote {
   type: 'streamable-http';
   url: string;
+  /** HTTP headers required or accepted when connecting to this remote. */
+  headers?: ServerCardKeyValueInput[];
+  /** Variables referenced as `{placeholders}` in `url`. */
+  variables?: Record<string, ServerCardInput>;
   supportedProtocolVersions?: string[];
 }
 
@@ -66,10 +110,85 @@ export interface McpCatalog {
   entries: McpCatalogEntry[];
 }
 
+/** `{variable}` placeholder syntax accepted by the Server Card schema. */
+const TEMPLATE_PLACEHOLDER = /\{[a-zA-Z_][a-zA-Z0-9_]*\}/;
+const VARIABLE_NAME = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+
+/**
+ * Reject header metadata that would publish secret material in the card.
+ *
+ * The card is a public, unauthenticated discovery document: a secret may only
+ * be *described* (name + required/secret flags), never carried. Secret header
+ * values must be templates referencing a `{variable}`, and secret variables
+ * must not embed a literal `value` or `default`.
+ */
+function assertHeadersCarryNoSecrets(headers: ServerCardKeyValueInput[]): void {
+  for (const header of headers) {
+    if (header.isSecret) {
+      if (header.default !== undefined) {
+        throw new Error(`Server Card header "${header.name}": secret headers must not declare a literal default.`);
+      }
+      if (header.value !== undefined && !TEMPLATE_PLACEHOLDER.test(header.value)) {
+        throw new Error(
+          `Server Card header "${header.name}": secret header values must reference a {variable} placeholder, ` +
+            `never a literal credential.`,
+        );
+      }
+    }
+    for (const [name, variable] of Object.entries(header.variables ?? {})) {
+      if (variable.isSecret && (variable.value !== undefined || variable.default !== undefined)) {
+        throw new Error(
+          `Server Card header "${header.name}" variable "${name}": secret variables must not embed a ` +
+            `literal value or default.`,
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Authorization header template for bearer-credential remotes.
+ *
+ * The credential itself never appears in the card: the header value is the
+ * template `Bearer {<variableName>}` and the variable is declared
+ * required + secret, so discovery clients prompt for it and store it securely.
+ */
+export function bearerAuthHeaderInput(
+  options: {
+    /** Template variable name (default `api_key`). */
+    variableName?: string;
+    /** Header description shown by configuration UIs. */
+    description?: string;
+    /** Description of the secret variable itself. */
+    variableDescription?: string;
+  } = {},
+): ServerCardKeyValueInput {
+  const variableName = options.variableName ?? 'api_key';
+  if (!VARIABLE_NAME.test(variableName)) {
+    throw new Error(`Invalid Server Card template variable name: "${variableName}".`);
+  }
+  return {
+    name: 'Authorization',
+    description: options.description ?? 'Bearer authentication for this remote endpoint.',
+    isRequired: true,
+    isSecret: true,
+    value: `Bearer {${variableName}}`,
+    variables: {
+      [variableName]: {
+        description: options.variableDescription ?? 'Secret credential for this remote endpoint.',
+        isRequired: true,
+        isSecret: true,
+      },
+    },
+  };
+}
+
 /**
  * Build the Server Card describing this server's identity and remote endpoint.
  *
- * @param info - Static metadata (name/version/description/...).
+ * @param info - Static metadata (name/version/description/...). When
+ *   `info.remoteHeaders` is set, the headers are attached to the remote after
+ *   the no-literal-secrets check.
  * @param remoteUrl - The absolute Streamable HTTP endpoint URL clients connect
  *   to (e.g. `https://mcp.example.com/mcp`).
  */
@@ -82,6 +201,10 @@ export function buildServerCard(info: ServerCardInfo, remoteUrl?: string): Serve
   };
   if (remoteUrl) {
     const remote: ServerCardRemote = { type: 'streamable-http', url: remoteUrl };
+    if (info.remoteHeaders && info.remoteHeaders.length > 0) {
+      assertHeadersCarryNoSecrets(info.remoteHeaders);
+      remote.headers = info.remoteHeaders;
+    }
     if (info.protocolVersions && info.protocolVersions.length > 0) {
       remote.supportedProtocolVersions = info.protocolVersions;
     }

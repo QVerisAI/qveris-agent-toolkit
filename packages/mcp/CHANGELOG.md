@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Server Card auth metadata for hosted deployments ([#236]): `ServerCardRemote` supports the schema's `headers`/`variables` inputs, `ServerCardInfo.remoteHeaders` threads them through `startHttpServer`, and `bearerAuthHeaderInput()` builds an `Authorization: Bearer {api_key}` template whose variable is required + secret. `buildServerCard` rejects literal secret material in the card. Generated cards are validated in CI against the upstream Server Card schema vendored at a pinned commit (`schemas/README.md`); a separate non-blocking step probes the public `$schema` URL so "card invalid" and "upstream URL unavailable" never mix.
+
 ## [0.10.0] - 2026-07-14
 
 ### Changed
@@ -134,6 +138,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#201]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/201
 [#204]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/204
 [#211]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/211
+[#236]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/236
 [#158]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/158
 [#145]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/145
 [#120]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/120

@@ -175,6 +175,12 @@ jobs:
         run: npm run typecheck:examples
       - name: MCP server tests
         run: npm test
+      # Non-blocking by design: a red mcp-tests job always means "generated
+      # card is invalid" (validated by vitest against the vendored pinned
+      # schema); upstream schema-URL availability is only reported here as an
+      # annotation without failing the build.
+      - name: Probe upstream Server Card schema URL (non-blocking)
+        run: node scripts/check-server-card-schema-url.mjs
 
   openclaw-plugin-tests:
     strategy:

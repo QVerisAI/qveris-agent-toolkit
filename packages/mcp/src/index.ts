@@ -607,7 +607,8 @@ export function initializeQverisClient(): QverisClient | undefined {
 export { QverisClient, resolveTransportConfig, startHttpServer };
 export { SessionAuthenticationError, SessionAuthenticationUnavailableError, SessionRateLimitError } from './http.js';
 export type { HttpSessionAuth, RunningHttpServer, TransportConfig } from './http.js';
-export type { ServerCardInfo } from './server-card.js';
+export { bearerAuthHeaderInput } from './server-card.js';
+export type { ServerCardInfo, ServerCardInput, ServerCardKeyValueInput, ServerCardRemote } from './server-card.js';
 
 /**
  * Type guard for API errors.
