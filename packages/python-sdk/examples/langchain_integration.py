@@ -8,7 +8,7 @@
 (qveris_discover / qveris_inspect / qveris_call). Bind them to any
 LangChain or LangGraph agent, e.g.:
 
-    # A complete agent also needs `langchain` and a model-provider package.
+    # Current create_agent needs Python >=3.10, langchain>=1.0, and a model provider.
     from langchain.agents import create_agent
     agent = create_agent(model, tools=get_qveris_tools(client))
 

@@ -9,14 +9,38 @@ The tools are async and return JSON strings. Pass them to ``FunctionAgent`` or
 another LlamaIndex agent, and close the QVeris client when finished.
 """
 
-import json
-from typing import Any, Dict, List, Optional
+from functools import wraps
+from typing import Any, Callable, List, Optional
 
 from ..client.api import QverisClient
+from ._workflow import (
+    CALL_DESCRIPTION,
+    DISCOVER_DESCRIPTION,
+    INSPECT_DESCRIPTION,
+    CallArgs,
+    DiscoverArgs,
+    InspectArgs,
+    build_qveris_workflow,
+)
 
 _INSTALL_HINT = (
-    "The LlamaIndex integration requires 'llama-index-core'. Install it with: pip install \"qveris[llamaindex]\""
+    "The LlamaIndex integration requires Python >=3.10 and 'llama-index-core'. "
+    'Install them with: pip install "qveris[llamaindex]"'
 )
+_SYNC_ERROR = (
+    "QVeris LlamaIndex tools are async-only because QverisClient owns a persistent async HTTP client. "
+    "Use 'await tool.acall(...)' or an async LlamaIndex agent instead of 'tool.call(...)'."
+)
+
+
+def _reject_sync_call(async_fn: Callable[..., Any]) -> Callable[..., str]:
+    """Preserve an async tool's schema while rejecting LlamaIndex's sync path."""
+
+    @wraps(async_fn)
+    def sync_guard(*args: Any, **kwargs: Any) -> str:
+        raise RuntimeError(_SYNC_ERROR)
+
+    return sync_guard
 
 
 def get_qveris_tools(
@@ -24,49 +48,49 @@ def get_qveris_tools(
     *,
     session_id: Optional[str] = None,
 ) -> List[Any]:
-    """Return LlamaIndex tools for the QVeris discover/inspect/call workflow."""
+    """Return LlamaIndex tools for the QVeris discover/inspect/call workflow.
+
+    Args:
+        client: The ``QverisClient`` to route calls through. You own its
+            lifecycle — keep it open while the tools are in use and call
+            ``await client.close()`` when done.
+        session_id: Optional session id for correlation/pricing context.
+
+    Returns:
+        Three async LlamaIndex ``FunctionTool`` objects named
+        ``qveris_discover``, ``qveris_inspect``, and ``qveris_call``. Their
+        synchronous ``call`` path raises with guidance to use ``acall``.
+
+    Raises:
+        ImportError: if Python is older than 3.10 or ``llama-index-core`` is not installed.
+    """
     try:
         from llama_index.core.tools import FunctionTool
     except ImportError as exc:  # pragma: no cover - exercised via install extras
         raise ImportError(_INSTALL_HINT) from exc
 
-    async def _route(name: str, args: Dict[str, Any]) -> str:
-        result, _is_error, _handled = await client.handle_tool_call(name, args, session_id=session_id)
-        return json.dumps(result, default=str)
-
-    async def _discover(query: str, limit: int = 20) -> str:
-        return await _route("discover", {"query": query, "limit": limit})
-
-    async def _inspect(tool_ids: List[str], search_id: Optional[str] = None) -> str:
-        return await _route("inspect", {"tool_ids": tool_ids, "search_id": search_id})
-
-    async def _call(
-        tool_id: str,
-        params_to_tool: Dict[str, Any],
-        search_id: Optional[str] = None,
-        max_response_size: Optional[int] = None,
-    ) -> str:
-        args: Dict[str, Any] = {"tool_id": tool_id, "params_to_tool": params_to_tool}
-        if search_id is not None:
-            args["search_id"] = search_id
-        if max_response_size is not None:
-            args["max_response_size"] = max_response_size
-        return await _route("call", args)
+    workflow = build_qveris_workflow(client, session_id=session_id)
 
     return [
         FunctionTool.from_defaults(
-            async_fn=_discover,
+            fn=_reject_sync_call(workflow.discover),
+            async_fn=workflow.discover,
             name="qveris_discover",
-            description="Discover QVeris capabilities from a natural-language query. Free; returns candidates and a search_id.",
+            description=DISCOVER_DESCRIPTION,
+            fn_schema=DiscoverArgs,
         ),
         FunctionTool.from_defaults(
-            async_fn=_inspect,
+            fn=_reject_sync_call(workflow.inspect),
+            async_fn=workflow.inspect,
             name="qveris_inspect",
-            description="Inspect one or more QVeris capabilities by tool_id before calling them. Free.",
+            description=INSPECT_DESCRIPTION,
+            fn_schema=InspectArgs,
         ),
         FunctionTool.from_defaults(
-            async_fn=_call,
+            fn=_reject_sync_call(workflow.call),
+            async_fn=workflow.call,
             name="qveris_call",
-            description="Call a selected QVeris capability with parameters. May consume credits.",
+            description=CALL_DESCRIPTION,
+            fn_schema=CallArgs,
         ),
     ]

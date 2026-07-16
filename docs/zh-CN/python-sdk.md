@@ -262,11 +262,11 @@ if handled and not is_error:
 
 | 框架 | 原生工具类型 | Adapter 安装 | 完整 Agent 还需要 |
 |------|--------------|--------------|-------------------|
-| LangChain / LangGraph | `StructuredTool` | `pip install "qveris[langchain]"`（Python 3.9+） | 另装 `langchain` 和模型 provider 包；异步运行，最后 `await client.close()`。 |
+| LangChain / LangGraph | `StructuredTool` | `pip install "qveris[langchain]"`（Adapter 支持 Python 3.9+） | 下方当前版 `create_agent` 示例需要 Python 3.10+、`langchain>=1.0` 和模型 provider 包。 |
 | OpenAI Agents SDK | `FunctionTool` | `pip install "qveris[openai-agents]"`（Python 3.10+） | 将工具传给 `Agent`，最后 `await client.close()`。 |
 | CrewAI | `BaseTool` | `pip install "qveris[crewai]"`（Python 3.10+） | Adapter 负责同步/异步桥接，最后调用 `aclose(client)`。 |
 | AutoGen | `autogen_core.tools.FunctionTool` | `pip install "qveris[autogen]"`（Python 3.10+） | 另装 `autogen-agentchat` 和模型扩展，如 `autogen-ext[openai]`。 |
-| LlamaIndex | `llama_index.core.tools.FunctionTool` | `pip install "qveris[llamaindex]"`（Python 3.10+） | 另装 `FunctionAgent` 使用的模型集成包。 |
+| LlamaIndex | `llama_index.core.tools.FunctionTool` | `pip install "qveris[llamaindex]"`（Python 3.10+） | 另装 `FunctionAgent` 使用的模型集成包；使用异步 Agent 或 `await tool.acall(...)`。 |
 | Pydantic AI | `pydantic_ai.Tool` | `pip install "qveris[pydantic-ai]"`（Python 3.10+） | Extra 为精简安装；另装模型 provider extra，如 `pydantic-ai-slim[openai]`。 |
 
 每次调用 `get_qveris_tools(client, session_id=...)` 都会按顺序返回 `qveris_discover`、`qveris_inspect`、`qveris_call` 三个工具。工具结果（包括 QVeris 错误结果）统一为 JSON 字符串，Agent 可以读取并自行调整参数或改选能力。`discover` 免费并返回 `search_id`，后续应把它传给 `inspect` 和 `call`。完整 Agent 运行既需要 `QVERIS_API_KEY`，也需要所选模型 provider 的 API key。
@@ -276,35 +276,54 @@ if handled and not is_error:
 使用 LangChain 当前的 `create_agent` API。它运行在 LangGraph 上；自定义 LangGraph 工作流也可以把同一组工具放入 `ToolNode`。
 
 ```bash
-pip install "qveris[langchain]" langchain langchain-openai
+pip install "qveris[langchain]" "langchain>=1.0" langchain-openai
 ```
 
 ```python
+import asyncio
+
 from langchain.agents import create_agent
 from qveris import QverisClient
 from qveris.integrations.langchain import get_qveris_tools
 
-client = QverisClient()
-agent = create_agent("openai:gpt-4o-mini", tools=get_qveris_tools(client))
-result = await agent.ainvoke({"messages": [{"role": "user", "content": "查找股票报价工具并查询 AAPL。"}]})
-await client.close()
+async def main():
+    client = QverisClient()
+    try:
+        agent = create_agent("openai:gpt-4o-mini", tools=get_qveris_tools(client))
+        result = await agent.ainvoke({"messages": [{"role": "user", "content": "查找股票报价工具并查询 AAPL。"}]})
+        print(result)
+    finally:
+        await client.close()
+
+asyncio.run(main())
 ```
 
-**OpenAI Agents SDK 与 CrewAI**
+**OpenAI Agents SDK**
 
 ```python
-# OpenAI Agents SDK
+import asyncio
+
 from agents import Agent, Runner
 from qveris import QverisClient
 from qveris.integrations.openai_agents import get_qveris_tools
 
-client = QverisClient()
-agent = Agent(name="Assistant", tools=get_qveris_tools(client))
-result = await Runner.run(agent, "查找股票报价能力并查询 AAPL。")
-await client.close()
+async def main():
+    client = QverisClient()
+    try:
+        agent = Agent(name="Assistant", tools=get_qveris_tools(client))
+        result = await Runner.run(agent, "查找股票报价能力并查询 AAPL。")
+        print(result.final_output)
+    finally:
+        await client.close()
 
-# CrewAI（同步应用中重新创建 client）
+asyncio.run(main())
+```
+
+**CrewAI**
+
+```python
 from crewai import Agent
+from qveris import QverisClient
 from qveris.integrations.crewai import aclose, get_qveris_tools
 
 client = QverisClient()
@@ -379,12 +398,15 @@ agent = Agent(llm_provider=MyProvider())
 | `explainable_routing.py` | 基于 `why_recommended` / `expected_cost` 的成本感知能力选型 |
 | `budget_guard.py` | 用 `Agent(budget_credits=...)` 设置会话级积分预算 |
 | `agent_loop_integration.py` | LLM agent 循环集成 |
+| `interactive_chat.py` | 交互式流式终端聊天 |
+| `stock_debate.py` | 多 Agent 股票研究辩论 |
 | `langchain_integration.py` | 把 QVeris 能力作为 LangChain 工具（`qveris[langchain]`） |
 | `openai_agents_integration.py` | 把 QVeris 能力作为 OpenAI Agents SDK 工具（`qveris[openai-agents]`） |
 | `crewai_integration.py` | 把 QVeris 能力作为 CrewAI 工具（`qveris[crewai]`） |
 | `autogen_integration.py` | 把 QVeris 能力作为 AutoGen 工具（`qveris[autogen]`） |
 | `llamaindex_integration.py` | 把 QVeris 能力作为 LlamaIndex 工具（`qveris[llamaindex]`） |
 | `pydantic_ai_integration.py` | 把 QVeris 能力作为 Pydantic AI 工具（`qveris[pydantic-ai]`） |
+| `otel_tracing.py` | 为 discover/call 生成 OpenTelemetry span（`qveris[otel]`） |
 
 设置 `QVERIS_API_KEY` 后，能力示例会运行 `discover`/`inspect`；仅当设置 `RUN_QVERIS_CALLS=1` 时才执行 `call`。
 

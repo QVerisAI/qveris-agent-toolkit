@@ -18,6 +18,9 @@ class TestLlamaIndexAdapterConformance(AdapterConformance):
     def tool_description(self, tool: Any) -> str:
         return tool.metadata.description
 
+    def tool_schema(self, tool: Any) -> Dict[str, Any]:
+        return tool.metadata.fn_schema.model_json_schema()
+
     def make_tools(self, client: Any, session_id: Optional[str] = None) -> List[Any]:
         return get_qveris_tools(client, session_id=session_id)
 
@@ -28,12 +31,12 @@ class TestLlamaIndexAdapterConformance(AdapterConformance):
         return run(tool.acall(**args)).raw_output
 
 
-def test_tools_are_native_function_tools_with_expected_schemas() -> None:
+def test_tools_are_native_function_tools() -> None:
     tools = get_qveris_tools(FakeClient())
     assert all(isinstance(tool, FunctionTool) for tool in tools)
-    props = {
-        tool.metadata.name: set(tool.metadata.fn_schema.model_json_schema().get("properties", {})) for tool in tools
-    }
-    assert props["qveris_discover"] == {"query", "limit"}
-    assert props["qveris_inspect"] == {"tool_ids", "search_id"}
-    assert props["qveris_call"] == {"tool_id", "params_to_tool", "search_id", "max_response_size"}
+
+
+def test_sync_calls_fail_with_async_guidance() -> None:
+    discover = get_qveris_tools(FakeClient())[0]
+    with pytest.raises(RuntimeError, match="async-only"):
+        discover.call(query="weather")

@@ -19,14 +19,13 @@ class TestAutoGenAdapterConformance(AdapterConformance):
     def make_tools_no_client(self) -> Any:
         return get_qveris_tools()  # type: ignore[call-arg]
 
+    def tool_schema(self, tool: Any) -> Dict[str, Any]:
+        return tool.schema.get("parameters", {})
+
     def invoke(self, tool: Any, args: Dict[str, Any]) -> str:
         return run(tool.run_json(args, CancellationToken()))
 
 
-def test_tools_are_native_function_tools_with_expected_schemas() -> None:
+def test_tools_are_native_function_tools() -> None:
     tools = get_qveris_tools(FakeClient())
     assert all(isinstance(tool, FunctionTool) for tool in tools)
-    props = {tool.name: set(tool.schema.get("parameters", {}).get("properties", {})) for tool in tools}
-    assert props["qveris_discover"] == {"query", "limit"}
-    assert props["qveris_inspect"] == {"tool_ids", "search_id"}
-    assert props["qveris_call"] == {"tool_id", "params_to_tool", "search_id", "max_response_size"}

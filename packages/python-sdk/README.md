@@ -188,7 +188,7 @@ tools = get_qveris_tools(client, session_id="optional-correlation-id")
 # Pass `tools` to your framework's agent, then `await client.close()`.
 ```
 
-Adapter extras install the framework's tool/core package. A complete agent may also need the framework runtime and its model-provider package; see the [Python SDK guide](../../docs/en-US/python-sdk.md#framework-integrations) and runnable examples below. CrewAI is the lifecycle exception: its synchronous bridge must be closed with `qveris.integrations.crewai.aclose(client)`.
+Adapter extras install the framework's tool/core package. A complete agent may also need the framework runtime and its model-provider package; see the [Python SDK guide](../../docs/en-US/python-sdk.md#framework-integrations) and runnable examples below. CrewAI is the lifecycle exception: its synchronous bridge must be closed with `qveris.integrations.crewai.aclose(client)`. LlamaIndex tools are async-only; use `await tool.acall(...)` or an async agent workflow.
 
 ## Observability (OpenTelemetry)
 
@@ -219,7 +219,7 @@ See [`examples/otel_tracing.py`](examples/otel_tracing.py) for a runnable end-to
 
 ## Examples
 
-Fourteen runnable examples are included under [`examples/`](examples):
+Sixteen runnable examples are included under [`examples/`](examples):
 
 | Example | Scenario |
 |---------|----------|
@@ -230,6 +230,8 @@ Fourteen runnable examples are included under [`examples/`](examples):
 | `explainable_routing.py` | Cost-aware capability selection with `why_recommended` / `expected_cost` |
 | `budget_guard.py` | Per-session credit budget with `Agent(budget_credits=...)` |
 | `agent_loop_integration.py` | LLM agent loop integration |
+| `interactive_chat.py` | Interactive streaming terminal chat |
+| `stock_debate.py` | Multi-agent stock research debate |
 | `langchain_integration.py` | QVeris capabilities as LangChain tools (`qveris[langchain]`) |
 | `openai_agents_integration.py` | QVeris capabilities as OpenAI Agents SDK tools (`qveris[openai-agents]`) |
 | `crewai_integration.py` | QVeris capabilities as CrewAI tools (`qveris[crewai]`) |

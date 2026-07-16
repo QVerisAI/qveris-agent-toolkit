@@ -15,6 +15,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Expanded the Python SDK framework-integration guide with a support matrix, dependency boundaries, current agent APIs, lifecycle requirements, and all six supported adapters.
 - Updated the LangChain/LangGraph example to use `langchain.agents.create_agent`, corrected CrewAI cleanup guidance, and quoted extras in shell install commands.
 
+### Fixed
+
+- Framework adapters now share canonical tool schemas and Pydantic-safe JSON serialization; LlamaIndex rejects its unsafe synchronous wrapper with async guidance instead of creating a fresh event loop around the persistent client.
+
 ## [0.3.2] - 2026-07-15
 
 ### Changed

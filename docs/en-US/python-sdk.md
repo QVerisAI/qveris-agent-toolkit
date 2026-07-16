@@ -264,11 +264,11 @@ Expose the QVeris discover/inspect/call workflow as native tools for popular age
 
 | Framework | Native tool type | Adapter install | Complete agent setup |
 |-----------|------------------|-----------------|----------------------|
-| LangChain / LangGraph | `StructuredTool` | `pip install "qveris[langchain]"` (Python 3.9+) | Also install `langchain` and your model-provider package. Use async execution and `await client.close()`. |
+| LangChain / LangGraph | `StructuredTool` | `pip install "qveris[langchain]"` (adapter: Python 3.9+) | The current `create_agent` example requires Python 3.10+, `langchain>=1.0`, and a model-provider package. |
 | OpenAI Agents SDK | `FunctionTool` | `pip install "qveris[openai-agents]"` (Python 3.10+) | Pass the tools to `Agent`; close with `await client.close()`. |
 | CrewAI | `BaseTool` | `pip install "qveris[crewai]"` (Python 3.10+) | Tools are sync/async bridged; close with `aclose(client)`. |
 | AutoGen | `autogen_core.tools.FunctionTool` | `pip install "qveris[autogen]"` (Python 3.10+) | Also install `autogen-agentchat` and a model extension such as `autogen-ext[openai]`. |
-| LlamaIndex | `llama_index.core.tools.FunctionTool` | `pip install "qveris[llamaindex]"` (Python 3.10+) | Also install the model integration used by `FunctionAgent`. |
+| LlamaIndex | `llama_index.core.tools.FunctionTool` | `pip install "qveris[llamaindex]"` (Python 3.10+) | Also install the model integration used by `FunctionAgent`; use an async agent or `await tool.acall(...)`. |
 | Pydantic AI | `pydantic_ai.Tool` | `pip install "qveris[pydantic-ai]"` (Python 3.10+) | The extra is slim; add a provider extra such as `pydantic-ai-slim[openai]`. |
 
 Every `get_qveris_tools(client, session_id=...)` call returns exactly three tools: `qveris_discover`, `qveris_inspect`, and `qveris_call`. Results, including QVeris error payloads, are JSON strings so the agent can inspect them and recover. `discover` is free and returns a `search_id`; pass that ID to `inspect` and `call`. A complete agent run needs `QVERIS_API_KEY` plus the API key required by its model provider.
@@ -278,35 +278,54 @@ Every `get_qveris_tools(client, session_id=...)` call returns exactly three tool
 Use LangChain's current `create_agent` API. It runs on LangGraph; custom LangGraph workflows can put the same tools in a `ToolNode`.
 
 ```bash
-pip install "qveris[langchain]" langchain langchain-openai
+pip install "qveris[langchain]" "langchain>=1.0" langchain-openai
 ```
 
 ```python
+import asyncio
+
 from langchain.agents import create_agent
 from qveris import QverisClient
 from qveris.integrations.langchain import get_qveris_tools
 
-client = QverisClient()
-agent = create_agent("openai:gpt-4o-mini", tools=get_qveris_tools(client))
-result = await agent.ainvoke({"messages": [{"role": "user", "content": "Find a stock quote tool and quote AAPL."}]})
-await client.close()
+async def main():
+    client = QverisClient()
+    try:
+        agent = create_agent("openai:gpt-4o-mini", tools=get_qveris_tools(client))
+        result = await agent.ainvoke({"messages": [{"role": "user", "content": "Find a stock quote tool and quote AAPL."}]})
+        print(result)
+    finally:
+        await client.close()
+
+asyncio.run(main())
 ```
 
-**OpenAI Agents SDK and CrewAI**
+**OpenAI Agents SDK**
 
 ```python
-# OpenAI Agents SDK
+import asyncio
+
 from agents import Agent, Runner
 from qveris import QverisClient
 from qveris.integrations.openai_agents import get_qveris_tools
 
-client = QverisClient()
-agent = Agent(name="Assistant", tools=get_qveris_tools(client))
-result = await Runner.run(agent, "Find a stock quote capability and quote AAPL.")
-await client.close()
+async def main():
+    client = QverisClient()
+    try:
+        agent = Agent(name="Assistant", tools=get_qveris_tools(client))
+        result = await Runner.run(agent, "Find a stock quote capability and quote AAPL.")
+        print(result.final_output)
+    finally:
+        await client.close()
 
-# CrewAI (in a synchronous application, with a new client)
+asyncio.run(main())
+```
+
+**CrewAI**
+
+```python
 from crewai import Agent
+from qveris import QverisClient
 from qveris.integrations.crewai import aclose, get_qveris_tools
 
 client = QverisClient()
@@ -384,12 +403,15 @@ Runnable examples live under [`packages/python-sdk/examples/`](https://github.co
 | `explainable_routing.py` | Cost-aware capability selection with `why_recommended` / `expected_cost` |
 | `budget_guard.py` | Per-session credit budget with `Agent(budget_credits=...)` |
 | `agent_loop_integration.py` | LLM agent loop integration |
+| `interactive_chat.py` | Interactive streaming terminal chat |
+| `stock_debate.py` | Multi-agent stock research debate |
 | `langchain_integration.py` | QVeris capabilities as LangChain tools (`qveris[langchain]`) |
 | `openai_agents_integration.py` | QVeris capabilities as OpenAI Agents SDK tools (`qveris[openai-agents]`) |
 | `crewai_integration.py` | QVeris capabilities as CrewAI tools (`qveris[crewai]`) |
 | `autogen_integration.py` | QVeris capabilities as AutoGen tools (`qveris[autogen]`) |
 | `llamaindex_integration.py` | QVeris capabilities as LlamaIndex tools (`qveris[llamaindex]`) |
 | `pydantic_ai_integration.py` | QVeris capabilities as Pydantic AI tools (`qveris[pydantic-ai]`) |
+| `otel_tracing.py` | OpenTelemetry spans for discover/call (`qveris[otel]`) |
 
 Capability examples run `discover`/`inspect` when `QVERIS_API_KEY` is set, and only execute `call` when `RUN_QVERIS_CALLS=1`.
 
