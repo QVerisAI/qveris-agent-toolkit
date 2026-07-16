@@ -132,16 +132,19 @@ export function listQverisMcpTools() {
       name: 'search_tools',
       description: '[Deprecated: use "discover" instead] Search for available tools based on natural language queries.',
       inputSchema: searchToolsSchema,
+      outputSchema: TOOL_OUTPUT_SCHEMAS.discover,
     },
     {
       name: 'get_tools_by_ids',
       description: '[Deprecated: use "inspect" instead] Get descriptions of tools based on their tool IDs.',
       inputSchema: getToolsByIdsSchema,
+      outputSchema: TOOL_OUTPUT_SCHEMAS.inspect,
     },
     {
       name: 'execute_tool',
       description: '[Deprecated: use "call" instead] Execute a specific remote tool with provided parameters.',
       inputSchema: executeToolSchema,
+      outputSchema: TOOL_OUTPUT_SCHEMAS.call,
     },
   ];
 }

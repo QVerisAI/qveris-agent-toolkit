@@ -21,6 +21,9 @@ class TestOpenAIAgentsAdapterConformance(AdapterConformance):
     def make_tools_no_client(self) -> Any:
         return get_qveris_tools()  # type: ignore[call-arg]
 
+    def tool_schema(self, tool: Any) -> Dict[str, Any]:
+        return tool.params_json_schema
+
     def invoke(self, tool: Any, args: Dict[str, Any]) -> str:
         ctx = ToolContext(
             context=None,
@@ -29,17 +32,6 @@ class TestOpenAIAgentsAdapterConformance(AdapterConformance):
             tool_arguments=json.dumps(args),
         )
         return run(tool.on_invoke_tool(ctx, json.dumps(args)))
-
-
-# --- OpenAI-Agents-specific behavior ------------------------------------------
-
-
-def test_tool_schemas_expose_expected_properties() -> None:
-    tools = get_qveris_tools(FakeClient())
-    props = {t.name: set(t.params_json_schema.get("properties", {})) for t in tools}
-    assert props["qveris_discover"] == {"query", "limit"}
-    assert props["qveris_inspect"] == {"tool_ids", "search_id"}
-    assert props["qveris_call"] == {"tool_id", "search_id", "params_to_tool", "max_response_size"}
 
 
 def test_discover_is_strict_but_dict_taking_tools_are_not() -> None:

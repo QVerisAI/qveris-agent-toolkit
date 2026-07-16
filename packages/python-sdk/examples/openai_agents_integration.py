@@ -1,6 +1,6 @@
 """Use QVeris capabilities as OpenAI Agents SDK tools.
 
-    pip install qveris[openai-agents]
+    pip install "qveris[openai-agents]"
     export QVERIS_API_KEY="sk-..." OPENAI_API_KEY="sk-..."
     python openai_agents_integration.py
 

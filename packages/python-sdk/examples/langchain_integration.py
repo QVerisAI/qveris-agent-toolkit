@@ -1,6 +1,6 @@
 """Use QVeris capabilities as LangChain tools.
 
-    pip install qveris[langchain]
+    pip install "qveris[langchain]"
     export QVERIS_API_KEY="sk-..."
     python langchain_integration.py
 
@@ -8,8 +8,9 @@
 (qveris_discover / qveris_inspect / qveris_call). Bind them to any
 LangChain or LangGraph agent, e.g.:
 
-    from langgraph.prebuilt import create_react_agent
-    agent = create_react_agent(model, get_qveris_tools(client))
+    # Current create_agent needs Python >=3.10, langchain>=1.0, and a model provider.
+    from langchain.agents import create_agent
+    agent = create_agent(model, tools=get_qveris_tools(client))
 
 This example invokes the discover tool directly (no LLM required) to show the
 tools work end to end.

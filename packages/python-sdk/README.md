@@ -192,6 +192,30 @@ class MyProvider(LLMProvider):
 agent = Agent(llm_provider=MyProvider())
 ```
 
+## Agent framework adapters
+
+Optional extras expose the same `qveris_discover` / `qveris_inspect` / `qveris_call` workflow as native framework tools. The base package does not import any framework dependency.
+
+| Framework | Native tool | Install |
+|-----------|-------------|---------|
+| LangChain / LangGraph | `StructuredTool` | `pip install "qveris[langchain]"` |
+| OpenAI Agents SDK | `FunctionTool` | `pip install "qveris[openai-agents]"` |
+| CrewAI | `BaseTool` | `pip install "qveris[crewai]"` |
+| AutoGen | `autogen_core.tools.FunctionTool` | `pip install "qveris[autogen]"` |
+| LlamaIndex | `llama_index.core.tools.FunctionTool` | `pip install "qveris[llamaindex]"` |
+| Pydantic AI | `pydantic_ai.Tool` | `pip install "qveris[pydantic-ai]"` |
+
+```python
+from qveris import QverisClient
+from qveris.integrations.pydantic_ai import get_qveris_tools  # choose one adapter module
+
+client = QverisClient()
+tools = get_qveris_tools(client, session_id="optional-correlation-id")
+# Pass `tools` to your framework's agent, then `await client.close()`.
+```
+
+Adapter extras install the framework's tool/core package. A complete agent may also need the framework runtime and its model-provider package; see the [Python SDK guide](../../docs/en-US/python-sdk.md#framework-integrations) and runnable examples below. CrewAI is the lifecycle exception: its synchronous bridge must be closed with `qveris.integrations.crewai.aclose(client)`. LlamaIndex tools are async-only; use `await tool.acall(...)` or an async agent workflow.
+
 ## Observability (OpenTelemetry)
 
 `discover` / `inspect` / `call` emit one OpenTelemetry span each, so you can trace QVeris activity and correlate it with the usage/ledger records. Tracing is **dependency-free and best-effort**:
@@ -221,7 +245,7 @@ See [`examples/otel_tracing.py`](examples/otel_tracing.py) for a runnable end-to
 
 ## Examples
 
-Eleven runnable examples are included under [`examples/`](examples):
+Sixteen runnable examples are included under [`examples/`](examples):
 
 | Example | Scenario |
 |---------|----------|
@@ -232,9 +256,14 @@ Eleven runnable examples are included under [`examples/`](examples):
 | `explainable_routing.py` | Cost-aware capability selection with `why_recommended` / `expected_cost` |
 | `budget_guard.py` | Per-session credit budget with `Agent(budget_credits=...)` |
 | `agent_loop_integration.py` | LLM agent loop integration |
+| `interactive_chat.py` | Interactive streaming terminal chat |
+| `stock_debate.py` | Multi-agent stock research debate |
 | `langchain_integration.py` | QVeris capabilities as LangChain tools (`qveris[langchain]`) |
 | `openai_agents_integration.py` | QVeris capabilities as OpenAI Agents SDK tools (`qveris[openai-agents]`) |
 | `crewai_integration.py` | QVeris capabilities as CrewAI tools (`qveris[crewai]`) |
+| `autogen_integration.py` | QVeris capabilities as AutoGen tools (`qveris[autogen]`) |
+| `llamaindex_integration.py` | QVeris capabilities as LlamaIndex tools (`qveris[llamaindex]`) |
+| `pydantic_ai_integration.py` | QVeris capabilities as Pydantic AI tools (`qveris[pydantic-ai]`) |
 | `otel_tracing.py` | OpenTelemetry spans for discover/call (`qveris[otel]`) |
 
 The capability examples run `discover` and `inspect` when `QVERIS_API_KEY` is set. They only execute `call` when `RUN_QVERIS_CALLS=1` is set.
