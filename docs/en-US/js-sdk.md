@@ -156,7 +156,7 @@ const { text } = await generateText({
 });
 ```
 
-The [Python SDK](python-sdk.md) ships LangChain and OpenAI Agents SDK adapters as well.
+The [Python SDK](python-sdk.md) ships adapters for LangChain/LangGraph, OpenAI Agents SDK, CrewAI, AutoGen, LlamaIndex, and Pydantic AI as well.
 
 ## Error handling
 

@@ -1,6 +1,6 @@
 """Use QVeris capabilities as CrewAI tools.
 
-    pip install qveris[crewai]
+    pip install "qveris[crewai]"
     export QVERIS_API_KEY="sk-..." OPENAI_API_KEY="sk-..."
     python crewai_integration.py
 

@@ -4,7 +4,7 @@ Exposes the QVeris ``discover`` / ``inspect`` / ``call`` workflow as CrewAI
 tools, so a CrewAI agent can find and invoke thousands of external capabilities
 through one QVeris API key.
 
-    pip install qveris[crewai]
+    pip install "qveris[crewai]"
 
     from crewai import Agent
     from qveris import QverisClient
@@ -28,15 +28,23 @@ from __future__ import annotations
 
 import asyncio
 import concurrent.futures
-import json
 import threading
 from typing import Any, Coroutine, Dict, List, Optional, Type
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from ..client.api import QverisClient
+from ._workflow import (
+    CALL_DESCRIPTION,
+    DISCOVER_DESCRIPTION,
+    INSPECT_DESCRIPTION,
+    CallArgs,
+    DiscoverArgs,
+    InspectArgs,
+    build_qveris_workflow,
+)
 
-_INSTALL_HINT = "The CrewAI integration requires 'crewai'. Install it with: pip install qveris[crewai]"
+_INSTALL_HINT = "The CrewAI integration requires 'crewai'. Install it with: pip install \"qveris[crewai]\""
 
 
 class _BridgeLoop:
@@ -98,29 +106,6 @@ def aclose(client: QverisClient) -> None:
     _run_sync(client.close())
 
 
-class _DiscoverArgs(BaseModel):
-    query: str = Field(description="Capability query in natural language, e.g. 'weather forecast API'.")
-    limit: int = Field(default=20, description="Number of results to return (1-100).")
-
-
-class _InspectArgs(BaseModel):
-    tool_ids: List[str] = Field(description="Tool IDs returned by discover.")
-    search_id: Optional[str] = Field(
-        default=None, description="The search_id from the discover response, if available."
-    )
-
-
-class _CallArgs(BaseModel):
-    tool_id: str = Field(description="The capability tool_id, from discover or inspect.")
-    params_to_tool: Dict[str, Any] = Field(description="Parameters to pass to the capability.")
-    search_id: Optional[str] = Field(
-        default=None, description="The search_id from the discover response, if available."
-    )
-    max_response_size: Optional[int] = Field(
-        default=None, description="Max response size in bytes; -1 means unlimited."
-    )
-
-
 def get_qveris_tools(
     client: QverisClient,
     *,
@@ -131,7 +116,7 @@ def get_qveris_tools(
     Args:
         client: The ``QverisClient`` to route calls through. You own its
             lifecycle — the tools hold a reference to it, so keep it open for
-            as long as the tools are used and ``await client.close()`` when done.
+            as long as the tools are used and call :func:`aclose` when done.
         session_id: Optional session id for correlation/pricing context.
 
     Returns:
@@ -146,51 +131,34 @@ def get_qveris_tools(
     except ImportError as exc:  # pragma: no cover - exercised via install extras
         raise ImportError(_INSTALL_HINT) from exc
 
-    async def _route(name: str, args: Dict[str, Any]) -> str:
-        result, _is_error, _handled = await client.handle_tool_call(name, args, session_id=session_id)
-        return json.dumps(result, default=str)
-
-    def _call_args(
-        tool_id: str,
-        params_to_tool: Dict[str, Any],
-        search_id: Optional[str],
-        max_response_size: Optional[int],
-    ) -> Dict[str, Any]:
-        args: Dict[str, Any] = {"tool_id": tool_id, "params_to_tool": params_to_tool}
-        if search_id is not None:
-            args["search_id"] = search_id
-        if max_response_size is not None:
-            args["max_response_size"] = max_response_size
-        return args
+    workflow = build_qveris_workflow(client, session_id=session_id)
 
     class QverisDiscoverTool(BaseTool):
         name: str = "qveris_discover"
-        description: str = (
-            "Discover QVeris capabilities from a natural-language query. Free; returns candidates and a search_id."
-        )
-        args_schema: Type[BaseModel] = _DiscoverArgs
+        description: str = DISCOVER_DESCRIPTION
+        args_schema: Type[BaseModel] = DiscoverArgs
 
         def _run(self, query: str, limit: int = 20) -> str:
-            return _run_sync(_route("discover", {"query": query, "limit": limit}))
+            return _run_sync(workflow.discover(query=query, limit=limit))
 
         async def _arun(self, query: str, limit: int = 20) -> str:
-            return await _run_async(_route("discover", {"query": query, "limit": limit}))
+            return await _run_async(workflow.discover(query=query, limit=limit))
 
     class QverisInspectTool(BaseTool):
         name: str = "qveris_inspect"
-        description: str = "Inspect one or more QVeris capabilities by tool_id before calling them. Free."
-        args_schema: Type[BaseModel] = _InspectArgs
+        description: str = INSPECT_DESCRIPTION
+        args_schema: Type[BaseModel] = InspectArgs
 
         def _run(self, tool_ids: List[str], search_id: Optional[str] = None) -> str:
-            return _run_sync(_route("inspect", {"tool_ids": tool_ids, "search_id": search_id}))
+            return _run_sync(workflow.inspect(tool_ids=tool_ids, search_id=search_id))
 
         async def _arun(self, tool_ids: List[str], search_id: Optional[str] = None) -> str:
-            return await _run_async(_route("inspect", {"tool_ids": tool_ids, "search_id": search_id}))
+            return await _run_async(workflow.inspect(tool_ids=tool_ids, search_id=search_id))
 
     class QverisCallTool(BaseTool):
         name: str = "qveris_call"
-        description: str = "Call a selected QVeris capability with parameters. May consume credits."
-        args_schema: Type[BaseModel] = _CallArgs
+        description: str = CALL_DESCRIPTION
+        args_schema: Type[BaseModel] = CallArgs
 
         def _run(
             self,
@@ -199,7 +167,14 @@ def get_qveris_tools(
             search_id: Optional[str] = None,
             max_response_size: Optional[int] = None,
         ) -> str:
-            return _run_sync(_route("call", _call_args(tool_id, params_to_tool, search_id, max_response_size)))
+            return _run_sync(
+                workflow.call(
+                    tool_id=tool_id,
+                    params_to_tool=params_to_tool,
+                    search_id=search_id,
+                    max_response_size=max_response_size,
+                )
+            )
 
         async def _arun(
             self,
@@ -208,6 +183,13 @@ def get_qveris_tools(
             search_id: Optional[str] = None,
             max_response_size: Optional[int] = None,
         ) -> str:
-            return await _run_async(_route("call", _call_args(tool_id, params_to_tool, search_id, max_response_size)))
+            return await _run_async(
+                workflow.call(
+                    tool_id=tool_id,
+                    params_to_tool=params_to_tool,
+                    search_id=search_id,
+                    max_response_size=max_response_size,
+                )
+            )
 
     return [QverisDiscoverTool(), QverisInspectTool(), QverisCallTool()]

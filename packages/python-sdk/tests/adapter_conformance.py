@@ -1,6 +1,6 @@
 """Shared conformance suite for the framework adapters.
 
-Every adapter (LangChain, OpenAI Agents SDK, CrewAI, ...) must expose the same
+Every adapter must expose the same
 QVeris workflow with the same semantics. Each adapter's test module subclasses
 :class:`AdapterConformance`, implements the two hooks, and inherits the full
 invariant suite — so a semantic drift in one adapter (e.g. an argument that is
@@ -26,6 +26,13 @@ import json
 from typing import Any, Dict, List, Optional, Tuple
 
 import pytest
+from pydantic import BaseModel
+
+EXPECTED_TOOL_PARAMS = {
+    "qveris_discover": {"query", "limit"},
+    "qveris_inspect": {"tool_ids", "search_id"},
+    "qveris_call": {"tool_id", "params_to_tool", "search_id", "max_response_size"},
+}
 
 
 class FakeClient:
@@ -65,22 +72,42 @@ class AdapterConformance:
         """Call the adapter's get_qveris_tools with no arguments."""
         raise NotImplementedError
 
+    def tool_name(self, tool: Any) -> str:
+        """Return a framework tool's public name."""
+        return tool.name
+
+    def tool_description(self, tool: Any) -> str:
+        """Return a framework tool's public description."""
+        return tool.description
+
+    def tool_schema(self, tool: Any) -> Dict[str, Any]:
+        """Return a framework tool's JSON parameter schema."""
+        return tool.args_schema.model_json_schema()
+
     # -- helpers ---------------------------------------------------------
 
     def tool(self, tools: List[Any], name: str) -> Any:
-        return next(t for t in tools if t.name == name)
+        return next(t for t in tools if self.tool_name(t) == name)
 
     # -- invariants ------------------------------------------------------
 
     def test_exposes_three_named_tools_in_order(self) -> None:
         tools = self.make_tools(FakeClient())
-        assert [t.name for t in tools] == ["qveris_discover", "qveris_inspect", "qveris_call"]
+        assert [self.tool_name(t) for t in tools] == ["qveris_discover", "qveris_inspect", "qveris_call"]
         for t in tools:
-            assert t.description, f"{t.name} must have a description"
+            assert self.tool_description(t), f"{self.tool_name(t)} must have a description"
 
     def test_client_is_required(self) -> None:
         with pytest.raises(TypeError):
             self.make_tools_no_client()
+
+    def test_tool_schemas_expose_described_canonical_parameters(self) -> None:
+        for tool in self.make_tools(FakeClient()):
+            name = self.tool_name(tool)
+            properties = self.tool_schema(tool).get("properties", {})
+            assert set(properties) == EXPECTED_TOOL_PARAMS[name]
+            for parameter, schema in properties.items():
+                assert schema.get("description"), f"{name}.{parameter} must have a description"
 
     def test_discover_routes_and_threads_session_id(self) -> None:
         client = FakeClient()
@@ -93,6 +120,22 @@ class AdapterConformance:
         ]
         assert isinstance(out, str), "adapters must return JSON strings"
         assert json.loads(out)["search_id"] == "s1"
+
+    def test_pydantic_results_are_serialized_as_json_objects(self) -> None:
+        class Payload(BaseModel):
+            search_id: str
+            results: List[Dict[str, str]]
+
+        class ModelClient(FakeClient):
+            async def handle_tool_call(
+                self, func_name: str, func_args: Dict[str, Any], session_id: Optional[str] = None
+            ) -> Tuple[Any, bool, bool]:
+                return Payload(search_id="s-model", results=[{"tool_id": "t-model"}]), False, True
+
+        discover = self.tool(self.make_tools(ModelClient()), "qveris_discover")
+        output = json.loads(self.invoke(discover, {"query": "weather", "limit": 1}))
+
+        assert output == {"search_id": "s-model", "results": [{"tool_id": "t-model"}]}
 
     def test_inspect_passes_tool_ids_and_search_id(self) -> None:
         client = FakeClient()

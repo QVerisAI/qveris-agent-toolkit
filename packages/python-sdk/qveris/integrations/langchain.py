@@ -4,7 +4,7 @@ Exposes the QVeris ``discover`` / ``inspect`` / ``call`` workflow as LangChain
 tools, so an agent built on LangChain (or LangGraph) can find and invoke
 thousands of external capabilities through one QVeris API key.
 
-    pip install qveris[langchain]
+    pip install "qveris[langchain]"
 
     from qveris import QverisClient
     from qveris.integrations.langchain import get_qveris_tools
@@ -21,37 +21,22 @@ descriptions instruct.
 
 from __future__ import annotations
 
-import json
-from typing import Any, Dict, List, Optional
-
-from pydantic import BaseModel, Field
+from typing import Any, List, Optional
 
 from ..client.api import QverisClient
+from ._workflow import (
+    CALL_DESCRIPTION,
+    DISCOVER_DESCRIPTION,
+    INSPECT_DESCRIPTION,
+    CallArgs,
+    DiscoverArgs,
+    InspectArgs,
+    build_qveris_workflow,
+)
 
-_INSTALL_HINT = "The LangChain integration requires 'langchain-core'. Install it with: pip install qveris[langchain]"
-
-
-class _DiscoverArgs(BaseModel):
-    query: str = Field(description="Capability query in natural language, e.g. 'weather forecast API'.")
-    limit: int = Field(default=20, description="Number of results to return (1-100).")
-
-
-class _InspectArgs(BaseModel):
-    tool_ids: List[str] = Field(description="Tool IDs returned by discover.")
-    search_id: Optional[str] = Field(
-        default=None, description="The search_id from the discover response, if available."
-    )
-
-
-class _CallArgs(BaseModel):
-    tool_id: str = Field(description="The capability tool_id, from discover or inspect.")
-    params_to_tool: Dict[str, Any] = Field(description="Parameters to pass to the capability.")
-    search_id: Optional[str] = Field(
-        default=None, description="The search_id from the discover response, if available."
-    )
-    max_response_size: Optional[int] = Field(
-        default=None, description="Max response size in bytes; -1 means unlimited."
-    )
+_INSTALL_HINT = (
+    "The LangChain integration requires 'langchain-core'. Install it with: pip install \"qveris[langchain]\""
+)
 
 
 def get_qveris_tools(
@@ -79,51 +64,25 @@ def get_qveris_tools(
     except ImportError as exc:  # pragma: no cover - exercised via install extras
         raise ImportError(_INSTALL_HINT) from exc
 
-    qveris = client
-
-    async def _route(name: str, args: Dict[str, Any]) -> str:
-        result, _is_error, _handled = await qveris.handle_tool_call(name, args, session_id=session_id)
-        return json.dumps(result, default=str)
-
-    async def _discover(query: str, limit: int = 20) -> str:
-        return await _route("discover", {"query": query, "limit": limit})
-
-    async def _inspect(tool_ids: List[str], search_id: Optional[str] = None) -> str:
-        return await _route("inspect", {"tool_ids": tool_ids, "search_id": search_id})
-
-    async def _call(
-        tool_id: str,
-        params_to_tool: Dict[str, Any],
-        search_id: Optional[str] = None,
-        max_response_size: Optional[int] = None,
-    ) -> str:
-        args: Dict[str, Any] = {
-            "tool_id": tool_id,
-            "params_to_tool": params_to_tool,
-        }
-        if search_id is not None:
-            args["search_id"] = search_id
-        if max_response_size is not None:
-            args["max_response_size"] = max_response_size
-        return await _route("call", args)
+    workflow = build_qveris_workflow(client, session_id=session_id)
 
     return [
         StructuredTool.from_function(
-            coroutine=_discover,
+            coroutine=workflow.discover,
             name="qveris_discover",
-            description="Discover QVeris capabilities from a natural-language query. Free; returns candidates and a search_id.",
-            args_schema=_DiscoverArgs,
+            description=DISCOVER_DESCRIPTION,
+            args_schema=DiscoverArgs,
         ),
         StructuredTool.from_function(
-            coroutine=_inspect,
+            coroutine=workflow.inspect,
             name="qveris_inspect",
-            description="Inspect one or more QVeris capabilities by tool_id before calling them. Free.",
-            args_schema=_InspectArgs,
+            description=INSPECT_DESCRIPTION,
+            args_schema=InspectArgs,
         ),
         StructuredTool.from_function(
-            coroutine=_call,
+            coroutine=workflow.call,
             name="qveris_call",
-            description="Call a selected QVeris capability with parameters. May consume credits.",
-            args_schema=_CallArgs,
+            description=CALL_DESCRIPTION,
+            args_schema=CallArgs,
         ),
     ]
