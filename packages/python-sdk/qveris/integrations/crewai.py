@@ -4,7 +4,7 @@ Exposes the QVeris ``discover`` / ``inspect`` / ``call`` workflow as CrewAI
 tools, so a CrewAI agent can find and invoke thousands of external capabilities
 through one QVeris API key.
 
-    pip install qveris[crewai]
+    pip install "qveris[crewai]"
 
     from crewai import Agent
     from qveris import QverisClient
@@ -36,7 +36,7 @@ from pydantic import BaseModel, Field
 
 from ..client.api import QverisClient
 
-_INSTALL_HINT = "The CrewAI integration requires 'crewai'. Install it with: pip install qveris[crewai]"
+_INSTALL_HINT = "The CrewAI integration requires 'crewai'. Install it with: pip install \"qveris[crewai]\""
 
 
 class _BridgeLoop:
@@ -131,7 +131,7 @@ def get_qveris_tools(
     Args:
         client: The ``QverisClient`` to route calls through. You own its
             lifecycle — the tools hold a reference to it, so keep it open for
-            as long as the tools are used and ``await client.close()`` when done.
+            as long as the tools are used and call :func:`aclose` when done.
         session_id: Optional session id for correlation/pricing context.
 
     Returns:

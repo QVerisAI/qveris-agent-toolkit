@@ -4,7 +4,7 @@ Exposes the QVeris ``discover`` / ``inspect`` / ``call`` workflow as LangChain
 tools, so an agent built on LangChain (or LangGraph) can find and invoke
 thousands of external capabilities through one QVeris API key.
 
-    pip install qveris[langchain]
+    pip install "qveris[langchain]"
 
     from qveris import QverisClient
     from qveris.integrations.langchain import get_qveris_tools
@@ -28,7 +28,9 @@ from pydantic import BaseModel, Field
 
 from ..client.api import QverisClient
 
-_INSTALL_HINT = "The LangChain integration requires 'langchain-core'. Install it with: pip install qveris[langchain]"
+_INSTALL_HINT = (
+    "The LangChain integration requires 'langchain-core'. Install it with: pip install \"qveris[langchain]\""
+)
 
 
 class _DiscoverArgs(BaseModel):

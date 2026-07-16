@@ -4,7 +4,7 @@ Exposes the QVeris ``discover`` / ``inspect`` / ``call`` workflow as OpenAI
 Agents SDK function tools, so an ``agents.Agent`` can find and invoke thousands
 of external capabilities through one QVeris API key.
 
-    pip install qveris[openai-agents]
+    pip install "qveris[openai-agents]"
 
     from agents import Agent, Runner
     from qveris import QverisClient
@@ -27,7 +27,7 @@ from typing import Any, Dict, List, Optional
 from ..client.api import QverisClient
 
 _INSTALL_HINT = (
-    "The OpenAI Agents integration requires 'openai-agents'. Install it with: pip install qveris[openai-agents]"
+    "The OpenAI Agents integration requires 'openai-agents'. Install it with: pip install \"qveris[openai-agents]\""
 )
 
 

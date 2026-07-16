@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Native AutoGen, LlamaIndex, and Pydantic AI adapters, optional dependency extras, conformance tests, and runnable agent examples.
+
+### Changed
+
+- Expanded the Python SDK framework-integration guide with a support matrix, dependency boundaries, current agent APIs, lifecycle requirements, and all six supported adapters.
+- Updated the LangChain/LangGraph example to use `langchain.agents.create_agent`, corrected CrewAI cleanup guidance, and quoted extras in shell install commands.
+
 ## [0.3.2] - 2026-07-15
 
 ### Changed

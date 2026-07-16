@@ -35,6 +35,18 @@ openai-agents = [
 crewai = [
     "crewai>=0.80.0; python_version >= '3.10'",
 ]
+# These three frameworks require Python >=3.10. Only their lightweight/core
+# packages are adapter dependencies; install a model-provider package as well
+# when constructing a complete framework agent.
+autogen = [
+    "autogen-core>=0.7.5; python_version >= '3.10'",
+]
+llamaindex = [
+    "llama-index-core>=0.14.23; python_version >= '3.10'",
+]
+pydantic-ai = [
+    "pydantic-ai-slim>=2.11.0; python_version >= '3.10'",
+]
 # OpenTelemetry tracing for discover/inspect/call. Only the API is needed; bring
 # your own SDK + exporter in the app. Absent this extra, tracing is a no-op.
 otel = [
@@ -49,6 +61,9 @@ dev = [
     "rich>=13.0.0",
     "langchain-core>=0.3.0; python_version >= '3.9'",  # for the LangChain integration tests
     "openai-agents>=0.1.0; python_version >= '3.10'",  # for the OpenAI Agents integration tests
+    "autogen-core>=0.7.5; python_version >= '3.10'",  # for the AutoGen integration tests
+    "llama-index-core>=0.14.23; python_version >= '3.10'",  # for the LlamaIndex integration tests
+    "pydantic-ai-slim>=2.11.0; python_version >= '3.10'",  # for the Pydantic AI integration tests
     "opentelemetry-api>=1.20.0",  # for the observability tests
     "opentelemetry-sdk>=1.20.0",  # in-memory span exporter used by the tests
     # API reference generation runs in the Python 3.11 docs CI job. The SDK

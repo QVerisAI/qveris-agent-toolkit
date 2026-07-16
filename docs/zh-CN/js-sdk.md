@@ -154,7 +154,7 @@ const { text } = await generateText({
 });
 ```
 
-[Python SDK](python-sdk.md) 还提供 LangChain 和 OpenAI Agents SDK 适配器。
+[Python SDK](python-sdk.md) 还提供 LangChain/LangGraph、OpenAI Agents SDK、CrewAI、AutoGen、LlamaIndex 和 Pydantic AI 适配器。
 
 ## 错误处理
 

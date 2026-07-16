@@ -1,6 +1,6 @@
 """Shared conformance suite for the framework adapters.
 
-Every adapter (LangChain, OpenAI Agents SDK, CrewAI, ...) must expose the same
+Every adapter must expose the same
 QVeris workflow with the same semantics. Each adapter's test module subclasses
 :class:`AdapterConformance`, implements the two hooks, and inherits the full
 invariant suite — so a semantic drift in one adapter (e.g. an argument that is
@@ -65,18 +65,26 @@ class AdapterConformance:
         """Call the adapter's get_qveris_tools with no arguments."""
         raise NotImplementedError
 
+    def tool_name(self, tool: Any) -> str:
+        """Return a framework tool's public name."""
+        return tool.name
+
+    def tool_description(self, tool: Any) -> str:
+        """Return a framework tool's public description."""
+        return tool.description
+
     # -- helpers ---------------------------------------------------------
 
     def tool(self, tools: List[Any], name: str) -> Any:
-        return next(t for t in tools if t.name == name)
+        return next(t for t in tools if self.tool_name(t) == name)
 
     # -- invariants ------------------------------------------------------
 
     def test_exposes_three_named_tools_in_order(self) -> None:
         tools = self.make_tools(FakeClient())
-        assert [t.name for t in tools] == ["qveris_discover", "qveris_inspect", "qveris_call"]
+        assert [self.tool_name(t) for t in tools] == ["qveris_discover", "qveris_inspect", "qveris_call"]
         for t in tools:
-            assert t.description, f"{t.name} must have a description"
+            assert self.tool_description(t), f"{self.tool_name(t)} must have a description"
 
     def test_client_is_required(self) -> None:
         with pytest.raises(TypeError):
