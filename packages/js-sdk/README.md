@@ -55,7 +55,30 @@ const credits = await qveris.credits();
 ## API reference
 
 Construct with `new Qveris({ apiKey })` or `Qveris.fromEnv(overrides?)` (reads
-`QVERIS_API_KEY` and resolves the API endpoint automatically).
+`QVERIS_API_KEY` and resolves the API endpoint automatically). Applications
+that manage short-lived credentials can instead pass an async-capable provider:
+
+```typescript
+import { Qveris, type CredentialProvider } from '@qverisai/sdk';
+
+const credentialProvider: CredentialProvider = {
+  async getCredential({ resource, scopes }) {
+    // Resolve a bearer credential through your application's credential store.
+    return process.env.QVERIS_API_KEY!;
+  },
+};
+
+const qveris = new Qveris({ credentialProvider });
+```
+
+The provider receives the resolved API `resource` and the requested `scopes`
+(currently empty). Configure either `apiKey` or `credentialProvider`, never
+both. A provider does not select or change the API endpoint.
+
+A credential provider supplies the bearer value that authenticates requests to
+the QVeris API itself. It is unrelated to the data and tool providers in the
+capability catalog: their upstream credentials are managed by the platform and
+never pass through the SDK.
 
 | Method | Billed | Returns | Notes |
 | --- | --- | --- | --- |
@@ -80,6 +103,7 @@ All types are exported from the package root (`import type { SearchResponse, Exe
 | Option / env var | Description |
 | --- | --- |
 | `apiKey` / `QVERIS_API_KEY` | Required. Create one at [qveris.ai](https://qveris.ai/account?page=api-keys) |
+| `credentialProvider` | Async-capable bearer credential source; mutually exclusive with `apiKey` |
 | `baseUrl` / `QVERIS_BASE_URL` | API endpoint: constructor option > environment variable > built-in default |
 | `timeoutMs` | Default request timeout (30s; `call` defaults to 120s) |
 | `maxRetries` | Retries for rate-limited (429) / transient (503) responses (default 3; `0` disables) |

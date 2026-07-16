@@ -1,5 +1,6 @@
 import { getSiteUrl, resolveBaseUrl } from "../config/endpoint.mjs";
 import { CliError } from "../errors/handler.mjs";
+import { getCredential, resolveCredentialProvider } from "./auth.mjs";
 import {
   computeRetryDelayMs,
   DEFAULT_BASE_DELAY_MS,
@@ -10,8 +11,8 @@ import {
   sleep,
 } from "./retry.mjs";
 
-function getBaseUrl(baseUrlFlag, apiKey) {
-  return resolveBaseUrl({ baseUrlFlag, apiKey }).baseUrl;
+function getBaseUrl(baseUrlFlag) {
+  return resolveBaseUrl({ baseUrlFlag }).baseUrl;
 }
 
 async function requestJson(
@@ -21,7 +22,7 @@ async function requestJson(
     query = {},
     body,
     timeoutMs = 30000,
-    apiKey,
+    credentialProvider,
     baseUrl,
     // Retry rate-limited (429) / transient (503) responses: honor Retry-After,
     // otherwise exponential backoff with jitter, bounded by maxRetries.
@@ -36,6 +37,12 @@ async function requestJson(
   }
 
   for (let attempt = 0; ; attempt++) {
+    // Credential acquisition is outside the API request timeout and happens
+    // on every attempt so retries can refresh short-lived tokens.
+    const credential = await getCredential(credentialProvider, {
+      resource: baseUrl,
+      scopes: [],
+    });
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
     let retryDelayMs;
@@ -44,7 +51,7 @@ async function requestJson(
       const response = await fetch(url.toString(), {
         method,
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${credential}`,
           "Content-Type": "application/json",
         },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
@@ -119,20 +126,45 @@ export function unwrapApiResponse(response) {
   return response;
 }
 
-export async function discoverTools({ apiKey, baseUrl: baseUrlFlag, query, limit = 5, timeoutMs = 30000 }) {
-  const baseUrl = getBaseUrl(baseUrlFlag, apiKey);
-  return requestJson("/search", { apiKey, baseUrl, body: { query, limit }, timeoutMs });
+export async function discoverTools({
+  apiKey,
+  credentialProvider,
+  baseUrl: baseUrlFlag,
+  query,
+  limit = 5,
+  timeoutMs = 30000,
+}) {
+  const baseUrl = getBaseUrl(baseUrlFlag);
+  return requestJson("/search", {
+    credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
+    baseUrl,
+    body: { query, limit },
+    timeoutMs,
+  });
 }
 
-export async function inspectToolsByIds({ apiKey, baseUrl: baseUrlFlag, toolIds, discoveryId, timeoutMs = 30000 }) {
-  const baseUrl = getBaseUrl(baseUrlFlag, apiKey);
+export async function inspectToolsByIds({
+  apiKey,
+  credentialProvider,
+  baseUrl: baseUrlFlag,
+  toolIds,
+  discoveryId,
+  timeoutMs = 30000,
+}) {
+  const baseUrl = getBaseUrl(baseUrlFlag);
   const body = { tool_ids: toolIds };
   if (discoveryId) body.search_id = discoveryId;
-  return requestJson("/tools/by-ids", { apiKey, baseUrl, body, timeoutMs });
+  return requestJson("/tools/by-ids", {
+    credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
+    baseUrl,
+    body,
+    timeoutMs,
+  });
 }
 
 export async function callTool({
   apiKey,
+  credentialProvider,
   baseUrl: baseUrlFlag,
   toolId,
   discoveryId,
@@ -140,9 +172,9 @@ export async function callTool({
   maxResponseSize = 102400,
   timeoutMs = 120000,
 }) {
-  const baseUrl = getBaseUrl(baseUrlFlag, apiKey);
+  const baseUrl = getBaseUrl(baseUrlFlag);
   return requestJson("/tools/execute", {
-    apiKey,
+    credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
     baseUrl,
     query: { tool_id: toolId },
     body: {
@@ -154,32 +186,44 @@ export async function callTool({
   });
 }
 
-export async function getCredits({ apiKey, baseUrl: baseUrlFlag, timeoutMs = 30000 }) {
-  const baseUrl = getBaseUrl(baseUrlFlag, apiKey);
+export async function getCredits({ apiKey, credentialProvider, baseUrl: baseUrlFlag, timeoutMs = 30000 }) {
+  const baseUrl = getBaseUrl(baseUrlFlag);
   return requestJson("/auth/credits", {
     method: "GET",
-    apiKey,
+    credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
     baseUrl,
     timeoutMs,
   });
 }
 
-export async function getUsageHistory({ apiKey, baseUrl: baseUrlFlag, query = {}, timeoutMs = 30000 }) {
-  const baseUrl = getBaseUrl(baseUrlFlag, apiKey);
+export async function getUsageHistory({
+  apiKey,
+  credentialProvider,
+  baseUrl: baseUrlFlag,
+  query = {},
+  timeoutMs = 30000,
+}) {
+  const baseUrl = getBaseUrl(baseUrlFlag);
   return requestJson("/auth/usage/history/v2", {
     method: "GET",
-    apiKey,
+    credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
     baseUrl,
     query,
     timeoutMs,
   });
 }
 
-export async function getCreditsLedger({ apiKey, baseUrl: baseUrlFlag, query = {}, timeoutMs = 30000 }) {
-  const baseUrl = getBaseUrl(baseUrlFlag, apiKey);
+export async function getCreditsLedger({
+  apiKey,
+  credentialProvider,
+  baseUrl: baseUrlFlag,
+  query = {},
+  timeoutMs = 30000,
+}) {
+  const baseUrl = getBaseUrl(baseUrlFlag);
   return requestJson("/auth/credits/ledger", {
     method: "GET",
-    apiKey,
+    credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
     baseUrl,
     query,
     timeoutMs,

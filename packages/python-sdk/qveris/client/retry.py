@@ -19,7 +19,7 @@ import asyncio
 import email.utils
 import random
 from datetime import datetime, timezone
-from typing import Any, Awaitable, Callable, Optional
+from typing import Any, Awaitable, Callable, Dict, Optional
 
 import httpx
 
@@ -96,11 +96,22 @@ class RetryPolicy:
         self.retries = 0
         self.total_backoff_seconds = 0.0
 
-    async def send(self, client: httpx.AsyncClient, method: str, url: str, **kwargs: Any) -> httpx.Response:
+    async def send(
+        self,
+        client: httpx.AsyncClient,
+        method: str,
+        url: str,
+        *,
+        prepare_attempt: Optional[Callable[[], Awaitable[Dict[str, Any]]]] = None,
+        **kwargs: Any,
+    ) -> httpx.Response:
         """Send a request through ``client``, retrying 429/503 with backoff."""
         attempt = 0
         while True:
-            response = await client.request(method, url, **kwargs)
+            attempt_kwargs = dict(kwargs)
+            if prepare_attempt is not None:
+                attempt_kwargs.update(await prepare_attempt())
+            response = await client.request(method, url, **attempt_kwargs)
             if response.status_code not in RETRYABLE_STATUS or attempt >= self.max_retries:
                 return response
 

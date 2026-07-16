@@ -16,6 +16,8 @@
  */
 
 export { Qveris } from './client.js';
-export type { DiscoverOptions, InspectOptions, CallOptions } from './client.js';
+export type { DiscoverOptions, InspectOptions, CallOptions, QverisClientOptions } from './client.js';
+export { ApiKeyCredentialProvider } from './credentials.js';
+export type { CredentialContext, CredentialProvider } from './credentials.js';
 export { QverisApiError } from './errors.js';
 export * from './types.js';

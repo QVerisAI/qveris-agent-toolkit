@@ -10,7 +10,7 @@
 
 <a id="qveris.QverisClient"></a>
 
-### *class* qveris.QverisClient(config: [QverisConfig](#qveris.QverisConfig) | None = None, debug_callback: Callable[[str], None] | None = None)
+### *class* qveris.QverisClient(config: [QverisConfig](#qveris.QverisConfig) | None = None, debug_callback: Callable[[str], None] | None = None, \*, credential_provider: CredentialProvider | None = None)
 
 Async client for Qveris API.
 

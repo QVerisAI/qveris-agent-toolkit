@@ -1,4 +1,13 @@
-from qveris import Agent, Message, QverisClient, SearchResponse, ToolExecutionResponse
+from qveris import (
+    Agent,
+    ApiKeyCredentialProvider,
+    CredentialContext,
+    CredentialProvider,
+    Message,
+    QverisClient,
+    SearchResponse,
+    ToolExecutionResponse,
+)
 from qveris.client import (
     CALL_TOOL_DEF,
     DEFAULT_SYSTEM_PROMPT,
@@ -14,6 +23,9 @@ from qveris.types import ToolInfo, ToolParameter
 def test_public_sdk_exports_cover_core_classes_and_models() -> None:
     assert Agent.__name__ == "Agent"
     assert QverisClient.__name__ == "QverisClient"
+    assert ApiKeyCredentialProvider.__name__ == "ApiKeyCredentialProvider"
+    assert CredentialContext(resource="https://qveris.ai/api/v1").scopes == ()
+    assert CredentialProvider.__name__ == "CredentialProvider"
     assert Message(role="user", content="hello").role == "user"
     assert SearchResponse(results=[{"tool_id": "tool-1"}]).results[0].tool_id == "tool-1"
     assert ToolExecutionResponse(execution_id="exec-1", success=True).success is True
