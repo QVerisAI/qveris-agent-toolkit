@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  bearerAuthHeaderInput,
   buildCatalog,
   buildServerCard,
   CATALOG_SPEC_VERSION,
@@ -53,6 +54,103 @@ describe('buildServerCard', () => {
     expect(card.repository).toBeUndefined();
     expect(card.remotes?.[0]).toEqual({ type: 'streamable-http', url: 'http://127.0.0.1:3000/mcp' });
     expect(card.remotes?.[0]).not.toHaveProperty('supportedProtocolVersions');
+  });
+
+  it('attaches remoteHeaders to the remote and leaves header-less cards unchanged', () => {
+    const withHeaders = buildServerCard(
+      { ...INFO, remoteHeaders: [bearerAuthHeaderInput()] },
+      'https://mcp.example.com/mcp',
+    );
+    expect(withHeaders.remotes?.[0].headers).toHaveLength(1);
+    expect(withHeaders.remotes?.[0].headers?.[0].name).toBe('Authorization');
+
+    const withoutHeaders = buildServerCard(INFO, 'https://mcp.example.com/mcp');
+    expect(withoutHeaders.remotes?.[0]).not.toHaveProperty('headers');
+  });
+
+  it('ignores remoteHeaders when no remote URL is given (stdio card)', () => {
+    const card = buildServerCard({ ...INFO, remoteHeaders: [bearerAuthHeaderInput()] });
+    expect(card.remotes).toBeUndefined();
+  });
+
+  it('rejects secret headers carrying literal values instead of {variable} templates', () => {
+    const literal = { name: 'Authorization', isSecret: true, value: 'Bearer sk-real-key' };
+    expect(() => buildServerCard({ ...INFO, remoteHeaders: [literal] }, 'https://mcp.example.com/mcp')).toThrow(
+      /never a literal credential/,
+    );
+  });
+
+  it('rejects literal credentials riding alongside a valid placeholder', () => {
+    const bypassed = { name: 'Authorization', isSecret: true, value: 'Bearer {api_key} sk-real-key' };
+    expect(() => buildServerCard({ ...INFO, remoteHeaders: [bypassed] }, 'https://mcp.example.com/mcp')).toThrow(
+      /must only contain \{variable\} placeholders/,
+    );
+
+    const multiPlaceholder = { name: 'Authorization', isSecret: true, value: 'Bearer {scheme_a} {scheme_b}' };
+    expect(() =>
+      buildServerCard({ ...INFO, remoteHeaders: [multiPlaceholder] }, 'https://mcp.example.com/mcp'),
+    ).not.toThrow();
+  });
+
+  it('tolerates null variable entries from untyped embedder config', () => {
+    const withNullVariable = {
+      name: 'Authorization',
+      isSecret: true,
+      value: 'Bearer {api_key}',
+      variables: { api_key: null as unknown as Record<string, never> },
+    };
+    expect(() =>
+      buildServerCard({ ...INFO, remoteHeaders: [withNullVariable] }, 'https://mcp.example.com/mcp'),
+    ).not.toThrow();
+  });
+
+  it('rejects secret headers and secret variables with literal defaults', () => {
+    const headerDefault = { name: 'Authorization', isSecret: true, default: 'sk-real-key' };
+    expect(() => buildServerCard({ ...INFO, remoteHeaders: [headerDefault] }, 'https://mcp.example.com/mcp')).toThrow(
+      /literal default/,
+    );
+
+    const variableDefault = {
+      name: 'Authorization',
+      value: 'Bearer {api_key}',
+      variables: { api_key: { isSecret: true, default: 'sk-real-key' } },
+    };
+    expect(() => buildServerCard({ ...INFO, remoteHeaders: [variableDefault] }, 'https://mcp.example.com/mcp')).toThrow(
+      /secret variables must not embed/,
+    );
+  });
+});
+
+describe('bearerAuthHeaderInput', () => {
+  it('builds the required+secret Authorization template', () => {
+    expect(bearerAuthHeaderInput()).toEqual({
+      name: 'Authorization',
+      description: 'Bearer authentication for this remote endpoint.',
+      isRequired: true,
+      isSecret: true,
+      value: 'Bearer {api_key}',
+      variables: {
+        api_key: {
+          description: 'Secret credential for this remote endpoint.',
+          isRequired: true,
+          isSecret: true,
+        },
+      },
+    });
+  });
+
+  it('supports a custom variable name and descriptions', () => {
+    const header = bearerAuthHeaderInput({
+      variableName: 'qveris_api_key',
+      description: 'QVeris bearer auth.',
+      variableDescription: 'API key from the QVeris console.',
+    });
+    expect(header.value).toBe('Bearer {qveris_api_key}');
+    expect(header.variables?.qveris_api_key?.description).toBe('API key from the QVeris console.');
+  });
+
+  it('rejects variable names that are not valid template identifiers', () => {
+    expect(() => bearerAuthHeaderInput({ variableName: 'not-valid' })).toThrow(/template variable name/);
   });
 });
 
