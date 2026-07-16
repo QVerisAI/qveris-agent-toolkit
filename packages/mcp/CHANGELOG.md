@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- The deprecated alias tools (`search_tools`, `get_tools_by_ids`, `execute_tool`) now declare the same `outputSchema` as their canonical counterparts, so MCP SDK clients validate alias results instead of silently skipping validation. Correction to the 0.9.0 notes: through 0.10.0 only the five canonical tools declared `outputSchema`, although alias calls always returned `structuredContent`. ([#237])
+
 ## [0.10.0] - 2026-07-14
 
 ### Changed
@@ -134,6 +138,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#201]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/201
 [#204]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/204
 [#211]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/211
+[#237]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/237
 [#158]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/158
 [#145]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/145
 [#120]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/120

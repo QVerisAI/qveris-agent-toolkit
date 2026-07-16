@@ -61,6 +61,24 @@ describe('output schemas + structured content', () => {
     expect(JSON.parse(text).search_id).toBe('s1');
     await c.close();
   });
+
+  it('deprecated aliases declare the same outputSchema as their canonical tools', async () => {
+    const c = await connect();
+    const { tools } = await c.listTools();
+    const byName = new Map(tools.map((t) => [t.name, t]));
+    const aliases = { search_tools: 'discover', get_tools_by_ids: 'inspect', execute_tool: 'call' };
+    for (const [alias, canonical] of Object.entries(aliases)) {
+      expect(byName.get(alias)?.outputSchema, `${alias} outputSchema`).toEqual(byName.get(canonical)?.outputSchema);
+    }
+    await c.close();
+  });
+
+  it('alias calls return structuredContent like their canonical tools', async () => {
+    const c = await connect({ client: fakeQverisClient() });
+    const result = await c.callTool({ name: 'search_tools', arguments: { query: 'weather' } });
+    expect(result.structuredContent).toMatchObject({ search_id: 's1' });
+    await c.close();
+  });
 });
 
 describe('elicitation billing consent (QVERIS_MCP_CONFIRM_CALLS)', () => {
