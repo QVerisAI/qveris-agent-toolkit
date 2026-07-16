@@ -52,6 +52,11 @@ The provider receives the resolved API `resource` and requested `scopes`
 (currently empty). Configure either `api_key` or `credential_provider`, never
 both. A provider does not select or change the API endpoint.
 
+A credential provider supplies the bearer value that authenticates requests to
+the QVeris API itself. It is unrelated to the data and tool providers in the
+capability catalog: their upstream credentials are managed by the platform and
+never pass through the SDK.
+
 ## Canonical Workflow
 
 ```python

@@ -75,6 +75,11 @@ The provider receives the resolved API `resource` and the requested `scopes`
 (currently empty). Configure either `apiKey` or `credentialProvider`, never
 both. A provider does not select or change the API endpoint.
 
+A credential provider supplies the bearer value that authenticates requests to
+the QVeris API itself. It is unrelated to the data and tool providers in the
+capability catalog: their upstream credentials are managed by the platform and
+never pass through the SDK.
+
 | Method | Billed | Returns | Notes |
 | --- | --- | --- | --- |
 | `discover(query, options?)` | Free | `SearchResponse` | `options`: `limit`, `sessionId`, `timeoutMs`. Results carry `why_recommended`, `expected_cost`, `stats`. |
