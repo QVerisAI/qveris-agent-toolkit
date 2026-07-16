@@ -1,6 +1,6 @@
 # QVeris REST API Documentation
 
-Version: 2026-07-13
+Version: 2026-07-16.1
 
 The public REST API exposes the core agent path:
 
@@ -84,11 +84,12 @@ Client guidance:
 
 ## Rate limits
 
-Rate limits are applied per API key when a Bearer token is present, otherwise per client IP.
+Authenticated rate limits are shared by all API keys owned by the same account. Anonymous website traffic is limited per client IP.
 
 | Action | Default quota |
 | --- | --- |
 | Discover (`POST /search`) | 120 requests/minute |
+| Inspect (`POST /tools/by-ids`) | 120 requests/minute |
 | Call (`POST /tools/execute`) | 200 requests/minute |
 
 Rate-limited responses include:

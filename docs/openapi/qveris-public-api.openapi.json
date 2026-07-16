@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "QVeris Public REST API",
-    "version": "2026-07-13",
+    "version": "2026-07-16.1",
     "summary": "External REST API for enterprise integration.",
     "description": "OpenAPI 3.1 schema for the formally released public `/api/v1` REST API surface. It covers search, provider discovery, tool metadata lookup/execution, credits, and account audit endpoints. Unreleased API families are intentionally excluded from this customer-facing schema."
   },
@@ -118,7 +118,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -138,23 +138,14 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
           }
         },
         "x-qveris-visibility": "public",
-        "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
-        "x-qveris-source": {
-          "file": "backend/routers/auth_usage.py",
-          "line": 1371
-        },
-        "x-qveris-response-model": "APIResponse[SettlementHistoryResponse]"
+        "x-qveris-release-stage": "published"
       }
     },
     "/auth/credits": {
@@ -181,7 +172,20 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, expired, or unrecognized credential",
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -193,16 +197,7 @@
           }
         ],
         "x-qveris-visibility": "public",
-        "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
-        "x-qveris-source": {
-          "file": "backend/routers/auth.py",
-          "line": 399
-        },
-        "x-qveris-response-model": "APIResponse[dict]"
+        "x-qveris-release-stage": "published"
       }
     },
     "/auth/credits/ledger": {
@@ -469,7 +464,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -489,7 +484,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -515,23 +510,14 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
           }
         },
         "x-qveris-visibility": "public",
-        "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
-        "x-qveris-source": {
-          "file": "backend/routers/auth_usage.py",
-          "line": 1469
-        },
-        "x-qveris-response-model": "APIResponse[CreditsLedgerResponse]"
+        "x-qveris-release-stage": "published"
       }
     },
     "/auth/credits/ledger-readiness": {
@@ -601,7 +587,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -621,23 +607,14 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
           }
         },
         "x-qveris-visibility": "public",
-        "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
-        "x-qveris-source": {
-          "file": "backend/routers/auth_usage.py",
-          "line": 1806
-        },
-        "x-qveris-response-model": "APIResponse[CreditsLedgerReadinessResponse]"
+        "x-qveris-release-stage": "published"
       }
     },
     "/auth/credits/ledger/export": {
@@ -727,22 +704,14 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
           }
         },
         "x-qveris-visibility": "public",
-        "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
-        "x-qveris-source": {
-          "file": "backend/routers/auth_usage.py",
-          "line": 1645
-        }
+        "x-qveris-release-stage": "published"
       }
     },
     "/auth/credits/ledger/{entry_id}": {
@@ -785,7 +754,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -805,23 +774,14 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
           }
         },
         "x-qveris-visibility": "public",
-        "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
-        "x-qveris-source": {
-          "file": "backend/routers/auth_usage.py",
-          "line": 1754
-        },
-        "x-qveris-response-model": "APIResponse[CreditsLedgerItem]"
+        "x-qveris-release-stage": "published"
       }
     },
     "/auth/usage/credits-spent": {
@@ -927,7 +887,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -947,23 +907,14 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
           }
         },
         "x-qveris-visibility": "public",
-        "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
-        "x-qveris-source": {
-          "file": "backend/routers/auth_usage.py",
-          "line": 1140
-        },
-        "x-qveris-response-model": "APIResponse[UsageCreditsSpentResponse]"
+        "x-qveris-release-stage": "published"
       }
     },
     "/auth/usage/history/v2": {
@@ -1399,7 +1350,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -1419,7 +1370,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -1445,23 +1396,14 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
           }
         },
         "x-qveris-visibility": "public",
-        "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
-        "x-qveris-source": {
-          "file": "backend/routers/auth_usage.py",
-          "line": 826
-        },
-        "x-qveris-response-model": "APIResponse[UsageEventsResponse]"
+        "x-qveris-release-stage": "published"
       }
     },
     "/auth/usage/history/v2/export": {
@@ -1730,22 +1672,14 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
           }
         },
         "x-qveris-visibility": "public",
-        "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
-        "x-qveris-source": {
-          "file": "backend/routers/auth_usage.py",
-          "line": 1210
-        }
+        "x-qveris-release-stage": "published"
       }
     },
     "/auth/usage/history/v2/summary": {
@@ -2045,7 +1979,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -2065,23 +1999,14 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
           }
         },
         "x-qveris-visibility": "public",
-        "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
-        "x-qveris-source": {
-          "file": "backend/routers/auth_usage.py",
-          "line": 1029
-        },
-        "x-qveris-response-model": "APIResponse[UsageEventSummaryResponse]"
+        "x-qveris-release-stage": "published"
       }
     },
     "/auth/usage/history/v2/{event_id}": {
@@ -2125,7 +2050,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -2145,23 +2070,14 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
           }
         },
         "x-qveris-visibility": "public",
-        "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
-        "x-qveris-source": {
-          "file": "backend/routers/auth_usage.py",
-          "line": 1329
-        },
-        "x-qveris-response-model": "APIResponse[UsageEventItem]"
+        "x-qveris-release-stage": "published"
       }
     },
     "/auth/verify-token": {
@@ -2188,7 +2104,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -2200,16 +2116,7 @@
           }
         ],
         "x-qveris-visibility": "public",
-        "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
-        "x-qveris-source": {
-          "file": "backend/routers/auth.py",
-          "line": 746
-        },
-        "x-qveris-response-model": "APIResponse[TokenVerificationResponse]"
+        "x-qveris-release-stage": "published"
       }
     },
     "/credits": {
@@ -2236,7 +2143,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -2248,16 +2155,7 @@
           }
         ],
         "x-qveris-visibility": "public",
-        "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
-        "x-qveris-source": {
-          "file": "backend/routers/credits.py",
-          "line": 28
-        },
-        "x-qveris-response-model": "APIResponse[dict]"
+        "x-qveris-release-stage": "published"
       }
     },
     "/meta": {
@@ -2284,7 +2182,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -2292,15 +2190,6 @@
         },
         "x-qveris-visibility": "public",
         "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
-        "x-qveris-source": {
-          "file": "backend/main.py",
-          "line": 315
-        },
-        "x-qveris-response-model": "PublicApiMetadata",
         "security": []
       }
     },
@@ -2411,7 +2300,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -2431,22 +2320,14 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
           }
         },
         "x-qveris-visibility": "public",
-        "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
-        "x-qveris-source": {
-          "file": "backend/routers/search.py",
-          "line": 4962
-        }
+        "x-qveris-release-stage": "published"
       }
     },
     "/providers/categories": {
@@ -2471,7 +2352,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -2483,15 +2364,7 @@
           }
         ],
         "x-qveris-visibility": "public",
-        "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
-        "x-qveris-source": {
-          "file": "backend/routers/search.py",
-          "line": 3042
-        }
+        "x-qveris-release-stage": "published"
       }
     },
     "/search": {
@@ -2535,7 +2408,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             },
@@ -2611,7 +2484,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             },
@@ -2660,7 +2533,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             },
@@ -2712,7 +2585,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             },
@@ -2737,10 +2610,6 @@
         ],
         "x-qveris-visibility": "public",
         "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2769,6 +2638,40 @@
         "responses": {
           "200": {
             "description": "Successful Response",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-16.1"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -2811,20 +2714,44 @@
                   "remaining_credits": 995
                 }
               }
-            },
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
             "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
               "X-Qveris-Api-Version": {
                 "description": "Version of the published QVeris REST API contract.",
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -2836,14 +2763,50 @@
                   "message": "Invalid API key"
                 }
               }
-            },
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
             "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
               "X-Qveris-Api-Version": {
                 "description": "Version of the published QVeris REST API contract.",
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "failure",
+                  "status_code": 429,
+                  "message": "Rate limit exceeded. Please try again later."
                 }
               }
             }
@@ -2867,7 +2830,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -2880,14 +2843,6 @@
         ],
         "x-qveris-visibility": "public",
         "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
-        "x-qveris-source": {
-          "file": "backend/routers/search.py",
-          "line": 5124
-        },
         "requestBody": {
           "required": true,
           "content": {
@@ -2998,7 +2953,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -3035,7 +2990,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -3072,7 +3027,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             },
@@ -3126,7 +3081,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             },
@@ -3167,7 +3122,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-13"
+                  "const": "2026-07-16.1"
                 }
               }
             }
@@ -3175,10 +3130,6 @@
         },
         "x-qveris-visibility": "public",
         "x-qveris-release-stage": "published",
-        "x-qveris-regions": [
-          "cn",
-          "global"
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -4105,7 +4056,7 @@
             "title": "Contract Version",
             "description": "Version of the published QVeris REST API contract.",
             "examples": [
-              "2026-07-13"
+              "2026-07-16.1"
             ]
           }
         },
@@ -5916,10 +5867,109 @@
         "title": "PublicToolStats",
         "properties": {
           "avg_execution_time_ms": {
-            "type": "number"
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "success_rate": {
-            "type": "number"
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "sample_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "quality_sample_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "metrics_sample_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "success_rate_sample_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "latency_sample_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minimum_sample_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "success_rate_minimum_sample_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "latency_minimum_sample_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "data_status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "insufficient",
+              "stale",
+              "unavailable"
+            ]
+          },
+          "quality_data_status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "insufficient",
+              "stale",
+              "unavailable"
+            ]
+          },
+          "success_rate_status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "insufficient",
+              "stale",
+              "unavailable"
+            ]
+          },
+          "latency_status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "insufficient",
+              "stale",
+              "unavailable"
+            ]
+          },
+          "metric_window": {
+            "type": "string"
+          },
+          "window": {
+            "type": "string"
+          },
+          "window_label": {
+            "type": "string"
+          },
+          "window_start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "window_end": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "metrics_updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_checked_at": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -6058,6 +6108,111 @@
           },
           "stats": {
             "$ref": "#/components/schemas/PublicToolStats"
+          },
+          "success_rate": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "avg_execution_time_ms": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "sample_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "quality_sample_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "metrics_sample_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "success_rate_sample_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "latency_sample_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minimum_sample_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "success_rate_minimum_sample_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "latency_minimum_sample_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "data_status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "insufficient",
+              "stale",
+              "unavailable"
+            ]
+          },
+          "quality_data_status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "insufficient",
+              "stale",
+              "unavailable"
+            ]
+          },
+          "success_rate_status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "insufficient",
+              "stale",
+              "unavailable"
+            ]
+          },
+          "latency_status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "insufficient",
+              "stale",
+              "unavailable"
+            ]
+          },
+          "metric_window": {
+            "type": "string"
+          },
+          "window": {
+            "type": "string"
+          },
+          "window_label": {
+            "type": "string"
+          },
+          "window_start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "window_end": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "metrics_updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_checked_at": {
+            "type": "string",
+            "format": "date-time"
           },
           "expected_cost": {
             "type": "string",

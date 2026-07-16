@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import AnyUrl, BaseModel, ConfigDict, Field, conint, constr
@@ -83,7 +84,7 @@ class PublicApiMetadata(BaseModel):
     contract_version: str = Field(
         ...,
         description='Version of the published QVeris REST API contract.',
-        examples=['2026-07-13'],
+        examples=['2026-07-16.1'],
         title='Contract Version',
     )
 
@@ -378,9 +379,56 @@ class PublicToolParameter(BaseModel):
     enum: Optional[List[str]] = None
 
 
+class DataStatus(Enum):
+    available = 'available'
+    insufficient = 'insufficient'
+    stale = 'stale'
+    unavailable = 'unavailable'
+
+
+class QualityDataStatus(Enum):
+    available = 'available'
+    insufficient = 'insufficient'
+    stale = 'stale'
+    unavailable = 'unavailable'
+
+
+class SuccessRateStatus(Enum):
+    available = 'available'
+    insufficient = 'insufficient'
+    stale = 'stale'
+    unavailable = 'unavailable'
+
+
+class LatencyStatus(Enum):
+    available = 'available'
+    insufficient = 'insufficient'
+    stale = 'stale'
+    unavailable = 'unavailable'
+
+
 class PublicToolStats(BaseModel):
     avg_execution_time_ms: Optional[float] = None
     success_rate: Optional[float] = None
+    sample_count: Optional[conint(ge=0)] = None
+    quality_sample_count: Optional[conint(ge=0)] = None
+    metrics_sample_count: Optional[conint(ge=0)] = None
+    success_rate_sample_count: Optional[conint(ge=0)] = None
+    latency_sample_count: Optional[conint(ge=0)] = None
+    minimum_sample_count: Optional[conint(ge=1)] = None
+    success_rate_minimum_sample_count: Optional[conint(ge=1)] = None
+    latency_minimum_sample_count: Optional[conint(ge=1)] = None
+    data_status: Optional[DataStatus] = None
+    quality_data_status: Optional[QualityDataStatus] = None
+    success_rate_status: Optional[SuccessRateStatus] = None
+    latency_status: Optional[LatencyStatus] = None
+    metric_window: Optional[str] = None
+    window: Optional[str] = None
+    window_label: Optional[str] = None
+    window_start: Optional[datetime] = None
+    window_end: Optional[datetime] = None
+    metrics_updated_at: Optional[datetime] = None
+    last_checked_at: Optional[datetime] = None
 
 
 class PublicBillingRule(BaseModel):
@@ -460,6 +508,27 @@ class PublicCapabilityResult(BaseModel):
     params: Optional[List[PublicToolParameter]] = None
     examples: Optional[Dict[str, Any]] = None
     stats: Optional[PublicToolStats] = None
+    success_rate: Optional[float] = None
+    avg_execution_time_ms: Optional[float] = None
+    sample_count: Optional[conint(ge=0)] = None
+    quality_sample_count: Optional[conint(ge=0)] = None
+    metrics_sample_count: Optional[conint(ge=0)] = None
+    success_rate_sample_count: Optional[conint(ge=0)] = None
+    latency_sample_count: Optional[conint(ge=0)] = None
+    minimum_sample_count: Optional[conint(ge=1)] = None
+    success_rate_minimum_sample_count: Optional[conint(ge=1)] = None
+    latency_minimum_sample_count: Optional[conint(ge=1)] = None
+    data_status: Optional[DataStatus] = None
+    quality_data_status: Optional[QualityDataStatus] = None
+    success_rate_status: Optional[SuccessRateStatus] = None
+    latency_status: Optional[LatencyStatus] = None
+    metric_window: Optional[str] = None
+    window: Optional[str] = None
+    window_label: Optional[str] = None
+    window_start: Optional[datetime] = None
+    window_end: Optional[datetime] = None
+    metrics_updated_at: Optional[datetime] = None
+    last_checked_at: Optional[datetime] = None
     expected_cost: Optional[str] = Field(
         None,
         description='Pre-call cost estimate returned by Discover/Inspect when available.',
