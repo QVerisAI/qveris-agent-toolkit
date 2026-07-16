@@ -19,7 +19,10 @@ on:
       - "packages/python-sdk/pyproject.toml"
       - "packages/python-sdk/uv.lock"
       - "scripts/check-doc-locales.mjs"
+      - "scripts/prepare-website-docs.mjs"
+      - "scripts/prepare-website-docs.test.mjs"
       - ".github/workflows/docs-check.yml"
+      - ".github/workflows/sync-docs-to-website.yml"
   push:
     branches:
       - main
@@ -37,7 +40,10 @@ on:
       - "packages/python-sdk/pyproject.toml"
       - "packages/python-sdk/uv.lock"
       - "scripts/check-doc-locales.mjs"
+      - "scripts/prepare-website-docs.mjs"
+      - "scripts/prepare-website-docs.test.mjs"
       - ".github/workflows/docs-check.yml"
+      - ".github/workflows/sync-docs-to-website.yml"
 
 permissions:
   contents: read
@@ -77,3 +83,5 @@ jobs:
           node-version: 20
       - name: Check doc locale consistency
         run: node scripts/check-doc-locales.mjs
+      - name: Test release-aware website docs staging
+        run: node --test scripts/prepare-website-docs.test.mjs
