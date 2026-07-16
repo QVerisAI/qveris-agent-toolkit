@@ -1,4 +1,4 @@
-import { readdirSync } from 'node:fs';
+import { readdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -9,9 +9,9 @@ import { scoreRecords } from './scoring.mjs';
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 
 // Validate every versioned task set; published results name the exact file.
-const taskFiles = readdirSync(resolve(root, 'tasks'))
+const taskFiles = (await readdir(resolve(root, 'tasks')))
   .filter((name) => /^v\d+\.jsonl$/.test(name))
-  .sort();
+  .sort((a, b) => Number.parseInt(a.slice(1), 10) - Number.parseInt(b.slice(1), 10));
 if (taskFiles.length === 0) throw new Error('No versioned task sets found under tasks/');
 
 const counts = [];
