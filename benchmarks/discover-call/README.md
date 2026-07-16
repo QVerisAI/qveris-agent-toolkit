@@ -45,6 +45,25 @@ The summary includes a 95% Wilson interval for workflow success. Dry runs never
 count as workflow success, so a published success rate cannot be produced
 without exercising the full workflow.
 
+## Task sets
+
+Task sets are versioned and immutable once referenced by a published result:
+
+- `tasks/v1.jsonl` — 6 tasks (initial smoke-scale set).
+- `tasks/v2.jsonl` — 18 tasks (supersedes v1 as the reference set): the v1 six
+  unchanged, plus geocoding, IP geolocation, crypto price, web search, air
+  quality, market news, domain intelligence, image search, market holidays,
+  earthquake catalog, company fundamentals, and sports standings. Every added
+  task was verified against the live catalog: its `discover_query` returns
+  multiple parameterizable capabilities within the default discovery limit,
+  and constraint aliases were taken from the actual parameter names of those
+  capabilities.
+
+New tasks land as a new `tasks/vN.jsonl` revision, never by editing an
+existing file, and must still score deterministically at the contract level.
+Select the set with `--tasks`; the scorer refuses to aggregate records across
+different task-set hashes.
+
 ## Run
 
 Set `QVERIS_API_KEY`, then provide an adapter executable and an immutable model
@@ -113,7 +132,7 @@ parameters and is not an official model result.
 An official result must include:
 
 - the raw JSONL records and generated summary;
-- the toolkit commit SHA and unchanged `tasks/v1.jsonl`;
+- the toolkit commit SHA and the exact, unchanged task-set file used (e.g. `tasks/v2.jsonl`);
 - an immutable model version, adapter source revision, trial count, and date;
 - the recorded API base URL, discovery limit, and task-set SHA-256;
 - at least three trials per task;
