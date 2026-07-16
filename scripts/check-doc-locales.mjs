@@ -29,6 +29,10 @@ const CN = 'docs/cn/zh-CN';
 const CN_INTENTIONAL_OMISSIONS = new Set([
   'claude-code-setup.md',
   'codex-setup.md',
+  // Source-generated references are global-locale pages. China-facing SDK
+  // guides remain the public setup entry points for that deployment.
+  'js-sdk-api.md',
+  'python-sdk-api.md',
 ]);
 
 function mdFiles(rel) {

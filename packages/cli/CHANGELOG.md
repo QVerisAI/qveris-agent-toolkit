@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-07-15
+
 ### Fixed
 
 - Account and pricing recovery hints now follow the resolved API endpoint for the public sites and custom deployments instead of linking to an unrelated site. ([#221])
@@ -78,7 +80,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial release: `discover` / `inspect` / `call` from the terminal against the QVeris API.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.8.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.8.1...HEAD
+[0.8.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.8.0...cli-v0.8.1
 [0.8.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.7.0...cli-v0.8.0
 [0.7.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.6.1...cli-v0.7.0
 [0.6.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.6.0...cli-v0.6.1

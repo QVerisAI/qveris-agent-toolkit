@@ -1,6 +1,6 @@
 # QVeris Python SDK
 
-异步 Python SDK，让你在自己的智能体和应用中发现、检查、调用并审计 10,000+ 真实已验证的 API 能力。
+QVeris Python SDK v0.3.1 是最新测试版本。使用异步客户端，在你自己的智能体和应用中发现、检查、调用并审计 10,000+ 真实已验证的 API 能力。
 
 SDK 提供两种控制粒度：
 
@@ -182,6 +182,9 @@ agent = Agent(
 ```
 
 ## API 参考
+
+[根据源码生成的 API 参考](python-sdk-api.md)列出当前公开 client、Agent、配置和响应模型的签名。
+Sphinx 会根据 Python 对象与 docstring 重新生成该页面，CI 同时检查是否漂移。
 
 ### `QverisClient`
 

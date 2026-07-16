@@ -47,8 +47,9 @@
     "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit",
     "typecheck:examples": "tsc -p tsconfig.examples.json --noEmit",
-    "lint": "eslint . && prettier --check \"src/**/*.ts\" \"examples/**/*.ts\"",
-    "lint:fix": "eslint . --fix && prettier --write \"src/**/*.ts\" \"examples/**/*.ts\"",
+    "docs:generate": "typedoc && typedoc --out ../../docs/zh-CN --lang zh --readme docs-api/README.zh.md",
+    "lint": "eslint . && prettier --check \"src/**/*.ts\" \"examples/**/*.ts\" \"docs-api/**/*.ts\" typedoc.json",
+    "lint:fix": "eslint . --fix && prettier --write \"src/**/*.ts\" \"examples/**/*.ts\" \"docs-api/**/*.ts\" typedoc.json",
     "test:coverage": "vitest run --coverage"
   },
   "peerDependencies": {
@@ -72,6 +73,8 @@
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.7.0",
     "prettier": "^3.9.5",
+    "typedoc": "^0.28.20",
+    "typedoc-plugin-markdown": "^4.12.0",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.63.0",
     "vitest": "3.2.6",

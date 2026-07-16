@@ -22,9 +22,8 @@ export interface SearchRequest {
 
   /**
    * Maximum number of results to return.
+   * Minimum: 1. Maximum: 100.
    * @default 20
-   * @minimum 1
-   * @maximum 100
    */
   limit?: number;
 
@@ -309,8 +308,8 @@ export interface ExecuteRequest {
    * Maximum size of response data in bytes.
    * If the tool generates data longer than this, it will be truncated
    * and a download URL will be provided for the full content.
+   * Minimum: -1 (`-1` means no limit).
    * @default 20480 (20KB)
-   * @minimum -1 (-1 means no limit)
    */
   max_response_size?: number;
 }
