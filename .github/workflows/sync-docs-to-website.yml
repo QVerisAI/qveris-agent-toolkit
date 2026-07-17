@@ -117,7 +117,7 @@ jobs:
 
       - name: Setup Node.js
         if: steps.guard.outputs.skip != 'true'
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 20
 

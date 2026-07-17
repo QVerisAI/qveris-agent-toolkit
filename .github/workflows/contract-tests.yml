@@ -80,7 +80,7 @@ jobs:
         working-directory: benchmarks/discover-call
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: "npm"
@@ -100,7 +100,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
       - name: CLI tests (full suite, includes the OpenAPI contract test)
@@ -137,7 +137,7 @@ jobs:
         working-directory: packages/js-sdk
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: "npm"
@@ -162,7 +162,7 @@ jobs:
         working-directory: packages/mcp
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: "npm"
@@ -193,7 +193,7 @@ jobs:
         working-directory: packages/openclaw-qveris-plugin
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22.22.2
           cache: "npm"
@@ -213,7 +213,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22.22.2
       - uses: astral-sh/setup-uv@v7
@@ -242,7 +242,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22.22.2
       - uses: astral-sh/setup-uv@v7
