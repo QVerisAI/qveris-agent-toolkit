@@ -41,20 +41,20 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@sinclair/typebox": "0.34.50"
+    "@sinclair/typebox": "0.34.52"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@vitest/coverage-v8": "3.2.6",
+    "@vitest/coverage-v8": "3.2.7",
     "esbuild": "0.28.1",
     "eslint": "^10.6.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.7.0",
-    "openclaw": "2026.6.11",
+    "openclaw": "2026.7.1",
     "prettier": "^3.9.5",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.63.0",
-    "vitest": "3.2.6"
+    "vitest": "3.2.7"
   },
   "overrides": {
     "vite": "6.4.3"
