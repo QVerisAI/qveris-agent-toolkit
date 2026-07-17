@@ -1,6 +1,6 @@
 # QVeris REST API Documentation
 
-Version: 2026-07-13
+Version: 2026-07-17.2
 
 The public REST API exposes the core agent path:
 
@@ -84,11 +84,12 @@ Client guidance:
 
 ## Rate limits
 
-Rate limits are applied per API key when a Bearer token is present, otherwise per client IP.
+Authenticated rate limits are shared by all API keys owned by the same account. Anonymous website traffic is limited per client IP.
 
 | Action | Default quota |
 | --- | --- |
 | Discover (`POST /search`) | 120 requests/minute |
+| Inspect (`POST /tools/by-ids`) | 120 requests/minute |
 | Call (`POST /tools/execute`) | 200 requests/minute |
 
 Rate-limited responses include:
@@ -108,9 +109,11 @@ POST /search
 
 ### Request
 
+This walkthrough uses the exact tool ID as its query so every following step is reproducible. For dynamic discovery, pass a natural-language capability description and select one of the returned tools.
+
 ```json
 {
-  "query": "weather forecast API",
+  "query": "openweathermap.weather.execute.v1",
   "limit": 10,
   "session_id": "sess_7Q9m"
 }
@@ -118,15 +121,17 @@ POST /search
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `query` | string | Yes | Natural-language capability query |
+| `query` | string | Yes | Natural-language capability query, or an exact tool ID for deterministic lookup |
 | `limit` | integer | No | Maximum result count; default `20`, range `1-100` |
 | `session_id` | string | No | Tracking and pricing-context id for this user task |
+| `view` | string | No | Response projection: `routing` returns compact routing cards (`tool_id`, `capability`, `cost_class`, `reliability`, `as_of_support`); `full` or omitted returns the complete shape, identical to previous releases |
+| `lang` | string | No | Response language, `zh` or `en`; defaults to `Accept-Language` negotiation |
 
 ### Success response
 
 ```json
 {
-  "query": "weather forecast API",
+  "query": "openweathermap.weather.execute.v1",
   "search_id": "srch_01HZX9QK7J3M9T",
   "total": 1,
   "results": [
@@ -137,10 +142,10 @@ POST /search
       "provider_name": "OpenWeatherMap",
       "params": [
         {
-          "name": "city",
+          "name": "q",
           "type": "string",
           "required": true,
-          "description": "City name"
+          "description": "Location query accepted by the weather provider."
         }
       ],
       "expected_cost": "5 credits per successful request",
@@ -192,7 +197,7 @@ Invalid API key:
 
 ```json
 {
-  "query": "weather forecast API",
+  "query": "openweathermap.weather.execute.v1",
   "search_id": "srch_failed",
   "total": 0,
   "results": []
@@ -203,7 +208,7 @@ Insufficient credits:
 
 ```json
 {
-  "query": "weather forecast API",
+  "query": "openweathermap.weather.execute.v1",
   "search_id": "srch_failed",
   "total": 0,
   "results": [],
@@ -245,6 +250,7 @@ Inspect returns the same capability result shape as Discover, usually with more 
 | `tool_ids` | string[] | Yes | Capability ids returned by Discover |
 | `search_id` | string | No | Search id that returned the capability |
 | `session_id` | string | No | Tracking and pricing-context id for this user task |
+| `view` | string | No | Response projection: `lean` trims per-capability metadata for model context; `full` or omitted returns the complete shape |
 
 ### Success response
 
@@ -260,23 +266,15 @@ Inspect returns the same capability result shape as Discover, usually with more 
       "provider_name": "OpenWeatherMap",
       "params": [
         {
-          "name": "city",
+          "name": "q",
           "type": "string",
           "required": true,
-          "description": "City name"
-        },
-        {
-          "name": "units",
-          "type": "string",
-          "required": false,
-          "description": "Temperature units",
-          "enum": ["metric", "imperial", "standard"]
+          "description": "Location query accepted by the weather provider."
         }
       ],
       "examples": {
         "sample_parameters": {
-          "city": "London",
-          "units": "metric"
+          "q": "London"
         }
       },
       "expected_cost": "5 credits per successful request",
@@ -341,8 +339,7 @@ You may pass `tool_id` as a query parameter or in the JSON body. Use the query p
   "session_id": "sess_7Q9m",
   "model": "gpt-4.1",
   "parameters": {
-    "city": "London",
-    "units": "metric"
+    "q": "London"
   },
   "max_response_size": 20480
 }
@@ -356,6 +353,7 @@ You may pass `tool_id` as a query parameter or in the JSON body. Use the query p
 | `model` | string | Recommended for agents | Model that selected the tool or generated the parameters, such as `gpt-4.1`, `deepseek-v4-pro`, or `claude-sonnet-4` |
 | `parameters` | object | Yes | Capability-specific parameters from Inspect |
 | `max_response_size` | integer | No | Truncate long responses; default `20480`, `-1` disables truncation |
+| `respond_with` | string | No | Server-side result projection: `full` (default, identical to previous releases), `fields:<JSONPath,...>` (comma-separated JSONPath expressions rooted at `result.data`; at least one non-empty expression), or `summary` (schema + size/row statistics + `full_content_file_url` for the complete payload) |
 
 Build `parameters` from the selected tool only:
 
@@ -993,4 +991,4 @@ Invalid credit range:
 
 ## OpenAPI
 
-The public OpenAPI document is available in this repository at `docs/openapi/qveris-public-api.openapi.json`. It includes request bodies, response schemas, and examples for the Discover, Inspect, and Call path.
+The [QVeris Public OpenAPI](https://qveris.ai/openapi/qveris-public-api.openapi.json) document includes request bodies, response schemas, and examples for the Discover, Inspect, and Call path.

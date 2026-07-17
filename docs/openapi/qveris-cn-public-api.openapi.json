@@ -6361,7 +6361,7 @@
   },
   "servers": [
     {
-      "url": "https://qveris.ai/api/v1",
+      "url": "https://qveris.cn/api/v1",
       "description": "QVeris API"
     }
   ],

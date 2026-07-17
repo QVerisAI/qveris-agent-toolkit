@@ -6,6 +6,8 @@ These recipes show common Discover -> Inspect -> Call patterns. Replace sample i
 
 Use this when a user asks for current weather and your agent needs a reliable external capability.
 
+This fixed recipe queries the exact tool ID so the Inspect and Call steps remain reproducible. Use a natural-language capability query when you want QVeris to rank alternative tools dynamically.
+
 ```bash
 export QVERIS_BASE_URL="https://qveris.ai/api/v1"
 export QVERIS_SESSION_ID="weather-$(date +%s)"
@@ -13,7 +15,7 @@ export QVERIS_SESSION_ID="weather-$(date +%s)"
 curl -sS "$QVERIS_BASE_URL/search" \
   -H "Authorization: Bearer $QVERIS_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"query":"current weather by city","limit":3,"session_id":"'"$QVERIS_SESSION_ID"'"}'
+  -d '{"query":"openweathermap.weather.execute.v1","limit":3,"session_id":"'"$QVERIS_SESSION_ID"'"}'
 ```
 
 Inspect the selected tool before calling:
@@ -38,7 +40,7 @@ curl -sS "$QVERIS_BASE_URL/tools/execute?tool_id=openweathermap.weather.execute.
   -d '{
     "search_id":"srch_01HZX9QK7J3M9T",
     "session_id":"'"$QVERIS_SESSION_ID"'",
-    "parameters":{"city":"London","units":"metric"}
+    "parameters":{"q":"London"}
   }'
 ```
 

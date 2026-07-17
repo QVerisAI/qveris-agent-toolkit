@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import AnyUrl, BaseModel, ConfigDict, Field, conint, constr
@@ -83,7 +84,7 @@ class PublicApiMetadata(BaseModel):
     contract_version: str = Field(
         ...,
         description='Version of the published QVeris REST API contract.',
-        examples=['2026-07-13'],
+        examples=['2026-07-17.2'],
         title='Contract Version',
     )
 
@@ -322,9 +323,28 @@ class PublicApiError(BaseModel):
     results: Optional[List[Dict[str, Any]]] = None
 
 
+class View(Enum):
+    """
+    Response projection. `routing` returns compact routing cards (`tool_id`, `capability`, `cost_class`, `reliability`, `as_of_support`) sized for model context; `full` or omitted returns the complete result shape, byte-identical to previous releases.
+    """
+
+    routing = 'routing'
+    full = 'full'
+
+
+class Lang(Enum):
+    """
+    Response language. When omitted the service negotiates from the `Accept-Language` header.
+    """
+
+    zh = 'zh'
+    en = 'en'
+
+
 class PublicSearchRequest(BaseModel):
     query: constr(min_length=1) = Field(
-        ..., description='Natural-language capability query.'
+        ...,
+        description='Natural-language capability query or an exact tool ID for deterministic lookup.',
     )
     limit: Optional[conint(ge=1, le=100)] = Field(
         20, description='Maximum number of ranked results to return.'
@@ -333,6 +353,23 @@ class PublicSearchRequest(BaseModel):
         None,
         description='Optional tracking and pricing-context identifier. It does not promise a cache hit.',
     )
+    view: Optional[View] = Field(
+        None,
+        description='Response projection. `routing` returns compact routing cards (`tool_id`, `capability`, `cost_class`, `reliability`, `as_of_support`) sized for model context; `full` or omitted returns the complete result shape, byte-identical to previous releases.',
+    )
+    lang: Optional[Lang] = Field(
+        None,
+        description='Response language. When omitted the service negotiates from the `Accept-Language` header.',
+    )
+
+
+class View1(Enum):
+    """
+    Response projection. `lean` trims per-capability metadata for model context; `full` or omitted returns the complete result shape.
+    """
+
+    full = 'full'
+    lean = 'lean'
 
 
 class PublicToolsByIdsRequest(BaseModel):
@@ -345,6 +382,10 @@ class PublicToolsByIdsRequest(BaseModel):
     session_id: Optional[str] = Field(
         None,
         description='Optional tracking and pricing-context identifier. It does not promise a cache hit.',
+    )
+    view: Optional[View1] = Field(
+        None,
+        description='Response projection. `lean` trims per-capability metadata for model context; `full` or omitted returns the complete result shape.',
     )
 
 
@@ -368,6 +409,10 @@ class PublicExecuteToolRequest(BaseModel):
         20480,
         description='Maximum response payload bytes before truncation. Use -1 for no limit.',
     )
+    respond_with: Optional[constr(pattern=r'^(full|summary|fields:.+)$')] = Field(
+        None,
+        description='Server-side result projection. `full` (default) returns the complete result, byte-identical to previous releases. `fields:<JSONPath,...>` returns only the selected fields — JSONPath expressions are rooted at `result.data`, comma-separated, and at least one non-empty expression is required. `summary` returns the response schema, size/row statistics, and a `full_content_file_url` for the complete payload.',
+    )
 
 
 class PublicToolParameter(BaseModel):
@@ -378,9 +423,56 @@ class PublicToolParameter(BaseModel):
     enum: Optional[List[str]] = None
 
 
+class DataStatus(Enum):
+    available = 'available'
+    insufficient = 'insufficient'
+    stale = 'stale'
+    unavailable = 'unavailable'
+
+
+class QualityDataStatus(Enum):
+    available = 'available'
+    insufficient = 'insufficient'
+    stale = 'stale'
+    unavailable = 'unavailable'
+
+
+class SuccessRateStatus(Enum):
+    available = 'available'
+    insufficient = 'insufficient'
+    stale = 'stale'
+    unavailable = 'unavailable'
+
+
+class LatencyStatus(Enum):
+    available = 'available'
+    insufficient = 'insufficient'
+    stale = 'stale'
+    unavailable = 'unavailable'
+
+
 class PublicToolStats(BaseModel):
     avg_execution_time_ms: Optional[float] = None
     success_rate: Optional[float] = None
+    sample_count: Optional[conint(ge=0)] = None
+    quality_sample_count: Optional[conint(ge=0)] = None
+    metrics_sample_count: Optional[conint(ge=0)] = None
+    success_rate_sample_count: Optional[conint(ge=0)] = None
+    latency_sample_count: Optional[conint(ge=0)] = None
+    minimum_sample_count: Optional[conint(ge=1)] = None
+    success_rate_minimum_sample_count: Optional[conint(ge=1)] = None
+    latency_minimum_sample_count: Optional[conint(ge=1)] = None
+    data_status: Optional[DataStatus] = None
+    quality_data_status: Optional[QualityDataStatus] = None
+    success_rate_status: Optional[SuccessRateStatus] = None
+    latency_status: Optional[LatencyStatus] = None
+    metric_window: Optional[str] = None
+    window: Optional[str] = None
+    window_label: Optional[str] = None
+    window_start: Optional[datetime] = None
+    window_end: Optional[datetime] = None
+    metrics_updated_at: Optional[datetime] = None
+    last_checked_at: Optional[datetime] = None
 
 
 class PublicBillingRule(BaseModel):
@@ -470,6 +562,22 @@ class PublicCapabilityResult(BaseModel):
     )
     billing_rule: Optional[PublicBillingRule] = None
     calls_count: Optional[str] = None
+    capability: Optional[str] = Field(
+        None,
+        description='Compact capability summary. Returned instead of the full descriptor fields when the request sets `view: routing`.',
+    )
+    cost_class: Optional[str] = Field(
+        None,
+        description='Coarse cost tier (e.g. `low`). Returned by the `routing` view.',
+    )
+    reliability: Optional[str] = Field(
+        None,
+        description='Coarse reliability grade (e.g. `A`). Returned by the `routing` view.',
+    )
+    as_of_support: Optional[bool] = Field(
+        None,
+        description='Whether the capability supports as-of/point-in-time queries. Returned by the `routing` view.',
+    )
 
 
 class PublicSearchResponse(BaseModel):
@@ -485,6 +593,19 @@ class PublicSearchResponse(BaseModel):
     error_message: Optional[str] = None
 
 
+class Summary(BaseModel):
+    """
+    Size and shape statistics returned by the `summary` projection.
+    """
+
+    model_config = ConfigDict(
+        extra='allow',
+    )
+    size_bytes: Optional[int] = None
+    row_count: Optional[int] = None
+    fields: Optional[List[str]] = None
+
+
 class PublicExecuteResult(BaseModel):
     model_config = ConfigDict(
         extra='allow',
@@ -494,6 +615,14 @@ class PublicExecuteResult(BaseModel):
     truncated_content: Optional[str] = None
     full_content_file_url: Optional[AnyUrl] = None
     content_schema: Optional[Dict[str, Any]] = None
+    respond_with: Optional[str] = Field(
+        None,
+        description='Echo of the requested projection mode when `respond_with` was set (e.g. `summary`).',
+    )
+    summary: Optional[Summary] = Field(
+        None,
+        description='Size and shape statistics returned by the `summary` projection.',
+    )
 
 
 class PublicCompactBillingStatement(BaseModel):

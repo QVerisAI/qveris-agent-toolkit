@@ -6,6 +6,8 @@
 
 当用户询问实时天气，而智能体需要可靠外部能力时使用。
 
+本固定示例直接查询完整工具 ID，以保证检查和调用步骤可以稳定复现。需要动态比较候选工具时，请改用自然语言能力描述。
+
 ```bash
 export QVERIS_BASE_URL="https://qveris.ai/api/v1"
 export QVERIS_SESSION_ID="weather-$(date +%s)"
@@ -13,7 +15,7 @@ export QVERIS_SESSION_ID="weather-$(date +%s)"
 curl -sS "$QVERIS_BASE_URL/search" \
   -H "Authorization: Bearer $QVERIS_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"query":"查询当前城市天气","limit":3,"session_id":"'"$QVERIS_SESSION_ID"'"}'
+  -d '{"query":"openweathermap.weather.execute.v1","limit":3,"session_id":"'"$QVERIS_SESSION_ID"'"}'
 ```
 
 调用前检查选中的工具：
@@ -38,7 +40,7 @@ curl -sS "$QVERIS_BASE_URL/tools/execute?tool_id=openweathermap.weather.execute.
   -d '{
     "search_id":"srch_01HZX9QK7J3M9T",
     "session_id":"'"$QVERIS_SESSION_ID"'",
-    "parameters":{"city":"北京","units":"metric"}
+    "parameters":{"q":"北京"}
   }'
 ```
 
