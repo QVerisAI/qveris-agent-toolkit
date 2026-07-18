@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import {
   closeSync,
   futimesSync,
+  linkSync,
   mkdirSync,
   openSync,
   readFileSync,
@@ -172,45 +173,73 @@ export async function withOAuthRefreshLock(
   const lockPath = `${getConfigPath()}.oauth-refresh.lock`;
   const ownerToken = randomUUID();
   const ownerRecord = JSON.stringify({ ownerToken, pid: process.pid });
+  const ownerPath = `${lockPath}.${ownerToken}.owner`;
   mkdirSync(dirname(lockPath), { recursive: true, mode: 0o700 });
+  writeFileSync(ownerPath, ownerRecord, { encoding: "utf8", flag: "wx", mode: 0o600 });
   const deadline = now() + REFRESH_LOCK_TIMEOUT_MS;
   let descriptor;
-  while (descriptor === undefined) {
-    try {
-      descriptor = openSync(lockPath, "wx", 0o600);
-    } catch (error) {
-      if (error?.code !== "EEXIST") throw error;
+  try {
+    while (descriptor === undefined) {
+      let published = false;
       try {
-        if (now() - statSync(lockPath).mtimeMs >= REFRESH_LOCK_STALE_MS) {
-          let ownerIsAlive = false;
+        // A hard link publishes the fully written owner record atomically. Other
+        // contenders can never observe the empty/partial lock created by open+write.
+        linkSync(ownerPath, lockPath);
+        published = true;
+        descriptor = openSync(lockPath, "r+");
+      } catch (error) {
+        if (published) {
           try {
-            ownerIsAlive = isProcessAlive(JSON.parse(readFileSync(lockPath, "utf8")).pid);
+            if (readFileSync(lockPath, "utf8") === ownerRecord) unlinkSync(lockPath);
           } catch {
-            // Invalid records from a terminated writer are safe to reclaim once stale.
-          }
-          if (!ownerIsAlive) {
-            unlinkSync(lockPath);
-            continue;
+            // Preserve the descriptor-open failure.
           }
         }
-      } catch (statError) {
-        if (statError?.code === "ENOENT") continue;
-        throw statError;
+        if (error?.code !== "EEXIST") throw error;
+        try {
+          const firstStat = statSync(lockPath);
+          if (now() - firstStat.mtimeMs >= REFRESH_LOCK_STALE_MS) {
+            let record;
+            try {
+              record = JSON.parse(readFileSync(lockPath, "utf8"));
+            } catch {
+              // An invalid record is not safe to unlink: it may belong to a
+              // replacement owner that is still being observed by this process.
+            }
+            const secondStat = statSync(lockPath);
+            const recordIsStable =
+              firstStat.dev === secondStat.dev &&
+              firstStat.ino === secondStat.ino &&
+              firstStat.size === secondStat.size &&
+              firstStat.mtimeMs === secondStat.mtimeMs;
+            if (recordIsStable && record?.ownerToken && !isProcessAlive(record.pid)) {
+              unlinkSync(lockPath);
+              continue;
+            }
+          }
+        } catch (statError) {
+          if (statError?.code === "ENOENT") continue;
+          throw statError;
+        }
+        if (now() >= deadline) {
+          throw new CliError(
+            "NET_TIMEOUT",
+            "Timed out waiting for another QVeris process to refresh OAuth credentials",
+          );
+        }
+        await sleep(REFRESH_LOCK_WAIT_MS);
       }
-      if (now() >= deadline) {
-        throw new CliError("NET_TIMEOUT", "Timed out waiting for another QVeris process to refresh OAuth credentials");
-      }
-      await sleep(REFRESH_LOCK_WAIT_MS);
     }
-  }
-  try {
-    writeFileSync(descriptor, ownerRecord, "utf8");
+    try {
+      unlinkSync(ownerPath);
+    } catch {
+      // The lock path retains the same inode and complete owner record.
+    }
   } catch (error) {
     try {
-      closeSync(descriptor);
-      unlinkSync(lockPath);
+      unlinkSync(ownerPath);
     } catch {
-      // Preserve the lock initialization error.
+      // Preserve the lock acquisition error.
     }
     throw error;
   }

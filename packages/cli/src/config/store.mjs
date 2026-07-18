@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { chmodSync, readFileSync, renameSync, unlinkSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
+import { CliError } from "../errors/handler.mjs";
 
 function configDir() {
   const xdg = process.env.XDG_CONFIG_HOME;
@@ -18,11 +19,29 @@ export function getConfigPath() {
 }
 
 export function readConfig() {
+  let raw;
   try {
-    return JSON.parse(readFileSync(configPath(), "utf-8"));
-  } catch {
-    return {};
+    raw = readFileSync(configPath(), "utf-8");
+  } catch (error) {
+    if (error?.code === "ENOENT") return {};
+    throw new CliError("API_ERROR", `QVeris config could not be read: ${configPath()}`);
   }
+  let config;
+  try {
+    config = JSON.parse(raw);
+  } catch {
+    throw new CliError(
+      "API_ERROR",
+      `QVeris config contains invalid JSON: ${configPath()}. Repair or remove it before continuing`,
+    );
+  }
+  if (!config || typeof config !== "object" || Array.isArray(config)) {
+    throw new CliError(
+      "API_ERROR",
+      `QVeris config must contain a JSON object: ${configPath()}. Repair or remove it before continuing`,
+    );
+  }
+  return config;
 }
 
 export function writeConfig(config) {

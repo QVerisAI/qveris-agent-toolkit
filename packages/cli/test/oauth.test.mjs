@@ -12,6 +12,7 @@ import {
   revokeOAuthToken,
   startDeviceAuthorization,
   validateOAuthScopes,
+  validateOAuthTokenBinding,
 } from "../src/auth/oauth.mjs";
 import {
   deleteOAuthSession,
@@ -128,6 +129,32 @@ test("OAuth scopes require offline access and reject unsupported values", () => 
     "offline_access",
     "tools.search",
   ]);
+});
+
+test("Token bindings reject resource and scope escalation while accepting scope narrowing", () => {
+  assert.throws(
+    () =>
+      validateOAuthTokenBinding(
+        { resource: "https://other.test/tools" },
+        { resource: "https://unit.test/tools", scope: "openid tools.search" },
+      ),
+    /unexpected resource/,
+  );
+  assert.throws(
+    () =>
+      validateOAuthTokenBinding(
+        { scope: "openid tools.execute" },
+        { resource: "https://unit.test/tools", scope: "openid tools.search" },
+      ),
+    /unexpected scope/,
+  );
+  assert.deepEqual(
+    validateOAuthTokenBinding(
+      { scope: "tools.search" },
+      { resource: "https://unit.test/tools", scope: "openid tools.search" },
+    ),
+    { resource: "https://unit.test/tools", scope: "tools.search" },
+  );
 });
 
 test("Device Authorization sends the registered public client and validates the response", async () => {
@@ -516,6 +543,39 @@ test("Refresh rejects a response that violates the QVeris rotation contract", as
     ),
     /did not rotate the refresh token/,
   );
+});
+
+test("Refresh revokes rotated credentials when the token binding changes", async () => {
+  const revoked = [];
+  await assert.rejects(
+    refreshOAuthSession(
+      {
+        ...discovery,
+        api_base_url: "https://unit.test/api/v1",
+        resource: "https://unit.test/tools",
+        scope: "openid offline_access tools.search",
+      },
+      { access_token: "old-access", refresh_token: "old-refresh" },
+      async (url, options) => {
+        if (url === discovery.token_endpoint) {
+          return response({
+            access_token: "new-access",
+            refresh_token: "new-refresh",
+            token_type: "Bearer",
+            expires_in: 3600,
+            resource: "https://other.test/tools",
+          });
+        }
+        if (url === discovery.revocation_endpoint) {
+          revoked.push(Object.fromEntries(options.body.entries()).token);
+          return response(null);
+        }
+        throw new Error(`Unexpected OAuth request: ${url}`);
+      },
+    ),
+    /unexpected resource/,
+  );
+  assert.deepEqual(revoked.sort(), ["new-access", "new-refresh"]);
 });
 
 test("Refresh reports when a previously persisted session cannot store rotated credentials", async () => {
@@ -1141,6 +1201,71 @@ test("A successful login revokes the previous OAuth session before replacing it"
       access_token: "new-access",
       refresh_token: "new-refresh",
     });
+  } finally {
+    console.log = previousLog;
+    console.error = previousError;
+    globalThis.fetch = previousFetch;
+    await deleteOAuthSession();
+    if (previousConfigHome === undefined) delete process.env.XDG_CONFIG_HOME;
+    else process.env.XDG_CONFIG_HOME = previousConfigHome;
+    if (previousKeyring === undefined) delete process.env.QVERIS_DISABLE_KEYRING;
+    else process.env.QVERIS_DISABLE_KEYRING = previousKeyring;
+  }
+});
+
+test("Login revokes newly issued credentials when their resource binding changes", async () => {
+  const previousConfigHome = process.env.XDG_CONFIG_HOME;
+  const previousKeyring = process.env.QVERIS_DISABLE_KEYRING;
+  const previousFetch = globalThis.fetch;
+  const previousLog = console.log;
+  const previousError = console.error;
+  process.env.XDG_CONFIG_HOME = `/tmp/qveris-oauth-login-binding-${process.pid}-${Date.now()}`;
+  process.env.QVERIS_DISABLE_KEYRING = "1";
+  const revokedTokens = [];
+  console.log = () => {};
+  console.error = () => {};
+  try {
+    globalThis.fetch = async (url, options = {}) => {
+      if (url.endsWith("/.well-known/oauth-authorization-server")) return response(discovery);
+      if (url === discovery.device_authorization_endpoint) {
+        return response({
+          device_code: "device-secret",
+          user_code: "ABCD-EFGH",
+          verification_uri: "https://unit.test/oauth/device",
+          expires_in: 30,
+          interval: 0.001,
+        });
+      }
+      if (url === discovery.token_endpoint) {
+        return response({
+          access_token: "new-access",
+          refresh_token: "new-refresh",
+          token_type: "Bearer",
+          expires_in: 3600,
+          resource: "https://other.test/tools",
+        });
+      }
+      if (url === discovery.revocation_endpoint) {
+        revokedTokens.push(Object.fromEntries(options.body.entries()).token);
+        return response(null);
+      }
+      throw new Error(`Unexpected OAuth request: ${url}`);
+    };
+
+    await assert.rejects(
+      runAuth("login", {
+        baseUrl: "https://unit.test/api/v1",
+        scope: "openid offline_access tools.search",
+        resource: "https://unit.test/tools",
+        noBrowser: true,
+        json: true,
+        allowUnencryptedStorage: true,
+      }),
+      /unexpected resource/,
+    );
+
+    assert.deepEqual(revokedTokens.sort(), ["new-access", "new-refresh"]);
+    assert.equal(getOAuthSessionMetadata({ fresh: true }), null);
   } finally {
     console.log = previousLog;
     console.error = previousError;

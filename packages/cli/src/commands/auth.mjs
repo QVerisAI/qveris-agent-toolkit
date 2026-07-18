@@ -11,6 +11,7 @@ import {
   revokeOAuthSession,
   startDeviceAuthorization,
   validateOAuthScopes,
+  validateOAuthTokenBinding,
 } from "../auth/oauth.mjs";
 import {
   deleteOAuthSession,
@@ -58,21 +59,22 @@ async function authLogin(flags) {
   }
 
   const tokens = await pollDeviceToken(metadata, authorization);
-  const session = {
-    issuer,
-    api_base_url: baseUrl,
-    resource: tokens.resource || resource,
-    scope: tokens.scope || scope,
-    token_endpoint: metadata.token_endpoint,
-    revocation_endpoint: metadata.revocation_endpoint,
-    expires_at: Date.now() + Math.max(1, Number(tokens.expires_in) || 3600) * 1000,
-  };
   const newSecret = {
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token,
   };
   let persisted;
+  let session;
   try {
+    const binding = validateOAuthTokenBinding(tokens, { resource, scope });
+    session = {
+      issuer,
+      api_base_url: baseUrl,
+      ...binding,
+      token_endpoint: metadata.token_endpoint,
+      revocation_endpoint: metadata.revocation_endpoint,
+      expires_at: Date.now() + Math.max(1, Number(tokens.expires_in) || 3600) * 1000,
+    };
     persisted = await withOAuthRefreshLock(async () => {
       const currentMetadata = getOAuthSessionMetadata({ fresh: true });
       const currentSecret = await loadOAuthSessionSecret(currentMetadata, { fresh: true });

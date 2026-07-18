@@ -306,6 +306,25 @@ function validateTokenResponse(payload, { requireRefreshToken = false } = {}) {
   };
 }
 
+export function validateOAuthTokenBinding(tokens, { resource, scope }) {
+  const expectedResource = validateEndpoint(resource, "resource");
+  if (tokens.resource && tokens.resource !== expectedResource) {
+    throw new CliError("API_ERROR", "Token endpoint returned credentials for an unexpected resource");
+  }
+  const requestedScopes = String(scope || "")
+    .split(/\s+/)
+    .filter(Boolean);
+  const grantedScopes = tokens.scope ? tokens.scope.split(/\s+/).filter(Boolean) : requestedScopes;
+  const requested = new Set(requestedScopes);
+  if (grantedScopes.some((item) => !requested.has(item))) {
+    throw new CliError("API_ERROR", "Token endpoint returned credentials with an unexpected scope");
+  }
+  return {
+    resource: tokens.resource || expectedResource,
+    scope: grantedScopes.join(" "),
+  };
+}
+
 export async function refreshOAuthSession(metadata, secret, fetchImpl = fetch) {
   if (typeof secret.refresh_token !== "string" || !secret.refresh_token) {
     throw oauthError("invalid_grant", "OAuth session cannot be refreshed; run qveris auth login again");
@@ -331,8 +350,20 @@ export async function refreshOAuthSession(metadata, secret, fetchImpl = fetch) {
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token,
   };
+  let binding;
+  try {
+    binding = validateOAuthTokenBinding(tokens, metadata);
+  } catch (error) {
+    try {
+      await revokeOAuthSession(metadata, replacement, fetchImpl);
+    } catch {
+      // Preserve the binding error as the actionable failure.
+    }
+    throw error;
+  }
   const updated = {
     ...metadata,
+    ...binding,
     expires_at: Date.now() + Math.max(1, Number(tokens.expires_in) || 3600) * 1000,
   };
   let persisted;
