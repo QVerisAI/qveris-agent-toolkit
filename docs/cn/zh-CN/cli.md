@@ -264,7 +264,22 @@ qveris mcp validate --target cursor --probe
 
 ---
 
-### `qveris login`
+### `qveris auth login/status/logout`
+
+设置本站 API 地址后，可在本地或无头终端通过 OAuth Device Flow 登录，无需复制 API 密钥。CLI 从当前站点的 Discovery 获取全部 OAuth 端点，打开验证页面，并严格按服务端返回的轮询间隔等待授权。
+
+```bash
+export QVERIS_BASE_URL="https://qveris.cn/api/v1"
+qveris auth login
+qveris auth status
+qveris auth logout
+```
+
+Refresh Token 会自动轮换并保存在操作系统凭证库中。系统凭证库不可用时，CLI 会明确降级为仅当前进程有效的凭证。`auth logout` 会先尝试远程撤销，再清理本地凭证。显式配置的 API Key 继续保持原有优先级和行为。
+
+无头主机可使用 `--no-browser`。高级集成可通过 `--scope <scopes>` 和 `--resource <url>` 收窄授权请求；两者都必须符合服务端公开契约。
+
+### `qveris login`（API Key）
 
 使用 QVeris API 密钥认证。打开浏览器进入 API 密钥页面并掩码输入。
 

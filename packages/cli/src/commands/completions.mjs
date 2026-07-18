@@ -2,6 +2,7 @@ const COMMANDS = [
   "discover",
   "inspect",
   "call",
+  "auth",
   "login",
   "logout",
   "whoami",

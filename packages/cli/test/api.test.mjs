@@ -175,6 +175,46 @@ test("API request timeout starts after the credential resolves", async () => {
   );
 });
 
+test("OAuth credentials refresh once on 401 and business 403 is not retried", async () => {
+  let credential = "expired-access";
+  let refreshes = 0;
+  const provider = {
+    async getCredential() {
+      return credential;
+    },
+    async refreshCredential() {
+      refreshes += 1;
+      credential = "fresh-access";
+    },
+  };
+  let requests = 0;
+  await withMockFetch(
+    (_url, options) => {
+      requests += 1;
+      return options.headers.Authorization === "Bearer expired-access"
+        ? jsonResponse({ message: "expired" }, { status: 401 })
+        : jsonResponse({ ok: true });
+    },
+    () => discoverTools({ credentialProvider: provider, baseUrl: "https://unit.test/api/v1", query: "weather" }),
+  );
+  assert.equal(refreshes, 1);
+  assert.equal(requests, 2);
+
+  requests = 0;
+  await assert.rejects(
+    withMockFetch(
+      () => {
+        requests += 1;
+        return jsonResponse({ message: "forbidden" }, { status: 403 });
+      },
+      () => discoverTools({ credentialProvider: provider, baseUrl: "https://unit.test/api/v1", query: "weather" }),
+    ),
+    /forbidden/,
+  );
+  assert.equal(requests, 1);
+  assert.equal(refreshes, 1);
+});
+
 test("API client rejects ambiguous or invalid provider credentials without exposing values", async () => {
   await assert.rejects(
     discoverTools({

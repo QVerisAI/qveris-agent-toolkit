@@ -3,6 +3,7 @@ import { resolveAll } from "../config/resolve.mjs";
 import { resolveBaseUrl } from "../config/endpoint.mjs";
 import { bold, dim, cyan } from "../output/colors.mjs";
 import { outputJson } from "../output/json.mjs";
+import { deleteOAuthSession } from "../auth/storage.mjs";
 
 const ALLOWED_KEYS = ["api_key", "default_limit", "default_max_size", "color", "output_format"];
 
@@ -95,7 +96,8 @@ function configList(flags) {
   console.log();
 }
 
-function configReset() {
+async function configReset() {
+  await deleteOAuthSession();
   writeConfig({});
   console.log("  Config reset to defaults.");
 }

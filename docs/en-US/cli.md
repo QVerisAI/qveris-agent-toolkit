@@ -266,7 +266,21 @@ qveris mcp validate --target cursor --probe
 
 ---
 
-### `qveris login`
+### `qveris auth login/status/logout`
+
+Use OAuth Device Flow on a local or headless terminal without copying an API key. The CLI discovers all OAuth endpoints from the selected API origin, opens the verification page, and polls at the server-provided interval.
+
+```bash
+qveris auth login
+qveris auth status
+qveris auth logout
+```
+
+Refresh credentials are rotated automatically and stored in the operating-system credential store. If no credential store is available, the CLI explicitly limits the credential to the current process. `auth logout` attempts remote revocation before clearing local credentials. An explicitly configured API key keeps its existing priority and behavior.
+
+Use `--no-browser` on a headless host. Advanced integrations can narrow the request with `--scope <scopes>` and `--resource <url>`; both must match the server's published contract.
+
+### `qveris login` (API key)
 
 Authenticate with your QVeris API key. Opens the browser to the API key page and prompts for masked input.
 

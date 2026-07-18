@@ -141,6 +141,9 @@ qveris call 1 --params '{"set":"land","first":"sct","timeOfDay":"day"}'
 
 | Command | Description |
 |---------|-------------|
+| `qveris auth login` | Authenticate through OAuth Device Flow without copying an API key |
+| `qveris auth status` | Validate the stored OAuth session |
+| `qveris auth logout` | Revoke and remove the stored OAuth session |
 | `qveris login` | Authenticate with an API key (opens the account page, or accepts `--token` for direct input) |
 | `qveris logout` | Remove stored key |
 | `qveris whoami` | Show current auth status, key source, and API endpoint |
