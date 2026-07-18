@@ -127,6 +127,30 @@ print prompts, keys, tokens, or provider error bodies to stdout. A first-result
 heuristic adapter is included only as a transport example; it does not construct
 parameters and is not an official model result.
 
+### Claude CLI adapter
+
+`adapters/claude-cli.mjs` is the reference adapter for authenticated Claude CLI
+installations. It passes the canonical system message as `--system-prompt`, the
+canonical user message on stdin, and the unchanged response schema through
+`--json-schema`. Safe mode disables project customizations, tools are disabled,
+and sessions are not persisted, so the run measures only the supplied benchmark
+messages. Use a full model identifier rather than an alias:
+
+```bash
+node src/run.mjs \
+  --model claude-sonnet-5 \
+  --adapter node \
+  --adapter-arg "$PWD/adapters/claude-cli.mjs" \
+  --adapter-revision adapter-git-sha \
+  --tasks tasks/v2.jsonl \
+  --trials 3 \
+  --execute \
+  --output runs/claude-sonnet-5.jsonl
+```
+
+The adapter uses the CLI's existing authentication and never receives
+`QVERIS_API_KEY` (the harness strips it from the adapter environment).
+
 ## Publication rules
 
 An official result must include:

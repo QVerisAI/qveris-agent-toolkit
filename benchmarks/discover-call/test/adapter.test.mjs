@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { createProcessAdapter, main } from '../src/run.mjs';
+import { buildClaudeInvocation, parseClaudeEnvelope } from '../adapters/claude-cli.mjs';
 
 const adapterPath = resolve(fileURLToPath(new URL('../adapters/first-result.mjs', import.meta.url)));
 
@@ -51,4 +52,39 @@ test('process adapter reports startup failures without an unhandled stdin error'
     timeoutMs: 5_000,
   });
   await assert.rejects(invoke({ stage: 'select' }), /could not be started/);
+});
+
+test('Claude adapter preserves canonical messages and response schema', () => {
+  const payload = {
+    model: 'claude-sonnet-5',
+    messages: [
+      { role: 'system', content: 'Return one grounded tool.' },
+      { role: 'user', content: '{"input":"unchanged"}' },
+    ],
+    response_schema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['tool_id'],
+      properties: { tool_id: { type: 'string' } },
+    },
+  };
+
+  const invocation = buildClaudeInvocation(payload);
+  assert.equal(invocation.stdin, payload.messages[1].content);
+  assert.equal(invocation.args[invocation.args.indexOf('--system-prompt') + 1], payload.messages[0].content);
+  assert.deepEqual(JSON.parse(invocation.args[invocation.args.indexOf('--json-schema') + 1]), payload.response_schema);
+  assert.equal(invocation.args[invocation.args.indexOf('--model') + 1], payload.model);
+  assert.equal(invocation.args.includes('--safe-mode'), true);
+  assert.equal(invocation.args[invocation.args.indexOf('--tools') + 1], '');
+});
+
+test('Claude adapter extracts only structured model output', () => {
+  assert.deepEqual(
+    parseClaudeEnvelope(JSON.stringify({ type: 'result', structured_output: { tool_id: 'weather.forecast' } })),
+    { tool_id: 'weather.forecast' },
+  );
+  assert.deepEqual(parseClaudeEnvelope(JSON.stringify({ result: '{"parameters":{"city":"London"}}' })), {
+    parameters: { city: 'London' },
+  });
+  assert.throws(() => parseClaudeEnvelope(JSON.stringify({ result: 'not-json' })), /no structured output/);
 });
