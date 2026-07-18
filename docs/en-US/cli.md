@@ -266,7 +266,23 @@ qveris mcp validate --target cursor --probe
 
 ---
 
-### `qveris login`
+### `qveris auth login/status/logout`
+
+Use OAuth Device Flow on a local or headless terminal without copying an API key. The CLI discovers all OAuth endpoints from the selected API origin, opens the verification page, and polls at the server-provided interval.
+
+```bash
+qveris auth login
+qveris auth status
+qveris auth logout
+```
+
+Refresh credentials are rotated automatically and stored in the operating-system credential store. If no credential store is available, the CLI limits the credential to the current process by default. On a trusted headless host, add `--allow-unencrypted-storage` to explicitly persist the tokens in the user-only config file (`0600` permissions). `auth logout` attempts remote revocation before clearing local credentials. An explicitly configured API key keeps its existing priority and behavior.
+
+The persisted OAuth session also remembers its API endpoint for later CLI processes. An explicit `--base-url` or `QVERIS_BASE_URL` still takes precedence and must match the session issuer.
+
+Use `--no-browser --allow-unencrypted-storage` on a trusted headless host that has no operating-system keyring. Advanced integrations can narrow the request with `--scope <scopes>` and `--resource <url>`; both must match the server's published contract, and a custom scope must retain `offline_access` so the session can refresh safely.
+
+### `qveris login` (API key)
 
 Authenticate with your QVeris API key. Opens the browser to the API key page and prompts for masked input.
 
@@ -411,7 +427,7 @@ qveris> exit
 
 ### `qveris doctor`
 
-Self-check diagnostics for a working first call. Checks Node.js version, API key, API endpoint, then a free `discover` probe covering connectivity, key validity, remaining credits, and response-shape conformance to the CLI contract. Each failure prints an actionable fix. Diagnostics consume no credits (discover is free). Add `--json` for machine-readable output.
+Self-check diagnostics for a working first call. Checks Node.js version, the active API key or OAuth session, the API endpoint, then a free `discover` probe covering connectivity, credential validity, remaining credits, and response-shape conformance to the CLI contract. Each failure prints an actionable fix. Diagnostics consume no credits (discover is free). Add `--json` for machine-readable output.
 
 ```bash
 qveris doctor
@@ -496,7 +512,7 @@ Use `--` to end option parsing: `qveris discover -- --literal-query`.
 
 **Priority:** `--flag` > environment variable > config file > default
 
-For the API endpoint specifically, resolution is `--base-url` > `QVERIS_BASE_URL` > built-in default. API keys never select or replace the endpoint. Override values must be complete HTTP(S) URLs without credentials, query parameters, or fragments.
+For the API endpoint specifically, resolution is `--base-url` > `QVERIS_BASE_URL` > stored OAuth session endpoint (when OAuth is active) > built-in default. API keys never select or replace the endpoint. Override values must be complete HTTP(S) URLs without credentials, query parameters, or fragments.
 
 ---
 

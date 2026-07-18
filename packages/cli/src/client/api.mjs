@@ -11,8 +11,24 @@ import {
   sleep,
 } from "./retry.mjs";
 
-function getBaseUrl(baseUrlFlag) {
-  return resolveBaseUrl({ baseUrlFlag }).baseUrl;
+import { getOAuthSessionMetadata } from "../auth/storage.mjs";
+
+export function resolveApiBaseUrl({ baseUrlFlag, preferOAuth = false } = {}) {
+  if (preferOAuth && baseUrlFlag === undefined && typeof process.env.QVERIS_BASE_URL !== "string") {
+    const session = getOAuthSessionMetadata();
+    if (session?.api_base_url) {
+      const { baseUrl } = resolveBaseUrl({ baseUrlFlag: session.api_base_url });
+      if (new URL(baseUrl).origin !== session.issuer) {
+        throw new CliError("API_ERROR", "Stored OAuth endpoint does not match its issuer");
+      }
+      return { baseUrl, source: "oauth session" };
+    }
+  }
+  return resolveBaseUrl({ baseUrlFlag });
+}
+
+function getBaseUrl(baseUrlFlag, preferOAuth = false) {
+  return resolveApiBaseUrl({ baseUrlFlag, preferOAuth }).baseUrl;
 }
 
 async function requestJson(
@@ -36,6 +52,7 @@ async function requestJson(
     }
   }
 
+  let authRetried = false;
   for (let attempt = 0; ; attempt++) {
     // Credential acquisition is outside the API request timeout and happens
     // on every attempt so retries can refresh short-lived tokens.
@@ -56,9 +73,15 @@ async function requestJson(
         },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         signal: controller.signal,
+        redirect: "error",
       });
 
-      if (RETRYABLE_STATUS.has(response.status) && attempt < maxRetries) {
+      if (response.status === 401 && !authRetried && typeof credentialProvider.refreshCredential === "function") {
+        authRetried = true;
+        await response.body?.cancel?.().catch(() => {});
+        await credentialProvider.refreshCredential();
+        continue;
+      } else if (RETRYABLE_STATUS.has(response.status) && attempt < maxRetries) {
         retryDelayMs = computeRetryDelayMs({
           retryAfterMs: parseRetryAfterMs(response.headers.get("retry-after")),
           attempt,
@@ -76,6 +99,14 @@ async function requestJson(
           errorDetail = jsonBody.error_message || jsonBody.message || null;
         } catch {
           /* not JSON */
+        }
+        if (status === 401 && credentialProvider.authType === "oauth") {
+          throw new CliError("AUTH_OAUTH_FAILED", errorDetail);
+        }
+        if (status === 403 && credentialProvider.authType === "oauth") {
+          const err = new CliError("API_ERROR", `HTTP 403: ${errorDetail || rawText}`);
+          if (jsonBody) err.responseData = jsonBody;
+          throw err;
         }
         if (status === 401 || status === 403) {
           const err = new CliError("AUTH_INVALID_KEY", errorDetail);
@@ -134,7 +165,7 @@ export async function discoverTools({
   limit = 5,
   timeoutMs = 30000,
 }) {
-  const baseUrl = getBaseUrl(baseUrlFlag);
+  const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
   return requestJson("/search", {
     credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
     baseUrl,
@@ -151,7 +182,7 @@ export async function inspectToolsByIds({
   discoveryId,
   timeoutMs = 30000,
 }) {
-  const baseUrl = getBaseUrl(baseUrlFlag);
+  const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
   const body = { tool_ids: toolIds };
   if (discoveryId) body.search_id = discoveryId;
   return requestJson("/tools/by-ids", {
@@ -172,7 +203,7 @@ export async function callTool({
   maxResponseSize = 102400,
   timeoutMs = 120000,
 }) {
-  const baseUrl = getBaseUrl(baseUrlFlag);
+  const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
   return requestJson("/tools/execute", {
     credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
     baseUrl,
@@ -187,7 +218,7 @@ export async function callTool({
 }
 
 export async function getCredits({ apiKey, credentialProvider, baseUrl: baseUrlFlag, timeoutMs = 30000 }) {
-  const baseUrl = getBaseUrl(baseUrlFlag);
+  const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
   return requestJson("/auth/credits", {
     method: "GET",
     credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
@@ -203,7 +234,7 @@ export async function getUsageHistory({
   query = {},
   timeoutMs = 30000,
 }) {
-  const baseUrl = getBaseUrl(baseUrlFlag);
+  const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
   return requestJson("/auth/usage/history/v2", {
     method: "GET",
     credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
@@ -220,7 +251,7 @@ export async function getCreditsLedger({
   query = {},
   timeoutMs = 30000,
 }) {
-  const baseUrl = getBaseUrl(baseUrlFlag);
+  const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
   return requestJson("/auth/credits/ledger", {
     method: "GET",
     credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),

@@ -9,7 +9,7 @@ export const EX_CONFIG = 78;
 export const ERROR_CODES = {
   AUTH_MISSING_KEY: {
     message: "No API key configured",
-    hint: "Run 'qveris login' or set QVERIS_API_KEY",
+    hint: "Run 'qveris auth login', 'qveris login', or set QVERIS_API_KEY",
     exit: EX_CONFIG,
   },
   NODE_UNSUPPORTED: {
@@ -25,6 +25,11 @@ export const ERROR_CODES = {
   AUTH_INVALID_KEY: {
     message: "Authentication failed",
     hint: "Check the API key for the configured endpoint",
+    exit: EX_NOPERM,
+  },
+  AUTH_OAUTH_FAILED: {
+    message: "OAuth authentication failed",
+    hint: "Run 'qveris auth login' again",
     exit: EX_NOPERM,
   },
   NET_TIMEOUT: {

@@ -33,6 +33,7 @@ test("API client maps discover, inspect, call, credits, usage, and ledger endpoi
   const requests = [];
   await withMockFetch(
     (url, options) => {
+      assert.equal(options.redirect, "error");
       requests.push({
         method: options.method,
         path: url.pathname,
@@ -175,6 +176,69 @@ test("API request timeout starts after the credential resolves", async () => {
   );
 });
 
+test("OAuth credentials refresh once on 401 and business 403 is not retried", async () => {
+  let credential = "expired-access";
+  let refreshes = 0;
+  const provider = {
+    async getCredential() {
+      return credential;
+    },
+    async refreshCredential() {
+      refreshes += 1;
+      credential = "fresh-access";
+    },
+  };
+  let requests = 0;
+  await withMockFetch(
+    (_url, options) => {
+      requests += 1;
+      return options.headers.Authorization === "Bearer expired-access"
+        ? jsonResponse({ message: "expired" }, { status: 401 })
+        : jsonResponse({ ok: true });
+    },
+    () => discoverTools({ credentialProvider: provider, baseUrl: "https://unit.test/api/v1", query: "weather" }),
+  );
+  assert.equal(refreshes, 1);
+  assert.equal(requests, 2);
+
+  requests = 0;
+  await assert.rejects(
+    withMockFetch(
+      () => {
+        requests += 1;
+        return jsonResponse({ message: "forbidden" }, { status: 403 });
+      },
+      () => discoverTools({ credentialProvider: provider, baseUrl: "https://unit.test/api/v1", query: "weather" }),
+    ),
+    /forbidden/,
+  );
+  assert.equal(requests, 1);
+  assert.equal(refreshes, 1);
+
+  const oauthProvider = {
+    authType: "oauth",
+    async getCredential() {
+      return "oauth-access";
+    },
+    async refreshCredential() {},
+  };
+  await assert.rejects(
+    withMockFetch(
+      () => jsonResponse({ message: "session expired" }, { status: 401 }),
+      () => discoverTools({ credentialProvider: oauthProvider, baseUrl: "https://unit.test/api/v1", query: "weather" }),
+    ),
+    (error) => error instanceof CliError && error.code === "AUTH_OAUTH_FAILED" && /session expired/.test(error.message),
+  );
+
+  await assert.rejects(
+    withMockFetch(
+      () => jsonResponse({ message: "missing required scope" }, { status: 403 }),
+      () => discoverTools({ credentialProvider: oauthProvider, baseUrl: "https://unit.test/api/v1", query: "weather" }),
+    ),
+    (error) => error instanceof CliError && error.code === "API_ERROR" && /missing required scope/.test(error.message),
+  );
+});
+
 test("API client rejects ambiguous or invalid provider credentials without exposing values", async () => {
   await assert.rejects(
     discoverTools({
@@ -205,6 +269,22 @@ test("API client rejects ambiguous or invalid provider credentials without expos
     }),
     (err) =>
       err instanceof CliError && /failed to provide a credential/.test(err.message) && !err.message.includes(secret),
+  );
+});
+
+test("API client preserves actionable CLI errors from credential providers", async () => {
+  const providerError = new CliError("API_ERROR", "Rotated OAuth credentials could not be persisted");
+  await assert.rejects(
+    discoverTools({
+      credentialProvider: {
+        async getCredential() {
+          throw providerError;
+        },
+      },
+      baseUrl: "https://unit.test/api/v1",
+      query: "weather",
+    }),
+    (error) => error === providerError,
   );
 });
 

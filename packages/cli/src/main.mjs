@@ -74,6 +74,12 @@ export async function main(argv) {
         await runLogin(flags);
         break;
       }
+      case "auth": {
+        const subcommand = rest[0];
+        const { runAuth } = await import("./commands/auth.mjs");
+        await runAuth(subcommand, flags);
+        break;
+      }
       case "logout": {
         const { runLogout } = await import("./commands/login.mjs");
         await runLogout();
@@ -186,6 +192,8 @@ const VALUE_FLAGS = {
   direction: "direction",
   "min-credits": "minCredits",
   "max-credits": "maxCredits",
+  scope: "scope",
+  resource: "resource",
 };
 
 function takeNext(args, i, flag) {
@@ -286,6 +294,9 @@ function extractGlobalFlags(args) {
       case "--no-browser":
         flags.noBrowser = true;
         break;
+      case "--allow-unencrypted-storage":
+        flags.allowUnencryptedStorage = true;
+        break;
       case "--clear":
         flags.clear = true;
         break;
@@ -370,6 +381,12 @@ function extractGlobalFlags(args) {
       case "--max-credits":
         flags.maxCredits = takeNext(args, i++, arg);
         break;
+      case "--scope":
+        flags.scope = takeNext(args, i++, arg);
+        break;
+      case "--resource":
+        flags.resource = takeNext(args, i++, arg);
+        break;
       default:
         flags._positional.push(arg);
     }
@@ -396,6 +413,7 @@ function printUsage(flags = {}) {
     ${cyan("call")}     <tool_id|index>     Execute a capability
 
   ${bold("Account:")}
+    ${cyan("auth")}      login|status|logout  OAuth Device Flow session
     ${cyan("login")}                        Authenticate with QVeris
     ${cyan("logout")}                       Remove stored API key
     ${cyan("whoami")}                       Show current auth status
@@ -417,6 +435,10 @@ function printUsage(flags = {}) {
     --json, -j             Output raw JSON
     --api-key <key>        Override API key
     --base-url <url>       Override API base URL
+    --scope <scopes>       OAuth scopes for auth login (must include offline_access)
+    --resource <url>       OAuth resource for auth login
+    --allow-unencrypted-storage
+                           Persist OAuth tokens in the user-only config file when no keyring is available
     --timeout <seconds>    Request timeout
     --target <target>      MCP target: cursor | claude-desktop | claude-code | opencode | openclaw | generic
     --output <path>        MCP config output path

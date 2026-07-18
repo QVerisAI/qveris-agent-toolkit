@@ -1,6 +1,5 @@
 import { resolveApiKey } from "../client/auth.mjs";
-import { discoverTools } from "../client/api.mjs";
-import { resolveBaseUrl } from "../config/endpoint.mjs";
+import { discoverTools, resolveApiBaseUrl } from "../client/api.mjs";
 import { writeSession } from "../session/session.mjs";
 import { formatDiscoverResult } from "../output/formatter.mjs";
 import { outputJson } from "../output/json.mjs";
@@ -8,7 +7,10 @@ import { createSpinner } from "../output/spinner.mjs";
 
 export async function runDiscover(query, flags) {
   const apiKey = resolveApiKey(flags.apiKey);
-  const { baseUrl: resolvedBaseUrl } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
+  const { baseUrl: resolvedBaseUrl } = resolveApiBaseUrl({
+    baseUrlFlag: flags.baseUrl,
+    preferOAuth: apiKey === undefined,
+  });
   const limit = parseInt(flags.limit, 10) || 5;
   const timeoutMs = (parseInt(flags.timeout, 10) || 30) * 1000;
 

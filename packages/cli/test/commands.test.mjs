@@ -15,7 +15,7 @@ import { runInspect } from "../src/commands/inspect.mjs";
 import { runLedger } from "../src/commands/ledger.mjs";
 import { runLogin, runLogout, runWhoami } from "../src/commands/login.mjs";
 import { runUsage } from "../src/commands/usage.mjs";
-import { getConfigPath } from "../src/config/store.mjs";
+import { getConfigPath, setConfigValue } from "../src/config/store.mjs";
 import { main } from "../src/main.mjs";
 
 function withTempConfig(fn) {
@@ -289,6 +289,17 @@ test("config command covers set, get, list, path, and reset", async () => {
 
     const get = await captureOutput(() => runConfig("get", ["api_key"], { json: true }));
     assert.deepEqual(jsonFromStdout(get.stdout), { key: "api_key", value: "sk-config" });
+
+    setConfigValue("oauth_session_secret", {
+      secret: { access_token: "never-print-access", refresh_token: "never-print-refresh" },
+    });
+    const previousSecretExitCode = process.exitCode;
+    process.exitCode = undefined;
+    const secretGet = await captureOutput(() => runConfig("get", ["oauth_session_secret"], { json: true }));
+    assert.match(secretGet.stderr, /Unknown config key: oauth_session_secret/);
+    assert.doesNotMatch(`${secretGet.stdout}${secretGet.stderr}`, /never-print/);
+    assert.equal(process.exitCode, 2);
+    process.exitCode = previousSecretExitCode;
 
     const list = await captureOutput(() => runConfig("list", [], { json: true }));
     const listed = jsonFromStdout(list.stdout);

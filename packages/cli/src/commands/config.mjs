@@ -1,8 +1,17 @@
 import { getConfigPath, getConfigValue, setConfigValue, writeConfig } from "../config/store.mjs";
 import { resolveAll } from "../config/resolve.mjs";
-import { resolveBaseUrl } from "../config/endpoint.mjs";
+import { resolveApiBaseUrl } from "../client/api.mjs";
 import { bold, dim, cyan } from "../output/colors.mjs";
 import { outputJson } from "../output/json.mjs";
+import { revokeOAuthSession } from "../auth/oauth.mjs";
+import {
+  deleteOAuthSession,
+  getOAuthSessionMetadata,
+  hasOAuthSession,
+  loadOAuthSessionSecret,
+  withOAuthRefreshLock,
+} from "../auth/storage.mjs";
+import { CliError } from "../errors/handler.mjs";
 
 const ALLOWED_KEYS = ["api_key", "default_limit", "default_max_size", "color", "output_format"];
 
@@ -25,7 +34,7 @@ export async function runConfig(subcommand, args, flags) {
   }
 }
 
-function configSet(key, value, flags) {
+async function configSet(key, value, flags) {
   if (!key || value === undefined) {
     console.error("  Usage: qveris config set <key> <value>");
     process.exitCode = 2;
@@ -46,7 +55,7 @@ function configSet(key, value, flags) {
       return;
     }
   }
-  setConfigValue(key, parsed);
+  await withOAuthRefreshLock(async () => setConfigValue(key, parsed));
   if (flags.json) {
     outputJson({ key, value: parsed });
   } else {
@@ -57,6 +66,12 @@ function configSet(key, value, flags) {
 function configGet(key, flags) {
   if (!key) {
     console.error("  Usage: qveris config get <key>");
+    process.exitCode = 2;
+    return;
+  }
+  if (!ALLOWED_KEYS.includes(key)) {
+    console.error(`  Unknown config key: ${key}`);
+    console.error(`  Allowed: ${ALLOWED_KEYS.join(", ")}`);
     process.exitCode = 2;
     return;
   }
@@ -71,7 +86,10 @@ function configGet(key, flags) {
 function configList(flags) {
   const all = resolveAll();
 
-  const { baseUrl, source: endpointSource } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
+  const { baseUrl, source: endpointSource } = resolveApiBaseUrl({
+    baseUrlFlag: flags.baseUrl,
+    preferOAuth: !all.api_key?.value && hasOAuthSession(),
+  });
 
   if (flags.json) {
     const obj = {};
@@ -95,8 +113,27 @@ function configList(flags) {
   console.log();
 }
 
-function configReset() {
-  writeConfig({});
+async function configReset() {
+  let cleanupWarning = null;
+  await withOAuthRefreshLock(async () => {
+    const metadata = getOAuthSessionMetadata({ fresh: true });
+    const secret = await loadOAuthSessionSecret(metadata, { fresh: true });
+    if (metadata && secret) {
+      try {
+        await revokeOAuthSession(metadata, secret);
+      } catch (error) {
+        cleanupWarning = error;
+      }
+    } else if (metadata) {
+      cleanupWarning = new CliError(
+        "API_ERROR",
+        "Remote OAuth revocation could not be attempted because the stored credential is unavailable",
+      );
+    }
+    await deleteOAuthSession();
+    writeConfig({});
+  });
+  if (cleanupWarning) throw cleanupWarning;
   console.log("  Config reset to defaults.");
 }
 
