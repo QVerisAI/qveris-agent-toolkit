@@ -279,8 +279,15 @@ export async function pollDeviceToken(
 }
 
 function validateTokenResponse(payload, { requireRefreshToken = false } = {}) {
-  const validToken = (value) =>
-    typeof value === "string" && value.trim() && value.length <= MAX_OAUTH_TOKEN_LENGTH && !/[\r\n]/.test(value);
+  const validToken = (value, { allowInternalSpaces = false } = {}) =>
+    typeof value === "string" &&
+    value.length > 0 &&
+    value === value.trim() &&
+    value.length <= MAX_OAUTH_TOKEN_LENGTH &&
+    Array.from(value).every((character) => {
+      const codePoint = character.codePointAt(0);
+      return codePoint >= (allowInternalSpaces ? 0x20 : 0x21) && codePoint <= 0x7e;
+    });
   if (
     typeof payload.token_type !== "string" ||
     payload.token_type.toLowerCase() !== "bearer" ||
@@ -288,8 +295,11 @@ function validateTokenResponse(payload, { requireRefreshToken = false } = {}) {
   ) {
     throw new CliError("API_ERROR", "Token endpoint returned an invalid access token response");
   }
-  if (requireRefreshToken && !validToken(payload.refresh_token)) {
+  if (payload.refresh_token === undefined && requireRefreshToken) {
     throw new CliError("API_ERROR", "Token endpoint did not return the required refresh token");
+  }
+  if (payload.refresh_token !== undefined && !validToken(payload.refresh_token, { allowInternalSpaces: true })) {
+    throw new CliError("API_ERROR", "Token endpoint returned an invalid refresh token");
   }
   if (
     payload.scope !== undefined &&

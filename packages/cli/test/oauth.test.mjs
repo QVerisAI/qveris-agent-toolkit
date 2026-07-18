@@ -543,6 +543,23 @@ test("Refresh rejects a response that violates the QVeris rotation contract", as
     ),
     /did not rotate the refresh token/,
   );
+
+  for (const invalidRefreshToken of [" new-refresh", "new\trefresh", "nëw-refresh", "x".repeat(16385)]) {
+    await assert.rejects(
+      refreshOAuthSession(
+        { ...discovery, api_base_url: "https://unit.test/api/v1", resource: "https://unit.test/tools" },
+        { access_token: "old-access", refresh_token: "old-refresh" },
+        async () =>
+          response({
+            access_token: "new-access",
+            refresh_token: invalidRefreshToken,
+            token_type: "Bearer",
+            expires_in: 3600,
+          }),
+      ),
+      /invalid refresh token/,
+    );
+  }
 });
 
 test("Refresh revokes rotated credentials when the token binding changes", async () => {

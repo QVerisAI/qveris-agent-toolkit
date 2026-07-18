@@ -41,17 +41,16 @@ function isProcessAlive(pid) {
 }
 
 function isValidSecret(secret) {
-  return (
-    secret &&
-    typeof secret.access_token === "string" &&
-    secret.access_token.trim() &&
-    secret.access_token.length <= MAX_OAUTH_TOKEN_LENGTH &&
-    !/[\r\n]/.test(secret.access_token) &&
-    typeof secret.refresh_token === "string" &&
-    secret.refresh_token.trim() &&
-    secret.refresh_token.length <= MAX_OAUTH_TOKEN_LENGTH &&
-    !/[\r\n]/.test(secret.refresh_token)
-  );
+  const validToken = (value, { allowInternalSpaces = false } = {}) =>
+    typeof value === "string" &&
+    value.length > 0 &&
+    value === value.trim() &&
+    value.length <= MAX_OAUTH_TOKEN_LENGTH &&
+    Array.from(value).every((character) => {
+      const codePoint = character.codePointAt(0);
+      return codePoint >= (allowInternalSpaces ? 0x20 : 0x21) && codePoint <= 0x7e;
+    });
+  return secret && validToken(secret.access_token) && validToken(secret.refresh_token, { allowInternalSpaces: true });
 }
 
 async function keyringEntry(issuer) {
@@ -224,7 +223,7 @@ export async function withOAuthRefreshLock(
         if (now() >= deadline) {
           throw new CliError(
             "NET_TIMEOUT",
-            "Timed out waiting for another QVeris process to refresh OAuth credentials",
+            `Timed out waiting for another QVeris process to update credentials. If no QVeris process is running, remove the stale lock: ${lockPath}`,
           );
         }
         await sleep(REFRESH_LOCK_WAIT_MS);

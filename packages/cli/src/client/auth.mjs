@@ -8,9 +8,12 @@ const PLACEHOLDER_PATTERNS = [/^your[_-]?(qveris)?[_-]?api[_-]?key/i, /^sk-1_xxx
 export function resolveApiKey(flagValue) {
   const { value } = resolve("api_key", flagValue);
 
-  if (!value || !value.trim()) {
+  if (value === undefined || value === null || (typeof value === "string" && !value.trim())) {
     if (hasOAuthSession()) return undefined;
     throw new CliError("AUTH_MISSING_KEY");
+  }
+  if (typeof value !== "string") {
+    throw new CliError("AUTH_MISSING_KEY", "Configured API key must be a string. Run qveris login to replace it.");
   }
 
   const trimmed = value.trim();

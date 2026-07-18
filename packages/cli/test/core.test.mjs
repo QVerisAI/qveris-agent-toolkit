@@ -47,6 +47,10 @@ test("endpoint resolution uses flag, environment, then default without key or re
   await withTempConfig(() => {
     assert.equal(resolveApiKey("sk-flag").trim(), "sk-flag");
     assert.throws(() => resolveApiKey("YOUR_QVERIS_API_KEY"), /placeholder/);
+    assert.throws(
+      () => resolveApiKey(12345),
+      (error) => error?.code === "AUTH_MISSING_KEY" && /must be a string/.test(error.message),
+    );
     process.env.QVERIS_REGION = "cn";
     assert.deepEqual(resolveBaseUrl({ apiKey: "sk-cn-test" }), {
       baseUrl: "https://qveris.ai/api/v1",
