@@ -6,6 +6,8 @@ export const DEVICE_CODE_GRANT = "urn:ietf:params:oauth:grant-type:device_code";
 export const OAUTH_CLIENT_ID = "qveris-cli";
 export const DEFAULT_OAUTH_SCOPES = "openid offline_access tools.search tools.inspect tools.execute";
 const OAUTH_REQUEST_TIMEOUT_MS = 30000;
+const MAX_OAUTH_RESPONSE_BYTES = 1024 * 1024;
+const MAX_OAUTH_TOKEN_LENGTH = 16384;
 const MAX_DEVICE_TIMER_SECONDS = Math.floor(0x7fffffff / 1000);
 const MAX_TOKEN_LIFETIME_SECONDS = Math.floor((Number.MAX_SAFE_INTEGER - Date.now()) / 1000);
 let sharedRefreshPromise = null;
@@ -31,10 +33,44 @@ function oauthError(code) {
   return err;
 }
 
+function hasControlCharacters(value) {
+  return Array.from(value).some((character) => {
+    const codePoint = character.codePointAt(0);
+    return codePoint <= 0x1f || codePoint === 0x7f;
+  });
+}
+
 async function jsonResponse(response, label) {
+  let raw = "";
+  try {
+    if (response.body) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let totalBytes = 0;
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          totalBytes += value.byteLength;
+          if (totalBytes > MAX_OAUTH_RESPONSE_BYTES) {
+            await reader.cancel();
+            throw new CliError("API_ERROR", `${label} exceeded the maximum response size`);
+          }
+          raw += decoder.decode(value, { stream: true });
+        }
+        raw += decoder.decode();
+      } finally {
+        reader.releaseLock();
+      }
+    }
+  } catch (error) {
+    if (error instanceof CliError) throw error;
+    if (error?.name === "AbortError") throw error;
+    throw new CliError("API_ERROR", `${label} could not be read`);
+  }
   let payload;
   try {
-    payload = await response.json();
+    payload = JSON.parse(raw);
   } catch {
     throw new CliError("API_ERROR", `${label} returned invalid JSON`);
   }
@@ -90,11 +126,18 @@ function positiveNumber(value, label, defaultValue, maximum = Number.MAX_SAFE_IN
   return normalized;
 }
 
-async function timedFetch(fetchImpl, url, options = {}, timeoutMs = OAUTH_REQUEST_TIMEOUT_MS) {
+async function timedFetch(
+  fetchImpl,
+  url,
+  options = {},
+  timeoutMs = OAUTH_REQUEST_TIMEOUT_MS,
+  consumeResponse = (response) => response,
+) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await fetchImpl(url, { ...options, signal: controller.signal });
+    const response = await fetchImpl(url, { ...options, signal: controller.signal });
+    return await consumeResponse(response);
   } catch (error) {
     if (error?.name === "AbortError") throw new CliError("NET_TIMEOUT", "OAuth request timed out");
     throw error;
@@ -104,12 +147,17 @@ async function timedFetch(fetchImpl, url, options = {}, timeoutMs = OAUTH_REQUES
 }
 
 export async function discoverAuthorizationServer(issuer, fetchImpl = fetch) {
-  const normalizedIssuer = new URL(issuer).origin;
-  const response = await timedFetch(fetchImpl, `${normalizedIssuer}/.well-known/oauth-authorization-server`, {
-    headers: { Accept: "application/json" },
-    redirect: "error",
-  });
-  const metadata = await jsonResponse(response, "OAuth discovery");
+  const normalizedIssuer = new URL(validateEndpoint(issuer, "issuer")).origin;
+  const { response, payload: metadata } = await timedFetch(
+    fetchImpl,
+    `${normalizedIssuer}/.well-known/oauth-authorization-server`,
+    {
+      headers: { Accept: "application/json" },
+      redirect: "error",
+    },
+    OAUTH_REQUEST_TIMEOUT_MS,
+    async (response) => ({ response, payload: await jsonResponse(response, "OAuth discovery") }),
+  );
   if (!response.ok) throw oauthError(metadata.error || "discovery_failed", metadata.error_description);
   if (metadata.issuer !== normalizedIssuer) {
     throw new CliError("API_ERROR", "OAuth discovery issuer does not match the requested endpoint");
@@ -140,7 +188,7 @@ export async function discoverAuthorizationServer(issuer, fetchImpl = fetch) {
 }
 
 async function postForm(url, form, fetchImpl = fetch, timeoutMs = OAUTH_REQUEST_TIMEOUT_MS) {
-  const response = await timedFetch(
+  return timedFetch(
     fetchImpl,
     url,
     {
@@ -150,14 +198,15 @@ async function postForm(url, form, fetchImpl = fetch, timeoutMs = OAUTH_REQUEST_
       redirect: "error",
     },
     timeoutMs,
+    async (response) => ({ response, payload: await jsonResponse(response, "OAuth endpoint") }),
   );
-  return { response, payload: await jsonResponse(response, "OAuth endpoint") };
 }
 
 export async function startDeviceAuthorization(metadata, { scope, resource }, fetchImpl = fetch) {
+  const normalizedResource = validateEndpoint(resource, "resource");
   const { response, payload } = await postForm(
     metadata.device_authorization_endpoint,
-    { client_id: OAUTH_CLIENT_ID, scope, resource },
+    { client_id: OAUTH_CLIENT_ID, scope, resource: normalizedResource },
     fetchImpl,
   );
   if (!response.ok) throw oauthError(payload.error || "authorization_failed", payload.error_description);
@@ -165,6 +214,9 @@ export async function startDeviceAuthorization(metadata, { scope, resource }, fe
     if (typeof payload[field] !== "string" || !payload[field]) {
       throw new CliError("API_ERROR", `Device Authorization response is missing ${field}`);
     }
+  }
+  if (payload.user_code.length > 256 || hasControlCharacters(payload.user_code)) {
+    throw new CliError("API_ERROR", "Device Authorization response has an invalid user_code");
   }
   const verificationUri = validateEndpoint(payload.verification_uri, "verification_uri");
   const verificationUriComplete = payload.verification_uri_complete
@@ -193,6 +245,8 @@ export async function pollDeviceToken(
     await sleep(Math.min(intervalMs, deadline - now()));
     if (now() >= deadline) break;
     let tokenResult;
+    const remainingMs = deadline - now();
+    const boundedByAuthorizationDeadline = remainingMs <= OAUTH_REQUEST_TIMEOUT_MS;
     try {
       tokenResult = await postForm(
         metadata.token_endpoint,
@@ -202,10 +256,10 @@ export async function pollDeviceToken(
           device_code: authorization.device_code,
         },
         fetchImpl,
-        Math.max(1, Math.min(OAUTH_REQUEST_TIMEOUT_MS, deadline - now())),
+        Math.max(1, Math.min(OAUTH_REQUEST_TIMEOUT_MS, remainingMs)),
       );
     } catch (error) {
-      if (error?.code === "NET_TIMEOUT" && now() >= deadline) break;
+      if (error?.code === "NET_TIMEOUT" && boundedByAuthorizationDeadline) break;
       throw error;
     }
     const { response, payload } = tokenResult;
@@ -225,7 +279,8 @@ export async function pollDeviceToken(
 }
 
 function validateTokenResponse(payload, { requireRefreshToken = false } = {}) {
-  const validToken = (value) => typeof value === "string" && value.trim() && !/[\r\n]/.test(value);
+  const validToken = (value) =>
+    typeof value === "string" && value.trim() && value.length <= MAX_OAUTH_TOKEN_LENGTH && !/[\r\n]/.test(value);
   if (
     typeof payload.token_type !== "string" ||
     payload.token_type.toLowerCase() !== "bearer" ||
@@ -236,13 +291,17 @@ function validateTokenResponse(payload, { requireRefreshToken = false } = {}) {
   if (requireRefreshToken && !validToken(payload.refresh_token)) {
     throw new CliError("API_ERROR", "Token endpoint did not return the required refresh token");
   }
-  for (const field of ["scope", "resource"]) {
-    if (payload[field] !== undefined && (typeof payload[field] !== "string" || !payload[field].trim())) {
-      throw new CliError("API_ERROR", `Token endpoint returned an invalid ${field}`);
-    }
+  if (
+    payload.scope !== undefined &&
+    (typeof payload.scope !== "string" || !payload.scope.trim() || hasControlCharacters(payload.scope))
+  ) {
+    throw new CliError("API_ERROR", "Token endpoint returned an invalid scope");
   }
+  const normalizedResource =
+    payload.resource === undefined ? undefined : validateEndpoint(payload.resource, "resource");
   return {
     ...payload,
+    ...(normalizedResource ? { resource: normalizedResource } : {}),
     expires_in: positiveNumber(payload.expires_in, "expires_in", undefined, MAX_TOKEN_LIFETIME_SECONDS),
   };
 }
@@ -296,30 +355,32 @@ export async function refreshOAuthSession(metadata, secret, fetchImpl = fetch) {
 export async function revokeOAuthToken(metadata, token, hint, fetchImpl = fetch) {
   if (!token) return;
   const revocationEndpoint = validateIssuerEndpoint(metadata, "revocation_endpoint");
-  const response = await timedFetch(fetchImpl, revocationEndpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
-    body: new URLSearchParams({ client_id: OAUTH_CLIENT_ID, token, token_type_hint: hint }),
-    redirect: "error",
-  });
+  const { response, payload } = await timedFetch(
+    fetchImpl,
+    revocationEndpoint,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+      body: new URLSearchParams({ client_id: OAUTH_CLIENT_ID, token, token_type_hint: hint }),
+      redirect: "error",
+    },
+    OAUTH_REQUEST_TIMEOUT_MS,
+    async (response) => ({
+      response,
+      payload: response.ok ? null : await jsonResponse(response, "OAuth revocation endpoint"),
+    }),
+  );
   if (response.ok) return;
-  const payload = await jsonResponse(response, "OAuth revocation endpoint");
   throw oauthError(payload.error || "revoke_failed", payload.error_description);
 }
 
 export async function revokeOAuthSession(metadata, secret, fetchImpl = fetch) {
-  let firstError = null;
-  for (const [token, hint] of [
-    [secret.refresh_token, "refresh_token"],
-    [secret.access_token, "access_token"],
-  ]) {
-    try {
-      await revokeOAuthToken(metadata, token, hint, fetchImpl);
-    } catch (error) {
-      firstError ||= error;
-    }
-  }
-  if (firstError) throw firstError;
+  const results = await Promise.allSettled([
+    revokeOAuthToken(metadata, secret.refresh_token, "refresh_token", fetchImpl),
+    revokeOAuthToken(metadata, secret.access_token, "access_token", fetchImpl),
+  ]);
+  const failure = results.find((result) => result.status === "rejected");
+  if (failure) throw failure.reason;
 }
 
 export function createStoredOAuthCredentialProvider({ fetchImpl = fetch } = {}) {

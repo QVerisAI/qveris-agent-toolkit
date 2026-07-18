@@ -20,6 +20,7 @@ const REFRESH_LOCK_STALE_MS = 60000;
 const REFRESH_LOCK_HEARTBEAT_MS = 10000;
 const REFRESH_LOCK_WAIT_MS = 100;
 const REFRESH_LOCK_TIMEOUT_MS = 65000;
+const MAX_OAUTH_TOKEN_LENGTH = 16384;
 let memorySecret = null;
 let memoryMetadata = null;
 
@@ -27,14 +28,27 @@ function accountForIssuer(issuer) {
   return `oauth-${createHash("sha256").update(issuer).digest("hex").slice(0, 24)}`;
 }
 
+function isProcessAlive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  if (pid === process.pid) return true;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error?.code === "EPERM";
+  }
+}
+
 function isValidSecret(secret) {
   return (
     secret &&
     typeof secret.access_token === "string" &&
     secret.access_token.trim() &&
+    secret.access_token.length <= MAX_OAUTH_TOKEN_LENGTH &&
     !/[\r\n]/.test(secret.access_token) &&
     typeof secret.refresh_token === "string" &&
     secret.refresh_token.trim() &&
+    secret.refresh_token.length <= MAX_OAUTH_TOKEN_LENGTH &&
     !/[\r\n]/.test(secret.refresh_token)
   );
 }
@@ -157,6 +171,7 @@ export async function withOAuthRefreshLock(
 ) {
   const lockPath = `${getConfigPath()}.oauth-refresh.lock`;
   const ownerToken = randomUUID();
+  const ownerRecord = JSON.stringify({ ownerToken, pid: process.pid });
   mkdirSync(dirname(lockPath), { recursive: true, mode: 0o700 });
   const deadline = now() + REFRESH_LOCK_TIMEOUT_MS;
   let descriptor;
@@ -167,8 +182,16 @@ export async function withOAuthRefreshLock(
       if (error?.code !== "EEXIST") throw error;
       try {
         if (now() - statSync(lockPath).mtimeMs >= REFRESH_LOCK_STALE_MS) {
-          unlinkSync(lockPath);
-          continue;
+          let ownerIsAlive = false;
+          try {
+            ownerIsAlive = isProcessAlive(JSON.parse(readFileSync(lockPath, "utf8")).pid);
+          } catch {
+            // Invalid records from a terminated writer are safe to reclaim once stale.
+          }
+          if (!ownerIsAlive) {
+            unlinkSync(lockPath);
+            continue;
+          }
         }
       } catch (statError) {
         if (statError?.code === "ENOENT") continue;
@@ -181,7 +204,7 @@ export async function withOAuthRefreshLock(
     }
   }
   try {
-    writeFileSync(descriptor, ownerToken, "utf8");
+    writeFileSync(descriptor, ownerRecord, "utf8");
   } catch (error) {
     try {
       closeSync(descriptor);
@@ -209,15 +232,14 @@ export async function withOAuthRefreshLock(
   } finally {
     clearInterval(heartbeat);
   }
-  let cleanupError;
   try {
     closeSync(descriptor);
-    if (readFileSync(lockPath, "utf8") === ownerToken) unlinkSync(lockPath);
-  } catch (error) {
-    if (error?.code !== "ENOENT") cleanupError = error;
+    if (readFileSync(lockPath, "utf8") === ownerRecord) unlinkSync(lockPath);
+  } catch {
+    // The stale-lock recovery path can reclaim this owner after the process exits.
+    // Do not turn a committed credential transaction into an ambiguous failure.
   }
   if (callbackError) throw callbackError;
-  if (cleanupError) throw cleanupError;
   return result;
 }
 

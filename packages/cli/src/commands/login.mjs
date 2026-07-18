@@ -7,6 +7,7 @@ import { resolveBaseUrl, getSiteUrl } from "../config/endpoint.mjs";
 import { bold, green, red, dim, cyan } from "../output/colors.mjs";
 import { printLoginBanner } from "../output/banner.mjs";
 import { openUrl } from "../utils/open-url.mjs";
+import { withOAuthRefreshLock } from "../auth/storage.mjs";
 
 /**
  * Masked input prompt using raw mode.
@@ -132,21 +133,27 @@ async function validateAndSave(key, baseUrlFlag) {
 
   try {
     await discoverTools({ apiKey: key, baseUrl, query: "test", limit: 1, timeoutMs: 10000 });
-    setConfigValue("api_key", key);
-    const masked = key.slice(0, 6) + "..." + key.slice(-4);
-    console.error(`\r\x1b[K`);
-    console.log(`  ${green("\u2713")} Authenticated as ${bold(masked)}`);
-    console.log(`  ${dim("Endpoint:")} ${baseUrl} ${dim(`(${source})`)}`);
-    console.log(`  ${dim("Key saved to config.")}`);
   } catch {
     console.error(`\r\x1b[K`);
     console.error(`  ${red("\u2718")} Invalid API key. Please check and try again.`);
     process.exitCode = 1;
+    return;
   }
+  try {
+    await withOAuthRefreshLock(async () => setConfigValue("api_key", key));
+  } catch (error) {
+    console.error(`\r\x1b[K`);
+    throw error;
+  }
+  const masked = key.slice(0, 6) + "..." + key.slice(-4);
+  console.error(`\r\x1b[K`);
+  console.log(`  ${green("\u2713")} Authenticated as ${bold(masked)}`);
+  console.log(`  ${dim("Endpoint:")} ${baseUrl} ${dim(`(${source})`)}`);
+  console.log(`  ${dim("Key saved to config.")}`);
 }
 
 export async function runLogout() {
-  deleteConfigValue("api_key");
+  await withOAuthRefreshLock(async () => deleteConfigValue("api_key"));
   console.log(`  ${green("\u2713")} API key removed from config.`);
 }
 

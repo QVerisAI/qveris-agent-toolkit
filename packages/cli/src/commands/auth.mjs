@@ -34,8 +34,7 @@ async function authLogin(flags) {
   const { baseUrl } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
   const issuer = new URL(baseUrl).origin;
   const metadata = await discoverAuthorizationServer(issuer);
-  const scope = flags.scope || DEFAULT_OAUTH_SCOPES;
-  validateOAuthScopes(metadata, scope);
+  const scope = validateOAuthScopes(metadata, flags.scope || DEFAULT_OAUTH_SCOPES).join(" ");
   const resource = flags.resource || `${issuer}/tools`;
   const authorization = await startDeviceAuthorization(metadata, { scope, resource });
 
@@ -175,23 +174,31 @@ async function authStatus(flags) {
 }
 
 async function authLogout(flags) {
-  const metadata = getOAuthSessionMetadata();
-  const secret = await loadOAuthSessionSecret(metadata);
+  let metadata = null;
+  let secret = null;
   let revokeError = null;
   let localError = null;
+  let lockAcquired = false;
   try {
-    if (metadata && secret) {
-      await revokeOAuthSession(metadata, secret);
-    }
+    await withOAuthRefreshLock(async () => {
+      lockAcquired = true;
+      metadata = getOAuthSessionMetadata({ fresh: true });
+      secret = await loadOAuthSessionSecret(metadata, { fresh: true });
+      try {
+        if (metadata && secret) await revokeOAuthSession(metadata, secret);
+      } catch (error) {
+        revokeError = error;
+      }
+      try {
+        await deleteOAuthSession();
+      } catch (error) {
+        localError = error;
+      }
+    });
   } catch (error) {
-    revokeError = error;
+    localError ||= error;
   }
-  try {
-    await deleteOAuthSession();
-  } catch (error) {
-    localError = error;
-  }
-  const remoteRevoked = !metadata || Boolean(secret && !revokeError);
+  const remoteRevoked = lockAcquired && (!metadata || Boolean(secret && !revokeError));
   const result = { authenticated: false, local_credentials_removed: !localError, revoked: remoteRevoked };
   if (flags.json) console.log(JSON.stringify(result, null, 2));
   else {

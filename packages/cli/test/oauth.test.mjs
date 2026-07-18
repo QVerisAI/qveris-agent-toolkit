@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import { statSync } from "node:fs";
-import { join } from "node:path";
+import { chmodSync, existsSync, mkdirSync, statSync, unlinkSync, utimesSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import test from "node:test";
 import {
   DEVICE_CODE_GRANT,
@@ -21,7 +21,8 @@ import {
   withOAuthRefreshLock,
 } from "../src/auth/storage.mjs";
 import { runAuth } from "../src/commands/auth.mjs";
-import { deleteConfigValue, setConfigValue } from "../src/config/store.mjs";
+import { runConfig } from "../src/commands/config.mjs";
+import { deleteConfigValue, getConfigPath, getConfigValue, setConfigValue } from "../src/config/store.mjs";
 
 function response(payload, status = 200, headers = {}) {
   return new Response(payload === null ? null : JSON.stringify(payload), {
@@ -47,6 +48,13 @@ test("OAuth discovery requires matching issuer, Device Flow, refresh, and a publ
   });
   assert.equal(metadata.issuer, "https://unit.test");
   assert.equal(metadata.device_authorization_endpoint, discovery.device_authorization_endpoint);
+
+  await assert.rejects(
+    discoverAuthorizationServer("javascript:alert(1)", async () => {
+      assert.fail("unsafe issuers must be rejected before discovery");
+    }),
+    /issuer must use HTTPS/,
+  );
 
   await assert.rejects(
     discoverAuthorizationServer("https://unit.test", async () =>
@@ -95,6 +103,13 @@ test("OAuth discovery requires matching issuer, Device Flow, refresh, and a publ
     }),
     (error) => error.code === "NET_TIMEOUT" && /OAuth request timed out/.test(error.message),
   );
+
+  await assert.rejects(
+    discoverAuthorizationServer("https://unit.test", async () =>
+      response({ ...discovery, padding: "x".repeat(1024 * 1024) }),
+    ),
+    /maximum response size/,
+  );
 });
 
 test("OAuth scopes require offline access and reject unsupported values", () => {
@@ -108,6 +123,11 @@ test("OAuth scopes require offline access and reject unsupported values", () => 
     () => validateOAuthScopes(discovery, "openid offline_access tools.execute"),
     /not supported: tools.execute/,
   );
+  assert.deepEqual(validateOAuthScopes(discovery, "  openid\n offline_access\ttools.search  "), [
+    "openid",
+    "offline_access",
+    "tools.search",
+  ]);
 });
 
 test("Device Authorization sends the registered public client and validates the response", async () => {
@@ -136,6 +156,13 @@ test("Device Authorization sends the registered public client and validates the 
   assert.equal(result.device_code, "device-secret");
 
   await assert.rejects(
+    startDeviceAuthorization(discovery, { scope: "openid", resource: "file:///tmp/token" }, async () => {
+      assert.fail("unsafe resources must be rejected before authorization");
+    }),
+    /resource must use HTTPS/,
+  );
+
+  await assert.rejects(
     startDeviceAuthorization(discovery, { scope: "openid", resource: "https://unit.test/tools" }, async () =>
       response({
         device_code: "device-secret",
@@ -157,6 +184,18 @@ test("Device Authorization sends the registered public client and validates the 
       }),
     ),
     /verification_uri_complete does not match/,
+  );
+
+  await assert.rejects(
+    startDeviceAuthorization(discovery, { scope: "openid", resource: "https://unit.test/tools" }, async () =>
+      response({
+        device_code: "device-secret",
+        user_code: "ABCD\u001b[2J",
+        verification_uri: "https://unit.test/oauth/device",
+        expires_in: 600,
+      }),
+    ),
+    /invalid user_code/,
   );
 });
 
@@ -207,6 +246,45 @@ test("Device polling rejects a success response without a refresh token", async 
         fetchImpl: async () =>
           response({
             access_token: "access-secret\nInjected: value",
+            refresh_token: "refresh-secret",
+            token_type: "Bearer",
+            expires_in: 3600,
+          }),
+        sleep: async () => {},
+        now: () => 0,
+      },
+    ),
+    /invalid access token response/,
+  );
+
+  await assert.rejects(
+    pollDeviceToken(
+      discovery,
+      { device_code: "device-secret", expires_in: 600, interval: 1 },
+      {
+        fetchImpl: async () =>
+          response({
+            access_token: "access-secret",
+            refresh_token: "refresh-secret",
+            token_type: "Bearer",
+            expires_in: 3600,
+            resource: "javascript:alert(1)",
+          }),
+        sleep: async () => {},
+        now: () => 0,
+      },
+    ),
+    /resource must use HTTPS/,
+  );
+
+  await assert.rejects(
+    pollDeviceToken(
+      discovery,
+      { device_code: "device-secret", expires_in: 600, interval: 1 },
+      {
+        fetchImpl: async () =>
+          response({
+            access_token: "x".repeat(16385),
             refresh_token: "refresh-secret",
             token_type: "Bearer",
             expires_in: 3600,
@@ -327,6 +405,33 @@ test("Device polling bounds an in-flight token request by the authorization dead
               reject(error);
             });
           }),
+      },
+    ),
+    /expired/,
+  );
+  assert.ok(Date.now() - startedAt < 1000);
+});
+
+test("Device polling timeout also covers a response body that stalls after headers", async () => {
+  const startedAt = Date.now();
+  await assert.rejects(
+    pollDeviceToken(
+      discovery,
+      { device_code: "device-secret", expires_in: 0.02, interval: 0.001 },
+      {
+        fetchImpl: async (_url, options) =>
+          new Response(
+            new ReadableStream({
+              start(controller) {
+                options.signal.addEventListener("abort", () => {
+                  const error = new Error("aborted");
+                  error.name = "AbortError";
+                  controller.error(error);
+                });
+              },
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          ),
       },
     ),
     /expired/,
@@ -490,6 +595,185 @@ test("OAuth logout reports incomplete local deletion and unknown remote revocati
     process.exitCode = previousExitCode;
     if (previous === undefined) delete process.env.XDG_CONFIG_HOME;
     else process.env.XDG_CONFIG_HOME = previous;
+    if (previousKeyring === undefined) delete process.env.QVERIS_DISABLE_KEYRING;
+    else process.env.QVERIS_DISABLE_KEYRING = previousKeyring;
+  }
+});
+
+test("Logout waits for an in-flight refresh and revokes the rotated session", async () => {
+  const previousConfigHome = process.env.XDG_CONFIG_HOME;
+  const previousKeyring = process.env.QVERIS_DISABLE_KEYRING;
+  const previousFetch = globalThis.fetch;
+  const previousExitCode = process.exitCode;
+  const previousLog = console.log;
+  process.env.XDG_CONFIG_HOME = `/tmp/qveris-oauth-logout-refresh-${process.pid}-${Date.now()}`;
+  process.env.QVERIS_DISABLE_KEYRING = "1";
+  console.log = () => {};
+  let releaseRefresh;
+  try {
+    await saveOAuthSession(
+      {
+        ...discovery,
+        storage: "config",
+        api_base_url: "https://unit.test/api/v1",
+        resource: "https://unit.test/tools",
+        expires_at: 0,
+      },
+      { access_token: "expired-access", refresh_token: "old-refresh" },
+      { allowUnencryptedStorage: true },
+    );
+    let markRefreshStarted;
+    const refreshStarted = new Promise((resolve) => {
+      markRefreshStarted = resolve;
+    });
+    const refreshGate = new Promise((resolve) => {
+      releaseRefresh = resolve;
+    });
+    const provider = createStoredOAuthCredentialProvider({
+      fetchImpl: async () => {
+        markRefreshStarted();
+        await refreshGate;
+        return response({
+          access_token: "fresh-access",
+          refresh_token: "fresh-refresh",
+          token_type: "Bearer",
+          expires_in: 3600,
+        });
+      },
+    });
+    const credential = provider.getCredential({ resource: "https://unit.test/api/v1", scopes: [] });
+    await refreshStarted;
+
+    const revokedTokens = [];
+    globalThis.fetch = async (_url, options) => {
+      revokedTokens.push(Object.fromEntries(options.body.entries()).token);
+      return response(null);
+    };
+    const logout = runAuth("logout", { json: true });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.deepEqual(revokedTokens, []);
+
+    releaseRefresh();
+    assert.equal(await credential, "fresh-access");
+    await logout;
+    assert.deepEqual(revokedTokens, ["fresh-refresh", "fresh-access"]);
+    assert.equal(getOAuthSessionMetadata({ fresh: true }), null);
+  } finally {
+    releaseRefresh?.();
+    console.log = previousLog;
+    globalThis.fetch = previousFetch;
+    process.exitCode = previousExitCode;
+    if (getOAuthSessionMetadata({ fresh: true })) await deleteOAuthSession();
+    if (previousConfigHome === undefined) delete process.env.XDG_CONFIG_HOME;
+    else process.env.XDG_CONFIG_HOME = previousConfigHome;
+    if (previousKeyring === undefined) delete process.env.QVERIS_DISABLE_KEYRING;
+    else process.env.QVERIS_DISABLE_KEYRING = previousKeyring;
+  }
+});
+
+test("Config writes wait for refresh rotation without restoring stale OAuth credentials", async () => {
+  const previousConfigHome = process.env.XDG_CONFIG_HOME;
+  const previousKeyring = process.env.QVERIS_DISABLE_KEYRING;
+  const previousLog = console.log;
+  process.env.XDG_CONFIG_HOME = `/tmp/qveris-oauth-config-refresh-${process.pid}-${Date.now()}`;
+  process.env.QVERIS_DISABLE_KEYRING = "1";
+  console.log = () => {};
+  let releaseRefresh;
+  try {
+    await saveOAuthSession(
+      {
+        ...discovery,
+        storage: "config",
+        api_base_url: "https://unit.test/api/v1",
+        resource: "https://unit.test/tools",
+        expires_at: 0,
+      },
+      { access_token: "expired-access", refresh_token: "old-refresh" },
+      { allowUnencryptedStorage: true },
+    );
+    let markRefreshStarted;
+    const refreshStarted = new Promise((resolve) => {
+      markRefreshStarted = resolve;
+    });
+    const refreshGate = new Promise((resolve) => {
+      releaseRefresh = resolve;
+    });
+    const provider = createStoredOAuthCredentialProvider({
+      fetchImpl: async () => {
+        markRefreshStarted();
+        await refreshGate;
+        return response({
+          access_token: "fresh-access",
+          refresh_token: "fresh-refresh",
+          token_type: "Bearer",
+          expires_in: 3600,
+        });
+      },
+    });
+    const credential = provider.getCredential({ resource: "https://unit.test/api/v1", scopes: [] });
+    await refreshStarted;
+
+    const configWrite = runConfig("set", ["api_key", "sk-config"], {});
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.equal(getConfigValue("api_key"), undefined);
+
+    releaseRefresh();
+    assert.equal(await credential, "fresh-access");
+    await configWrite;
+    assert.equal(getConfigValue("api_key"), "sk-config");
+    assert.deepEqual(await loadOAuthSessionSecret(undefined, { fresh: true }), {
+      access_token: "fresh-access",
+      refresh_token: "fresh-refresh",
+    });
+  } finally {
+    releaseRefresh?.();
+    console.log = previousLog;
+    if (getOAuthSessionMetadata({ fresh: true })) await deleteOAuthSession();
+    if (previousConfigHome === undefined) delete process.env.XDG_CONFIG_HOME;
+    else process.env.XDG_CONFIG_HOME = previousConfigHome;
+    if (previousKeyring === undefined) delete process.env.QVERIS_DISABLE_KEYRING;
+    else process.env.QVERIS_DISABLE_KEYRING = previousKeyring;
+  }
+});
+
+test("Config reset revokes and removes a stored OAuth session", async () => {
+  const previousConfigHome = process.env.XDG_CONFIG_HOME;
+  const previousKeyring = process.env.QVERIS_DISABLE_KEYRING;
+  const previousFetch = globalThis.fetch;
+  const previousLog = console.log;
+  process.env.XDG_CONFIG_HOME = `/tmp/qveris-oauth-config-reset-${process.pid}-${Date.now()}`;
+  process.env.QVERIS_DISABLE_KEYRING = "1";
+  console.log = () => {};
+  try {
+    await saveOAuthSession(
+      {
+        ...discovery,
+        storage: "config",
+        api_base_url: "https://unit.test/api/v1",
+        resource: "https://unit.test/tools",
+        expires_at: Date.now() + 3600000,
+      },
+      { access_token: "access-secret", refresh_token: "refresh-secret" },
+      { allowUnencryptedStorage: true },
+    );
+    setConfigValue("api_key", "sk-config");
+    const revokedTokens = [];
+    globalThis.fetch = async (_url, options) => {
+      revokedTokens.push(Object.fromEntries(options.body.entries()).token);
+      return response(null);
+    };
+
+    await runConfig("reset", [], {});
+
+    assert.deepEqual(revokedTokens, ["refresh-secret", "access-secret"]);
+    assert.equal(getOAuthSessionMetadata({ fresh: true }), null);
+    assert.equal(getConfigValue("api_key"), undefined);
+  } finally {
+    console.log = previousLog;
+    globalThis.fetch = previousFetch;
+    if (getOAuthSessionMetadata({ fresh: true })) await deleteOAuthSession();
+    if (previousConfigHome === undefined) delete process.env.XDG_CONFIG_HOME;
+    else process.env.XDG_CONFIG_HOME = previousConfigHome;
     if (previousKeyring === undefined) delete process.env.QVERIS_DISABLE_KEYRING;
     else process.env.QVERIS_DISABLE_KEYRING = previousKeyring;
   }
@@ -693,6 +977,69 @@ test("A refresh never returns credentials from a session replaced while waiting 
   }
 });
 
+test("A stale refresh lock is reclaimed only when its owning process is gone", async () => {
+  const previous = process.env.XDG_CONFIG_HOME;
+  process.env.XDG_CONFIG_HOME = `/tmp/qveris-oauth-stale-lock-${process.pid}-${Date.now()}`;
+  const lockPath = `${getConfigPath()}.oauth-refresh.lock`;
+  mkdirSync(dirname(lockPath), { recursive: true });
+  let currentTime = Date.now();
+  try {
+    writeFileSync(lockPath, JSON.stringify({ ownerToken: "live-owner", pid: process.pid }));
+    const staleTime = new Date(currentTime - 120000);
+    utimesSync(lockPath, staleTime, staleTime);
+    await assert.rejects(
+      withOAuthRefreshLock(async () => assert.fail("a live owner's lock must not be reclaimed"), {
+        now: () => currentTime,
+        sleep: async (milliseconds) => {
+          currentTime += milliseconds;
+        },
+      }),
+      /Timed out waiting/,
+    );
+    assert.equal(existsSync(lockPath), true);
+
+    unlinkSync(lockPath);
+    writeFileSync(lockPath, JSON.stringify({ ownerToken: "dead-owner", pid: 2147483647 }));
+    utimesSync(lockPath, staleTime, staleTime);
+    assert.equal(
+      await withOAuthRefreshLock(async () => "reclaimed", {
+        now: () => currentTime,
+        sleep: async () => {},
+      }),
+      "reclaimed",
+    );
+    assert.equal(existsSync(lockPath), false);
+  } finally {
+    if (existsSync(lockPath)) unlinkSync(lockPath);
+    if (previous === undefined) delete process.env.XDG_CONFIG_HOME;
+    else process.env.XDG_CONFIG_HOME = previous;
+  }
+});
+
+test(
+  "A committed lock callback stays successful when only lock-file cleanup fails",
+  { skip: process.platform === "win32" },
+  async () => {
+    const previous = process.env.XDG_CONFIG_HOME;
+    process.env.XDG_CONFIG_HOME = `/tmp/qveris-oauth-lock-cleanup-${process.pid}-${Date.now()}`;
+    const lockPath = `${getConfigPath()}.oauth-refresh.lock`;
+    const configDirectory = dirname(lockPath);
+    try {
+      const result = await withOAuthRefreshLock(async () => {
+        chmodSync(configDirectory, 0o500);
+        return "committed";
+      });
+      assert.equal(result, "committed");
+      assert.equal(existsSync(lockPath), true);
+    } finally {
+      chmodSync(configDirectory, 0o700);
+      if (existsSync(lockPath)) unlinkSync(lockPath);
+      if (previous === undefined) delete process.env.XDG_CONFIG_HOME;
+      else process.env.XDG_CONFIG_HOME = previous;
+    }
+  },
+);
+
 test("Revocation accepts an empty success response and never puts tokens in the URL", async () => {
   let request;
   await revokeOAuthToken(discovery, "refresh-secret", "refresh_token", async (url, options) => {
@@ -707,13 +1054,19 @@ test("Revocation accepts an empty success response and never puts tokens in the 
 
 test("Session revocation attempts the access token after refresh-token revocation fails", async () => {
   const hints = [];
+  let activeRequests = 0;
+  let maximumConcurrency = 0;
   await assert.rejects(
     revokeOAuthSession(
       discovery,
       { refresh_token: "refresh-secret", access_token: "access-secret" },
       async (_url, options) => {
+        activeRequests += 1;
+        maximumConcurrency = Math.max(maximumConcurrency, activeRequests);
         const form = Object.fromEntries(options.body.entries());
         hints.push(form.token_type_hint);
+        await new Promise((resolve) => setImmediate(resolve));
+        activeRequests -= 1;
         return form.token_type_hint === "refresh_token"
           ? response({ error: "invalid_token" }, 400)
           : response(null, 200);
@@ -722,6 +1075,7 @@ test("Session revocation attempts the access token after refresh-token revocatio
     /OAuth request failed/,
   );
   assert.deepEqual(hints, ["refresh_token", "access_token"]);
+  assert.equal(maximumConcurrency, 2);
 });
 
 test("A successful login revokes the previous OAuth session before replacing it", async () => {
