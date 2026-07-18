@@ -11,6 +11,7 @@ import {
   revokeOAuthSession,
   revokeOAuthToken,
   startDeviceAuthorization,
+  validateOAuthScopes,
 } from "../src/auth/oauth.mjs";
 import { deleteOAuthSession, getOAuthSessionMetadata, saveOAuthSession } from "../src/auth/storage.mjs";
 import { runAuth } from "../src/commands/auth.mjs";
@@ -42,6 +43,53 @@ test("OAuth discovery requires matching issuer, Device Flow, and a public client
       response({ ...discovery, token_endpoint_auth_methods_supported: ["client_secret_basic"] }),
     ),
     /public QVeris CLI client/,
+  );
+
+  const loopback = await discoverAuthorizationServer("http://[::1]:8787", async () =>
+    response({
+      ...discovery,
+      issuer: "http://[::1]:8787",
+      device_authorization_endpoint: "http://[::1]:8787/oauth/device/authorize",
+      token_endpoint: "http://[::1]:8787/oauth/token",
+      revocation_endpoint: "http://[::1]:8787/oauth/revoke",
+    }),
+  );
+  assert.equal(loopback.issuer, "http://[::1]:8787");
+
+  await assert.rejects(
+    discoverAuthorizationServer("https://unit.test", async () =>
+      response({ ...discovery, token_endpoint: "ftp://localhost/oauth/token" }),
+    ),
+    /token_endpoint must use HTTPS/,
+  );
+
+  await assert.rejects(
+    discoverAuthorizationServer("https://unit.test", async () =>
+      response({ ...discovery, token_endpoint: "https://other.test/oauth/token" }),
+    ),
+    /token_endpoint does not match the stored issuer/,
+  );
+
+  await assert.rejects(
+    discoverAuthorizationServer("https://unit.test", async () => {
+      const error = new Error("aborted");
+      error.name = "AbortError";
+      throw error;
+    }),
+    (error) => error.code === "NET_TIMEOUT" && /OAuth request timed out/.test(error.message),
+  );
+});
+
+test("OAuth scopes require offline access and reject unsupported values", () => {
+  assert.deepEqual(validateOAuthScopes(discovery, "openid offline_access tools.search"), [
+    "openid",
+    "offline_access",
+    "tools.search",
+  ]);
+  assert.throws(() => validateOAuthScopes(discovery, "openid tools.search"), /must include offline_access/);
+  assert.throws(
+    () => validateOAuthScopes(discovery, "openid offline_access tools.execute"),
+    /not supported: tools.execute/,
   );
 });
 
@@ -106,6 +154,80 @@ test("Device polling honors pending and slow_down before returning tokens", asyn
   assert.equal(tokens.access_token, "access-secret");
 });
 
+test("Device polling rejects a success response without a refresh token", async () => {
+  await assert.rejects(
+    pollDeviceToken(
+      discovery,
+      { device_code: "device-secret", expires_in: 600, interval: 1 },
+      {
+        fetchImpl: async () => response({ access_token: "access-secret", token_type: "Bearer", expires_in: 3600 }),
+        sleep: async () => {},
+        now: () => 0,
+      },
+    ),
+    /required refresh token/,
+  );
+});
+
+test("Device and token responses reject invalid expiry values", async () => {
+  await assert.rejects(
+    startDeviceAuthorization(
+      discovery,
+      { scope: "openid offline_access", resource: "https://unit.test/tools" },
+      async () =>
+        response({
+          device_code: "device-secret",
+          user_code: "ABCD-EFGH",
+          verification_uri: "https://unit.test/oauth/device",
+          expires_in: 0,
+        }),
+    ),
+    /invalid expires_in/,
+  );
+
+  await assert.rejects(
+    pollDeviceToken(
+      discovery,
+      { device_code: "device-secret", expires_in: 600, interval: 1 },
+      {
+        fetchImpl: async () =>
+          response({
+            access_token: "access-secret",
+            refresh_token: "refresh-secret",
+            token_type: "Bearer",
+          }),
+        sleep: async () => {},
+        now: () => 0,
+      },
+    ),
+    /invalid expires_in/,
+  );
+});
+
+test("Device polling does not call the token endpoint after authorization expires", async () => {
+  let currentTime = 0;
+  let requests = 0;
+  await assert.rejects(
+    pollDeviceToken(
+      discovery,
+      { device_code: "device-secret", expires_in: 1, interval: 5 },
+      {
+        fetchImpl: async () => {
+          requests += 1;
+          return response({ error: "authorization_pending" }, { ok: false, status: 400 });
+        },
+        sleep: async (milliseconds) => {
+          currentTime += milliseconds;
+        },
+        now: () => currentTime,
+      },
+    ),
+    /expired/,
+  );
+  assert.equal(currentTime, 1000);
+  assert.equal(requests, 0);
+});
+
 for (const code of ["access_denied", "expired_token", "invalid_grant"]) {
   test(`Device polling stops on ${code}`, async () => {
     await assert.rejects(
@@ -168,6 +290,55 @@ test("Refresh rejects a response that violates the QVeris rotation contract", as
     ),
     /did not rotate the refresh token/,
   );
+
+  await assert.rejects(
+    refreshOAuthSession(
+      { ...discovery, api_base_url: "https://unit.test/api/v1", resource: "https://unit.test/tools" },
+      { access_token: "old-access", refresh_token: "same-refresh" },
+      async () =>
+        response({
+          access_token: "new-access",
+          refresh_token: "same-refresh",
+          token_type: "Bearer",
+          expires_in: 3600,
+        }),
+    ),
+    /did not rotate the refresh token/,
+  );
+});
+
+test("Refresh reports when a previously persisted session cannot store rotated credentials", async () => {
+  const previous = process.env.XDG_CONFIG_HOME;
+  const previousKeyring = process.env.QVERIS_DISABLE_KEYRING;
+  process.env.XDG_CONFIG_HOME = `/tmp/qveris-oauth-persist-failure-${process.pid}-${Date.now()}`;
+  process.env.QVERIS_DISABLE_KEYRING = "1";
+  try {
+    await assert.rejects(
+      refreshOAuthSession(
+        {
+          ...discovery,
+          storage: "keyring",
+          api_base_url: "https://unit.test/api/v1",
+          resource: "https://unit.test/tools",
+        },
+        { access_token: "old-access", refresh_token: "old-refresh" },
+        async () =>
+          response({
+            access_token: "new-access",
+            refresh_token: "new-refresh",
+            token_type: "Bearer",
+            expires_in: 3600,
+          }),
+      ),
+      /could not be persisted/,
+    );
+  } finally {
+    await deleteOAuthSession();
+    if (previous === undefined) delete process.env.XDG_CONFIG_HOME;
+    else process.env.XDG_CONFIG_HOME = previous;
+    if (previousKeyring === undefined) delete process.env.QVERIS_DISABLE_KEYRING;
+    else process.env.QVERIS_DISABLE_KEYRING = previousKeyring;
+  }
 });
 
 test("Explicit config fallback persists across processes with owner-only permissions", async () => {

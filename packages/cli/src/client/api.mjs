@@ -89,6 +89,9 @@ async function requestJson(
         } catch {
           /* not JSON */
         }
+        if ((status === 401 || status === 403) && credentialProvider.authType === "oauth") {
+          throw new CliError("AUTH_OAUTH_FAILED", errorDetail);
+        }
         if (status === 401 || status === 403) {
           const err = new CliError("AUTH_INVALID_KEY", errorDetail);
           err.hint = `Check your key at ${getSiteUrl(baseUrl)}/account`;

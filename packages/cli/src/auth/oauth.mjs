@@ -5,6 +5,7 @@ import { getOAuthSessionMetadata, loadOAuthSessionSecret, saveOAuthSession } fro
 export const DEVICE_CODE_GRANT = "urn:ietf:params:oauth:grant-type:device_code";
 export const OAUTH_CLIENT_ID = "qveris-cli";
 export const DEFAULT_OAUTH_SCOPES = "openid offline_access tools.search tools.inspect tools.execute";
+const OAUTH_REQUEST_TIMEOUT_MS = 30000;
 let sharedRefreshPromise = null;
 
 function oauthError(code) {
@@ -39,13 +40,26 @@ function validateEndpoint(value, label) {
   } catch {
     throw new CliError("API_ERROR", `OAuth discovery has an invalid ${label}`);
   }
-  if (url.protocol !== "https:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
+  const isLoopback = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+  if (url.protocol !== "https:" && !(url.protocol === "http:" && isLoopback)) {
     throw new CliError("API_ERROR", `OAuth ${label} must use HTTPS`);
   }
   if (url.username || url.password || url.hash) {
     throw new CliError("API_ERROR", `OAuth discovery has an unsafe ${label}`);
   }
   return url.toString();
+}
+
+export function validateOAuthScopes(metadata, scope) {
+  const requestedScopes = scope.split(/\s+/).filter(Boolean);
+  if (!requestedScopes.includes("offline_access")) {
+    throw new CliError("API_ERROR", "OAuth scopes must include offline_access for a persistent CLI session");
+  }
+  const unsupported = requestedScopes.filter((item) => !metadata.scopes_supported.includes(item));
+  if (unsupported.length) {
+    throw new CliError("API_ERROR", `OAuth scopes are not supported: ${unsupported.join(", ")}`);
+  }
+  return requestedScopes;
 }
 
 function validateIssuerEndpoint(metadata, key) {
@@ -56,9 +70,31 @@ function validateIssuerEndpoint(metadata, key) {
   return endpoint;
 }
 
+function positiveNumber(value, label, defaultValue) {
+  if (value === undefined && defaultValue !== undefined) return defaultValue;
+  const normalized = Number(value);
+  if (!Number.isFinite(normalized) || normalized <= 0) {
+    throw new CliError("API_ERROR", `OAuth response has an invalid ${label}`);
+  }
+  return normalized;
+}
+
+async function timedFetch(fetchImpl, url, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), OAUTH_REQUEST_TIMEOUT_MS);
+  try {
+    return await fetchImpl(url, { ...options, signal: controller.signal });
+  } catch (error) {
+    if (error?.name === "AbortError") throw new CliError("NET_TIMEOUT", "OAuth request timed out");
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function discoverAuthorizationServer(issuer, fetchImpl = fetch) {
   const normalizedIssuer = new URL(issuer).origin;
-  const response = await fetchImpl(`${normalizedIssuer}/.well-known/oauth-authorization-server`, {
+  const response = await timedFetch(fetchImpl, `${normalizedIssuer}/.well-known/oauth-authorization-server`, {
     headers: { Accept: "application/json" },
   });
   const metadata = await jsonResponse(response, "OAuth discovery");
@@ -72,7 +108,7 @@ export async function discoverAuthorizationServer(issuer, fetchImpl = fetch) {
   if (!metadata.token_endpoint_auth_methods_supported?.includes("none")) {
     throw new CliError("API_ERROR", "This endpoint does not support the public QVeris CLI client");
   }
-  return {
+  const result = {
     issuer: normalizedIssuer,
     device_authorization_endpoint: validateEndpoint(
       metadata.device_authorization_endpoint,
@@ -82,10 +118,14 @@ export async function discoverAuthorizationServer(issuer, fetchImpl = fetch) {
     revocation_endpoint: validateEndpoint(metadata.revocation_endpoint, "revocation_endpoint"),
     scopes_supported: Array.isArray(metadata.scopes_supported) ? metadata.scopes_supported : [],
   };
+  for (const key of ["device_authorization_endpoint", "token_endpoint", "revocation_endpoint"]) {
+    validateIssuerEndpoint(result, key);
+  }
+  return result;
 }
 
 async function postForm(url, form, fetchImpl = fetch) {
-  const response = await fetchImpl(url, {
+  const response = await timedFetch(fetchImpl, url, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
     body: new URLSearchParams(form),
@@ -113,8 +153,8 @@ export async function startDeviceAuthorization(metadata, { scope, resource }, fe
     ...payload,
     verification_uri: verificationUri,
     ...(verificationUriComplete ? { verification_uri_complete: verificationUriComplete } : {}),
-    expires_in: Number.isFinite(Number(payload.expires_in)) ? Number(payload.expires_in) : 600,
-    interval: Number.isFinite(Number(payload.interval)) ? Math.max(1, Number(payload.interval)) : 5,
+    expires_in: positiveNumber(payload.expires_in, "expires_in"),
+    interval: positiveNumber(payload.interval, "interval", 5),
   };
 }
 
@@ -126,7 +166,8 @@ export async function pollDeviceToken(
   const deadline = now() + authorization.expires_in * 1000;
   let intervalMs = authorization.interval * 1000;
   while (now() < deadline) {
-    await sleep(intervalMs);
+    await sleep(Math.min(intervalMs, deadline - now()));
+    if (now() >= deadline) break;
     const { response, payload } = await postForm(
       metadata.token_endpoint,
       {
@@ -137,7 +178,7 @@ export async function pollDeviceToken(
       fetchImpl,
     );
     onPoll?.(payload.error || "approved");
-    if (response.ok) return validateTokenResponse(payload);
+    if (response.ok) return validateTokenResponse(payload, { requireRefreshToken: true });
     if (payload.error === "authorization_pending") continue;
     if (payload.error === "slow_down") {
       intervalMs += 5000;
@@ -151,11 +192,19 @@ export async function pollDeviceToken(
   throw oauthError("expired_token", "Device authorization expired before it was approved");
 }
 
-function validateTokenResponse(payload) {
-  if (payload.token_type?.toLowerCase() !== "bearer" || typeof payload.access_token !== "string") {
+function validateTokenResponse(payload, { requireRefreshToken = false } = {}) {
+  if (
+    typeof payload.token_type !== "string" ||
+    payload.token_type.toLowerCase() !== "bearer" ||
+    typeof payload.access_token !== "string" ||
+    !payload.access_token.trim()
+  ) {
     throw new CliError("API_ERROR", "Token endpoint returned an invalid access token response");
   }
-  return payload;
+  if (requireRefreshToken && (typeof payload.refresh_token !== "string" || !payload.refresh_token.trim())) {
+    throw new CliError("API_ERROR", "Token endpoint did not return the required refresh token");
+  }
+  return { ...payload, expires_in: positiveNumber(payload.expires_in, "expires_in") };
 }
 
 export async function refreshOAuthSession(metadata, secret, fetchImpl = fetch) {
@@ -172,7 +221,11 @@ export async function refreshOAuthSession(metadata, secret, fetchImpl = fetch) {
   const tokens = validateTokenResponse(payload);
   // QVeris advertises refresh-token rotation as part of its public OAuth contract.
   // Rejecting a non-rotating response prevents reuse of a superseded credential.
-  if (typeof tokens.refresh_token !== "string" || !tokens.refresh_token) {
+  if (
+    typeof tokens.refresh_token !== "string" ||
+    !tokens.refresh_token.trim() ||
+    tokens.refresh_token === secret.refresh_token
+  ) {
     throw new CliError("API_ERROR", "Token endpoint did not rotate the refresh token");
   }
   const replacement = {
@@ -183,14 +236,17 @@ export async function refreshOAuthSession(metadata, secret, fetchImpl = fetch) {
     ...metadata,
     expires_at: Date.now() + Math.max(1, Number(tokens.expires_in) || 3600) * 1000,
   };
-  await saveOAuthSession(updated, replacement);
+  const persisted = await saveOAuthSession(updated, replacement);
+  if (["keyring", "config"].includes(metadata.storage) && !persisted) {
+    throw new CliError("API_ERROR", "Rotated OAuth credentials could not be persisted; run qveris auth login again");
+  }
   return { metadata: updated, secret: replacement };
 }
 
 export async function revokeOAuthToken(metadata, token, hint, fetchImpl = fetch) {
   if (!token) return;
   const revocationEndpoint = validateIssuerEndpoint(metadata, "revocation_endpoint");
-  const response = await fetchImpl(revocationEndpoint, {
+  const response = await timedFetch(fetchImpl, revocationEndpoint, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
     body: new URLSearchParams({ client_id: OAUTH_CLIENT_ID, token, token_type_hint: hint }),
@@ -232,6 +288,7 @@ export function createStoredOAuthCredentialProvider({ fetchImpl = fetch } = {}) 
     return sharedRefreshPromise;
   }
   return {
+    authType: "oauth",
     async getCredential(context) {
       const metadata = getOAuthSessionMetadata();
       let secret = await loadOAuthSessionSecret(metadata);

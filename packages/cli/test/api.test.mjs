@@ -213,6 +213,21 @@ test("OAuth credentials refresh once on 401 and business 403 is not retried", as
   );
   assert.equal(requests, 1);
   assert.equal(refreshes, 1);
+
+  const oauthProvider = {
+    authType: "oauth",
+    async getCredential() {
+      return "oauth-access";
+    },
+    async refreshCredential() {},
+  };
+  await assert.rejects(
+    withMockFetch(
+      () => jsonResponse({ message: "session expired" }, { status: 401 }),
+      () => discoverTools({ credentialProvider: oauthProvider, baseUrl: "https://unit.test/api/v1", query: "weather" }),
+    ),
+    (error) => error instanceof CliError && error.code === "AUTH_OAUTH_FAILED" && /session expired/.test(error.message),
+  );
 });
 
 test("API client rejects ambiguous or invalid provider credentials without exposing values", async () => {

@@ -9,6 +9,7 @@ import {
   pollDeviceToken,
   revokeOAuthSession,
   startDeviceAuthorization,
+  validateOAuthScopes,
 } from "../auth/oauth.mjs";
 import {
   deleteOAuthSession,
@@ -30,9 +31,7 @@ async function authLogin(flags) {
   const issuer = new URL(baseUrl).origin;
   const metadata = await discoverAuthorizationServer(issuer);
   const scope = flags.scope || DEFAULT_OAUTH_SCOPES;
-  const requestedScopes = scope.split(/\s+/).filter(Boolean);
-  const unsupported = requestedScopes.filter((item) => !metadata.scopes_supported.includes(item));
-  if (unsupported.length) throw new Error(`OAuth scopes are not supported: ${unsupported.join(", ")}`);
+  validateOAuthScopes(metadata, scope);
   const resource = flags.resource || `${issuer}/tools`;
   const authorization = await startDeviceAuthorization(metadata, { scope, resource });
 

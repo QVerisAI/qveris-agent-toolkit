@@ -278,7 +278,7 @@ qveris auth logout
 
 Refresh Token 会自动轮换并保存在操作系统凭证库中。系统凭证库不可用时，CLI 默认仅在当前进程保留凭证。在可信的无头主机上，可显式添加 `--allow-unencrypted-storage`，将 token 持久化到权限为 `0600` 的用户配置文件中。`auth logout` 会先尝试远程撤销，再清理本地凭证。显式配置的 API Key 继续保持原有优先级和行为。
 
-在没有操作系统凭证库的可信无头主机上，可使用 `--no-browser --allow-unencrypted-storage`。高级集成可通过 `--scope <scopes>` 和 `--resource <url>` 收窄授权请求；两者都必须符合服务端公开契约。
+在没有操作系统凭证库的可信无头主机上，可使用 `--no-browser --allow-unencrypted-storage`。高级集成可通过 `--scope <scopes>` 和 `--resource <url>` 收窄授权请求；两者都必须符合服务端公开契约，且自定义 scope 必须保留 `offline_access`，以便安全刷新会话。
 
 ### `qveris login`（API Key）
 

@@ -435,7 +435,7 @@ function printUsage(flags = {}) {
     --json, -j             Output raw JSON
     --api-key <key>        Override API key
     --base-url <url>       Override API base URL
-    --scope <scopes>       OAuth scopes for auth login
+    --scope <scopes>       OAuth scopes for auth login (must include offline_access)
     --resource <url>       OAuth resource for auth login
     --allow-unencrypted-storage
                            Persist OAuth tokens in the user-only config file when no keyring is available
