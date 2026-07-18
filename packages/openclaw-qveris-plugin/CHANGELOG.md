@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Changed
+
+- Aligned the full-toolkit development and CI Node.js pin with the `22.22.3` minimum required by the tested OpenClaw `2026.7.1` development dependency. The published plugin's existing runtime compatibility floor is unchanged.
+
 ## [2026.7.15] - 2026-07-15
 
 ### Changed

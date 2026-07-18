@@ -6,19 +6,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-18
+
 ### Added
 
-- Native AutoGen, LlamaIndex, and Pydantic AI adapters, optional dependency extras, conformance tests, and runnable agent examples.
+- Native AutoGen, LlamaIndex, and Pydantic AI adapters, optional dependency extras, conformance tests, and runnable agent examples. ([#235])
 - Added an async `CredentialProvider` protocol and `ApiKeyCredentialProvider`. Existing `QverisConfig.api_key` behavior remains compatible, while applications can supply short-lived bearer credentials without changing endpoint selection. ([#226])
 
 ### Changed
 
-- Expanded the Python SDK framework-integration guide with a support matrix, dependency boundaries, current agent APIs, lifecycle requirements, and all six supported adapters.
-- Updated the LangChain/LangGraph example to use `langchain.agents.create_agent`, corrected CrewAI cleanup guidance, and quoted extras in shell install commands.
+- Expanded the Python SDK framework-integration guide with a support matrix, dependency boundaries, current agent APIs, lifecycle requirements, and all six supported adapters. ([#235])
+- Updated the LangChain/LangGraph example to use `langchain.agents.create_agent`, corrected CrewAI cleanup guidance, and quoted extras in shell install commands. ([#235])
+- API reference pages are now generated from the public Python surface, with drift checks keeping the English and Chinese references aligned. ([#233])
 
 ### Fixed
 
-- Framework adapters now share canonical tool schemas and Pydantic-safe JSON serialization; LlamaIndex rejects its unsafe synchronous wrapper with async guidance instead of creating a fresh event loop around the persistent client.
+- Framework adapters now share canonical tool schemas and Pydantic-safe JSON serialization; LlamaIndex rejects its unsafe synchronous wrapper with async guidance instead of creating a fresh event loop around the persistent client. ([#235])
 
 ## [0.3.2] - 2026-07-15
 
@@ -65,13 +68,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Generated OpenAPI contract models with drift CI. ([#48])
 - `Agent` runtime: LLM tool loop over the QVeris workflow with streaming events.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.3.2...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.4.0...HEAD
+[0.4.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.3.2...python-sdk-v0.4.0
 [0.3.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.3.1...python-sdk-v0.3.2
 [0.3.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.3.0...python-sdk-v0.3.1
 [0.3.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.2.1...python-sdk-v0.3.0
 [0.2.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.2.0...python-sdk-v0.2.1
 [0.2.0]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/python-sdk-v0.2.0
 [#222]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/222
+[#235]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/235
+[#233]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/233
 [#204]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/204
 [#226]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/226
 [#157]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/157

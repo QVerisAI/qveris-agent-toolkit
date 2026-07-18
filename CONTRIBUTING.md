@@ -17,7 +17,7 @@ Thanks for your interest in the QVeris Agent Toolkit! This monorepo hosts five i
 
 From the repo root, the `package.json` task runner fans out across every package
 (it delegates to each package's own scripts; there are no root dependencies or
-workspaces). Running the full toolkit requires Node `>=22.22.2` because it includes
+workspaces). Running the full toolkit requires Node `>=22.22.3` because it includes
 the OpenClaw development toolchain; development uses that version from `.nvmrc`. The CLI, MCP,
 and JavaScript SDK retain their package-level Node 18 support. The Python SDK uses `uv`.
 

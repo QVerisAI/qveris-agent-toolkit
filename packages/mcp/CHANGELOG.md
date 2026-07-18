@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-07-18
+
 ### Added
 
 - Server Card auth metadata for hosted deployments ([#236]): `ServerCardRemote` supports the schema's `headers`/`variables` inputs, `ServerCardInfo.remoteHeaders` threads them through `startHttpServer`, and `bearerAuthHeaderInput()` builds an `Authorization: Bearer {api_key}` template whose variable is required + secret. `buildServerCard` rejects literal secret material in the card. Generated cards are validated in CI against the upstream Server Card schema vendored at a pinned commit (`schemas/README.md`); a separate non-blocking step probes the public `$schema` URL so "card invalid" and "upstream URL unavailable" never mix.
@@ -120,7 +122,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Handle empty/non-JSON success responses gracefully; `params_to_tool` documented as an object.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.10.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.11.0...HEAD
+[0.11.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.10.0...mcp-v0.11.0
 [0.10.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.9.0...mcp-v0.10.0
 [0.9.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.8.0...mcp-v0.9.0
 [0.8.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.7.5...mcp-v0.8.0
@@ -139,11 +142,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#201]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/201
 [#204]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/204
 [#211]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/211
-<<<<<<< HEAD
 [#236]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/236
-=======
 [#237]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/237
->>>>>>> origin/main
 [#158]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/158
 [#145]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/145
 [#120]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/120
