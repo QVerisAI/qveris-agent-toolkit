@@ -6,9 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-07-18
+
 ### Added
 
 - Added an async-capable `CredentialProvider` contract and `ApiKeyCredentialProvider`. Existing `apiKey` configuration remains the default-compatible path, while applications can supply short-lived bearer credentials without changing endpoint selection. ([#226])
+
+### Changed
+
+- API reference pages are now generated from the public TypeScript surface, with drift checks keeping the English and Chinese references aligned. ([#233])
 
 ## [0.4.0] - 2026-07-14
 
@@ -37,12 +43,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - `0.1.x` under this npm name was an early MCP-focused SDK, superseded by `@qverisai/mcp`.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.4.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.5.0...HEAD
+[0.5.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.4.0...js-sdk-v0.5.0
 [0.4.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.3.0...js-sdk-v0.4.0
 [0.3.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.2.0...js-sdk-v0.3.0
 [0.2.0]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/js-sdk-v0.2.0
 [#204]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/204
 [#226]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/226
+[#233]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/233
 [#211]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/211
 [#161]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/161
 [#143]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/143

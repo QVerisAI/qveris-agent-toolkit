@@ -10,7 +10,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": ">=22.22.2"
+    "node": ">=22.22.3"
   },
   "scripts": {
     "install:all": "npm --prefix packages/cli ci && npm --prefix packages/mcp ci && npm --prefix packages/js-sdk ci && npm --prefix packages/openclaw-qveris-plugin ci && npm run install:py",

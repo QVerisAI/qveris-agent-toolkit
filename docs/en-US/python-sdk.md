@@ -1,6 +1,6 @@
 # QVeris Python SDK
 
-QVeris Python SDK v0.3.1 is the latest tested release. Use its async client to discover, inspect, call, and audit 10,000+ real-world API capabilities from your own agents and applications.
+QVeris Python SDK v0.4.0 is the latest tested release. Use its async client to discover, inspect, call, and audit 10,000+ real-world API capabilities from your own agents and applications.
 
 The SDK gives you two levels of control:
 

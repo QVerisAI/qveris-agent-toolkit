@@ -1,6 +1,6 @@
 {
   "name": "@qverisai/cli",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "QVeris CLI for agent capability discovery, inspection, calling, and audit",
   "type": "module",
   "bin": {
