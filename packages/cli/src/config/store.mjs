@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { chmodSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
 
@@ -28,6 +28,7 @@ export function writeConfig(config) {
   const dir = configDir();
   mkdirSync(dir, { recursive: true });
   writeFileSync(configPath(), JSON.stringify(config, null, 2) + "\n", { mode: 0o600 });
+  chmodSync(configPath(), 0o600);
 }
 
 export function getConfigValue(key) {

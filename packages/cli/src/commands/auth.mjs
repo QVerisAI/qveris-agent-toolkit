@@ -1,14 +1,13 @@
-import { execFile } from "node:child_process";
-import { platform } from "node:os";
 import { resolveBaseUrl } from "../config/endpoint.mjs";
 import { discoverTools } from "../client/api.mjs";
 import { bold, cyan, dim, green, red } from "../output/colors.mjs";
+import { openUrl } from "../utils/open-url.mjs";
 import {
   DEFAULT_OAUTH_SCOPES,
   createStoredOAuthCredentialProvider,
   discoverAuthorizationServer,
   pollDeviceToken,
-  revokeOAuthToken,
+  revokeOAuthSession,
   startDeviceAuthorization,
 } from "../auth/oauth.mjs";
 import {
@@ -17,12 +16,6 @@ import {
   loadOAuthSessionSecret,
   saveOAuthSession,
 } from "../auth/storage.mjs";
-
-function openBrowser(url) {
-  const command = { darwin: "open", win32: "cmd", linux: "xdg-open" }[platform()] || "xdg-open";
-  const args = platform() === "win32" ? ["/c", "start", "", url] : [url];
-  execFile(command, args, () => {});
-}
 
 export async function runAuth(subcommand, flags) {
   if (subcommand === "login") return authLogin(flags);
@@ -59,7 +52,7 @@ async function authLogin(flags) {
     );
   }
   if (!flags.noBrowser) {
-    openBrowser(authorization.verification_uri_complete || authorization.verification_uri);
+    openUrl(authorization.verification_uri_complete || authorization.verification_uri);
   }
 
   const tokens = await pollDeviceToken(metadata, authorization);
@@ -73,18 +66,32 @@ async function authLogin(flags) {
     expires_at: Date.now() + Math.max(1, Number(tokens.expires_in) || 3600) * 1000,
   };
   await deleteOAuthSession();
-  const persisted = await saveOAuthSession(session, {
-    access_token: tokens.access_token,
-    refresh_token: tokens.refresh_token,
-  });
-  const result = { authenticated: true, issuer, resource: session.resource, scope: session.scope, persisted };
+  const persisted = await saveOAuthSession(
+    session,
+    {
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+    },
+    { allowUnencryptedStorage: flags.allowUnencryptedStorage },
+  );
+  const storage = getOAuthSessionMetadata()?.storage || "session";
+  const result = {
+    authenticated: true,
+    issuer,
+    resource: session.resource,
+    scope: session.scope,
+    persisted,
+    storage,
+  };
   if (flags.json) console.log(JSON.stringify(result, null, 2));
   else {
     console.log(`  ${green("✓")} Device authorization completed.`);
     console.log(
-      persisted
+      storage === "keyring"
         ? `  ${dim("Refresh credentials saved in the operating-system credential store.")}`
-        : `  ${red("!")} No operating-system credential store is available; credentials last only for this process.`,
+        : storage === "config"
+          ? `  ${red("!")} Refresh credentials saved unencrypted in the user-only config file.`
+          : `  ${red("!")} No credential store is available; rerun with --allow-unencrypted-storage to persist this session.`,
     );
   }
 }
@@ -100,13 +107,26 @@ async function authStatus(flags) {
     return;
   }
   const provider = createStoredOAuthCredentialProvider();
-  await discoverTools({
-    credentialProvider: provider,
-    baseUrl: metadata.api_base_url,
-    query: "test",
-    limit: 1,
-    timeoutMs: 10000,
-  });
+  try {
+    await discoverTools({
+      credentialProvider: provider,
+      baseUrl: metadata.api_base_url,
+      query: "test",
+      limit: 1,
+      timeoutMs: 10000,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "OAuth session validation failed";
+    const result = { authenticated: false, type: "oauth", error: message };
+    if (flags.json) console.log(JSON.stringify(result, null, 2));
+    else {
+      console.log(`  ${red("!")} OAuth session is invalid or expired.`);
+      console.log(`  Error: ${message}`);
+      console.log(`  Run ${cyan("qveris auth login")} to log in again.`);
+    }
+    process.exitCode = 1;
+    return;
+  }
   const result = {
     authenticated: true,
     type: "oauth",
@@ -130,8 +150,7 @@ async function authLogout(flags) {
   let revokeError = null;
   try {
     if (metadata && secret) {
-      await revokeOAuthToken(metadata, secret.refresh_token, "refresh_token");
-      await revokeOAuthToken(metadata, secret.access_token, "access_token");
+      await revokeOAuthSession(metadata, secret);
     }
   } catch (error) {
     revokeError = error;

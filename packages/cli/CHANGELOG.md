@@ -8,7 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
-- Added `qveris auth login/status/logout` using OAuth Device Authorization Grant, refresh-token rotation, revocation, and operating-system credential storage. API key authentication remains fully compatible and takes precedence when configured.
+- Added `qveris auth login/status/logout` using OAuth Device Authorization Grant, refresh-token rotation, revocation, and operating-system credential storage. Trusted headless hosts can explicitly opt into a user-only unencrypted config fallback. API key authentication remains fully compatible and takes precedence when configured.
 
 ## [0.8.2] - 2026-07-18
 

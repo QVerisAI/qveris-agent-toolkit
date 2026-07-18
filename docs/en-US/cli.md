@@ -276,9 +276,9 @@ qveris auth status
 qveris auth logout
 ```
 
-Refresh credentials are rotated automatically and stored in the operating-system credential store. If no credential store is available, the CLI explicitly limits the credential to the current process. `auth logout` attempts remote revocation before clearing local credentials. An explicitly configured API key keeps its existing priority and behavior.
+Refresh credentials are rotated automatically and stored in the operating-system credential store. If no credential store is available, the CLI limits the credential to the current process by default. On a trusted headless host, add `--allow-unencrypted-storage` to explicitly persist the tokens in the user-only config file (`0600` permissions). `auth logout` attempts remote revocation before clearing local credentials. An explicitly configured API key keeps its existing priority and behavior.
 
-Use `--no-browser` on a headless host. Advanced integrations can narrow the request with `--scope <scopes>` and `--resource <url>`; both must match the server's published contract.
+Use `--no-browser --allow-unencrypted-storage` on a trusted headless host that has no operating-system keyring. Advanced integrations can narrow the request with `--scope <scopes>` and `--resource <url>`; both must match the server's published contract.
 
 ### `qveris login` (API key)
 

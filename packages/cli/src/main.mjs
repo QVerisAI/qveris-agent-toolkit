@@ -294,6 +294,9 @@ function extractGlobalFlags(args) {
       case "--no-browser":
         flags.noBrowser = true;
         break;
+      case "--allow-unencrypted-storage":
+        flags.allowUnencryptedStorage = true;
+        break;
       case "--clear":
         flags.clear = true;
         break;
@@ -434,6 +437,8 @@ function printUsage(flags = {}) {
     --base-url <url>       Override API base URL
     --scope <scopes>       OAuth scopes for auth login
     --resource <url>       OAuth resource for auth login
+    --allow-unencrypted-storage
+                           Persist OAuth tokens in the user-only config file when no keyring is available
     --timeout <seconds>    Request timeout
     --target <target>      MCP target: cursor | claude-desktop | claude-code | opencode | openclaw | generic
     --output <path>        MCP config output path

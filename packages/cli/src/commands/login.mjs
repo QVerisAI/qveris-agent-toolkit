@@ -1,6 +1,4 @@
 import { createInterface } from "node:readline";
-import { execFile } from "node:child_process";
-import { platform } from "node:os";
 import { resolve } from "../config/resolve.mjs";
 import { setConfigValue, deleteConfigValue } from "../config/store.mjs";
 import { discoverTools } from "../client/api.mjs";
@@ -8,13 +6,7 @@ import { VERSION } from "../config/defaults.mjs";
 import { resolveBaseUrl, getSiteUrl } from "../config/endpoint.mjs";
 import { bold, green, red, dim, cyan } from "../output/colors.mjs";
 import { printLoginBanner } from "../output/banner.mjs";
-
-function openBrowser(url) {
-  const cmds = { darwin: "open", win32: "cmd", linux: "xdg-open" };
-  const cmd = cmds[platform()] || "xdg-open";
-  const args = platform() === "win32" ? ["/c", "start", "", url] : [url];
-  execFile(cmd, args, () => {});
-}
+import { openUrl } from "../utils/open-url.mjs";
 
 /**
  * Masked input prompt using raw mode.
@@ -114,7 +106,7 @@ export async function runLogin(flags) {
   console.log(`\n  Get your API key at: ${cyan(accountUrl)}\n`);
 
   if (!flags.noBrowser) {
-    openBrowser(accountUrl);
+    openUrl(accountUrl);
   }
 
   let key;

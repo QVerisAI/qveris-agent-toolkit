@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
-import { deleteConfigValue, getConfigValue, setConfigValue } from "../config/store.mjs";
+import { getConfigValue, readConfig, writeConfig } from "../config/store.mjs";
 
 const SERVICE = "qveris-cli";
+const SECRET_CONFIG_KEY = "oauth_session_secret";
 let memorySecret = null;
 let memoryMetadata = null;
 
@@ -19,6 +20,15 @@ async function keyringEntry(issuer) {
   }
 }
 
+function persistSessionConfig(metadata, storedSecret = null) {
+  const config = readConfig();
+  if (metadata) config.oauth_session = metadata;
+  else delete config.oauth_session;
+  if (storedSecret) config[SECRET_CONFIG_KEY] = storedSecret;
+  else delete config[SECRET_CONFIG_KEY];
+  writeConfig(config);
+}
+
 export function getOAuthSessionMetadata() {
   if (memoryMetadata) return memoryMetadata;
   const value = getConfigValue("oauth_session");
@@ -29,27 +39,37 @@ export function hasOAuthSession() {
   return getOAuthSessionMetadata() !== null;
 }
 
-export async function saveOAuthSession(metadata, secret) {
+export async function saveOAuthSession(metadata, secret, { allowUnencryptedStorage = false } = {}) {
   const entry = await keyringEntry(metadata.issuer);
-  let persisted = false;
+  let storage = "session";
   if (entry) {
     try {
       entry.setPassword(JSON.stringify(secret));
-      persisted = true;
+      storage = "keyring";
     } catch {
       // A desktop keyring may be unavailable in a headless session.
     }
   }
+  const useConfigStorage = storage === "session" && (allowUnencryptedStorage || metadata.storage === "config");
+  if (useConfigStorage) storage = "config";
   memorySecret = { issuer: metadata.issuer, secret };
-  memoryMetadata = { ...metadata, storage: persisted ? "keyring" : "session" };
-  if (persisted) setConfigValue("oauth_session", memoryMetadata);
-  else deleteConfigValue("oauth_session");
-  return persisted;
+  memoryMetadata = { ...metadata, storage };
+  persistSessionConfig(
+    storage === "session" ? null : memoryMetadata,
+    storage === "config" ? { issuer: metadata.issuer, secret } : null,
+  );
+  return storage !== "session";
 }
 
 export async function loadOAuthSessionSecret(metadata = getOAuthSessionMetadata()) {
   if (!metadata) return null;
   if (memorySecret?.issuer === metadata.issuer) return memorySecret.secret;
+  if (metadata.storage === "config") {
+    const stored = getConfigValue(SECRET_CONFIG_KEY);
+    if (stored?.issuer !== metadata.issuer || !stored.secret) return null;
+    return typeof stored.secret.access_token === "string" ? stored.secret : null;
+  }
+  if (metadata.storage !== "keyring") return null;
   const entry = await keyringEntry(metadata.issuer);
   if (!entry) return null;
   try {
@@ -76,5 +96,5 @@ export async function deleteOAuthSession() {
   }
   memorySecret = null;
   memoryMetadata = null;
-  deleteConfigValue("oauth_session");
+  persistSessionConfig(null);
 }

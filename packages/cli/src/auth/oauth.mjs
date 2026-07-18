@@ -105,8 +105,14 @@ export async function startDeviceAuthorization(metadata, { scope, resource }, fe
       throw new CliError("API_ERROR", `Device Authorization response is missing ${field}`);
     }
   }
+  const verificationUri = validateEndpoint(payload.verification_uri, "verification_uri");
+  const verificationUriComplete = payload.verification_uri_complete
+    ? validateEndpoint(payload.verification_uri_complete, "verification_uri_complete")
+    : undefined;
   return {
     ...payload,
+    verification_uri: verificationUri,
+    ...(verificationUriComplete ? { verification_uri_complete: verificationUriComplete } : {}),
     expires_in: Number.isFinite(Number(payload.expires_in)) ? Number(payload.expires_in) : 600,
     interval: Number.isFinite(Number(payload.interval)) ? Math.max(1, Number(payload.interval)) : 5,
   };
@@ -164,6 +170,8 @@ export async function refreshOAuthSession(metadata, secret, fetchImpl = fetch) {
   );
   if (!response.ok) throw oauthError(payload.error || "refresh_failed", payload.error_description);
   const tokens = validateTokenResponse(payload);
+  // QVeris advertises refresh-token rotation as part of its public OAuth contract.
+  // Rejecting a non-rotating response prevents reuse of a superseded credential.
   if (typeof tokens.refresh_token !== "string" || !tokens.refresh_token) {
     throw new CliError("API_ERROR", "Token endpoint did not rotate the refresh token");
   }
@@ -190,6 +198,21 @@ export async function revokeOAuthToken(metadata, token, hint, fetchImpl = fetch)
   if (response.ok) return;
   const payload = await jsonResponse(response, "OAuth revocation endpoint");
   throw oauthError(payload.error || "revoke_failed", payload.error_description);
+}
+
+export async function revokeOAuthSession(metadata, secret, fetchImpl = fetch) {
+  let firstError = null;
+  for (const [token, hint] of [
+    [secret.refresh_token, "refresh_token"],
+    [secret.access_token, "access_token"],
+  ]) {
+    try {
+      await revokeOAuthToken(metadata, token, hint, fetchImpl);
+    } catch (error) {
+      firstError ||= error;
+    }
+  }
+  if (firstError) throw firstError;
 }
 
 export function createStoredOAuthCredentialProvider({ fetchImpl = fetch } = {}) {
