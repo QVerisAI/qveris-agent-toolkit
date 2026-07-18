@@ -191,7 +191,9 @@ test("Explicit config fallback persists across processes with owner-only permiss
       access_token: "access-secret",
       refresh_token: "refresh-secret",
     });
-    assert.equal(statSync(join(configHome, "qveris", "config.json")).mode & 0o777, 0o600);
+    if (process.platform !== "win32") {
+      assert.equal(statSync(join(configHome, "qveris", "config.json")).mode & 0o777, 0o600);
+    }
   } finally {
     await reader.deleteOAuthSession();
     if (previous === undefined) delete process.env.XDG_CONFIG_HOME;
