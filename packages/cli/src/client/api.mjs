@@ -13,12 +13,22 @@ import {
 
 import { getOAuthSessionMetadata } from "../auth/storage.mjs";
 
-function getBaseUrl(baseUrlFlag, preferOAuth = false) {
+export function resolveApiBaseUrl({ baseUrlFlag, preferOAuth = false } = {}) {
   if (preferOAuth && baseUrlFlag === undefined && typeof process.env.QVERIS_BASE_URL !== "string") {
     const session = getOAuthSessionMetadata();
-    if (session?.api_base_url) return session.api_base_url;
+    if (session?.api_base_url) {
+      const { baseUrl } = resolveBaseUrl({ baseUrlFlag: session.api_base_url });
+      if (new URL(baseUrl).origin !== session.issuer) {
+        throw new CliError("API_ERROR", "Stored OAuth endpoint does not match its issuer");
+      }
+      return { baseUrl, source: "oauth session" };
+    }
   }
-  return resolveBaseUrl({ baseUrlFlag }).baseUrl;
+  return resolveBaseUrl({ baseUrlFlag });
+}
+
+function getBaseUrl(baseUrlFlag, preferOAuth = false) {
+  return resolveApiBaseUrl({ baseUrlFlag, preferOAuth }).baseUrl;
 }
 
 async function requestJson(
@@ -63,6 +73,7 @@ async function requestJson(
         },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         signal: controller.signal,
+        redirect: "error",
       });
 
       if (response.status === 401 && !authRetried && typeof credentialProvider.refreshCredential === "function") {
@@ -89,8 +100,13 @@ async function requestJson(
         } catch {
           /* not JSON */
         }
-        if ((status === 401 || status === 403) && credentialProvider.authType === "oauth") {
+        if (status === 401 && credentialProvider.authType === "oauth") {
           throw new CliError("AUTH_OAUTH_FAILED", errorDetail);
+        }
+        if (status === 403 && credentialProvider.authType === "oauth") {
+          const err = new CliError("API_ERROR", `HTTP 403: ${errorDetail || rawText}`);
+          if (jsonBody) err.responseData = jsonBody;
+          throw err;
         }
         if (status === 401 || status === 403) {
           const err = new CliError("AUTH_INVALID_KEY", errorDetail);

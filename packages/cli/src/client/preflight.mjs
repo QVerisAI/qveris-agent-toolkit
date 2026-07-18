@@ -1,6 +1,7 @@
 import { resolve } from "../config/resolve.mjs";
-import { resolveBaseUrl, getSiteUrl } from "../config/endpoint.mjs";
-import { discoverTools } from "./api.mjs";
+import { getSiteUrl } from "../config/endpoint.mjs";
+import { getOAuthSessionMetadata } from "../auth/storage.mjs";
+import { discoverTools, resolveApiBaseUrl } from "./api.mjs";
 import { ERROR_CODES } from "../errors/codes.mjs";
 
 /**
@@ -31,6 +32,7 @@ export function nodeCheck(nodeVersion = process.version) {
 /** Map a thrown CliError code to a friendlier check name. */
 function codeToName(code) {
   if (code === "AUTH_INVALID_KEY") return "api_key_valid";
+  if (code === "AUTH_OAUTH_FAILED") return "oauth";
   if (code === "CREDITS_INSUFFICIENT") return "credits";
   return "connectivity";
 }
@@ -44,9 +46,15 @@ function endpointRecoveryHint(code, baseUrl) {
   return null;
 }
 
-async function defaultProbe({ apiKey, baseUrl }) {
+async function defaultProbe({ apiKey, baseUrl, authType }) {
   // "test" matches the probe query login/whoami use to validate a key.
-  return discoverTools({ apiKey, baseUrl, query: "test", limit: 1, timeoutMs: 10000 });
+  return discoverTools({
+    ...(authType === "oauth" ? {} : { apiKey }),
+    baseUrl,
+    query: "test",
+    limit: 1,
+    timeoutMs: 10000,
+  });
 }
 
 /**
@@ -58,23 +66,30 @@ export function localPreflight({ apiKeyFlag, baseUrlFlag, nodeVersion = process.
   const checks = [nodeCheck(nodeVersion)];
 
   const { value: apiKey, source } = resolve("api_key", apiKeyFlag);
+  let authType = "api_key";
   if (!apiKey || typeof apiKey !== "string" || !apiKey.trim()) {
-    checks.push(check("api_key", "fail", ERROR_CODES.AUTH_MISSING_KEY.message, ERROR_CODES.AUTH_MISSING_KEY.hint));
-    return { checks, ok: false, apiKey: null, baseUrl: null };
+    const oauthSession = !apiKey ? getOAuthSessionMetadata() : null;
+    if (!oauthSession) {
+      checks.push(check("api_key", "fail", ERROR_CODES.AUTH_MISSING_KEY.message, ERROR_CODES.AUTH_MISSING_KEY.hint));
+      return { checks, ok: false, apiKey: null, authType: null, baseUrl: null };
+    }
+    authType = "oauth";
+    checks.push(check("oauth", "ok", "OAuth session configured"));
+  } else {
+    checks.push(check("api_key", "ok", `API key configured (${maskKey(apiKey)} via ${source})`));
   }
-  checks.push(check("api_key", "ok", `API key configured (${maskKey(apiKey)} via ${source})`));
 
   let endpoint;
   try {
-    endpoint = resolveBaseUrl({ baseUrlFlag });
+    endpoint = resolveApiBaseUrl({ baseUrlFlag, preferOAuth: authType === "oauth" });
   } catch (err) {
     checks.push(check("endpoint", "fail", err.message, err.hint));
-    return { checks, ok: false, apiKey, baseUrl: null };
+    return { checks, ok: false, apiKey, authType, baseUrl: null };
   }
   const { baseUrl, source: endpointSource } = endpoint;
   checks.push(check("endpoint", "ok", `API endpoint ${baseUrl} (${endpointSource})`));
 
-  return { checks, ok: checks.every((c) => c.status !== "fail"), apiKey, baseUrl };
+  return { checks, ok: checks.every((c) => c.status !== "fail"), apiKey, authType, baseUrl };
 }
 
 /**
@@ -94,13 +109,13 @@ export async function runPreflight({
   const checks = [...local.checks];
 
   // Without a key or with a failing local check we cannot probe safely.
-  if (!local.apiKey || local.checks.some((c) => c.status === "fail")) {
+  if (!local.authType || local.checks.some((c) => c.status === "fail")) {
     return { checks, ok: false, contractVersion: CLI_CONTRACT_VERSION };
   }
 
   let response;
   try {
-    response = await probe({ apiKey: local.apiKey, baseUrl: local.baseUrl });
+    response = await probe({ apiKey: local.apiKey, authType: local.authType, baseUrl: local.baseUrl });
   } catch (err) {
     // A diagnostic must never crash: anything (even a non-Error) can be thrown.
     const hint =

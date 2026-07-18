@@ -1,7 +1,6 @@
 import { createInterface } from "node:readline";
 import { resolveApiKey } from "../client/auth.mjs";
-import { discoverTools, inspectToolsByIds, callTool } from "../client/api.mjs";
-import { resolveBaseUrl } from "../config/endpoint.mjs";
+import { discoverTools, inspectToolsByIds, callTool, resolveApiBaseUrl } from "../client/api.mjs";
 import { resolveParams } from "../utils/params.mjs";
 import { formatDiscoverResult, formatInspectResult, formatCallResult } from "../output/formatter.mjs";
 import { generateSnippet } from "../output/codegen.mjs";
@@ -14,7 +13,10 @@ import { createSpinner } from "../output/spinner.mjs";
 
 export async function runInteractive(flags) {
   const apiKey = resolveApiKey(flags.apiKey);
-  const { baseUrl: resolvedBaseUrl } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
+  const { baseUrl: resolvedBaseUrl } = resolveApiBaseUrl({
+    baseUrlFlag: flags.baseUrl,
+    preferOAuth: apiKey === undefined,
+  });
   const limit = parseInt(flags.limit, 10) || 5;
   const discoverTimeout = (parseInt(flags.timeout, 10) || 30) * 1000;
   const callTimeout = (parseInt(flags.timeout, 10) || 60) * 1000;

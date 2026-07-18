@@ -1,9 +1,9 @@
 import { getConfigPath, getConfigValue, setConfigValue, writeConfig } from "../config/store.mjs";
 import { resolveAll } from "../config/resolve.mjs";
-import { resolveBaseUrl } from "../config/endpoint.mjs";
+import { resolveApiBaseUrl } from "../client/api.mjs";
 import { bold, dim, cyan } from "../output/colors.mjs";
 import { outputJson } from "../output/json.mjs";
-import { deleteOAuthSession } from "../auth/storage.mjs";
+import { deleteOAuthSession, hasOAuthSession } from "../auth/storage.mjs";
 
 const ALLOWED_KEYS = ["api_key", "default_limit", "default_max_size", "color", "output_format"];
 
@@ -61,6 +61,12 @@ function configGet(key, flags) {
     process.exitCode = 2;
     return;
   }
+  if (!ALLOWED_KEYS.includes(key)) {
+    console.error(`  Unknown config key: ${key}`);
+    console.error(`  Allowed: ${ALLOWED_KEYS.join(", ")}`);
+    process.exitCode = 2;
+    return;
+  }
   const val = getConfigValue(key);
   if (flags.json) {
     outputJson({ key, value: val ?? null });
@@ -72,7 +78,10 @@ function configGet(key, flags) {
 function configList(flags) {
   const all = resolveAll();
 
-  const { baseUrl, source: endpointSource } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
+  const { baseUrl, source: endpointSource } = resolveApiBaseUrl({
+    baseUrlFlag: flags.baseUrl,
+    preferOAuth: !all.api_key?.value && hasOAuthSession(),
+  });
 
   if (flags.json) {
     const obj = {};

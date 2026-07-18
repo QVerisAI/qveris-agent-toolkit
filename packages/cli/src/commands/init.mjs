@@ -1,8 +1,7 @@
 import { resolveApiKey } from "../client/auth.mjs";
-import { callTool, discoverTools, inspectToolsByIds } from "../client/api.mjs";
+import { callTool, discoverTools, inspectToolsByIds, resolveApiBaseUrl } from "../client/api.mjs";
 import { nodeCheck } from "../client/preflight.mjs";
 import { resolve } from "../config/resolve.mjs";
-import { resolveBaseUrl } from "../config/endpoint.mjs";
 import { CliError } from "../errors/handler.mjs";
 import { bold, cyan, dim, green, red, yellow } from "../output/colors.mjs";
 import { outputJson } from "../output/json.mjs";
@@ -31,10 +30,13 @@ export async function runInit(queryArg, flags) {
 
   const timeoutMs = (parseInt(flags.timeout, 10) || 60) * 1000;
   const apiKey = getInitApiKey(flags);
-  const { baseUrl, source: endpointSource } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
-  record(steps, "auth", "ok", "API key resolved", {
-    source: resolve("api_key", flags.apiKey || flags.token).source,
-    key: maskKey(apiKey),
+  const { baseUrl, source: endpointSource } = resolveApiBaseUrl({
+    baseUrlFlag: flags.baseUrl,
+    preferOAuth: apiKey === undefined,
+  });
+  record(steps, "auth", "ok", apiKey === undefined ? "OAuth session resolved" : "API key resolved", {
+    source: apiKey === undefined ? "oauth session" : resolve("api_key", flags.apiKey || flags.token).source,
+    ...(apiKey === undefined ? { type: "oauth" } : { type: "api_key", key: maskKey(apiKey) }),
     base_url: baseUrl,
     endpoint_source: endpointSource,
   });
@@ -210,7 +212,8 @@ function getInitApiKey(flags) {
     return resolveApiKey(flags.apiKey || flags.token);
   } catch (err) {
     if (err instanceof CliError && err.code === "AUTH_MISSING_KEY") {
-      err.hint = "Run 'qveris login', set QVERIS_API_KEY, or pass --api-key/--token to qveris init.";
+      err.hint =
+        "Run 'qveris auth login' or 'qveris login', set QVERIS_API_KEY, or pass --api-key/--token to qveris init.";
     }
     throw err;
   }

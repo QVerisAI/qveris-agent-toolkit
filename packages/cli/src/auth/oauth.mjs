@@ -1,11 +1,13 @@
 import { setTimeout as delay } from "node:timers/promises";
 import { CliError } from "../errors/handler.mjs";
-import { getOAuthSessionMetadata, loadOAuthSessionSecret, saveOAuthSession } from "./storage.mjs";
+import { getOAuthSessionMetadata, loadOAuthSessionSecret, saveOAuthSession, withOAuthRefreshLock } from "./storage.mjs";
 
 export const DEVICE_CODE_GRANT = "urn:ietf:params:oauth:grant-type:device_code";
 export const OAUTH_CLIENT_ID = "qveris-cli";
 export const DEFAULT_OAUTH_SCOPES = "openid offline_access tools.search tools.inspect tools.execute";
 const OAUTH_REQUEST_TIMEOUT_MS = 30000;
+const MAX_DEVICE_TIMER_SECONDS = Math.floor(0x7fffffff / 1000);
+const MAX_TOKEN_LIFETIME_SECONDS = Math.floor((Number.MAX_SAFE_INTEGER - Date.now()) / 1000);
 let sharedRefreshPromise = null;
 
 function oauthError(code) {
@@ -70,10 +72,10 @@ function validateIssuerEndpoint(metadata, key) {
   return endpoint;
 }
 
-function positiveNumber(value, label, defaultValue) {
+function positiveNumber(value, label, defaultValue, maximum = Number.MAX_SAFE_INTEGER) {
   if (value === undefined && defaultValue !== undefined) return defaultValue;
   const normalized = Number(value);
-  if (!Number.isFinite(normalized) || normalized <= 0) {
+  if (!Number.isFinite(normalized) || normalized <= 0 || normalized > maximum) {
     throw new CliError("API_ERROR", `OAuth response has an invalid ${label}`);
   }
   return normalized;
@@ -96,6 +98,7 @@ export async function discoverAuthorizationServer(issuer, fetchImpl = fetch) {
   const normalizedIssuer = new URL(issuer).origin;
   const response = await timedFetch(fetchImpl, `${normalizedIssuer}/.well-known/oauth-authorization-server`, {
     headers: { Accept: "application/json" },
+    redirect: "error",
   });
   const metadata = await jsonResponse(response, "OAuth discovery");
   if (!response.ok) throw oauthError(metadata.error || "discovery_failed", metadata.error_description);
@@ -104,6 +107,9 @@ export async function discoverAuthorizationServer(issuer, fetchImpl = fetch) {
   }
   if (!metadata.grant_types_supported?.includes(DEVICE_CODE_GRANT)) {
     throw new CliError("API_ERROR", "This endpoint does not advertise Device Authorization Grant");
+  }
+  if (!metadata.grant_types_supported.includes("refresh_token")) {
+    throw new CliError("API_ERROR", "This endpoint does not advertise Refresh Token Grant");
   }
   if (!metadata.token_endpoint_auth_methods_supported?.includes("none")) {
     throw new CliError("API_ERROR", "This endpoint does not support the public QVeris CLI client");
@@ -129,6 +135,7 @@ async function postForm(url, form, fetchImpl = fetch) {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
     body: new URLSearchParams(form),
+    redirect: "error",
   });
   return { response, payload: await jsonResponse(response, "OAuth endpoint") };
 }
@@ -149,12 +156,15 @@ export async function startDeviceAuthorization(metadata, { scope, resource }, fe
   const verificationUriComplete = payload.verification_uri_complete
     ? validateEndpoint(payload.verification_uri_complete, "verification_uri_complete")
     : undefined;
+  if (verificationUriComplete && new URL(verificationUriComplete).origin !== new URL(verificationUri).origin) {
+    throw new CliError("API_ERROR", "OAuth verification_uri_complete does not match verification_uri");
+  }
   return {
     ...payload,
     verification_uri: verificationUri,
     ...(verificationUriComplete ? { verification_uri_complete: verificationUriComplete } : {}),
-    expires_in: positiveNumber(payload.expires_in, "expires_in"),
-    interval: positiveNumber(payload.interval, "interval", 5),
+    expires_in: positiveNumber(payload.expires_in, "expires_in", undefined, MAX_DEVICE_TIMER_SECONDS),
+    interval: positiveNumber(payload.interval, "interval", 5, MAX_DEVICE_TIMER_SECONDS),
   };
 }
 
@@ -193,18 +203,26 @@ export async function pollDeviceToken(
 }
 
 function validateTokenResponse(payload, { requireRefreshToken = false } = {}) {
+  const validToken = (value) => typeof value === "string" && value.trim() && !/[\r\n]/.test(value);
   if (
     typeof payload.token_type !== "string" ||
     payload.token_type.toLowerCase() !== "bearer" ||
-    typeof payload.access_token !== "string" ||
-    !payload.access_token.trim()
+    !validToken(payload.access_token)
   ) {
     throw new CliError("API_ERROR", "Token endpoint returned an invalid access token response");
   }
-  if (requireRefreshToken && (typeof payload.refresh_token !== "string" || !payload.refresh_token.trim())) {
+  if (requireRefreshToken && !validToken(payload.refresh_token)) {
     throw new CliError("API_ERROR", "Token endpoint did not return the required refresh token");
   }
-  return { ...payload, expires_in: positiveNumber(payload.expires_in, "expires_in") };
+  for (const field of ["scope", "resource"]) {
+    if (payload[field] !== undefined && (typeof payload[field] !== "string" || !payload[field].trim())) {
+      throw new CliError("API_ERROR", `Token endpoint returned an invalid ${field}`);
+    }
+  }
+  return {
+    ...payload,
+    expires_in: positiveNumber(payload.expires_in, "expires_in", undefined, MAX_TOKEN_LIFETIME_SECONDS),
+  };
 }
 
 export async function refreshOAuthSession(metadata, secret, fetchImpl = fetch) {
@@ -250,6 +268,7 @@ export async function revokeOAuthToken(metadata, token, hint, fetchImpl = fetch)
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
     body: new URLSearchParams({ client_id: OAUTH_CLIENT_ID, token, token_type_hint: hint }),
+    redirect: "error",
   });
   if (response.ok) return;
   const payload = await jsonResponse(response, "OAuth revocation endpoint");
@@ -275,12 +294,28 @@ export function createStoredOAuthCredentialProvider({ fetchImpl = fetch } = {}) 
   async function refresh() {
     if (!sharedRefreshPromise) {
       sharedRefreshPromise = (async () => {
-        const metadata = getOAuthSessionMetadata();
-        const secret = await loadOAuthSessionSecret(metadata);
-        if (!metadata || !secret) {
+        const initialMetadata = getOAuthSessionMetadata();
+        const initialSecret = await loadOAuthSessionSecret(initialMetadata);
+        if (!initialMetadata || !initialSecret) {
           throw oauthError("invalid_grant", "OAuth session is unavailable; run qveris auth login again");
         }
-        return refreshOAuthSession(metadata, secret, fetchImpl);
+        if (initialMetadata.storage === "session") {
+          return refreshOAuthSession(initialMetadata, initialSecret, fetchImpl);
+        }
+        return withOAuthRefreshLock(async () => {
+          const metadata = getOAuthSessionMetadata({ fresh: true });
+          const secret = await loadOAuthSessionSecret(metadata, { fresh: true });
+          if (!metadata || !secret) {
+            throw oauthError("invalid_grant", "OAuth session is unavailable; run qveris auth login again");
+          }
+          if (
+            secret.access_token !== initialSecret.access_token ||
+            secret.refresh_token !== initialSecret.refresh_token
+          ) {
+            return { metadata, secret };
+          }
+          return refreshOAuthSession(metadata, secret, fetchImpl);
+        });
       })().finally(() => {
         sharedRefreshPromise = null;
       });

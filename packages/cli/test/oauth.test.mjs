@@ -15,6 +15,7 @@ import {
 } from "../src/auth/oauth.mjs";
 import { deleteOAuthSession, getOAuthSessionMetadata, saveOAuthSession } from "../src/auth/storage.mjs";
 import { runAuth } from "../src/commands/auth.mjs";
+import { deleteConfigValue, setConfigValue } from "../src/config/store.mjs";
 
 function response(payload, status = 200, headers = {}) {
   return new Response(payload === null ? null : JSON.stringify(payload), {
@@ -33,8 +34,11 @@ const discovery = {
   scopes_supported: ["openid", "offline_access", "tools.search"],
 };
 
-test("OAuth discovery requires matching issuer, Device Flow, and a public client", async () => {
-  const metadata = await discoverAuthorizationServer("https://unit.test/api/v1", async () => response(discovery));
+test("OAuth discovery requires matching issuer, Device Flow, refresh, and a public client", async () => {
+  const metadata = await discoverAuthorizationServer("https://unit.test/api/v1", async (_url, options) => {
+    assert.equal(options.redirect, "error");
+    return response(discovery);
+  });
   assert.equal(metadata.issuer, "https://unit.test");
   assert.equal(metadata.device_authorization_endpoint, discovery.device_authorization_endpoint);
 
@@ -43,6 +47,13 @@ test("OAuth discovery requires matching issuer, Device Flow, and a public client
       response({ ...discovery, token_endpoint_auth_methods_supported: ["client_secret_basic"] }),
     ),
     /public QVeris CLI client/,
+  );
+
+  await assert.rejects(
+    discoverAuthorizationServer("https://unit.test", async () =>
+      response({ ...discovery, grant_types_supported: [DEVICE_CODE_GRANT] }),
+    ),
+    /Refresh Token Grant/,
   );
 
   const loopback = await discoverAuthorizationServer("http://[::1]:8787", async () =>
@@ -99,6 +110,7 @@ test("Device Authorization sends the registered public client and validates the 
     discovery,
     { scope: "openid offline_access tools.search", resource: "https://unit.test/tools" },
     async (_url, options) => {
+      assert.equal(options.redirect, "error");
       form = Object.fromEntries(options.body.entries());
       return response({
         device_code: "device-secret",
@@ -126,6 +138,19 @@ test("Device Authorization sends the registered public client and validates the 
       }),
     ),
     /verification_uri must use HTTPS/,
+  );
+
+  await assert.rejects(
+    startDeviceAuthorization(discovery, { scope: "openid", resource: "https://unit.test/tools" }, async () =>
+      response({
+        device_code: "device-secret",
+        user_code: "ABCD-EFGH",
+        verification_uri: "https://unit.test/oauth/device",
+        verification_uri_complete: "https://phishing.test/oauth/device?user_code=ABCD-EFGH",
+        expires_in: 600,
+      }),
+    ),
+    /verification_uri_complete does not match/,
   );
 });
 
@@ -167,6 +192,25 @@ test("Device polling rejects a success response without a refresh token", async 
     ),
     /required refresh token/,
   );
+
+  await assert.rejects(
+    pollDeviceToken(
+      discovery,
+      { device_code: "device-secret", expires_in: 600, interval: 1 },
+      {
+        fetchImpl: async () =>
+          response({
+            access_token: "access-secret\nInjected: value",
+            refresh_token: "refresh-secret",
+            token_type: "Bearer",
+            expires_in: 3600,
+          }),
+        sleep: async () => {},
+        now: () => 0,
+      },
+    ),
+    /invalid access token response/,
+  );
 });
 
 test("Device and token responses reject invalid expiry values", async () => {
@@ -186,6 +230,21 @@ test("Device and token responses reject invalid expiry values", async () => {
   );
 
   await assert.rejects(
+    startDeviceAuthorization(
+      discovery,
+      { scope: "openid offline_access", resource: "https://unit.test/tools" },
+      async () =>
+        response({
+          device_code: "device-secret",
+          user_code: "ABCD-EFGH",
+          verification_uri: "https://unit.test/oauth/device",
+          expires_in: Number.MAX_VALUE,
+        }),
+    ),
+    /invalid expires_in/,
+  );
+
+  await assert.rejects(
     pollDeviceToken(
       discovery,
       { device_code: "device-secret", expires_in: 600, interval: 1 },
@@ -195,6 +254,25 @@ test("Device and token responses reject invalid expiry values", async () => {
             access_token: "access-secret",
             refresh_token: "refresh-secret",
             token_type: "Bearer",
+          }),
+        sleep: async () => {},
+        now: () => 0,
+      },
+    ),
+    /invalid expires_in/,
+  );
+
+  await assert.rejects(
+    pollDeviceToken(
+      discovery,
+      { device_code: "device-secret", expires_in: 600, interval: 1 },
+      {
+        fetchImpl: async () =>
+          response({
+            access_token: "access-secret",
+            refresh_token: "refresh-secret",
+            token_type: "Bearer",
+            expires_in: Number.MAX_VALUE,
           }),
         sleep: async () => {},
         now: () => 0,
@@ -341,6 +419,54 @@ test("Refresh reports when a previously persisted session cannot store rotated c
   }
 });
 
+test("Keyring deletion failure retains issuer metadata for a later cleanup retry", async () => {
+  const previous = process.env.XDG_CONFIG_HOME;
+  const previousKeyring = process.env.QVERIS_DISABLE_KEYRING;
+  process.env.XDG_CONFIG_HOME = `/tmp/qveris-oauth-keyring-cleanup-${process.pid}-${Date.now()}`;
+  process.env.QVERIS_DISABLE_KEYRING = "1";
+  const isolatedStorage = await import(`../src/auth/storage.mjs?cleanup=${process.pid}-${Date.now()}`);
+  try {
+    setConfigValue("oauth_session", { ...discovery, storage: "keyring" });
+    await assert.rejects(isolatedStorage.deleteOAuthSession(), /credential store is unavailable/);
+    assert.equal(isolatedStorage.getOAuthSessionMetadata({ fresh: true }).storage, "keyring");
+    assert.equal(await isolatedStorage.loadOAuthSessionSecret(undefined, { fresh: true }), null);
+  } finally {
+    deleteConfigValue("oauth_session");
+    if (previous === undefined) delete process.env.XDG_CONFIG_HOME;
+    else process.env.XDG_CONFIG_HOME = previous;
+    if (previousKeyring === undefined) delete process.env.QVERIS_DISABLE_KEYRING;
+    else process.env.QVERIS_DISABLE_KEYRING = previousKeyring;
+  }
+});
+
+test("OAuth logout reports incomplete local deletion and unknown remote revocation", async () => {
+  const previous = process.env.XDG_CONFIG_HOME;
+  const previousKeyring = process.env.QVERIS_DISABLE_KEYRING;
+  const previousExitCode = process.exitCode;
+  const previousLog = console.log;
+  const lines = [];
+  process.env.XDG_CONFIG_HOME = `/tmp/qveris-oauth-logout-cleanup-${process.pid}-${Date.now()}`;
+  process.env.QVERIS_DISABLE_KEYRING = "1";
+  console.log = (...args) => lines.push(args.join(" "));
+  try {
+    setConfigValue("oauth_session", { ...discovery, storage: "keyring" });
+    process.exitCode = undefined;
+    await runAuth("logout", { json: true });
+    const result = JSON.parse(lines.join("\n"));
+    assert.deepEqual(result, { authenticated: false, local_credentials_removed: false, revoked: false });
+    assert.equal(process.exitCode, 1);
+    assert.equal(getOAuthSessionMetadata({ fresh: true }).storage, "keyring");
+  } finally {
+    console.log = previousLog;
+    deleteConfigValue("oauth_session");
+    process.exitCode = previousExitCode;
+    if (previous === undefined) delete process.env.XDG_CONFIG_HOME;
+    else process.env.XDG_CONFIG_HOME = previous;
+    if (previousKeyring === undefined) delete process.env.QVERIS_DISABLE_KEYRING;
+    else process.env.QVERIS_DISABLE_KEYRING = previousKeyring;
+  }
+});
+
 test("Explicit config fallback persists across processes with owner-only permissions", async () => {
   const previous = process.env.XDG_CONFIG_HOME;
   const previousKeyring = process.env.QVERIS_DISABLE_KEYRING;
@@ -418,9 +544,58 @@ test("Concurrent providers coalesce refresh rotation", async () => {
   }
 });
 
+test("Independent OAuth module instances serialize persisted refresh rotation", async () => {
+  const previous = process.env.XDG_CONFIG_HOME;
+  const previousKeyring = process.env.QVERIS_DISABLE_KEYRING;
+  process.env.XDG_CONFIG_HOME = `/tmp/qveris-oauth-process-lock-${process.pid}-${Date.now()}`;
+  process.env.QVERIS_DISABLE_KEYRING = "1";
+  const suffix = `${process.pid}-${Date.now()}`;
+  try {
+    await saveOAuthSession(
+      {
+        ...discovery,
+        storage: "config",
+        api_base_url: "https://unit.test/api/v1",
+        resource: "https://unit.test/tools",
+        expires_at: 0,
+      },
+      { access_token: "expired-access", refresh_token: "old-refresh" },
+      { allowUnencryptedStorage: true },
+    );
+    const firstModule = await import(`../src/auth/oauth.mjs?first-process=${suffix}`);
+    const secondModule = await import(`../src/auth/oauth.mjs?second-process=${suffix}`);
+    let refreshes = 0;
+    const fetchImpl = async () => {
+      refreshes += 1;
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      return response({
+        access_token: "fresh-access",
+        refresh_token: "new-refresh",
+        token_type: "Bearer",
+        expires_in: 3600,
+      });
+    };
+    const context = { resource: "https://unit.test/api/v1", scopes: [] };
+    const first = firstModule.createStoredOAuthCredentialProvider({ fetchImpl });
+    const second = secondModule.createStoredOAuthCredentialProvider({ fetchImpl });
+    assert.deepEqual(await Promise.all([first.getCredential(context), second.getCredential(context)]), [
+      "fresh-access",
+      "fresh-access",
+    ]);
+    assert.equal(refreshes, 1);
+  } finally {
+    await deleteOAuthSession();
+    if (previous === undefined) delete process.env.XDG_CONFIG_HOME;
+    else process.env.XDG_CONFIG_HOME = previous;
+    if (previousKeyring === undefined) delete process.env.QVERIS_DISABLE_KEYRING;
+    else process.env.QVERIS_DISABLE_KEYRING = previousKeyring;
+  }
+});
+
 test("Revocation accepts an empty success response and never puts tokens in the URL", async () => {
   let request;
   await revokeOAuthToken(discovery, "refresh-secret", "refresh_token", async (url, options) => {
+    assert.equal(options.redirect, "error");
     request = { url, form: Object.fromEntries(options.body.entries()) };
     return response(null, 200);
   });

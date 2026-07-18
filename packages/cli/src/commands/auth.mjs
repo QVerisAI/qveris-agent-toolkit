@@ -64,7 +64,19 @@ async function authLogin(flags) {
     revocation_endpoint: metadata.revocation_endpoint,
     expires_at: Date.now() + Math.max(1, Number(tokens.expires_in) || 3600) * 1000,
   };
-  await deleteOAuthSession();
+  try {
+    await deleteOAuthSession();
+  } catch (error) {
+    try {
+      await revokeOAuthSession(metadata, {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+      });
+    } catch {
+      // Preserve the local-cleanup error as the actionable failure.
+    }
+    throw error;
+  }
   const persisted = await saveOAuthSession(
     session,
     {
@@ -147,20 +159,36 @@ async function authLogout(flags) {
   const metadata = getOAuthSessionMetadata();
   const secret = await loadOAuthSessionSecret(metadata);
   let revokeError = null;
+  let localError = null;
   try {
     if (metadata && secret) {
       await revokeOAuthSession(metadata, secret);
     }
   } catch (error) {
     revokeError = error;
-  } finally {
-    await deleteOAuthSession();
   }
-  const result = { authenticated: false, local_credentials_removed: true, revoked: !revokeError };
+  try {
+    await deleteOAuthSession();
+  } catch (error) {
+    localError = error;
+  }
+  const remoteRevoked = !metadata || Boolean(secret && !revokeError);
+  const result = { authenticated: false, local_credentials_removed: !localError, revoked: remoteRevoked };
   if (flags.json) console.log(JSON.stringify(result, null, 2));
   else {
-    console.log(`  ${green("✓")} Local OAuth credentials removed.`);
-    if (revokeError) console.error(`  ${red("!")} Remote revocation failed; the local session was still cleared.`);
+    if (localError) console.error(`  ${red("!")} Local OAuth credentials could not be completely removed.`);
+    else console.log(`  ${green("✓")} Local OAuth credentials removed.`);
+    if (revokeError) {
+      console.error(
+        localError
+          ? `  ${red("!")} Remote revocation also failed; retry logout when the credential store is available.`
+          : `  ${red("!")} Remote revocation failed; the local session was still cleared.`,
+      );
+    } else if (metadata && !secret) {
+      console.error(
+        `  ${red("!")} Remote revocation could not be attempted because the stored credential is unavailable.`,
+      );
+    }
   }
-  if (revokeError) process.exitCode = 1;
+  if (!remoteRevoked || localError) process.exitCode = 1;
 }

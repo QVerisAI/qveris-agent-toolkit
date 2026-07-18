@@ -33,6 +33,7 @@ test("API client maps discover, inspect, call, credits, usage, and ledger endpoi
   const requests = [];
   await withMockFetch(
     (url, options) => {
+      assert.equal(options.redirect, "error");
       requests.push({
         method: options.method,
         path: url.pathname,
@@ -228,6 +229,14 @@ test("OAuth credentials refresh once on 401 and business 403 is not retried", as
     ),
     (error) => error instanceof CliError && error.code === "AUTH_OAUTH_FAILED" && /session expired/.test(error.message),
   );
+
+  await assert.rejects(
+    withMockFetch(
+      () => jsonResponse({ message: "missing required scope" }, { status: 403 }),
+      () => discoverTools({ credentialProvider: oauthProvider, baseUrl: "https://unit.test/api/v1", query: "weather" }),
+    ),
+    (error) => error instanceof CliError && error.code === "API_ERROR" && /missing required scope/.test(error.message),
+  );
 });
 
 test("API client rejects ambiguous or invalid provider credentials without exposing values", async () => {
@@ -260,6 +269,22 @@ test("API client rejects ambiguous or invalid provider credentials without expos
     }),
     (err) =>
       err instanceof CliError && /failed to provide a credential/.test(err.message) && !err.message.includes(secret),
+  );
+});
+
+test("API client preserves actionable CLI errors from credential providers", async () => {
+  const providerError = new CliError("API_ERROR", "Rotated OAuth credentials could not be persisted");
+  await assert.rejects(
+    discoverTools({
+      credentialProvider: {
+        async getCredential() {
+          throw providerError;
+        },
+      },
+      baseUrl: "https://unit.test/api/v1",
+      query: "weather",
+    }),
+    (error) => error === providerError,
   );
 });
 

@@ -277,6 +277,8 @@ qveris auth logout
 
 Refresh Token 会自动轮换并保存在操作系统凭证库中。系统凭证库不可用时，CLI 默认仅在当前进程保留凭证。在可信的无头主机上，可显式添加 `--allow-unencrypted-storage`，将 token 持久化到权限为 `0600` 的用户配置文件中。`auth logout` 会先尝试远程撤销，再清理本地凭证。显式配置的 API Key 继续保持原有优先级和行为。
 
+持久化的 OAuth 会话还会记住本站 API 地址，供后续 CLI 进程自动恢复。显式传入的 `--base-url` 或 `QVERIS_BASE_URL` 仍具有更高优先级，且必须与会话 issuer 匹配。
+
 在没有操作系统凭证库的可信无头主机上，可使用 `--no-browser --allow-unencrypted-storage`。高级集成可通过 `--scope <scopes>` 和 `--resource <url>` 收窄授权请求；两者都必须符合服务端公开契约，且自定义 scope 必须保留 `offline_access`，以便安全刷新会话。
 
 ### `qveris login`（API Key）
@@ -377,7 +379,7 @@ qveris> exit
 
 ### `qveris doctor`
 
-面向首次调用的自检诊断：依次检查 Node.js 版本、API 密钥、API 地址，再用一次免费的 `discover` 探测覆盖连通性、密钥有效性、剩余积分，以及响应结构是否符合 CLI 合同。每项失败都会给出可执行的修复建议。诊断不消耗积分（discover 免费）。加 `--json` 输出机器可读结果。
+面向首次调用的自检诊断：依次检查 Node.js 版本、当前 API Key 或 OAuth 会话、API 地址，再用一次免费的 `discover` 探测覆盖连通性、凭证有效性、剩余积分，以及响应结构是否符合 CLI 合同。每项失败都会给出可执行的修复建议。诊断不消耗积分（discover 免费）。加 `--json` 输出机器可读结果。
 
 ### `qveris config`
 
@@ -457,7 +459,7 @@ qveris history [--clear]
 
 **优先级：**`--flag` > 环境变量 > 配置文件 > 默认值
 
-API 地址单独遵循 `--base-url` > `QVERIS_BASE_URL` > 内置默认值。使用本站服务时，请设置 `QVERIS_BASE_URL=https://qveris.cn/api/v1`。API 密钥不会选择或替换地址；覆盖值必须是完整的 HTTP(S) URL，且不能包含凭据、查询参数或片段。
+API 地址单独遵循 `--base-url` > `QVERIS_BASE_URL` > 已存储的 OAuth 会话地址（OAuth 生效时）> 内置默认值。首次使用本站服务时，请设置 `QVERIS_BASE_URL=https://qveris.cn/api/v1`；完成 OAuth 登录后，CLI 会自动恢复该地址。API 密钥不会选择或替换地址；覆盖值必须是完整的 HTTP(S) URL，且不能包含凭据、查询参数或片段。
 
 ---
 

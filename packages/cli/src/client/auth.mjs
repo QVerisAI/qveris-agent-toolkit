@@ -60,7 +60,7 @@ export async function getCredential(provider, context) {
   try {
     credential = await provider.getCredential(context);
   } catch (error) {
-    if (error instanceof CliError && error.code === "AUTH_OAUTH_FAILED") throw error;
+    if (error instanceof CliError) throw error;
     throw new CliError("API_ERROR", "Credential provider failed to provide a credential");
   }
   if (typeof credential !== "string" || !credential.trim() || /[\r\n]/.test(credential)) {

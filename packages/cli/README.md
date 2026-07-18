@@ -156,7 +156,7 @@ qveris call 1 --params '{"set":"land","first":"sct","timeOfDay":"day"}'
 | Command | Description |
 |---------|-------------|
 | `qveris interactive` | Launch REPL mode (discover/inspect/call/codegen in one session) |
-| `qveris doctor` | Self-check: Node.js version, API key, API endpoint, connectivity |
+| `qveris doctor` | Self-check: Node.js version, active credential, API endpoint, connectivity |
 | `qveris config <subcommand>` | Manage CLI settings (set, get, list, reset, path) |
 | `qveris mcp configure` | Generate MCP client config for Cursor, Claude Desktop, OpenCode, OpenClaw, or generic stdio; generate a `claude mcp add` command for Claude Code |
 | `qveris mcp validate` | Validate an MCP config file, with optional live stdio tool probing |
@@ -387,7 +387,7 @@ The CLI uses a built-in API endpoint by default. When an explicit endpoint is re
 qveris discover "weather" --base-url "$QVERIS_BASE_URL"
 ```
 
-Resolution order: `--base-url` > `QVERIS_BASE_URL` > built-in default. API keys never change the selected endpoint. Values must be complete HTTP(S) URLs without credentials, query parameters, or fragments; trailing slashes are normalized automatically.
+Resolution order: `--base-url` > `QVERIS_BASE_URL` > stored OAuth session endpoint (when OAuth is active) > built-in default. API keys never change the selected endpoint. Values must be complete HTTP(S) URLs without credentials, query parameters, or fragments; trailing slashes are normalized automatically.
 
 ### Rate limiting & retries
 

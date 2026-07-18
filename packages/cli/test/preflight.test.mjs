@@ -6,6 +6,8 @@ import test from "node:test";
 
 import { runPreflight, nodeCheck, CLI_CONTRACT_VERSION } from "../src/client/preflight.mjs";
 import { CliError } from "../src/errors/handler.mjs";
+import { setConfigValue } from "../src/config/store.mjs";
+import { deleteOAuthSession } from "../src/auth/storage.mjs";
 
 const byName = (checks) => Object.fromEntries(checks.map((c) => [c.name, c]));
 
@@ -31,6 +33,49 @@ test("runPreflight: healthy probe reports connectivity, credits, and contract co
   assert.equal(c.credits.status, "ok");
   assert.match(c.credits.detail, /42 credits/);
   assert.equal(c.contract.status, "ok");
+});
+
+test("runPreflight: stored OAuth session restores its endpoint without environment configuration", async () => {
+  const previous = {
+    key: process.env.QVERIS_API_KEY,
+    base: process.env.QVERIS_BASE_URL,
+    xdg: process.env.XDG_CONFIG_HOME,
+  };
+  const dir = mkdtempSync(join(tmpdir(), "qveris-preflight-oauth-"));
+  process.env.XDG_CONFIG_HOME = dir;
+  delete process.env.QVERIS_API_KEY;
+  delete process.env.QVERIS_BASE_URL;
+  try {
+    setConfigValue("oauth_session", {
+      issuer: "https://test.qveris.cn",
+      api_base_url: "https://test.qveris.cn/api/v1",
+      storage: "config",
+    });
+    let probeContext;
+    const { checks, ok } = await runPreflight({
+      probe: async (context) => {
+        probeContext = context;
+        return { search_id: "s1", results: [] };
+      },
+    });
+    assert.equal(ok, true);
+    assert.equal(probeContext.authType, "oauth");
+    assert.equal(probeContext.apiKey, undefined);
+    assert.equal(probeContext.baseUrl, "https://test.qveris.cn/api/v1");
+    assert.equal(byName(checks).oauth.status, "ok");
+    assert.match(byName(checks).endpoint.detail, /oauth session/);
+  } finally {
+    await deleteOAuthSession();
+    rmSync(dir, { recursive: true, force: true });
+    for (const [key, value] of [
+      ["QVERIS_API_KEY", previous.key],
+      ["QVERIS_BASE_URL", previous.base],
+      ["XDG_CONFIG_HOME", previous.xdg],
+    ]) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
 });
 
 test("runPreflight: zero credits warns (not fails) with a purchase hint", async () => {

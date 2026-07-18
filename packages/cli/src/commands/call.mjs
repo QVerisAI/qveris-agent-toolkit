@@ -1,12 +1,11 @@
 import { resolveApiKey } from "../client/auth.mjs";
-import { callTool } from "../client/api.mjs";
+import { callTool, resolveApiBaseUrl } from "../client/api.mjs";
 import { resolveToolId, getSessionDiscoveryId } from "../session/session.mjs";
 import { resolveParams } from "../utils/params.mjs";
 import { formatCallResult } from "../output/formatter.mjs";
 import { outputJson } from "../output/json.mjs";
 import { createSpinner } from "../output/spinner.mjs";
 import { generateSnippet } from "../output/codegen.mjs";
-import { resolveBaseUrl } from "../config/endpoint.mjs";
 import { CliError } from "../errors/handler.mjs";
 import { bold, dim, cyan } from "../output/colors.mjs";
 
@@ -33,7 +32,7 @@ export async function runCall(idOrIndex, flags) {
   const apiKey = resolveApiKey(flags.apiKey);
   const timeoutMs = (parseInt(flags.timeout, 10) || 60) * 1000;
   const maxSize = resolveMaxSize(flags);
-  const { baseUrl } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
+  const { baseUrl } = resolveApiBaseUrl({ baseUrlFlag: flags.baseUrl, preferOAuth: apiKey === undefined });
 
   const resolved = resolveToolId(idOrIndex);
   const toolId = resolved.toolId;
