@@ -1,5 +1,6 @@
 import { resolveBaseUrl } from "../config/endpoint.mjs";
 import { discoverTools } from "../client/api.mjs";
+import { CliError } from "../errors/handler.mjs";
 import { bold, cyan, dim, green, red } from "../output/colors.mjs";
 import { openUrl } from "../utils/open-url.mjs";
 import {
@@ -16,6 +17,7 @@ import {
   getOAuthSessionMetadata,
   loadOAuthSessionSecret,
   saveOAuthSession,
+  withOAuthRefreshLock,
 } from "../auth/storage.mjs";
 
 export async function runAuth(subcommand, flags) {
@@ -27,6 +29,8 @@ export async function runAuth(subcommand, flags) {
 }
 
 async function authLogin(flags) {
+  const previousMetadata = getOAuthSessionMetadata();
+  const previousSecret = await loadOAuthSessionSecret(previousMetadata);
   const { baseUrl } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
   const issuer = new URL(baseUrl).origin;
   const metadata = await discoverAuthorizationServer(issuer);
@@ -64,27 +68,42 @@ async function authLogin(flags) {
     revocation_endpoint: metadata.revocation_endpoint,
     expires_at: Date.now() + Math.max(1, Number(tokens.expires_in) || 3600) * 1000,
   };
+  const newSecret = {
+    access_token: tokens.access_token,
+    refresh_token: tokens.refresh_token,
+  };
+  let persisted;
   try {
-    await deleteOAuthSession();
+    persisted = await withOAuthRefreshLock(async () => {
+      const currentMetadata = getOAuthSessionMetadata({ fresh: true });
+      const currentSecret = await loadOAuthSessionSecret(currentMetadata, { fresh: true });
+      const snapshotUnchanged =
+        previousMetadata === null
+          ? currentMetadata === null
+          : currentMetadata?.issuer === previousMetadata.issuer &&
+            currentMetadata?.api_base_url === previousMetadata.api_base_url &&
+            currentSecret?.access_token === previousSecret?.access_token &&
+            currentSecret?.refresh_token === previousSecret?.refresh_token;
+      if (!snapshotUnchanged) {
+        throw new CliError(
+          "API_ERROR",
+          "OAuth session changed while device authorization was in progress; retry login",
+        );
+      }
+      if (currentMetadata && currentSecret) await revokeOAuthSession(currentMetadata, currentSecret);
+      await deleteOAuthSession();
+      return saveOAuthSession(session, newSecret, {
+        allowUnencryptedStorage: flags.allowUnencryptedStorage,
+      });
+    });
   } catch (error) {
     try {
-      await revokeOAuthSession(metadata, {
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-      });
+      await revokeOAuthSession(metadata, newSecret);
     } catch {
-      // Preserve the local-cleanup error as the actionable failure.
+      // Preserve the local-storage error as the actionable failure.
     }
     throw error;
   }
-  const persisted = await saveOAuthSession(
-    session,
-    {
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
-    },
-    { allowUnencryptedStorage: flags.allowUnencryptedStorage },
-  );
   const storage = getOAuthSessionMetadata()?.storage || "session";
   const result = {
     authenticated: true,

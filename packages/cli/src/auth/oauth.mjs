@@ -10,6 +10,15 @@ const MAX_DEVICE_TIMER_SECONDS = Math.floor(0x7fffffff / 1000);
 const MAX_TOKEN_LIFETIME_SECONDS = Math.floor((Number.MAX_SAFE_INTEGER - Date.now()) / 1000);
 let sharedRefreshPromise = null;
 
+function isSameOAuthSession(left, right) {
+  return (
+    left?.issuer === right?.issuer &&
+    left?.api_base_url === right?.api_base_url &&
+    left?.token_endpoint === right?.token_endpoint &&
+    left?.revocation_endpoint === right?.revocation_endpoint
+  );
+}
+
 function oauthError(code) {
   const messages = {
     access_denied: "Device authorization was denied",
@@ -81,9 +90,9 @@ function positiveNumber(value, label, defaultValue, maximum = Number.MAX_SAFE_IN
   return normalized;
 }
 
-async function timedFetch(fetchImpl, url, options = {}) {
+async function timedFetch(fetchImpl, url, options = {}, timeoutMs = OAUTH_REQUEST_TIMEOUT_MS) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), OAUTH_REQUEST_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetchImpl(url, { ...options, signal: controller.signal });
   } catch (error) {
@@ -130,13 +139,18 @@ export async function discoverAuthorizationServer(issuer, fetchImpl = fetch) {
   return result;
 }
 
-async function postForm(url, form, fetchImpl = fetch) {
-  const response = await timedFetch(fetchImpl, url, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
-    body: new URLSearchParams(form),
-    redirect: "error",
-  });
+async function postForm(url, form, fetchImpl = fetch, timeoutMs = OAUTH_REQUEST_TIMEOUT_MS) {
+  const response = await timedFetch(
+    fetchImpl,
+    url,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+      body: new URLSearchParams(form),
+      redirect: "error",
+    },
+    timeoutMs,
+  );
   return { response, payload: await jsonResponse(response, "OAuth endpoint") };
 }
 
@@ -178,15 +192,23 @@ export async function pollDeviceToken(
   while (now() < deadline) {
     await sleep(Math.min(intervalMs, deadline - now()));
     if (now() >= deadline) break;
-    const { response, payload } = await postForm(
-      metadata.token_endpoint,
-      {
-        grant_type: DEVICE_CODE_GRANT,
-        client_id: OAUTH_CLIENT_ID,
-        device_code: authorization.device_code,
-      },
-      fetchImpl,
-    );
+    let tokenResult;
+    try {
+      tokenResult = await postForm(
+        metadata.token_endpoint,
+        {
+          grant_type: DEVICE_CODE_GRANT,
+          client_id: OAUTH_CLIENT_ID,
+          device_code: authorization.device_code,
+        },
+        fetchImpl,
+        Math.max(1, Math.min(OAUTH_REQUEST_TIMEOUT_MS, deadline - now())),
+      );
+    } catch (error) {
+      if (error?.code === "NET_TIMEOUT" && now() >= deadline) break;
+      throw error;
+    }
+    const { response, payload } = tokenResult;
     onPoll?.(payload.error || "approved");
     if (response.ok) return validateTokenResponse(payload, { requireRefreshToken: true });
     if (payload.error === "authorization_pending") continue;
@@ -254,7 +276,17 @@ export async function refreshOAuthSession(metadata, secret, fetchImpl = fetch) {
     ...metadata,
     expires_at: Date.now() + Math.max(1, Number(tokens.expires_in) || 3600) * 1000,
   };
-  const persisted = await saveOAuthSession(updated, replacement);
+  let persisted;
+  try {
+    persisted = await saveOAuthSession(updated, replacement);
+  } catch (error) {
+    try {
+      await revokeOAuthSession(updated, replacement, fetchImpl);
+    } catch {
+      // Preserve the local persistence error as the actionable failure.
+    }
+    throw error;
+  }
   if (["keyring", "config"].includes(metadata.storage) && !persisted) {
     throw new CliError("API_ERROR", "Rotated OAuth credentials could not be persisted; run qveris auth login again");
   }
@@ -308,6 +340,12 @@ export function createStoredOAuthCredentialProvider({ fetchImpl = fetch } = {}) 
           if (!metadata || !secret) {
             throw oauthError("invalid_grant", "OAuth session is unavailable; run qveris auth login again");
           }
+          if (!isSameOAuthSession(metadata, initialMetadata)) {
+            throw new CliError(
+              "API_ERROR",
+              "OAuth session changed while credentials were being refreshed; retry the command",
+            );
+          }
           if (
             secret.access_token !== initialSecret.access_token ||
             secret.refresh_token !== initialSecret.refresh_token
@@ -334,7 +372,14 @@ export function createStoredOAuthCredentialProvider({ fetchImpl = fetch } = {}) 
         throw new CliError("API_ERROR", "OAuth session does not match the selected API endpoint");
       }
       if (Date.now() >= Number(metadata.expires_at || 0) - 60000) {
-        ({ secret } = await refresh());
+        const refreshed = await refresh();
+        if (!isSameOAuthSession(refreshed.metadata, metadata)) {
+          throw new CliError(
+            "API_ERROR",
+            "OAuth session changed while credentials were being refreshed; retry the command",
+          );
+        }
+        ({ secret } = refreshed);
       }
       return secret.access_token;
     },

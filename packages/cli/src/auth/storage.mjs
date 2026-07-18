@@ -1,5 +1,14 @@
-import { createHash } from "node:crypto";
-import { closeSync, mkdirSync, openSync, statSync, unlinkSync } from "node:fs";
+import { createHash, randomUUID } from "node:crypto";
+import {
+  closeSync,
+  futimesSync,
+  mkdirSync,
+  openSync,
+  readFileSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { CliError } from "../errors/handler.mjs";
@@ -8,6 +17,7 @@ import { getConfigPath, getConfigValue, readConfig, writeConfig } from "../confi
 const SERVICE = "qveris-cli";
 const SECRET_CONFIG_KEY = "oauth_session_secret";
 const REFRESH_LOCK_STALE_MS = 60000;
+const REFRESH_LOCK_HEARTBEAT_MS = 10000;
 const REFRESH_LOCK_WAIT_MS = 100;
 const REFRESH_LOCK_TIMEOUT_MS = 65000;
 let memorySecret = null;
@@ -66,22 +76,49 @@ export async function saveOAuthSession(metadata, secret, { allowUnencryptedStora
   }
   const entry = await keyringEntry(metadata.issuer);
   let storage = "session";
+  let previousKeyringSecret = null;
+  let keyringWriteError = null;
   if (entry) {
     try {
+      previousKeyringSecret = entry.getPassword();
       entry.setPassword(JSON.stringify(secret));
       storage = "keyring";
-    } catch {
+    } catch (error) {
+      keyringWriteError = error;
       // A desktop keyring may be unavailable in a headless session.
     }
   }
+  if (storage === "session" && metadata.storage === "keyring") {
+    throw new CliError(
+      "API_ERROR",
+      `Rotated OAuth credentials could not be persisted in the operating-system credential store${keyringWriteError?.message ? `: ${keyringWriteError.message}` : ""}`,
+    );
+  }
   const useConfigStorage = storage === "session" && (allowUnencryptedStorage || metadata.storage === "config");
   if (useConfigStorage) storage = "config";
-  memorySecret = { issuer: metadata.issuer, secret };
-  memoryMetadata = { ...metadata, storage };
-  persistSessionConfig(
-    storage === "session" ? null : memoryMetadata,
-    storage === "config" ? { issuer: metadata.issuer, secret } : null,
-  );
+  const nextMemorySecret = { issuer: metadata.issuer, secret };
+  const nextMemoryMetadata = { ...metadata, storage };
+  try {
+    persistSessionConfig(
+      storage === "session" ? null : nextMemoryMetadata,
+      storage === "config" ? nextMemorySecret : null,
+    );
+  } catch (error) {
+    if (storage === "keyring") {
+      try {
+        if (previousKeyringSecret) entry.setPassword(previousKeyringSecret);
+        else entry.deletePassword();
+      } catch (rollbackError) {
+        throw new CliError(
+          "API_ERROR",
+          `OAuth session metadata could not be saved and the credential-store rollback failed${rollbackError?.message ? `: ${rollbackError.message}` : ""}`,
+        );
+      }
+    }
+    throw error;
+  }
+  memorySecret = nextMemorySecret;
+  memoryMetadata = nextMemoryMetadata;
   return storage !== "session";
 }
 
@@ -119,6 +156,7 @@ export async function withOAuthRefreshLock(
   { sleep = (milliseconds) => delay(milliseconds), now = () => Date.now() } = {},
 ) {
   const lockPath = `${getConfigPath()}.oauth-refresh.lock`;
+  const ownerToken = randomUUID();
   mkdirSync(dirname(lockPath), { recursive: true, mode: 0o700 });
   const deadline = now() + REFRESH_LOCK_TIMEOUT_MS;
   let descriptor;
@@ -142,17 +180,39 @@ export async function withOAuthRefreshLock(
       await sleep(REFRESH_LOCK_WAIT_MS);
     }
   }
+  try {
+    writeFileSync(descriptor, ownerToken, "utf8");
+  } catch (error) {
+    try {
+      closeSync(descriptor);
+      unlinkSync(lockPath);
+    } catch {
+      // Preserve the lock initialization error.
+    }
+    throw error;
+  }
   let result;
   let callbackError;
+  const heartbeat = setInterval(() => {
+    try {
+      const timestamp = new Date();
+      futimesSync(descriptor, timestamp, timestamp);
+    } catch {
+      // Cleanup below reports lock failures that affect ownership.
+    }
+  }, REFRESH_LOCK_HEARTBEAT_MS);
+  heartbeat.unref?.();
   try {
     result = await callback();
   } catch (error) {
     callbackError = error;
+  } finally {
+    clearInterval(heartbeat);
   }
   let cleanupError;
   try {
     closeSync(descriptor);
-    unlinkSync(lockPath);
+    if (readFileSync(lockPath, "utf8") === ownerToken) unlinkSync(lockPath);
   } catch (error) {
     if (error?.code !== "ENOENT") cleanupError = error;
   }
