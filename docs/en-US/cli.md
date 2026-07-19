@@ -280,7 +280,7 @@ Refresh credentials are rotated automatically and stored in the operating-system
 
 The persisted OAuth session also remembers its API endpoint for later CLI processes. An explicit `--base-url` or `QVERIS_BASE_URL` still takes precedence and must match the session issuer.
 
-Use `--no-browser --allow-unencrypted-storage` on a trusted headless host that has no operating-system keyring. Advanced integrations can narrow the request with `--scope <scopes>` and `--resource <url>`; both must match the server's published contract, and a custom scope must retain `offline_access` so the session can refresh safely.
+Use `--no-browser --allow-unencrypted-storage` on a trusted headless host that has no operating-system credential store. Advanced integrations can narrow the request with `--scope <scopes>` and `--resource <url>`; both must match the server's published contract, and a custom scope must retain `offline_access` so the session can refresh safely.
 
 ### `qveris login` (API key)
 
