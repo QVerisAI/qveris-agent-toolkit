@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { classifyContractChanges } from './plan-contract-tests.mjs';
+import { classifyContractChanges, resolveContractPlan } from './plan-contract-tests.mjs';
 
 test('a CLI-only change does not schedule unrelated SDKs', () => {
   assert.deepEqual(classifyContractChanges(['packages/cli/src/main.mjs']), {
@@ -71,6 +71,39 @@ test('workflow changes and full runs exercise every target and both operating sy
   assert.equal(fullPlan.lint_mcp, true);
   assert.equal(fullPlan.lint_plugin, true);
   assert.equal(fullPlan.examples, true);
+});
+
+test('root task-runner configuration and lockfile schedule every package on the PR platform', () => {
+  for (const file of ['package.json', 'package-lock.json']) {
+    const plan = classifyContractChanges([file]);
+
+    for (const target of ['benchmark', 'cli', 'python', 'js', 'mcp', 'plugin']) {
+      assert.equal(plan[target], true);
+    }
+    assert.deepEqual(plan.os_matrix, ['ubuntu-latest']);
+  }
+});
+
+test('missing git history fails safe to the full cross-platform matrix', () => {
+  let fallbackReason = '';
+  const result = resolveContractPlan({
+    baseSha: 'missing-base',
+    headSha: 'missing-head',
+    diff: () => {
+      throw new Error('base commit is unavailable');
+    },
+    onFallback: (error) => {
+      fallbackReason = error.message;
+    },
+  });
+
+  assert.equal(result.full, true);
+  assert.deepEqual(result.files, []);
+  assert.equal(fallbackReason, 'base commit is unavailable');
+  for (const target of ['benchmark', 'cli', 'python', 'js', 'mcp', 'plugin']) {
+    assert.equal(result.plan[target], true);
+  }
+  assert.deepEqual(result.plan.os_matrix, ['ubuntu-latest', 'windows-latest']);
 });
 
 test('duplicate and empty filenames do not create false-positive targets', () => {

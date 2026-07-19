@@ -15,6 +15,8 @@ const ALL_TARGETS = Object.keys(PACKAGE_PREFIXES);
 const OPENAPI_TARGETS = ['cli', 'python', 'js', 'mcp'];
 const PLANNER_FILES = new Set([
   '.github/workflows/contract-tests.yml',
+  'package.json',
+  'package-lock.json',
   'scripts/plan-contract-tests.mjs',
   'scripts/plan-contract-tests.test.mjs',
 ]);
@@ -78,9 +80,35 @@ export function classifyContractChanges(files, { full = false } = {}) {
 
 function changedFiles(baseSha, headSha) {
   if (!baseSha || !headSha) throw new Error('CONTRACT_TEST_BASE_SHA and CONTRACT_TEST_HEAD_SHA are required');
-  return execFileSync('git', ['diff', '--name-only', `${baseSha}...${headSha}`], {
+  return execFileSync('git', ['diff', '--name-only', `${baseSha}...${headSha}`, '--'], {
     encoding: 'utf8',
   }).split('\n');
+}
+
+export function resolveContractPlan({
+  full = false,
+  baseSha,
+  headSha,
+  diff = changedFiles,
+  onFallback = () => {},
+} = {}) {
+  let effectiveFull = full;
+  let files = [];
+
+  if (!effectiveFull) {
+    try {
+      files = diff(baseSha, headSha);
+    } catch (error) {
+      effectiveFull = true;
+      onFallback(error);
+    }
+  }
+
+  return {
+    full: effectiveFull,
+    files: files.filter(Boolean),
+    plan: classifyContractChanges(files, { full: effectiveFull }),
+  };
 }
 
 function writeOutputs(plan, outputPath) {
@@ -92,12 +120,18 @@ function writeOutputs(plan, outputPath) {
 }
 
 function main() {
-  const full = process.env.CONTRACT_TEST_FULL === 'true';
-  const files = full ? [] : changedFiles(process.env.CONTRACT_TEST_BASE_SHA, process.env.CONTRACT_TEST_HEAD_SHA);
-  const plan = classifyContractChanges(files, { full });
+  const result = resolveContractPlan({
+    full: process.env.CONTRACT_TEST_FULL === 'true',
+    baseSha: process.env.CONTRACT_TEST_BASE_SHA,
+    headSha: process.env.CONTRACT_TEST_HEAD_SHA,
+    onFallback: (error) => {
+      const reason = error instanceof Error ? error.message : String(error);
+      console.error(`Failed to resolve changed files; falling back to the full test matrix: ${reason}`);
+    },
+  });
 
-  if (process.env.GITHUB_OUTPUT) writeOutputs(plan, process.env.GITHUB_OUTPUT);
-  process.stdout.write(`${JSON.stringify({ full, files: files.filter(Boolean), plan }, null, 2)}\n`);
+  if (process.env.GITHUB_OUTPUT) writeOutputs(result.plan, process.env.GITHUB_OUTPUT);
+  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) main();

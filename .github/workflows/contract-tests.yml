@@ -7,6 +7,8 @@ name: Contract tests
 on:
   pull_request:
     paths:
+      - "package.json"
+      - "package-lock.json"
       - "docs/openapi/**"
       - "packages/cli/src/**"
       - "packages/cli/test/**"
