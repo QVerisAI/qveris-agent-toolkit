@@ -1,19 +1,26 @@
 name: Contract tests
 
-# Issue #37 phase 3 (#47): enforce, on every PR, that the CLI's API calls and
-# the Python SDK's consumed models stay aligned with the website-mirrored
-# public OpenAPI contract. The cli/python *-publish workflows only run on
-# release tags, so without this the contract guards would not gate PRs.
+# Keep contract consumers aligned on PRs without rerunning the same full matrix
+# after merge. A weekly full run retains Windows coverage; package release
+# workflows keep their own release-time matrices.
 
 on:
   pull_request:
     paths:
+      - "package.json"
+      - "package-lock.json"
       - "docs/openapi/**"
       - "packages/cli/src/**"
-      - "packages/cli/test/openapi-contract.test.mjs"
+      - "packages/cli/test/**"
+      - "packages/cli/scripts/**"
+      - "packages/cli/bin/**"
       - "packages/python-sdk/qveris/**"
-      - "packages/python-sdk/tests/test_openapi_contract.py"
+      - "packages/python-sdk/tests/**"
+      - "packages/python-sdk/examples/**"
+      - "packages/python-sdk/docs-api/**"
       - "packages/js-sdk/src/**"
+      - "packages/js-sdk/test/**"
+      - "packages/js-sdk/docs-api/**"
       - "packages/js-sdk/package.json"
       - "packages/js-sdk/package-lock.json"
       - "packages/cli/package.json"
@@ -21,6 +28,9 @@ on:
       - "packages/python-sdk/pyproject.toml"
       - "packages/python-sdk/uv.lock"
       - "packages/mcp/src/**"
+      - "packages/mcp/test/**"
+      - "packages/mcp/scripts/**"
+      - "packages/mcp/schemas/**"
       - "packages/mcp/package.json"
       - "packages/mcp/package-lock.json"
       - "packages/mcp/tsconfig.json"
@@ -34,48 +44,60 @@ on:
       - ".prettierrc.json"
       - ".prettierignore"
       - "packages/*/eslint.config.mjs"
+      - "scripts/plan-contract-tests.mjs"
+      - "scripts/plan-contract-tests.test.mjs"
       - ".github/workflows/contract-tests.yml"
-  push:
-    branches:
-      - main
-    paths:
-      - "docs/openapi/**"
-      - "packages/cli/src/**"
-      - "packages/cli/test/openapi-contract.test.mjs"
-      - "packages/python-sdk/qveris/**"
-      - "packages/python-sdk/tests/test_openapi_contract.py"
-      - "packages/js-sdk/src/**"
-      - "packages/js-sdk/package.json"
-      - "packages/js-sdk/package-lock.json"
-      - "packages/cli/package.json"
-      - "packages/cli/package-lock.json"
-      - "packages/python-sdk/pyproject.toml"
-      - "packages/python-sdk/uv.lock"
-      - "packages/mcp/src/**"
-      - "packages/mcp/package.json"
-      - "packages/mcp/package-lock.json"
-      - "packages/mcp/tsconfig.json"
-      - "packages/openclaw-qveris-plugin/**"
-      - "packages/js-sdk/examples/**"
-      - "packages/js-sdk/tsconfig.examples.json"
-      - "packages/mcp/examples/**"
-      - "packages/mcp/tsconfig.examples.json"
-      - "packages/cli/examples/**"
-      - "benchmarks/discover-call/**"
-      - ".prettierrc.json"
-      - ".prettierignore"
-      - "packages/*/eslint.config.mjs"
-      - ".github/workflows/contract-tests.yml"
+  schedule:
+    - cron: "23 3 * * 0"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: contract-tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  plan:
+    name: Plan affected contract tests
+    runs-on: ubuntu-latest
+    outputs:
+      benchmark: ${{ steps.plan.outputs.benchmark }}
+      cli: ${{ steps.plan.outputs.cli }}
+      python: ${{ steps.plan.outputs.python }}
+      js: ${{ steps.plan.outputs.js }}
+      mcp: ${{ steps.plan.outputs.mcp }}
+      plugin: ${{ steps.plan.outputs.plugin }}
+      lint: ${{ steps.plan.outputs.lint }}
+      lint_cli: ${{ steps.plan.outputs.lint_cli }}
+      lint_python: ${{ steps.plan.outputs.lint_python }}
+      lint_js: ${{ steps.plan.outputs.lint_js }}
+      lint_mcp: ${{ steps.plan.outputs.lint_mcp }}
+      lint_plugin: ${{ steps.plan.outputs.lint_plugin }}
+      examples: ${{ steps.plan.outputs.examples }}
+      os_matrix: ${{ steps.plan.outputs.os_matrix }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Test the affected-target planner
+        run: node --test scripts/plan-contract-tests.test.mjs
+      - name: Classify changed targets
+        id: plan
+        env:
+          CONTRACT_TEST_FULL: ${{ github.event_name != 'pull_request' }}
+          CONTRACT_TEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          CONTRACT_TEST_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/plan-contract-tests.mjs
+
   discover-call-benchmark:
+    needs: plan
+    if: needs.plan.outputs.benchmark == 'true'
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: ${{ fromJSON(needs.plan.outputs.os_matrix) }}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -95,25 +117,39 @@ jobs:
         run: npm test
 
   cli-contract:
+    needs: plan
+    if: needs.plan.outputs.cli == 'true'
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: ${{ fromJSON(needs.plan.outputs.os_matrix) }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 20
-      - name: CLI tests (full suite, includes the OpenAPI contract test)
+          cache: "npm"
+          cache-dependency-path: packages/cli/package-lock.json
+      - name: Install dependencies
         working-directory: packages/cli
-        run: node --test
+        run: npm ci
+      - name: CLI tests with coverage (Linux)
+        if: runner.os == 'Linux'
+        working-directory: packages/cli
+        run: npm run test:coverage
+      - name: CLI tests (Windows)
+        if: runner.os == 'Windows'
+        working-directory: packages/cli
+        run: npm test
 
   python-contract:
+    needs: plan
+    if: needs.plan.outputs.python == 'true'
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: ${{ fromJSON(needs.plan.outputs.os_matrix) }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -124,15 +160,22 @@ jobs:
         with:
           enable-cache: true
           cache-dependency-glob: packages/python-sdk/uv.lock
-      - name: Python SDK tests (full suite, includes the contract tests)
+      - name: Python SDK tests with coverage (Linux)
+        if: runner.os == 'Linux'
+        working-directory: packages/python-sdk
+        run: uv run --extra dev pytest -q --cov=qveris --cov-fail-under=82
+      - name: Python SDK tests (Windows)
+        if: runner.os == 'Windows'
         working-directory: packages/python-sdk
         run: uv run --extra dev pytest -q
 
   js-sdk-tests:
+    needs: plan
+    if: needs.plan.outputs.js == 'true'
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: ${{ fromJSON(needs.plan.outputs.os_matrix) }}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -150,14 +193,20 @@ jobs:
         run: npm run typecheck
       - name: Type check examples
         run: npm run typecheck:examples
-      - name: JS SDK client tests
+      - name: JS SDK client tests with coverage (Linux)
+        if: runner.os == 'Linux'
+        run: npm run test:coverage
+      - name: JS SDK client tests (Windows)
+        if: runner.os == 'Windows'
         run: npm test
 
   mcp-tests:
+    needs: plan
+    if: needs.plan.outputs.mcp == 'true'
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: ${{ fromJSON(needs.plan.outputs.os_matrix) }}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -175,7 +224,11 @@ jobs:
         run: npm run typecheck
       - name: Type check examples
         run: npm run typecheck:examples
-      - name: MCP server tests
+      - name: MCP server tests with coverage (Linux)
+        if: runner.os == 'Linux'
+        run: npm run test:coverage
+      - name: MCP server tests (Windows)
+        if: runner.os == 'Windows'
         run: npm test
       # Non-blocking by design: a red mcp-tests job always means "generated
       # card is invalid" (validated by vitest against the vendored pinned
@@ -185,10 +238,12 @@ jobs:
         run: node scripts/check-server-card-schema-url.mjs
 
   openclaw-plugin-tests:
+    needs: plan
+    if: needs.plan.outputs.plugin == 'true'
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: ${{ fromJSON(needs.plan.outputs.os_matrix) }}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -204,7 +259,11 @@ jobs:
         run: npm ci
       - name: Type check
         run: npm run typecheck
-      - name: Plugin tests
+      - name: Plugin tests with coverage (Linux)
+        if: runner.os == 'Linux'
+        run: npm run test:coverage
+      - name: Plugin tests (Windows)
+        if: runner.os == 'Windows'
         run: npm test
       - name: Verify npm package contents
         run: npm run check:pack
@@ -212,66 +271,50 @@ jobs:
           NPM_CONFIG_OFFLINE: "true"
 
   lint:
+    needs: plan
+    if: needs.plan.outputs.lint == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
+        if: needs.plan.outputs.lint_mcp == 'true' || needs.plan.outputs.lint_js == 'true' || needs.plan.outputs.lint_cli == 'true' || needs.plan.outputs.lint_plugin == 'true'
         with:
           node-version: 22.22.3
       - uses: astral-sh/setup-uv@v7
+        if: needs.plan.outputs.lint_python == 'true'
         with:
           enable-cache: true
           cache-dependency-glob: packages/python-sdk/uv.lock
       - name: Lint mcp
+        if: needs.plan.outputs.lint_mcp == 'true'
         working-directory: packages/mcp
         run: npm ci && npm run lint
       - name: Lint js-sdk
+        if: needs.plan.outputs.lint_js == 'true'
         working-directory: packages/js-sdk
         run: npm ci && npm run lint
       - name: Lint cli
+        if: needs.plan.outputs.lint_cli == 'true'
         working-directory: packages/cli
         run: npm ci && npm run lint
       - name: Lint openclaw plugin
+        if: needs.plan.outputs.lint_plugin == 'true'
         working-directory: packages/openclaw-qveris-plugin
         run: npm ci && npm run lint
       - name: Lint python-sdk (ruff)
+        if: needs.plan.outputs.lint_python == 'true'
         working-directory: packages/python-sdk
         run: |
           uv run --extra dev ruff check qveris tests examples docs-api
           uv run --extra dev ruff format --check qveris tests examples docs-api
-
-  coverage:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22.22.3
-      - uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
-          cache-dependency-glob: packages/python-sdk/uv.lock
-      - name: mcp coverage (thresholds in vitest.config.ts)
-        working-directory: packages/mcp
-        run: npm ci && npm run test:coverage
-      - name: js-sdk coverage
-        working-directory: packages/js-sdk
-        run: npm ci && npm run test:coverage
-      - name: openclaw plugin coverage
-        working-directory: packages/openclaw-qveris-plugin
-        run: npm ci && npm run test:coverage
-      - name: cli coverage (thresholds in .c8rc.json)
-        working-directory: packages/cli
-        run: npm ci && npm run test:coverage
-      - name: python-sdk coverage
-        working-directory: packages/python-sdk
-        run: uv run --extra dev pytest -q --cov=qveris --cov-fail-under=82
 
   # Shellcheck the CLI scripting examples. The TypeScript examples are type
   # checked in the js-sdk-tests / mcp-tests jobs; the Python examples are linted
   # by the ruff step above; the recipe run.sh scripts are checked in
   # ecosystem-validate.yml (which triggers on recipes/**).
   examples:
+    needs: plan
+    if: needs.plan.outputs.examples == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
