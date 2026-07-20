@@ -17,6 +17,9 @@ permissions:
 jobs:
   request-codex-review:
     if: github.event_name == 'pull_request_target' && !github.event.pull_request.draft
+    concurrency:
+      group: codex-review-request-${{ github.repository }}-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     steps:
       - name: Ask Codex to review this PR
@@ -24,7 +27,20 @@ jobs:
         with:
           github-token: ${{ secrets.REPO_ACCESS_TOKEN }}
           script: |
-            const pr = context.payload.pull_request;
+            const eventPr = context.payload.pull_request;
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: eventPr.number,
+            }).then((response) => response.data);
+
+            if (pr.state !== "open" || pr.draft || pr.head.sha !== eventPr.head.sha) {
+              core.info(
+                `Ignoring stale review request for ${eventPr.head.sha}; live state=${pr.state}, draft=${pr.draft}, head=${pr.head.sha}.`,
+              );
+              return;
+            }
+
             const marker = `<!-- codex-auto-review:${pr.head.sha} -->`;
 
             const comments = await github.paginate(github.rest.issues.listComments, {
@@ -52,9 +68,9 @@ jobs:
     if: >-
       github.event_name == 'pull_request_review' &&
       github.event.pull_request.base.ref == 'main' &&
+      github.event.review.user.type == 'Bot' &&
       (contains(github.event.review.user.login, 'codex') ||
-       (github.event.review.user.type == 'Bot' &&
-        vars.CODEX_REVIEW_AUTHOR_PATTERN != ''))
+       vars.CODEX_REVIEW_AUTHOR_PATTERN != '')
     runs-on: ubuntu-latest
     steps:
       - name: Approve when Codex reports no blocking issues
@@ -133,11 +149,10 @@ jobs:
     if: >-
       github.event_name == 'issue_comment' &&
       github.event.issue.pull_request &&
+      github.event.comment.user.type == 'Bot' &&
       (contains(github.event.comment.user.login, 'codex') ||
        contains(github.event.comment.performed_via_github_app.slug, 'codex') ||
-       ((github.event.comment.user.type == 'Bot' ||
-         github.event.comment.performed_via_github_app) &&
-        vars.CODEX_COMMENT_AUTHOR_PATTERN != ''))
+       vars.CODEX_COMMENT_AUTHOR_PATTERN != '')
     runs-on: ubuntu-latest
     steps:
       - name: Approve when Codex leaves a clean summary comment
