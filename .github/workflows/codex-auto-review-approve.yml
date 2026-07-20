@@ -17,6 +17,9 @@ permissions:
 jobs:
   request-codex-review:
     if: github.event_name == 'pull_request_target' && !github.event.pull_request.draft
+    concurrency:
+      group: codex-review-request-${{ github.repository }}-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     steps:
       - name: Ask Codex to review this PR
@@ -24,7 +27,20 @@ jobs:
         with:
           github-token: ${{ secrets.REPO_ACCESS_TOKEN }}
           script: |
-            const pr = context.payload.pull_request;
+            const eventPr = context.payload.pull_request;
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: eventPr.number,
+            }).then((response) => response.data);
+
+            if (pr.state !== "open" || pr.draft || pr.head.sha !== eventPr.head.sha) {
+              core.info(
+                `Ignoring stale review request for ${eventPr.head.sha}; live state=${pr.state}, draft=${pr.draft}, head=${pr.head.sha}.`,
+              );
+              return;
+            }
+
             const marker = `<!-- codex-auto-review:${pr.head.sha} -->`;
 
             const comments = await github.paginate(github.rest.issues.listComments, {
@@ -47,7 +63,14 @@ jobs:
             });
 
   approve-after-nonblocking-codex-review:
-    if: github.event_name == 'pull_request_review' && github.event.pull_request.base.ref == 'main'
+    # Filter before runner allocation. The approval created below emits another
+    # pull_request_review event, and unrelated human/bot reviews must stay no-op.
+    if: >-
+      github.event_name == 'pull_request_review' &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.review.user.type == 'Bot' &&
+      (contains(github.event.review.user.login, 'codex') ||
+       vars.CODEX_REVIEW_AUTHOR_PATTERN != '')
     runs-on: ubuntu-latest
     steps:
       - name: Approve when Codex reports no blocking issues
@@ -98,16 +121,38 @@ jobs:
               return;
             }
 
+            const livePr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+            }).then((response) => response.data);
+
+            if (!review.commit_id || review.commit_id !== livePr.head.sha) {
+              core.info(
+                `Ignoring review for ${review.commit_id || "<missing>"}; live head is ${livePr.head.sha}.`,
+              );
+              return;
+            }
+
             await github.rest.pulls.createReview({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: pr.number,
+              commit_id: review.commit_id,
               event: "APPROVE",
               body: "Codex review completed without blocking findings. Auto-approving this PR; developers should still review and address any non-blocking suggestions before merge.",
             });
 
   approve-after-clean-codex-comment:
-    if: github.event_name == 'issue_comment' && github.event.issue.pull_request
+    # The request job's own @codex comment also emits issue_comment. Only a
+    # trusted Codex identity can produce a clean-review approval candidate.
+    if: >-
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request &&
+      github.event.comment.user.type == 'Bot' &&
+      (contains(github.event.comment.user.login, 'codex') ||
+       contains(github.event.comment.performed_via_github_app.slug, 'codex') ||
+       vars.CODEX_COMMENT_AUTHOR_PATTERN != '')
     runs-on: ubuntu-latest
     steps:
       - name: Approve when Codex leaves a clean summary comment
@@ -181,6 +226,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: pr.number,
+              commit_id: pr.head.sha,
               event: "APPROVE",
               body: "Codex left a clean summary comment for the current head commit. Auto-approving this PR; developers should still review any follow-up comments before merge.",
             });
