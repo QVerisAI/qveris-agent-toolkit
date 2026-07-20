@@ -47,7 +47,13 @@ jobs:
             });
 
   approve-after-nonblocking-codex-review:
-    if: github.event_name == 'pull_request_review' && github.event.pull_request.base.ref == 'main'
+    # Filter before runner allocation. The approval created below emits another
+    # pull_request_review event, and unrelated human/bot reviews must stay no-op.
+    if: >-
+      github.event_name == 'pull_request_review' &&
+      github.event.pull_request.base.ref == 'main' &&
+      (github.event.review.user.type == 'Bot' ||
+       contains(github.event.review.user.login, 'codex'))
     runs-on: ubuntu-latest
     steps:
       - name: Approve when Codex reports no blocking issues
@@ -61,13 +67,26 @@ jobs:
             const pr = context.payload.pull_request;
             const reviewer = review.user?.login || "";
             const reviewerType = review.user?.type || "";
+            const normalizedReviewer = reviewer
+              .toLowerCase()
+              .replace(/\[bot\]$/i, "")
+              .replace(/[^a-z0-9]+/g, "");
             const authorPattern = new RegExp(
               process.env.CODEX_REVIEW_AUTHOR_PATTERN ||
-                "^(_chatgpt-codex-connector|codex|codex\\[bot\\]|openai-codex|openai-codex\\[bot\\]|chatgpt-codex|chatgpt-codex\\[bot\\]|chatgpt-codex-connector|chatgpt-codex-connector\\[bot\\])$",
+                "codex|chatgpt.*codex|openai.*codex",
               "i",
             );
+            const knownConnector = [
+              "chatgptcodexconnector",
+              "chatgptcodex",
+              "openaicodex",
+              "codex",
+            ].includes(normalizedReviewer);
+            const matchesCodexIdentity =
+              authorPattern.test(reviewer) || authorPattern.test(normalizedReviewer);
+            const isTrustedAutomation = reviewerType === "Bot" || knownConnector;
 
-            if (!authorPattern.test(reviewer) || reviewerType !== "Bot") {
+            if (!matchesCodexIdentity || !isTrustedAutomation) {
               core.info(`Ignoring review from ${reviewer} (${reviewerType}).`);
               return;
             }
@@ -98,16 +117,37 @@ jobs:
               return;
             }
 
+            const livePr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+            }).then((response) => response.data);
+
+            if (!review.commit_id || review.commit_id !== livePr.head.sha) {
+              core.info(
+                `Ignoring review for ${review.commit_id || "<missing>"}; live head is ${livePr.head.sha}.`,
+              );
+              return;
+            }
+
             await github.rest.pulls.createReview({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: pr.number,
+              commit_id: review.commit_id,
               event: "APPROVE",
               body: "Codex review completed without blocking findings. Auto-approving this PR; developers should still review and address any non-blocking suggestions before merge.",
             });
 
   approve-after-clean-codex-comment:
-    if: github.event_name == 'issue_comment' && github.event.issue.pull_request
+    # The request job's own @codex comment also emits issue_comment. Only a
+    # trusted Codex identity can produce a clean-review approval candidate.
+    if: >-
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request &&
+      (github.event.comment.user.type == 'Bot' ||
+       github.event.comment.performed_via_github_app ||
+       contains(github.event.comment.user.login, 'codex'))
     runs-on: ubuntu-latest
     steps:
       - name: Approve when Codex leaves a clean summary comment
@@ -123,28 +163,51 @@ jobs:
             const commenter = comment.user?.login || "";
             const commenterType = comment.user?.type || "";
             const appSlug = comment.performed_via_github_app?.slug || "";
+            const normalizeIdentity = (value) => (value || "")
+              .toLowerCase()
+              .replace(/\[bot\]$/i, "")
+              .replace(/[^a-z0-9]+/g, "");
+            const normalizedCommenter = normalizeIdentity(commenter);
+            const normalizedAppSlug = normalizeIdentity(appSlug);
             const authorPattern = new RegExp(
               process.env.CODEX_COMMENT_AUTHOR_PATTERN ||
-                "(^|[-_])codex($|[-_\\[])|chatgpt-codex|openai-codex",
+                "codex|chatgpt.*codex|openai.*codex",
               "i",
             );
+            const knownConnectors = new Set([
+              "chatgptcodexconnector",
+              "chatgptcodex",
+              "openaicodex",
+              "codex",
+            ]);
+            const matchesCodexIdentity = [
+              commenter,
+              appSlug,
+              normalizedCommenter,
+              normalizedAppSlug,
+            ].some((identity) => authorPattern.test(identity));
+            const isTrustedAutomation =
+              commenterType === "Bot" ||
+              Boolean(appSlug) ||
+              knownConnectors.has(normalizedCommenter);
 
-            if (
-              commenterType !== "Bot" ||
-              (!authorPattern.test(commenter) && !authorPattern.test(appSlug))
-            ) {
+            if (!matchesCodexIdentity || !isTrustedAutomation) {
               core.info(`Ignoring comment from ${commenter || "unknown"} (${commenterType}).`);
               return;
             }
 
-            const normalizedBody = body.replace(/\s+/g, " ").trim();
+            const normalizedBody = body
+              .replace(/<!--.*?-->/gs, " ")
+              .replace(/[`*_>#|]/g, " ")
+              .replace(/\s+/g, " ")
+              .trim();
             const reportsCleanReview =
-              /Codex\s+Review\s*:\s*(?:Did(?:\s+not|n't)\s+find\s+any\s+(?:major\s+)?issues|No\s+(?:major\s+)?issues\s+found)\b/i.test(
-                normalizedBody,
-              );
-            const hasBlockingSeverity = /(^|[^A-Za-z0-9])(P0|P1)([^A-Za-z0-9]|$)/i.test(
-              normalizedBody,
-            );
+              /(?:codex\s+review[^.!。；;:]*(?:[:：]|\b).{0,80})?(?:did\s+not|didn't|could\s+not)\s+find\s+(?:any\s+)?(?:major|blocking|critical|actionable)?\s*(?:issues?|problems?|findings?)/i.test(normalizedBody) ||
+              /(?:codex\s+review[^.!。；;:]*(?:[:：]|\b).{0,80})?no\s+(?:major|blocking|critical|actionable)?\s*(?:issues?|problems?|findings?)\s+(?:were\s+)?found\b/i.test(normalizedBody) ||
+              /(?:Codex\s*审查|代码审查).{0,80}(?:未发现|没有发现|无)(?:明显|重大|阻塞性?|严重|需要处理的)?(?:问题|缺陷|风险)/i.test(normalizedBody);
+            const hasBlockingSeverity =
+              /(^|[^A-Za-z0-9])(P0|P1)([^A-Za-z0-9]|$)/i.test(normalizedBody) ||
+              /(?:blocking|critical)\s+(?:issue|problem|finding)|(?:阻塞性?|严重)(?:问题|缺陷|风险)/i.test(normalizedBody);
 
             if (!reportsCleanReview) {
               core.info("Codex comment does not report a clean review.");
@@ -167,7 +230,9 @@ jobs:
               return;
             }
 
-            const reviewedCommitMatch = body.match(/Reviewed commit[^0-9a-f]*([0-9a-f]{7,40})/i);
+            const reviewedCommitMatch = body.match(
+              /(?:Reviewed\s+commit|Commit\s+reviewed|reviewed[_ -]?commit|审查提交|已审查提交)[^0-9a-f]*([0-9a-f]{7,40})/i,
+            );
             const reviewedCommit = reviewedCommitMatch?.[1] || "";
 
             if (!reviewedCommit || !pr.head.sha.startsWith(reviewedCommit)) {
@@ -181,6 +246,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: pr.number,
+              commit_id: pr.head.sha,
               event: "APPROVE",
               body: "Codex left a clean summary comment for the current head commit. Auto-approving this PR; developers should still review any follow-up comments before merge.",
             });
