@@ -84,7 +84,7 @@ class PublicApiMetadata(BaseModel):
     contract_version: str = Field(
         ...,
         description='Version of the published QVeris REST API contract.',
-        examples=['2026-07-17.2'],
+        examples=['2026-07-18.1'],
         title='Contract Version',
     )
 
@@ -316,6 +316,7 @@ class PublicApiError(BaseModel):
     message: Optional[str] = None
     error: Optional[str] = None
     error_message: Optional[str] = None
+    data: Optional[Dict[str, Any]] = None
     remaining_credits: Optional[float] = None
     search_id: Optional[str] = None
     execution_id: Optional[str] = None
@@ -647,6 +648,10 @@ class PublicExecuteToolResponse(BaseModel):
     billing: Optional[PublicCompactBillingStatement] = None
     cost: Optional[float] = None
     remaining_credits: Optional[float] = None
+    details: Optional[List[ValidationError]] = Field(
+        None,
+        description='Field-level validation failures. Present when a request parameter or projection such as `respond_with` is invalid.',
+    )
 
 
 class APIResponseCreditsLedgerItem(BaseModel):

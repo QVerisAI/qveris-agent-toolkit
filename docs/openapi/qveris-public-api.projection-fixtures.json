@@ -1,0 +1,103 @@
+{
+  "contract_version": "2026-07-18.1",
+  "compatibility": {
+    "legacy_service_ignores_projection": {
+      "request": {"query": "current weather", "view": "routing"},
+      "response_status": 200,
+      "response": {
+        "search_id": "srch_fixture_full",
+        "total": 1,
+        "results": [
+          {
+            "tool_id": "openweathermap.weather.execute.v1",
+            "name": "Current Weather",
+            "description": "Get current weather data for a city.",
+            "params": [{"name": "q", "type": "string", "required": true}]
+          }
+        ]
+      },
+      "client_behavior": "Treat a successful full response as compatible when routing-only fields are absent."
+    },
+    "legacy_service_rejects_projection": {
+      "request": {"query": "current weather", "view": "routing"},
+      "response_status": 422,
+      "response": {
+        "detail": [
+          {
+            "type": "extra_forbidden",
+            "loc": ["body", "view"],
+            "msg": "Extra inputs are not permitted",
+            "input": "routing"
+          }
+        ]
+      },
+      "client_behavior": "Retry once without the optional projection parameter."
+    }
+  },
+  "routing_search": {
+    "request": {"query": "current weather", "view": "routing", "lang": "en"},
+    "response_status": 200,
+    "response": {
+      "search_id": "srch_fixture_routing",
+      "total": 1,
+      "results": [
+        {
+          "tool_id": "openweathermap.weather.execute.v1",
+          "capability": "Current weather by location",
+          "cost_class": "low",
+          "reliability": "A",
+          "as_of_support": false
+        }
+      ]
+    }
+  },
+  "summary_execute": {
+    "request": {
+      "tool_id": "openweathermap.weather.execute.v1",
+      "parameters": {"q": "London"},
+      "respond_with": "summary"
+    },
+    "response_status": 200,
+    "response": {
+      "execution_id": "exec_fixture_summary",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "content_schema": {"type": "object"},
+        "summary": {"size_bytes": 4096, "row_count": 1, "fields": ["temperature"]},
+        "full_content_file_url": "https://qveris.ai/api/v1/tool-results/exec_fixture_summary",
+        "message": "Summarized response. Download the full content from full_content_file_url."
+      }
+    }
+  },
+  "fields_execute": {
+    "request": {
+      "tool_id": "openweathermap.weather.execute.v1",
+      "parameters": {"q": "London"},
+      "respond_with": "fields:$.temperature"
+    },
+    "response_status": 200,
+    "response": {
+      "execution_id": "exec_fixture_fields",
+      "success": true,
+      "result": {"respond_with": "fields:$.temperature", "data": {"temperature": 15.5}}
+    }
+  },
+  "invalid_projection": {
+    "response_status": 422,
+    "response": {
+      "execution_id": "exec_fixture_invalid",
+      "success": false,
+      "result": {"data": {}},
+      "error_message": "Request validation failed",
+      "details": [
+        {
+          "type": "value_error",
+          "loc": ["body", "respond_with"],
+          "msg": "Invalid projection",
+          "input": "fields:"
+        }
+      ]
+    }
+  }
+}

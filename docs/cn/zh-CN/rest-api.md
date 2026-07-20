@@ -1,6 +1,6 @@
 # QVeris REST API 文档
 
-版本：2026-07-17.2
+版本：2026-07-18.1
 
 公开 REST API 暴露核心 Agent 路径：
 
@@ -355,6 +355,8 @@ POST /tools/execute?tool_id={tool_id}
 | `max_response_size` | integer | 否 | 长响应截断阈值；默认 `20480`，`-1` 表示不截断 |
 | `respond_with` | string | 否 | 服务端结果投影：`full`（默认，与既有版本一致）、`fields:<JSONPath,...>`（以 `result.data` 为根的逗号分隔 JSONPath 表达式，至少一个非空表达式）或 `summary`（返回 schema、大小/行数统计与完整内容的 `full_content_file_url`）|
 
+工具参数或投影无效时返回 HTTP `422`，并通过 `details` 给出字段级错误；鉴权失败返回统一 API 错误对象，不再伪装成成功 Call 或空 Search 结果。
+
 只从选中的工具构造 `parameters`：
 
 - 使用选中结果的 `params` 字段作为必填 schema。
@@ -520,7 +522,7 @@ POST /tools/execute?tool_id={tool_id}
 | 字段 | 说明 |
 | --- | --- |
 | `truncated_content` | 工具响应的前几个字节 |
-| `full_content_file_url` | 完整内容的临时 URL |
+| `full_content_file_url` | 当前 API 域名下用于下载完整内容的临时不透明 URL；链接会过期 |
 | `message` | 适合给 LLM 读取的截断说明 |
 | `content_schema` | 完整内容的 JSON schema（如果可用） |
 
@@ -991,4 +993,4 @@ Summary 字段：
 
 ## OpenAPI
 
-[QVeris 公开 OpenAPI](https://qveris.cn/openapi/qveris-public-api.openapi.json) 文档包含 Discover、Inspect 和 Call 路径的请求体、响应结构与示例。
+[QVeris 公开 OpenAPI](https://qveris.cn/openapi/qveris-public-api.openapi.json) 文档包含 Discover、Inspect 和 Call 路径的请求体、响应结构与示例。稳定的投影与旧服务兼容样例见[投影 fixtures](https://qveris.cn/openapi/qveris-public-api.projection-fixtures.json)。

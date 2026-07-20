@@ -1,6 +1,6 @@
 # QVeris REST API Documentation
 
-Version: 2026-07-17.2
+Version: 2026-07-18.1
 
 The public REST API exposes the core agent path:
 
@@ -355,6 +355,8 @@ You may pass `tool_id` as a query parameter or in the JSON body. Use the query p
 | `max_response_size` | integer | No | Truncate long responses; default `20480`, `-1` disables truncation |
 | `respond_with` | string | No | Server-side result projection: `full` (default, identical to previous releases), `fields:<JSONPath,...>` (comma-separated JSONPath expressions rooted at `result.data`; at least one non-empty expression), or `summary` (schema + size/row statistics + `full_content_file_url` for the complete payload) |
 
+Invalid tool parameters or projections return HTTP `422` with field-level `details`; authentication failures return the standard API error object instead of a successful Call or empty Search shape.
+
 Build `parameters` from the selected tool only:
 
 - Use the selected result's `params` field as the required schema.
@@ -520,7 +522,7 @@ If the payload exceeds `max_response_size`, `result` may omit `data` and include
 | Field | Description |
 | --- | --- |
 | `truncated_content` | Initial bytes of the tool response |
-| `full_content_file_url` | Temporary URL for the full content |
+| `full_content_file_url` | Temporary, opaque URL on the current API origin for downloading the full content; the link expires |
 | `message` | LLM-safe explanation of truncation |
 | `content_schema` | JSON schema for the full content when available |
 
@@ -991,4 +993,4 @@ Invalid credit range:
 
 ## OpenAPI
 
-The [QVeris Public OpenAPI](https://qveris.ai/openapi/qveris-public-api.openapi.json) document includes request bodies, response schemas, and examples for the Discover, Inspect, and Call path.
+The [QVeris Public OpenAPI](https://qveris.ai/openapi/qveris-public-api.openapi.json) document includes request bodies, response schemas, and examples for the Discover, Inspect, and Call path. Stable projection and legacy-compatibility fixtures are available from the [projection fixtures](https://qveris.ai/openapi/qveris-public-api.projection-fixtures.json).

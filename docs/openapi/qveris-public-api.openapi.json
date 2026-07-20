@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "QVeris Public REST API",
-    "version": "2026-07-17.2",
+    "version": "2026-07-18.1",
     "summary": "External REST API for enterprise integration.",
     "description": "OpenAPI 3.1 schema for the formally released public `/api/v1` REST API surface. It covers search, provider discovery, tool metadata lookup/execution, credits, and account audit endpoints. Unreleased API families are intentionally excluded from this customer-facing schema."
   },
@@ -118,7 +118,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -138,7 +138,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -172,7 +172,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -185,7 +185,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -464,7 +464,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -484,7 +484,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -510,7 +510,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -587,7 +587,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -607,7 +607,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -704,7 +704,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -754,7 +754,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -774,7 +774,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -887,7 +887,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -907,7 +907,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -1350,7 +1350,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -1370,7 +1370,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -1396,7 +1396,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -1672,7 +1672,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -1979,7 +1979,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -1999,7 +1999,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -2050,7 +2050,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -2070,7 +2070,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -2104,7 +2104,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -2143,7 +2143,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -2182,7 +2182,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -2300,7 +2300,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -2320,7 +2320,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -2352,7 +2352,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -2408,7 +2408,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             },
@@ -2484,7 +2484,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             },
@@ -2533,7 +2533,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             },
@@ -2585,7 +2585,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             },
@@ -2625,6 +2625,147 @@
             }
           }
         }
+      }
+    },
+    "/tool-results/{token}": {
+      "get": {
+        "tags": [
+          "Tool Execution"
+        ],
+        "summary": "Download a full projected tool result",
+        "description": "Download full content referenced by a successful `respond_with: summary` or truncated execution response. The path token is opaque and expires.",
+        "operationId": "download_tool_result_api_v1_tool_results__token__get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Full tool result",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-18.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-18.1"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invalid or expired link",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "status_code": 404,
+                  "message": "Tool result link is invalid or expired"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-18.1"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Storage unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "status_code": 502,
+                  "message": "Tool result is temporarily unavailable"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-18.1"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "status_code": 429,
+                  "message": "Rate limit exceeded. Please try again later."
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-18.1"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published"
       }
     },
     "/tools/by-ids": {
@@ -2668,7 +2809,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             },
@@ -2747,7 +2888,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             },
@@ -2796,7 +2937,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             },
@@ -2829,7 +2970,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -2952,7 +3093,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -2989,7 +3130,23 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "status_code": 401,
+                  "message": "Invalid API key",
+                  "data": {
+                    "guidance": "Copy a valid API key from Account > API Keys and try again.",
+                    "remaining_credits": null
+                  }
                 }
               }
             }
@@ -3026,7 +3183,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             },
@@ -3080,7 +3237,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             },
@@ -3110,7 +3267,18 @@
                     "data": {}
                   },
                   "success": false,
-                  "error_message": "Missing required parameter: tool_id. Provide it as query (?tool_id=xxx) or in JSON body.",
+                  "error_message": "Request validation failed",
+                  "details": [
+                    {
+                      "type": "value_error",
+                      "loc": [
+                        "body",
+                        "respond_with"
+                      ],
+                      "msg": "Invalid projection",
+                      "input": "fields:"
+                    }
+                  ],
                   "execution_time": 0.01
                 }
               }
@@ -3121,7 +3289,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-18.1"
                 }
               }
             }
@@ -4054,7 +4222,7 @@
             "title": "Contract Version",
             "description": "Version of the published QVeris REST API contract.",
             "examples": [
-              "2026-07-17.2"
+              "2026-07-18.1"
             ]
           }
         },
@@ -5709,6 +5877,17 @@
           "error_message": {
             "type": "string"
           },
+          "data": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "remaining_credits": {
             "anyOf": [
               {
@@ -6339,6 +6518,13 @@
                 "type": "null"
               }
             ]
+          },
+          "details": {
+            "type": "array",
+            "description": "Field-level validation failures. Present when a request parameter or projection such as `respond_with` is invalid.",
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            }
           }
         }
       }
@@ -6383,8 +6569,8 @@
       "description": "Credits, usage audit, and billing ledger APIs."
     }
   ],
-  "x-qveris-route-count": 19,
-  "x-qveris-public-operation-count": 19,
+  "x-qveris-route-count": 20,
+  "x-qveris-public-operation-count": 20,
   "x-qveris-private-operation-count": 0,
   "x-qveris-generation-source": "Filtered from qveris-internal-api.openapi.json"
 }

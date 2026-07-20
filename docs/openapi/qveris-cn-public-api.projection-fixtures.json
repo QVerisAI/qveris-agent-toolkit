@@ -1,0 +1,103 @@
+{
+  "contract_version": "2026-07-18.1",
+  "compatibility": {
+    "legacy_service_ignores_projection": {
+      "request": {"query": "查询当前天气", "view": "routing"},
+      "response_status": 200,
+      "response": {
+        "search_id": "srch_fixture_full",
+        "total": 1,
+        "results": [
+          {
+            "tool_id": "weather.current.retrieve.v1",
+            "name": "当前天气",
+            "description": "查询指定城市的当前天气。",
+            "params": [{"name": "city", "type": "string", "required": true}]
+          }
+        ]
+      },
+      "client_behavior": "若服务成功返回完整结果且没有 routing 专属字段，按兼容的完整响应处理。"
+    },
+    "legacy_service_rejects_projection": {
+      "request": {"query": "查询当前天气", "view": "routing"},
+      "response_status": 422,
+      "response": {
+        "detail": [
+          {
+            "type": "extra_forbidden",
+            "loc": ["body", "view"],
+            "msg": "不允许额外输入",
+            "input": "routing"
+          }
+        ]
+      },
+      "client_behavior": "移除可选投影参数后仅重试一次。"
+    }
+  },
+  "routing_search": {
+    "request": {"query": "查询当前天气", "view": "routing", "lang": "zh"},
+    "response_status": 200,
+    "response": {
+      "search_id": "srch_fixture_routing",
+      "total": 1,
+      "results": [
+        {
+          "tool_id": "weather.current.retrieve.v1",
+          "capability": "按位置查询当前天气",
+          "cost_class": "low",
+          "reliability": "A",
+          "as_of_support": false
+        }
+      ]
+    }
+  },
+  "summary_execute": {
+    "request": {
+      "tool_id": "weather.current.retrieve.v1",
+      "parameters": {"city": "杭州"},
+      "respond_with": "summary"
+    },
+    "response_status": 200,
+    "response": {
+      "execution_id": "exec_fixture_summary",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "content_schema": {"type": "object"},
+        "summary": {"size_bytes": 4096, "row_count": 1, "fields": ["temperature"]},
+        "full_content_file_url": "https://qveris.cn/api/v1/tool-results/exec_fixture_summary",
+        "message": "响应已摘要，可通过 full_content_file_url 下载完整内容。"
+      }
+    }
+  },
+  "fields_execute": {
+    "request": {
+      "tool_id": "weather.current.retrieve.v1",
+      "parameters": {"city": "杭州"},
+      "respond_with": "fields:$.temperature"
+    },
+    "response_status": 200,
+    "response": {
+      "execution_id": "exec_fixture_fields",
+      "success": true,
+      "result": {"respond_with": "fields:$.temperature", "data": {"temperature": 28.5}}
+    }
+  },
+  "invalid_projection": {
+    "response_status": 422,
+    "response": {
+      "execution_id": "exec_fixture_invalid",
+      "success": false,
+      "result": {"data": {}},
+      "error_message": "请求参数验证失败",
+      "details": [
+        {
+          "type": "value_error",
+          "loc": ["body", "respond_with"],
+          "msg": "投影参数无效",
+          "input": "fields:"
+        }
+      ]
+    }
+  }
+}
