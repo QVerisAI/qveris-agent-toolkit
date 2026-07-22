@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "QVeris Public REST API",
-    "version": "2026-07-17.2",
+    "version": "2026-07-22.1",
     "summary": "External REST API for enterprise integration.",
     "description": "OpenAPI 3.1 schema for the formally released public `/api/v1` REST API surface. It covers search, provider discovery, tool metadata lookup/execution, credits, and account audit endpoints. Unreleased API families are intentionally excluded from this customer-facing schema."
   },
@@ -118,7 +118,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -138,7 +138,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -172,7 +172,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -185,7 +185,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -464,7 +464,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -484,7 +484,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -510,7 +510,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -587,7 +587,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -607,7 +607,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -704,7 +704,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -754,7 +754,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -774,7 +774,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -887,7 +887,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -907,7 +907,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -1350,7 +1350,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -1370,7 +1370,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -1396,7 +1396,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -1672,7 +1672,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -1979,7 +1979,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -1999,7 +1999,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -2050,7 +2050,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -2070,7 +2070,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -2104,7 +2104,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -2143,7 +2143,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -2182,7 +2182,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -2300,7 +2300,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -2320,7 +2320,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -2352,7 +2352,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -2408,7 +2408,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             },
@@ -2484,7 +2484,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             },
@@ -2533,7 +2533,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             },
@@ -2585,7 +2585,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             },
@@ -2668,7 +2668,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             },
@@ -2747,7 +2747,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             },
@@ -2796,7 +2796,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             },
@@ -2829,7 +2829,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -2952,7 +2952,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -2989,7 +2989,23 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "status_code": 401,
+                  "message": "Invalid API key",
+                  "data": {
+                    "guidance": "Copy a valid API key from Account > API Keys and try again.",
+                    "remaining_credits": null
+                  }
                 }
               }
             }
@@ -3026,7 +3042,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             },
@@ -3080,7 +3096,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             },
@@ -3110,7 +3126,18 @@
                     "data": {}
                   },
                   "success": false,
-                  "error_message": "Missing required parameter: tool_id. Provide it as query (?tool_id=xxx) or in JSON body.",
+                  "error_message": "Request validation failed",
+                  "details": [
+                    {
+                      "type": "value_error",
+                      "loc": [
+                        "body",
+                        "respond_with"
+                      ],
+                      "msg": "Invalid projection",
+                      "input": "fields:"
+                    }
+                  ],
                   "execution_time": 0.01
                 }
               }
@@ -3121,7 +3148,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-17.2"
+                  "const": "2026-07-22.1"
                 }
               }
             }
@@ -3143,6 +3170,327 @@
                   "q": "London"
                 },
                 "max_response_size": 20480
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tools/probe": {
+      "post": {
+        "tags": [
+          "Tool Execution"
+        ],
+        "summary": "Probe a capability without executing it",
+        "description": "Validate candidate parameters and obtain a zero-cost quote before Call. The M1 `schema` and `quote` checks are implemented; `coverage` and `sample` return an explicit unknown verdict. Probe never executes the capability or consumes credits.",
+        "operationId": "probe_tool_api_v1_tools_probe_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tool_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Tool ID to validate",
+              "title": "Tool Id"
+            },
+            "description": "Tool ID to validate"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicToolProbeResponse"
+                },
+                "example": {
+                  "schema": {
+                    "valid": true
+                  },
+                  "quote": {
+                    "estimate_credits": 5,
+                    "currency": "credits",
+                    "exact": true,
+                    "basis": "per_call"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-22.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-22.1"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "status_code": 401,
+                  "message": "Invalid API key"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-22.1"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "failure",
+                  "status_code": 429,
+                  "message": "Rate limit exceeded. Please try again later."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid probe request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "error": "ValidationError",
+                  "message": "Request validation failed"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-22.1"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Capability not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "error": "HTTPException",
+                  "message": "Tool not found"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-22.1"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "status_code": 502,
+                  "message": "Tool probe service is temporarily unavailable"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-22.1"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Upstream timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "status_code": 504,
+                  "message": "Tool probe request timed out"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-22.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-22.1"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicToolProbeRequest"
+              },
+              "example": {
+                "parameters": {
+                  "q": "London"
+                },
+                "checks": [
+                  "schema",
+                  "quote"
+                ],
+                "live_budget": "none"
               }
             }
           }
@@ -4054,7 +4402,7 @@
             "title": "Contract Version",
             "description": "Version of the published QVeris REST API contract.",
             "examples": [
-              "2026-07-17.2"
+              "2026-07-22.1"
             ]
           }
         },
@@ -5709,6 +6057,17 @@
           "error_message": {
             "type": "string"
           },
+          "data": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "remaining_credits": {
             "anyOf": [
               {
@@ -5821,6 +6180,197 @@
               "lean"
             ],
             "description": "Response projection. `lean` trims per-capability metadata for model context; `full` or omitted returns the complete result shape."
+          }
+        }
+      },
+      "PublicToolProbeRequest": {
+        "type": "object",
+        "title": "PublicToolProbeRequest",
+        "properties": {
+          "parameters": {
+            "type": "object",
+            "additionalProperties": true,
+            "default": {},
+            "description": "Candidate parameters to validate without executing the capability."
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "schema",
+                "quote",
+                "coverage",
+                "sample"
+              ]
+            },
+            "minItems": 1,
+            "default": [
+              "schema"
+            ]
+          },
+          "live_budget": {
+            "type": "string",
+            "enum": [
+              "none",
+              "metadata",
+              "sampled"
+            ],
+            "default": "none",
+            "description": "M1 is zero-cost; every value avoids an upstream tool execution."
+          }
+        }
+      },
+      "PublicProbeSchemaViolation": {
+        "type": "object",
+        "title": "PublicProbeSchemaViolation",
+        "required": [
+          "type",
+          "message"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "param": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "type": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PublicProbeSchemaResult": {
+        "type": "object",
+        "title": "PublicProbeSchemaResult",
+        "required": [
+          "valid"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "violations": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PublicProbeSchemaViolation"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "PublicProbeQuoteResult": {
+        "type": "object",
+        "title": "PublicProbeQuoteResult",
+        "required": [
+          "currency",
+          "exact"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "estimate_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "credits"
+            ]
+          },
+          "exact": {
+            "type": "boolean"
+          },
+          "basis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "PublicProbeUnknownResult": {
+        "type": "object",
+        "title": "PublicProbeUnknownResult",
+        "required": [
+          "verdict",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "unknown"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "PublicToolProbeResponse": {
+        "type": "object",
+        "title": "PublicToolProbeResponse",
+        "additionalProperties": false,
+        "properties": {
+          "schema": {
+            "$ref": "#/components/schemas/PublicProbeSchemaResult"
+          },
+          "quote": {
+            "$ref": "#/components/schemas/PublicProbeQuoteResult"
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/PublicProbeUnknownResult"
+          },
+          "sample": {
+            "$ref": "#/components/schemas/PublicProbeUnknownResult"
           }
         }
       },
@@ -6063,7 +6613,7 @@
       "PublicCapabilityResult": {
         "type": "object",
         "title": "PublicCapabilityResult",
-        "additionalProperties": true,
+        "additionalProperties": false,
         "required": [
           "tool_id"
         ],
@@ -6178,7 +6728,7 @@
       "PublicSearchResponse": {
         "type": "object",
         "title": "PublicSearchResponse",
-        "additionalProperties": true,
+        "additionalProperties": false,
         "required": [
           "search_id",
           "total",
@@ -6276,7 +6826,7 @@
       "PublicCompactBillingStatement": {
         "type": "object",
         "title": "PublicCompactBillingStatement",
-        "additionalProperties": true,
+        "additionalProperties": false,
         "properties": {
           "summary": {
             "type": "string"
@@ -6292,7 +6842,7 @@
       "PublicExecuteToolResponse": {
         "type": "object",
         "title": "PublicExecuteToolResponse",
-        "additionalProperties": true,
+        "additionalProperties": false,
         "required": [
           "execution_id",
           "result",
@@ -6303,7 +6853,28 @@
             "type": "string"
           },
           "result": {
-            "$ref": "#/components/schemas/PublicExecuteResult"
+            "description": "Capability result. Projected responses use the documented object shape; default/full responses may contain any JSON value.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicExecuteResult"
+              },
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "success": {
             "type": "boolean"
@@ -6339,6 +6910,13 @@
                 "type": "null"
               }
             ]
+          },
+          "details": {
+            "type": "array",
+            "description": "Field-level validation failures. Present when a request parameter or projection such as `respond_with` is invalid.",
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            }
           }
         }
       }
@@ -6383,8 +6961,8 @@
       "description": "Credits, usage audit, and billing ledger APIs."
     }
   ],
-  "x-qveris-route-count": 19,
-  "x-qveris-public-operation-count": 19,
+  "x-qveris-route-count": 20,
+  "x-qveris-public-operation-count": 20,
   "x-qveris-private-operation-count": 0,
   "x-qveris-generation-source": "Filtered from qveris-internal-api.openapi.json"
 }

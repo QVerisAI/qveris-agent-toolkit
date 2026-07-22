@@ -1,6 +1,6 @@
 # QVeris REST API Documentation
 
-Version: 2026-07-17.2
+Version: 2026-07-22.1
 
 The public REST API exposes the core agent path:
 
@@ -32,7 +32,7 @@ Authorization: Bearer YOUR_API_KEY
 
 Discover and Inspect are free. They may return `expected_cost`, legacy `cost`, or `billing_rule` so clients can estimate Call cost before spending credits.
 
-Call can return compact pre-settlement fields such as `billing` and `cost`. Final settlement is reported by usage audit and the credits ledger; use those endpoints for support, reconciliation, and user-facing billing history.
+The default/full Call response can return compact pre-settlement fields such as `billing` and `cost`. Projection responses (`summary` and `fields:*`) intentionally omit billing internals to keep the response small. Final settlement is reported by usage audit and the credits ledger; use those endpoints for support, reconciliation, and user-facing billing history.
 
 `session_id` is optional. Use one stable value per user task or conversation for tracing, analytics, and pricing context. It is not a cache contract and does not promise cache reuse or `session_cache_hit`.
 
@@ -63,23 +63,24 @@ QVeris separates pre-call estimate, execution outcome, pre-settlement billing, a
 | Stage | Where to read it | Important fields | How to use it |
 | --- | --- | --- | --- |
 | Pre-call estimate | Discover / Inspect | `expected_cost`, `billing_rule` | Show users the pricing rule before executing a capability. |
-| Execution result | Call | `success`, `error_message`, `execution_outcome` | Explain whether the provider/result was usable. Do not use `success` alone to decide final billing. |
-| Pre-settlement bill | Call and usage audit | `billing`, `pre_settlement_bill`, `requested_amount_credits` | Show the amount requested before final settlement, discounts, or no-charge rules are applied. |
+| Execution result | Call | `success`, `error_message` | Explain whether the provider/result was usable. Do not use `success` alone to decide final billing. |
+| Provider/result outcome | Usage audit | `execution_outcome`, `reason_code`, `billable_success` | Inspect structured provider and result classification without expanding the Call response. |
+| Pre-settlement bill | Default/full Call and usage audit | `billing`, `pre_settlement_bill`, `requested_amount_credits` | Show the amount requested before final settlement, discounts, or no-charge rules are applied. |
 | Final request status | Usage audit | `charge_outcome`, `reason_code`, `settlement_result`, `actual_amount_credits` | Answer whether the request was finally charged and why. |
 | Final balance movement | Credits ledger | `amount_credits`, `balance_before`, `balance_after`, `execution_id` | Reconcile account balance and support tickets. |
 
 Recommended reconciliation flow:
 
 1. Use Discover or Inspect to show `billing_rule` / `expected_cost`.
-2. Call the capability and save `execution_id`, `billing`, `execution_outcome`, and legacy `cost`.
+2. Call the capability and save `execution_id` and legacy `cost`; default/full clients may also save compact `billing`.
 3. Query `/auth/usage/history/v2?execution_id=...` to read `charge_outcome`, `reason_code`, `actual_amount_credits`, and `credits_ledger_entry_id`.
 4. Query `/auth/credits/ledger` or the linked ledger entry to verify the final signed balance movement.
 
 Client guidance:
 
-- REST clients should preserve `execution_id`, `billing`, `execution_outcome`, and `cost` from Call responses.
-- CLI, MCP, and SDK clients should display the same machine-readable fields instead of translating them into unrelated local status names.
-- Use stable machine fields such as `charge_outcome` and `reason_code` for automation; use `billing_summary` and `error_message` for user-facing text.
+- REST clients should preserve `execution_id` and `cost` from Call responses. Read structured outcome and final billing details from usage audit.
+- CLI, MCP, and SDK clients should keep projected Call responses compact and fetch audit details only when needed.
+- Use stable audit fields such as `charge_outcome` and `reason_code` for automation; use `billing_summary` and `error_message` for user-facing text.
 - `cost` is kept for backward compatibility. New billing UIs should prefer usage audit and credits ledger for final settlement.
 
 ## Rate limits
@@ -355,6 +356,8 @@ You may pass `tool_id` as a query parameter or in the JSON body. Use the query p
 | `max_response_size` | integer | No | Truncate long responses; default `20480`, `-1` disables truncation |
 | `respond_with` | string | No | Server-side result projection: `full` (default, identical to previous releases), `fields:<JSONPath,...>` (comma-separated JSONPath expressions rooted at `result.data`; at least one non-empty expression), or `summary` (schema + size/row statistics + `full_content_file_url` for the complete payload) |
 
+Invalid tool parameters or projections return HTTP `422` with field-level `details`; authentication failures return the standard API error object instead of a successful Call or empty Search shape.
+
 Build `parameters` from the selected tool only:
 
 - Use the selected result's `params` field as the required schema.
@@ -382,14 +385,6 @@ Build `parameters` from the selected tool only:
     "summary": "5 credits per successful request",
     "list_amount_credits": 5
   },
-  "execution_outcome": {
-    "outcome": "success",
-    "reason_code": "result.valid",
-    "provider_success": true,
-    "billable_success": true,
-    "result_valid": true,
-    "user_message": "The provider returned a valid result."
-  },
   "cost": 5,
   "remaining_credits": 990
 }
@@ -406,9 +401,10 @@ Build `parameters` from the selected tool only:
 | `execution_time` | number | Execution elapsed time in seconds. This is the legacy execute response timing field. |
 | `elapsed_time_ms` | number | Execution elapsed time in milliseconds when available. |
 | `billing` | object | Compact pre-settlement billing statement when available. |
-| `execution_outcome` | object | Structured result and billing outcome context when available. Includes stable fields such as `outcome`, `reason_code`, `provider_success`, `billable_success`, and `result_valid`. |
 | `cost` | number | Legacy/pre-settlement cost signal when available. |
 | `remaining_credits` | number/null | Remaining account credits when available. |
+
+With `respond_with: "summary"`, the top-level response is intentionally limited to execution identity/status, timing when available, `cost`, `remaining_credits`, and `result`. The result is limited to `respond_with`, `content_schema`, `summary`, `full_content_file_url`, and `message`. It does not include raw `billing`, `execution_outcome`, parameters, experiment metadata, status codes, or sample rows. The signed `full_content_file_url` points directly to object storage and must be used exactly as returned.
 
 ### Example: empty result, not charged
 
@@ -427,14 +423,6 @@ Some providers return a valid response that contains no usable result. In this c
   "billing": {
     "summary": "No charge: provider returned no usable result",
     "list_amount_credits": 0
-  },
-  "execution_outcome": {
-    "outcome": "empty_result",
-    "reason_code": "result.empty",
-    "provider_success": true,
-    "billable_success": false,
-    "result_valid": false,
-    "user_message": "The provider returned no usable result data; this call was not charged."
   },
   "cost": 0,
   "remaining_credits": 990
@@ -496,7 +484,7 @@ Upstream tool failure:
 | Parameter error | Missing required field, invalid enum, invalid type, invalid date range, or invalid code/ticker format. | Compare the request body with the selected tool's current `params`. | Regenerate `parameters` from the selected result or Inspect response. |
 | Schema mismatch | Parameters look valid for a different provider or a different tool. | Did the agent choose one `tool_id` but fill parameters from another search result? | Keep `search_id`, selected result, and parameter schema together in one context object. |
 | Permission or region error | Auth, OAuth, or region restriction appears before provider execution. | Is the account authorized? Is the client using the right regional API base URL? | Ask the user to connect OAuth, change region, or select another returned tool. |
-| Provider failure | Parameters are accepted but upstream returns an HTTP/provider error. | Does `execution_outcome.reason_code` start with `provider.`? | Retry when appropriate, choose another provider, or share `execution_id` with support. |
+| Provider failure | Parameters are accepted but upstream returns an HTTP/provider error. | Check `error_message`; use usage audit when the structured `reason_code` is needed. | Retry when appropriate, choose another provider, or share `execution_id` with support. |
 
 When contacting support, include `execution_id`, `search_id`, `session_id`, `tool_id`, and, for agent clients, `model`. These fields make it possible to tell whether the failure came from search ranking, tool selection, parameter generation, local validation, or the third-party provider.
 
@@ -508,7 +496,7 @@ If the payload exceeds `max_response_size`, `result` may omit `data` and include
 {
   "result": {
     "message": "Result content is too long. Use truncated_content or download full_content_file_url.",
-    "full_content_file_url": "https://...",
+    "full_content_file_url": "https://oss.qveris.ai/tool_result_cache/result.json?Expires=1700007200&Signature=example",
     "truncated_content": "{\"query\":\"evolution\",\"total_results\":890994",
     "content_schema": {
       "type": "object"
@@ -520,7 +508,7 @@ If the payload exceeds `max_response_size`, `result` may omit `data` and include
 | Field | Description |
 | --- | --- |
 | `truncated_content` | Initial bytes of the tool response |
-| `full_content_file_url` | Temporary URL for the full content |
+| `full_content_file_url` | Temporary signed HTTPS URL for downloading the full content directly from QVeris object storage. Use it exactly as returned; do not rewrite it or assume it shares the API origin. The link expires. |
 | `message` | LLM-safe explanation of truncation |
 | `content_schema` | JSON schema for the full content when available |
 
@@ -991,4 +979,4 @@ Invalid credit range:
 
 ## OpenAPI
 
-The [QVeris Public OpenAPI](https://qveris.ai/openapi/qveris-public-api.openapi.json) document includes request bodies, response schemas, and examples for the Discover, Inspect, and Call path.
+The [QVeris Public OpenAPI](https://qveris.ai/openapi/qveris-public-api.openapi.json) document includes request bodies, response schemas, and examples for the Discover, Inspect, and Call path. Stable projection and legacy-compatibility fixtures are available from the [projection fixtures](https://qveris.ai/openapi/qveris-public-api.projection-fixtures.json).
