@@ -84,7 +84,7 @@ class PublicApiMetadata(BaseModel):
     contract_version: str = Field(
         ...,
         description='Version of the published QVeris REST API contract.',
-        examples=['2026-07-17.2'],
+        examples=['2026-07-22.1'],
         title='Contract Version',
     )
 
@@ -316,6 +316,7 @@ class PublicApiError(BaseModel):
     message: Optional[str] = None
     error: Optional[str] = None
     error_message: Optional[str] = None
+    data: Optional[Dict[str, Any]] = None
     remaining_credits: Optional[float] = None
     search_id: Optional[str] = None
     execution_id: Optional[str] = None
@@ -387,6 +388,90 @@ class PublicToolsByIdsRequest(BaseModel):
         None,
         description='Response projection. `lean` trims per-capability metadata for model context; `full` or omitted returns the complete result shape.',
     )
+
+
+class Check(Enum):
+    schema = 'schema'
+    quote = 'quote'
+    coverage = 'coverage'
+    sample = 'sample'
+
+
+class LiveBudget(Enum):
+    """
+    M1 is zero-cost; every value avoids an upstream tool execution.
+    """
+
+    none = 'none'
+    metadata = 'metadata'
+    sampled = 'sampled'
+
+
+class PublicToolProbeRequest(BaseModel):
+    parameters: Optional[Dict[str, Any]] = Field(
+        {},
+        description='Candidate parameters to validate without executing the capability.',
+    )
+    checks: Optional[List[Check]] = Field(['schema'], min_length=1)
+    live_budget: Optional[LiveBudget] = Field(
+        'none',
+        description='M1 is zero-cost; every value avoids an upstream tool execution.',
+    )
+
+
+class PublicProbeSchemaViolation(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    param: Optional[str] = None
+    type: str
+    message: str
+
+
+class PublicProbeSchemaResult(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    valid: bool
+    violations: Optional[List[PublicProbeSchemaViolation]] = None
+    note: Optional[str] = None
+
+
+class Currency(Enum):
+    credits = 'credits'
+
+
+class PublicProbeQuoteResult(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    estimate_credits: Optional[float] = None
+    currency: Currency
+    exact: bool
+    basis: Optional[str] = None
+    detail: Optional[Dict[str, Any]] = None
+
+
+class Verdict(Enum):
+    unknown = 'unknown'
+
+
+class PublicProbeUnknownResult(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    verdict: Verdict
+    reason: str
+
+
+class PublicToolProbeResponse(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    schema_: Optional[PublicProbeSchemaResult] = Field(None, alias='schema')
+    quote: Optional[PublicProbeQuoteResult] = None
+    coverage: Optional[PublicProbeUnknownResult] = None
+    sample: Optional[PublicProbeUnknownResult] = None
 
 
 class PublicExecuteToolRequest(BaseModel):
@@ -526,7 +611,7 @@ class PublicToolCapability(BaseModel):
 
 class PublicCapabilityResult(BaseModel):
     model_config = ConfigDict(
-        extra='allow',
+        extra='forbid',
     )
     tool_id: str
     name: Optional[str] = None
@@ -582,7 +667,7 @@ class PublicCapabilityResult(BaseModel):
 
 class PublicSearchResponse(BaseModel):
     model_config = ConfigDict(
-        extra='allow',
+        extra='forbid',
     )
     query: Optional[str] = None
     search_id: str
@@ -627,7 +712,7 @@ class PublicExecuteResult(BaseModel):
 
 class PublicCompactBillingStatement(BaseModel):
     model_config = ConfigDict(
-        extra='allow',
+        extra='forbid',
     )
     summary: Optional[str] = None
     list_amount_credits: Optional[float] = None
@@ -636,10 +721,13 @@ class PublicCompactBillingStatement(BaseModel):
 
 class PublicExecuteToolResponse(BaseModel):
     model_config = ConfigDict(
-        extra='allow',
+        extra='forbid',
     )
     execution_id: str
-    result: PublicExecuteResult
+    result: Optional[Union[PublicExecuteResult, List, str, float, bool]] = Field(
+        ...,
+        description='Capability result. Projected responses use the documented object shape; default/full responses may contain any JSON value.',
+    )
     success: bool
     error_message: Optional[str] = None
     execution_time: Optional[float] = None
@@ -647,6 +735,10 @@ class PublicExecuteToolResponse(BaseModel):
     billing: Optional[PublicCompactBillingStatement] = None
     cost: Optional[float] = None
     remaining_credits: Optional[float] = None
+    details: Optional[List[ValidationError]] = Field(
+        None,
+        description='Field-level validation failures. Present when a request parameter or projection such as `respond_with` is invalid.',
+    )
 
 
 class APIResponseCreditsLedgerItem(BaseModel):
