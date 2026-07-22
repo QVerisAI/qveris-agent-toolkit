@@ -86,5 +86,13 @@ test('Claude adapter extracts only structured model output', () => {
   assert.deepEqual(parseClaudeEnvelope(JSON.stringify({ result: '{"parameters":{"city":"London"}}' })), {
     parameters: { city: 'London' },
   });
+  assert.throws(
+    () => parseClaudeEnvelope(JSON.stringify({ type: 'result', subtype: 'error_during_execution', is_error: true })),
+    /unsuccessful result/,
+  );
+  assert.throws(
+    () => parseClaudeEnvelope(JSON.stringify({ type: 'result', is_error: true, result: '{"tool_id":"wrong"}' })),
+    /unsuccessful result/,
+  );
   assert.throws(() => parseClaudeEnvelope(JSON.stringify({ result: 'not-json' })), /no structured output/);
 });

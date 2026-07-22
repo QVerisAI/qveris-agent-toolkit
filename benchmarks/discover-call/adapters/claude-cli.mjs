@@ -51,6 +51,11 @@ export function parseClaudeEnvelope(stdout) {
     throw new Error('Claude CLI returned invalid JSON');
   }
 
+  if (!isObject(envelope)) throw new Error('Claude CLI returned an invalid result envelope');
+  if (envelope.is_error === true || (typeof envelope.subtype === 'string' && envelope.subtype.startsWith('error'))) {
+    throw new Error('Claude CLI reported an unsuccessful result');
+  }
+
   if (isObject(envelope.structured_output)) return envelope.structured_output;
   if (isObject(envelope.structuredOutput)) return envelope.structuredOutput;
   if (typeof envelope.result === 'string') {
@@ -73,14 +78,47 @@ export async function invokeClaude(payload) {
       env: process.env,
     });
     let output = '';
+    let outputExceeded = false;
+    let forwardedSignal;
+    let forceKillTimer;
+
+    const cleanup = () => {
+      process.off('SIGINT', forwardSigint);
+      process.off('SIGTERM', forwardSigterm);
+      if (forceKillTimer) clearTimeout(forceKillTimer);
+    };
+    const forwardSignal = (signal) => {
+      if (forwardedSignal) return;
+      forwardedSignal = signal;
+      child.kill(signal);
+      forceKillTimer = setTimeout(() => child.kill('SIGKILL'), 1_000);
+      forceKillTimer.unref();
+    };
+    const forwardSigint = () => forwardSignal('SIGINT');
+    const forwardSigterm = () => forwardSignal('SIGTERM');
+    process.once('SIGINT', forwardSigint);
+    process.once('SIGTERM', forwardSigterm);
+
     child.stdin.on('error', () => {});
     child.stdout.on('data', (chunk) => {
       output += chunk;
-      if (output.length > 1_000_000) child.kill('SIGTERM');
+      if (output.length > 1_000_000 && !outputExceeded) {
+        outputExceeded = true;
+        child.kill('SIGTERM');
+      }
     });
     child.stderr.resume();
-    child.on('error', () => reject(new Error('Claude CLI could not be started')));
+    child.on('error', () => {
+      cleanup();
+      reject(new Error('Claude CLI could not be started'));
+    });
     child.on('close', (code) => {
+      cleanup();
+      if (forwardedSignal) {
+        process.kill(process.pid, forwardedSignal);
+        return;
+      }
+      if (outputExceeded) return reject(new Error('Claude CLI output exceeded the adapter limit'));
       if (code === 0) resolve(output);
       else reject(new Error('Claude CLI invocation failed'));
     });
