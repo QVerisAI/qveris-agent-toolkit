@@ -8,6 +8,7 @@ It gives agents access to QVeris through a small set of MCP tools:
 
 - `discover` — Find capabilities by natural language
 - `inspect` — Get detailed tool info (params, success rate, examples)
+- `probe` — Validate parameters and quote without execution
 - `call` — Execute a tool with parameters
 - `usage_history` — Context-safe usage audit summary/search/export
 - `credits_ledger` — Context-safe final credit ledger summary/search/export
@@ -36,6 +37,7 @@ Both surfaces map to the same QVeris protocol:
 |----------------|----------|----------|
 | **Discover** | `discover` | `POST /search` |
 | **Inspect** | `inspect` | `POST /tools/by-ids` |
+| **Probe** | `probe` | `POST /tools/probe` |
 | **Call** | `call` | `POST /tools/execute` |
 | **Usage audit** | `usage_history` | `GET /auth/usage/history/v2` |
 | **Credits ledger** | `credits_ledger` | `GET /auth/credits/ledger` |
@@ -91,7 +93,7 @@ Validate a config before restarting the client:
 qveris mcp validate --target cursor
 ```
 
-For stdio clients, add `--probe` to start the configured MCP server and confirm that `discover`, `inspect`, and `call` are visible via `tools/list`:
+For stdio clients, add `--probe` to start the configured MCP server and confirm that `discover`, `inspect`, `probe`, and `call` are visible via `tools/list`:
 
 ```bash
 qveris mcp validate --target cursor --probe
@@ -173,7 +175,7 @@ Setup flow:
 
 1. Create a key on [Dashboard / API Keys](/account?page=api-keys).
 2. Add the endpoint and Bearer header to your client. Store the key in a secret or environment variable when supported; never commit it.
-3. Reconnect the client and confirm `discover`, `inspect`, and `call` are visible.
+3. Reconnect the client and confirm `discover`, `inspect`, `probe`, and `call` are visible.
 
 The server validates the key when a session starts and binds that session to the credential. A `401` means the key is missing or invalid; a `503` means validation is temporarily unavailable. Start a new MCP session after changing the key. See the [Hosted MCP page](/hosted-mcp) for a copy-ready setup.
 
@@ -252,7 +254,15 @@ The response schema matches `/search` for the requested tools, including paramet
 
 ---
 
-### 3. `call`
+### 3. `probe`
+
+Use this tool to validate candidate parameters and obtain a zero-cost quote without executing the capability.
+
+Inputs are `tool_id`, optional `parameters`, optional `checks` (`schema`, `quote`, `coverage`, `sample`), and optional `live_budget` (`none`, `metadata`, `sampled`). Schema and quote are implemented; coverage and sample may return `unknown`. Probe never executes the capability or consumes credits.
+
+---
+
+### 4. `call`
 
 Use this tool to call a discovered QVeris capability.
 
@@ -291,7 +301,7 @@ Typical successful response fields:
 
 ---
 
-### 4. `usage_history`
+### 5. `usage_history`
 
 Use this tool when the user asks whether a call succeeded, failed, or charged credits. It defaults to `summary` mode and does not dump full history into context.
 
@@ -315,7 +325,7 @@ Examples:
 { "mode": "search", "execution_id": "EXECUTION_ID" }
 ```
 
-### 5. `credits_ledger`
+### 6. `credits_ledger`
 
 Use this tool when the user asks why their balance changed. It defaults to `summary` mode.
 

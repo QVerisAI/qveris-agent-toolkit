@@ -135,6 +135,7 @@ qveris call 1 --params '{"set":"land","first":"sct","timeOfDay":"day"}'
 | `qveris init` | Guided first-call wizard: auth, discover, inspect, call, and usage/ledger reconciliation guidance. |
 | `qveris discover <query>` | Find capabilities by natural language. Shows tool ID, description, relevance, success rate, latency, billing rule, provider, tags, and region when available. |
 | `qveris inspect <id\|index>` | View full tool details: parameters (type, required, description, enum values), example, provider info, execution history. |
+| `qveris probe <id\|index>` | Validate candidate parameters and obtain a zero-cost quote without execution. |
 | `qveris call <id\|index>` | Execute a capability. Shows result data, execution time, pre-settlement billing, and remaining credits. |
 
 ### Account
@@ -204,6 +205,16 @@ qveris inspect alphavantage.quote.execute.v1
 # Inspect multiple tools
 qveris inspect 1 2 3
 ```
+
+### Probe
+
+Validate candidate parameters and request a zero-cost quote without executing the capability:
+
+```bash
+qveris probe 1 --params '{"symbol":"AAPL"}' --checks schema,quote
+```
+
+`schema` and `quote` are implemented. `coverage` and `sample` can return an explicit `unknown` verdict. Probe never executes the capability or consumes credits.
 
 ### Call
 
@@ -299,7 +310,7 @@ Validate an existing config:
 # Static config validation
 qveris mcp validate --target cursor
 
-# Live stdio probe: starts the MCP server and confirms discover/inspect/call are visible
+# Live stdio probe: starts the MCP server and confirms discover/inspect/probe/call are visible
 qveris mcp validate --target cursor --probe
 ```
 

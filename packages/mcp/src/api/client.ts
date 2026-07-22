@@ -13,6 +13,8 @@ import type {
   GetToolsByIdsRequest,
   ExecuteRequest,
   ExecuteResponse,
+  ProbeRequest,
+  ProbeResponse,
   CreditsResponse,
   UsageHistoryRequest,
   UsageEventsResponse,
@@ -295,6 +297,19 @@ export class QverisClient {
    */
   async getToolsByIds(request: GetToolsByIdsRequest): Promise<SearchResponse> {
     return this.request<SearchResponse>('inspect', 'POST', '/tools/by-ids', request);
+  }
+
+  /**
+   * Validate candidate parameters and obtain a zero-cost quote without
+   * executing the capability.
+   */
+  async probeTool(toolId: string, request: ProbeRequest = {}): Promise<ProbeResponse> {
+    const endpoint = `/tools/probe?tool_id=${encodeURIComponent(toolId)}`;
+    return this.request<ProbeResponse>('probe', 'POST', endpoint, {
+      parameters: request.parameters ?? {},
+      checks: request.checks ?? ['schema'],
+      live_budget: request.live_budget ?? 'none',
+    });
   }
 
   /**

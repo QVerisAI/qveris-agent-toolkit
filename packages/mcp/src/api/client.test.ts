@@ -401,6 +401,34 @@ describe('QverisClient', () => {
     });
   });
 
+  describe('probeTool', () => {
+    it('posts zero-cost probe defaults with the encoded tool id', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ schema: { valid: true } }),
+      });
+      global.fetch = fetchMock;
+
+      const result = await new QverisClient({ apiKey: 'test-api-key' }).probeTool('weather/tool', {
+        parameters: { city: 'London' },
+        checks: ['schema', 'quote'],
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://qveris.ai/api/v1/tools/probe?tool_id=weather%2Ftool',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({
+            parameters: { city: 'London' },
+            checks: ['schema', 'quote'],
+            live_budget: 'none',
+          }),
+        }),
+      );
+      expect(result.schema?.valid).toBe(true);
+    });
+  });
+
   describe('executeTool', () => {
     let client: QverisClient;
     let fetchMock: ReturnType<typeof vi.fn>;

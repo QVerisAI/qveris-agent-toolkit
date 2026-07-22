@@ -19,6 +19,7 @@ const spec = JSON.parse(readFileSync(specPath, "utf8"));
 const CLI_OPERATIONS = [
   ["/search", "post"],
   ["/tools/by-ids", "post"],
+  ["/tools/probe", "post"],
   ["/tools/execute", "post"],
   ["/auth/credits", "get"],
   ["/auth/usage/history/v2", "get"],

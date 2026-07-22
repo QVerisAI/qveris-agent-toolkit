@@ -176,6 +176,38 @@ class ToolExecutionResponse(QverisModel):
     created_at: Optional[str] = None
 
 
+class ProbeSchemaViolation(QverisModel):
+    param: Optional[str] = None
+    type: str
+    message: str
+
+
+class ProbeSchemaResult(QverisModel):
+    valid: bool
+    violations: Optional[List[ProbeSchemaViolation]] = None
+    note: Optional[str] = None
+
+
+class ProbeQuoteResult(QverisModel):
+    estimate_credits: Optional[float] = None
+    currency: Literal["credits"]
+    exact: bool
+    basis: Optional[str] = None
+    detail: Optional[Dict[str, Any]] = None
+
+
+class ProbeUnknownResult(QverisModel):
+    verdict: Literal["unknown"]
+    reason: str
+
+
+class ToolProbeResponse(QverisModel):
+    schema_: Optional[ProbeSchemaResult] = Field(default=None, alias="schema")
+    quote: Optional[ProbeQuoteResult] = None
+    coverage: Optional[ProbeUnknownResult] = None
+    sample: Optional[ProbeUnknownResult] = None
+
+
 # --- Account audit types ---
 
 

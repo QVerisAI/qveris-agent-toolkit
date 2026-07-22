@@ -2,7 +2,7 @@
  * QVeris TypeScript SDK.
  *
  * Typed client for the QVeris Agent External Data & Tool Harness:
- * discover, inspect, call, plus usage and credits-ledger audit.
+ * discover, inspect, probe, call, plus usage and credits-ledger audit.
  *
  * @example
  * ```typescript
@@ -16,7 +16,7 @@
  */
 
 export { Qveris } from './client.js';
-export type { DiscoverOptions, InspectOptions, CallOptions, QverisClientOptions } from './client.js';
+export type { DiscoverOptions, InspectOptions, ProbeOptions, CallOptions, QverisClientOptions } from './client.js';
 export { ApiKeyCredentialProvider } from './credentials.js';
 export type { CredentialContext, CredentialProvider } from './credentials.js';
 export { QverisApiError } from './errors.js';

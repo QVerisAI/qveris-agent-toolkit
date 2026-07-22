@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 
 - Added `view` / `lang` discover options and `respondWith` call projection support, including typed routing cards and summary/field result shapes. Defaults remain full; an explicit legacy `422 extra_forbidden` response triggers one retry without only the rejected optional field.
+- Added `Qveris.probe()` with typed schema, quote, coverage, and sample results. ([#259])
 
 ## [0.5.0] - 2026-07-18
 
@@ -60,3 +61,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#143]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/143
 [#134]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/134
 [#106]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/106
+[#259]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/259

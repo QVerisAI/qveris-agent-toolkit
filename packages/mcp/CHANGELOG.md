@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 
 - Added optional `view` / `lang` inputs to `discover` and `respond_with` to `call`, with typed routing/summary response support. Defaults remain full; an explicit legacy `422 extra_forbidden` response triggers one retry without only the rejected optional field.
+- Added the canonical `probe` tool with typed zero-cost schema/quote results and an MCP `outputSchema`. ([#259])
 
 ## [0.11.0] - 2026-07-18
 
@@ -167,3 +168,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#13]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/13
 [#9]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/9
 [#8]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/8
+[#259]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/259

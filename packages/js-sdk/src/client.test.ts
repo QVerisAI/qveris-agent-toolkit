@@ -323,6 +323,29 @@ describe('Qveris client', () => {
     expect(response.results).toEqual([]);
   });
 
+  it('probe sends the tool id and zero-cost defaults', async () => {
+    const fetchMock = mockFetch({
+      schema: { valid: true },
+      quote: { estimate_credits: 3, currency: 'credits', exact: true, basis: 'per_call' },
+    });
+    globalThis.fetch = fetchMock;
+
+    const response = await new Qveris({ apiKey: API_KEY }).probe('weather.forecast.v1', {
+      parameters: { city: 'London' },
+      checks: ['schema', 'quote'],
+    });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('https://qveris.ai/api/v1/tools/probe?tool_id=weather.forecast.v1');
+    expect(JSON.parse(init.body)).toEqual({
+      parameters: { city: 'London' },
+      checks: ['schema', 'quote'],
+      live_budget: 'none',
+    });
+    expect(response.schema?.valid).toBe(true);
+    expect(response.quote?.estimate_credits).toBe(3);
+  });
+
   it('call sends tool_id as query param and parameters/search_id/max_response_size in the body', async () => {
     const fetchMock = mockFetch({
       execution_id: 'exec-123',

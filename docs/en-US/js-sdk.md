@@ -53,8 +53,14 @@ const tool = discovered.results[0];
 const inspected = await qveris.inspect(tool.tool_id, { searchId: discovered.search_id });
 const selected = inspected.results[0];
 
-// 3. Call it (may consume credits)
+// 3. Probe candidate parameters and quote without execution or credits
 const params = selected.examples?.sample_parameters ?? { city: 'London' };
+const probe = await qveris.probe(selected.tool_id, {
+  parameters: params,
+  checks: ['schema', 'quote'],
+});
+
+// 4. Call it (may consume credits)
 const result = await qveris.call(selected.tool_id, {
   parameters: params,
   searchId: discovered.search_id,
@@ -62,7 +68,7 @@ const result = await qveris.call(selected.tool_id, {
 });
 console.log(result.success, result.result);
 
-// 4. Audit the final charge outcome
+// 5. Audit the final charge outcome
 const usage = await qveris.usage({ execution_id: result.execution_id, summary: true });
 const ledger = await qveris.ledger({ summary: true, limit: 5 });
 console.log(usage.total, ledger.total);

@@ -10,6 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Added `qveris auth login/status/logout` using OAuth Device Authorization Grant, refresh-token rotation, revocation, and operating-system credential storage. Trusted headless hosts can explicitly opt into a user-only unencrypted config fallback. API key authentication remains fully compatible and takes precedence when configured.
 - Added opt-in server-side projections: `qveris discover --view routing [--lang zh|en]` and `qveris call --respond-with full|summary|fields:<JSONPath,...>`. Defaults remain unchanged; clients retry once without a projection only when a legacy service explicitly rejects that optional field as unknown.
+- Added `qveris probe` for zero-cost parameter validation and quotes without executing a capability. ([#259])
 
 ## [0.8.2] - 2026-07-18
 
@@ -100,6 +101,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [0.1.0]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/cli-v0.1.0
 [#221]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/221
 [#226]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/226
+[#259]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/259
 [#204]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/204
 [#161]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/161
 [#144]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/144

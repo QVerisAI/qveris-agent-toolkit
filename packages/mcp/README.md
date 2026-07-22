@@ -87,8 +87,9 @@ Then your AI assistant can discover and call tools:
 The assistant will:
 1. Call `discover` with query "weather"
 2. Optionally call `inspect` to review tool details
-3. Call `call` with the tool_id and parameters
-4. Use `usage_history` or `credits_ledger` only when the user asks about charge status or balance changes
+3. Optionally call `probe` to validate parameters and quote without execution
+4. Call `call` with the tool_id and parameters
+5. Use `usage_history` or `credits_ledger` only when the user asks about charge status or balance changes
 
 ## Available Tools
 
@@ -133,6 +134,19 @@ Inspect tools by their IDs to get detailed information (parameters, success rate
   "search_id": "abcd1234-ab12-ab12-ab12-abcdef123456"
 }
 ```
+
+### `probe`
+
+Validate candidate parameters and obtain a zero-cost quote without executing the capability.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `tool_id` | string | ✓ | Capability ID to validate |
+| `parameters` | object | | Candidate parameters; defaults to `{}` |
+| `checks` | array | | `schema`, `quote`, `coverage`, or `sample`; defaults to `schema` |
+| `live_budget` | string | | `none`, `metadata`, or `sampled`; defaults to `none` |
+
+Schema and quote are implemented. Coverage and sample may return `unknown`. Probe never executes the capability or consumes credits.
 
 ### `call`
 

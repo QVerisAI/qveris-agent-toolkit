@@ -58,12 +58,15 @@ async def main():
         inspected = await client.inspect([tool.tool_id], search_id=discovered.search_id)
         selected = inspected.results[0]
 
-        # 3. 调用（可能消耗积分）
+        # 3. 在不执行或扣费的情况下校验参数并获取报价
         params = (
             selected.examples.sample_parameters
             if selected.examples and selected.examples.sample_parameters
             else {"city": "北京"}
         )
+        probe = await client.probe(selected.tool_id, params, checks=["schema", "quote"])
+
+        # 4. 调用（可能消耗积分）
         result = await client.call(
             selected.tool_id,
             params,
@@ -72,7 +75,7 @@ async def main():
         )
         print(result.success, result.result)
 
-        # 4. 审计最终扣费结果
+        # 5. 审计最终扣费结果
         usage = await client.usage(execution_id=result.execution_id, summary=True)
         ledger = await client.ledger(summary=True, limit=5)
         print(usage.total, ledger.total)

@@ -70,6 +70,12 @@ Inspect one or more capabilities by tool ID.
 
 Deprecated alias for inspect(...).
 
+<a id="qveris.QverisClient.probe"></a>
+
+#### *async* probe(tool_id: str, parameters: Dict[str, Any] | None = None, checks: List[Literal['schema', 'quote', 'coverage', 'sample']] | None = None, live_budget: Literal['none', 'metadata', 'sampled'] = 'none') → ToolProbeResponse
+
+Validate candidate parameters and obtain a zero-cost quote without execution.
+
 <a id="qveris.QverisClient.call"></a>
 
 #### *async* call(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, respond_with: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)

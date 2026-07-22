@@ -159,6 +159,18 @@ qveris inspect 1 2 3
 
 ---
 
+### `qveris probe`
+
+在不执行能力的情况下校验候选参数并获取零成本报价。
+
+```bash
+qveris probe <tool_id|index> --params '{"city":"北京"}' --checks schema,quote
+```
+
+`--checks` 支持 `schema`、`quote`、`coverage` 和 `sample`；`--live-budget` 支持 `none`、`metadata` 和 `sampled`。当前契约已实现 schema 和 quote；coverage 与 sample 可能返回 `unknown`。Probe 不执行能力，也不消耗 credits。
+
+---
+
 ### `qveris call`
 
 执行一个能力。返回结构化结果、执行时间、预结算账单和剩余 credits。最终是否扣费请通过 `qveris usage` 或 `qveris ledger` 查询。
@@ -266,7 +278,7 @@ qveris mcp validate --target cursor
 qveris mcp validate --target cursor --output ~/.cursor/mcp.json
 ```
 
-添加 `--probe` 会启动配置中的 stdio MCP server，并通过 `tools/list` 确认 `discover`、`inspect`、`call` 工具可见。
+添加 `--probe` 会启动配置中的 stdio MCP server，并通过 `tools/list` 确认 `discover`、`inspect`、`probe`、`call` 工具可见。
 
 ```bash
 qveris mcp validate --target cursor --probe

@@ -454,6 +454,47 @@ export interface ExecuteResponse {
   created_at?: string;
 }
 
+export type ProbeCheck = 'schema' | 'quote' | 'coverage' | 'sample';
+export type ProbeLiveBudget = 'none' | 'metadata' | 'sampled';
+
+export interface ProbeRequest {
+  parameters?: Record<string, unknown>;
+  checks?: ProbeCheck[];
+  live_budget?: ProbeLiveBudget;
+}
+
+export interface ProbeSchemaViolation {
+  param?: string | null;
+  type: string;
+  message: string;
+}
+
+export interface ProbeSchemaResult {
+  valid: boolean;
+  violations?: ProbeSchemaViolation[] | null;
+  note?: string | null;
+}
+
+export interface ProbeQuoteResult {
+  estimate_credits?: number | null;
+  currency: 'credits';
+  exact: boolean;
+  basis?: string | null;
+  detail?: Record<string, unknown> | null;
+}
+
+export interface ProbeUnknownResult {
+  verdict: 'unknown';
+  reason: string;
+}
+
+export interface ProbeResponse {
+  schema?: ProbeSchemaResult;
+  quote?: ProbeQuoteResult;
+  coverage?: ProbeUnknownResult;
+  sample?: ProbeUnknownResult;
+}
+
 // ============================================================================
 // Account Audit API Types
 // ============================================================================
@@ -594,7 +635,7 @@ export interface QverisClientConfig {
 /**
  * Error response from the Qveris API.
  */
-export type ApiOperation = 'discover' | 'inspect' | 'call' | 'credits' | 'usage_history' | 'credits_ledger';
+export type ApiOperation = 'discover' | 'inspect' | 'probe' | 'call' | 'credits' | 'usage_history' | 'credits_ledger';
 export type ApiErrorType = 'http_error' | 'invalid_json' | 'timeout' | 'network_error';
 
 export interface ApiObservability {

@@ -8,6 +8,7 @@ import {
   getCreditsLedger,
   getUsageHistory,
   inspectToolsByIds,
+  probeTool,
   unwrapApiResponse,
 } from "../src/client/api.mjs";
 import { CliError } from "../src/errors/handler.mjs";
@@ -29,7 +30,7 @@ function jsonResponse(payload, init = {}) {
   });
 }
 
-test("API client maps discover, inspect, call, credits, usage, and ledger endpoints", async () => {
+test("API client maps discover, inspect, probe, call, credits, usage, and ledger endpoints", async () => {
   const requests = [];
   await withMockFetch(
     (url, options) => {
@@ -56,6 +57,14 @@ test("API client maps discover, inspect, call, credits, usage, and ledger endpoi
         baseUrl: "https://unit.test/api/v1",
         toolIds: ["tool-1"],
         discoveryId: "search-1",
+        timeoutMs: 1000,
+      });
+      await probeTool({
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        toolId: "tool-1",
+        parameters: { city: "London" },
+        checks: ["schema", "quote"],
         timeoutMs: 1000,
       });
       await callTool({
@@ -96,6 +105,13 @@ test("API client maps discover, inspect, call, credits, usage, and ledger endpoi
       path: "/api/v1/tools/by-ids",
       query: {},
       body: { tool_ids: ["tool-1"], search_id: "search-1" },
+      authorization: "Bearer sk-test",
+    },
+    {
+      method: "POST",
+      path: "/api/v1/tools/probe",
+      query: { tool_id: "tool-1" },
+      body: { parameters: { city: "London" }, checks: ["schema", "quote"], live_budget: "none" },
       authorization: "Bearer sk-test",
     },
     {

@@ -1,6 +1,7 @@
 const COMMANDS = [
   "discover",
   "inspect",
+  "probe",
   "call",
   "auth",
   "login",

@@ -31,7 +31,13 @@ const detail = await qveris.inspect(found.results[0].tool_id, {
   searchId: found.search_id,
 });
 
-// 3. Call — billed in credits; response includes pre-settlement billing
+// 3. Probe — zero-cost validation and quote; no capability execution
+const probe = await qveris.probe(found.results[0].tool_id, {
+  parameters: { symbol: 'AAPL' },
+  checks: ['schema', 'quote'],
+});
+
+// 4. Call — billed in credits; response includes pre-settlement billing
 const outcome = await qveris.call(found.results[0].tool_id, {
   searchId: found.search_id,
   parameters: { symbol: 'AAPL' },
