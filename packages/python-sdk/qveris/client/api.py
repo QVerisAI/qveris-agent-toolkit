@@ -359,8 +359,8 @@ class QverisClient:
         """Validate candidate parameters and obtain a zero-cost quote without execution."""
         url = self._url_for("POST", "tools/probe", params={"tool_id": tool_id})
         payload: Dict[str, Any] = {
-            "parameters": parameters or {},
-            "checks": checks or ["schema"],
+            "parameters": parameters if parameters is not None else {},
+            "checks": checks if checks is not None else ["schema"],
             "live_budget": live_budget,
         }
         with start_span("qveris.probe", {ATTR_OPERATION: "probe", ATTR_TOOL_ID: tool_id}) as span:
