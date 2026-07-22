@@ -129,6 +129,92 @@ test("API client maps discover, inspect, call, credits, usage, and ledger endpoi
   ]);
 });
 
+test("API client passes projections and retries once when a legacy service rejects optional fields", async () => {
+  const discoverBodies = [];
+  await withMockFetch(
+    (_url, options) => {
+      const body = JSON.parse(options.body);
+      discoverBodies.push(body);
+      if (discoverBodies.length === 1) {
+        return jsonResponse(
+          {
+            detail: [
+              { type: "extra_forbidden", loc: ["body", "view"] },
+              { type: "extra_forbidden", loc: ["body", "lang"] },
+            ],
+          },
+          { status: 422 },
+        );
+      }
+      return jsonResponse({ search_id: "search-1", results: [] });
+    },
+    () =>
+      discoverTools({
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        query: "weather",
+        view: "routing",
+        lang: "en",
+      }),
+  );
+  assert.deepEqual(discoverBodies, [
+    { query: "weather", limit: 5, view: "routing", lang: "en" },
+    { query: "weather", limit: 5 },
+  ]);
+
+  const callBodies = [];
+  await withMockFetch(
+    (_url, options) => {
+      const body = JSON.parse(options.body);
+      callBodies.push(body);
+      if (callBodies.length === 1) {
+        return jsonResponse({ detail: [{ type: "extra_forbidden", loc: ["body", "respond_with"] }] }, { status: 422 });
+      }
+      return jsonResponse({ execution_id: "exec-1", success: true, result: { data: {} } });
+    },
+    () =>
+      callTool({
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        toolId: "weather-tool",
+        discoveryId: "search-1",
+        parameters: {},
+        respondWith: "summary",
+      }),
+  );
+  assert.deepEqual(callBodies, [
+    {
+      search_id: "search-1",
+      parameters: {},
+      max_response_size: 102400,
+      respond_with: "summary",
+    },
+    { search_id: "search-1", parameters: {}, max_response_size: 102400 },
+  ]);
+});
+
+test("API client does not downgrade invalid projections", async () => {
+  let requests = 0;
+  await assert.rejects(
+    withMockFetch(
+      () => {
+        requests += 1;
+        return jsonResponse({ details: [{ type: "value_error", loc: ["body", "respond_with"] }] }, { status: 422 });
+      },
+      () =>
+        callTool({
+          apiKey: "sk-test",
+          baseUrl: "https://unit.test/api/v1",
+          toolId: "weather-tool",
+          parameters: {},
+          respondWith: "fields:",
+        }),
+    ),
+    (error) => error instanceof CliError && error.status === 422,
+  );
+  assert.equal(requests, 1);
+});
+
 test("API client gets async credentials for the configured resource", async () => {
   const contexts = [];
   const credentialProvider = {

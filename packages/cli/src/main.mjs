@@ -169,9 +169,12 @@ const VALUE_FLAGS = {
   "base-url": "baseUrl",
   timeout: "timeout",
   limit: "limit",
+  view: "view",
+  lang: "lang",
   "discovery-id": "discoveryId",
   params: "params",
   "max-size": "maxSize",
+  "respond-with": "respondWith",
   codegen: "codegen",
   token: "token",
   query: "query",
@@ -312,6 +315,12 @@ function extractGlobalFlags(args) {
       case "--limit":
         flags.limit = takeNext(args, i++, arg);
         break;
+      case "--view":
+        flags.view = takeNext(args, i++, arg);
+        break;
+      case "--lang":
+        flags.lang = takeNext(args, i++, arg);
+        break;
       case "--discovery-id":
         flags.discoveryId = takeNext(args, i++, arg);
         break;
@@ -320,6 +329,9 @@ function extractGlobalFlags(args) {
         break;
       case "--max-size":
         flags.maxSize = takeNext(args, i++, arg);
+        break;
+      case "--respond-with":
+        flags.respondWith = takeNext(args, i++, arg);
         break;
       case "--codegen":
         flags.codegen = takeNext(args, i++, arg);
@@ -440,6 +452,9 @@ function printUsage(flags = {}) {
     --allow-unencrypted-storage
                            Persist OAuth tokens in the user-only config file when no keyring is available
     --timeout <seconds>    Request timeout
+    --view <routing|full>  Discover response projection
+    --lang <zh|en>         Discover response language
+    --respond-with <mode>  Call projection: full | summary | fields:<JSONPath,...>
     --target <target>      MCP target: cursor | claude-desktop | claude-code | opencode | openclaw | generic
     --output <path>        MCP config output path
     --write                Write MCP config to disk
@@ -467,8 +482,10 @@ function printUsage(flags = {}) {
     qveris init --query "weather forecast API"
     qveris init --resume --params '{"city": "London"}'
     qveris discover "weather forecast API"
+    qveris discover "weather forecast API" --view routing --lang en
     qveris inspect 1
     qveris call 1 --params '{"city": "London"}'
+    qveris call 1 --params '{"city": "London"}' --respond-with summary
     qveris call 1 --params @params.json --codegen curl
     qveris mcp configure --target cursor --write --include-key
     qveris mcp validate --target cursor

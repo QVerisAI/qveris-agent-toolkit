@@ -94,13 +94,15 @@ First-class typed APIs:
 
 | Method | REST endpoint | Purpose |
 |--------|---------------|---------|
-| `discover(query, ...)` | `POST /search` | Find capabilities with natural language |
+| `discover(query, ..., view=None, lang=None)` | `POST /search` | Find capabilities; `view="routing"` returns compact routing cards |
 | `inspect(tool_ids, ...)` | `POST /tools/by-ids` | Fetch full capability metadata |
-| `call(tool_id, parameters, ...)` | `POST /tools/execute` | Execute a selected capability |
+| `call(tool_id, parameters, ..., respond_with=None)` | `POST /tools/execute` | Execute a selected capability; request `full`, `summary`, or selected JSONPath fields |
 | `usage(...)` | `GET /auth/usage/history/v2` | Audit request status and charge outcome |
 | `ledger(...)` | `GET /auth/credits/ledger` | Inspect final credit balance movements |
 
 Backward-compatible aliases remain available: `search_tools`, `get_tools_by_ids`, and `execute_tool`.
+
+Projection arguments are never sent unless explicitly configured. If a legacy service returns `422 extra_forbidden` for an optional projection field, the SDK retries once without that field; invalid projection errors are returned unchanged.
 
 ## Typed Models
 

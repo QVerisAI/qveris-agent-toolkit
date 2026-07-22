@@ -96,6 +96,8 @@ qveris discover <query> [flags]
 | Flag | Description | Default |
 |------|-------------|---------|
 | `--limit <n>` | Max results to return | 5 |
+| `--view <routing\|full>` | Compact routing cards or complete results | full |
+| `--lang <zh\|en>` | Response language | server negotiation |
 | `--json` | Output raw JSON | false |
 
 **Examples:**
@@ -104,6 +106,7 @@ qveris discover <query> [flags]
 qveris discover "stock price API"
 qveris discover "translate text to French" --limit 10
 qveris discover "cryptocurrency market data" --json
+qveris discover "weather forecast" --view routing --lang en
 ```
 
 **Output fields per tool:**
@@ -167,6 +170,7 @@ qveris call <tool_id|index> [flags]
 | `--params <json\|@file\|->` | Parameters as JSON, file path, or stdin | `{}` |
 | `--discovery-id <id>` | Discovery session ID | auto from session |
 | `--max-size <bytes>` | Response size limit (-1 = unlimited) | 4KB (TTY) / 20KB (pipe) |
+| `--respond-with <mode>` | `full`, `summary`, or `fields:<JSONPath,...>` | full |
 | `--dry-run` | Preview request without executing | false |
 | `--codegen <lang>` | Generate code snippet after call | — |
 | `--json` | Output raw JSON | false |
@@ -182,7 +186,15 @@ qveris call 1 --params @params.json
 
 # From stdin
 echo '{"city": "London"}' | qveris call 1 --params -
+
+# Compact schema/size summary with a signed full-content URL
+qveris call 1 --params '{"city": "London"}' --respond-with summary
+
+# Select fields rooted at result.data
+qveris call 1 --params '{"city": "London"}' --respond-with 'fields:$.temperature,$.humidity'
 ```
+
+Projection flags are opt-in. If an older service explicitly rejects a projection field as unknown, the CLI retries once without only that field. Invalid projections remain `422` errors.
 
 **Dry run (no credits consumed):**
 

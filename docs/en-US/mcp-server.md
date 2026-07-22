@@ -194,13 +194,17 @@ This is the **Discover** action and is **free**.
 | `query` | string | Yes | Natural-language description of the capability you need |
 | `limit` | number | No | Max results to return (`1-100`, default `20`) |
 | `session_id` | string | No | Session identifier for tracking |
+| `view` | string | No | `routing` for compact routing cards; `full` or omitted for complete results |
+| `lang` | string | No | Response language: `zh` or `en`; omitted uses server negotiation |
 
 Example:
 
 ```json
 {
   "query": "weather forecast API",
-  "limit": 10
+  "limit": 10,
+  "view": "routing",
+  "lang": "en"
 }
 ```
 
@@ -261,6 +265,7 @@ The call response may include compact pre-settlement `billing`. Final charge sta
 | `params_to_tool` | object | Yes | Dictionary of parameters to pass to the tool |
 | `session_id` | string | No | Session identifier for tracking |
 | `max_response_size` | number | No | Max response size in bytes (default `20480`) |
+| `respond_with` | string | No | `full`, `summary`, or `fields:<JSONPath,...>`; omitted defaults to full |
 
 Example:
 
@@ -268,16 +273,19 @@ Example:
 {
   "tool_id": "openweathermap.weather.execute.v1",
   "search_id": "YOUR_SEARCH_ID",
-  "params_to_tool": {"city": "London", "units": "metric"}
+  "params_to_tool": {"city": "London", "units": "metric"},
+  "respond_with": "summary"
 }
 ```
+
+Projection inputs are opt-in. A legacy `422 extra_forbidden` response causes one retry without only the rejected optional field; invalid projections remain errors.
 
 Typical successful response fields:
 
 - `execution_id`
-- `tool_id`
+- `tool_id` when returned by the selected projection
 - `success`
-- `result.data`
+- `result.data`, or compact summary fields when requested
 - `elapsed_time_ms` or `execution_time`
 - `billing` / `pre_settlement_bill` when available
 

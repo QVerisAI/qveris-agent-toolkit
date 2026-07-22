@@ -239,6 +239,58 @@ describe('Qveris client', () => {
     expect(tool.why_recommended).toContain('semantic and keyword');
   });
 
+  it('discover passes routing projection and language', async () => {
+    const fetchMock = mockFetch({
+      search_id: 'search-routing',
+      total: 1,
+      results: [
+        {
+          tool_id: 'weather.forecast.v1',
+          capability: 'Current weather by location',
+          cost_class: 'low',
+          reliability: 'A',
+          as_of_support: false,
+        },
+      ],
+    });
+    globalThis.fetch = fetchMock;
+
+    const response = await new Qveris({ apiKey: API_KEY }).discover('weather', {
+      view: 'routing',
+      lang: 'en',
+    });
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      query: 'weather',
+      view: 'routing',
+      lang: 'en',
+    });
+    expect(response.results[0].capability).toBe('Current weather by location');
+  });
+
+  it('discover retries once without projection fields rejected by a legacy service', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse(
+          {
+            detail: [
+              { type: 'extra_forbidden', loc: ['body', 'view'], msg: 'Extra inputs are not permitted' },
+              { type: 'extra_forbidden', loc: ['body', 'lang'], msg: 'Extra inputs are not permitted' },
+            ],
+          },
+          422,
+        ),
+      )
+      .mockResolvedValueOnce(jsonResponse(SAMPLE_DISCOVER_RESPONSE));
+    globalThis.fetch = fetchMock;
+
+    await new Qveris({ apiKey: API_KEY }).discover('weather', { view: 'routing', lang: 'en' });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ query: 'weather' });
+  });
+
   it('inspect posts tool_ids and search_id, coercing a single string id', async () => {
     const fetchMock = mockFetch({
       search_id: 'search-123',
@@ -304,6 +356,81 @@ describe('Qveris client', () => {
     expect(response.execution_id).toBe('exec-123');
     expect(response.billing?.list_amount_credits).toBe(3);
     expect(response.billing?.charge_lines?.[0].component_key).toBe('request');
+  });
+
+  it('call passes summary projection and accepts its compact response shape', async () => {
+    const fetchMock = mockFetch({
+      execution_id: 'exec-summary',
+      success: true,
+      result: {
+        respond_with: 'summary',
+        content_schema: { type: 'object' },
+        summary: { size_bytes: 4096, row_count: 1, fields: ['temperature'] },
+        full_content_file_url: 'https://oss.qveris.ai/result.json',
+      },
+    });
+    globalThis.fetch = fetchMock;
+
+    const response = await new Qveris({ apiKey: API_KEY }).call('weather.forecast.v1', {
+      parameters: { city: 'London' },
+      respondWith: 'summary',
+    });
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      parameters: { city: 'London' },
+      search_id: null,
+      respond_with: 'summary',
+    });
+    expect(response.result).toMatchObject({ respond_with: 'summary' });
+  });
+
+  it('call retries without respond_with only when a legacy service rejects the extra field', async () => {
+    const success = {
+      execution_id: 'exec-full',
+      success: true,
+      result: { data: { temperature: 18 } },
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse(
+          {
+            detail: [{ type: 'extra_forbidden', loc: ['body', 'respond_with'], msg: 'Extra input' }],
+          },
+          422,
+        ),
+      )
+      .mockResolvedValueOnce(jsonResponse(success));
+    globalThis.fetch = fetchMock;
+
+    await new Qveris({ apiKey: API_KEY }).call('weather.forecast.v1', {
+      parameters: { city: 'London' },
+      respondWith: 'summary',
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
+      parameters: { city: 'London' },
+      search_id: null,
+    });
+  });
+
+  it('call does not downgrade an invalid projection response', async () => {
+    const fetchMock = mockFetch(
+      {
+        details: [{ type: 'value_error', loc: ['body', 'respond_with'], msg: 'Invalid projection' }],
+      },
+      422,
+    );
+    globalThis.fetch = fetchMock;
+
+    await expect(
+      new Qveris({ apiKey: API_KEY }).call('weather.forecast.v1', {
+        parameters: {},
+        respondWith: 'fields:',
+      }),
+    ).rejects.toMatchObject({ status: 422 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('unwraps {status: "success", data: ...} envelopes', async () => {

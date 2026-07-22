@@ -108,6 +108,10 @@ class ToolInfo(QverisModel):
     tool_id: str
     name: Optional[str] = None
     description: Optional[Any] = None
+    capability: Optional[str] = None
+    cost_class: Optional[str] = None
+    reliability: Optional[str] = None
+    as_of_support: Optional[bool] = None
     categories: Optional[List[Union[str, ToolCategory]]] = None
     category: Optional[str] = None
     capabilities: Optional[List[ToolCapability]] = None

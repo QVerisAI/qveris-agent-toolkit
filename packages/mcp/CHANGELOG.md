@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Added optional `view` / `lang` inputs to `discover` and `respond_with` to `call`, with typed routing/summary response support. Defaults remain full; an explicit legacy `422 extra_forbidden` response triggers one retry without only the rejected optional field.
+
 ## [0.11.0] - 2026-07-18
 
 ### Added

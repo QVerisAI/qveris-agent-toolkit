@@ -88,18 +88,20 @@ console.log(usage.total, ledger.total);
 
 | 方法 | REST 端点 | 用途 |
 |------|-----------|------|
-| `discover(query, options?)` | `POST /search` | 用自然语言发现能力（免费） |
+| `discover(query, options?)` | `POST /search` | 发现能力；`view: 'routing'` 返回精简 routing card（免费） |
 | `inspect(toolIds, options?)` | `POST /tools/by-ids` | 获取能力完整元数据（免费） |
-| `call(toolId, options)` | `POST /tools/execute` | 执行能力（可能消耗积分） |
+| `call(toolId, options)` | `POST /tools/execute` | 执行能力；`respondWith` 可选择完整、摘要或 JSONPath 字段 |
 | `credits()` | `GET /auth/credits` | 当前积分余额与分桶 |
 | `usage(filters?)` | `GET /auth/usage/history/v2` | 审计请求状态与扣费结果 |
 | `ledger(filters?)` | `GET /auth/credits/ledger` | 查看最终积分余额变动 |
 
 选项结构：
 
-- `discover(query, { limit?, sessionId?, timeoutMs? })`
+- `discover(query, { limit?, sessionId?, view?, lang?, timeoutMs? })`
 - `inspect(toolIds, { searchId?, sessionId?, timeoutMs? })` —— `toolIds` 接受单个字符串或数组；**空数组会短路**，直接返回空响应而不发起网络请求。
-- `call(toolId, { parameters, searchId?, sessionId?, maxResponseSize?, timeoutMs? })`
+- `call(toolId, { parameters, searchId?, sessionId?, maxResponseSize?, respondWith?, timeoutMs? })`
+
+投影参数仅在显式指定时发送。旧服务返回 `422 extra_forbidden` 时仅移除对应可选字段并重试一次；无效投影仍按错误返回。
 
 `usage(...)` 和 `ledger(...)` 接受过滤对象，如 `start_date`、`end_date`、`summary`、`bucket`、`charge_outcome`、`execution_id`、`search_id`、`direction`、`entry_type`、`min_credits`、`max_credits`、`limit`、`page`、`page_size`。
 

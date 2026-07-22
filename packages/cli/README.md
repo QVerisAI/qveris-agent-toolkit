@@ -185,7 +185,10 @@ Search for capabilities using natural language. Each result shows the tool name,
 ```bash
 qveris discover "stock price API"
 qveris discover "translate text" --limit 10
+qveris discover "weather forecast" --view routing --lang en
 ```
+
+`--view routing` returns compact routing cards. `--view full` or omitting the flag preserves the existing complete response.
 
 ### Inspect
 
@@ -222,11 +225,19 @@ qveris call 1 --params '{"symbol": "AAPL"}' --dry-run
 # Full result (no truncation)
 qveris call 1 --params '{"symbol": "AAPL"}' --max-size -1
 
+# Compact schema/size summary with a signed full-content URL
+qveris call 1 --params '{"symbol": "AAPL"}' --respond-with summary
+
+# Select fields rooted at result.data
+qveris call 1 --params '{"symbol": "AAPL"}' --respond-with 'fields:$.price,$.currency'
+
 # Generate code snippet after call
 qveris call 1 --params '{"symbol": "AAPL"}' --codegen curl
 qveris call 1 --params '{"symbol": "AAPL"}' --codegen python
 qveris call 1 --params '{"symbol": "AAPL"}' --codegen js
 ```
+
+Projection flags are opt-in. If an older service explicitly rejects a projection field as unknown, the CLI retries once without only that field. Invalid projections are not downgraded and remain `422` errors.
 
 #### Response Truncation
 

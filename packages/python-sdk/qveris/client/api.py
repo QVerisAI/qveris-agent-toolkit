@@ -25,7 +25,7 @@ Debug logs redact the token value.
 """
 
 import json
-from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, Literal, Optional, Set, Tuple, Union
 
 import httpx
 
@@ -55,6 +55,30 @@ def _pre_settlement_credits(response: ToolExecutionResponse) -> Optional[float]:
     if response.billing is not None and response.billing.list_amount_credits is not None:
         return response.billing.list_amount_credits
     return response.cost
+
+
+def _unsupported_optional_fields(response: httpx.Response, allowed_fields: Set[str]) -> Set[str]:
+    """Return optional fields rejected by a legacy service as extra inputs."""
+    if response.status_code != 422:
+        return set()
+    try:
+        body = response.json()
+    except json.JSONDecodeError:
+        return set()
+    if not isinstance(body, dict):
+        return set()
+    candidates = body.get("detail") if isinstance(body.get("detail"), list) else body.get("details")
+    if not isinstance(candidates, list):
+        return set()
+    unsupported: Set[str] = set()
+    for item in candidates:
+        if not isinstance(item, dict) or item.get("type") != "extra_forbidden":
+            continue
+        loc = item.get("loc")
+        field = loc[-1] if isinstance(loc, list) and loc else None
+        if isinstance(field, str) and field in allowed_fields:
+            unsupported.add(field)
+    return unsupported
 
 
 class QverisClient:
@@ -109,6 +133,22 @@ class QverisClient:
             return {"headers": headers}
 
         return await self._retry.send(self.client, method, endpoint, prepare_attempt=prepare_attempt, **kwargs)
+
+    async def _send_with_optional_field_fallback(
+        self,
+        method: str,
+        endpoint: str,
+        payload: Dict[str, Any],
+        allowed_fields: Set[str],
+        **kwargs: Any,
+    ) -> httpx.Response:
+        """Retry once without optional fields rejected by a legacy service."""
+        response = await self._send(method, endpoint, json=payload, **kwargs)
+        unsupported = _unsupported_optional_fields(response, allowed_fields)
+        if not unsupported:
+            return response
+        fallback_payload = {key: value for key, value in payload.items() if key not in unsupported}
+        return await self._send(method, endpoint, json=fallback_payload, **kwargs)
 
     @property
     def rate_limit_retries(self) -> int:
@@ -180,7 +220,14 @@ class QverisClient:
         """
         await self.client.aclose()
 
-    async def discover(self, query: str, limit: int = 20, session_id: Optional[str] = None) -> SearchResponse:
+    async def discover(
+        self,
+        query: str,
+        limit: int = 20,
+        session_id: Optional[str] = None,
+        view: Optional[Literal["routing", "full"]] = None,
+        lang: Optional[Literal["zh", "en"]] = None,
+    ) -> SearchResponse:
         """
         Discover capabilities using natural language.
 
@@ -189,6 +236,8 @@ class QverisClient:
                    Example: "weather forecast API" or "search recent news".
             limit: Maximum number of tools to return (server may cap this).
             session_id: Optional correlation id.
+            view: Optional response projection. Omit for the legacy/full response.
+            lang: Optional response language; omit for server-side negotiation.
 
         Returns:
             `SearchResponse` containing `results` (tools) and `search_id` used for execution.
@@ -201,6 +250,10 @@ class QverisClient:
 
         if session_id:
             payload["session_id"] = session_id
+        if view is not None:
+            payload["view"] = view
+        if lang is not None:
+            payload["lang"] = lang
 
         with start_span(
             "qveris.discover",
@@ -210,7 +263,7 @@ class QverisClient:
             self._debug(f"[Qveris API] Request body: {json.dumps(payload, indent=2)}")
             self._debug_headers()
 
-            response = await self._send("POST", "search", json=payload)
+            response = await self._send_with_optional_field_fallback("POST", "search", payload, {"view", "lang"})
 
             self._debug(f"[Qveris API] Response status: {response.status_code}")
             data = self._unwrap_envelope(self._parse_response_json(response))
@@ -296,6 +349,7 @@ class QverisClient:
         search_id: Optional[str] = None,
         session_id: Optional[str] = None,
         max_response_size: Optional[int] = None,
+        respond_with: Optional[str] = None,
     ) -> ToolExecutionResponse:
         """
         Call a specific capability.
@@ -306,6 +360,7 @@ class QverisClient:
             search_id: Search ID returned by `discover(...)` (recommended for traceability).
             session_id: Optional correlation id.
             max_response_size: Optional max response size in bytes. Large responses may be truncated.
+            respond_with: Optional server-side projection (`full`, `summary`, or `fields:<JSONPath,...>`).
 
         Returns:
             `ToolExecutionResponse` with `success`, `result`, and metadata.
@@ -324,6 +379,9 @@ class QverisClient:
         if max_response_size is not None:
             payload["max_response_size"] = max_response_size
 
+        if respond_with is not None:
+            payload["respond_with"] = respond_with
+
         with start_span(
             "qveris.call",
             {
@@ -337,11 +395,12 @@ class QverisClient:
             self._debug(f"[Qveris API] Request body: {json.dumps(payload, indent=2)}")
             self._debug_headers()
 
-            response = await self._send(
+            response = await self._send_with_optional_field_fallback(
                 "POST",
                 "tools/execute",
+                payload,
+                {"respond_with"},
                 params={"tool_id": tool_id},
-                json=payload,
             )
 
             self._debug(f"[Qveris API] Response status: {response.status_code}")

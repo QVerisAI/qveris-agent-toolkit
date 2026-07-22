@@ -28,6 +28,13 @@ describe('discover (search_tools)', () => {
       expect(searchToolsSchema.properties.session_id.type).toBe('string');
       expect(searchToolsSchema.required).not.toContain('session_id');
     });
+
+    it('should define optional routing projection and response language', () => {
+      expect(searchToolsSchema.properties.view.enum).toEqual(['routing', 'full']);
+      expect(searchToolsSchema.properties.lang.enum).toEqual(['zh', 'en']);
+      expect(searchToolsSchema.required).not.toContain('view');
+      expect(searchToolsSchema.required).not.toContain('lang');
+    });
   });
 
   describe('executeSearchTools', () => {
@@ -98,6 +105,20 @@ describe('discover (search_tools)', () => {
         query: 'test',
         limit: 20,
         session_id: 'custom-session',
+      });
+    });
+
+    it('should pass routing projection and response language when provided', async () => {
+      searchToolsMock.mockResolvedValueOnce({ search_id: 'search-routing', results: [] });
+
+      await executeSearchTools(mockClient, { query: 'weather', view: 'routing', lang: 'en' }, 'default-session');
+
+      expect(searchToolsMock).toHaveBeenCalledWith({
+        query: 'weather',
+        limit: 20,
+        session_id: 'default-session',
+        view: 'routing',
+        lang: 'en',
       });
     });
 

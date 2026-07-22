@@ -36,6 +36,11 @@ describe('call (execute_tool)', () => {
       expect(executeToolSchema.properties.session_id.type).toBe('string');
       expect(executeToolSchema.required).not.toContain('session_id');
     });
+
+    it('should define respond_with as an optional projection', () => {
+      expect(executeToolSchema.properties.respond_with.pattern).toBe('^(full|summary|fields:.+)$');
+      expect(executeToolSchema.required).not.toContain('respond_with');
+    });
   });
 
   describe('executeExecuteTool', () => {
@@ -138,6 +143,33 @@ describe('call (execute_tool)', () => {
         session_id: 'default-session',
         parameters: {},
         max_response_size: 102400,
+      });
+    });
+
+    it('should pass respond_with when provided', async () => {
+      executeToolMock.mockResolvedValueOnce({
+        execution_id: 'exec-summary',
+        success: true,
+        result: { respond_with: 'summary' },
+      });
+
+      await executeExecuteTool(
+        mockClient,
+        {
+          tool_id: 'tool-1',
+          search_id: 'search-123',
+          params_to_tool: {},
+          respond_with: 'summary',
+        },
+        'default-session',
+      );
+
+      expect(executeToolMock).toHaveBeenCalledWith('tool-1', {
+        search_id: 'search-123',
+        session_id: 'default-session',
+        parameters: {},
+        max_response_size: undefined,
+        respond_with: 'summary',
       });
     });
 

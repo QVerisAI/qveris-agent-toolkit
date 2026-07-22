@@ -190,9 +190,11 @@ Sphinx 会根据 Python 对象与 docstring 重新生成该页面，CI 同时检
 
 | 方法 | REST 端点 | 用途 |
 |------|-----------|------|
-| `discover(query, limit=20, session_id=None)` | `POST /search` | 用自然语言发现能力（免费） |
+| `discover(query, limit=20, session_id=None, view=None, lang=None)` | `POST /search` | 发现能力；`view="routing"` 返回精简 routing card（免费） |
 | `inspect(tool_ids, search_id=None, session_id=None)` | `POST /tools/by-ids` | 获取能力完整元数据（免费） |
-| `call(tool_id, parameters, search_id=None, session_id=None, max_response_size=None)` | `POST /tools/execute` | 执行能力（可能消耗积分） |
+| `call(tool_id, parameters, search_id=None, session_id=None, max_response_size=None, respond_with=None)` | `POST /tools/execute` | 执行能力；可选择完整、摘要或 JSONPath 字段 |
+
+投影参数仅在显式指定时发送。旧服务返回 `422 extra_forbidden` 时仅移除对应可选字段并重试一次；无效投影仍按错误返回。
 | `usage(**filters)` | `GET /auth/usage/history/v2` | 审计请求状态与扣费结果 |
 | `ledger(**filters)` | `GET /auth/credits/ledger` | 查看最终积分余额变动 |
 | `handle_tool_call(func_name, func_args, session_id=None)` | — | 把 LLM 工具调用桥接到对应的 QVeris 方法 |

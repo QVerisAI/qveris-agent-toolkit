@@ -29,6 +29,12 @@ export interface SearchRequest {
 
   /** Session identifier for tracking user sessions. */
   session_id?: string;
+
+  /** Response projection. Omit for the legacy/full response shape. */
+  view?: 'routing' | 'full';
+
+  /** Response language. Omit to use server-side language negotiation. */
+  lang?: 'zh' | 'en';
 }
 
 /**
@@ -155,10 +161,22 @@ export interface ToolInfo {
   tool_id: string;
 
   /** Human-readable display name */
-  name: string;
+  name?: string;
 
   /** Detailed description of what the tool does */
-  description: string;
+  description?: string;
+
+  /** Compact capability label returned by the routing projection. */
+  capability?: string;
+
+  /** Compact cost class returned by the routing projection. */
+  cost_class?: string;
+
+  /** Compact reliability grade returned by the routing projection. */
+  reliability?: string;
+
+  /** Whether the capability supports point-in-time requests. */
+  as_of_support?: boolean;
 
   /** Tool categories/tags: category objects, or plain strings in legacy responses */
   categories?: Array<string | ToolCategory>;
@@ -312,6 +330,9 @@ export interface ExecuteRequest {
    * @default 20480 (20KB)
    */
   max_response_size?: number;
+
+  /** Server-side result projection. Omit for the legacy/full response. */
+  respond_with?: 'full' | 'summary' | `fields:${string}`;
 }
 
 /**
@@ -349,10 +370,39 @@ export interface ExecuteResultTruncated {
   content_schema?: Record<string, unknown>;
 }
 
+/** Compact result returned by `respond_with: "summary"`. */
+export interface ExecuteResultSummary {
+  respond_with: 'summary';
+  content_schema?: Record<string, unknown>;
+  summary?: {
+    size_bytes?: number;
+    row_count?: number;
+    fields?: string[];
+    [key: string]: unknown;
+  };
+  full_content_file_url?: string;
+  message?: string;
+}
+
+/** Selected result fields returned by a `fields:<JSONPath,...>` projection. */
+export interface ExecuteResultFields {
+  respond_with: `fields:${string}`;
+  data?: unknown;
+}
+
 /**
  * Union type for execution results (either full data or truncated).
  */
-export type ExecuteResult = ExecuteResultData | ExecuteResultTruncated;
+export type ExecuteResult =
+  | ExecuteResultData
+  | ExecuteResultTruncated
+  | ExecuteResultSummary
+  | ExecuteResultFields
+  | unknown[]
+  | string
+  | number
+  | boolean
+  | null;
 
 /**
  * Response from the Execute Tool API.
@@ -362,10 +412,10 @@ export interface ExecuteResponse {
   execution_id: string;
 
   /** The tool that was executed */
-  tool_id: string;
+  tool_id?: string;
 
   /** The parameters that were passed to the tool */
-  parameters: Record<string, unknown>;
+  parameters?: Record<string, unknown>;
 
   /**
    * The execution result.

@@ -699,6 +699,12 @@ Max response bytes before truncation (-1 for no limit, server default 20480)
 
 Key-value parameters matching the tool's parameter schema
 
+##### respondWith?
+
+> `optional` **respondWith?**: `"full"` \| `` `fields:${string}` `` \| `"summary"`
+
+Server-side result projection. Omit for the legacy/full response.
+
 ##### searchId?
 
 > `optional` **searchId?**: `string`
@@ -961,6 +967,12 @@ Options for [Qveris.discover](#discover).
 
 #### 属性
 
+##### lang?
+
+> `optional` **lang?**: `"zh"` \| `"en"`
+
+Response language. Omit to use server-side language negotiation.
+
 ##### limit?
 
 > `optional` **limit?**: `number`
@@ -978,6 +990,12 @@ Session identifier for tracking
 > `optional` **timeoutMs?**: `number`
 
 Per-request timeout override in milliseconds
+
+##### view?
+
+> `optional` **view?**: `"routing"` \| `"full"`
+
+Response projection. Omit for the legacy/full response shape.
 
 ***
 
@@ -1008,6 +1026,12 @@ Minimum: -1 (`-1` means no limit).
 
 Key-value pairs of parameters to pass to the tool.
 Must match the parameter schema from the tool's definition.
+
+##### respond\_with?
+
+> `optional` **respond\_with?**: `"full"` \| `` `fields:${string}` `` \| `"summary"`
+
+Server-side result projection. Omit for the legacy/full response.
 
 ##### search\_id
 
@@ -1073,9 +1097,9 @@ Unique identifier for this execution record
 
 Execution duration in seconds
 
-##### parameters
+##### parameters?
 
-> **parameters**: `Record`\<`string`, `unknown`\>
+> `optional` **parameters?**: `Record`\<`string`, `unknown`\>
 
 The parameters that were passed to the tool
 
@@ -1104,9 +1128,9 @@ Contains either `data` (if within size limit) or truncation info.
 
 Whether the execution completed successfully
 
-##### tool\_id
+##### tool\_id?
 
-> **tool\_id**: `string`
+> `optional` **tool\_id?**: `string`
 
 The tool that was executed
 
@@ -1123,6 +1147,66 @@ Result data when the response fits within max_response_size.
 > **data**: `unknown`
 
 The actual result data from the tool execution
+
+***
+
+### ExecuteResultFields
+
+Selected result fields returned by a `fields:<JSONPath,...>` projection.
+
+#### 属性
+
+##### data?
+
+> `optional` **data?**: `unknown`
+
+##### respond\_with
+
+> **respond\_with**: `` `fields:${string}` ``
+
+***
+
+### ExecuteResultSummary
+
+Compact result returned by `respond_with: "summary"`.
+
+#### 属性
+
+##### content\_schema?
+
+> `optional` **content\_schema?**: `Record`\<`string`, `unknown`\>
+
+##### full\_content\_file\_url?
+
+> `optional` **full\_content\_file\_url?**: `string`
+
+##### message?
+
+> `optional` **message?**: `string`
+
+##### respond\_with
+
+> **respond\_with**: `"summary"`
+
+##### summary?
+
+> `optional` **summary?**: `object`
+
+###### 索引签名
+
+\[`key`: `string`\]: `unknown`
+
+###### fields?
+
+> `optional` **fields?**: `string`[]
+
+###### row\_count?
+
+> `optional` **row\_count?**: `number`
+
+###### size\_bytes?
+
+> `optional` **size\_bytes?**: `number`
 
 ***
 
@@ -1254,6 +1338,12 @@ Request body for the Search Tools API.
 
 #### 属性
 
+##### lang?
+
+> `optional` **lang?**: `"zh"` \| `"en"`
+
+Response language. Omit to use server-side language negotiation.
+
 ##### limit?
 
 > `optional` **limit?**: `number`
@@ -1278,6 +1368,12 @@ Natural language search query describing the tool capability you need.
 > `optional` **session\_id?**: `string`
 
 Session identifier for tracking user sessions.
+
+##### view?
+
+> `optional` **view?**: `"routing"` \| `"full"`
+
+Response projection. Omit for the legacy/full response shape.
 
 ***
 
@@ -1442,6 +1538,12 @@ Contains everything needed to understand and execute the tool.
 
 #### 属性
 
+##### as\_of\_support?
+
+> `optional` **as\_of\_support?**: `boolean`
+
+Whether the capability supports point-in-time requests.
+
 ##### billing\_rule?
 
 > `optional` **billing\_rule?**: [`BillingRule`](#billingrule)
@@ -1454,15 +1556,27 @@ Structured rule-level billing metadata when available
 
 Standardized capability descriptors with coverage tags
 
+##### capability?
+
+> `optional` **capability?**: `string`
+
+Compact capability label returned by the routing projection.
+
 ##### categories?
 
 > `optional` **categories?**: (`string` \| [`ToolCategory`](#toolcategory))[]
 
 Tool categories/tags: category objects, or plain strings in legacy responses
 
-##### description
+##### cost\_class?
 
-> **description**: `string`
+> `optional` **cost\_class?**: `string`
+
+Compact cost class returned by the routing projection.
+
+##### description?
+
+> `optional` **description?**: `string`
 
 Detailed description of what the tool does
 
@@ -1502,9 +1616,9 @@ Whether this tool has been executed before (verified in production)
 
 Most recent execution record, if available
 
-##### name
+##### name?
 
-> **name**: `string`
+> `optional` **name?**: `string`
 
 Human-readable display name
 
@@ -1552,6 +1666,12 @@ Geographic availability of the tool.
 - "global" - Available worldwide
 - "US|CA" - Whitelist: only available in US and Canada
 - "-CN|RU" - Blacklist: not available in China and Russia
+
+##### reliability?
+
+> `optional` **reliability?**: `string`
+
+Compact reliability grade returned by the routing projection.
 
 ##### stats?
 
@@ -1855,7 +1975,7 @@ Error response from the Qveris API.
 
 ### ExecuteResult
 
-> **ExecuteResult** = [`ExecuteResultData`](#executeresultdata) \| [`ExecuteResultTruncated`](#executeresulttruncated)
+> **ExecuteResult** = [`ExecuteResultData`](#executeresultdata) \| [`ExecuteResultTruncated`](#executeresulttruncated) \| [`ExecuteResultSummary`](#executeresultsummary) \| [`ExecuteResultFields`](#executeresultfields) \| `unknown`[] \| `string` \| `number` \| `boolean` \| `null`
 
 Union type for execution results (either full data or truncated).
 
