@@ -31,7 +31,7 @@ function git(cwd, ...args) {
 }
 
 test("website staging holds published docs between releases and advances on new SDK tags", async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "qveris-website-docs-"))
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "qveris-docs-source-"))
   const toolkit = path.join(root, "toolkit")
   const website = path.join(root, "website")
   const output = path.join(root, "output")
