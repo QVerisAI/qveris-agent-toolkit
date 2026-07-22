@@ -6,9 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-23
+
 ### Added
 
-- Added `view` / `lang` discover options and `respondWith` call projection support, including typed routing cards and summary/field result shapes. Defaults remain full; an explicit legacy `422 extra_forbidden` response triggers one retry without only the rejected optional field.
+- Added `view` / `lang` discover options and `respondWith` call projection support, including typed routing cards and summary/field result shapes. Defaults remain full; an explicit legacy `422 extra_forbidden` response triggers one retry without only the rejected optional field. ([#256])
 - Added `Qveris.probe()` with typed schema, quote, coverage, and sample results. ([#259])
 
 ## [0.5.0] - 2026-07-18
@@ -48,7 +50,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - `0.1.x` under this npm name was an early MCP-focused SDK, superseded by `@qverisai/mcp`.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.5.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.6.0...HEAD
+[0.6.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.5.0...js-sdk-v0.6.0
 [0.5.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.4.0...js-sdk-v0.5.0
 [0.4.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.3.0...js-sdk-v0.4.0
 [0.3.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.2.0...js-sdk-v0.3.0
@@ -62,3 +65,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#134]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/134
 [#106]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/106
 [#259]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/259
+[#256]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/256
