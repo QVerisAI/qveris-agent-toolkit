@@ -84,7 +84,7 @@ class PublicApiMetadata(BaseModel):
     contract_version: str = Field(
         ...,
         description='Version of the published QVeris REST API contract.',
-        examples=['2026-07-22.1'],
+        examples=['2026-07-23.2'],
         title='Contract Version',
     )
 
@@ -127,12 +127,23 @@ class UsageCreditsSpentResponse(BaseModel):
     end_date: Optional[str] = Field(None, title='End Date')
 
 
+class UsageEventApiKey(BaseModel):
+    id: str = Field(..., title='Id')
+    name: str = Field(..., title='Name')
+    masked_value: str = Field(..., title='Masked Value')
+
+
 class UsageEventItem(BaseModel):
     id: str = Field(..., title='Id')
     event_type: str = Field(..., title='Event Type')
     source_system: str = Field(..., title='Source System')
     source_ref_type: Optional[str] = Field(None, title='Source Ref Type')
     source_ref_id: Optional[str] = Field(None, title='Source Ref Id')
+    credential_type: Optional[str] = Field(None, title='Credential Type')
+    api_key: Optional[UsageEventApiKey] = None
+    api_key_attribution_status: Optional[str] = Field(
+        'historical_unknown', title='Api Key Attribution Status'
+    )
     session_id: Optional[str] = Field(None, title='Session Id')
     search_id: Optional[str] = Field(None, title='Search Id')
     execution_id: Optional[str] = Field(None, title='Execution Id')
@@ -215,6 +226,11 @@ class UsageEventSummaryItem(BaseModel):
     source_system: str = Field(..., title='Source System')
     source_ref_type: Optional[str] = Field(None, title='Source Ref Type')
     source_ref_id: Optional[str] = Field(None, title='Source Ref Id')
+    credential_type: Optional[str] = Field(None, title='Credential Type')
+    api_key: Optional[UsageEventApiKey] = None
+    api_key_attribution_status: Optional[str] = Field(
+        'historical_unknown', title='Api Key Attribution Status'
+    )
     session_id: Optional[str] = Field(None, title='Session Id')
     search_id: Optional[str] = Field(None, title='Search Id')
     execution_id: Optional[str] = Field(None, title='Execution Id')
@@ -669,7 +685,19 @@ class PublicSearchResponse(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    query: Optional[str] = None
+    query: str
+    search_id: str
+    total: int
+    results: List[PublicCapabilityResult]
+    elapsed_time_ms: Optional[float] = None
+    remaining_credits: Optional[float] = None
+    error_message: Optional[str] = None
+
+
+class PublicInspectResponse(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     search_id: str
     total: int
     results: List[PublicCapabilityResult]
