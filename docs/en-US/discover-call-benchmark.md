@@ -39,7 +39,29 @@ provider error bodies must never be published.
 
 ## Published results
 
-No official model result is published yet. The repository currently includes a
-synthetic scorer fixture only; it is not a product-performance claim. The first
-controlled run will be added with raw records and the exact methodology metadata
-before any accuracy percentage is advertised.
+The first controlled result was run on 2026-07-23 with `gpt-5.6-sol`, medium
+reasoning effort, Codex CLI 0.144.1, `tasks/v2.jsonl`, and three trials per task.
+All 54 trials used real execution and all failures remain in the denominator.
+
+| Metric | Result |
+| --- | ---: |
+| Completed and executed | 50 / 54 |
+| Selection grounded | 100% |
+| Inspection grounded | 100% |
+| Required-parameter accuracy | 100% |
+| Constraint accuracy | 75.93% |
+| Call success among attempted calls | 88.00% (44 / 50) |
+| Strict workflow success | 64.81% (35 / 54) |
+| Workflow success, 95% Wilson interval | 51.48%–76.18% |
+
+Call success and workflow success have different denominators: strict workflow
+success includes all 54 trials and also requires every preceding scoring
+component to pass. Four trials failed during model parameterization and six
+well-formed calls returned `success: false`. Additional constraint misses
+include a valid combined currency pair that the current v2 alias scorer does
+not split, URL-encoded news queries, and timezone-list selections that could not
+accept the requested city.
+
+See the [result notes, immutable revisions, raw JSONL, and generated
+summary](../../benchmarks/discover-call/results/README.md). The synthetic scorer
+fixture remains test-only and is not a product-performance claim.
