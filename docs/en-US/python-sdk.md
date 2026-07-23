@@ -1,10 +1,10 @@
 # QVeris Python SDK
 
-QVeris Python SDK v0.4.0 is the latest tested release. Use its async client to discover, inspect, call, and audit 10,000+ real-world API capabilities from your own agents and applications.
+QVeris Python SDK v0.5.0 is the latest tested release. Use its async client to discover, inspect, probe, call, and audit 10,000+ real-world API capabilities from your own agents and applications.
 
 The SDK gives you two levels of control:
 
-- **`QverisClient`** — a thin typed wrapper over the QVeris REST API (`discover`, `inspect`, `call`, `usage`, `ledger`).
+- **`QverisClient`** — a thin typed wrapper over the QVeris REST API (`discover`, `inspect`, `probe`, `call`, `usage`, `ledger`).
 - **`Agent`** — a ready-made LLM tool loop that lets a model discover and call capabilities on its own.
 
 Use the client when you want full control, or the agent when you want a working assistant in a few lines.

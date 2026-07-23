@@ -331,7 +331,7 @@ npx -y @qverisai/mcp
   - Both are public (unauthenticated, CORS-enabled), even when an auth token is set. Behind a TLS proxy, set `QVERIS_MCP_PUBLIC_URL` (or send `X-Forwarded-Proto`) so the advertised URLs use your public origin.
   - **Auth metadata:** hosted deployments can advertise how to authenticate by setting `remoteHeaders` on the `ServerCardInfo` they pass to `startHttpServer` — typically `bearerAuthHeaderInput()` (exported from the package root), which declares an `Authorization: Bearer {api_key}` template whose variable is marked required + secret so discovery clients prompt for the key and store it securely. `buildServerCard` rejects literal secret material: secret header values must stay `{variable}` templates and secret variables cannot carry a `value`/`default`. Each deployment's card must reference only its own endpoint — never a sibling site's URLs.
   - **Schema status (experimental):** the card follows the MCP Server Card experimental extension (SEP-2127). Its public `$schema` URL (`static.modelcontextprotocol.io/schemas/v1/server-card.schema.json`) is the canonical versioned location but is not published upstream yet, so generated cards are validated in CI against a schema vendored at a pinned upstream commit (`schemas/README.md`); a separate non-blocking CI step probes the public URL and reports availability/drift.
-- Full OAuth 2.1 authorization is tracked as a follow-up in [#107](https://github.com/QVerisAI/qveris-agent-toolkit/issues/107).
+- This package does not implement a hosted OAuth authorization server. Independently operated HTTP deployments own credential validation and session policy through the embedding/session-auth hooks described above.
 
 ## Environment Variables
 
