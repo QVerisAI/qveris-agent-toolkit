@@ -70,8 +70,16 @@ export async function main(argv = process.argv.slice(2)) {
   process.stdout.write(`Wrote ${records.length} benchmark records to ${output}\n`);
 }
 
-export function createProcessAdapter({ command, args = [], timeoutMs = 120_000 }) {
+export function createProcessAdapter({
+  command,
+  args = [],
+  timeoutMs = 120_000,
+  forceKillAfterMs = 1_000,
+}) {
   if (typeof command !== 'string' || !command) throw new Error('--adapter is required');
+  if (!Number.isInteger(forceKillAfterMs) || forceKillAfterMs < 1 || forceKillAfterMs > 10_000) {
+    throw new Error('forceKillAfterMs must be an integer from 1 to 10000');
+  }
   const adapterEnv = { ...process.env };
   delete adapterEnv.QVERIS_API_KEY;
   return (payload) =>
@@ -86,33 +94,51 @@ export function createProcessAdapter({ command, args = [], timeoutMs = 120_000 }
       let stderr = '';
       let stdoutExceeded = false;
       let stderrExceeded = false;
-      const timer = setTimeout(() => {
+      let settled = false;
+      let forceKillTimer;
+      const cleanup = () => {
+        clearTimeout(timer);
+        if (forceKillTimer) clearTimeout(forceKillTimer);
+      };
+      const rejectOnce = (error) => {
+        if (settled) return;
+        settled = true;
+        reject(error);
+      };
+      const terminate = (error) => {
+        if (settled) return;
+        clearTimeout(timer);
         child.kill('SIGTERM');
-        reject(adapterError('Adapter timed out', 'timeout'));
+        forceKillTimer = setTimeout(() => child.kill('SIGKILL'), forceKillAfterMs);
+        forceKillTimer.unref();
+        rejectOnce(error);
+      };
+      const timer = setTimeout(() => {
+        terminate(adapterError('Adapter timed out', 'timeout'));
       }, timeoutMs);
 
       child.stdout.on('data', (chunk) => {
         stdout += chunk;
         if (stdout.length > 1_000_000 && !stdoutExceeded) {
           stdoutExceeded = true;
-          child.kill('SIGTERM');
+          terminate(adapterError('Adapter output exceeded the limit', 'stdout_limit'));
         }
       });
       child.stderr.on('data', (chunk) => {
         stderr += chunk;
         if (stderr.length > 100_000 && !stderrExceeded) {
           stderrExceeded = true;
-          child.kill('SIGTERM');
+          terminate(adapterError('Adapter error output exceeded the limit', 'stderr_limit'));
         }
       });
       child.on('error', () => {
-        clearTimeout(timer);
-        reject(adapterError('Adapter could not be started', 'start_failed'));
+        cleanup();
+        rejectOnce(adapterError('Adapter could not be started', 'start_failed'));
       });
       child.on('close', (code) => {
-        clearTimeout(timer);
-        if (stdoutExceeded) return reject(adapterError('Adapter output exceeded the limit', 'stdout_limit'));
-        if (stderrExceeded) return reject(adapterError('Adapter error output exceeded the limit', 'stderr_limit'));
+        cleanup();
+        if (settled) return;
+        settled = true;
         if (code !== 0) {
           return reject(
             adapterError('Adapter exited unsuccessfully', adapterReasonFromStderr(stderr) || 'process_exit'),

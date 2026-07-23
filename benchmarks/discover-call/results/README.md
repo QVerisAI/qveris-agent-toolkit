@@ -163,8 +163,10 @@ No failed trial was removed or selectively rerun.
 | Required-parameter accuracy | 100% |
 | Constraint accuracy | 75.93% |
 | Call success among attempted calls | 88.00% (44 / 50) |
-| Strict workflow success | 64.81% (35 / 54) |
-| Workflow success, 95% task-cluster bootstrap | 42.59%–85.19% |
+| Historical pre-result-gate workflow success | 64.81% (35 / 54) |
+| Result non-empty | Unreported |
+| Current strict workflow success | Not reportable |
+| Current strict workflow interval | Not reportable |
 
 Reproducibility metadata:
 
@@ -190,9 +192,12 @@ Artifacts:
 ### Interpretation
 
 The component metrics have different denominators. Call success is 44 of the 50
-attempted calls; strict workflow success is 35 of all 54 trials and additionally
-requires grounded selection and inspection, complete required parameters, and
-all task constraints.
+attempted calls. The original v2 scorer counted 35 of all 54 trials after
+grounded selection and inspection, complete required parameters, task
+constraints, and call success. That historical result predates result-content
+observation, so the 44 successful calls cannot be assumed to have non-empty
+results. The current scorer reports the pre-result-gate rate separately and
+leaves strict workflow success and its interval unavailable.
 
 The four adapter-stage failures were retained: all three domain-intelligence
 trials selected a catalog capability whose inspected contract exposed no usable

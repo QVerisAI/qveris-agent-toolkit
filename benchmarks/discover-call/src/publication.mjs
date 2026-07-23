@@ -1,5 +1,37 @@
 import { createHash } from 'node:crypto';
 
+const PUBLIC_METADATA_FIELDS = new Set([
+  'lane',
+  'model_revision',
+  'adapter_revision',
+  'toolkit_revision',
+  'task_set_sha256',
+  'api_base_url',
+  'api_revision',
+  'catalog_revision',
+  'catalog_observation_sha256',
+  'runtime',
+  'discovery_limit',
+  'execute',
+  'publication_policy',
+]);
+
+const REQUIRED_FORBIDDEN_FIELDS = [
+  'execution_id',
+  'search_id',
+  'connection_id',
+  'remaining_credits',
+  'result_tool_ids',
+  'returned_tool_ids',
+  'api_key',
+  'access_token',
+  'refresh_token',
+  'oauth_token',
+  'authorization',
+  'client_secret',
+  'password',
+];
+
 export function sanitizePublicRecords(records, policy) {
   validatePolicy(policy);
   const approvedToolIds = new Set(policy.approved_selected_tool_ids);
@@ -69,11 +101,11 @@ export function sanitizePublicRecord(
     },
     parameters: policy.publish_parameters === true ? record.parameters : null,
     call,
-    ...(record.error ? { error: record.error } : {}),
+    ...(record.error ? { error: publicError(record.error) } : {}),
     finished_at: record.finished_at,
     source_record_sha256: sha256(JSON.stringify(record)),
   };
-  assertNoForbiddenFields(sanitized, new Set(policy.forbidden_fields));
+  assertNoForbiddenFields(sanitized, forbiddenFieldSet(policy));
   return sanitized;
 }
 
@@ -93,8 +125,17 @@ export function validatePolicy(policy) {
   ) {
     throw new Error('Publication policy needs approved_selected_tool_ids');
   }
-  if (!Array.isArray(policy.forbidden_fields) || !policy.forbidden_fields.includes('execution_id')) {
-    throw new Error('Publication policy must forbid execution_id');
+  if (!Array.isArray(policy.forbidden_fields)) {
+    throw new Error('Publication policy needs forbidden_fields');
+  }
+  const forbidden = forbiddenFieldSet(policy);
+  const missingForbidden = REQUIRED_FORBIDDEN_FIELDS.filter(
+    (field) => !forbidden.has(normalizeFieldName(field)),
+  );
+  if (missingForbidden.length > 0) {
+    throw new Error(
+      `Publication policy must forbid protected fields: ${missingForbidden.join(', ')}`,
+    );
   }
   if (
     policy.legacy_lane_rewrites !== undefined &&
@@ -111,11 +152,16 @@ export function validatePolicy(policy) {
 export function validatePublicRecords(records, policy) {
   validatePolicy(policy);
   const approvedToolIds = new Set(policy.approved_selected_tool_ids);
-  const forbidden = new Set(policy.forbidden_fields);
+  const forbidden = forbiddenFieldSet(policy);
   for (const record of records) {
     assertNoForbiddenFields(record, forbidden);
     if (record.metadata?.publication_policy !== policy.policy_id) {
       throw new Error(`Public artifact is missing publication policy ${policy.policy_id}`);
+    }
+    for (const field of Object.keys(record.metadata ?? {})) {
+      if (!PUBLIC_METADATA_FIELDS.has(field)) {
+        throw new Error(`Public artifact contains unsupported metadata: ${field}`);
+      }
     }
     const selectedToolId = record.selection?.tool_id;
     if (selectedToolId && !approvedToolIds.has(selectedToolId)) {
@@ -123,21 +169,24 @@ export function validatePublicRecords(records, policy) {
     }
     if (
       record.selection?.tool_id_sha256 !== undefined &&
-      (typeof record.selection.tool_id_sha256 !== 'string' ||
-        record.selection.tool_id_sha256.length !== 64 ||
-        selectedToolId)
+      (!isSha256(record.selection.tool_id_sha256) || selectedToolId)
     ) {
       throw new Error('Public artifact selected tool digest is invalid');
     }
     if (
       !Number.isInteger(record.discovery?.result_count) ||
-      typeof record.discovery?.snapshot_sha256 !== 'string' ||
-      record.discovery.snapshot_sha256.length !== 64
+      !isSha256(record.discovery?.snapshot_sha256)
     ) {
       throw new Error('Public artifact discovery needs a count and SHA-256 snapshot');
     }
-    if (typeof record.source_record_sha256 !== 'string' || record.source_record_sha256.length !== 64) {
+    if (!isSha256(record.source_record_sha256)) {
       throw new Error('Public artifact needs source_record_sha256');
+    }
+    if (record.error) {
+      const errorFields = Object.keys(record.error);
+      if (errorFields.some((field) => !['stage', 'reason_code'].includes(field))) {
+        throw new Error('Public artifact error contains unsupported fields');
+      }
     }
   }
 }
@@ -145,9 +194,12 @@ export function validatePublicRecords(records, policy) {
 function publicMetadata(metadata = {}, policy, catalogObservationSha256) {
   const lane = policy.legacy_lane_rewrites?.[metadata.lane] ?? metadata.lane ?? 'model';
   return {
-    ...metadata,
     lane,
     model_revision: metadata.model_revision ?? 'unreported',
+    adapter_revision: metadata.adapter_revision ?? 'unreported',
+    toolkit_revision: metadata.toolkit_revision ?? 'unreported',
+    task_set_sha256: metadata.task_set_sha256 ?? 'unreported',
+    api_base_url: metadata.api_base_url ?? 'unreported',
     api_revision: metadata.api_revision ?? 'unreported',
     catalog_revision: metadata.catalog_revision ?? 'unreported',
     catalog_observation_sha256: catalogObservationSha256,
@@ -156,17 +208,18 @@ function publicMetadata(metadata = {}, policy, catalogObservationSha256) {
       platform: metadata.runtime?.platform ?? 'unreported',
       arch: metadata.runtime?.arch ?? 'unreported',
     },
+    discovery_limit: metadata.discovery_limit ?? 'unreported',
+    execute: metadata.execute === true,
     publication_policy: policy.policy_id,
   };
 }
 
 function commonMetadataValue(records, field) {
-  const values = new Set(
-    records
-      .map((record) => record.metadata?.[field])
-      .filter((value) => typeof value === 'string' && value && value !== 'pending'),
-  );
-  return values.size === 1 ? [...values][0] : null;
+  if (records.length === 0) return null;
+  const values = records.map((record) => record.metadata?.[field]);
+  if (values.some((value) => !isSha256(value))) return null;
+  const unique = new Set(values);
+  return unique.size === 1 ? values[0] : null;
 }
 
 function assertNoForbiddenFields(value, forbidden, path = '$') {
@@ -176,13 +229,38 @@ function assertNoForbiddenFields(value, forbidden, path = '$') {
   }
   if (!value || typeof value !== 'object') return;
   for (const [key, child] of Object.entries(value)) {
-    if (forbidden.has(key)) throw new Error(`Forbidden public artifact field at ${path}.${key}`);
+    if (forbidden.has(normalizeFieldName(key))) {
+      throw new Error(`Forbidden public artifact field at ${path}.${key}`);
+    }
     assertNoForbiddenFields(child, forbidden, `${path}.${key}`);
   }
 }
 
+function publicError(error) {
+  return {
+    stage: safeCode(error?.stage),
+    reason_code: safeCode(error?.reason_code),
+  };
+}
+
+function safeCode(value) {
+  return typeof value === 'string' && /^[a-z][a-z0-9_]{1,63}$/.test(value) ? value : null;
+}
+
+function normalizeFieldName(value) {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function forbiddenFieldSet(policy) {
+  return new Set(policy.forbidden_fields.map(normalizeFieldName));
+}
+
 function sha256(value) {
   return createHash('sha256').update(value).digest('hex');
+}
+
+function isSha256(value) {
+  return typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 }
 
 function array(value) {

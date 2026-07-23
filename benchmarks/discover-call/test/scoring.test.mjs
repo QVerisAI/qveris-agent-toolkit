@@ -20,7 +20,7 @@ test('scores a grounded, complete, successful workflow', () => {
     selection: { tool_id: 'weather.forecast' },
     inspection: { returned_tool_ids: ['weather.forecast'], required_parameters: ['city'] },
     parameters: { city: 'london' },
-    call: { attempted: true, success: true },
+    call: { attempted: true, success: true, result_nonempty: true },
   });
 
   assert.equal(result.selection_grounded, true);
@@ -129,7 +129,7 @@ test('aggregates per model with parameter and workflow rates', () => {
       selection: { tool_id: 'weather.forecast' },
       inspection: { returned_tool_ids: ['weather.forecast'], required_parameters: ['city'] },
       parameters: { city: 'London' },
-      call: { attempted: true, success: true },
+      call: { attempted: true, success: true, result_nonempty: true },
     },
     {
       run_id: 'run-2',
@@ -156,6 +156,7 @@ test('aggregates per model with parameter and workflow rates', () => {
       parameters: summary.models[0].required_parameter_accuracy,
       constraints: summary.models[0].constraint_accuracy,
       calls: summary.models[0].call_success_rate,
+      preResult: summary.models[0].pre_result_gate_workflow_success_rate,
       workflow: summary.models[0].workflow_success_rate,
       failures: summary.models[0].failures_by_stage,
       failureReasons: summary.models[0].failures_by_reason,
@@ -168,12 +169,39 @@ test('aggregates per model with parameter and workflow rates', () => {
       parameters: 0.5,
       constraints: 0.5,
       calls: 0.5,
+      preResult: 0.5,
       workflow: 0.5,
       failures: {},
       failureReasons: {},
     },
   );
   assert.equal(summary.models[0].workflow_success_task_cluster_bootstrap_95.length, 2);
+});
+
+test('does not infer non-empty results when a successful legacy call lacks evidence', () => {
+  const record = {
+    run_id: 'run-unobserved',
+    task_id: task.id,
+    model: 'model-a',
+    trial: 1,
+    status: 'completed',
+    discovery: { result_tool_ids: ['weather.forecast'] },
+    selection: { tool_id: 'weather.forecast' },
+    inspection: { returned_tool_ids: ['weather.forecast'], required_parameters: ['city'] },
+    parameters: { city: 'London' },
+    call: { attempted: true, success: true },
+  };
+
+  const result = scoreRecord(task, record);
+  assert.equal(result.result_nonempty, null);
+  assert.equal(result.pre_result_gate_workflow_success, true);
+  assert.equal(result.workflow_success, null);
+
+  const summary = scoreRecords([task], [record]);
+  assert.equal(summary.models[0].result_nonempty_rate, null);
+  assert.equal(summary.models[0].pre_result_gate_workflow_success_rate, 1);
+  assert.equal(summary.models[0].workflow_success_rate, null);
+  assert.equal(summary.models[0].workflow_success_task_cluster_bootstrap_95, null);
 });
 
 test('scores aliases with task-versioned accepted values', () => {

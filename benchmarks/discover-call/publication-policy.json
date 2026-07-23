@@ -43,6 +43,13 @@
     "connection_id",
     "remaining_credits",
     "result_tool_ids",
-    "returned_tool_ids"
+    "returned_tool_ids",
+    "api_key",
+    "access_token",
+    "refresh_token",
+    "oauth_token",
+    "authorization",
+    "client_secret",
+    "password"
   ]
 }

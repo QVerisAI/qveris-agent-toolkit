@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { resolve } from 'node:path';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { createProcessAdapter, main } from '../src/run.mjs';
@@ -90,6 +92,28 @@ test('process adapter classifies timeouts', async () => {
     assert.equal(error.benchmarkReason, 'timeout');
     return true;
   });
+});
+
+test('process adapter force-kills a child that ignores SIGTERM', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'qveris-adapter-test-'));
+  const pidPath = join(directory, 'pid');
+  try {
+    const invoke = createProcessAdapter({
+      command: process.execPath,
+      args: [
+        '-e',
+        "require('node:fs').writeFileSync(process.argv[1], String(process.pid)); process.on('SIGTERM', () => {}); process.stdin.resume(); setInterval(() => {}, 1000)",
+        pidPath,
+      ],
+      timeoutMs: 50,
+      forceKillAfterMs: 20,
+    });
+    await assert.rejects(invoke({ stage: 'select' }), /timed out/);
+    const pid = Number(await readFile(pidPath, 'utf8'));
+    assert.equal(await waitForProcessExit(pid), true);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 test('reference adapter selects only configured candidates present in discovery', async () => {
@@ -260,3 +284,22 @@ test('Codex adapter extracts the final structured message and rejects tool use',
     /no structured output/,
   );
 });
+
+function processExists(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    if (error?.code === 'ESRCH') return false;
+    throw error;
+  }
+}
+
+async function waitForProcessExit(pid, timeoutMs = 1_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (!processExists(pid)) return true;
+    await new Promise((resolvePromise) => setTimeout(resolvePromise, 20));
+  }
+  return !processExists(pid);
+}

@@ -103,18 +103,22 @@ export function scoreRecord(task, record) {
   const callSuccess = executed ? record.call?.success === true : null;
   const resultNonempty =
     executed && callSuccess
-      ? record.call?.result_nonempty ?? record.call?.result_valid ?? true
+      ? booleanOrNull(record.call?.result_nonempty ?? record.call?.result_valid)
       : executed
         ? false
         : null;
-  const workflowSuccess =
+  const preResultGateWorkflowSuccess =
     completed &&
     selectionGrounded &&
     inspectionGrounded &&
     requiredParameterAccuracy === 1 &&
     constraintAccuracy === 1 &&
-    callSuccess === true &&
-    resultNonempty === true;
+    callSuccess === true;
+  const workflowSuccess = preResultGateWorkflowSuccess
+    ? resultNonempty === null
+      ? null
+      : resultNonempty === true
+    : false;
 
   return {
     run_id: record.run_id,
@@ -129,6 +133,7 @@ export function scoreRecord(task, record) {
     constraint_accuracy: round(constraintAccuracy),
     call_success: callSuccess,
     result_nonempty: resultNonempty,
+    pre_result_gate_workflow_success: preResultGateWorkflowSuccess,
     workflow_success: workflowSuccess,
     error_stage: record.error?.stage ?? null,
     error_reason: record.error?.reason_code ?? null,
@@ -138,8 +143,10 @@ export function scoreRecord(task, record) {
 
 function aggregateModel(model, records) {
   const executed = records.filter((record) => record.executed);
-  const workflowWins = records.filter((record) => record.workflow_success).length;
-  const interval = taskClusterBootstrapInterval(records);
+  const resultEvidenceComplete = executed.every((record) => record.result_nonempty !== null);
+  const workflowEvidenceComplete = records.every((record) => record.workflow_success !== null);
+  const workflowWins = records.filter((record) => record.workflow_success === true).length;
+  const interval = workflowEvidenceComplete ? taskClusterBootstrapInterval(records) : null;
   const taskCount = new Set(records.map((record) => record.task_id)).size;
   const failuresByStage = {};
   const failuresByReason = {};
@@ -162,9 +169,15 @@ function aggregateModel(model, records) {
     required_parameter_accuracy: round(mean(records.map((record) => record.required_parameter_accuracy))),
     constraint_accuracy: round(mean(records.map((record) => record.constraint_accuracy))),
     call_success_rate: executed.length ? round(mean(executed.map((record) => record.call_success))) : null,
-    result_nonempty_rate: executed.length ? round(mean(executed.map((record) => record.result_nonempty))) : null,
-    workflow_success_rate: round(workflowWins / records.length),
-    workflow_success_task_cluster_bootstrap_95: interval.map(round),
+    result_nonempty_rate:
+      executed.length && resultEvidenceComplete
+        ? round(mean(executed.map((record) => record.result_nonempty)))
+        : null,
+    pre_result_gate_workflow_success_rate: round(
+      mean(records.map((record) => record.pre_result_gate_workflow_success)),
+    ),
+    workflow_success_rate: workflowEvidenceComplete ? round(workflowWins / records.length) : null,
+    workflow_success_task_cluster_bootstrap_95: interval?.map(round) ?? null,
     failures_by_stage: failuresByStage,
     failures_by_reason: failuresByReason,
   };
@@ -267,4 +280,8 @@ function array(value) {
 
 function plainObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function booleanOrNull(value) {
+  return typeof value === 'boolean' ? value : null;
 }

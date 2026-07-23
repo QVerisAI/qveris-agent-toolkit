@@ -38,7 +38,9 @@ The publication command enforces `publication-policy.json`. It replaces the
 ordered discovery list with its count and SHA-256 digest and preserves grounded
 selection as an attestation. An approved selected tool keeps its ID; an
 unapproved selected tool is represented only by a SHA-256 digest, so a benchmark
-run cannot silently expand the public catalog.
+run cannot silently expand the public catalog. Metadata is projected through an
+explicit allowlist, errors retain only normalized stage/reason codes, and
+credential-shaped parameter keys are rejected case-insensitively.
 
 Provider authorization and namespace ownership must be confirmed before adding a
 tool ID to the public allowlist. Removing an approval requires regenerating all

@@ -1,6 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isDeepStrictEqual } from 'node:util';
 
 import { validateTask } from './harness.mjs';
 import { readJsonLines } from './io.mjs';
@@ -43,9 +44,20 @@ for (const file of resultFiles) {
   const tasks = await readJsonLines(resolve(root, `tasks/v${version}.jsonl`));
   const records = await readJsonLines(resolve(root, 'results', file));
   validatePublicRecords(records, policy);
-  scoreRecords(tasks, records);
+  const generatedSummary = scoreRecords(tasks, records);
+  const summaryFile = file.replace(/\.runs\.jsonl$/, '.summary.json');
+  const publishedSummary = JSON.parse(await readFile(resolve(root, 'results', summaryFile), 'utf8'));
+  if (!isDeepStrictEqual(comparableSummary(generatedSummary), comparableSummary(publishedSummary))) {
+    throw new Error(`${summaryFile}: summary does not match its public run records`);
+  }
 }
 
 process.stdout.write(
   `Validated ${counts.join(', ')}, ${fixture.length} fixture records, and ${resultFiles.length} public result files\n`,
 );
+
+function comparableSummary(summary) {
+  if (!summary || typeof summary !== 'object' || Array.isArray(summary)) return summary;
+  const { generated_at: _generatedAt, ...comparable } = summary;
+  return comparable;
+}

@@ -47,7 +47,9 @@ workflow-success denominator.
 The summary includes a deterministic 95% task-cluster bootstrap interval for
 workflow success. Tasks, rather than individual trials, are resampled so three
 trials of one task are not treated as three independent task draws. Dry runs
-never count as workflow success.
+never count as workflow success. A successful legacy call with no recorded
+result-content observation is reported as unknown; it is never inferred to have
+a non-empty result or included in a strict workflow point estimate.
 
 ## Task sets
 
