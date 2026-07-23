@@ -73,6 +73,8 @@ test('builds a strict provider-neutral schema from inspected parameters', () => 
     parameterResponseSchema({
       params: [
         { name: 'limit', type: 'integer', required: true },
+        { name: 'count', type: 'integer', required: false, enum: ['10', '20'] },
+        { name: 'spellcheck', type: 'boolean', required: false, enum: ['1'] },
         { name: 'tags', type: 'array', required: false, items: { type: 'string' } },
         {
           name: 'options',
@@ -93,9 +95,11 @@ test('builds a strict provider-neutral schema from inspected parameters', () => 
         parameters: {
           type: 'object',
           additionalProperties: false,
-          required: ['limit', 'tags', 'options'],
+          required: ['limit', 'count', 'spellcheck', 'tags', 'options'],
           properties: {
             limit: { type: 'integer' },
+            count: { type: ['string', 'null'], enum: ['10', '20', null] },
+            spellcheck: { type: ['string', 'null'], enum: ['1', null] },
             tags: { type: ['array', 'null'], items: { type: 'string' } },
             options: {
               type: ['object', 'null'],

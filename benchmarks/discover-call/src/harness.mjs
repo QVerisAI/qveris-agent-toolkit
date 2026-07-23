@@ -211,7 +211,7 @@ function strictParameterSchema(parameter, forceRequired = parameter?.required ==
   }
 
   if (Array.isArray(parameter?.enum) && parameter.enum.length > 0) {
-    schema.type = nullableType(type, forceRequired);
+    schema.type = enumType(parameter.enum, forceRequired);
     schema.enum = forceRequired ? [...parameter.enum] : [...parameter.enum, null];
     return schema;
   }
@@ -250,6 +250,21 @@ function normalizeParameterType(value) {
 
 function nullableType(type, required) {
   return required ? type : [type, 'null'];
+}
+
+function enumType(values, required) {
+  const types = [...new Set(values.map(jsonValueType).filter(Boolean))];
+  const normalized = types.includes('number') ? types.filter((type) => type !== 'integer') : types;
+  if (!required) normalized.push('null');
+  return normalized.length === 1 ? normalized[0] : normalized;
+}
+
+function jsonValueType(value) {
+  if (typeof value === 'string') return 'string';
+  if (typeof value === 'number') return Number.isInteger(value) ? 'integer' : 'number';
+  if (typeof value === 'boolean') return 'boolean';
+  if (value === null) return 'null';
+  return null;
 }
 
 function omitNullParameters(parameters) {
