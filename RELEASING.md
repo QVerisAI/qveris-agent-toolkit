@@ -23,12 +23,13 @@ Each package releases independently via an annotated git tag; the matching GitHu
    ```
 
    The coordinator validates package versions, npm/Python lockfiles, MCP
-   `server.json`, and each versioned Changelog section. It creates annotated
-   tags from those sections, pushes exactly one tag at a time, confirms the
-   matching Actions run is registered before pushing the next tag, and then
-   waits for all four publish workflows. If a run is interrupted, rerun the
-   command: tags already present at the release commit are verified and
-   resumed instead of recreated. Use `-- --no-watch` only when another
+   `server.json`, each versioned Changelog section, and that every configured
+   publish workflow exists and listens for the matching tag prefix. It creates
+   annotated tags from those sections, pushes exactly one tag at a time,
+   confirms the matching Actions run is registered before pushing the next
+   tag, and then waits for all four publish workflows. If a run is interrupted,
+   rerun the command: tags already present at the release commit are verified
+   and resumed instead of recreated. Use `-- --no-watch` only when another
    operator will monitor the registered runs.
 
    For an individual package release, **tag the release commit with an

@@ -4,6 +4,10 @@ on:
   pull_request:
     paths:
       - ".github/workflows/release-tools.yml"
+      - ".github/workflows/cli-publish.yml"
+      - ".github/workflows/js-sdk-publish.yml"
+      - ".github/workflows/mcp-publish.yml"
+      - ".github/workflows/python-sdk-publish.yml"
       - "RELEASING.md"
       - "package.json"
       - "scripts/release-client-packages.mjs"
@@ -12,6 +16,10 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/release-tools.yml"
+      - ".github/workflows/cli-publish.yml"
+      - ".github/workflows/js-sdk-publish.yml"
+      - ".github/workflows/mcp-publish.yml"
+      - ".github/workflows/python-sdk-publish.yml"
       - "RELEASING.md"
       - "package.json"
       - "scripts/release-client-packages.mjs"

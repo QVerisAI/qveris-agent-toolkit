@@ -1,10 +1,19 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
-import { CLIENTS, extractChangelogRelease, publishReleasePlan, readReleasePlan } from "./release-client-packages.mjs";
+import {
+  CLIENTS,
+  extractChangelogRelease,
+  publishReleasePlan,
+  readReleasePlan,
+  workflowTagPatterns,
+} from "./release-client-packages.mjs";
+
+const REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 function fixtureRoot(overrides = {}) {
   const root = mkdtempSync(join(tmpdir(), "qveris-client-release-"));
@@ -35,6 +44,13 @@ function fixtureRoot(overrides = {}) {
       writeFileSync(join(directory, "pyproject.toml"), `[project]\nname = "qveris"\nversion = "${version}"\n`);
       writeFileSync(join(directory, "uv.lock"), `version = 1\n\n[[package]]\nname = "qveris"\nversion = "${version}"\n`);
     }
+
+    const workflowDirectory = join(root, ".github/workflows");
+    mkdirSync(workflowDirectory, { recursive: true });
+    writeFileSync(
+      join(workflowDirectory, client.workflow),
+      `name: Publish ${client.label}\n\non:\n  workflow_dispatch:\n  push:\n    tags:\n      - "${client.tagPrefix}*"\n\njobs: {}\n`,
+    );
   }
   return root;
 }
@@ -45,6 +61,15 @@ test("extractChangelogRelease returns only the requested release notes", () => {
     "1.2.0",
   );
   assert.equal(notes, "### Added\n\n- new");
+});
+
+test("workflowTagPatterns reads only push tag triggers", () => {
+  assert.deepEqual(
+    workflowTagPatterns(
+      'name: Test\n\non:\n  pull_request:\n    paths:\n      - "js-sdk-v*"\n  push:\n    branches: [main]\n    tags:\n      - "js-sdk-v*"\n',
+    ),
+    ["js-sdk-v*"],
+  );
 });
 
 test("readReleasePlan validates and coordinates all four package tags", () => {
@@ -61,6 +86,19 @@ test("readReleasePlan validates and coordinates all four package tags", () => {
   assert.ok(releases.every((release) => release.notes.includes(`${release.label} release`)));
 });
 
+test("repository publish workflows exist and listen for every coordinated tag", () => {
+  const releases = readReleasePlan(REPOSITORY_ROOT);
+  assert.deepEqual(
+    releases.map(({ workflow, tagPrefix }) => [workflow, `${tagPrefix}*`]),
+    [
+      ["cli-publish.yml", "cli-v*"],
+      ["mcp-publish.yml", "mcp-v*"],
+      ["js-sdk-publish.yml", "js-sdk-v*"],
+      ["python-sdk-publish.yml", "python-sdk-v*"],
+    ],
+  );
+});
+
 test("readReleasePlan rejects drift between package and release metadata", () => {
   const root = fixtureRoot();
   writeFileSync(
@@ -74,6 +112,25 @@ test("readReleasePlan rejects drift between package and release metadata", () =>
     (error) =>
       error.message.includes("MCP: server.json version (2.3.3) must equal 2.3.4") &&
       error.message.includes("Python SDK: uv.lock qveris version (4.5.5) must equal 4.5.6"),
+  );
+});
+
+test("readReleasePlan rejects a missing or mismatched publish workflow before tagging", () => {
+  const missingRoot = fixtureRoot();
+  rmSync(join(missingRoot, ".github/workflows/js-sdk-publish.yml"));
+  assert.throws(
+    () => readReleasePlan(missingRoot),
+    /JavaScript SDK: publish workflow is missing: \.github\/workflows\/js-sdk-publish\.yml/,
+  );
+
+  const mismatchedRoot = fixtureRoot();
+  writeFileSync(
+    join(mismatchedRoot, ".github/workflows/js-sdk-publish.yml"),
+    'name: Publish JavaScript SDK\n\non:\n  push:\n    tags:\n      - "javascript-v*"\n',
+  );
+  assert.throws(
+    () => readReleasePlan(mismatchedRoot),
+    /JavaScript SDK: \.github\/workflows\/js-sdk-publish\.yml must listen for push\.tags pattern "js-sdk-v\*"/,
   );
 });
 

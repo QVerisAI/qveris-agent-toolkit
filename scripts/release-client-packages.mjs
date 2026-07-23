@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -50,6 +50,70 @@ function read(root, path) {
 
 function readJson(root, path) {
   return JSON.parse(read(root, path));
+}
+
+export function workflowTagPatterns(content) {
+  const patterns = [];
+  let section = null;
+  let onIndent = -1;
+  let pushIndent = -1;
+  let tagsIndent = -1;
+
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.replace(/\s+#.*$/, "");
+    if (!line.trim()) continue;
+    const indent = line.match(/^\s*/)[0].length;
+    const value = line.trim();
+
+    if (indent === 0) {
+      section = value === "on:" ? "on" : null;
+      onIndent = section ? indent : -1;
+      pushIndent = -1;
+      tagsIndent = -1;
+      continue;
+    }
+    if (section === "on" && indent > onIndent && value === "push:") {
+      section = "push";
+      pushIndent = indent;
+      tagsIndent = -1;
+      continue;
+    }
+    if (section === "push" && indent <= pushIndent) {
+      section = indent > onIndent && value === "push:" ? "push" : "on";
+      tagsIndent = -1;
+    }
+    if (section === "push" && indent > pushIndent && value === "tags:") {
+      section = "tags";
+      tagsIndent = indent;
+      continue;
+    }
+    if (section === "tags") {
+      if (indent <= tagsIndent) {
+        section = indent > pushIndent ? "push" : indent > onIndent ? "on" : null;
+        continue;
+      }
+      const match = value.match(/^-\s*["']?([^"'#]+?)["']?\s*$/);
+      if (match) patterns.push(match[1]);
+    }
+  }
+  return patterns;
+}
+
+function validateWorkflow(root, client, errors) {
+  const workflowPath = `.github/workflows/${client.workflow}`;
+  if (!existsSync(resolve(root, workflowPath))) {
+    errors.push(`${client.label}: publish workflow is missing: ${workflowPath}`);
+    return;
+  }
+  const expected = `${client.tagPrefix}*`;
+  const patterns = workflowTagPatterns(read(root, workflowPath));
+  if (!patterns.includes(expected)) {
+    errors.push(
+      `${client.label}: ${workflowPath} must listen for push.tags pattern ${JSON.stringify(expected)} (found: ${
+        patterns.length ? patterns.map(JSON.stringify).join(", ") : "none"
+      })`,
+    );
+  }
 }
 
 function packageVersionFromUvLock(content) {
@@ -112,6 +176,7 @@ function validatePythonMetadata(root, client, errors) {
 export function readReleasePlan(root = ROOT) {
   const errors = [];
   const releases = CLIENTS.map((client) => {
+    validateWorkflow(root, client, errors);
     const version =
       client.manifest === "npm"
         ? validateNpmMetadata(root, client, errors)
