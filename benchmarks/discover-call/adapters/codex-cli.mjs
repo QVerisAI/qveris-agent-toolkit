@@ -183,6 +183,7 @@ export function runCodex(invocation, { outputLimit = 1_000_000, forceKillAfterMs
     });
     child.stderr.resume();
     child.on('error', () => {
+      if (terminationError) return;
       cleanup();
       rejectOnce(adapterFailure('Codex CLI could not be started', 'start_failed'));
     });

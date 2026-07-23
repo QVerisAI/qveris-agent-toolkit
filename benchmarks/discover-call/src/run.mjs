@@ -87,6 +87,7 @@ export function createProcessAdapter({ command, args = [], timeoutMs = 120_000, 
       let stdoutExceeded = false;
       let stderrExceeded = false;
       let settled = false;
+      let terminationError;
       let forceKillTimer;
       const cleanup = () => {
         clearTimeout(timer);
@@ -98,18 +99,19 @@ export function createProcessAdapter({ command, args = [], timeoutMs = 120_000, 
         reject(error);
       };
       const terminate = (error) => {
-        if (settled) return;
+        if (settled || terminationError) return;
+        terminationError = error;
         clearTimeout(timer);
         child.kill('SIGTERM');
         forceKillTimer = setTimeout(() => child.kill('SIGKILL'), forceKillAfterMs);
         forceKillTimer.unref();
-        rejectOnce(error);
       };
       const timer = setTimeout(() => {
         terminate(adapterError('Adapter timed out', 'timeout'));
       }, timeoutMs);
 
       child.stdout.on('data', (chunk) => {
+        if (terminationError) return;
         stdout += chunk;
         if (stdout.length > 1_000_000 && !stdoutExceeded) {
           stdoutExceeded = true;
@@ -117,6 +119,7 @@ export function createProcessAdapter({ command, args = [], timeoutMs = 120_000, 
         }
       });
       child.stderr.on('data', (chunk) => {
+        if (terminationError) return;
         stderr += chunk;
         if (stderr.length > 100_000 && !stderrExceeded) {
           stderrExceeded = true;
@@ -124,12 +127,14 @@ export function createProcessAdapter({ command, args = [], timeoutMs = 120_000, 
         }
       });
       child.on('error', () => {
+        if (terminationError) return;
         cleanup();
         rejectOnce(adapterError('Adapter could not be started', 'start_failed'));
       });
       child.on('close', (code) => {
         cleanup();
         if (settled) return;
+        if (terminationError) return rejectOnce(terminationError);
         settled = true;
         if (code !== 0) {
           return reject(

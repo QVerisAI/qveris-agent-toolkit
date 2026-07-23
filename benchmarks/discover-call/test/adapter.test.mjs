@@ -7,7 +7,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { createProcessAdapter, main } from '../src/run.mjs';
-import { buildClaudeInvocation, parseClaudeEnvelope } from '../adapters/claude-cli.mjs';
+import { buildClaudeInvocation, parseClaudeEnvelope, runClaude } from '../adapters/claude-cli.mjs';
 import { buildCodexInvocation, CODEX_REASONING_EFFORT, parseCodexEvents, runCodex } from '../adapters/codex-cli.mjs';
 
 const adapterPath = resolve(fileURLToPath(new URL('../adapters/first-result.mjs', import.meta.url)));
@@ -107,7 +107,7 @@ test('process adapter force-kills a child that ignores SIGTERM', async () => {
     });
     await assert.rejects(invoke({ stage: 'select' }), /timed out/);
     const pid = Number(await readFile(pidPath, 'utf8'));
-    assert.equal(await waitForProcessExit(pid), true);
+    assert.equal(processExists(pid), false);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -211,6 +211,39 @@ test('Claude adapter extracts only structured model output', () => {
     /unsuccessful result/,
   );
   assert.throws(() => parseClaudeEnvelope(JSON.stringify({ result: 'not-json' })), /no structured output/);
+});
+
+test('Claude adapter removes the QVeris key from its model subprocess', async () => {
+  const previous = process.env.QVERIS_API_KEY;
+  process.env.QVERIS_API_KEY = 'must-not-reach-model';
+  try {
+    const output = await runClaude({
+      command: process.execPath,
+      args: ['-e', 'process.stdout.write(String(Boolean(process.env.QVERIS_API_KEY)))'],
+      stdin: '',
+    });
+    assert.equal(output, 'false');
+  } finally {
+    if (previous === undefined) delete process.env.QVERIS_API_KEY;
+    else process.env.QVERIS_API_KEY = previous;
+  }
+});
+
+test('Claude adapter force-kills a child that ignores the output-limit signal', async () => {
+  await assert.rejects(
+    runClaude(
+      {
+        command: process.execPath,
+        args: [
+          '-e',
+          "process.on('SIGTERM', () => {}); process.stdout.write('x'.repeat(100)); setInterval(() => {}, 1000)",
+        ],
+        stdin: '',
+      },
+      { outputLimit: 10, forceKillAfterMs: 20 },
+    ),
+    /output exceeded/,
+  );
 });
 
 test('Codex adapter preserves canonical messages and response schema', () => {
@@ -328,13 +361,4 @@ function processExists(pid) {
     if (error?.code === 'ESRCH') return false;
     throw error;
   }
-}
-
-async function waitForProcessExit(pid, timeoutMs = 1_000) {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (!processExists(pid)) return true;
-    await new Promise((resolvePromise) => setTimeout(resolvePromise, 20));
-  }
-  return !processExists(pid);
 }

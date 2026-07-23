@@ -278,6 +278,193 @@ test('rejects contradictory public lifecycle attestations', () => {
       ),
     /inconsistent call lifecycle/,
   );
+  assert.throws(
+    () =>
+      validatePublicRecords(
+        [
+          {
+            ...record,
+            call: { attempted: true, success: null },
+          },
+        ],
+        policy,
+      ),
+    /inconsistent call lifecycle/,
+  );
+  assert.throws(
+    () =>
+      validatePublicRecords(
+        [
+          {
+            ...record,
+            status: 'failed',
+            error: { stage: 'api', reason_code: 'request_failed' },
+            call: { attempted: true, success: true, result_nonempty: true },
+          },
+        ],
+        policy,
+      ),
+    /inconsistent call lifecycle/,
+  );
+});
+
+test('rejects unsafe metadata scalar types and control characters', () => {
+  const [record] = sanitizePublicRecords([rawRecord()], policy, tasks);
+  assert.throws(
+    () =>
+      sanitizePublicRecords(
+        [
+          rawRecord({
+            metadata: {
+              ...rawRecord().metadata,
+              runtime: { node: { private: 'nested value' }, platform: 'darwin', arch: 'arm64' },
+            },
+          }),
+        ],
+        policy,
+        tasks,
+      ),
+    /invalid public metadata values/,
+  );
+  assert.throws(
+    () =>
+      validatePublicRecords(
+        [
+          {
+            ...record,
+            metadata: {
+              ...record.metadata,
+              runtime: { ...record.metadata.runtime, node: { private: 'nested value' } },
+            },
+          },
+        ],
+        policy,
+      ),
+    /invalid public metadata values/,
+  );
+  assert.throws(
+    () =>
+      validatePublicRecords(
+        [
+          {
+            ...record,
+            metadata: { ...record.metadata, api_revision: 'revision\nprivate-value' },
+          },
+        ],
+        policy,
+      ),
+    /invalid public metadata values/,
+  );
+  assert.throws(
+    () =>
+      validatePublicRecords(
+        [
+          {
+            ...record,
+            metadata: { ...record.metadata, api_revision: 'safe\u202Etxt' },
+          },
+        ],
+        policy,
+      ),
+    /invalid public metadata values/,
+  );
+});
+
+test('rejects impossible public grounding attestations', () => {
+  const [record] = sanitizePublicRecords([rawRecord()], policy, tasks);
+  assert.throws(
+    () =>
+      validatePublicRecords(
+        [
+          {
+            ...record,
+            discovery: { ...record.discovery, result_count: 0 },
+          },
+        ],
+        policy,
+      ),
+    /inconsistent grounding attestations/,
+  );
+  assert.throws(
+    () =>
+      validatePublicRecords(
+        [
+          {
+            ...record,
+            discovery: { ...record.discovery, selection_grounded: false },
+          },
+        ],
+        policy,
+      ),
+    /inconsistent grounding attestations/,
+  );
+  assert.throws(
+    () =>
+      validatePublicRecords(
+        [
+          {
+            ...record,
+            selection: { tool_id: null },
+          },
+        ],
+        policy,
+      ),
+    /inconsistent grounding attestations/,
+  );
+});
+
+test('requires a categorical error stage and safe optional reason code', () => {
+  const [record] = sanitizePublicRecords(
+    [
+      rawRecord({
+        status: 'failed',
+        selection: { tool_id: null },
+        inspection: { returned_tool_ids: [], required_parameters: [] },
+        parameters: null,
+        call: { attempted: false, success: null },
+        error: { stage: 'adapter', reason_code: 'model_failed' },
+      }),
+    ],
+    policy,
+    tasks,
+  );
+  assert.throws(
+    () =>
+      validatePublicRecords(
+        [
+          {
+            ...record,
+            error: { stage: null, reason_code: null },
+          },
+        ],
+        policy,
+      ),
+    /error codes are invalid/,
+  );
+  assert.doesNotThrow(() =>
+    validatePublicRecords(
+      [
+        {
+          ...record,
+          error: { stage: 'adapter', reason_code: null },
+        },
+      ],
+      policy,
+    ),
+  );
+  assert.throws(
+    () =>
+      validatePublicRecords(
+        [
+          {
+            ...record,
+            error: { stage: 'adapter', reason_code: 'unsafe reason' },
+          },
+        ],
+        policy,
+      ),
+    /error codes are invalid/,
+  );
 });
 
 test('publication policy cannot expose parameters or omit a required protected field', () => {

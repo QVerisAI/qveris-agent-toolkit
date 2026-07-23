@@ -61,6 +61,7 @@ test('orchestrates discover, select, inspect, parameterize, and call', async () 
     ['discover', 'select', 'inspect', 'parameterize', 'call'],
   );
   assert.equal(records[0].status, 'completed');
+  assert.equal(records[0].benchmark_version, 'v2');
   assert.deepEqual(records[0].inspection.required_parameters, ['city']);
   assert.deepEqual(records[0].parameters, { city: 'London' });
   assert.equal(records[0].call.success, true);
@@ -118,6 +119,118 @@ test('builds a strict provider-neutral schema from inspected parameters', () => 
   );
 });
 
+test('rejects required object parameters without a usable property schema', () => {
+  assert.throws(
+    () =>
+      parameterResponseSchema({
+        params: [{ name: 'payload', type: 'object', required: true }],
+      }),
+    (error) =>
+      error.benchmarkStage === 'parameterize' &&
+      error.benchmarkReason === 'unsupported_parameter_schema' &&
+      /payload/.test(error.message),
+  );
+  assert.throws(
+    () =>
+      parameterResponseSchema({
+        params: [{ name: 'items', type: 'array', required: true }],
+      }),
+    (error) =>
+      error.benchmarkStage === 'parameterize' &&
+      error.benchmarkReason === 'unsupported_parameter_schema' &&
+      /items/.test(error.message),
+  );
+  assert.deepEqual(
+    parameterResponseSchema({
+      params: [
+        { name: 'payload', type: 'object', required: false },
+        { name: 'items', type: 'array', required: false },
+      ],
+    }).properties.parameters.properties,
+    {
+      payload: { type: 'null' },
+      items: { type: 'null' },
+    },
+  );
+});
+
+test('rejects ambiguous inspected parameter metadata instead of guessing', () => {
+  assert.throws(
+    () =>
+      parameterResponseSchema({
+        params: [
+          { name: 'query', type: 'string', required: true },
+          { name: 'query', type: 'number', required: false },
+        ],
+      }),
+    (error) => error.benchmarkReason === 'unsupported_parameter_schema',
+  );
+  assert.throws(
+    () =>
+      parameterResponseSchema({
+        params: [{ name: 'query', type: 'unknown', required: true }],
+      }),
+    (error) => error.benchmarkReason === 'unsupported_parameter_schema',
+  );
+  assert.throws(
+    () =>
+      parameterResponseSchema({
+        params: [{ name: 'query', type: 'string' }],
+      }),
+    (error) => error.benchmarkReason === 'unsupported_parameter_schema',
+  );
+  assert.throws(
+    () =>
+      parameterResponseSchema({
+        params: [{ name: 'query', type: 'string', required: true, enum: { unsafe: true } }],
+      }),
+    (error) => error.benchmarkReason === 'unsupported_parameter_schema',
+  );
+});
+
+test('does not invoke parameterization or a billed call for an opaque required parameter', async () => {
+  const events = [];
+  const [record] = await runBenchmark({
+    tasks: [task],
+    model: 'model-a',
+    trials: 1,
+    execute: true,
+    api: {
+      async discover() {
+        events.push('discover');
+        return { search_id: 'search-1', results: [{ tool_id: 'weather.forecast' }] };
+      },
+      async inspect() {
+        events.push('inspect');
+        return {
+          results: [
+            {
+              tool_id: 'weather.forecast',
+              params: [{ name: 'payload', type: 'object', required: true }],
+            },
+          ],
+        };
+      },
+      async call() {
+        events.push('call');
+        throw new Error('not reached');
+      },
+    },
+    async invokeAdapter(payload) {
+      events.push(payload.stage);
+      return { tool_id: 'weather.forecast' };
+    },
+  });
+
+  assert.deepEqual(events, ['discover', 'select', 'inspect']);
+  assert.equal(record.call.attempted, false);
+  assert.deepEqual(record.error, {
+    stage: 'parameterize',
+    reason_code: 'unsupported_parameter_schema',
+    message: 'Required object parameter payload has no property schema',
+  });
+});
+
 test('records adapter failures without copying their error text', async () => {
   const records = await runBenchmark({
     tasks: [task],
@@ -147,6 +260,40 @@ test('records adapter failures without copying their error text', async () => {
   assert.equal(records[0].error.message, 'Adapter invocation failed');
   assert.equal(records[0].error.reason_code, 'tool_use_rejected');
   assert.equal(JSON.stringify(records[0]).includes('secret-token'), false);
+});
+
+test('checks the full result data instead of treating its wrapper as non-empty', async () => {
+  const [record] = await runBenchmark({
+    tasks: [task],
+    model: 'model-a',
+    trials: 1,
+    execute: true,
+    api: {
+      async discover() {
+        return { search_id: 'search-1', results: [{ tool_id: 'weather.forecast' }] };
+      },
+      async inspect() {
+        return {
+          results: [
+            {
+              tool_id: 'weather.forecast',
+              params: [{ name: 'city', type: 'string', required: true }],
+            },
+          ],
+        };
+      },
+      async call() {
+        return { success: true, result: { data: {} } };
+      },
+    },
+    async invokeAdapter(payload) {
+      return payload.stage === 'select' ? { tool_id: 'weather.forecast' } : { parameters: { city: 'London' } };
+    },
+  });
+
+  assert.equal(record.status, 'completed');
+  assert.equal(record.call.success, true);
+  assert.equal(record.call.result_nonempty, false);
 });
 
 test('does not inspect or execute a tool outside the discovery results', async () => {
@@ -215,10 +362,57 @@ test('validates task constraints and trial bounds', async () => {
       }),
     /alias_values/,
   );
+  assert.throws(
+    () =>
+      validateTask({
+        ...task,
+        constraints: [task.constraints[0], { ...task.constraints[0] }],
+      }),
+    /duplicate constraint id/,
+  );
+  assert.throws(
+    () =>
+      validateTask({
+        ...task,
+        constraints: [{ ...task.constraints[0], value: Number.POSITIVE_INFINITY }],
+      }),
+    /primitive finite value/,
+  );
   await assert.rejects(
     runBenchmark({ tasks: [task], model: 'model-a', trials: 0, api: {}, invokeAdapter() {} }),
     /trials/,
   );
+});
+
+test('validates the complete task set before any external call', async () => {
+  let externalCalls = 0;
+  const api = {
+    async discover() {
+      externalCalls++;
+      return { results: [] };
+    },
+    async inspect() {
+      externalCalls++;
+      return { results: [] };
+    },
+    async call() {
+      externalCalls++;
+      return { success: false };
+    },
+  };
+  await assert.rejects(
+    runBenchmark({
+      tasks: [task, { ...task }],
+      model: 'model-a',
+      api,
+      async invokeAdapter() {
+        externalCalls++;
+        return {};
+      },
+    }),
+    /Duplicate benchmark task id/,
+  );
+  assert.equal(externalCalls, 0);
 });
 
 test('does not parameterize or execute when inspection omits the selected tool', async () => {

@@ -1,6 +1,16 @@
+import { validateTaskSet } from './harness.mjs';
+
 export function scoreRecords(tasks, records) {
-  if (!Array.isArray(tasks) || tasks.length === 0) throw new Error('At least one benchmark task is required');
+  validateTaskSet(tasks);
   if (!Array.isArray(records) || records.length === 0) throw new Error('At least one run record is required');
+  const benchmarkVersions = new Set(records.map((record) => record?.benchmark_version ?? 'v1'));
+  if (benchmarkVersions.size !== 1) {
+    throw new Error('Benchmark summary cannot mix benchmark versions');
+  }
+  const benchmarkVersion = [...benchmarkVersions][0];
+  if (!['v1', 'v2'].includes(benchmarkVersion)) {
+    throw new Error(`Unsupported benchmark version: ${benchmarkVersion}`);
+  }
   const taskById = new Map(tasks.map((task) => [task.id, task]));
   const runIds = new Set();
   for (const record of records) {
@@ -23,7 +33,7 @@ export function scoreRecords(tasks, records) {
 
   return {
     schema_version: 1,
-    methodology: 'discover-call-v1',
+    methodology: `discover-call-${benchmarkVersion}`,
     generated_at: new Date().toISOString(),
     models: [...byModel.entries()].map(([model, results]) => aggregateModel(model, results)),
     records: scored,
@@ -111,7 +121,7 @@ export function scoreRecord(task, record) {
     (required.length === 0 ? 1 : mean(required.map((name) => hasValue(parameters[name]))));
   const constraintAccuracy =
     parameterization?.constraint_accuracy ??
-    mean(task.constraints.map((constraint) => constraintSatisfied(parameters, constraint)));
+    mean(task.constraints.map((constraint) => constraintSatisfied(parameters, constraint, task.constraints)));
   const executed = record.call?.attempted === true;
   const callSuccess = executed ? record.call?.success === true : null;
   const resultNonempty =
@@ -183,9 +193,7 @@ function aggregateModel(model, records) {
     constraint_accuracy: round(mean(records.map((record) => record.constraint_accuracy))),
     call_success_rate: executed.length ? round(mean(executed.map((record) => record.call_success))) : null,
     result_nonempty_rate:
-      executed.length && resultEvidenceComplete
-        ? round(mean(executed.map((record) => record.result_nonempty)))
-        : null,
+      executed.length && resultEvidenceComplete ? round(mean(executed.map((record) => record.result_nonempty))) : null,
     pre_result_gate_workflow_success_rate: round(
       mean(records.map((record) => record.pre_result_gate_workflow_success)),
     ),
@@ -196,7 +204,7 @@ function aggregateModel(model, records) {
   };
 }
 
-function constraintSatisfied(parameters, constraint) {
+function constraintSatisfied(parameters, constraint, constraints) {
   for (const alias of constraint.aliases) {
     if (!hasValue(parameters[alias])) continue;
     const actual = parameters[alias];
@@ -211,7 +219,17 @@ function constraintSatisfied(parameters, constraint) {
   }
   for (const alias of array(constraint.composite_aliases)) {
     if (!hasValue(parameters[alias])) continue;
-    if (normalize(parameters[alias], constraint).includes(normalize(constraint.value, constraint))) return 1;
+    const compositeConstraints = constraints.filter((candidate) => array(candidate.composite_aliases).includes(alias));
+    const values = compositeConstraints.map((candidate) => normalize(candidate.value, candidate));
+    const representations = new Set([
+      values.join(''),
+      values.join('/'),
+      values.join('-'),
+      values.join('_'),
+      values.join(':'),
+      values.join(' '),
+    ]);
+    if (representations.has(normalize(parameters[alias], constraint))) return 1;
   }
   return 0;
 }
@@ -301,11 +319,7 @@ function booleanOrNull(value) {
 
 function parameterizationMetrics(value) {
   if (value === undefined) return null;
-  if (
-    !plainObject(value) ||
-    !metric(value.required_parameter_accuracy) ||
-    !metric(value.constraint_accuracy)
-  ) {
+  if (!plainObject(value) || !metric(value.required_parameter_accuracy) || !metric(value.constraint_accuracy)) {
     throw new Error('Run record parameterization metrics must be between 0 and 1');
   }
   return value;

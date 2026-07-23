@@ -1,13 +1,23 @@
 # Published benchmark results
 
-## 2026-07-23 — v4 public quality baseline
+## 2026-07-23 — v4 diagnostic baseline candidate
 
-The v4 baseline compares the curated reference route and the configured model
+This v4 run compares the curated reference route and the configured model
 over immutable `tasks/v4.jsonl`: 18 tasks, three trials per task, Top 10
 discovery, and real calls. All 54 trials in each lane are retained.
 Public run records omit raw parameter values and retain only their scored
 required-parameter and constraint-accuracy attestations. Inspected parameter
 names are also omitted.
+
+A later collector audit found that this run's `result_nonempty` implementation
+tested the full `result` wrapper rather than its `result.data` payload. A
+standard wrapper such as `{"data":{}}` was therefore classified as non-empty.
+Raw result bodies were intentionally not retained, so the affected attestations
+cannot be recomputed. The call-success and pre-result component metrics remain
+diagnostic, but result non-emptiness, strict workflow success, its interval, and
+the strict benchmark gap below are historical outputs rather than an official
+quality baseline. Promotion requires a new run under a toolkit revision that
+checks `result.data` and explicitly requests `respond_with: "full"`.
 
 | Metric | Curated reference route | `gpt-5.6-sol` configured model |
 | --- | ---: | ---: |
@@ -18,12 +28,13 @@ names are also omitted.
 | Required-parameter accuracy | 100% | 100% |
 | Constraint accuracy | 94.44% | 88.89% |
 | Call success among attempted calls | 100% (51 / 51) | 88.24% (45 / 51) |
-| Non-empty result among attempted calls | 100% (51 / 51) | 88.24% (45 / 51) |
-| Strict workflow success | 94.44% (51 / 54) | 77.78% (42 / 54) |
-| Workflow success, 95% task-cluster bootstrap | 83.33%–100% | 55.56%–94.44% |
+| Historical wrapper-level non-empty observation | 100% (51 / 51) | 88.24% (45 / 51) |
+| Historical strict workflow output | 94.44% (51 / 54) | 77.78% (42 / 54) |
+| Historical workflow interval | 83.33%–100% | 55.56%–94.44% |
 
-The v4 strict benchmark gap is **16.66 percentage points**. This is an
-end-to-end benchmark difference, not a pure routing effect: the two sequential
+The historical v4 strict benchmark gap output is **16.66 percentage points**.
+It must not be presented as a current quality baseline. Independently, it is an
+end-to-end difference rather than a pure routing effect: the two sequential
 lanes observed different live Top-10 catalog snapshots, as recorded by their
 different catalog-observation digests.
 
@@ -52,11 +63,11 @@ Lane metadata:
   `e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054`
 
 The reference route's three failures are the expected `timezone-tokyo`
-coverage misses; its 51 calls all succeeded and returned structurally non-empty
-results. The configured model has 12 strict failures: three Tokyo constraint
-misses, three IP lookup call failures, three company-profile call failures, and
-three domain-intelligence `tool_use_rejected` adapter failures. All three
-Bitcoin trials pass in v4, confirming that the task-versioned `id=1` mapping
+coverage misses; its 51 attempted calls all reported success. The configured
+model has 12 historical strict failures: three Tokyo constraint misses, three
+IP lookup call failures, three company-profile call failures, and three
+domain-intelligence `tool_use_rejected` adapter failures. All three Bitcoin
+constraint checks pass in v4, confirming that the task-versioned `id=1` mapping
 removed the known v3 scoring false negative.
 
 Artifacts:
@@ -72,7 +83,9 @@ This diagnostic run compares the curated reference route and a configured model
 over the same 18 tasks, three trials per task, Top 10 discovery limit, and real
 QVeris calls. No failed trial was removed or selectively rerun. It is not the
 official quality baseline because v3 has a known Bitcoin constraint-scoring
-false negative.
+false negative. It also predates the `result.data` collector correction
+described above, so its result-non-empty and strict workflow outputs remain
+historical diagnostics.
 
 | Metric | Curated reference route | `gpt-5.6-sol` configured model |
 | --- | ---: | ---: |
@@ -83,9 +96,9 @@ false negative.
 | Required-parameter accuracy | 100% | 100% |
 | Constraint accuracy | 94.44% | 83.33% |
 | Call success among attempted calls | 100% (51 / 51) | 88.46% (46 / 52) |
-| Non-empty result among attempted calls | 100% (51 / 51) | 88.46% (46 / 52) |
-| Strict workflow success | 94.44% (51 / 54) | 72.22% (39 / 54) |
-| Workflow success, 95% task-cluster bootstrap | 83.33%–100% | 50.00%–88.89% |
+| Historical wrapper-level non-empty observation | 100% (51 / 51) | 88.46% (46 / 52) |
+| Historical strict workflow output | 94.44% (51 / 54) | 72.22% (39 / 54) |
+| Historical workflow interval | 83.33%–100% | 50.00%–88.89% |
 
 The v3 strict benchmark gap is **22.22 percentage points**: curated reference
 route 94.44% minus configured model 72.22%. It includes three Bitcoin false
@@ -130,10 +143,9 @@ Artifacts:
 
 ### v3 diagnostic interpretation
 
-The curated reference route's three strict failures are all `timezone-tokyo`:
+The curated reference route's three historical strict failures are all `timezone-tokyo`:
 the fixed discovery query returned no Top 10 capability that accepts a city or
-coordinates. All 51 reference-selected calls succeeded and returned non-empty
-results.
+coordinates. All 51 reference-selected calls reported success.
 
 The configured model also missed Tokyo semantically in all three trials: it
 selected a successful timezone-list capability with no Tokyo input. Six well-formed
@@ -144,7 +156,7 @@ parameterization attempts were rejected because the isolated model session
 tried to use a disabled external tool; the remaining trial called the selected
 tool with `{}` and therefore missed the domain constraint.
 
-Three cryptocurrency calls succeeded and returned non-empty Bitcoin results via
+Three cryptocurrency calls succeeded and returned Bitcoin result wrappers via
 CoinMarketCap's provider-specific numeric `id=1`, but the deterministic task
 constraint expects a parameter value containing `BTC`; these remain strict
 constraint misses rather than being silently reclassified after the run. This

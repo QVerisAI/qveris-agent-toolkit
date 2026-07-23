@@ -126,6 +126,52 @@ test('request timeout covers a response body that stalls after headers', async (
   assert.equal(signal.aborted, true);
 });
 
+test('retries a response-body timeout before recording an API failure', async () => {
+  let attempts = 0;
+  const delays = [];
+  const client = createApiClient({
+    apiKey: 'test-key',
+    timeoutMs: 10,
+    maxRetries: 1,
+    sleep: async (ms) => delays.push(ms),
+    fetchImpl: async (_url, init) => {
+      attempts++;
+      if (attempts === 2) return new Response(JSON.stringify({ results: [] }));
+      return {
+        ok: true,
+        status: 200,
+        headers: new Headers(),
+        json: () =>
+          new Promise((resolve, reject) => {
+            init.signal.addEventListener(
+              'abort',
+              () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })),
+              { once: true },
+            );
+          }),
+      };
+    },
+  });
+
+  assert.deepEqual(await client.discover({ query: 'weather', limit: 5 }), { results: [] });
+  assert.equal(attempts, 2);
+  assert.deepEqual(delays, [500]);
+});
+
+test('pins full execution results for structural non-empty scoring', async () => {
+  let requestBody;
+  const client = createApiClient({
+    apiKey: 'test-key',
+    fetchImpl: async (_url, init) => {
+      requestBody = JSON.parse(init.body);
+      return new Response(JSON.stringify({ success: true, result: { data: { value: 1 } } }));
+    },
+  });
+
+  await client.call({ toolId: 'weather.tool', discoveryId: 'search-1', parameters: { city: 'London' } });
+  assert.equal(requestBody.respond_with, 'full');
+});
+
 test('cancels unsuccessful response bodies before reporting API errors', async () => {
   let cancelled = false;
   const client = createApiClient({

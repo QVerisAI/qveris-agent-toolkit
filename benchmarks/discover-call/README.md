@@ -4,6 +4,11 @@ This directory contains the reproducible evaluation harness tracked by issue
 #163. It measures whether an agent can use the public QVeris workflow correctly,
 without assuming that one catalog tool ID is the only valid answer.
 
+New runs use benchmark methodology `discover-call-v2`. Version 2 checks the
+payload inside full execution-result wrappers and uses exact ordered composite
+constraint matching. Historical v1 artifacts remain verifiable but must not be
+mixed with v2 in one summary.
+
 ## Scope boundary
 
 This harness deliberately stays at the contract level: deterministic scoring of
@@ -30,7 +35,9 @@ Each task runs the same sequence:
 The runner treats both grounding checks as execution gates: it stops before
 `inspect` when selection is outside the discovery results, and stops before
 parameterization or `call` when inspection does not return the exact selected
-tool.
+tool. It validates the complete task set, including unique task and constraint
+identifiers, before the first external request so malformed input cannot leave
+a partial billed run.
 
 The scorer reports these metrics separately:
 
@@ -40,14 +47,17 @@ The scorer reports these metrics separately:
 - **constraint accuracy**: fraction of task facts represented through accepted parameter aliases;
 - **call success**: successful real executions among attempted calls;
 - **result non-empty**: successful calls returned a structurally non-empty
-  result; this does not assert semantic correctness;
+  `result.data` (or non-empty truncated-content evidence); this does not assert
+  semantic correctness;
 - **workflow success**: all preceding checks equal 100%, the real call succeeds,
   and its result is non-empty.
 
 The transport retries `429` and `503` responses before recording an API-stage
-failure, matching the public clients' transient-failure behavior. The summary
-reports failures by stage; all exhausted API failures remain in the strict
-workflow-success denominator.
+failure, as well as transient network and response-body timeouts, matching the
+public clients' transient-failure behavior. Calls explicitly request
+`respond_with: "full"` so structural result scoring does not depend on a
+changing server default. The summary reports failures by stage; all exhausted
+API failures remain in the strict workflow-success denominator.
 
 The summary includes a deterministic 95% task-cluster bootstrap interval for
 workflow success. Tasks, rather than individual trials, are resampled so three
@@ -206,7 +216,15 @@ inspected tool's parameter metadata. Every known parameter is represented;
 optional parameters are nullable because strict structured-output providers
 require every declared property to appear. The harness removes top-level null
 values before scoring and execution, so omitted optional parameters retain
-their normal API semantics.
+their normal API semantics. Because the public inspection contract does not
+describe array items or object properties, an opaque optional array/object is
+forced to `null`, while an opaque required array/object fails before model
+parameterization or a billed call.
+
+When multiple constraints share a composite alias such as `symbol` or `pair`,
+the scorer accepts only an exact, ordered composite representation (for
+example, `USD/EUR`, `USD-EUR`, or `USDEUR`). Reversed pairs and substring
+matches do not satisfy the constraints.
 
 Adapters may call any model provider, but must not alter canonical messages or
 print prompts, keys, tokens, or provider error bodies to stdout. A first-result

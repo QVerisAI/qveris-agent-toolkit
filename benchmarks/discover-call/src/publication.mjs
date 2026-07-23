@@ -1,8 +1,10 @@
 import { createHash } from 'node:crypto';
 
+import { validateTaskSet } from './harness.mjs';
 import { scoreRecord } from './scoring.mjs';
 
 const PUBLIC_API_HOSTS = new Set(['qveris.ai', 'qveris.cn']);
+const PUBLIC_LANES = new Set(['model', 'reference', 'configured-model', 'pinned-model', 'current-model']);
 
 const PUBLIC_RECORD_FIELDS = new Set([
   'schema_version',
@@ -90,9 +92,11 @@ export function sanitizePublicRecords(records, policy, tasks) {
   ) {
     throw new Error('Raw benchmark catalog observation digest does not match its records');
   }
-  return records.map((record) =>
+  const sanitized = records.map((record) =>
     sanitizePublicRecord(record, taskById.get(record.task_id), policy, approvedToolIds, catalogObservationSha256),
   );
+  validatePublicRecords(sanitized, policy);
+  return sanitized;
 }
 
 function sanitizePublicRecord(
@@ -163,7 +167,7 @@ export function validatePolicy(policy) {
   if (!policy || typeof policy !== 'object' || policy.schema_version !== 1) {
     throw new Error('Publication policy schema_version must be 1');
   }
-  if (typeof policy.policy_id !== 'string' || !policy.policy_id) {
+  if (!safePublicString(policy.policy_id, 128)) {
     throw new Error('Publication policy needs a policy_id');
   }
   if (policy.catalog_visibility_default !== 'private') {
@@ -171,7 +175,7 @@ export function validatePolicy(policy) {
   }
   if (
     !Array.isArray(policy.approved_selected_tool_ids) ||
-    policy.approved_selected_tool_ids.some((toolId) => typeof toolId !== 'string' || !toolId)
+    policy.approved_selected_tool_ids.some((toolId) => !safePublicString(toolId, 512))
   ) {
     throw new Error('Publication policy needs approved_selected_tool_ids');
   }
@@ -193,9 +197,9 @@ export function validatePolicy(policy) {
   if (
     policy.legacy_lane_rewrites !== undefined &&
     (!plainObject(policy.legacy_lane_rewrites) ||
-      Object.values(policy.legacy_lane_rewrites).some((lane) => typeof lane !== 'string' || !lane))
+      Object.values(policy.legacy_lane_rewrites).some((lane) => !PUBLIC_LANES.has(lane)))
   ) {
-    throw new Error('Publication policy legacy_lane_rewrites must map strings to strings');
+    throw new Error('Publication policy legacy_lane_rewrites must map to public lanes');
   }
   if (policy.unapproved_selected_tool_handling !== 'hash') {
     throw new Error('Publication policy must hash unapproved selected tools');
@@ -214,10 +218,10 @@ export function validatePublicRecords(records, policy) {
     assertObjectFields(record, PUBLIC_RECORD_FIELDS, '$');
     if (
       record.schema_version !== 1 ||
-      record.benchmark_version !== 'v1' ||
-      !nonemptyString(record.run_id) ||
-      !nonemptyString(record.model) ||
-      !nonemptyString(record.task_id) ||
+      !['v1', 'v2'].includes(record.benchmark_version) ||
+      !safePublicString(record.run_id, 256) ||
+      !safePublicString(record.model, 256) ||
+      !safePublicString(record.task_id, 256) ||
       !Number.isInteger(record.trial) ||
       record.trial < 1 ||
       !['completed', 'failed'].includes(record.status) ||
@@ -258,6 +262,19 @@ export function validatePublicRecords(records, policy) {
     ) {
       throw new Error('Public artifact has invalid reproducibility metadata');
     }
+    if (
+      !PUBLIC_LANES.has(record.metadata.lane) ||
+      !safePublicString(record.metadata.model_revision, 256) ||
+      !safePublicString(record.metadata.adapter_revision, 256) ||
+      !safePublicString(record.metadata.toolkit_revision, 256) ||
+      !safePublicString(record.metadata.api_revision, 256) ||
+      !safePublicString(record.metadata.catalog_revision, 256) ||
+      !safePublicString(record.metadata.runtime.node, 128) ||
+      !safePublicString(record.metadata.runtime.platform, 128) ||
+      !safePublicString(record.metadata.runtime.arch, 128)
+    ) {
+      throw new Error('Public artifact has invalid public metadata values');
+    }
     if (selectedToolId && !approvedToolIds.has(selectedToolId)) {
       throw new Error(`Public artifact contains an unapproved selected tool: ${selectedToolId}`);
     }
@@ -292,6 +309,14 @@ export function validatePublicRecords(records, policy) {
     ) {
       throw new Error('Public artifact grounding attestations must be booleans');
     }
+    const hasSelectionIdentity = Boolean(selectedToolId || record.selection?.tool_id_sha256);
+    if (
+      (record.discovery.selection_grounded && (record.discovery.result_count === 0 || !hasSelectionIdentity)) ||
+      (record.inspection.selection_grounded && (!record.discovery.selection_grounded || !hasSelectionIdentity)) ||
+      (record.status === 'completed' && (!record.discovery.selection_grounded || !record.inspection.selection_grounded))
+    ) {
+      throw new Error('Public artifact has inconsistent grounding attestations');
+    }
     if (
       typeof record.call?.attempted !== 'boolean' ||
       !booleanOrNull(record.call?.success) ||
@@ -303,14 +328,17 @@ export function validatePublicRecords(records, policy) {
       (!record.call.attempted && (record.call.success !== null || record.call.result_nonempty !== undefined)) ||
       (record.call.result_nonempty === true && record.call.success !== true) ||
       (record.call.attempted && record.metadata.execute !== true) ||
-      (record.status === 'completed' && record.metadata.execute === true && record.call.attempted !== true)
+      (record.status === 'completed' && record.metadata.execute === true && record.call.attempted !== true) ||
+      (record.status === 'completed' && record.call.attempted && typeof record.call.success !== 'boolean') ||
+      (record.status === 'failed' && (record.call.success !== null || record.call.result_nonempty !== undefined))
     ) {
       throw new Error('Public artifact has inconsistent call lifecycle');
     }
     if (
       record.error !== undefined &&
-      (safeCode(record.error.stage) !== record.error.stage ||
-        safeCode(record.error.reason_code) !== record.error.reason_code)
+      (safeCode(record.error.stage) === null ||
+        safeCode(record.error.stage) !== record.error.stage ||
+        (record.error.reason_code !== null && safeCode(record.error.reason_code) !== record.error.reason_code))
     ) {
       throw new Error('Public artifact error codes are invalid');
     }
@@ -393,7 +421,7 @@ function assertObjectFields(value, allowed, path) {
 function publicError(error) {
   return {
     stage: safeCode(error?.stage),
-    reason_code: safeCode(error?.reason_code),
+    reason_code: safeCode(error?.reason_code) ?? 'unclassified',
   };
 }
 
@@ -429,8 +457,19 @@ function nonemptyString(value) {
   return typeof value === 'string' && value.length > 0;
 }
 
+function safePublicString(value, maxLength) {
+  return (
+    nonemptyString(value) && value.trim().length > 0 && value.length <= maxLength && !/[\p{Cc}\p{Cf}]/u.test(value)
+  );
+}
+
 function validTimestamp(value) {
-  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value) && Number.isFinite(Date.parse(value));
+  if (typeof value !== 'string' || !Number.isFinite(Date.parse(value))) return false;
+  try {
+    return new Date(value).toISOString() === value;
+  } catch {
+    return false;
+  }
 }
 
 function safePublicApiUrl(value) {
@@ -452,14 +491,9 @@ function safePublicApiUrl(value) {
 }
 
 function taskMap(tasks) {
-  if (!Array.isArray(tasks) || tasks.length === 0) {
-    throw new Error('Public artifact publication needs benchmark tasks');
-  }
+  validateTaskSet(tasks);
   const result = new Map();
   for (const task of tasks) {
-    if (!plainObject(task) || typeof task.id !== 'string' || !task.id || result.has(task.id)) {
-      throw new Error('Public artifact publication needs unique task ids');
-    }
     result.set(task.id, task);
   }
   return result;

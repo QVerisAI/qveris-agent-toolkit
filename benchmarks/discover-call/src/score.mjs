@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { readJsonLines } from './io.mjs';
+import { readJsonLines, writeTextAtomic } from './io.mjs';
 import { scoreRecords } from './scoring.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -20,7 +20,7 @@ export async function main(argv = process.argv.slice(2)) {
   if (options.output) {
     const output = resolve(options.output);
     await mkdir(dirname(output), { recursive: true });
-    await writeFile(output, json, { encoding: 'utf8', mode: 0o600 });
+    await writeTextAtomic(output, json);
     process.stdout.write(`Wrote benchmark summary to ${output}\n`);
   } else {
     process.stdout.write(json);

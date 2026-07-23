@@ -4,13 +4,9 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 
-import { validateTask } from './harness.mjs';
+import { validateTaskSet } from './harness.mjs';
 import { readJsonLines } from './io.mjs';
-import {
-  validateOfficialPublicRun,
-  validatePolicy,
-  validatePublicRecords,
-} from './publication.mjs';
+import { validateOfficialPublicRun, validatePolicy, validatePublicRecords } from './publication.mjs';
 import { scoreRecords } from './scoring.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -24,12 +20,7 @@ if (taskFiles.length === 0) throw new Error('No versioned task sets found under 
 const counts = [];
 for (const file of taskFiles) {
   const tasks = await readJsonLines(resolve(root, 'tasks', file));
-  const ids = new Set();
-  for (const task of tasks) {
-    validateTask(task);
-    if (ids.has(task.id)) throw new Error(`${file}: duplicate task id: ${task.id}`);
-    ids.add(task.id);
-  }
+  validateTaskSet(tasks);
   counts.push(`${file}: ${tasks.length} tasks`);
 }
 
@@ -40,9 +31,7 @@ scoreRecords(v1, fixture);
 
 const policy = JSON.parse(await readFile(resolve(root, 'publication-policy.json'), 'utf8'));
 validatePolicy(policy);
-const resultFiles = (await readdir(resolve(root, 'results')))
-  .filter((name) => /\.runs\.jsonl$/.test(name))
-  .sort();
+const resultFiles = (await readdir(resolve(root, 'results'))).filter((name) => /\.runs\.jsonl$/.test(name)).sort();
 for (const file of resultFiles) {
   const version = file.match(/-v(\d+)\.runs\.jsonl$/)?.[1];
   if (!version) throw new Error(`${file}: result filename must identify its task-set version`);

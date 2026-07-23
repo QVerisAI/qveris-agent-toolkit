@@ -42,13 +42,18 @@ export function createApiClient({
           observeRevision(response.headers, 'x-qveris-catalog-version', observedCatalogRevisions);
           if (!response.ok) {
             await Promise.resolve(response.body?.cancel?.()).catch(() => undefined);
-            throw apiError(`HTTP ${response.status}`);
+            throw apiError(`HTTP ${response.status}`, `http_${response.status}`);
           }
           let payload;
           try {
             payload = await response.json();
           } catch {
-            throw apiError(controller.signal.aborted ? 'API response timed out' : 'Invalid API response');
+            if (controller.signal.aborted) {
+              const error = new Error('response timeout');
+              error.apiTimeoutPhase = 'response';
+              throw error;
+            }
+            throw apiError('Invalid API response', 'invalid_response');
           }
           if (
             payload &&
@@ -61,7 +66,7 @@ export function createApiClient({
               (typeof status === 'string' && ['failure', 'failed', 'error'].includes(status.toLowerCase())) ||
               (typeof status === 'number' && status >= 400)
             ) {
-              throw apiError('API returned a failure envelope');
+              throw apiError('API returned a failure envelope', 'failure_envelope');
             }
             return payload.data;
           }
@@ -70,7 +75,13 @@ export function createApiClient({
       } catch (error) {
         if (error?.benchmarkStage === 'api') throw error;
         if (attempt >= maxRetries) {
-          throw apiError(controller.signal.aborted ? 'API request timed out' : 'Network request failed');
+          if (controller.signal.aborted) {
+            throw apiError(
+              error?.apiTimeoutPhase === 'response' ? 'API response timed out' : 'API request timed out',
+              error?.apiTimeoutPhase === 'response' ? 'response_timeout' : 'request_timeout',
+            );
+          }
+          throw apiError('Network request failed', 'network_failure');
         }
         retryDelay = retryDelayMs(null, attempt);
       } finally {
@@ -92,6 +103,7 @@ export function createApiClient({
       request(`/tools/execute?tool_id=${encodeURIComponent(toolId)}`, {
         parameters,
         search_id: discoveryId ?? null,
+        respond_with: 'full',
       }),
     observedRevisions: () => ({
       api_revision: singleRevision(observedApiRevisions),
@@ -146,8 +158,9 @@ export function normalizeBaseUrl(value) {
   return parsed.toString().replace(/\/$/, '');
 }
 
-function apiError(message) {
+function apiError(message, reason) {
   const error = new Error(message);
   error.benchmarkStage = 'api';
+  error.benchmarkReason = reason;
   return error;
 }

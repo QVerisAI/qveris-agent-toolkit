@@ -88,6 +88,33 @@ test('v3 constraints support composite parameters and explicit URL decoding', ()
     1,
   );
   assert.equal(
+    scoreRecord(exchange, {
+      ...baseRecord,
+      run_id: 'run-reversed',
+      task_id: exchange.id,
+      parameters: { symbol: 'EUR/USD' },
+    }).constraint_accuracy,
+    0,
+  );
+  assert.equal(
+    scoreRecord(exchange, {
+      ...baseRecord,
+      run_id: 'run-substring',
+      task_id: exchange.id,
+      parameters: { symbol: 'USDT/EUR' },
+    }).constraint_accuracy,
+    0,
+  );
+  assert.equal(
+    scoreRecord(exchange, {
+      ...baseRecord,
+      run_id: 'run-compact',
+      task_id: exchange.id,
+      parameters: { symbol: 'USDEUR' },
+    }).constraint_accuracy,
+    1,
+  );
+  assert.equal(
     scoreRecord(news, {
       ...baseRecord,
       run_id: 'run-news',
@@ -276,6 +303,14 @@ test('rejects run records for unknown tasks', () => {
   );
 });
 
+test('rejects duplicate task definitions before scoring', () => {
+  assert.throws(
+    () =>
+      scoreRecords([task, { ...task, prompt: 'Different duplicate definition' }], [resultRecord({ taskId: task.id })]),
+    /Duplicate benchmark task id/,
+  );
+});
+
 function resultRecord({ taskId }) {
   return {
     run_id: `run-${taskId}`,
@@ -368,5 +403,16 @@ test('rejects duplicate run ids and mixed benchmark conditions', () => {
         ],
       ),
     /schema_version/,
+  );
+  assert.throws(
+    () =>
+      scoreRecords(
+        [task],
+        [
+          { ...record, benchmark_version: 'v1' },
+          { ...record, run_id: 'run-2', trial: 2, benchmark_version: 'v2' },
+        ],
+      ),
+    /cannot mix benchmark versions/,
   );
 });

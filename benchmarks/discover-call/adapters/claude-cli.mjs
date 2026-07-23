@@ -71,28 +71,51 @@ export function parseClaudeEnvelope(stdout) {
 
 export async function invokeClaude(payload) {
   const invocation = buildClaudeInvocation(payload);
-  const stdout = await new Promise((resolve, reject) => {
+  return parseClaudeEnvelope(await runClaude(invocation));
+}
+
+export function runClaude(invocation, { outputLimit = 1_000_000, forceKillAfterMs = 1_000 } = {}) {
+  if (!Number.isInteger(outputLimit) || outputLimit < 1) {
+    throw new Error('outputLimit must be a positive integer');
+  }
+  if (!Number.isInteger(forceKillAfterMs) || forceKillAfterMs < 1) {
+    throw new Error('forceKillAfterMs must be a positive integer');
+  }
+  return new Promise((resolve, reject) => {
+    const env = { ...process.env };
+    delete env.QVERIS_API_KEY;
     const child = spawn(invocation.command, invocation.args, {
       shell: false,
       stdio: ['pipe', 'pipe', 'pipe'],
-      env: process.env,
+      env,
     });
     let output = '';
-    let outputExceeded = false;
     let forwardedSignal;
     let forceKillTimer;
+    let terminationError;
+    let settled = false;
 
     const cleanup = () => {
       process.off('SIGINT', forwardSigint);
       process.off('SIGTERM', forwardSigterm);
       if (forceKillTimer) clearTimeout(forceKillTimer);
     };
+    const rejectOnce = (error) => {
+      if (settled) return;
+      settled = true;
+      reject(error);
+    };
+    const terminate = (error, signal = 'SIGTERM') => {
+      if (terminationError || settled) return;
+      terminationError = error;
+      child.kill(signal);
+      forceKillTimer = setTimeout(() => child.kill('SIGKILL'), forceKillAfterMs);
+      forceKillTimer.unref();
+    };
     const forwardSignal = (signal) => {
       if (forwardedSignal) return;
       forwardedSignal = signal;
-      child.kill(signal);
-      forceKillTimer = setTimeout(() => child.kill('SIGKILL'), 1_000);
-      forceKillTimer.unref();
+      terminate(new Error('Claude CLI interrupted'), signal);
     };
     const forwardSigint = () => forwardSignal('SIGINT');
     const forwardSigterm = () => forwardSignal('SIGTERM');
@@ -101,30 +124,32 @@ export async function invokeClaude(payload) {
 
     child.stdin.on('error', () => {});
     child.stdout.on('data', (chunk) => {
+      if (terminationError) return;
       output += chunk;
-      if (output.length > 1_000_000 && !outputExceeded) {
-        outputExceeded = true;
-        child.kill('SIGTERM');
+      if (output.length > outputLimit) {
+        terminate(new Error('Claude CLI output exceeded the adapter limit'));
       }
     });
     child.stderr.resume();
     child.on('error', () => {
+      if (terminationError) return;
       cleanup();
-      reject(new Error('Claude CLI could not be started'));
+      rejectOnce(new Error('Claude CLI could not be started'));
     });
     child.on('close', (code) => {
       cleanup();
+      if (settled) return;
       if (forwardedSignal) {
         process.kill(process.pid, forwardedSignal);
         return;
       }
-      if (outputExceeded) return reject(new Error('Claude CLI output exceeded the adapter limit'));
+      if (terminationError) return rejectOnce(terminationError);
+      settled = true;
       if (code === 0) resolve(output);
       else reject(new Error('Claude CLI invocation failed'));
     });
     child.stdin.end(invocation.stdin);
   });
-  return parseClaudeEnvelope(stdout);
 }
 
 function isObject(value) {

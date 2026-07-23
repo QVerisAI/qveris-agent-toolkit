@@ -1,7 +1,20 @@
 import { randomUUID } from 'node:crypto';
 
 export const SCHEMA_VERSION = 1;
-export const BENCHMARK_VERSION = 'v1';
+export const BENCHMARK_VERSION = 'v2';
+
+export function validateTaskSet(tasks) {
+  if (!Array.isArray(tasks) || tasks.length === 0) {
+    throw new Error('At least one benchmark task is required');
+  }
+  const taskIds = new Set();
+  for (const task of tasks) {
+    validateTask(task);
+    if (taskIds.has(task.id)) throw new Error(`Duplicate benchmark task id: ${task.id}`);
+    taskIds.add(task.id);
+  }
+  return tasks;
+}
 
 export function validateTask(task) {
   if (!task || typeof task !== 'object') throw new Error('Task must be an object');
@@ -12,10 +25,15 @@ export function validateTask(task) {
   if (!Array.isArray(task.constraints) || task.constraints.length === 0) {
     throw new Error(`Task ${task.id}: constraints must be a non-empty array`);
   }
+  const constraintIds = new Set();
   for (const constraint of task.constraints) {
     if (typeof constraint.id !== 'string' || !constraint.id) {
       throw new Error(`Task ${task.id}: every constraint needs an id`);
     }
+    if (constraintIds.has(constraint.id)) {
+      throw new Error(`Task ${task.id}: duplicate constraint id ${constraint.id}`);
+    }
+    constraintIds.add(constraint.id);
     if (
       !Array.isArray(constraint.aliases) ||
       constraint.aliases.length === 0 ||
@@ -23,7 +41,12 @@ export function validateTask(task) {
     ) {
       throw new Error(`Task ${task.id}: constraint ${constraint.id} needs string aliases`);
     }
-    if (!('value' in constraint)) throw new Error(`Task ${task.id}: constraint ${constraint.id} needs a value`);
+    if (
+      !['string', 'number', 'boolean'].includes(typeof constraint.value) ||
+      (typeof constraint.value === 'number' && !Number.isFinite(constraint.value))
+    ) {
+      throw new Error(`Task ${task.id}: constraint ${constraint.id} needs a primitive finite value`);
+    }
     if (constraint.match !== undefined && !['equals', 'contains'].includes(constraint.match)) {
       throw new Error(`Task ${task.id}: constraint ${constraint.id} has an unsupported match mode`);
     }
@@ -50,7 +73,11 @@ export function validateTask(task) {
           !constraint.aliases.includes(alias) ||
           !Array.isArray(values) ||
           values.length === 0 ||
-          values.some((value) => !['string', 'number', 'boolean'].includes(typeof value))
+          values.some(
+            (value) =>
+              !['string', 'number', 'boolean'].includes(typeof value) ||
+              (typeof value === 'number' && !Number.isFinite(value)),
+          )
         ) {
           throw new Error(`Task ${task.id}: constraint ${constraint.id} has invalid alias_values`);
         }
@@ -92,7 +119,7 @@ export async function runBenchmark({
   now = () => new Date().toISOString(),
   newRunId = randomUUID,
 }) {
-  if (!Array.isArray(tasks) || tasks.length === 0) throw new Error('At least one benchmark task is required');
+  validateTaskSet(tasks);
   if (typeof model !== 'string' || !model.trim()) throw new Error('A model identifier is required');
   if (!Number.isInteger(trials) || trials < 1 || trials > 100)
     throw new Error('trials must be an integer from 1 to 100');
@@ -107,8 +134,7 @@ export async function runBenchmark({
   if (typeof invokeAdapter !== 'function') throw new Error('invokeAdapter must be a function');
 
   const records = [];
-  for (const rawTask of tasks) {
-    const task = validateTask(rawTask);
+  for (const task of tasks) {
     for (let trial = 1; trial <= trials; trial++) {
       records.push(await runTrial({ task, model, trial, execute, limit, api, invokeAdapter, metadata, now, newRunId }));
     }
@@ -213,8 +239,17 @@ function requiredParameterNames(tool) {
 export function parameterResponseSchema(tool) {
   const properties = {};
   for (const parameter of array(tool?.params)) {
-    if (typeof parameter?.name !== 'string' || !parameter.name || Object.hasOwn(properties, parameter.name)) {
-      continue;
+    if (
+      typeof parameter?.name !== 'string' ||
+      !parameter.name.trim() ||
+      typeof parameter.required !== 'boolean' ||
+      Object.hasOwn(properties, parameter.name)
+    ) {
+      throw stageError(
+        'parameterize',
+        'Inspected tool contains invalid or duplicate parameter metadata',
+        'unsupported_parameter_schema',
+      );
     }
     properties[parameter.name] = strictParameterSchema(parameter);
   }
@@ -275,7 +310,25 @@ function strictParameterSchema(parameter, forceRequired = parameter?.required ==
       : `${parameter.description} Use null when this optional parameter is not needed.`;
   }
 
+  if (parameter?.enum !== undefined && !Array.isArray(parameter.enum)) {
+    throw stageError(
+      'parameterize',
+      `Parameter ${parameter?.name ?? '<unnamed>'} has invalid enum metadata`,
+      'unsupported_parameter_schema',
+    );
+  }
   if (Array.isArray(parameter?.enum) && parameter.enum.length > 0) {
+    if (
+      parameter.enum.some(
+        (value) => jsonValueType(value) === null || (typeof value === 'number' && !Number.isFinite(value)),
+      )
+    ) {
+      throw stageError(
+        'parameterize',
+        `Parameter ${parameter?.name ?? '<unnamed>'} has unsupported enum values`,
+        'unsupported_parameter_schema',
+      );
+    }
     schema.type = enumType(parameter.enum, forceRequired);
     schema.enum = forceRequired ? [...parameter.enum] : [...parameter.enum, null];
     return schema;
@@ -283,13 +336,31 @@ function strictParameterSchema(parameter, forceRequired = parameter?.required ==
 
   schema.type = nullableType(type, forceRequired);
   if (type === 'array') {
-    schema.items = strictParameterSchema(
-      isPlainObject(parameter?.items) ? parameter.items : { type: 'string', required: true },
-      true,
-    );
+    if (!isPlainObject(parameter?.items)) {
+      if (forceRequired) {
+        throw stageError(
+          'parameterize',
+          `Required array parameter ${parameter?.name ?? '<unnamed>'} has no item schema`,
+          'unsupported_parameter_schema',
+        );
+      }
+      return { ...schema, type: 'null' };
+    }
+    schema.items = strictParameterSchema(parameter.items, true);
   } else if (type === 'object') {
+    const nestedDefinitions = isPlainObject(parameter?.properties) ? parameter.properties : {};
+    if (Object.keys(nestedDefinitions).length === 0) {
+      if (forceRequired) {
+        throw stageError(
+          'parameterize',
+          `Required object parameter ${parameter?.name ?? '<unnamed>'} has no property schema`,
+          'unsupported_parameter_schema',
+        );
+      }
+      return { ...schema, type: 'null' };
+    }
     const nestedProperties = {};
-    for (const [name, definition] of Object.entries(isPlainObject(parameter?.properties) ? parameter.properties : {})) {
+    for (const [name, definition] of Object.entries(nestedDefinitions)) {
       nestedProperties[name] = strictParameterSchema(isPlainObject(definition) ? definition : { type: 'string' });
     }
     schema.additionalProperties = false;
@@ -300,13 +371,17 @@ function strictParameterSchema(parameter, forceRequired = parameter?.required ==
 }
 
 function normalizeParameterType(value) {
-  const type = typeof value === 'string' ? value.toLowerCase() : 'string';
+  if (typeof value !== 'string') {
+    throw stageError('parameterize', 'Parameter type is missing', 'unsupported_parameter_schema');
+  }
+  const type = value.toLowerCase();
   if (['integer', 'int'].includes(type)) return 'integer';
   if (['number', 'float', 'double'].includes(type)) return 'number';
   if (['boolean', 'bool'].includes(type)) return 'boolean';
   if (['array', 'list'].includes(type)) return 'array';
   if (['object', 'map'].includes(type)) return 'object';
-  return 'string';
+  if (type === 'string') return 'string';
+  throw stageError('parameterize', `Unsupported parameter type: ${value}`, 'unsupported_parameter_schema');
 }
 
 function nullableType(type, required) {
@@ -336,7 +411,12 @@ function hasNonemptyResult(result) {
   if (result === null || result === undefined) return false;
   if (typeof result === 'string') return result.trim().length > 0;
   if (Array.isArray(result)) return result.length > 0;
-  if (isPlainObject(result)) return Object.keys(result).length > 0;
+  if (isPlainObject(result)) {
+    if (Object.hasOwn(result, 'data')) return hasNonemptyResult(result.data);
+    if (typeof result.truncated_content === 'string' && result.truncated_content.trim()) return true;
+    if (typeof result.full_content_file_url === 'string' && result.full_content_file_url.trim()) return true;
+    return Object.keys(result).length > 0;
+  }
   return true;
 }
 

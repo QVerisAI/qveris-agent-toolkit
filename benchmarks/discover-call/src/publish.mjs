@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, realpath, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, realpath, stat } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { readJsonLines, writeJsonLines } from './io.mjs';
+import { readJsonLines, writeJsonLines, writeTextAtomic } from './io.mjs';
 import { sanitizePublicRecords, validateOfficialPublicRun, validatePublicRecords } from './publication.mjs';
 import { scoreRecords } from './scoring.mjs';
 
@@ -39,7 +39,7 @@ export async function main(argv = process.argv.slice(2)) {
     mkdir(dirname(outputSummary), { recursive: true }),
   ]);
   await writeJsonLines(outputRuns, publicRecords);
-  await writeFile(outputSummary, JSON.stringify(summary, null, 2) + '\n', { encoding: 'utf8', mode: 0o600 });
+  await writeTextAtomic(outputSummary, JSON.stringify(summary, null, 2) + '\n');
   process.stdout.write(`Wrote ${publicRecords.length} sanitized records and summary\n`);
 }
 

@@ -1,4 +1,5 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { open, readFile, rename, unlink } from 'node:fs/promises';
 
 export async function readJsonLines(path) {
   const text = await readFile(path, 'utf8');
@@ -17,5 +18,22 @@ export async function readJsonLines(path) {
 
 export async function writeJsonLines(path, records) {
   const content = records.map((record) => JSON.stringify(record)).join('\n') + '\n';
-  await writeFile(path, content, { encoding: 'utf8', mode: 0o600 });
+  await writeTextAtomic(path, content);
+}
+
+export async function writeTextAtomic(path, content) {
+  const temporaryPath = `${path}.${process.pid}.${randomUUID()}.tmp`;
+  let handle;
+  try {
+    handle = await open(temporaryPath, 'wx', 0o600);
+    await handle.writeFile(content, { encoding: 'utf8' });
+    await handle.sync();
+    await handle.close();
+    handle = undefined;
+    await rename(temporaryPath, path);
+  } catch (error) {
+    await handle?.close().catch(() => {});
+    await unlink(temporaryPath).catch(() => {});
+    throw error;
+  }
 }
