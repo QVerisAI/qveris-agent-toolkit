@@ -12,6 +12,7 @@ const task = {
 
 test('orchestrates discover, select, inspect, parameterize, and call', async () => {
   const events = [];
+  const checkpointSizes = [];
   const records = await runBenchmark({
     tasks: [task],
     model: 'model-a',
@@ -28,6 +29,7 @@ test('orchestrates discover, select, inspect, parameterize, and call', async () 
           results: [
             {
               tool_id: 'weather.forecast',
+              one_of_required: [],
               params: [
                 { name: 'city', type: 'string', required: true },
                 { name: 'units', type: 'string', required: false, enum: ['metric', 'imperial'] },
@@ -46,7 +48,12 @@ test('orchestrates discover, select, inspect, parameterize, and call', async () 
       assert.equal(payload.messages.length, 2);
       assert.equal(payload.messages[1].content, JSON.stringify(payload.input));
       events.push([payload.stage, payload.input.task_id]);
-      if (payload.stage === 'select') return { tool_id: 'weather.forecast' };
+      if (payload.stage === 'select') {
+        assert.equal('search_id' in payload.input.discovery, false);
+        return { tool_id: 'weather.forecast' };
+      }
+      assert.equal('discovery_id' in payload.input, false);
+      assert.deepEqual(Object.keys(payload.input.selected_tool).sort(), ['one_of_required', 'params', 'tool_id']);
       assert.deepEqual(payload.response_schema.properties.parameters.required, ['city', 'units']);
       assert.deepEqual(payload.response_schema.properties.parameters.properties.units.type, ['string', 'null']);
       return { parameters: { city: 'London', units: null } };
@@ -54,6 +61,10 @@ test('orchestrates discover, select, inspect, parameterize, and call', async () 
     metadata: { adapter_revision: 'adapter-sha' },
     now: () => '2026-07-15T00:00:00.000Z',
     newRunId: () => 'run-1',
+    newSessionId: () => 'session-1',
+    async onRecord(records) {
+      checkpointSizes.push(records.length);
+    },
   });
 
   assert.deepEqual(
@@ -68,6 +79,11 @@ test('orchestrates discover, select, inspect, parameterize, and call', async () 
   assert.equal(records[0].call.result_nonempty, true);
   assert.equal('execution_id' in records[0].call, false);
   assert.equal(records[0].metadata.adapter_revision, 'adapter-sha');
+  assert.equal(events[0][1].sessionId, 'session-1');
+  assert.equal(events[2][1].sessionId, 'session-1');
+  assert.equal(events[4][1].sessionId, 'session-1');
+  assert.equal(events[4][1].model, 'model-a');
+  assert.deepEqual(checkpointSizes, [1]);
 });
 
 test('builds a strict provider-neutral schema from inspected parameters', () => {
@@ -117,6 +133,7 @@ test('builds a strict provider-neutral schema from inspected parameters', () => 
       },
     },
   );
+  assert.doesNotThrow(() => parameterResponseSchema({ params: [], one_of_required: [] }));
 });
 
 test('rejects required object parameters without a usable property schema', () => {
@@ -238,7 +255,7 @@ test('records adapter failures without copying their error text', async () => {
     trials: 1,
     api: {
       async discover() {
-        return { results: [{ tool_id: 'weather.forecast' }] };
+        return { search_id: 'search-1', results: [{ tool_id: 'weather.forecast' }] };
       },
       async inspect() {
         throw new Error('not reached');
@@ -306,7 +323,7 @@ test('does not inspect or execute a tool outside the discovery results', async (
     api: {
       async discover() {
         events.push('discover');
-        return { results: [{ tool_id: 'weather.forecast' }] };
+        return { search_id: 'search-1', results: [{ tool_id: 'weather.forecast' }] };
       },
       async inspect() {
         events.push('inspect');
@@ -378,6 +395,28 @@ test('validates task constraints and trial bounds', async () => {
       }),
     /primitive finite value/,
   );
+  assert.throws(() => validateTask({ ...task, discover_query: 123 }), /discover_query/);
+  assert.throws(
+    () =>
+      validateTask({
+        ...task,
+        constraints: [{ ...task.constraints[0], aliases: ['city', 'city'] }],
+      }),
+    /string aliases/,
+  );
+  assert.throws(
+    () =>
+      validateTask({
+        ...task,
+        reference: {
+          candidates: [
+            { tool_id: 'weather.forecast', parameters: { city: 'London' } },
+            { tool_id: 'weather.forecast', parameters: { city: 'Paris' } },
+          ],
+        },
+      }),
+    /unique tool ids/,
+  );
   await assert.rejects(
     runBenchmark({ tasks: [task], model: 'model-a', trials: 0, api: {}, invokeAdapter() {} }),
     /trials/,
@@ -415,7 +454,63 @@ test('validates the complete task set before any external call', async () => {
   assert.equal(externalCalls, 0);
 });
 
-test('does not parameterize or execute when inspection omits the selected tool', async () => {
+test('validates execution controls and all run ids before external calls', async () => {
+  let externalCalls = 0;
+  const api = {
+    async discover() {
+      externalCalls++;
+      return { search_id: 'search-1', results: [] };
+    },
+    async inspect() {
+      externalCalls++;
+      return { results: [] };
+    },
+    async call() {
+      externalCalls++;
+      return { success: false };
+    },
+  };
+  const invokeAdapter = async () => {
+    externalCalls++;
+    return {};
+  };
+
+  await assert.rejects(
+    runBenchmark({ tasks: [task], model: 'model-a', execute: 'false', api, invokeAdapter }),
+    /execute must be a boolean/,
+  );
+  await assert.rejects(
+    runBenchmark({ tasks: [task], model: 'model-a', limit: 0, api, invokeAdapter }),
+    /limit must be an integer/,
+  );
+  await assert.rejects(
+    runBenchmark({
+      tasks: [task],
+      model: 'model-a',
+      trials: 2,
+      api,
+      invokeAdapter,
+      newRunId: () => 'duplicate-run',
+    }),
+    /Duplicate benchmark run id/,
+  );
+  let runId = 0;
+  await assert.rejects(
+    runBenchmark({
+      tasks: [task],
+      model: 'model-a',
+      trials: 2,
+      api,
+      invokeAdapter,
+      newRunId: () => `run-${++runId}`,
+      newSessionId: () => 'duplicate-session',
+    }),
+    /Duplicate benchmark session id/,
+  );
+  assert.equal(externalCalls, 0);
+});
+
+test('stops before selection when discover omits its correlation id', async () => {
   const events = [];
   const [record] = await runBenchmark({
     tasks: [task],
@@ -426,6 +521,133 @@ test('does not parameterize or execute when inspection omits the selected tool',
       async discover() {
         events.push('discover');
         return { results: [{ tool_id: 'weather.forecast' }] };
+      },
+      async inspect() {
+        events.push('inspect');
+        throw new Error('not reached');
+      },
+      async call() {
+        events.push('call');
+        throw new Error('not reached');
+      },
+    },
+    async invokeAdapter() {
+      events.push('adapter');
+      return {};
+    },
+  });
+
+  assert.deepEqual(events, ['discover']);
+  assert.deepEqual(record.error, {
+    stage: 'discover',
+    reason_code: 'missing_search_id',
+    message: 'Discover did not return a search_id',
+  });
+  assert.equal(record.call.attempted, false);
+});
+
+test('validates adapter parameters and one-of requirements before a billed call', async () => {
+  const variants = [
+    { parameters: {}, message: /omitted required parameter city/ },
+    { parameters: { city: 123 }, message: /invalid string value/ },
+    { parameters: { city: 'London', units: 'kelvin' }, message: /outside the parameter enum/ },
+    { parameters: { city: 'London', unknown: true }, message: /unknown parameter unknown/ },
+    { parameters: { city: 'London' }, oneOf: [['query', 'url']], message: /one_of_required group/ },
+  ];
+
+  for (const [index, variant] of variants.entries()) {
+    let calls = 0;
+    const [record] = await runBenchmark({
+      tasks: [task],
+      model: 'model-a',
+      trials: 1,
+      execute: true,
+      api: {
+        async discover() {
+          return { search_id: `search-${index}`, results: [{ tool_id: 'weather.forecast' }] };
+        },
+        async inspect() {
+          return {
+            results: [
+              {
+                tool_id: 'weather.forecast',
+                params: [
+                  { name: 'city', type: 'string', required: true },
+                  { name: 'units', type: 'string', required: false, enum: ['metric', 'imperial'] },
+                  { name: 'query', type: 'string', required: false },
+                  { name: 'url', type: 'string', required: false },
+                ],
+                ...(variant.oneOf ? { one_of_required: variant.oneOf } : {}),
+              },
+            ],
+          };
+        },
+        async call() {
+          calls++;
+          return { success: true, result: { data: { ok: true } } };
+        },
+      },
+      async invokeAdapter(payload) {
+        return payload.stage === 'select' ? { tool_id: 'weather.forecast' } : variant;
+      },
+    });
+
+    assert.equal(calls, 0);
+    assert.equal(record.error.stage, 'parameterize');
+    assert.equal(record.error.reason_code, 'invalid_parameter_values');
+    assert.match(record.error.message, variant.message);
+  }
+});
+
+test('adapter projections cannot mutate the inspected schema used for call validation', async () => {
+  let calls = 0;
+  const [record] = await runBenchmark({
+    tasks: [task],
+    model: 'model-a',
+    trials: 1,
+    execute: true,
+    api: {
+      async discover() {
+        return { search_id: 'search-1', results: [{ tool_id: 'weather.forecast' }] };
+      },
+      async inspect() {
+        return {
+          results: [
+            {
+              tool_id: 'weather.forecast',
+              params: [{ name: 'city', type: 'string', required: true }],
+            },
+          ],
+        };
+      },
+      async call() {
+        calls++;
+        return { success: true, result: { data: { ok: true } } };
+      },
+    },
+    async invokeAdapter(payload) {
+      if (payload.stage === 'select') return { tool_id: 'weather.forecast' };
+      payload.input.selected_tool.params[0].required = false;
+      return { parameters: {} };
+    },
+  });
+
+  assert.equal(calls, 0);
+  assert.equal(record.error.stage, 'parameterize');
+  assert.equal(record.error.reason_code, 'invalid_parameter_values');
+});
+
+test('does not parameterize or execute when inspection omits the selected tool', async () => {
+  const events = [];
+  const [record] = await runBenchmark({
+    tasks: [task],
+    model: 'model-a',
+    trials: 1,
+    execute: true,
+    api: {
+      async discover() {
+        events.push('discover');
+        return { search_id: 'search-1', results: [{ tool_id: 'weather.forecast' }] };
       },
       async inspect() {
         events.push('inspect');

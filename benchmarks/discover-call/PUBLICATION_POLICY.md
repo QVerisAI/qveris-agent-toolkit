@@ -31,7 +31,7 @@ and account-specific availability remain internal.
 
 Public artifacts must not contain API keys, OAuth tokens, connection/account
 identifiers, `search_id`, `execution_id`, credit balances, raw provider errors,
-raw tool results, parameter values, private prompts, tenant-private tools, or
+`session_id`, raw tool results, parameter values, private prompts, tenant-private tools, or
 the unfiltered ordered discovery catalog. Inspected parameter names are also
 omitted because they can disclose the input schema of an unapproved tool.
 

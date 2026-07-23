@@ -53,6 +53,7 @@ const PUBLIC_ERROR_FIELDS = new Set(['stage', 'reason_code']);
 const REQUIRED_FORBIDDEN_FIELDS = [
   'execution_id',
   'search_id',
+  'session_id',
   'connection_id',
   'remaining_credits',
   'result_tool_ids',
@@ -224,6 +225,7 @@ export function validatePublicRecords(records, policy) {
       !safePublicString(record.task_id, 256) ||
       !Number.isInteger(record.trial) ||
       record.trial < 1 ||
+      record.trial > 100 ||
       !['completed', 'failed'].includes(record.status) ||
       !validTimestamp(record.started_at) ||
       !validTimestamp(record.finished_at)
@@ -258,6 +260,7 @@ export function validatePublicRecords(records, policy) {
       !isSha256(record.metadata.catalog_observation_sha256) ||
       !Number.isInteger(record.metadata.discovery_limit) ||
       record.metadata.discovery_limit < 1 ||
+      record.metadata.discovery_limit > 100 ||
       typeof record.metadata.execute !== 'boolean'
     ) {
       throw new Error('Public artifact has invalid reproducibility metadata');
@@ -275,6 +278,9 @@ export function validatePublicRecords(records, policy) {
     ) {
       throw new Error('Public artifact has invalid public metadata values');
     }
+    if (record.metadata.lane === 'pinned-model' && record.metadata.model_revision === 'unreported') {
+      throw new Error('Public pinned-model artifact needs an immutable model revision');
+    }
     if (selectedToolId && !approvedToolIds.has(selectedToolId)) {
       throw new Error(`Public artifact contains an unapproved selected tool: ${selectedToolId}`);
     }
@@ -290,6 +296,8 @@ export function validatePublicRecords(records, policy) {
     if (
       !Number.isInteger(record.discovery?.result_count) ||
       record.discovery.result_count < 0 ||
+      record.discovery.result_count > record.metadata.discovery_limit ||
+      (record.discovery.result_count === 0 && record.discovery.snapshot_sha256 !== sha256('[]')) ||
       !isSha256(record.discovery?.snapshot_sha256)
     ) {
       throw new Error('Public artifact discovery needs a count and SHA-256 snapshot');
@@ -358,6 +366,23 @@ export function validateOfficialPublicRun(records, { taskSetSha256, minTrialsPer
     if (record.metadata?.execute !== true) {
       throw new Error(`Official public artifact must execute every trial: ${record.task_id}`);
     }
+    if (record.benchmark_version === 'v2') {
+      if (record.metadata?.lane === 'model') {
+        throw new Error('Official benchmark v2 artifacts need an explicit comparison lane');
+      }
+      if (
+        ['reference', 'pinned-model'].includes(record.metadata?.lane) &&
+        record.metadata?.model_revision === 'unreported'
+      ) {
+        throw new Error(`Official ${record.metadata.lane} artifact needs an immutable model revision`);
+      }
+      if (!/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(record.metadata?.toolkit_revision ?? '')) {
+        throw new Error('Official benchmark v2 artifact needs a toolkit commit SHA');
+      }
+      if (record.metadata?.adapter_revision === 'unreported') {
+        throw new Error('Official benchmark v2 artifact needs an adapter revision');
+      }
+    }
     const key = `${record.model}\0${record.task_id}`;
     trials.set(key, (trials.get(key) ?? 0) + 1);
   }
@@ -370,7 +395,13 @@ export function validateOfficialPublicRun(records, { taskSetSha256, minTrialsPer
 }
 
 function publicMetadata(metadata = {}, policy, catalogObservationSha256) {
-  const lane = policy.legacy_lane_rewrites?.[metadata.lane] ?? metadata.lane ?? 'model';
+  const hasPinnedRevision =
+    metadata.lane === 'pinned-model' &&
+    typeof metadata.model_revision === 'string' &&
+    metadata.model_revision !== 'unreported';
+  const lane = hasPinnedRevision
+    ? 'pinned-model'
+    : (policy.legacy_lane_rewrites?.[metadata.lane] ?? metadata.lane ?? 'model');
   if (!policy.approved_api_base_urls.includes(metadata.api_base_url)) {
     throw new Error('Raw benchmark record uses an unapproved public API base URL');
   }

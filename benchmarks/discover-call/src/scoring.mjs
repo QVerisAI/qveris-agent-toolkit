@@ -1,8 +1,22 @@
 import { validateTaskSet } from './harness.mjs';
 
-export function scoreRecords(tasks, records) {
+export function scoreRecords(tasks, records, { taskSetSha256 } = {}) {
   validateTaskSet(tasks);
   if (!Array.isArray(records) || records.length === 0) throw new Error('At least one run record is required');
+  if (taskSetSha256 !== undefined) {
+    if (typeof taskSetSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(taskSetSha256)) {
+      throw new Error('Scoring taskSetSha256 must be a SHA-256 digest');
+    }
+    for (const record of records) {
+      const declaredTaskSetSha256 = record?.metadata?.task_set_sha256;
+      if (
+        (declaredTaskSetSha256 !== undefined && declaredTaskSetSha256 !== taskSetSha256) ||
+        (record?.benchmark_version === 'v2' && declaredTaskSetSha256 !== taskSetSha256)
+      ) {
+        throw new Error(`Run record task-set digest does not match ${record?.task_id ?? '<missing>'}`);
+      }
+    }
+  }
   const benchmarkVersions = new Set(records.map((record) => record?.benchmark_version ?? 'v1'));
   if (benchmarkVersions.size !== 1) {
     throw new Error('Benchmark summary cannot mix benchmark versions');
@@ -102,7 +116,7 @@ export function scoreRecord(task, record) {
   const inspected = array(record.inspection?.returned_tool_ids);
   const required = array(record.inspection?.required_parameters);
   const parameters = plainObject(record.parameters) ? record.parameters : {};
-  const parameterization = parameterizationMetrics(record.parameterization);
+  const parameterization = record.parameters === undefined ? parameterizationMetrics(record.parameterization) : null;
   const completed = record.status === 'completed';
   const selectionGrounded =
     typeof record.discovery?.selection_grounded === 'boolean'
@@ -118,7 +132,15 @@ export function scoreRecord(task, record) {
         : false;
   const requiredParameterAccuracy =
     parameterization?.required_parameter_accuracy ??
-    (required.length === 0 ? 1 : mean(required.map((name) => hasValue(parameters[name]))));
+    (required.length === 0
+      ? 1
+      : mean(
+          required.map((requirement) =>
+            Array.isArray(requirement)
+              ? requirement.some((name) => hasValue(parameters[name]))
+              : hasValue(parameters[requirement]),
+          ),
+        ));
   const constraintAccuracy =
     parameterization?.constraint_accuracy ??
     mean(task.constraints.map((constraint) => constraintSatisfied(parameters, constraint, task.constraints)));
@@ -174,10 +196,9 @@ function aggregateModel(model, records) {
   const failuresByStage = {};
   const failuresByReason = {};
   for (const record of records) {
-    if (record.error_stage) failuresByStage[record.error_stage] = (failuresByStage[record.error_stage] || 0) + 1;
-    if (record.error_reason) {
-      failuresByReason[record.error_reason] = (failuresByReason[record.error_reason] || 0) + 1;
-    }
+    const failure = strictFailure(record);
+    if (failure?.stage) failuresByStage[failure.stage] = (failuresByStage[failure.stage] || 0) + 1;
+    if (failure?.reason) failuresByReason[failure.reason] = (failuresByReason[failure.reason] || 0) + 1;
   }
   return {
     model,
@@ -202,6 +223,20 @@ function aggregateModel(model, records) {
     failures_by_stage: failuresByStage,
     failures_by_reason: failuresByReason,
   };
+}
+
+function strictFailure(record) {
+  if (record.error_stage) return { stage: record.error_stage, reason: record.error_reason };
+  if (!record.completed) return { stage: 'unknown', reason: 'incomplete_trial' };
+  if (!record.selection_grounded) return { stage: 'select', reason: 'ungrounded_selection' };
+  if (!record.inspection_grounded) return { stage: 'inspect', reason: 'ungrounded_inspection' };
+  if (record.required_parameter_accuracy < 1) {
+    return { stage: 'parameterize', reason: 'incomplete_required_parameters' };
+  }
+  if (record.constraint_accuracy < 1) return { stage: 'parameterize', reason: 'constraint_mismatch' };
+  if (record.call_success === false) return { stage: 'call', reason: 'tool_returned_failure' };
+  if (record.result_nonempty === false) return { stage: 'result', reason: 'empty_result' };
+  return null;
 }
 
 function constraintSatisfied(parameters, constraint, constraints) {

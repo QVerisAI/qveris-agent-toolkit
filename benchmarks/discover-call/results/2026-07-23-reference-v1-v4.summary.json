@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "methodology": "discover-call-v1",
-  "generated_at": "2026-07-23T12:14:22.009Z",
+  "generated_at": "2026-07-23T15:53:48.692Z",
   "models": [
     {
       "model": "reference-v1",
@@ -19,10 +19,7 @@
       "result_nonempty_rate": 1,
       "pre_result_gate_workflow_success_rate": 0.9444,
       "workflow_success_rate": 0.9444,
-      "workflow_success_task_cluster_bootstrap_95": [
-        0.8333,
-        1
-      ],
+      "workflow_success_task_cluster_bootstrap_95": [0.8333, 1],
       "failures_by_stage": {
         "select": 3
       },

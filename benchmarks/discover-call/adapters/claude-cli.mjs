@@ -83,7 +83,7 @@ export function runClaude(invocation, { outputLimit = 1_000_000, forceKillAfterM
   }
   return new Promise((resolve, reject) => {
     const env = { ...process.env };
-    delete env.QVERIS_API_KEY;
+    stripQverisEnvironment(env);
     const child = spawn(invocation.command, invocation.args, {
       shell: false,
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -150,6 +150,12 @@ export function runClaude(invocation, { outputLimit = 1_000_000, forceKillAfterM
     });
     child.stdin.end(invocation.stdin);
   });
+}
+
+function stripQverisEnvironment(env) {
+  for (const name of Object.keys(env)) {
+    if (name.startsWith('QVERIS_')) delete env[name];
+  }
 }
 
 function isObject(value) {

@@ -8,9 +8,7 @@
     "oracle": "reference",
     "pinned-model": "configured-model"
   },
-  "approved_api_base_urls": [
-    "https://qveris.ai/api/v1"
-  ],
+  "approved_api_base_urls": ["https://qveris.ai/api/v1"],
   "approved_selected_tool_ids": [
     "amap_webservice.geocode.geo.retrieve.v3",
     "api-football.standings.list.v3.76f7703e",
@@ -43,6 +41,7 @@
   "forbidden_fields": [
     "execution_id",
     "search_id",
+    "session_id",
     "connection_id",
     "remaining_credits",
     "result_tool_ids",

@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 import { createApiClient } from './api.mjs';
 import { runBenchmark } from './harness.mjs';
-import { readJsonLines, writeJsonLines } from './io.mjs';
+import { readJsonLines, validatePathSeparation, writeJsonLines } from './io.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -20,6 +20,8 @@ export async function main(argv = process.argv.slice(2)) {
   }
 
   const tasksPath = resolve(options.tasks);
+  const output = resolve(options.output);
+  await validatePathSeparation({ inputs: [tasksPath], outputs: [output] });
   const tasks = await readJsonLines(tasksPath);
   const taskSetSha256 = createHash('sha256')
     .update(await readFile(tasksPath))
@@ -31,7 +33,6 @@ export async function main(argv = process.argv.slice(2)) {
     args: options.adapterArgs,
     timeoutMs: options.adapterTimeoutMs,
   });
-  const output = resolve(options.output);
   await mkdir(dirname(output), { recursive: true });
   const metadata = {
     lane: options.lane,
@@ -60,6 +61,7 @@ export async function main(argv = process.argv.slice(2)) {
     api,
     invokeAdapter,
     metadata,
+    onRecord: (records) => writeJsonLines(output, records),
   });
   Object.assign(metadata, api.observedRevisions?.() ?? { api_revision: 'unreported', catalog_revision: 'unreported' });
   metadata.catalog_observation_sha256 = catalogObservationSha256(records);
@@ -73,7 +75,7 @@ export function createProcessAdapter({ command, args = [], timeoutMs = 120_000, 
     throw new Error('forceKillAfterMs must be an integer from 1 to 10000');
   }
   const adapterEnv = { ...process.env };
-  delete adapterEnv.QVERIS_API_KEY;
+  stripQverisEnvironment(adapterEnv);
   return (payload) =>
     new Promise((resolvePromise, reject) => {
       const child = spawn(command, args, {
@@ -151,14 +153,18 @@ export function createProcessAdapter({ command, args = [], timeoutMs = 120_000, 
     });
 }
 
+function stripQverisEnvironment(env) {
+  for (const name of Object.keys(env)) {
+    if (name.startsWith('QVERIS_')) delete env[name];
+  }
+}
+
 function parseArgs(argv) {
   const options = {
-    tasks: resolve(ROOT, 'tasks/v1.jsonl'),
     output: resolve(process.cwd(), 'benchmark-runs.jsonl'),
     trials: 3,
     execute: false,
     limit: 10,
-    lane: 'model',
     modelRevision: 'unreported',
     adapterArgs: [],
     adapterTimeoutMs: 120_000,
@@ -184,8 +190,10 @@ function parseArgs(argv) {
   if (!options.help && !options.model) throw new Error('--model is required');
   if (!options.help && !options.adapter) throw new Error('--adapter is required');
   if (!options.help && !options.adapterRevision) throw new Error('--adapter-revision is required');
-  if (!options.help && options.lane === 'pinned-model' && options.modelRevision === 'unreported') {
-    throw new Error('--model-revision is required for --lane pinned-model');
+  if (!options.help && !options.tasks) throw new Error('--tasks is required');
+  if (!options.help && !options.lane) throw new Error('--lane is required');
+  if (!options.help && ['reference', 'pinned-model'].includes(options.lane) && options.modelRevision === 'unreported') {
+    throw new Error(`--model-revision is required for --lane ${options.lane}`);
   }
   return options;
 }
@@ -203,8 +211,8 @@ function integer(value, flag) {
 }
 
 function lane(value) {
-  if (!['model', 'oracle', 'reference', 'configured-model', 'pinned-model', 'current-model'].includes(value)) {
-    throw new Error('--lane must be model, oracle, reference, configured-model, pinned-model, or current-model');
+  if (!['reference', 'configured-model', 'pinned-model', 'current-model'].includes(value)) {
+    throw new Error('--lane must be reference, configured-model, pinned-model, or current-model');
   }
   return value;
 }
@@ -232,18 +240,48 @@ function adapterReasonFromStderr(stderr) {
   return match?.[1] ?? null;
 }
 
-function resolveToolkitRevision(explicit) {
-  if (explicit) return explicit;
-  if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA;
+export function resolveToolkitRevision(
+  explicit,
+  { githubSha = process.env.GITHUB_SHA, execFile = execFileSync, root = ROOT } = {},
+) {
+  const declaredRevision = explicit
+    ? commitSha(explicit, '--toolkit-revision')
+    : githubSha
+      ? commitSha(githubSha, 'GITHUB_SHA')
+      : null;
+  let dirty;
   try {
-    return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
+    dirty = execFile('git', ['status', '--porcelain', '--untracked-files=no'], {
+      cwd: root,
+      encoding: 'utf8',
+    }).trim();
   } catch {
-    throw new Error('--toolkit-revision is required outside a git checkout');
+    if (declaredRevision) return declaredRevision;
+    throw new Error('--toolkit-revision is required outside a clean git checkout');
   }
+  if (dirty) {
+    throw new Error('Working tree has tracked changes; commit them before running the benchmark');
+  }
+  if (declaredRevision) return declaredRevision;
+  let revision;
+  try {
+    revision = execFile('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
+  } catch {
+    throw new Error('--toolkit-revision is required outside a clean git checkout');
+  }
+  return commitSha(revision, 'git HEAD');
+}
+
+function commitSha(value, source) {
+  const revision = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (!/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(revision)) {
+    throw new Error(`${source} must be a 40- or 64-character commit SHA`);
+  }
+  return revision;
 }
 
 function helpText() {
-  return `QVeris discover→call benchmark\n\nUsage:\n  node src/run.mjs --model MODEL --adapter COMMAND --adapter-revision REVISION [options]\n\nOptions:\n  --adapter-arg VALUE       Repeatable adapter argument (no shell parsing)\n  --adapter-revision VALUE  Immutable adapter source/config revision (required)\n  --toolkit-revision VALUE  Toolkit revision (auto-detected in git/GitHub Actions)\n  --model-revision VALUE    Provider snapshot/backend revision; required for pinned-model\n  --tasks PATH              Task-set JSONL (default: tasks/v1.jsonl)\n  --output PATH             Run-record JSONL (default: benchmark-runs.jsonl)\n  --trials N                Trials per task (default: 3)\n  --limit N                 Discover result limit (default: 10)\n  --lane VALUE              reference, configured-model, pinned-model, current-model, or legacy value\n  --execute                 Perform billed call requests (required for workflow success)\n  --adapter-timeout-ms N    Per-stage adapter timeout (default: 120000)\n`;
+  return `QVeris discover→call benchmark\n\nUsage:\n  node src/run.mjs --model MODEL --lane LANE --tasks PATH --adapter COMMAND --adapter-revision REVISION [options]\n\nOptions:\n  --adapter-arg VALUE       Repeatable adapter argument (no shell parsing)\n  --adapter-revision VALUE  Immutable adapter source/config revision (required)\n  --toolkit-revision VALUE  Toolkit commit SHA (auto-detected only in a clean checkout)\n  --model-revision VALUE    Provider snapshot/backend revision; required for reference and pinned-model\n  --tasks PATH              Immutable task-set JSONL (required)\n  --output PATH             Private run-record JSONL with per-trial checkpoints (default: benchmark-runs.jsonl)\n  --trials N                Trials per task (default: 3)\n  --limit N                 Discover result limit (default: 10)\n  --lane VALUE              reference, configured-model, pinned-model, or current-model (required)\n  --execute                 Perform billed call requests (required for workflow success)\n  --adapter-timeout-ms N    Per-stage adapter timeout (default: 120000)\n`;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

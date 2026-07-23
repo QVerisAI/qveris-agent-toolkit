@@ -52,12 +52,16 @@ The scorer reports these metrics separately:
 - **workflow success**: all preceding checks equal 100%, the real call succeeds,
   and its result is non-empty.
 
-The transport retries `429` and `503` responses before recording an API-stage
-failure, as well as transient network and response-body timeouts, matching the
-public clients' transient-failure behavior. Calls explicitly request
-`respond_with: "full"` so structural result scoring does not depend on a
-changing server default. The summary reports failures by stage; all exhausted
-API failures remain in the strict workflow-success denominator.
+Discover and inspect retry `429` and `503` responses, transient network
+failures, and response-body timeouts. Execute retries only an explicit `429`;
+it does not retry `503`, network errors, or timeouts because the first request
+may already have produced third-party side effects or a charge. Calls explicitly
+request `respond_with: "full"` so structural result scoring does not depend on
+a changing server default. The summary assigns each observed strict failure to
+its earliest failed gate and reports normalized stage/reason counts; all
+exhausted API failures remain in the strict workflow-success denominator.
+Legacy successful calls without result-non-emptiness evidence remain
+unreportable rather than being relabeled as failures.
 
 The summary includes a deterministic 95% task-cluster bootstrap interval for
 workflow success. Tasks, rather than individual trials, are resampled so three
@@ -101,13 +105,18 @@ Use `--lane pinned-model` only when the provider exposes a verifiable immutable
 model revision and record it with `--model-revision`. Otherwise use
 `configured-model` or `current-model` and record `unreported`.
 The adapter command is spawned directly without shell parsing.
-The harness removes `QVERIS_API_KEY` from the adapter environment; adapters
-must use separately named credentials for their model provider.
+The harness removes every `QVERIS_*` variable from the adapter environment;
+the bundled adapters repeat that boundary before starting their model CLI.
+Adapters must use separately named credentials for their model provider.
+The runner requires an explicit immutable task file and comparison lane. It
+records a commit-shaped toolkit revision and refuses to run from a checkout
+with tracked changes, including when `--toolkit-revision` is supplied.
 
 ```bash
 node src/run.mjs \
   --model provider/model-version \
   --lane configured-model \
+  --tasks tasks/v4.jsonl \
   --adapter node \
   --adapter-arg /absolute/path/to/model-adapter.mjs \
   --adapter-revision adapter-git-sha-or-config-hash \
@@ -117,7 +126,15 @@ node src/run.mjs \
 ```
 
 `--execute` performs billed calls. Omit it while validating an adapter, but do
-not publish dry-run records as benchmark results.
+not publish dry-run records as benchmark results. Each trial atomically
+checkpoints the private output file so an interrupted paid run retains all
+records completed before the interruption; a partial checkpoint still fails
+official publication completeness checks.
+
+Within a trial, Discover, Inspect, and Execute share an independent private
+`session_id`, and Execute also records the model identifier in the API request.
+The session id is not derived from the public run id. Neither operational field
+is sent to the model adapter or retained in public artifacts.
 
 ### Comparison lanes
 
@@ -136,7 +153,7 @@ Use the lanes together; none is a substitute for the others:
 - `current-model` measures the currently recommended model under the same task
   contract.
 - `model` is retained for backward-compatible records that predate explicit
-  lanes.
+  lanes; the v2 runner does not accept it for new runs.
 
 The strict benchmark gap is
 `curated reference route workflow success - model workflow success`.
@@ -197,15 +214,19 @@ so model comparisons use the same prompt and output contract. The bundled
 reference adapter rejects a task-file digest mismatch. Ground-truth scoring
 constraints are deliberately not exposed to model adapters.
 
-Selection input uses `stage: "select"`; `input` contains the user prompt and the
-complete discovery response. Return:
+Selection input uses `stage: "select"`; `input` contains the user prompt and
+compact routing cards. The operational `search_id` and non-routing discovery
+metadata are not sent to the model adapter. Return:
 
 ```json
 {"tool_id":"selected.tool.id"}
 ```
 
 Parameterization input uses `stage: "parameterize"`; `input` contains the same
-user prompt and the inspected `selected_tool`. Return:
+user prompt and a least-privilege projection of the inspected `selected_tool`
+(`tool_id`, descriptive fields, parameters, one-of requirements, and examples).
+The discovery id, billing metadata, runtime statistics, and prior-execution
+records are not sent to the model adapter. Return:
 
 ```json
 {"parameters":{"city":"London"}}
@@ -245,6 +266,7 @@ alongside the adapter commit in `--adapter-revision`:
 ```bash
 node src/run.mjs \
   --model gpt-5.6-sol \
+  --lane configured-model \
   --adapter node \
   --adapter-arg "$PWD/adapters/codex-cli.mjs" \
   --adapter-revision adapter-git-sha/codex-cli-0.144.1/medium \
@@ -270,6 +292,7 @@ messages. Use a full model identifier rather than an alias:
 ```bash
 node src/run.mjs \
   --model claude-sonnet-5 \
+  --lane configured-model \
   --adapter node \
   --adapter-arg "$PWD/adapters/claude-cli.mjs" \
   --adapter-revision adapter-git-sha \

@@ -55,32 +55,38 @@ task. They record the model identifier and provider revision (or
 revision, catalog revision when reported, catalog-observation digest, endpoint,
 and discovery limit.
 
-Only sanitized JSONL is committed. Public artifacts omit execution, search, and
-connection identifiers, raw parameter values, and the ordered discovery
-catalog. Approved selected tool IDs may remain visible; other selected tools
-are represented only by a digest. Parameter quality is published only as
-required-parameter and constraint-accuracy attestations; inspected parameter
-names are omitted so hashed tools do not leak schema details. See the
+Only sanitized JSONL is committed. Public artifacts omit execution, search,
+session, and connection identifiers, raw parameter values, and the ordered
+discovery catalog. Approved selected tool IDs may remain visible; other
+selected tools are represented only by a digest. Parameter quality is published
+only as required-parameter and constraint-accuracy attestations; inspected
+parameter names are omitted so hashed tools do not leak schema details. See the
 [publication policy](../../benchmarks/discover-call/PUBLICATION_POLICY.md).
 
 ## Published results
 
-The official v4 baseline was run on 2026-07-23 over 18 immutable tasks, three
-trials each, with real calls.
+The 2026-07-23 v4 run is a **diagnostic baseline candidate**, not an official
+quality baseline. It covers 18 immutable tasks, three trials each, with real
+calls, but a later collector audit found that result non-emptiness was tested
+against the full `result` wrapper instead of `result.data`. A wrapper containing
+empty data could therefore be recorded as non-empty. Raw result bodies were
+intentionally not retained, so the affected attestations cannot be recomputed.
 
-| Metric | Curated reference route | `gpt-5.6-sol` configured model |
+| Historical diagnostic | Curated reference route | `gpt-5.6-sol` configured model |
 | --- | ---: | ---: |
 | Completed and executed | 51 / 54 | 51 / 54 |
 | Constraint accuracy | 94.44% | 88.89% |
-| Call and non-empty-result success | 100% (51 / 51) | 88.24% (45 / 51) |
-| Strict workflow success | 94.44% (51 / 54) | 77.78% (42 / 54) |
-| Workflow success, 95% task-cluster bootstrap | 83.33%–100% | 55.56%–94.44% |
+| Call success | 100% (51 / 51) | 88.24% (45 / 51) |
+| Wrapper-level non-empty observation | 100% (51 / 51) | 88.24% (45 / 51) |
+| Strict workflow output | 94.44% (51 / 54) | 77.78% (42 / 54) |
+| Workflow interval | 83.33%–100% | 55.56%–94.44% |
 
-The strict benchmark gap is 16.66 percentage points. The reference route's
-three failures are Tokyo-timezone coverage misses. The configured model's 12
-strict failures are three Tokyo constraint misses, three IP lookup call
-failures, three company-profile call failures, and three safely classified
-`tool_use_rejected` adapter failures.
+The historical strict benchmark gap output is 16.66 percentage points. It must
+not be presented as a current quality or routing baseline. The reference
+route's three diagnostic failures are Tokyo-timezone coverage misses. The
+configured model's 12 diagnostic strict failures are three Tokyo constraint
+misses, three IP lookup call failures, three company-profile call failures, and
+three safely classified `tool_use_rejected` adapter failures.
 
 The configured lane used `gpt-5.6-sol`, medium reasoning, and Codex CLI 0.144.1.
 Its provider model revision is `unreported`, so this is not presented as a
@@ -88,7 +94,10 @@ pinned model snapshot. Both lanes observed API revision `2026-07-22.1`; the API
 did not report a catalog revision, and the separate catalog-observation digests
 differ.
 
-The earlier v3 run is retained only as a diagnostic baseline. Its three
+Promotion requires a fresh run under the corrected collector, which now checks
+`result.data`, requests the full result projection, prevents ambiguous Execute
+retries, and pins the reproducibility inputs before the first external call.
+The earlier v3 run is also retained only as a diagnostic baseline. Its three
 successful Bitcoin calls used provider-specific `id=1`, which v3 incorrectly
 scored as constraint failures. Immutable `tasks/v4.jsonl` explicitly recognizes
 that mapping, and all three Bitcoin trials pass in v4.

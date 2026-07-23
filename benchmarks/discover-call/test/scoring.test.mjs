@@ -198,11 +198,25 @@ test('aggregates per model with parameter and workflow rates', () => {
       calls: 0.5,
       preResult: 0.5,
       workflow: 0.5,
-      failures: {},
-      failureReasons: {},
+      failures: { select: 1 },
+      failureReasons: { ungrounded_selection: 1 },
     },
   );
   assert.equal(summary.models[0].workflow_success_task_cluster_bootstrap_95.length, 2);
+});
+
+test('classifies the earliest failed strict gate in aggregate diagnostics', () => {
+  const records = [
+    {
+      ...resultRecord({ taskId: task.id }),
+      parameters: { city: 'Paris' },
+      call: { attempted: true, success: false, result_nonempty: false },
+    },
+  ];
+  const summary = scoreRecords([task], records);
+
+  assert.deepEqual(summary.models[0].failures_by_stage, { parameterize: 1 });
+  assert.deepEqual(summary.models[0].failures_by_reason, { constraint_mismatch: 1 });
 });
 
 test('does not infer non-empty results when a successful legacy call lacks evidence', () => {
@@ -293,6 +307,44 @@ test('scores sanitized parameterization attestations without publishing paramete
         },
       }),
     /parameterization metrics/,
+  );
+});
+
+test('does not trust parameterization attestations when raw parameters are present', () => {
+  const result = scoreRecord(task, {
+    ...resultRecord({ taskId: task.id }),
+    inspection: {
+      selection_grounded: true,
+      required_parameters: ['city', ['query', 'url']],
+    },
+    parameters: { city: '', query: '' },
+    parameterization: {
+      required_parameter_accuracy: 1,
+      constraint_accuracy: 1,
+    },
+  });
+
+  assert.equal(result.required_parameter_accuracy, 0);
+  assert.equal(result.constraint_accuracy, 0);
+  assert.equal(result.workflow_success, false);
+});
+
+test('scores each one-of-required group as one requirement', () => {
+  const base = {
+    ...resultRecord({ taskId: task.id }),
+    inspection: {
+      selection_grounded: true,
+      required_parameters: ['city', ['query', 'url']],
+    },
+    parameters: { city: 'London', url: 'https://example.com' },
+  };
+  assert.equal(scoreRecord(task, base).required_parameter_accuracy, 1);
+  assert.equal(
+    scoreRecord(task, {
+      ...base,
+      parameters: { city: 'London' },
+    }).required_parameter_accuracy,
+    0.5,
   );
 });
 
@@ -414,5 +466,24 @@ test('rejects duplicate run ids and mixed benchmark conditions', () => {
         ],
       ),
     /cannot mix benchmark versions/,
+  );
+  assert.throws(
+    () =>
+      scoreRecords([task], [{ ...record, metadata: { ...record.metadata, task_set_sha256: 'b'.repeat(64) } }], {
+        taskSetSha256: 'a'.repeat(64),
+      }),
+    /task-set digest does not match/,
+  );
+  assert.doesNotThrow(() =>
+    scoreRecords([task], [{ ...record, benchmark_version: 'v1' }], {
+      taskSetSha256: 'a'.repeat(64),
+    }),
+  );
+  assert.throws(
+    () =>
+      scoreRecords([task], [{ ...record, benchmark_version: 'v2' }], {
+        taskSetSha256: 'a'.repeat(64),
+      }),
+    /task-set digest does not match/,
   );
 });

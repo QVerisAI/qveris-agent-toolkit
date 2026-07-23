@@ -40,35 +40,42 @@ reference 与模型的严格工作流成功率之差称为 **strict benchmark ga
 `unreported`）、adapter 与 toolkit revision、任务集摘要、runtime、API revision、服务端有返回时
 的 catalog revision、catalog observation 摘要、endpoint 和 discovery limit。
 
-仓库只提交脱敏后的 JSONL。公开 artifact 不包含 execution、search、connection 标识、原始参数值，
-也不包含完整有序 discovery 目录。已批准的 selected tool ID 可以保留；其他 selected tool 只保留
-摘要。参数质量仅以必填参数完整率和任务约束准确率证明的形式公开；inspect 返回的参数名也会移除，
-避免已哈希工具泄露 schema 细节。详见
+仓库只提交脱敏后的 JSONL。公开 artifact 不包含 execution、search、session、connection 标识、
+原始参数值，也不包含完整有序 discovery 目录。已批准的 selected tool ID 可以保留；其他 selected
+tool 只保留摘要。参数质量仅以必填参数完整率和任务约束准确率证明的形式公开；inspect 返回的参数名
+也会移除，避免已哈希工具泄露 schema 细节。详见
 [公开策略](../../benchmarks/discover-call/PUBLICATION_POLICY.md)。
 
 ## 已发布结果
 
-正式 v4 基线于 2026-07-23 运行：18 个不可变任务，每个任务三个 trial，并启用真实调用。
+2026-07-23 的 v4 运行是 **diagnostic baseline candidate**，不是正式质量基线。它包含 18 个不可变
+任务、每个任务三个 trial，并启用真实调用；但后续 collector 审核发现，结果非空判断检查的是完整
+`result` wrapper，而不是 `result.data`。因此，即使 data 为空，只要 wrapper 非空也可能被记录为
+非空。原始结果正文按策略未保留，受影响的证明无法重新计算。
 
-| 指标 | Curated reference route | `gpt-5.6-sol` configured model |
+| 历史诊断输出 | Curated reference route | `gpt-5.6-sol` configured model |
 | --- | ---: | ---: |
 | 完成参数化并执行 | 51 / 54 | 51 / 54 |
 | 任务约束准确率 | 94.44% | 88.89% |
-| call 成功且结果非空 | 100%（51 / 51） | 88.24%（45 / 51） |
-| 严格工作流成功率 | 94.44%（51 / 54） | 77.78%（42 / 54） |
-| 工作流成功率 95% task-cluster bootstrap | 83.33%–100% | 55.56%–94.44% |
+| call 成功率 | 100%（51 / 51） | 88.24%（45 / 51） |
+| wrapper 级非空观察 | 100%（51 / 51） | 88.24%（45 / 51） |
+| 严格工作流输出 | 94.44%（51 / 54） | 77.78%（42 / 54） |
+| 工作流区间 | 83.33%–100% | 55.56%–94.44% |
 
-strict benchmark gap 为 16.66 个百分点。reference 的三次失败均为东京时区目录覆盖缺口。configured
-model 的 12 次严格失败包括：三次东京约束未命中、三次 IP lookup 调用失败、三次 company profile
-调用失败，以及三次安全归类的 `tool_use_rejected` adapter 失败。
+历史 strict benchmark gap 输出为 16.66 个百分点，不得将其表述为当前质量基线或纯路由基线。
+reference 的三次诊断失败均为东京时区目录覆盖缺口。configured model 的 12 次诊断严格失败包括：
+三次东京约束未命中、三次 IP lookup 调用失败、三次 company profile 调用失败，以及三次安全归类的
+`tool_use_rejected` adapter 失败。
 
 configured lane 使用 `gpt-5.6-sol`、medium reasoning 和 Codex CLI 0.144.1。provider 模型
 revision 为 `unreported`，因此不会称为 pinned model snapshot。两个 lane 都观察到 API revision
 `2026-07-22.1`；API 未报告 catalog revision，且两次独立运行的 catalog observation 摘要不同。
 
-较早的 v3 只保留为 diagnostic baseline。其三次 Bitcoin 调用通过 provider 特定的 `id=1` 成功返回，
-但 v3 错误地将其计为约束失败。不可变 `tasks/v4.jsonl` 已明确识别该映射，v4 的三次 Bitcoin trial
-全部通过。
+只有在修正后的 collector 上重新运行，才能晋升为正式基线；当前 collector 已改为检查
+`result.data`、显式请求完整结果投影、禁止对结果不明确的 Execute 失败自动重试，并在首次外部调用前
+固定所有复现输入。较早的 v3 同样只保留为 diagnostic baseline。其三次 Bitcoin 调用通过 provider
+特定的 `id=1` 成功返回，但 v3 错误地将其计为约束失败。不可变 `tasks/v4.jsonl` 已明确识别该映射，
+v4 的三次 Bitcoin trial 全部通过。
 
 完整的[结果说明、revision、脱敏 JSONL 与生成汇总](../../benchmarks/discover-call/results/README.md)
 均已公开。scorer fixture 仍只用于测试，不代表产品性能。

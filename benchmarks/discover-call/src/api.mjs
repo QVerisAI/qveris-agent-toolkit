@@ -1,5 +1,6 @@
 const DEFAULT_BASE_URL = 'https://qveris.ai/api/v1';
 const RETRYABLE_STATUS = new Set([429, 503]);
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 export function createApiClient({
   apiKey,
@@ -21,7 +22,7 @@ export function createApiClient({
     throw new Error('timeoutMs must be a positive integer');
   }
 
-  async function request(path, body) {
+  async function request(path, body, { retryAmbiguousFailures = true, retryableStatuses = RETRYABLE_STATUS } = {}) {
     for (let attempt = 0; ; attempt++) {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -34,7 +35,7 @@ export function createApiClient({
           signal: controller.signal,
           redirect: 'error',
         });
-        if (RETRYABLE_STATUS.has(response.status) && attempt < maxRetries) {
+        if (retryableStatuses.has(response.status) && attempt < maxRetries) {
           await Promise.resolve(response.body?.cancel?.()).catch(() => undefined);
           retryDelay = retryDelayMs(response.headers.get('retry-after'), attempt);
         } else {
@@ -74,7 +75,7 @@ export function createApiClient({
         }
       } catch (error) {
         if (error?.benchmarkStage === 'api') throw error;
-        if (attempt >= maxRetries) {
+        if (attempt >= maxRetries || !retryAmbiguousFailures) {
           if (controller.signal.aborted) {
             throw apiError(
               error?.apiTimeoutPhase === 'response' ? 'API response timed out' : 'API request timed out',
@@ -93,18 +94,30 @@ export function createApiClient({
 
   return {
     baseUrl: resolvedBaseUrl,
-    discover: ({ query, limit }) => request('/search', { query, limit }),
-    inspect: ({ toolIds, discoveryId }) =>
+    discover: ({ query, limit, sessionId }) =>
+      request('/search', { query, limit, session_id: sessionId, view: 'routing' }),
+    inspect: ({ toolIds, discoveryId, sessionId }) =>
       request('/tools/by-ids', {
         tool_ids: toolIds,
         ...(discoveryId ? { search_id: discoveryId } : {}),
+        session_id: sessionId,
+        view: 'lean',
       }),
-    call: ({ toolId, discoveryId, parameters }) =>
-      request(`/tools/execute?tool_id=${encodeURIComponent(toolId)}`, {
-        parameters,
-        search_id: discoveryId ?? null,
-        respond_with: 'full',
-      }),
+    call: ({ toolId, discoveryId, sessionId, model, parameters }) =>
+      request(
+        `/tools/execute?tool_id=${encodeURIComponent(toolId)}`,
+        {
+          parameters,
+          search_id: discoveryId ?? null,
+          session_id: sessionId,
+          model,
+          respond_with: 'full',
+        },
+        {
+          retryAmbiguousFailures: false,
+          retryableStatuses: new Set([429]),
+        },
+      ),
     observedRevisions: () => ({
       api_revision: singleRevision(observedApiRevisions),
       catalog_revision: singleRevision(observedCatalogRevisions),
@@ -150,6 +163,9 @@ export function normalizeBaseUrl(value) {
   }
   if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname || parsed.username || parsed.password) {
     throw new Error('QVERIS_BASE_URL must be a valid HTTP(S) URL without credentials');
+  }
+  if (parsed.protocol !== 'https:' && !LOOPBACK_HOSTS.has(parsed.hostname)) {
+    throw new Error('QVERIS_BASE_URL must use HTTPS except for loopback development');
   }
   if (candidate.includes('?') || candidate.includes('#')) {
     throw new Error('QVERIS_BASE_URL must not contain a query or fragment');

@@ -8,11 +8,13 @@ test('normalizes safe API base URLs and rejects unsafe values', () => {
   for (const value of [
     '',
     'ftp://qveris.ai/api/v1',
+    'http://qveris.ai/api/v1',
     'https://user:pass@qveris.ai/api/v1',
     'https://qveris.ai/api/v1?x=1',
   ]) {
     assert.throws(() => normalizeBaseUrl(value), /QVERIS_BASE_URL/);
   }
+  assert.equal(normalizeBaseUrl('http://127.0.0.1:8000/api/v1/'), 'http://127.0.0.1:8000/api/v1');
 });
 
 test('sends bearer authentication without exposing it in API errors', async () => {
@@ -158,6 +160,58 @@ test('retries a response-body timeout before recording an API failure', async ()
   assert.deepEqual(delays, [500]);
 });
 
+test('does not retry an ambiguous execute timeout that could duplicate a billed call', async () => {
+  let attempts = 0;
+  const delays = [];
+  const client = createApiClient({
+    apiKey: 'test-key',
+    timeoutMs: 10,
+    maxRetries: 3,
+    sleep: async (ms) => delays.push(ms),
+    fetchImpl: async (_url, init) => {
+      attempts++;
+      return {
+        ok: true,
+        status: 200,
+        headers: new Headers(),
+        json: () =>
+          new Promise((resolve, reject) => {
+            init.signal.addEventListener(
+              'abort',
+              () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })),
+              { once: true },
+            );
+          }),
+      };
+    },
+  });
+
+  await assert.rejects(
+    client.call({ toolId: 'weather.tool', discoveryId: 'search-1', parameters: {} }),
+    (error) => error.benchmarkReason === 'response_timeout',
+  );
+  assert.equal(attempts, 1);
+  assert.deepEqual(delays, []);
+});
+
+test('does not retry an execute 503 that could follow an upstream side effect', async () => {
+  let attempts = 0;
+  const client = createApiClient({
+    apiKey: 'test-key',
+    maxRetries: 3,
+    fetchImpl: async () => {
+      attempts++;
+      return new Response('', { status: 503 });
+    },
+  });
+
+  await assert.rejects(
+    client.call({ toolId: 'weather.tool', discoveryId: 'search-1', parameters: {} }),
+    (error) => error.benchmarkReason === 'http_503',
+  );
+  assert.equal(attempts, 1);
+});
+
 test('pins full execution results for structural non-empty scoring', async () => {
   let requestBody;
   const client = createApiClient({
@@ -168,8 +222,41 @@ test('pins full execution results for structural non-empty scoring', async () =>
     },
   });
 
-  await client.call({ toolId: 'weather.tool', discoveryId: 'search-1', parameters: { city: 'London' } });
-  assert.equal(requestBody.respond_with, 'full');
+  await client.call({
+    toolId: 'weather.tool',
+    discoveryId: 'search-1',
+    sessionId: 'run-1',
+    model: 'model-a',
+    parameters: { city: 'London' },
+  });
+  assert.deepEqual(requestBody, {
+    parameters: { city: 'London' },
+    search_id: 'search-1',
+    session_id: 'run-1',
+    model: 'model-a',
+    respond_with: 'full',
+  });
+});
+
+test('pins compact discovery and inspection projections', async () => {
+  const bodies = [];
+  const client = createApiClient({
+    apiKey: 'test-key',
+    fetchImpl: async (_url, init) => {
+      bodies.push(JSON.parse(init.body));
+      return new Response(JSON.stringify({ search_id: 'search-1', results: [] }));
+    },
+  });
+
+  await client.discover({ query: 'weather', limit: 5, sessionId: 'run-1' });
+  await client.inspect({ toolIds: ['weather.tool'], discoveryId: 'search-1', sessionId: 'run-1' });
+  assert.deepEqual(bodies[0], { query: 'weather', limit: 5, session_id: 'run-1', view: 'routing' });
+  assert.deepEqual(bodies[1], {
+    tool_ids: ['weather.tool'],
+    search_id: 'search-1',
+    session_id: 'run-1',
+    view: 'lean',
+  });
 });
 
 test('cancels unsuccessful response bodies before reporting API errors', async () => {

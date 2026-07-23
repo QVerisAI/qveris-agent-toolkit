@@ -42,7 +42,7 @@ for (const file of resultFiles) {
   const records = await readJsonLines(resolve(root, 'results', file));
   validatePublicRecords(records, policy);
   validateOfficialPublicRun(records, { taskSetSha256 });
-  const generatedSummary = scoreRecords(tasks, records);
+  const generatedSummary = scoreRecords(tasks, records, { taskSetSha256 });
   const summaryFile = file.replace(/\.runs\.jsonl$/, '.summary.json');
   const publishedSummary = JSON.parse(await readFile(resolve(root, 'results', summaryFile), 'utf8'));
   if (!isDeepStrictEqual(comparableSummary(generatedSummary), comparableSummary(publishedSummary))) {

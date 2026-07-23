@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mkdtemp, readFile, readdir, rm, stat } from 'node:fs/promises';
+import { link, mkdtemp, readFile, readdir, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { writeJsonLines, writeTextAtomic } from '../src/io.mjs';
+import { validatePathSeparation, writeJsonLines, writeTextAtomic } from '../src/io.mjs';
 
 test('atomically replaces private benchmark output files', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'qveris-benchmark-io-'));
@@ -22,6 +22,27 @@ test('atomically replaces private benchmark output files', async () => {
       assert.equal((await stat(linesPath)).mode & 0o777, 0o600);
     }
     assert.deepEqual((await readdir(directory)).sort(), ['runs.jsonl', 'summary.json']);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('rejects outputs that alias an input path or inode', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'qveris-benchmark-paths-'));
+  const input = join(directory, 'tasks.jsonl');
+  const alias = join(directory, 'tasks-hardlink.jsonl');
+  try {
+    await writeTextAtomic(input, '{}\n');
+    await link(input, alias);
+    await assert.rejects(validatePathSeparation({ inputs: [input], outputs: [input] }), /must not overwrite/);
+    await assert.rejects(validatePathSeparation({ inputs: [input], outputs: [alias] }), /must not overwrite/);
+    await assert.rejects(
+      validatePathSeparation({
+        inputs: [input],
+        outputs: [join(directory, 'out.jsonl'), join(directory, 'out.jsonl')],
+      }),
+      /different files/,
+    );
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

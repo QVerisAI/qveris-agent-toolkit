@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { open, readFile, rename, unlink } from 'node:fs/promises';
+import { open, readFile, realpath, rename, stat, unlink } from 'node:fs/promises';
+import { basename, dirname, join, resolve } from 'node:path';
 
 export async function readJsonLines(path) {
   const text = await readFile(path, 'utf8');
@@ -36,4 +37,47 @@ export async function writeTextAtomic(path, content) {
     await unlink(temporaryPath).catch(() => {});
     throw error;
   }
+}
+
+export async function validatePathSeparation({ inputs, outputs }) {
+  if (!Array.isArray(inputs) || !Array.isArray(outputs) || outputs.length === 0) {
+    throw new Error('Path validation needs input and output arrays');
+  }
+  const inputIdentities = await Promise.all(inputs.map(fileIdentities));
+  const outputIdentities = await Promise.all(outputs.map(fileIdentities));
+  for (let left = 0; left < outputIdentities.length; left++) {
+    for (let right = left + 1; right < outputIdentities.length; right++) {
+      if (identitiesOverlap(outputIdentities[left], outputIdentities[right])) {
+        throw new Error('Output files must use different files');
+      }
+    }
+  }
+  for (const output of outputIdentities) {
+    if (inputIdentities.some((input) => identitiesOverlap(input, output))) {
+      throw new Error('Output files must not overwrite input files');
+    }
+  }
+}
+
+async function fileIdentities(path) {
+  const absolute = resolve(path);
+  const identities = new Set([`path:${absolute}`]);
+  try {
+    const canonical = await realpath(absolute);
+    const info = await stat(absolute);
+    identities.add(`path:${canonical}`);
+    identities.add(`inode:${info.dev}:${info.ino}`);
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+    try {
+      identities.add(`path:${join(await realpath(dirname(absolute)), basename(absolute))}`);
+    } catch (parentError) {
+      if (parentError?.code !== 'ENOENT') throw parentError;
+    }
+  }
+  return identities;
+}
+
+function identitiesOverlap(left, right) {
+  return [...left].some((identity) => right.has(identity));
 }

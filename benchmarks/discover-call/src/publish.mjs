@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, realpath, stat } from 'node:fs/promises';
-import { basename, dirname, join, resolve } from 'node:path';
+import { mkdir, readFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { readJsonLines, writeJsonLines, writeTextAtomic } from './io.mjs';
+import { readJsonLines, validatePathSeparation, writeJsonLines, writeTextAtomic } from './io.mjs';
 import { sanitizePublicRecords, validateOfficialPublicRun, validatePublicRecords } from './publication.mjs';
 import { scoreRecords } from './scoring.mjs';
 
@@ -28,12 +28,13 @@ export async function main(argv = process.argv.slice(2)) {
     readJsonLines(runsPath),
     readFile(policyPath, 'utf8').then(JSON.parse),
   ]);
+  const taskSetSha256 = createHash('sha256').update(taskBytes).digest('hex');
   const publicRecords = sanitizePublicRecords(records, policy, tasks);
   validatePublicRecords(publicRecords, policy);
   validateOfficialPublicRun(publicRecords, {
-    taskSetSha256: createHash('sha256').update(taskBytes).digest('hex'),
+    taskSetSha256,
   });
-  const summary = scoreRecords(tasks, publicRecords);
+  const summary = scoreRecords(tasks, publicRecords, { taskSetSha256 });
   await Promise.all([
     mkdir(dirname(outputRuns), { recursive: true }),
     mkdir(dirname(outputSummary), { recursive: true }),
@@ -44,39 +45,17 @@ export async function main(argv = process.argv.slice(2)) {
 }
 
 export async function validatePublicationPaths({ inputs, outputs }) {
-  const inputIdentities = await Promise.all(inputs.map(fileIdentities));
-  const outputIdentities = await Promise.all(outputs.map(fileIdentities));
-  if (identitiesOverlap(outputIdentities[0], outputIdentities[1])) {
-    throw new Error('--output-runs and --output-summary must use different files');
-  }
-  for (const output of outputIdentities) {
-    if (inputIdentities.some((input) => identitiesOverlap(input, output))) {
+  try {
+    await validatePathSeparation({ inputs, outputs });
+  } catch (error) {
+    if (error?.message === 'Output files must use different files') {
+      throw new Error('--output-runs and --output-summary must use different files');
+    }
+    if (error?.message === 'Output files must not overwrite input files') {
       throw new Error('Publication output files must not overwrite task, run, or policy inputs');
     }
+    throw error;
   }
-}
-
-async function fileIdentities(path) {
-  const absolute = resolve(path);
-  const identities = new Set([`path:${absolute}`]);
-  try {
-    const canonical = await realpath(absolute);
-    const info = await stat(absolute);
-    identities.add(`path:${canonical}`);
-    identities.add(`inode:${info.dev}:${info.ino}`);
-  } catch (error) {
-    if (error?.code !== 'ENOENT') throw error;
-    try {
-      identities.add(`path:${join(await realpath(dirname(absolute)), basename(absolute))}`);
-    } catch (parentError) {
-      if (parentError?.code !== 'ENOENT') throw parentError;
-    }
-  }
-  return identities;
-}
-
-function identitiesOverlap(left, right) {
-  return [...left].some((identity) => right.has(identity));
 }
 
 function parseArgs(argv) {

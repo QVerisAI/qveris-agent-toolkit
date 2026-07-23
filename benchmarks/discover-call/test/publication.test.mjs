@@ -27,6 +27,7 @@ const policy = {
   forbidden_fields: [
     'execution_id',
     'search_id',
+    'session_id',
     'connection_id',
     'remaining_credits',
     'result_tool_ids',
@@ -109,6 +110,51 @@ test('hashes an unapproved selected tool instead of expanding the public catalog
   assert.equal(record.selection.tool_id, null);
   assert.equal(record.selection.tool_id_sha256.length, 64);
   assert.equal(record.discovery.selection_grounded, true);
+});
+
+test('preserves a verifiably pinned lane while demoting legacy unpinned labels', () => {
+  const [pinned] = sanitizePublicRecords(
+    [
+      rawRecord({
+        metadata: {
+          ...rawRecord().metadata,
+          lane: 'pinned-model',
+          model_revision: 'provider-snapshot-2026-07-23',
+        },
+      }),
+    ],
+    policy,
+    tasks,
+  );
+  const [legacy] = sanitizePublicRecords(
+    [
+      rawRecord({
+        metadata: {
+          ...rawRecord().metadata,
+          lane: 'pinned-model',
+          model_revision: 'unreported',
+        },
+      }),
+    ],
+    policy,
+    tasks,
+  );
+
+  assert.equal(pinned.metadata.lane, 'pinned-model');
+  assert.equal(legacy.metadata.lane, 'configured-model');
+  assert.throws(
+    () =>
+      validatePublicRecords(
+        [
+          {
+            ...pinned,
+            metadata: { ...pinned.metadata, model_revision: 'unreported' },
+          },
+        ],
+        policy,
+      ),
+    /immutable model revision/,
+  );
 });
 
 test('recomputes parameterization scores instead of trusting raw attestations', () => {
@@ -378,7 +424,11 @@ test('rejects impossible public grounding attestations', () => {
         [
           {
             ...record,
-            discovery: { ...record.discovery, result_count: 0 },
+            discovery: {
+              ...record.discovery,
+              result_count: 0,
+              snapshot_sha256: '4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945',
+            },
           },
         ],
         policy,
@@ -410,6 +460,22 @@ test('rejects impossible public grounding attestations', () => {
         policy,
       ),
     /inconsistent grounding attestations/,
+  );
+  assert.throws(
+    () =>
+      validatePublicRecords(
+        [
+          {
+            ...record,
+            discovery: {
+              ...record.discovery,
+              result_count: record.metadata.discovery_limit + 1,
+            },
+          },
+        ],
+        policy,
+      ),
+    /count and SHA-256 snapshot/,
   );
 });
 
@@ -520,6 +586,50 @@ test('official public runs require the exact task digest, execution, and three t
         { taskSetSha256 },
       ),
     /must execute every trial/,
+  );
+  assert.throws(
+    () =>
+      validateOfficialPublicRun(
+        records.map((record) => ({
+          ...record,
+          benchmark_version: 'v2',
+          metadata: { ...record.metadata, lane: 'model' },
+        })),
+        { taskSetSha256 },
+      ),
+    /explicit comparison lane/,
+  );
+  assert.throws(
+    () =>
+      validateOfficialPublicRun(
+        records.map((record) => ({
+          ...record,
+          benchmark_version: 'v2',
+          metadata: {
+            ...record.metadata,
+            lane: 'reference',
+            model_revision: 'unreported',
+          },
+        })),
+        { taskSetSha256 },
+      ),
+    /immutable model revision/,
+  );
+  assert.throws(
+    () =>
+      validateOfficialPublicRun(
+        records.map((record) => ({
+          ...record,
+          benchmark_version: 'v2',
+          metadata: {
+            ...record.metadata,
+            lane: 'configured-model',
+            toolkit_revision: 'unreported',
+          },
+        })),
+        { taskSetSha256 },
+      ),
+    /toolkit commit SHA/,
   );
 });
 

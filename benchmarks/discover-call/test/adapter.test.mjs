@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createProcessAdapter, main } from '../src/run.mjs';
+import { createProcessAdapter, main, resolveToolkitRevision } from '../src/run.mjs';
 import { buildClaudeInvocation, parseClaudeEnvelope, runClaude } from '../adapters/claude-cli.mjs';
 import { buildCodexInvocation, CODEX_REASONING_EFFORT, parseCodexEvents, runCodex } from '../adapters/codex-cli.mjs';
 
@@ -29,27 +29,69 @@ test('process adapter exchanges one JSON object without shell parsing', async ()
   assert.deepEqual(parameterized, { parameters: {} });
 });
 
-test('process adapter cannot read the QVeris API key', async () => {
-  const previous = process.env.QVERIS_API_KEY;
+test('process adapter cannot read QVeris environment values', async () => {
+  const previousKey = process.env.QVERIS_API_KEY;
+  const previousToken = process.env.QVERIS_MCP_HTTP_AUTH_TOKEN;
   process.env.QVERIS_API_KEY = 'must-not-reach-adapter';
+  process.env.QVERIS_MCP_HTTP_AUTH_TOKEN = 'must-also-not-reach-adapter';
   try {
     const invoke = createProcessAdapter({
       command: process.execPath,
       args: [
         '-e',
-        "process.stdin.resume(); process.stdin.on('end', () => process.stdout.write(JSON.stringify({visible: Boolean(process.env.QVERIS_API_KEY)})))",
+        "process.stdin.resume(); process.stdin.on('end', () => process.stdout.write(JSON.stringify({visible: Object.keys(process.env).some((name) => name.startsWith('QVERIS_'))})))",
       ],
       timeoutMs: 5_000,
     });
     assert.deepEqual(await invoke({ stage: 'select' }), { visible: false });
   } finally {
-    if (previous === undefined) delete process.env.QVERIS_API_KEY;
-    else process.env.QVERIS_API_KEY = previous;
+    if (previousKey === undefined) delete process.env.QVERIS_API_KEY;
+    else process.env.QVERIS_API_KEY = previousKey;
+    if (previousToken === undefined) delete process.env.QVERIS_MCP_HTTP_AUTH_TOKEN;
+    else process.env.QVERIS_MCP_HTTP_AUTH_TOKEN = previousToken;
   }
 });
 
 test('runner requires an immutable adapter revision before API setup', async () => {
   await assert.rejects(main(['--model', 'model-a', '--adapter', process.execPath]), /adapter-revision/);
+  await assert.rejects(
+    main([
+      '--model',
+      'reference-v1',
+      '--lane',
+      'reference',
+      '--adapter',
+      process.execPath,
+      '--adapter-revision',
+      'adapter-sha',
+      '--tasks',
+      v4TasksPath,
+    ]),
+    /model-revision.*reference/,
+  );
+});
+
+test('runner records only commit-shaped toolkit revisions from a clean checkout', () => {
+  const sha = 'a'.repeat(40);
+  const cleanGit = {
+    githubSha: '',
+    execFile(_command, args) {
+      return args[0] === 'status' ? '' : `${sha}\n`;
+    },
+  };
+  assert.equal(resolveToolkitRevision(sha.toUpperCase(), cleanGit), sha);
+  assert.throws(() => resolveToolkitRevision('main'), /commit SHA/);
+  assert.equal(resolveToolkitRevision(undefined, cleanGit), sha);
+  assert.throws(
+    () =>
+      resolveToolkitRevision(sha, {
+        githubSha: '',
+        execFile(_command, args) {
+          return args[0] === 'status' ? ' M benchmarks/discover-call/src/run.mjs\n' : `${sha}\n`;
+        },
+      }),
+    /tracked changes/,
+  );
 });
 
 test('process adapter reports startup failures without an unhandled stdin error', async () => {
@@ -213,19 +255,23 @@ test('Claude adapter extracts only structured model output', () => {
   assert.throws(() => parseClaudeEnvelope(JSON.stringify({ result: 'not-json' })), /no structured output/);
 });
 
-test('Claude adapter removes the QVeris key from its model subprocess', async () => {
-  const previous = process.env.QVERIS_API_KEY;
+test('Claude adapter removes QVeris environment values from its model subprocess', async () => {
+  const previousKey = process.env.QVERIS_API_KEY;
+  const previousToken = process.env.QVERIS_MCP_HTTP_AUTH_TOKEN;
   process.env.QVERIS_API_KEY = 'must-not-reach-model';
+  process.env.QVERIS_MCP_HTTP_AUTH_TOKEN = 'must-also-not-reach-model';
   try {
     const output = await runClaude({
       command: process.execPath,
-      args: ['-e', 'process.stdout.write(String(Boolean(process.env.QVERIS_API_KEY)))'],
+      args: ['-e', "process.stdout.write(String(Object.keys(process.env).some((name) => name.startsWith('QVERIS_'))))"],
       stdin: '',
     });
     assert.equal(output, 'false');
   } finally {
-    if (previous === undefined) delete process.env.QVERIS_API_KEY;
-    else process.env.QVERIS_API_KEY = previous;
+    if (previousKey === undefined) delete process.env.QVERIS_API_KEY;
+    else process.env.QVERIS_API_KEY = previousKey;
+    if (previousToken === undefined) delete process.env.QVERIS_MCP_HTTP_AUTH_TOKEN;
+    else process.env.QVERIS_MCP_HTTP_AUTH_TOKEN = previousToken;
   }
 });
 
@@ -334,6 +380,35 @@ test('Codex adapter extracts the final structured message and rejects tool use',
       ),
     (error) => error.adapterCode === 'invalid_events' && /incomplete event stream/.test(error.message),
   );
+});
+
+test('Codex adapter removes QVeris environment values from its model subprocess', async () => {
+  const previousKey = process.env.QVERIS_API_KEY;
+  const previousToken = process.env.QVERIS_MCP_HTTP_AUTH_TOKEN;
+  process.env.QVERIS_API_KEY = 'must-not-reach-model';
+  process.env.QVERIS_MCP_HTTP_AUTH_TOKEN = 'must-also-not-reach-model';
+  try {
+    const result = parseCodexEvents(
+      await runCodex({
+        command: process.execPath,
+        args: [
+          '-e',
+          `const visible = Object.keys(process.env).some((name) => name.startsWith('QVERIS_'));
+           process.stdout.write([
+             JSON.stringify({type:'item.completed',item:{type:'agent_message',text:JSON.stringify({visible})}}),
+             JSON.stringify({type:'turn.completed'})
+           ].join('\\n'));`,
+        ],
+        stdin: '',
+      }),
+    );
+    assert.deepEqual(result, { visible: false });
+  } finally {
+    if (previousKey === undefined) delete process.env.QVERIS_API_KEY;
+    else process.env.QVERIS_API_KEY = previousKey;
+    if (previousToken === undefined) delete process.env.QVERIS_MCP_HTTP_AUTH_TOKEN;
+    else process.env.QVERIS_MCP_HTTP_AUTH_TOKEN = previousToken;
+  }
 });
 
 test('Codex adapter force-kills a child that ignores the output-limit signal', async () => {

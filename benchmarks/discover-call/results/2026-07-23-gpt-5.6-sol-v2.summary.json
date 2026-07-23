@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "methodology": "discover-call-v1",
-  "generated_at": "2026-07-23T12:14:22.012Z",
+  "generated_at": "2026-07-23T15:53:48.695Z",
   "models": [
     {
       "model": "gpt-5.6-sol",
@@ -21,9 +21,14 @@
       "workflow_success_rate": null,
       "workflow_success_task_cluster_bootstrap_95": null,
       "failures_by_stage": {
+        "parameterize": 9,
+        "call": 6,
         "adapter": 4
       },
-      "failures_by_reason": {}
+      "failures_by_reason": {
+        "constraint_mismatch": 9,
+        "tool_returned_failure": 6
+      }
     }
   ],
   "records": [
