@@ -116,14 +116,14 @@ async function runTrial({ task, model, trial, execute, limit, api, invokeAdapter
     if (!isPlainObject(parameterized?.parameters)) {
       throw stageError('parameterize', 'Adapter did not return a parameters object');
     }
-    record.parameters = parameterized.parameters;
+    record.parameters = omitNullParameters(parameterized.parameters);
 
     if (execute) {
       record.call.attempted = true;
       const response = await api.call({
         toolId: selectedToolId,
         discoveryId: discovered?.search_id,
-        parameters: parameterized.parameters,
+        parameters: record.parameters,
       });
       record.call.success = response?.success === true;
       record.call.execution_id = response?.execution_id ?? null;
@@ -146,6 +146,29 @@ function requiredParameterNames(tool) {
     .map((parameter) => parameter.name);
 }
 
+export function parameterResponseSchema(tool) {
+  const properties = {};
+  for (const parameter of array(tool?.params)) {
+    if (typeof parameter?.name !== 'string' || !parameter.name || Object.hasOwn(properties, parameter.name)) {
+      continue;
+    }
+    properties[parameter.name] = strictParameterSchema(parameter);
+  }
+  return {
+    type: 'object',
+    additionalProperties: false,
+    required: ['parameters'],
+    properties: {
+      parameters: {
+        type: 'object',
+        additionalProperties: false,
+        required: Object.keys(properties),
+        properties,
+      },
+    },
+  };
+}
+
 function adapterPayload({ stage, model, task, discovery, selectedTool, discoveryId, trial }) {
   const input =
     stage === 'select'
@@ -159,12 +182,7 @@ function adapterPayload({ stage, model, task, discovery, selectedTool, discovery
           required: ['tool_id'],
           properties: { tool_id: { type: 'string' } },
         }
-      : {
-          type: 'object',
-          additionalProperties: false,
-          required: ['parameters'],
-          properties: { parameters: { type: 'object' } },
-        };
+      : parameterResponseSchema(selectedTool);
   const instruction =
     stage === 'select'
       ? 'Select one tool from the discovery results that best fulfills the user request. Return JSON only.'
@@ -181,6 +199,61 @@ function adapterPayload({ stage, model, task, discovery, selectedTool, discovery
     ],
     response_schema: responseSchema,
   };
+}
+
+function strictParameterSchema(parameter, forceRequired = parameter?.required === true) {
+  const type = normalizeParameterType(parameter?.type);
+  const schema = {};
+  if (typeof parameter?.description === 'string' && parameter.description) {
+    schema.description = forceRequired
+      ? parameter.description
+      : `${parameter.description} Use null when this optional parameter is not needed.`;
+  }
+
+  if (Array.isArray(parameter?.enum) && parameter.enum.length > 0) {
+    schema.type = nullableType(type, forceRequired);
+    schema.enum = forceRequired ? [...parameter.enum] : [...parameter.enum, null];
+    return schema;
+  }
+
+  schema.type = nullableType(type, forceRequired);
+  if (type === 'array') {
+    schema.items = strictParameterSchema(
+      isPlainObject(parameter?.items) ? parameter.items : { type: 'string', required: true },
+      true,
+    );
+  } else if (type === 'object') {
+    const nestedProperties = {};
+    for (const [name, definition] of Object.entries(
+      isPlainObject(parameter?.properties) ? parameter.properties : {},
+    )) {
+      nestedProperties[name] = strictParameterSchema(
+        isPlainObject(definition) ? definition : { type: 'string' },
+      );
+    }
+    schema.additionalProperties = false;
+    schema.required = Object.keys(nestedProperties);
+    schema.properties = nestedProperties;
+  }
+  return schema;
+}
+
+function normalizeParameterType(value) {
+  const type = typeof value === 'string' ? value.toLowerCase() : 'string';
+  if (['integer', 'int'].includes(type)) return 'integer';
+  if (['number', 'float', 'double'].includes(type)) return 'number';
+  if (['boolean', 'bool'].includes(type)) return 'boolean';
+  if (['array', 'list'].includes(type)) return 'array';
+  if (['object', 'map'].includes(type)) return 'object';
+  return 'string';
+}
+
+function nullableType(type, required) {
+  return required ? type : [type, 'null'];
+}
+
+function omitNullParameters(parameters) {
+  return Object.fromEntries(Object.entries(parameters).filter(([, value]) => value !== null));
 }
 
 function toolId(value) {

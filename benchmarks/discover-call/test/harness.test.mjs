@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { runBenchmark, validateTask } from '../src/harness.mjs';
+import { parameterResponseSchema, runBenchmark, validateTask } from '../src/harness.mjs';
 
 const task = {
   id: 'weather-london',
@@ -24,7 +24,17 @@ test('orchestrates discover, select, inspect, parameterize, and call', async () 
       },
       async inspect(input) {
         events.push(['inspect', input]);
-        return { results: [{ tool_id: 'weather.forecast', params: [{ name: 'city', required: true }] }] };
+        return {
+          results: [
+            {
+              tool_id: 'weather.forecast',
+              params: [
+                { name: 'city', type: 'string', required: true },
+                { name: 'units', type: 'string', required: false, enum: ['metric', 'imperial'] },
+              ],
+            },
+          ],
+        };
       },
       async call(input) {
         events.push(['call', input]);
@@ -36,7 +46,10 @@ test('orchestrates discover, select, inspect, parameterize, and call', async () 
       assert.equal(payload.messages.length, 2);
       assert.equal(payload.messages[1].content, JSON.stringify(payload.input));
       events.push([payload.stage, payload.input.task_id]);
-      return payload.stage === 'select' ? { tool_id: 'weather.forecast' } : { parameters: { city: 'London' } };
+      if (payload.stage === 'select') return { tool_id: 'weather.forecast' };
+      assert.deepEqual(payload.response_schema.properties.parameters.required, ['city', 'units']);
+      assert.deepEqual(payload.response_schema.properties.parameters.properties.units.type, ['string', 'null']);
+      return { parameters: { city: 'London', units: null } };
     },
     metadata: { adapter_revision: 'adapter-sha' },
     now: () => '2026-07-15T00:00:00.000Z',
@@ -49,9 +62,55 @@ test('orchestrates discover, select, inspect, parameterize, and call', async () 
   );
   assert.equal(records[0].status, 'completed');
   assert.deepEqual(records[0].inspection.required_parameters, ['city']);
+  assert.deepEqual(records[0].parameters, { city: 'London' });
   assert.equal(records[0].call.success, true);
   assert.equal(records[0].call.execution_id, 'exec-1');
   assert.equal(records[0].metadata.adapter_revision, 'adapter-sha');
+});
+
+test('builds a strict provider-neutral schema from inspected parameters', () => {
+  assert.deepEqual(
+    parameterResponseSchema({
+      params: [
+        { name: 'limit', type: 'integer', required: true },
+        { name: 'tags', type: 'array', required: false, items: { type: 'string' } },
+        {
+          name: 'options',
+          type: 'object',
+          required: false,
+          properties: {
+            enabled: { type: 'boolean', required: true },
+            label: { type: 'string', required: false },
+          },
+        },
+      ],
+    }),
+    {
+      type: 'object',
+      additionalProperties: false,
+      required: ['parameters'],
+      properties: {
+        parameters: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['limit', 'tags', 'options'],
+          properties: {
+            limit: { type: 'integer' },
+            tags: { type: ['array', 'null'], items: { type: 'string' } },
+            options: {
+              type: ['object', 'null'],
+              additionalProperties: false,
+              required: ['enabled', 'label'],
+              properties: {
+                enabled: { type: 'boolean' },
+                label: { type: ['string', 'null'] },
+              },
+            },
+          },
+        },
+      },
+    },
+  );
 });
 
 test('records adapter failures without copying their error text', async () => {

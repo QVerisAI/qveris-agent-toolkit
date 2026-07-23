@@ -122,6 +122,13 @@ user prompt and the inspected `selected_tool`. Return:
 {"parameters":{"city":"London"}}
 ```
 
+For parameterization, the harness derives a strict response schema from the
+inspected tool's parameter metadata. Every known parameter is represented;
+optional parameters are nullable because strict structured-output providers
+require every declared property to appear. The harness removes top-level null
+values before scoring and execution, so omitted optional parameters retain
+their normal API semantics.
+
 Adapters may call any model provider, but must not alter canonical messages or
 print prompts, keys, tokens, or provider error bodies to stdout. A first-result
 heuristic adapter is included only as a transport example; it does not construct
