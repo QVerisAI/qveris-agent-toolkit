@@ -6,9 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-07-23
+
 ### Added
 
-- Added `view` / `lang` discover arguments and `respond_with` call projection support, including compact routing-card model fields. Defaults remain full; an explicit legacy `422 extra_forbidden` response triggers one retry without only the rejected optional field.
+- Added `view` / `lang` discover arguments and `respond_with` call projection support, including compact routing-card model fields. Defaults remain full; an explicit legacy `422 extra_forbidden` response triggers one retry without only the rejected optional field. ([#256])
 - Added `QverisClient.probe()` with typed zero-cost schema, quote, coverage, and sample results. ([#259])
 
 ## [0.4.0] - 2026-07-18
@@ -73,7 +75,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Generated OpenAPI contract models with drift CI. ([#48])
 - `Agent` runtime: LLM tool loop over the QVeris workflow with streaming events.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.4.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.5.0...HEAD
+[0.5.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.4.0...python-sdk-v0.5.0
 [0.4.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.3.2...python-sdk-v0.4.0
 [0.3.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.3.1...python-sdk-v0.3.2
 [0.3.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.3.0...python-sdk-v0.3.1
@@ -100,3 +103,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#48]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/48
 [#34]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/34
 [#259]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/259
+[#256]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/256

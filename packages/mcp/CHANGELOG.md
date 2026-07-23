@@ -6,9 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-07-23
+
 ### Added
 
-- Added optional `view` / `lang` inputs to `discover` and `respond_with` to `call`, with typed routing/summary response support. Defaults remain full; an explicit legacy `422 extra_forbidden` response triggers one retry without only the rejected optional field.
+- Added optional `view` / `lang` inputs to `discover` and `respond_with` to `call`, with typed routing/summary response support. Defaults remain full; an explicit legacy `422 extra_forbidden` response triggers one retry without only the rejected optional field. ([#256])
 - Added the canonical `probe` tool with typed zero-cost schema/quote results and an MCP `outputSchema`. ([#259])
 
 ## [0.11.0] - 2026-07-18
@@ -127,7 +129,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Handle empty/non-JSON success responses gracefully; `params_to_tool` documented as an object.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.11.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.12.0...HEAD
+[0.12.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.11.0...mcp-v0.12.0
 [0.11.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.10.0...mcp-v0.11.0
 [0.10.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.9.0...mcp-v0.10.0
 [0.9.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.8.0...mcp-v0.9.0
@@ -169,3 +172,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#9]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/9
 [#8]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/8
 [#259]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/259
+[#256]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/256

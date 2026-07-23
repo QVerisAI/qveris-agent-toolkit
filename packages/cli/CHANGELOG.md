@@ -6,10 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-07-23
+
 ### Added
 
-- Added `qveris auth login/status/logout` using OAuth Device Authorization Grant, refresh-token rotation, revocation, and operating-system credential storage. Trusted headless hosts can explicitly opt into a user-only unencrypted config fallback. API key authentication remains fully compatible and takes precedence when configured.
-- Added opt-in server-side projections: `qveris discover --view routing [--lang zh|en]` and `qveris call --respond-with full|summary|fields:<JSONPath,...>`. Defaults remain unchanged; clients retry once without a projection only when a legacy service explicitly rejects that optional field as unknown.
+- Added `qveris auth login/status/logout` using OAuth Device Authorization Grant, refresh-token rotation, revocation, and operating-system credential storage. Trusted headless hosts can explicitly opt into a user-only unencrypted config fallback. API key authentication remains fully compatible and takes precedence when configured. ([#250])
+- Added opt-in server-side projections: `qveris discover --view routing [--lang zh|en]` and `qveris call --respond-with full|summary|fields:<JSONPath,...>`. Defaults remain unchanged; clients retry once without a projection only when a legacy service explicitly rejects that optional field as unknown. ([#256])
 - Added `qveris probe` for zero-cost parameter validation and quotes without executing a capability. ([#259])
 
 ## [0.8.2] - 2026-07-18
@@ -88,7 +90,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial release: `discover` / `inspect` / `call` from the terminal against the QVeris API.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.8.2...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.9.0...HEAD
+[0.9.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.8.2...cli-v0.9.0
 [0.8.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.8.1...cli-v0.8.2
 [0.8.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.8.0...cli-v0.8.1
 [0.8.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.7.0...cli-v0.8.0
@@ -102,6 +105,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#221]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/221
 [#226]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/226
 [#259]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/259
+[#250]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/250
+[#256]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/256
 [#204]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/204
 [#161]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/161
 [#144]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/144
