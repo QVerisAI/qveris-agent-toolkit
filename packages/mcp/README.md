@@ -101,13 +101,17 @@ Discover available tools based on natural language queries.
 | `query` | string | ✓ | Natural language description of the capability you need |
 | `limit` | number | | Max results to return (1-100, default: 20) |
 | `session_id` | string | | Session identifier for tracking (auto-generated if omitted) |
+| `view` | string | | `routing` for compact routing cards; `full` or omitted for complete results |
+| `lang` | string | | Response language: `zh` or `en`; omitted uses server negotiation |
 
 **Example:**
 
 ```json
 {
   "query": "send email notification",
-  "limit": 10
+  "limit": 10,
+  "view": "routing",
+  "lang": "en"
 }
 ```
 
@@ -141,6 +145,7 @@ Call a discovered tool with specific parameters.
 | `params_to_tool` | object | ✓ | A dictionary of parameters to pass to the tool |
 | `session_id` | string | | Session identifier (auto-generated if omitted) |
 | `max_response_size` | number | | Max response size in bytes (default: 20480) |
+| `respond_with` | string | | `full`, `summary`, or `fields:<JSONPath,...>`; omitted defaults to full |
 
 **Example:**
 
@@ -148,11 +153,14 @@ Call a discovered tool with specific parameters.
 {
   "tool_id": "openweathermap.weather.execute.v1",
   "search_id": "abcd1234-ab12-ab12-ab12-abcdef123456",
-  "params_to_tool": {"city": "London", "units": "metric"}
+  "params_to_tool": {"city": "London", "units": "metric"},
+  "respond_with": "summary"
 }
 ```
 
 The `call` response may include compact pre-settlement `billing`. Final charge status should be checked with `usage_history` or `credits_ledger`.
+
+Projection inputs are opt-in. If an older service explicitly rejects one as an unknown field, the MCP server retries once without only that field. Invalid projection errors remain errors and are never silently downgraded.
 
 ### `usage_history`
 

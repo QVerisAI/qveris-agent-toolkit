@@ -169,13 +169,17 @@ https://mcp.qveris.cn/mcp
 | `query` | string | 是 | 用自然语言描述所需能力 |
 | `limit` | number | 否 | 最大返回数量（`1-100`，默认 `20`） |
 | `session_id` | string | 否 | 用于追踪的会话标识符 |
+| `view` | string | 否 | `routing` 返回精简 routing card；`full` 或省略返回完整结果 |
+| `lang` | string | 否 | 响应语言：`zh` 或 `en`；省略时由服务端协商 |
 
 示例：
 
 ```json
 {
   "query": "天气预报 API",
-  "limit": 10
+  "limit": 10,
+  "view": "routing",
+  "lang": "zh"
 }
 ```
 
@@ -236,6 +240,7 @@ https://mcp.qveris.cn/mcp
 | `params_to_tool` | object | 是 | 传递给工具的参数字典 |
 | `session_id` | string | 否 | 用于追踪的会话标识符 |
 | `max_response_size` | number | 否 | 最大响应字节数（默认 `20480`） |
+| `respond_with` | string | 否 | `full`、`summary` 或 `fields:<JSONPath,...>`；省略时为 full |
 
 示例：
 
@@ -243,16 +248,19 @@ https://mcp.qveris.cn/mcp
 {
   "tool_id": "openweathermap.weather.execute.v1",
   "search_id": "YOUR_SEARCH_ID",
-  "params_to_tool": {"city": "北京", "units": "metric"}
+  "params_to_tool": {"city": "北京", "units": "metric"},
+  "respond_with": "summary"
 }
 ```
+
+投影参数仅在显式指定时发送。旧服务返回 `422 extra_forbidden` 时仅移除对应可选字段并重试一次；无效投影仍按错误返回。
 
 典型成功响应字段：
 
 - `execution_id`
-- `tool_id`
+- `tool_id`（所选投影返回时）
 - `success`
-- `result.data`
+- `result.data`，或显式请求的精简摘要字段
 - `elapsed_time_ms` 或 `execution_time`
 - `billing` / `pre_settlement_bill`（如可用）
 

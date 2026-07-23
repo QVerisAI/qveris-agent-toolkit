@@ -160,6 +160,47 @@ describe('QverisClient', () => {
       );
     });
 
+    it('should pass routing projection and language', async () => {
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ search_id: 'search-routing', results: [] }),
+      });
+
+      await client.searchTools({ query: 'weather', view: 'routing', lang: 'en' });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          body: JSON.stringify({ query: 'weather', view: 'routing', lang: 'en' }),
+        }),
+      );
+    });
+
+    it('should retry once without projection fields rejected by a legacy service', async () => {
+      fetchMock
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 422,
+          statusText: 'Unprocessable Entity',
+          headers: new Headers(),
+          json: async () => ({
+            detail: [
+              { type: 'extra_forbidden', loc: ['body', 'view'] },
+              { type: 'extra_forbidden', loc: ['body', 'lang'] },
+            ],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ search_id: 'search-full', results: [] }),
+        });
+
+      await client.searchTools({ query: 'weather', view: 'routing', lang: 'en' });
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock.mock.calls[1][1].body).toBe(JSON.stringify({ query: 'weather' }));
+    });
+
     it('should throw ApiError on non-OK response', async () => {
       fetchMock.mockResolvedValueOnce({
         ok: false,
@@ -406,6 +447,78 @@ describe('QverisClient', () => {
       );
 
       expect(result).toEqual(mockResponse);
+    });
+
+    it('should pass summary projection', async () => {
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          execution_id: 'exec-summary',
+          success: true,
+          result: { respond_with: 'summary' },
+        }),
+      });
+
+      await client.executeTool('weather-tool', {
+        search_id: 'search-123',
+        parameters: { city: 'London' },
+        respond_with: 'summary',
+      });
+
+      expect(fetchMock.mock.calls[0][1].body).toBe(
+        JSON.stringify({
+          search_id: 'search-123',
+          parameters: { city: 'London' },
+          respond_with: 'summary',
+        }),
+      );
+    });
+
+    it('should retry without respond_with only for a legacy extra-field rejection', async () => {
+      fetchMock
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 422,
+          statusText: 'Unprocessable Entity',
+          headers: new Headers(),
+          json: async () => ({
+            detail: [{ type: 'extra_forbidden', loc: ['body', 'respond_with'] }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ execution_id: 'exec-full', success: true, result: { data: {} } }),
+        });
+
+      await client.executeTool('weather-tool', {
+        search_id: 'search-123',
+        parameters: {},
+        respond_with: 'summary',
+      });
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock.mock.calls[1][1].body).toBe(JSON.stringify({ search_id: 'search-123', parameters: {} }));
+    });
+
+    it('should not downgrade an invalid projection', async () => {
+      fetchMock.mockResolvedValueOnce({
+        ok: false,
+        status: 422,
+        statusText: 'Unprocessable Entity',
+        headers: new Headers(),
+        json: async () => ({
+          details: [{ type: 'value_error', loc: ['body', 'respond_with'] }],
+        }),
+      });
+
+      await expect(
+        client.executeTool('weather-tool', {
+          search_id: 'search-123',
+          parameters: {},
+          respond_with: 'fields:',
+        }),
+      ).rejects.toMatchObject({ status: 422 });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
     it('should URL-encode tool_id', async () => {

@@ -325,6 +325,36 @@ async def test_discover_contract_parses_tool_quality_and_billing() -> None:
 
 
 @pytest.mark.asyncio
+async def test_discover_projection_passes_through_and_retries_legacy_rejection_once() -> None:
+    payloads = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        payloads.append(json.loads(request.content))
+        if len(payloads) == 1:
+            return httpx.Response(
+                422,
+                json={
+                    "detail": [
+                        {"type": "extra_forbidden", "loc": ["body", "view"]},
+                        {"type": "extra_forbidden", "loc": ["body", "lang"]},
+                    ]
+                },
+            )
+        return httpx.Response(200, json={"search_id": "search-full", "results": []})
+
+    client = make_client(handler)
+    try:
+        await client.discover("weather", view="routing", lang="en")
+    finally:
+        await client.close()
+
+    assert payloads == [
+        {"query": "weather", "limit": 20, "view": "routing", "lang": "en"},
+        {"query": "weather", "limit": 20},
+    ]
+
+
+@pytest.mark.asyncio
 async def test_inspect_contract_posts_tool_ids() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.method == "POST"
@@ -414,6 +444,91 @@ async def test_call_contract_parses_execution_outcome_and_billing() -> None:
     assert response.billing.list_amount_credits == 3
     assert response.billing.charge_lines is not None
     assert response.billing.charge_lines[0].component_key == "request"
+
+
+@pytest.mark.asyncio
+async def test_call_summary_projection_passes_through_and_parses_compact_response() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert json.loads(request.content) == {
+            "parameters": {"city": "London"},
+            "search_id": "search-123",
+            "respond_with": "summary",
+        }
+        return httpx.Response(
+            200,
+            json={
+                "execution_id": "exec-summary",
+                "success": True,
+                "result": {
+                    "respond_with": "summary",
+                    "content_schema": {"type": "object"},
+                    "summary": {"size_bytes": 4096, "row_count": 1, "fields": ["temperature"]},
+                    "full_content_file_url": "https://oss.qveris.ai/result.json",
+                },
+            },
+        )
+
+    client = make_client(handler)
+    try:
+        response = await client.call(
+            "weather.forecast.v1",
+            {"city": "London"},
+            search_id="search-123",
+            respond_with="summary",
+        )
+    finally:
+        await client.close()
+
+    assert response.result["respond_with"] == "summary"
+    assert response.tool_id is None
+    assert response.parameters is None
+
+
+@pytest.mark.asyncio
+async def test_call_projection_retries_only_legacy_extra_field_rejection() -> None:
+    payloads = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        payloads.append(json.loads(request.content))
+        if len(payloads) == 1:
+            return httpx.Response(
+                422,
+                json={"detail": [{"type": "extra_forbidden", "loc": ["body", "respond_with"]}]},
+            )
+        return httpx.Response(200, json={"execution_id": "exec-full", "success": True, "result": {"data": {}}})
+
+    client = make_client(handler)
+    try:
+        await client.call("weather.forecast.v1", {}, respond_with="summary")
+    finally:
+        await client.close()
+
+    assert payloads == [
+        {"parameters": {}, "respond_with": "summary"},
+        {"parameters": {}},
+    ]
+
+
+@pytest.mark.asyncio
+async def test_call_invalid_projection_is_not_downgraded() -> None:
+    requests = 0
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        nonlocal requests
+        requests += 1
+        return httpx.Response(
+            422,
+            json={"details": [{"type": "value_error", "loc": ["body", "respond_with"]}]},
+        )
+
+    client = make_client(handler)
+    try:
+        with pytest.raises(httpx.HTTPStatusError):
+            await client.call("weather.forecast.v1", {}, respond_with="fields:")
+    finally:
+        await client.close()
+
+    assert requests == 1
 
 
 @pytest.mark.asyncio

@@ -22,6 +22,8 @@ export async function runDiscover(query, flags) {
       baseUrl: resolvedBaseUrl,
       query,
       limit,
+      view: flags.view,
+      lang: flags.lang,
       timeoutMs,
     });
 

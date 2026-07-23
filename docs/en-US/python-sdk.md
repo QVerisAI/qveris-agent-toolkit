@@ -192,9 +192,11 @@ drift.
 
 | Method | REST endpoint | Purpose |
 |--------|---------------|---------|
-| `discover(query, limit=20, session_id=None)` | `POST /search` | Find capabilities with natural language (free) |
+| `discover(query, limit=20, session_id=None, view=None, lang=None)` | `POST /search` | Find capabilities; `view="routing"` returns compact routing cards (free) |
 | `inspect(tool_ids, search_id=None, session_id=None)` | `POST /tools/by-ids` | Fetch full capability metadata (free) |
-| `call(tool_id, parameters, search_id=None, session_id=None, max_response_size=None)` | `POST /tools/execute` | Execute a capability (may consume credits) |
+| `call(tool_id, parameters, search_id=None, session_id=None, max_response_size=None, respond_with=None)` | `POST /tools/execute` | Execute a capability; select full, summary, or JSONPath fields |
+
+Projection arguments are opt-in. A legacy `422 extra_forbidden` response causes one retry without only the rejected optional field; invalid projections remain errors.
 | `usage(**filters)` | `GET /auth/usage/history/v2` | Audit request status and charge outcome |
 | `ledger(**filters)` | `GET /auth/credits/ledger` | Inspect final credit balance movements |
 | `handle_tool_call(func_name, func_args, session_id=None)` | — | Bridge an LLM tool call to the right QVeris method |

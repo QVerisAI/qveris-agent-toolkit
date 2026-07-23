@@ -2,30 +2,31 @@ import { resolveBaseUrl } from "../config/endpoint.mjs";
 
 export function generateSnippet(
   lang,
-  { baseUrl: baseUrlFlag, toolId, discoveryId, parameters, maxResponseSize = 20480 },
+  { baseUrl: baseUrlFlag, toolId, discoveryId, parameters, maxResponseSize = 20480, respondWith },
 ) {
   const { baseUrl } = resolveBaseUrl({ baseUrlFlag });
 
   switch (lang) {
     case "curl":
-      return generateCurl({ baseUrl, toolId, discoveryId, parameters, maxResponseSize });
+      return generateCurl({ baseUrl, toolId, discoveryId, parameters, maxResponseSize, respondWith });
     case "js":
     case "javascript":
-      return generateJs({ baseUrl, toolId, discoveryId, parameters, maxResponseSize });
+      return generateJs({ baseUrl, toolId, discoveryId, parameters, maxResponseSize, respondWith });
     case "python":
     case "py":
-      return generatePython({ baseUrl, toolId, discoveryId, parameters, maxResponseSize });
+      return generatePython({ baseUrl, toolId, discoveryId, parameters, maxResponseSize, respondWith });
     default:
       return `Unsupported language: ${lang}. Use: curl, js, python`;
   }
 }
 
-function generateCurl({ baseUrl, toolId, discoveryId, parameters, maxResponseSize }) {
+function generateCurl({ baseUrl, toolId, discoveryId, parameters, maxResponseSize, respondWith }) {
   const body = JSON.stringify(
     {
       search_id: discoveryId,
       parameters,
       max_response_size: maxResponseSize,
+      ...(respondWith !== undefined && { respond_with: respondWith }),
     },
     null,
     2,
@@ -40,7 +41,7 @@ ${body}
 EOF`;
 }
 
-function generateJs({ baseUrl, toolId, discoveryId, parameters, maxResponseSize }) {
+function generateJs({ baseUrl, toolId, discoveryId, parameters, maxResponseSize, respondWith }) {
   const paramsStr = JSON.stringify(parameters, null, 4);
   return `const resp = await fetch(
   "${baseUrl}/tools/execute?tool_id=${toolId}",
@@ -54,6 +55,7 @@ function generateJs({ baseUrl, toolId, discoveryId, parameters, maxResponseSize 
       search_id: "${discoveryId}",
       parameters: ${paramsStr},
       max_response_size: ${maxResponseSize},
+      ${respondWith === undefined ? "" : `respond_with: ${JSON.stringify(respondWith)},`}
     }),
   }
 );
@@ -61,7 +63,7 @@ const data = await resp.json();
 console.log(data);`;
 }
 
-function generatePython({ baseUrl, toolId, discoveryId, parameters, maxResponseSize }) {
+function generatePython({ baseUrl, toolId, discoveryId, parameters, maxResponseSize, respondWith }) {
   const paramsStr = JSON.stringify(parameters, null, 8);
   return `import os
 import requests
@@ -74,6 +76,7 @@ resp = requests.post(
         "search_id": "${discoveryId}",
         "parameters": ${paramsStr},
         "max_response_size": ${maxResponseSize},
+        ${respondWith === undefined ? "" : `"respond_with": ${JSON.stringify(respondWith)},`}
     },
     timeout=60,
 )

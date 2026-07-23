@@ -50,12 +50,20 @@ export async function runCall(idOrIndex, flags) {
 
   if (flags.dryRun) {
     if (flags.json) {
-      outputJson({ dry_run: true, tool_id: toolId, discovery_id: discoveryId, parameters, max_response_size: maxSize });
+      outputJson({
+        dry_run: true,
+        tool_id: toolId,
+        discovery_id: discoveryId,
+        parameters,
+        max_response_size: maxSize,
+        ...(flags.respondWith !== undefined && { respond_with: flags.respondWith }),
+      });
     } else {
       console.log(`\n  ${bold("Dry run")} -- would send:\n`);
       console.log(`  Tool:         ${cyan(toolId)}`);
       console.log(`  Discovery ID: ${dim(discoveryId)}`);
       console.log(`  Max size:     ${maxSize}`);
+      if (flags.respondWith !== undefined) console.log(`  Respond with: ${flags.respondWith}`);
       console.log(`  Parameters:`);
       console.log(
         JSON.stringify(parameters, null, 2)
@@ -77,6 +85,7 @@ export async function runCall(idOrIndex, flags) {
       discoveryId,
       parameters,
       maxResponseSize: maxSize,
+      respondWith: flags.respondWith,
       timeoutMs,
     });
 
@@ -95,6 +104,7 @@ export async function runCall(idOrIndex, flags) {
         discoveryId,
         parameters,
         maxResponseSize: maxSize,
+        respondWith: flags.respondWith,
       });
       console.log(`\n  ${dim("--- Code snippet (" + flags.codegen + ") ---")}\n`);
       console.log(snippet);

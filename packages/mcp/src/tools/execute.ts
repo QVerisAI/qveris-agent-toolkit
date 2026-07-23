@@ -50,6 +50,9 @@ export interface ExecuteToolInput {
    * @minimum -1 (-1 means no limit)
    */
   max_response_size?: number;
+
+  /** Server-side result projection. Omit for the legacy/full response. */
+  respond_with?: 'full' | 'summary' | `fields:${string}`;
 }
 
 /**
@@ -90,6 +93,11 @@ export const executeToolSchema = {
         'Use -1 for no limit. Default is 20480 (20KB).',
       default: 20480,
     },
+    respond_with: {
+      type: 'string',
+      pattern: '^(full|summary|fields:.+)$',
+      description: 'Server-side result projection: "full", "summary", or "fields:<JSONPath,...>". Omit for full.',
+    },
   },
   required: ['tool_id', 'search_id', 'params_to_tool'],
 };
@@ -117,6 +125,7 @@ export async function executeExecuteTool(
     session_id: input.session_id ?? defaultSessionId,
     parameters: input.params_to_tool,
     max_response_size: input.max_response_size,
+    ...(input.respond_with !== undefined && { respond_with: input.respond_with }),
   });
 
   return response;

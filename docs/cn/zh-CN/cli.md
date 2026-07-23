@@ -98,6 +98,8 @@ qveris discover <query> [flags]
 | 参数 | 说明 | 默认值 |
 |------|------|--------|
 | `--limit <n>` | 最大结果数 | 5 |
+| `--view <routing\|full>` | 精简 routing card 或完整结果 | full |
+| `--lang <zh\|en>` | 响应语言 | 服务端协商 |
 | `--json` | 输出原始 JSON | false |
 
 **示例：**
@@ -106,6 +108,7 @@ qveris discover <query> [flags]
 qveris discover "股票价格 API"
 qveris discover "将文本翻译成法语" --limit 10
 qveris discover "加密货币市场数据" --json
+qveris discover "天气预报" --view routing --lang zh
 ```
 
 **每个工具的输出字段：**
@@ -169,6 +172,7 @@ qveris call <tool_id|index> [flags]
 | `--params <json\|@file\|->` | JSON、文件路径或 stdin | `{}` |
 | `--discovery-id <id>` | 发现会话 ID | 自动从会话获取 |
 | `--max-size <bytes>` | 响应大小限制（-1 = 无限制） | 4KB (TTY) / 20KB (管道) |
+| `--respond-with <mode>` | `full`、`summary` 或 `fields:<JSONPath,...>` | full |
 | `--dry-run` | 预览请求，不实际执行 | false |
 | `--codegen <lang>` | 调用后生成代码片段 | — |
 | `--json` | 输出原始 JSON | false |
@@ -184,7 +188,15 @@ qveris call 1 --params @params.json
 
 # 从 stdin
 echo '{"city": "London"}' | qveris call 1 --params -
+
+# 返回 schema、大小摘要和完整内容签名 URL
+qveris call 1 --params '{"city": "London"}' --respond-with summary
+
+# 选择以 result.data 为根的字段
+qveris call 1 --params '{"city": "London"}' --respond-with 'fields:$.temperature,$.humidity'
 ```
+
+投影参数仅在显式指定时发送。如果旧服务明确把投影字段判定为未知字段，CLI 只移除该字段并重试一次；无效投影仍按 `422` 错误返回。
 
 **试运行（不消耗 credits）：**
 

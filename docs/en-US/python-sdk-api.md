@@ -32,7 +32,7 @@ Call this if you create QverisClient directly and want to free network resources
 
 <a id="qveris.QverisClient.discover"></a>
 
-#### *async* discover(query: str, limit: int = 20, session_id: str | None = None) → [SearchResponse](#qveris.SearchResponse)
+#### *async* discover(query: str, limit: int = 20, session_id: str | None = None, view: Literal['routing', 'full'] | None = None, lang: Literal['zh', 'en'] | None = None) → [SearchResponse](#qveris.SearchResponse)
 
 Discover capabilities using natural language.
 
@@ -40,6 +40,8 @@ Discover capabilities using natural language.
   * **query** – Natural-language description of the capability you want (not parameters). Example: “weather forecast API” or “search recent news”.
   * **limit** – Maximum number of tools to return (server may cap this).
   * **session_id** – Optional correlation id.
+  * **view** – Optional response projection. Omit for the legacy/full response.
+  * **lang** – Optional response language; omit for server-side negotiation.
 * **Returns:**
   SearchResponse containing results (tools) and search_id used for execution.
 
@@ -70,7 +72,7 @@ Deprecated alias for inspect(…).
 
 <a id="qveris.QverisClient.call"></a>
 
-#### *async* call(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
+#### *async* call(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, respond_with: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
 
 Call a specific capability.
 
@@ -80,6 +82,7 @@ Call a specific capability.
   * **search_id** – Search ID returned by discover(…) (recommended for traceability).
   * **session_id** – Optional correlation id.
   * **max_response_size** – Optional max response size in bytes. Large responses may be truncated.
+  * **respond_with** – Optional server-side projection (full, summary, or fields:<JSONPath,…>).
 * **Returns:**
   ToolExecutionResponse with success, result, and metadata.
 
@@ -347,7 +350,7 @@ Current API responses return category objects; legacy responses returned plain s
 
 <a id="qveris.ToolInfo"></a>
 
-### *class* qveris.ToolInfo(\*, tool_id: str, name: str | None = None, description: Any | None = None, categories: List[str | [ToolCategory](#qveris.ToolCategory)] | None = None, category: str | None = None, capabilities: List[[ToolCapability](#qveris.ToolCapability)] | None = None, provider_id: str | None = None, provider_name: str | None = None, provider_description: Any | None = None, provider_website_url: str | None = None, region: str | None = None, params: List[[ToolParameter](#qveris.ToolParameter)] | None = None, examples: ToolExamples | None = None, stats: ToolStats | None = None, billing_rule: BillingRule | None = None, expected_cost: str | float | None = None, final_score: float | None = None, score: float | None = None, why_recommended: str | None = None, has_last_execution: bool | None = None, last_execution_record: Dict[str, Any] | None = None, docs_url: str | None = None, protocol: str | None = None, \*\*extra_data: Any)
+### *class* qveris.ToolInfo(\*, tool_id: str, name: str | None = None, description: Any | None = None, capability: str | None = None, cost_class: str | None = None, reliability: str | None = None, as_of_support: bool | None = None, categories: List[str | [ToolCategory](#qveris.ToolCategory)] | None = None, category: str | None = None, capabilities: List[[ToolCapability](#qveris.ToolCapability)] | None = None, provider_id: str | None = None, provider_name: str | None = None, provider_description: Any | None = None, provider_website_url: str | None = None, region: str | None = None, params: List[[ToolParameter](#qveris.ToolParameter)] | None = None, examples: ToolExamples | None = None, stats: ToolStats | None = None, billing_rule: BillingRule | None = None, expected_cost: str | float | None = None, final_score: float | None = None, score: float | None = None, why_recommended: str | None = None, has_last_execution: bool | None = None, last_execution_record: Dict[str, Any] | None = None, docs_url: str | None = None, protocol: str | None = None, \*\*extra_data: Any)
 
 <a id="qveris.ToolParameter"></a>
 

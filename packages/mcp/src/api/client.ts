@@ -278,7 +278,15 @@ export class QverisClient {
    * This is the Discover action and is free.
    */
   async searchTools(request: SearchRequest): Promise<SearchResponse> {
-    return this.request<SearchResponse>('discover', 'POST', '/search', request);
+    const body: Record<string, unknown> = { ...request };
+    try {
+      return await this.request<SearchResponse>('discover', 'POST', '/search', body);
+    } catch (error) {
+      const unsupported = unsupportedOptionalFields(error, new Set(['view', 'lang']));
+      if (unsupported.length === 0) throw error;
+      for (const field of unsupported) delete body[field];
+      return this.request<SearchResponse>('discover', 'POST', '/search', body);
+    }
   }
 
   /**
@@ -296,7 +304,15 @@ export class QverisClient {
    */
   async executeTool(toolId: string, request: ExecuteRequest): Promise<ExecuteResponse> {
     const endpoint = `/tools/execute?tool_id=${encodeURIComponent(toolId)}`;
-    return this.request<ExecuteResponse>('call', 'POST', endpoint, request, EXECUTE_TIMEOUT_MS);
+    const body: Record<string, unknown> = { ...request };
+    try {
+      return await this.request<ExecuteResponse>('call', 'POST', endpoint, body, EXECUTE_TIMEOUT_MS);
+    } catch (error) {
+      const unsupported = unsupportedOptionalFields(error, new Set(['respond_with']));
+      if (unsupported.length === 0) throw error;
+      delete body.respond_with;
+      return this.request<ExecuteResponse>('call', 'POST', endpoint, body, EXECUTE_TIMEOUT_MS);
+    }
   }
 
   /**
@@ -380,6 +396,23 @@ function extractRequestId(response: Response): string | undefined {
 
 function isApiError(error: unknown): error is ApiError {
   return typeof error === 'object' && error !== null && 'status' in error && 'message' in error;
+}
+
+function unsupportedOptionalFields(error: unknown, allowedFields: ReadonlySet<string>): string[] {
+  if (!isApiError(error) || error.status !== 422 || !error.details) return [];
+  const body = error.details as Record<string, unknown>;
+  const candidates = Array.isArray(body.detail) ? body.detail : Array.isArray(body.details) ? body.details : [];
+  const fields = new Set<string>();
+  for (const candidate of candidates) {
+    if (!candidate || typeof candidate !== 'object') continue;
+    const item = candidate as Record<string, unknown>;
+    const loc = Array.isArray(item.loc) ? item.loc : [];
+    const field = loc.at(-1);
+    if (item.type === 'extra_forbidden' && typeof field === 'string' && allowedFields.has(field)) {
+      fields.add(field);
+    }
+  }
+  return [...fields];
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {

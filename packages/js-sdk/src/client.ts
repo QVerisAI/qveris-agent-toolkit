@@ -96,12 +96,33 @@ function normalizeBaseUrl(value: string): string {
 const DEFAULT_TIMEOUT_MS = 30_000;
 const EXECUTE_TIMEOUT_MS = 120_000;
 
+function unsupportedOptionalFields(error: unknown, allowedFields: ReadonlySet<string>): string[] {
+  if (!(error instanceof QverisApiError) || error.status !== 422 || !error.details) return [];
+  const body = error.details as Record<string, unknown>;
+  const candidates = Array.isArray(body.detail) ? body.detail : Array.isArray(body.details) ? body.details : [];
+  const fields = new Set<string>();
+  for (const candidate of candidates) {
+    if (!candidate || typeof candidate !== 'object') continue;
+    const item = candidate as Record<string, unknown>;
+    const loc = Array.isArray(item.loc) ? item.loc : [];
+    const field = loc.at(-1);
+    if (item.type === 'extra_forbidden' && typeof field === 'string' && allowedFields.has(field)) {
+      fields.add(field);
+    }
+  }
+  return [...fields];
+}
+
 /** Options for {@link Qveris.discover}. */
 export interface DiscoverOptions {
   /** Maximum number of results (1-100, server default 20) */
   limit?: number;
   /** Session identifier for tracking */
   sessionId?: string;
+  /** Response projection. Omit for the legacy/full response shape. */
+  view?: 'routing' | 'full';
+  /** Response language. Omit to use server-side language negotiation. */
+  lang?: 'zh' | 'en';
   /** Per-request timeout override in milliseconds */
   timeoutMs?: number;
 }
@@ -126,6 +147,8 @@ export interface CallOptions {
   sessionId?: string;
   /** Max response bytes before truncation (-1 for no limit, server default 20480) */
   maxResponseSize?: number;
+  /** Server-side result projection. Omit for the legacy/full response. */
+  respondWith?: 'full' | 'summary' | `fields:${string}`;
   /** Per-request timeout override in milliseconds (default 120s) */
   timeoutMs?: number;
 }
@@ -207,17 +230,21 @@ export class Qveris {
    * Discover capabilities from a natural-language query. Free.
    */
   async discover(query: string, options: DiscoverOptions = {}): Promise<SearchResponse> {
-    return this.request<SearchResponse>(
-      'discover',
-      'POST',
-      '/search',
-      {
-        query,
-        ...(options.limit !== undefined && { limit: options.limit }),
-        ...(options.sessionId !== undefined && { session_id: options.sessionId }),
-      },
-      options.timeoutMs,
-    );
+    const body: Record<string, unknown> = {
+      query,
+      ...(options.limit !== undefined && { limit: options.limit }),
+      ...(options.sessionId !== undefined && { session_id: options.sessionId }),
+      ...(options.view !== undefined && { view: options.view }),
+      ...(options.lang !== undefined && { lang: options.lang }),
+    };
+    try {
+      return await this.request<SearchResponse>('discover', 'POST', '/search', body, options.timeoutMs);
+    } catch (error) {
+      const unsupported = unsupportedOptionalFields(error, new Set(['view', 'lang']));
+      if (unsupported.length === 0) throw error;
+      for (const field of unsupported) delete body[field];
+      return this.request<SearchResponse>('discover', 'POST', '/search', body, options.timeoutMs);
+    }
   }
 
   /**
@@ -247,20 +274,25 @@ export class Qveris {
    * final charges are reflected in usage() and ledger().
    */
   async call(toolId: string, options: CallOptions): Promise<ExecuteResponse> {
-    return this.request<ExecuteResponse>(
-      'call',
-      'POST',
-      `/tools/execute?tool_id=${encodeURIComponent(toolId)}`,
-      {
-        parameters: options.parameters,
-        search_id: options.searchId ?? null,
-        ...(options.sessionId !== undefined && { session_id: options.sessionId }),
-        ...(options.maxResponseSize !== undefined && {
-          max_response_size: options.maxResponseSize,
-        }),
-      },
-      options.timeoutMs ?? EXECUTE_TIMEOUT_MS,
-    );
+    const endpoint = `/tools/execute?tool_id=${encodeURIComponent(toolId)}`;
+    const body: Record<string, unknown> = {
+      parameters: options.parameters,
+      search_id: options.searchId ?? null,
+      ...(options.sessionId !== undefined && { session_id: options.sessionId }),
+      ...(options.maxResponseSize !== undefined && {
+        max_response_size: options.maxResponseSize,
+      }),
+      ...(options.respondWith !== undefined && { respond_with: options.respondWith }),
+    };
+    const timeoutMs = options.timeoutMs ?? EXECUTE_TIMEOUT_MS;
+    try {
+      return await this.request<ExecuteResponse>('call', 'POST', endpoint, body, timeoutMs);
+    } catch (error) {
+      const unsupported = unsupportedOptionalFields(error, new Set(['respond_with']));
+      if (unsupported.length === 0) throw error;
+      delete body.respond_with;
+      return this.request<ExecuteResponse>('call', 'POST', endpoint, body, timeoutMs);
+    }
   }
 
   /** Get current credit balance and bucket details. */

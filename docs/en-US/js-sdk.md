@@ -93,18 +93,20 @@ in CI.
 
 | Method | REST endpoint | Purpose |
 |--------|---------------|---------|
-| `discover(query, options?)` | `POST /search` | Find capabilities with natural language (free) |
+| `discover(query, options?)` | `POST /search` | Find capabilities; `view: 'routing'` returns compact routing cards (free) |
 | `inspect(toolIds, options?)` | `POST /tools/by-ids` | Fetch full capability metadata (free) |
-| `call(toolId, options)` | `POST /tools/execute` | Execute a capability (may consume credits) |
+| `call(toolId, options)` | `POST /tools/execute` | Execute a capability; `respondWith` selects full, summary, or JSONPath fields |
 | `credits()` | `GET /auth/credits` | Current credit balance and buckets |
 | `usage(filters?)` | `GET /auth/usage/history/v2` | Audit request status and charge outcome |
 | `ledger(filters?)` | `GET /auth/credits/ledger` | Inspect final credit balance movements |
 
 Option shapes:
 
-- `discover(query, { limit?, sessionId?, timeoutMs? })`
+- `discover(query, { limit?, sessionId?, view?, lang?, timeoutMs? })`
 - `inspect(toolIds, { searchId?, sessionId?, timeoutMs? })` — `toolIds` accepts a single string or an array; an **empty array short-circuits** and returns an empty response without a network request.
-- `call(toolId, { parameters, searchId?, sessionId?, maxResponseSize?, timeoutMs? })`
+- `call(toolId, { parameters, searchId?, sessionId?, maxResponseSize?, respondWith?, timeoutMs? })`
+
+Projection options are opt-in. A legacy `422 extra_forbidden` response causes one retry without only the rejected optional field; invalid projections remain errors.
 
 `usage(...)` and `ledger(...)` take filter objects such as `start_date`, `end_date`, `summary`, `bucket`, `charge_outcome`, `execution_id`, `search_id`, `direction`, `entry_type`, `min_credits`, `max_credits`, `limit`, `page`, `page_size`.
 

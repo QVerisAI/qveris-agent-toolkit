@@ -37,6 +37,12 @@ export interface SearchToolsInput {
    * If not provided, the server will use an auto-generated session ID.
    */
   session_id?: string;
+
+  /** Compact routing cards or the complete result shape. Omit for full. */
+  view?: 'routing' | 'full';
+
+  /** Response language. Omit to use server-side negotiation. */
+  lang?: 'zh' | 'en';
 }
 
 /**
@@ -66,6 +72,17 @@ export const searchToolsSchema = {
         'Session identifier for tracking user sessions. ' +
         'If not provided, an auto-generated session ID will be used.',
     },
+    view: {
+      type: 'string',
+      enum: ['routing', 'full'],
+      description:
+        'Response projection. "routing" returns compact routing cards; "full" or omitted returns complete results.',
+    },
+    lang: {
+      type: 'string',
+      enum: ['zh', 'en'],
+      description: 'Response language. Omit to use server-side language negotiation.',
+    },
   },
   required: ['query'],
 };
@@ -87,6 +104,8 @@ export async function executeSearchTools(
     query: input.query,
     limit: input.limit ?? 20,
     session_id: input.session_id ?? defaultSessionId,
+    ...(input.view !== undefined && { view: input.view }),
+    ...(input.lang !== undefined && { lang: input.lang }),
   });
 
   return response;

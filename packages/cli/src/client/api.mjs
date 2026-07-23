@@ -120,6 +120,7 @@ async function requestJson(
         }
         if (status === 429) throw new CliError("RATE_LIMITED", errorDetail);
         const err = new CliError("API_ERROR", `HTTP ${status}: ${errorDetail || rawText}`);
+        err.status = status;
         if (jsonBody) err.responseData = jsonBody;
         throw err;
       } else {
@@ -139,6 +140,32 @@ async function requestJson(
 
     // Only reached on the retry path (success returns, errors throw above).
     await sleep(retryDelayMs ?? 0);
+  }
+}
+
+function unsupportedOptionalFields(error, allowedFields) {
+  if (error?.status !== 422 || !error.responseData) return [];
+  const body = error.responseData;
+  const candidates = Array.isArray(body.detail) ? body.detail : Array.isArray(body.details) ? body.details : [];
+  return [
+    ...new Set(
+      candidates
+        .filter((item) => item?.type === "extra_forbidden" && Array.isArray(item.loc))
+        .map((item) => item.loc.at(-1))
+        .filter((field) => typeof field === "string" && allowedFields.has(field)),
+    ),
+  ];
+}
+
+async function requestWithOptionalFieldFallback(path, options, allowedFields) {
+  try {
+    return await requestJson(path, options);
+  } catch (error) {
+    const unsupported = unsupportedOptionalFields(error, allowedFields);
+    if (unsupported.length === 0) throw error;
+    const body = { ...options.body };
+    for (const field of unsupported) delete body[field];
+    return requestJson(path, { ...options, body });
   }
 }
 
@@ -163,15 +190,26 @@ export async function discoverTools({
   baseUrl: baseUrlFlag,
   query,
   limit = 5,
+  view,
+  lang,
   timeoutMs = 30000,
 }) {
   const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
-  return requestJson("/search", {
-    credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
-    baseUrl,
-    body: { query, limit },
-    timeoutMs,
-  });
+  return requestWithOptionalFieldFallback(
+    "/search",
+    {
+      credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
+      baseUrl,
+      body: {
+        query,
+        limit,
+        ...(view !== undefined && { view }),
+        ...(lang !== undefined && { lang }),
+      },
+      timeoutMs,
+    },
+    new Set(["view", "lang"]),
+  );
 }
 
 export async function inspectToolsByIds({
@@ -201,20 +239,26 @@ export async function callTool({
   discoveryId,
   parameters,
   maxResponseSize = 102400,
+  respondWith,
   timeoutMs = 120000,
 }) {
   const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
-  return requestJson("/tools/execute", {
-    credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
-    baseUrl,
-    query: { tool_id: toolId },
-    body: {
-      search_id: discoveryId,
-      parameters,
-      max_response_size: maxResponseSize,
+  return requestWithOptionalFieldFallback(
+    "/tools/execute",
+    {
+      credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
+      baseUrl,
+      query: { tool_id: toolId },
+      body: {
+        search_id: discoveryId,
+        parameters,
+        max_response_size: maxResponseSize,
+        ...(respondWith !== undefined && { respond_with: respondWith }),
+      },
+      timeoutMs,
     },
-    timeoutMs,
-  });
+    new Set(["respond_with"]),
+  );
 }
 
 export async function getCredits({ apiKey, credentialProvider, baseUrl: baseUrlFlag, timeoutMs = 30000 }) {

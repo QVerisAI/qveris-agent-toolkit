@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Added `view` / `lang` discover options and `respondWith` call projection support, including typed routing cards and summary/field result shapes. Defaults remain full; an explicit legacy `422 extra_forbidden` response triggers one retry without only the rejected optional field.
+
 ## [0.5.0] - 2026-07-18
 
 ### Added
