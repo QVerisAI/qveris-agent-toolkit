@@ -64,8 +64,8 @@ test('orchestrates discover, select, inspect, parameterize, and call', async () 
   assert.deepEqual(records[0].inspection.required_parameters, ['city']);
   assert.deepEqual(records[0].parameters, { city: 'London' });
   assert.equal(records[0].call.success, true);
-  assert.equal(records[0].call.result_valid, true);
-  assert.equal(records[0].call.execution_id, 'exec-1');
+  assert.equal(records[0].call.result_nonempty, true);
+  assert.equal('execution_id' in records[0].call, false);
   assert.equal(records[0].metadata.adapter_revision, 'adapter-sha');
 });
 
@@ -160,6 +160,23 @@ test('validates task constraints and trial bounds', async () => {
     /normalizers/,
   );
   assert.throws(() => validateTask({ ...task, oracle: { candidates: [] } }), /unavailable_reason/);
+  assert.doesNotThrow(() =>
+    validateTask({
+      ...task,
+      constraints: [{ ...task.constraints[0], alias_values: { city: ['LON'] } }],
+      reference: {
+        candidates: [{ tool_id: 'weather.forecast', parameters: { city: 'LON' } }],
+      },
+    }),
+  );
+  assert.throws(
+    () =>
+      validateTask({
+        ...task,
+        constraints: [{ ...task.constraints[0], alias_values: { unknown: ['LON'] } }],
+      }),
+    /alias_values/,
+  );
   await assert.rejects(
     runBenchmark({ tasks: [task], model: 'model-a', trials: 0, api: {}, invokeAdapter() {} }),
     /trials/,

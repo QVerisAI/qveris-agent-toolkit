@@ -12,8 +12,8 @@ import {
 } from '../adapters/codex-cli.mjs';
 
 const adapterPath = resolve(fileURLToPath(new URL('../adapters/first-result.mjs', import.meta.url)));
-const oracleAdapterPath = resolve(fileURLToPath(new URL('../adapters/oracle.mjs', import.meta.url)));
-const v3TasksPath = resolve(fileURLToPath(new URL('../tasks/v3.jsonl', import.meta.url)));
+const referenceAdapterPath = resolve(fileURLToPath(new URL('../adapters/reference.mjs', import.meta.url)));
+const v4TasksPath = resolve(fileURLToPath(new URL('../tasks/v4.jsonl', import.meta.url)));
 
 test('process adapter exchanges one JSON object without shell parsing', async () => {
   const invoke = createProcessAdapter({ command: process.execPath, args: [adapterPath], timeoutMs: 5_000 });
@@ -92,10 +92,10 @@ test('process adapter classifies timeouts', async () => {
   });
 });
 
-test('Oracle adapter selects only configured candidates present in discovery', async () => {
+test('reference adapter selects only configured candidates present in discovery', async () => {
   const invoke = createProcessAdapter({
     command: process.execPath,
-    args: [oracleAdapterPath, v3TasksPath],
+    args: [referenceAdapterPath, v4TasksPath],
     timeoutMs: 5_000,
   });
   assert.deepEqual(

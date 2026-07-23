@@ -79,7 +79,7 @@ test('v3 constraints support composite parameters and explicit URL decoding', ()
     discovery: { result_tool_ids: ['tool'] },
     selection: { tool_id: 'tool' },
     inspection: { returned_tool_ids: ['tool'], required_parameters: [] },
-    call: { attempted: true, success: true, result_valid: true },
+    call: { attempted: true, success: true, result_nonempty: true },
   };
 
   assert.equal(
@@ -98,7 +98,7 @@ test('v3 constraints support composite parameters and explicit URL decoding', ()
   );
 });
 
-test('requires a meaningful result when result validity is recorded', () => {
+test('requires a non-empty result when result non-emptiness is recorded', () => {
   const record = {
     run_id: 'run-empty',
     task_id: task.id,
@@ -109,11 +109,11 @@ test('requires a meaningful result when result validity is recorded', () => {
     selection: { tool_id: 'weather.forecast' },
     inspection: { returned_tool_ids: ['weather.forecast'], required_parameters: ['city'] },
     parameters: { city: 'London' },
-    call: { attempted: true, success: true, result_valid: false },
+    call: { attempted: true, success: true, result_nonempty: false },
   };
   const result = scoreRecord(task, record);
   assert.equal(result.call_success, true);
-  assert.equal(result.result_valid, false);
+  assert.equal(result.result_nonempty, false);
   assert.equal(result.workflow_success, false);
 });
 
@@ -173,7 +173,39 @@ test('aggregates per model with parameter and workflow rates', () => {
       failureReasons: {},
     },
   );
-  assert.equal(summary.models[0].workflow_success_wilson_95.length, 2);
+  assert.equal(summary.models[0].workflow_success_task_cluster_bootstrap_95.length, 2);
+});
+
+test('scores aliases with task-versioned accepted values', () => {
+  const btcTask = {
+    id: 'crypto-price',
+    prompt: 'BTC price',
+    constraints: [
+      {
+        id: 'symbol',
+        aliases: ['symbol', 'id'],
+        value: 'BTC',
+        alias_values: { id: ['1'] },
+      },
+    ],
+  };
+  const result = scoreRecord(btcTask, {
+    run_id: 'run-btc',
+    task_id: btcTask.id,
+    model: 'model-a',
+    trial: 1,
+    status: 'completed',
+    discovery: { selection_grounded: true },
+    selection: { tool_id: 'crypto.tool' },
+    inspection: { selection_grounded: true, required_parameters: ['id'] },
+    parameters: { id: 1 },
+    call: { attempted: true, success: true, result_nonempty: true },
+  });
+
+  assert.equal(result.selection_grounded, true);
+  assert.equal(result.inspection_grounded, true);
+  assert.equal(result.constraint_accuracy, 1);
+  assert.equal(result.workflow_success, true);
 });
 
 test('rejects run records for unknown tasks', () => {

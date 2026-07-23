@@ -41,24 +41,43 @@ export function validateTask(task) {
     ) {
       throw new Error(`Task ${task.id}: constraint ${constraint.id} has invalid normalizers`);
     }
+    if (constraint.alias_values !== undefined) {
+      if (!isPlainObject(constraint.alias_values)) {
+        throw new Error(`Task ${task.id}: constraint ${constraint.id} has invalid alias_values`);
+      }
+      for (const [alias, values] of Object.entries(constraint.alias_values)) {
+        if (
+          !constraint.aliases.includes(alias) ||
+          !Array.isArray(values) ||
+          values.length === 0 ||
+          values.some((value) => !['string', 'number', 'boolean'].includes(typeof value))
+        ) {
+          throw new Error(`Task ${task.id}: constraint ${constraint.id} has invalid alias_values`);
+        }
+      }
+    }
   }
-  if (task.oracle !== undefined) {
-    if (!task.oracle || typeof task.oracle !== 'object' || !Array.isArray(task.oracle.candidates)) {
-      throw new Error(`Task ${task.id}: oracle.candidates must be an array`);
+  if (task.reference !== undefined && task.oracle !== undefined) {
+    throw new Error(`Task ${task.id}: use reference or legacy oracle, not both`);
+  }
+  const reference = task.reference ?? task.oracle;
+  if (reference !== undefined) {
+    if (!reference || typeof reference !== 'object' || !Array.isArray(reference.candidates)) {
+      throw new Error(`Task ${task.id}: reference.candidates must be an array`);
     }
     if (
-      task.oracle.candidates.length === 0 &&
-      (typeof task.oracle.unavailable_reason !== 'string' || !task.oracle.unavailable_reason)
+      reference.candidates.length === 0 &&
+      (typeof reference.unavailable_reason !== 'string' || !reference.unavailable_reason)
     ) {
-      throw new Error(`Task ${task.id}: an empty oracle needs unavailable_reason`);
+      throw new Error(`Task ${task.id}: an empty reference needs unavailable_reason`);
     }
-    for (const candidate of task.oracle.candidates) {
+    for (const candidate of reference.candidates) {
       if (
         typeof candidate?.tool_id !== 'string' ||
         !candidate.tool_id ||
         !isPlainObject(candidate.parameters)
       ) {
-        throw new Error(`Task ${task.id}: every oracle candidate needs tool_id and parameters`);
+        throw new Error(`Task ${task.id}: every reference candidate needs tool_id and parameters`);
       }
     }
   }
@@ -160,8 +179,7 @@ async function runTrial({ task, model, trial, execute, limit, api, invokeAdapter
         parameters: record.parameters,
       });
       record.call.success = response?.success === true;
-      record.call.execution_id = response?.execution_id ?? null;
-      record.call.result_valid = response?.success === true ? hasMeaningfulResult(response?.result) : false;
+      record.call.result_nonempty = response?.success === true ? hasNonemptyResult(response?.result) : false;
     }
 
     record.status = 'completed';
@@ -307,7 +325,7 @@ function omitNullParameters(parameters) {
   return Object.fromEntries(Object.entries(parameters).filter(([, value]) => value !== null));
 }
 
-function hasMeaningfulResult(result) {
+function hasNonemptyResult(result) {
   if (result === null || result === undefined) return false;
   if (typeof result === 'string') return result.trim().length > 0;
   if (Array.isArray(result)) return result.length > 0;

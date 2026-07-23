@@ -1,10 +1,11 @@
 {
   "schema_version": 1,
   "methodology": "discover-call-v1",
-  "generated_at": "2026-07-23T06:58:29.076Z",
+  "generated_at": "2026-07-23T11:10:34.155Z",
   "models": [
     {
       "model": "gpt-5.6-sol",
+      "lane": "model",
       "tasks": 18,
       "trials_per_task": 3,
       "runs": 54,
@@ -15,14 +16,16 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0.7593,
       "call_success_rate": 0.88,
+      "result_nonempty_rate": 0.88,
       "workflow_success_rate": 0.6481,
-      "workflow_success_wilson_95": [
-        0.5148,
-        0.7618
+      "workflow_success_task_cluster_bootstrap_95": [
+        0.4259,
+        0.8519
       ],
       "failures_by_stage": {
         "adapter": 4
-      }
+      },
+      "failures_by_reason": {}
     }
   ],
   "records": [
@@ -38,15 +41,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -61,15 +77,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -84,15 +113,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -107,15 +149,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -130,15 +185,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -153,15 +221,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -176,15 +257,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": false,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -199,15 +293,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": false,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -222,15 +329,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": false,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -245,15 +365,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": false,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -268,15 +401,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": false,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -291,15 +437,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": false,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -314,15 +473,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -337,15 +509,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -360,15 +545,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -383,15 +581,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": false,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -406,15 +617,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": false,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -429,15 +653,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": false,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -452,15 +689,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -475,15 +725,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -498,15 +761,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -521,15 +797,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": false,
+      "result_nonempty": false,
       "workflow_success": false,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -544,15 +833,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": false,
+      "result_nonempty": false,
       "workflow_success": false,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -567,15 +869,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": false,
+      "result_nonempty": false,
       "workflow_success": false,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -590,15 +905,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -613,15 +941,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -636,15 +977,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -659,15 +1013,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -682,15 +1049,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -705,15 +1085,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -728,15 +1121,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -751,15 +1157,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -774,15 +1193,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -797,15 +1229,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -820,15 +1265,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -843,15 +1301,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -866,15 +1337,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0,
       "call_success": null,
+      "result_nonempty": null,
       "workflow_success": false,
       "error_stage": "adapter",
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -889,15 +1373,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0,
       "call_success": null,
+      "result_nonempty": null,
       "workflow_success": false,
       "error_stage": "adapter",
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -912,15 +1409,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0,
       "call_success": null,
+      "result_nonempty": null,
       "workflow_success": false,
       "error_stage": "adapter",
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -935,15 +1445,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -958,15 +1481,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -981,15 +1517,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1004,15 +1553,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1027,15 +1589,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1050,15 +1625,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1073,15 +1661,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1096,15 +1697,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1119,15 +1733,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0,
       "call_success": null,
+      "result_nonempty": null,
       "workflow_success": false,
       "error_stage": "adapter",
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1142,15 +1769,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": false,
+      "result_nonempty": false,
       "workflow_success": false,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1165,15 +1805,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": false,
+      "result_nonempty": false,
       "workflow_success": false,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1188,15 +1841,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": false,
+      "result_nonempty": false,
       "workflow_success": false,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1211,15 +1877,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1234,15 +1913,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1257,15 +1949,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "adapter_revision": "72672d22f3852349e166ab930efa3617945d82f0/codex-cli-0.144.1/medium",
         "toolkit_revision": "fd08165e979a8ffaa030c56a4bd4853d805bf095",
         "task_set_sha256": "67ce3685c911781f91d9978696eb4ec64192aa03da5df8fb320f8680b6e411ba",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "lane": "model",
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "50813b2a37d9024abddde21c614110c3fa926c66df833d039bf68a69fe9c7349",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     }
   ]

@@ -89,3 +89,19 @@ test('cancels unsuccessful response bodies before reporting API errors', async (
   await assert.rejects(client.discover({ query: 'weather', limit: 5 }), /HTTP 400/);
   assert.equal(cancelled, true);
 });
+
+test('records API revisions without inventing an absent catalog revision', async () => {
+  const client = createApiClient({
+    apiKey: 'test-key',
+    fetchImpl: async () =>
+      new Response(JSON.stringify({ results: [] }), {
+        headers: { 'x-qveris-api-version': '2026-07-22.1' },
+      }),
+  });
+
+  await client.discover({ query: 'weather', limit: 5 });
+  assert.deepEqual(client.observedRevisions(), {
+    api_revision: '2026-07-22.1',
+    catalog_revision: 'unreported',
+  });
+});

@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "methodology": "discover-call-v1",
-  "generated_at": "2026-07-23T07:55:58.643Z",
+  "generated_at": "2026-07-23T11:10:34.385Z",
   "models": [
     {
       "model": "oracle-v1",
-      "lane": "oracle",
+      "lane": "reference",
       "tasks": 18,
       "trials_per_task": 3,
       "runs": 54,
@@ -16,11 +16,11 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0.9444,
       "call_success_rate": 1,
-      "result_valid_rate": 1,
+      "result_nonempty_rate": 1,
       "workflow_success_rate": 0.9444,
-      "workflow_success_wilson_95": [
-        0.8489,
-        0.9809
+      "workflow_success_task_cluster_bootstrap_95": [
+        0.8333,
+        1
       ],
       "failures_by_stage": {
         "select": 3
@@ -43,18 +43,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -69,18 +79,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -95,18 +115,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -121,18 +151,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -147,18 +187,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -173,18 +223,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -199,18 +259,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -225,18 +295,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -251,18 +331,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -277,18 +367,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -303,18 +403,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -329,18 +439,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -355,18 +475,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -381,18 +511,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -407,18 +547,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -433,18 +583,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0,
       "call_success": null,
-      "result_valid": null,
+      "result_nonempty": null,
       "workflow_success": false,
       "error_stage": "select",
       "error_reason": "missing_tool_id",
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -459,18 +619,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0,
       "call_success": null,
-      "result_valid": null,
+      "result_nonempty": null,
       "workflow_success": false,
       "error_stage": "select",
       "error_reason": "missing_tool_id",
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -485,18 +655,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0,
       "call_success": null,
-      "result_valid": null,
+      "result_nonempty": null,
       "workflow_success": false,
       "error_stage": "select",
       "error_reason": "missing_tool_id",
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -511,18 +691,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -537,18 +727,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -563,18 +763,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -589,18 +799,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -615,18 +835,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -641,18 +871,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -667,18 +907,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -693,18 +943,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -719,18 +979,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -745,18 +1015,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -771,18 +1051,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -797,18 +1087,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -823,18 +1123,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -849,18 +1159,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -875,18 +1195,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -901,18 +1231,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -927,18 +1267,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -953,18 +1303,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -979,18 +1339,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1005,18 +1375,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1031,18 +1411,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1057,18 +1447,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1083,18 +1483,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1109,18 +1519,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1135,18 +1555,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1161,18 +1591,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1187,18 +1627,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1213,18 +1663,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1239,18 +1699,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1265,18 +1735,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1291,18 +1771,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1317,18 +1807,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1343,18 +1843,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1369,18 +1879,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1395,18 +1915,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     },
     {
@@ -1421,18 +1951,28 @@
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
       "call_success": true,
-      "result_valid": true,
+      "result_nonempty": true,
       "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
-        "lane": "oracle",
+        "lane": "reference",
         "adapter_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1",
         "toolkit_revision": "5006c2a0789e2352944ffd87b1a154b96ec0566f",
         "task_set_sha256": "d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866",
         "api_base_url": "https://qveris.ai/api/v1",
         "discovery_limit": 10,
-        "execute": true
+        "execute": true,
+        "model_revision": "unreported",
+        "api_revision": "unreported",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "dcf0141d9e09bb7655a69e31d54a0a755f129b0e81aeda11e5eebbd35946e591",
+        "runtime": {
+          "node": "unreported",
+          "platform": "unreported",
+          "arch": "unreported"
+        },
+        "publication_policy": "public-artifact-v1"
       }
     }
   ]

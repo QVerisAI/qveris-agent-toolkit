@@ -54,10 +54,14 @@ function validateCompleteModelRun(model, tasks, records) {
   // it with runner metadata is rejected.
   const comparableMetadata = [
     'lane',
+    'model_revision',
     'adapter_revision',
     'toolkit_revision',
     'task_set_sha256',
     'api_base_url',
+    'api_revision',
+    'catalog_revision',
+    'catalog_observation_sha256',
     'discovery_limit',
     'execute',
   ];
@@ -80,14 +84,29 @@ export function scoreRecord(task, record) {
   const required = array(record.inspection?.required_parameters);
   const parameters = plainObject(record.parameters) ? record.parameters : {};
   const completed = record.status === 'completed';
-  const selectionGrounded = selected ? discovered.includes(selected) : false;
-  const inspectionGrounded = selected ? inspected.includes(selected) : false;
+  const selectionGrounded =
+    typeof record.discovery?.selection_grounded === 'boolean'
+      ? record.discovery.selection_grounded
+      : selected
+        ? discovered.includes(selected)
+        : false;
+  const inspectionGrounded =
+    typeof record.inspection?.selection_grounded === 'boolean'
+      ? record.inspection.selection_grounded
+      : selected
+        ? inspected.includes(selected)
+        : false;
   const requiredParameterAccuracy =
     required.length === 0 ? 1 : mean(required.map((name) => hasValue(parameters[name])));
   const constraintAccuracy = mean(task.constraints.map((constraint) => constraintSatisfied(parameters, constraint)));
   const executed = record.call?.attempted === true;
   const callSuccess = executed ? record.call?.success === true : null;
-  const resultValid = executed && callSuccess ? record.call?.result_valid !== false : executed ? false : null;
+  const resultNonempty =
+    executed && callSuccess
+      ? record.call?.result_nonempty ?? record.call?.result_valid ?? true
+      : executed
+        ? false
+        : null;
   const workflowSuccess =
     completed &&
     selectionGrounded &&
@@ -95,7 +114,7 @@ export function scoreRecord(task, record) {
     requiredParameterAccuracy === 1 &&
     constraintAccuracy === 1 &&
     callSuccess === true &&
-    resultValid === true;
+    resultNonempty === true;
 
   return {
     run_id: record.run_id,
@@ -109,7 +128,7 @@ export function scoreRecord(task, record) {
     required_parameter_accuracy: round(requiredParameterAccuracy),
     constraint_accuracy: round(constraintAccuracy),
     call_success: callSuccess,
-    result_valid: resultValid,
+    result_nonempty: resultNonempty,
     workflow_success: workflowSuccess,
     error_stage: record.error?.stage ?? null,
     error_reason: record.error?.reason_code ?? null,
@@ -120,7 +139,7 @@ export function scoreRecord(task, record) {
 function aggregateModel(model, records) {
   const executed = records.filter((record) => record.executed);
   const workflowWins = records.filter((record) => record.workflow_success).length;
-  const interval = wilsonInterval(workflowWins, records.length);
+  const interval = taskClusterBootstrapInterval(records);
   const taskCount = new Set(records.map((record) => record.task_id)).size;
   const failuresByStage = {};
   const failuresByReason = {};
@@ -143,9 +162,9 @@ function aggregateModel(model, records) {
     required_parameter_accuracy: round(mean(records.map((record) => record.required_parameter_accuracy))),
     constraint_accuracy: round(mean(records.map((record) => record.constraint_accuracy))),
     call_success_rate: executed.length ? round(mean(executed.map((record) => record.call_success))) : null,
-    result_valid_rate: executed.length ? round(mean(executed.map((record) => record.result_valid))) : null,
+    result_nonempty_rate: executed.length ? round(mean(executed.map((record) => record.result_nonempty))) : null,
     workflow_success_rate: round(workflowWins / records.length),
-    workflow_success_wilson_95: interval.map(round),
+    workflow_success_task_cluster_bootstrap_95: interval.map(round),
     failures_by_stage: failuresByStage,
     failures_by_reason: failuresByReason,
   };
@@ -155,11 +174,13 @@ function constraintSatisfied(parameters, constraint) {
   for (const alias of constraint.aliases) {
     if (!hasValue(parameters[alias])) continue;
     const actual = parameters[alias];
-    const expected = constraint.value;
-    if (constraint.match === 'contains') {
-      if (normalize(actual, constraint).includes(normalize(expected, constraint))) return 1;
-    } else if (normalize(actual, constraint) === normalize(expected, constraint)) {
-      return 1;
+    const expectedValues = [constraint.value, ...array(constraint.alias_values?.[alias])];
+    for (const expected of expectedValues) {
+      if (constraint.match === 'contains') {
+        if (normalize(actual, constraint).includes(normalize(expected, constraint))) return 1;
+      } else if (normalize(actual, constraint) === normalize(expected, constraint)) {
+        return 1;
+      }
     }
   }
   for (const alias of array(constraint.composite_aliases)) {
@@ -204,13 +225,36 @@ function mean(values) {
   return values.reduce((sum, value) => sum + Number(value), 0) / values.length;
 }
 
-function wilsonInterval(successes, total, z = 1.96) {
-  if (total === 0) return [0, 0];
-  const proportion = successes / total;
-  const denominator = 1 + (z * z) / total;
-  const center = (proportion + (z * z) / (2 * total)) / denominator;
-  const margin = (z / denominator) * Math.sqrt((proportion * (1 - proportion)) / total + (z * z) / (4 * total * total));
-  return [Math.max(0, center - margin), Math.min(1, center + margin)];
+function taskClusterBootstrapInterval(records, iterations = 20_000) {
+  const byTask = new Map();
+  for (const record of records) {
+    const values = byTask.get(record.task_id) || [];
+    values.push(Number(record.workflow_success));
+    byTask.set(record.task_id, values);
+  }
+  const taskRates = [...byTask.values()].map(mean);
+  if (taskRates.length <= 1) {
+    const value = taskRates[0] ?? 0;
+    return [value, value];
+  }
+
+  let state = 0x51f15e;
+  const randomIndex = () => {
+    state = (Math.imul(state, 1_664_525) + 1_013_904_223) >>> 0;
+    return Math.floor((state / 2 ** 32) * taskRates.length);
+  };
+  const estimates = [];
+  for (let iteration = 0; iteration < iterations; iteration++) {
+    let total = 0;
+    for (let task = 0; task < taskRates.length; task++) total += taskRates[randomIndex()];
+    estimates.push(total / taskRates.length);
+  }
+  estimates.sort((left, right) => left - right);
+  return [percentile(estimates, 0.025), percentile(estimates, 0.975)];
+}
+
+function percentile(sorted, probability) {
+  return sorted[Math.min(sorted.length - 1, Math.max(0, Math.floor(probability * sorted.length)))];
 }
 
 function round(value) {

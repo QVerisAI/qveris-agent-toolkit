@@ -12,6 +12,8 @@ export function createApiClient({
   const key = typeof apiKey === 'string' ? apiKey.trim() : '';
   if (!key || /[\r\n]/.test(key)) throw new Error('QVERIS_API_KEY is required');
   const resolvedBaseUrl = normalizeBaseUrl(baseUrl);
+  const observedApiRevisions = new Set();
+  const observedCatalogRevisions = new Set();
   if (!Number.isInteger(maxRetries) || maxRetries < 0 || maxRetries > 10) {
     throw new Error('maxRetries must be an integer from 0 to 10');
   }
@@ -39,6 +41,8 @@ export function createApiClient({
       await Promise.resolve(response.body?.cancel?.()).catch(() => undefined);
       await sleep(retryDelayMs(response.headers.get('retry-after'), attempt));
     }
+    observeRevision(response.headers, 'x-qveris-api-version', observedApiRevisions);
+    observeRevision(response.headers, 'x-qveris-catalog-version', observedCatalogRevisions);
     if (!response.ok) {
       await Promise.resolve(response.body?.cancel?.()).catch(() => undefined);
       throw apiError(`HTTP ${response.status}`);
@@ -80,7 +84,22 @@ export function createApiClient({
         parameters,
         search_id: discoveryId ?? null,
       }),
+    observedRevisions: () => ({
+      api_revision: singleRevision(observedApiRevisions),
+      catalog_revision: singleRevision(observedCatalogRevisions),
+    }),
   };
+}
+
+function observeRevision(headers, name, revisions) {
+  const value = headers?.get?.(name);
+  if (typeof value === 'string' && value.trim()) revisions.add(value.trim());
+}
+
+function singleRevision(revisions) {
+  if (revisions.size === 0) return 'unreported';
+  if (revisions.size === 1) return [...revisions][0];
+  return `mixed:${[...revisions].sort().join(',')}`;
 }
 
 function retryDelayMs(retryAfter, attempt) {

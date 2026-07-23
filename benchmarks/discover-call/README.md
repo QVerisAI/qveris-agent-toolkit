@@ -34,7 +34,8 @@ The scorer reports these metrics separately:
 - **required-parameter accuracy**: fraction of required schema parameters supplied;
 - **constraint accuracy**: fraction of task facts represented through accepted parameter aliases;
 - **call success**: successful real executions among attempted calls;
-- **result validity**: successful calls returned a non-empty result;
+- **result non-empty**: successful calls returned a structurally non-empty
+  result; this does not assert semantic correctness;
 - **workflow success**: all preceding checks equal 100%, the real call succeeds,
   and its result is non-empty.
 
@@ -43,9 +44,10 @@ failure, matching the public clients' transient-failure behavior. The summary
 reports failures by stage; all exhausted API failures remain in the strict
 workflow-success denominator.
 
-The summary includes a 95% Wilson interval for workflow success. Dry runs never
-count as workflow success, so a published success rate cannot be produced
-without exercising the full workflow.
+The summary includes a deterministic 95% task-cluster bootstrap interval for
+workflow success. Tasks, rather than individual trials, are resampled so three
+trials of one task are not treated as three independent task draws. Dry runs
+never count as workflow success.
 
 ## Task sets
 
@@ -60,11 +62,14 @@ Task sets are versioned and immutable once referenced by a published result:
   multiple parameterizable capabilities within the default discovery limit,
   and constraint aliases were taken from the actual parameter names of those
   capabilities.
-- `tasks/v3.jsonl` — the 18-task comparison set for lane-based baselines. It
-  preserves the v2 prompts and discovery queries, adds explicit Oracle
-  candidates, recognizes combined parameters such as `symbol=USD/EUR`, and
-  applies URL decoding only where a task opts into it. An empty Oracle candidate
-  list records a verified discovery-coverage gap; it is not silently excluded.
+- `tasks/v3.jsonl` — a diagnostic comparison set. It added deterministic
+  reference candidates and task-specific normalization, but its crypto
+  constraint did not recognize CoinMarketCap's provider-specific Bitcoin
+  identifier `id=1`.
+- `tasks/v4.jsonl` — the current immutable quality-baseline contract. It copies
+  v3 and explicitly accepts `id=1` only for the crypto task's `id` alias.
+  This task-versioned mapping fixes the known v3 scoring false negative without
+  retroactively changing v3.
 
 New tasks land as a new `tasks/vN.jsonl` revision, never by editing an
 existing file, and must still score deterministically at the contract level.
@@ -73,15 +78,18 @@ different task-set hashes.
 
 ## Run
 
-Set `QVERIS_API_KEY`, then provide an adapter executable and an immutable model
-identifier. The adapter command is spawned directly without shell parsing.
+Set `QVERIS_API_KEY`, then provide an adapter executable and a model identifier.
+Use `--lane pinned-model` only when the provider exposes a verifiable immutable
+model revision and record it with `--model-revision`. Otherwise use
+`configured-model` or `current-model` and record `unreported`.
+The adapter command is spawned directly without shell parsing.
 The harness removes `QVERIS_API_KEY` from the adapter environment; adapters
 must use separately named credentials for their model provider.
 
 ```bash
 node src/run.mjs \
   --model provider/model-version \
-  --lane pinned-model \
+  --lane configured-model \
   --adapter node \
   --adapter-arg /absolute/path/to/model-adapter.mjs \
   --adapter-revision adapter-git-sha-or-config-hash \
@@ -97,46 +105,59 @@ not publish dry-run records as benchmark results.
 
 Use the lanes together; none is a substitute for the others:
 
-- `oracle` measures the current platform ceiling for the fixed discovery query.
-  The deterministic adapter selects only a configured candidate that appears in
-  the current Top 10 and supplies fixed valid parameters. A task with no suitable
-  returned candidate remains a strict failure.
+- `reference` is a curated reference route for the fixed discovery query. The
+  deterministic adapter selects only a configured candidate that appears in the
+  observed Top 10 and supplies fixed parameters. It represents only those
+  curated candidates; a task with no suitable returned candidate remains a
+  strict failure.
+- `configured-model` measures a named model plus recorded CLI, reasoning, adapter,
+  and task-set configuration when an immutable provider snapshot is unavailable.
 - `pinned-model` measures longitudinal changes with one immutable model,
-  reasoning configuration, CLI, adapter revision, and task set.
+  provider revision, reasoning configuration, CLI, adapter revision, and task
+  set. The runner rejects this lane without `--model-revision`.
 - `current-model` measures the currently recommended model under the same task
   contract.
 - `model` is retained for backward-compatible records that predate explicit
   lanes.
 
-The primary routing gap is `oracle workflow success - model workflow success`.
+The strict benchmark gap is
+`curated reference route workflow success - model workflow success`.
 Compare component metrics and failure reasons alongside it so discovery
-coverage, model routing, parameter construction, execution, and result validity
-are not collapsed into one diagnosis.
+coverage, model routing, parameter construction, execution, and result non-emptiness
+are not collapsed into one diagnosis. Here, result non-emptiness is structural,
+not a semantic-quality judgment.
 
-Run the deterministic Oracle lane with the same task file supplied both to the
+Run the curated reference route with the same task file supplied both to the
 harness and adapter:
 
 ```bash
 node src/run.mjs \
-  --model oracle-v1 \
-  --lane oracle \
+  --model reference-v1 \
+  --model-revision deterministic-reference-v1 \
+  --lane reference \
   --adapter node \
-  --adapter-arg "$PWD/adapters/oracle.mjs" \
-  --adapter-arg "$PWD/tasks/v3.jsonl" \
-  --adapter-revision toolkit-git-sha/oracle-v1 \
-  --tasks tasks/v3.jsonl \
+  --adapter-arg "$PWD/adapters/reference.mjs" \
+  --adapter-arg "$PWD/tasks/v4.jsonl" \
+  --adapter-revision toolkit-git-sha/reference-v1 \
+  --tasks tasks/v4.jsonl \
   --trials 3 \
   --execute \
-  --output runs/oracle-v1.jsonl
+  --output runs/reference-v1.raw.jsonl
 ```
 
-Score the records:
+Generate public artifacts from raw records:
 
 ```bash
-node src/score.mjs \
-  --runs runs/model-version.jsonl \
-  --output runs/model-version.summary.json
+npm run publish -- \
+  --tasks tasks/v4.jsonl \
+  --runs runs/model-version.raw.jsonl \
+  --output-runs results/model-version-v4.runs.jsonl \
+  --output-summary results/model-version-v4.summary.json
 ```
+
+Keep raw records outside the public repository. Publication removes operational
+identifiers and the ordered discovery catalog, adds count/digest attestations,
+and rejects selected tools that are not explicitly approved.
 
 Validate the checked-in task set, fixtures, and scorer:
 
@@ -234,19 +255,28 @@ The adapter uses the CLI's existing authentication and never receives
 
 An official result must include:
 
-- the raw JSONL records and generated summary;
+- sanitized public JSONL records and generated summary; raw records remain
+  private;
 - the toolkit commit SHA and the exact, unchanged task-set file used (e.g. `tasks/v2.jsonl`);
-- an immutable model version, adapter source revision, trial count, and date;
-- the recorded API base URL, discovery limit, and task-set SHA-256;
+- the model identifier and provider revision (or explicit `unreported`), adapter
+  source revision, runtime, trial count, and date;
+- the recorded API base URL, observed API revision, catalog revision when
+  reported, catalog-observation SHA-256, discovery limit, and task-set SHA-256;
 - at least three trials per task;
 - `--execute` records for every reported workflow-success denominator;
 - failures retained in the denominator; no selective reruns or task removal;
-- no API keys, access tokens, private prompts, or raw provider error bodies.
+- no API keys, access tokens, private prompts, raw provider error bodies,
+  execution/search/connection identifiers, or unfiltered catalog results.
 
 The scorer rejects missing tasks, unequal trial counts, duplicate trials, and
 non-consecutive trial numbering for every model. It also rejects duplicate run
 IDs and aggregation across different adapter, toolkit, task-set, endpoint,
 discovery-limit, or execution settings.
+
+The catalog and artifact visibility boundary is defined in
+[`PUBLICATION_POLICY.md`](PUBLICATION_POLICY.md). Until discovery reports
+per-tool visibility, bulk catalog content defaults to private; only approved
+selected tool IDs may appear in public benchmark records.
 
 The checked-in fixture validates the scorer only. It is synthetic and must not
 be presented as product performance.

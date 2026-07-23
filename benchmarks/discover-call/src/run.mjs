@@ -33,6 +33,24 @@ export async function main(argv = process.argv.slice(2)) {
   });
   const output = resolve(options.output);
   await mkdir(dirname(output), { recursive: true });
+  const metadata = {
+    lane: options.lane,
+    model_revision: options.modelRevision,
+    adapter_revision: options.adapterRevision,
+    toolkit_revision: toolkitRevision,
+    task_set_sha256: taskSetSha256,
+    api_base_url: api.baseUrl,
+    api_revision: 'pending',
+    catalog_revision: 'pending',
+    catalog_observation_sha256: 'pending',
+    runtime: {
+      node: process.version,
+      platform: process.platform,
+      arch: process.arch,
+    },
+    discovery_limit: options.limit,
+    execute: options.execute,
+  };
   const records = await runBenchmark({
     tasks,
     model: options.model,
@@ -41,16 +59,13 @@ export async function main(argv = process.argv.slice(2)) {
     limit: options.limit,
     api,
     invokeAdapter,
-    metadata: {
-      lane: options.lane,
-      adapter_revision: options.adapterRevision,
-      toolkit_revision: toolkitRevision,
-      task_set_sha256: taskSetSha256,
-      api_base_url: api.baseUrl,
-      discovery_limit: options.limit,
-      execute: options.execute,
-    },
+    metadata,
   });
+  Object.assign(
+    metadata,
+    api.observedRevisions?.() ?? { api_revision: 'unreported', catalog_revision: 'unreported' },
+  );
+  metadata.catalog_observation_sha256 = catalogObservationSha256(records);
   await writeJsonLines(output, records);
   process.stdout.write(`Wrote ${records.length} benchmark records to ${output}\n`);
 }
@@ -121,6 +136,7 @@ function parseArgs(argv) {
     execute: false,
     limit: 10,
     lane: 'model',
+    modelRevision: 'unreported',
     adapterArgs: [],
     adapterTimeoutMs: 120_000,
   };
@@ -133,6 +149,7 @@ function parseArgs(argv) {
     else if (arg === '--adapter-revision') options.adapterRevision = nextValue(argv, ++index, arg);
     else if (arg === '--toolkit-revision') options.toolkitRevision = nextValue(argv, ++index, arg);
     else if (arg === '--model') options.model = nextValue(argv, ++index, arg);
+    else if (arg === '--model-revision') options.modelRevision = nextValue(argv, ++index, arg);
     else if (arg === '--tasks') options.tasks = nextValue(argv, ++index, arg);
     else if (arg === '--output') options.output = nextValue(argv, ++index, arg);
     else if (arg === '--trials') options.trials = integer(nextValue(argv, ++index, arg), arg);
@@ -144,6 +161,9 @@ function parseArgs(argv) {
   if (!options.help && !options.model) throw new Error('--model is required');
   if (!options.help && !options.adapter) throw new Error('--adapter is required');
   if (!options.help && !options.adapterRevision) throw new Error('--adapter-revision is required');
+  if (!options.help && options.lane === 'pinned-model' && options.modelRevision === 'unreported') {
+    throw new Error('--model-revision is required for --lane pinned-model');
+  }
   return options;
 }
 
@@ -160,10 +180,21 @@ function integer(value, flag) {
 }
 
 function lane(value) {
-  if (!['model', 'oracle', 'pinned-model', 'current-model'].includes(value)) {
-    throw new Error('--lane must be model, oracle, pinned-model, or current-model');
+  if (!['model', 'oracle', 'reference', 'configured-model', 'pinned-model', 'current-model'].includes(value)) {
+    throw new Error(
+      '--lane must be model, oracle, reference, configured-model, pinned-model, or current-model',
+    );
   }
   return value;
+}
+
+function catalogObservationSha256(records) {
+  const observation = records.map((record) => ({
+    task_id: record.task_id,
+    trial: record.trial,
+    result_tool_ids: record.discovery?.result_tool_ids ?? [],
+  }));
+  return createHash('sha256').update(JSON.stringify(observation)).digest('hex');
 }
 
 function adapterError(message, reason) {
@@ -175,7 +206,7 @@ function adapterError(message, reason) {
 
 function adapterReasonFromStderr(stderr) {
   const match = stderr.match(
-    /QVERIS_BENCHMARK_ADAPTER_ERROR=(tool_use_rejected|model_failed|invalid_events|invalid_output|cli_failed|start_failed|output_limit|missing_oracle|missing_oracle_candidate|unsupported_stage)/,
+    /QVERIS_BENCHMARK_ADAPTER_ERROR=(tool_use_rejected|model_failed|invalid_events|invalid_output|cli_failed|start_failed|output_limit|missing_reference|missing_reference_candidate|missing_oracle|missing_oracle_candidate|unsupported_stage)/,
   );
   return match?.[1] ?? null;
 }
@@ -191,7 +222,7 @@ function resolveToolkitRevision(explicit) {
 }
 
 function helpText() {
-  return `QVeris discover→call benchmark\n\nUsage:\n  node src/run.mjs --model MODEL --adapter COMMAND --adapter-revision REVISION [options]\n\nOptions:\n  --adapter-arg VALUE       Repeatable adapter argument (no shell parsing)\n  --adapter-revision VALUE  Immutable adapter source/config revision (required)\n  --toolkit-revision VALUE  Toolkit revision (auto-detected in git/GitHub Actions)\n  --tasks PATH              Task-set JSONL (default: tasks/v1.jsonl)\n  --output PATH             Run-record JSONL (default: benchmark-runs.jsonl)\n  --trials N                Trials per task (default: 3)\n  --limit N                 Discover result limit (default: 10)\n  --lane VALUE              model, oracle, pinned-model, or current-model\n  --execute                 Perform billed call requests (required for workflow success)\n  --adapter-timeout-ms N    Per-stage adapter timeout (default: 120000)\n`;
+  return `QVeris discover→call benchmark\n\nUsage:\n  node src/run.mjs --model MODEL --adapter COMMAND --adapter-revision REVISION [options]\n\nOptions:\n  --adapter-arg VALUE       Repeatable adapter argument (no shell parsing)\n  --adapter-revision VALUE  Immutable adapter source/config revision (required)\n  --toolkit-revision VALUE  Toolkit revision (auto-detected in git/GitHub Actions)\n  --model-revision VALUE    Provider snapshot/backend revision; required for pinned-model\n  --tasks PATH              Task-set JSONL (default: tasks/v1.jsonl)\n  --output PATH             Run-record JSONL (default: benchmark-runs.jsonl)\n  --trials N                Trials per task (default: 3)\n  --limit N                 Discover result limit (default: 10)\n  --lane VALUE              reference, configured-model, pinned-model, current-model, or legacy value\n  --execute                 Perform billed call requests (required for workflow success)\n  --adapter-timeout-ms N    Per-stage adapter timeout (default: 120000)\n`;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

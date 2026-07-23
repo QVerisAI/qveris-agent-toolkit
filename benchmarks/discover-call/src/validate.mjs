@@ -1,9 +1,10 @@
-import { readdir } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { validateTask } from './harness.mjs';
 import { readJsonLines } from './io.mjs';
+import { validatePolicy, validatePublicRecords } from './publication.mjs';
 import { scoreRecords } from './scoring.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -30,4 +31,21 @@ for (const file of taskFiles) {
 const v1 = await readJsonLines(resolve(root, 'tasks/v1.jsonl'));
 const fixture = await readJsonLines(resolve(root, 'fixtures/sample-runs.jsonl'));
 scoreRecords(v1, fixture);
-process.stdout.write(`Validated ${counts.join(', ')} and ${fixture.length} fixture records\n`);
+
+const policy = JSON.parse(await readFile(resolve(root, 'publication-policy.json'), 'utf8'));
+validatePolicy(policy);
+const resultFiles = (await readdir(resolve(root, 'results')))
+  .filter((name) => /\.runs\.jsonl$/.test(name))
+  .sort();
+for (const file of resultFiles) {
+  const version = file.match(/-v(\d+)\.runs\.jsonl$/)?.[1];
+  if (!version) throw new Error(`${file}: result filename must identify its task-set version`);
+  const tasks = await readJsonLines(resolve(root, `tasks/v${version}.jsonl`));
+  const records = await readJsonLines(resolve(root, 'results', file));
+  validatePublicRecords(records, policy);
+  scoreRecords(tasks, records);
+}
+
+process.stdout.write(
+  `Validated ${counts.join(', ')}, ${fixture.length} fixture records, and ${resultFiles.length} public result files\n`,
+);
