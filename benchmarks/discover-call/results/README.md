@@ -46,9 +46,12 @@ all task constraints.
 
 The four adapter-stage failures were retained: all three domain-intelligence
 trials selected a catalog capability whose inspected contract exposed no usable
-domain parameter, and one earthquake trial attempted prohibited tool use during
-parameterization. Six well-formed calls returned `success: false`: all three IP
-lookup trials and all three company-profile trials.
+domain parameter, and the final earthquake trial reached the 120-second adapter
+timeout during parameterization. The adapter intentionally records only a safe,
+generic failure at this boundary, so no more specific model event can be
+attributed to that original trial. Six well-formed calls returned
+`success: false`: all three IP lookup trials and all three company-profile
+trials.
 
 Constraint misses include three valid `symbol=USD/EUR` executions that the
 current v2 alias scorer does not split into separate base/quote constraints,
