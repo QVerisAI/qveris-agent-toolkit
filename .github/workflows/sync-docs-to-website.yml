@@ -2,10 +2,10 @@ name: Sync toolkit docs to website
 
 # Issue #38: toolkit-owned docs are authoritative for CLI / MCP / SDK /
 # coding-agent setup. When they change on main, or an SDK release tag is
-# created, open a PR back to
-# WonderfulValley/qveris-website:release/test so the website mirror stays
-# in sync. Website-owned docs (rest-api, cookbook, openapi) are excluded
-# from the trigger so this workflow cannot create a sync loop.
+# created, open a PR to the privately configured documentation destination so
+# the website mirror stays in sync. Website-owned docs (rest-api, cookbook,
+# openapi) are excluded from the trigger so this workflow cannot create a
+# sync loop.
 
 on:
   push:
@@ -65,21 +65,22 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     env:
-      WEBSITE_SYNC_TOKEN: ${{ secrets.WEBSITE_SYNC_TOKEN }}
-      WEBSITE_REPO: WonderfulValley/qveris-website
-      WEBSITE_BASE: release/test
+      WEBSITE_SYNC_TOKEN: ${{ secrets.WEBSITE_SYNC_TOKEN || secrets.REPO_ACCESS_TOKEN }}
+      WEBSITE_REPO: ${{ secrets.WEBSITE_SYNC_REPOSITORY }}
+      WEBSITE_BASE: ${{ secrets.WEBSITE_SYNC_BASE }}
 
     steps:
       - name: Check sync token
         id: guard
         run: |
-          if [ -n "${WEBSITE_SYNC_TOKEN}" ]; then
+          if [ -n "${WEBSITE_SYNC_TOKEN}" ] && [ -n "${WEBSITE_REPO}" ] && [ -n "${WEBSITE_BASE}" ]; then
             echo "skip=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          # Missing secret. Do NOT report a silent green "success" that did
-          # nothing — that hid this breakage until a manual run was inspected.
-          echo "::error title=WEBSITE_SYNC_TOKEN missing::Repo secret WEBSITE_SYNC_TOKEN is not configured, so the toolkit -> website docs sync cannot run. Add it under Settings -> Secrets and variables -> Actions. The token needs Contents:write + Pull requests:write on ${WEBSITE_REPO}."
+          # Missing private configuration. Do NOT report a silent green
+          # "success" that did nothing — that hides breakage until a manual run
+          # is inspected. Do not print configured values into public logs.
+          echo "::error title=Website docs sync configuration missing::Required Actions secrets are not configured. Add the sync token, destination repository, and destination base under Settings -> Secrets and variables -> Actions."
           if [ "${GITHUB_REPOSITORY}" = "QVerisAI/qveris-agent-toolkit" ]; then
             # First-party repo: a missing required secret is a misconfiguration
             # that must be visible (red), not a silent no-op.
@@ -106,14 +107,14 @@ jobs:
         working-directory: qveris-agent-toolkit
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Checkout website (release/test)
+      - name: Checkout documentation destination
         if: steps.guard.outputs.skip != 'true'
         uses: actions/checkout@v7
         with:
           repository: ${{ env.WEBSITE_REPO }}
           ref: ${{ env.WEBSITE_BASE }}
-          token: ${{ secrets.WEBSITE_SYNC_TOKEN }}
-          path: qveris-website
+          token: ${{ env.WEBSITE_SYNC_TOKEN }}
+          path: website
 
       - name: Setup Node.js
         if: steps.guard.outputs.skip != 'true'
@@ -127,19 +128,19 @@ jobs:
         run: >-
           node qveris-agent-toolkit/scripts/prepare-website-docs.mjs
           --toolkit-dir qveris-agent-toolkit
-          --website-dir qveris-website
+          --website-dir website
           --output-dir qveris-agent-toolkit-public
 
       - name: Mirror toolkit-owned docs into website checkout
         if: steps.guard.outputs.skip != 'true'
-        working-directory: qveris-website
+        working-directory: website
         run: node scripts/sync-docs.mjs --from-toolkit --toolkit-dir ../qveris-agent-toolkit-public
 
       - name: Open website PR if docs changed
         if: steps.guard.outputs.skip != 'true'
-        working-directory: qveris-website
+        working-directory: website
         env:
-          GH_TOKEN: ${{ secrets.WEBSITE_SYNC_TOKEN }}
+          GH_TOKEN: ${{ env.WEBSITE_SYNC_TOKEN }}
           TOOLKIT_SHA: ${{ steps.toolkit.outputs.sha }}
           PYTHON_SDK_TAG: ${{ steps.releases.outputs.python_tag }}
           JS_SDK_TAG: ${{ steps.releases.outputs.js_tag }}

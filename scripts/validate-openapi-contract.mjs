@@ -2,7 +2,7 @@
 
 // Issue #37 Phase 1: validate the mirrored public OpenAPI contract.
 //
-// The website (qveris-website) owns the public REST contract and mirrors
+// The private documentation source owns the public REST contract and mirrors
 // docs/openapi/qveris-public-api.openapi.json into this repo. This script is
 // a zero-dependency drift check: it fails CI when the checked-in contract is
 // missing the version, the core paths, or the response schemas the toolkit
@@ -49,7 +49,7 @@ function fail(errors) {
   console.error("OpenAPI contract validation FAILED:");
   for (const error of errors) console.error(`  - ${error}`);
   console.error(
-    "\nThe public OpenAPI contract is mirrored from qveris-website. " +
+    "\nThe public OpenAPI contract is mirrored from the documentation source. " +
       "If this drift is intentional, re-mirror the spec; otherwise the backend contract changed."
   );
   process.exit(1);
