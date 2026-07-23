@@ -12,6 +12,8 @@ import {
 } from '../adapters/codex-cli.mjs';
 
 const adapterPath = resolve(fileURLToPath(new URL('../adapters/first-result.mjs', import.meta.url)));
+const oracleAdapterPath = resolve(fileURLToPath(new URL('../adapters/oracle.mjs', import.meta.url)));
+const v3TasksPath = resolve(fileURLToPath(new URL('../tasks/v3.jsonl', import.meta.url)));
 
 test('process adapter exchanges one JSON object without shell parsing', async () => {
   const invoke = createProcessAdapter({ command: process.execPath, args: [adapterPath], timeoutMs: 5_000 });
@@ -56,7 +58,81 @@ test('process adapter reports startup failures without an unhandled stdin error'
     command: `missing-adapter-${process.pid}`,
     timeoutMs: 5_000,
   });
-  await assert.rejects(invoke({ stage: 'select' }), /could not be started/);
+  await assert.rejects(invoke({ stage: 'select' }), (error) => {
+    assert.equal(error.benchmarkReason, 'start_failed');
+    return /could not be started/.test(error.message);
+  });
+});
+
+test('process adapter records safe failure reasons without provider stderr', async () => {
+  const invoke = createProcessAdapter({
+    command: process.execPath,
+    args: [
+      '-e',
+      "process.stdin.resume(); process.stdin.on('end', () => { process.stderr.write('private body\\nQVERIS_BENCHMARK_ADAPTER_ERROR=tool_use_rejected\\n'); process.exitCode = 2; })",
+    ],
+    timeoutMs: 5_000,
+  });
+  await assert.rejects(invoke({ stage: 'select' }), (error) => {
+    assert.equal(error.benchmarkReason, 'tool_use_rejected');
+    assert.equal(error.message.includes('private body'), false);
+    return true;
+  });
+});
+
+test('process adapter classifies timeouts', async () => {
+  const invoke = createProcessAdapter({
+    command: process.execPath,
+    args: ['-e', "process.stdin.resume(); setInterval(() => {}, 1000)"],
+    timeoutMs: 25,
+  });
+  await assert.rejects(invoke({ stage: 'select' }), (error) => {
+    assert.equal(error.benchmarkReason, 'timeout');
+    return true;
+  });
+});
+
+test('Oracle adapter selects only configured candidates present in discovery', async () => {
+  const invoke = createProcessAdapter({
+    command: process.execPath,
+    args: [oracleAdapterPath, v3TasksPath],
+    timeoutMs: 5_000,
+  });
+  assert.deepEqual(
+    await invoke({
+      stage: 'select',
+      input: {
+        task_id: 'weather-london',
+        discovery: {
+          results: [
+            { tool_id: 'unrelated.tool' },
+            { tool_id: 'visualcrossing.timeline.retrieve.v1' },
+          ],
+        },
+      },
+    }),
+    { tool_id: 'visualcrossing.timeline.retrieve.v1' },
+  );
+  assert.deepEqual(
+    await invoke({
+      stage: 'parameterize',
+      input: {
+        task_id: 'weather-london',
+        selected_tool: { tool_id: 'visualcrossing.timeline.retrieve.v1' },
+      },
+    }),
+    { parameters: { location: 'London', unitGroup: 'metric', contentType: 'json' } },
+  );
+  assert.deepEqual(
+    await invoke({
+      stage: 'select',
+      input: {
+        task_id: 'timezone-tokyo',
+        discovery: { results: [{ tool_id: 'api_sports.timezone.retrieve.v1.e993615d' }] },
+      },
+    }),
+    { tool_id: null },
+  );
 });
 
 test('Claude adapter preserves canonical messages and response schema', () => {
@@ -167,11 +243,11 @@ test('Codex adapter extracts the final structured message and rejects tool use',
           item: { type: 'command_execution', command: 'pwd' },
         }),
       ),
-    /attempted to use a tool/,
+    (error) => error.adapterCode === 'tool_use_rejected' && /attempted to use a tool/.test(error.message),
   );
   assert.throws(
     () => parseCodexEvents(JSON.stringify({ type: 'turn.failed', error: { message: 'private' } })),
-    /unsuccessful result/,
+    (error) => error.adapterCode === 'model_failed' && /unsuccessful result/.test(error.message),
   );
   assert.throws(
     () =>

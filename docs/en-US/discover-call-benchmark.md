@@ -19,8 +19,10 @@ execution is enabled.
 
 The scorer publishes grounded selection, grounded inspection, required-parameter
 accuracy, task-constraint accuracy, call success, and strict end-to-end workflow
-success. Workflow success requires every component to pass and therefore cannot
-be reported from dry runs. The aggregate includes a 95% Wilson interval.
+success. A successful call must also return a non-empty result to satisfy the
+result-validity and strict-workflow gates. Workflow success requires every
+component to pass and therefore cannot be reported from dry runs. The aggregate
+includes a 95% Wilson interval and safe failure counts by stage and reason.
 Transient `429` and `503` responses are retried first; exhausted API failures
 remain in the denominator and are reported separately by failure stage.
 
@@ -29,6 +31,21 @@ This avoids penalizing a model for selecting a different capability that fulfill
 the same task while still requiring its choice to come from the actual discovery
 response. Model adapters receive canonical messages and a response schema but
 never receive the scorer's ground-truth constraints.
+
+The v3 task set adds explicit handling for combined parameters such as
+`symbol=USD/EUR` and opt-in URL decoding, without changing the historical v2
+scoring contract. It also supports three complementary comparison lanes:
+
+- the deterministic Oracle lane measures the current platform ceiling by
+  selecting a fixed valid candidate only when it appears in the query's Top 10;
+- the pinned-model lane measures changes over time with an immutable model and
+  adapter configuration;
+- the current-model lane measures the currently recommended model.
+
+The difference between Oracle and model strict-workflow success is the routing
+gap. Component metrics and failure reasons identify whether the remaining loss
+comes from discovery coverage, model routing, parameter construction,
+execution, or result validity.
 
 ## Reproducibility requirements
 

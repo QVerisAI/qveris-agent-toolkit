@@ -27,6 +27,40 @@ export function validateTask(task) {
     if (constraint.match !== undefined && !['equals', 'contains'].includes(constraint.match)) {
       throw new Error(`Task ${task.id}: constraint ${constraint.id} has an unsupported match mode`);
     }
+    if (
+      constraint.composite_aliases !== undefined &&
+      (!Array.isArray(constraint.composite_aliases) ||
+        constraint.composite_aliases.some((alias) => typeof alias !== 'string' || !alias))
+    ) {
+      throw new Error(`Task ${task.id}: constraint ${constraint.id} has invalid composite_aliases`);
+    }
+    if (
+      constraint.normalizers !== undefined &&
+      (!Array.isArray(constraint.normalizers) ||
+        constraint.normalizers.some((normalizer) => normalizer !== 'url_decode'))
+    ) {
+      throw new Error(`Task ${task.id}: constraint ${constraint.id} has invalid normalizers`);
+    }
+  }
+  if (task.oracle !== undefined) {
+    if (!task.oracle || typeof task.oracle !== 'object' || !Array.isArray(task.oracle.candidates)) {
+      throw new Error(`Task ${task.id}: oracle.candidates must be an array`);
+    }
+    if (
+      task.oracle.candidates.length === 0 &&
+      (typeof task.oracle.unavailable_reason !== 'string' || !task.oracle.unavailable_reason)
+    ) {
+      throw new Error(`Task ${task.id}: an empty oracle needs unavailable_reason`);
+    }
+    for (const candidate of task.oracle.candidates) {
+      if (
+        typeof candidate?.tool_id !== 'string' ||
+        !candidate.tool_id ||
+        !isPlainObject(candidate.parameters)
+      ) {
+        throw new Error(`Task ${task.id}: every oracle candidate needs tool_id and parameters`);
+      }
+    }
   }
   return task;
 }
@@ -127,12 +161,14 @@ async function runTrial({ task, model, trial, execute, limit, api, invokeAdapter
       });
       record.call.success = response?.success === true;
       record.call.execution_id = response?.execution_id ?? null;
+      record.call.result_valid = response?.success === true ? hasMeaningfulResult(response?.result) : false;
     }
 
     record.status = 'completed';
   } catch (error) {
     record.error = {
       stage: error?.benchmarkStage || 'unknown',
+      reason_code: safeReasonCode(error),
       message: safeErrorMessage(error),
     };
   }
@@ -271,6 +307,14 @@ function omitNullParameters(parameters) {
   return Object.fromEntries(Object.entries(parameters).filter(([, value]) => value !== null));
 }
 
+function hasMeaningfulResult(result) {
+  if (result === null || result === undefined) return false;
+  if (typeof result === 'string') return result.trim().length > 0;
+  if (Array.isArray(result)) return result.length > 0;
+  if (isPlainObject(result)) return Object.keys(result).length > 0;
+  return true;
+}
+
 function toolId(value) {
   const id = value?.tool_id;
   return typeof id === 'string' && id.trim() ? id.trim() : null;
@@ -287,7 +331,13 @@ function isPlainObject(value) {
 function stageError(stage, message) {
   const error = new Error(message);
   error.benchmarkStage = stage;
+  error.benchmarkReason = stage === 'select' ? 'missing_tool_id' : 'invalid_parameters';
   return error;
+}
+
+function safeReasonCode(error) {
+  const reason = error?.benchmarkReason;
+  return typeof reason === 'string' && /^[a-z][a-z0-9_]{1,63}$/.test(reason) ? reason : null;
 }
 
 function safeErrorMessage(error) {

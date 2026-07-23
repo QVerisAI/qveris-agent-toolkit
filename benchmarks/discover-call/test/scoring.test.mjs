@@ -49,6 +49,74 @@ test('does not count dry runs as workflow success', () => {
   assert.equal(result.workflow_success, false);
 });
 
+test('v3 constraints support composite parameters and explicit URL decoding', () => {
+  const exchange = {
+    id: 'exchange',
+    prompt: 'USD to EUR',
+    constraints: [
+      { id: 'base', aliases: ['base'], composite_aliases: ['symbol'], value: 'USD' },
+      { id: 'quote', aliases: ['quote'], composite_aliases: ['symbol'], value: 'EUR' },
+    ],
+  };
+  const news = {
+    id: 'news',
+    prompt: 'AI news',
+    constraints: [
+      {
+        id: 'query',
+        aliases: ['q'],
+        value: 'artificial intelligence',
+        match: 'contains',
+        normalizers: ['url_decode'],
+      },
+    ],
+  };
+  const baseRecord = {
+    run_id: 'run',
+    model: 'model-a',
+    trial: 1,
+    status: 'completed',
+    discovery: { result_tool_ids: ['tool'] },
+    selection: { tool_id: 'tool' },
+    inspection: { returned_tool_ids: ['tool'], required_parameters: [] },
+    call: { attempted: true, success: true, result_valid: true },
+  };
+
+  assert.equal(
+    scoreRecord(exchange, { ...baseRecord, task_id: exchange.id, parameters: { symbol: 'USD/EUR' } })
+      .constraint_accuracy,
+    1,
+  );
+  assert.equal(
+    scoreRecord(news, {
+      ...baseRecord,
+      run_id: 'run-news',
+      task_id: news.id,
+      parameters: { q: '%22artificial%20intelligence%22' },
+    }).constraint_accuracy,
+    1,
+  );
+});
+
+test('requires a meaningful result when result validity is recorded', () => {
+  const record = {
+    run_id: 'run-empty',
+    task_id: task.id,
+    model: 'model-a',
+    trial: 1,
+    status: 'completed',
+    discovery: { result_tool_ids: ['weather.forecast'] },
+    selection: { tool_id: 'weather.forecast' },
+    inspection: { returned_tool_ids: ['weather.forecast'], required_parameters: ['city'] },
+    parameters: { city: 'London' },
+    call: { attempted: true, success: true, result_valid: false },
+  };
+  const result = scoreRecord(task, record);
+  assert.equal(result.call_success, true);
+  assert.equal(result.result_valid, false);
+  assert.equal(result.workflow_success, false);
+});
+
 test('aggregates per model with parameter and workflow rates', () => {
   const records = [
     {
@@ -90,6 +158,7 @@ test('aggregates per model with parameter and workflow rates', () => {
       calls: summary.models[0].call_success_rate,
       workflow: summary.models[0].workflow_success_rate,
       failures: summary.models[0].failures_by_stage,
+      failureReasons: summary.models[0].failures_by_reason,
     },
     {
       tasks: 1,
@@ -101,6 +170,7 @@ test('aggregates per model with parameter and workflow rates', () => {
       calls: 0.5,
       workflow: 0.5,
       failures: {},
+      failureReasons: {},
     },
   );
   assert.equal(summary.models[0].workflow_success_wilson_95.length, 2);

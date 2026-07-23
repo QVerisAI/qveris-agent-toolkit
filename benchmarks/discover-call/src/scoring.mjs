@@ -53,6 +53,7 @@ function validateCompleteModelRun(model, tasks, records) {
   // Undefined is a valid shared value for old/synthetic fixtures, but mixing
   // it with runner metadata is rejected.
   const comparableMetadata = [
+    'lane',
     'adapter_revision',
     'toolkit_revision',
     'task_set_sha256',
@@ -86,13 +87,15 @@ export function scoreRecord(task, record) {
   const constraintAccuracy = mean(task.constraints.map((constraint) => constraintSatisfied(parameters, constraint)));
   const executed = record.call?.attempted === true;
   const callSuccess = executed ? record.call?.success === true : null;
+  const resultValid = executed && callSuccess ? record.call?.result_valid !== false : executed ? false : null;
   const workflowSuccess =
     completed &&
     selectionGrounded &&
     inspectionGrounded &&
     requiredParameterAccuracy === 1 &&
     constraintAccuracy === 1 &&
-    callSuccess === true;
+    callSuccess === true &&
+    resultValid === true;
 
   return {
     run_id: record.run_id,
@@ -106,8 +109,10 @@ export function scoreRecord(task, record) {
     required_parameter_accuracy: round(requiredParameterAccuracy),
     constraint_accuracy: round(constraintAccuracy),
     call_success: callSuccess,
+    result_valid: resultValid,
     workflow_success: workflowSuccess,
     error_stage: record.error?.stage ?? null,
+    error_reason: record.error?.reason_code ?? null,
     metadata: record.metadata,
   };
 }
@@ -118,11 +123,16 @@ function aggregateModel(model, records) {
   const interval = wilsonInterval(workflowWins, records.length);
   const taskCount = new Set(records.map((record) => record.task_id)).size;
   const failuresByStage = {};
+  const failuresByReason = {};
   for (const record of records) {
     if (record.error_stage) failuresByStage[record.error_stage] = (failuresByStage[record.error_stage] || 0) + 1;
+    if (record.error_reason) {
+      failuresByReason[record.error_reason] = (failuresByReason[record.error_reason] || 0) + 1;
+    }
   }
   return {
     model,
+    lane: records[0]?.metadata?.lane ?? 'model',
     tasks: taskCount,
     trials_per_task: records.length / taskCount,
     runs: records.length,
@@ -133,9 +143,11 @@ function aggregateModel(model, records) {
     required_parameter_accuracy: round(mean(records.map((record) => record.required_parameter_accuracy))),
     constraint_accuracy: round(mean(records.map((record) => record.constraint_accuracy))),
     call_success_rate: executed.length ? round(mean(executed.map((record) => record.call_success))) : null,
+    result_valid_rate: executed.length ? round(mean(executed.map((record) => record.result_valid))) : null,
     workflow_success_rate: round(workflowWins / records.length),
     workflow_success_wilson_95: interval.map(round),
     failures_by_stage: failuresByStage,
+    failures_by_reason: failuresByReason,
   };
 }
 
@@ -145,18 +157,42 @@ function constraintSatisfied(parameters, constraint) {
     const actual = parameters[alias];
     const expected = constraint.value;
     if (constraint.match === 'contains') {
-      if (normalize(actual).includes(normalize(expected))) return 1;
-    } else if (normalize(actual) === normalize(expected)) {
+      if (normalize(actual, constraint).includes(normalize(expected, constraint))) return 1;
+    } else if (normalize(actual, constraint) === normalize(expected, constraint)) {
       return 1;
     }
+  }
+  for (const alias of array(constraint.composite_aliases)) {
+    if (!hasValue(parameters[alias])) continue;
+    if (normalize(parameters[alias], constraint).includes(normalize(constraint.value, constraint))) return 1;
   }
   return 0;
 }
 
-function normalize(value) {
-  if (typeof value === 'string') return value.trim().toLowerCase();
+function normalize(value, constraint = {}) {
+  if (typeof value === 'string') {
+    let normalized = value.trim().toLowerCase();
+    for (const normalizer of array(constraint.normalizers)) {
+      if (normalizer === 'url_decode') normalized = safeUrlDecode(normalized);
+    }
+    return normalized;
+  }
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   return JSON.stringify(value);
+}
+
+function safeUrlDecode(value) {
+  let decoded = value.replace(/\+/g, ' ');
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const next = decodeURIComponent(decoded);
+      if (next === decoded) break;
+      decoded = next;
+    } catch {
+      break;
+    }
+  }
+  return decoded;
 }
 
 function hasValue(value) {

@@ -42,6 +42,7 @@ export async function main(argv = process.argv.slice(2)) {
     api,
     invokeAdapter,
     metadata: {
+      lane: options.lane,
       adapter_revision: options.adapterRevision,
       toolkit_revision: toolkitRevision,
       task_set_sha256: taskSetSha256,
@@ -68,30 +69,44 @@ export function createProcessAdapter({ command, args = [], timeoutMs = 120_000 }
       child.stdin.on('error', () => {});
       let stdout = '';
       let stderr = '';
+      let stdoutExceeded = false;
+      let stderrExceeded = false;
       const timer = setTimeout(() => {
         child.kill('SIGTERM');
-        reject(adapterError('Adapter timed out'));
+        reject(adapterError('Adapter timed out', 'timeout'));
       }, timeoutMs);
 
       child.stdout.on('data', (chunk) => {
         stdout += chunk;
-        if (stdout.length > 1_000_000) child.kill('SIGTERM');
+        if (stdout.length > 1_000_000 && !stdoutExceeded) {
+          stdoutExceeded = true;
+          child.kill('SIGTERM');
+        }
       });
       child.stderr.on('data', (chunk) => {
         stderr += chunk;
-        if (stderr.length > 100_000) child.kill('SIGTERM');
+        if (stderr.length > 100_000 && !stderrExceeded) {
+          stderrExceeded = true;
+          child.kill('SIGTERM');
+        }
       });
       child.on('error', () => {
         clearTimeout(timer);
-        reject(adapterError('Adapter could not be started'));
+        reject(adapterError('Adapter could not be started', 'start_failed'));
       });
       child.on('close', (code) => {
         clearTimeout(timer);
-        if (code !== 0) return reject(adapterError('Adapter exited unsuccessfully'));
+        if (stdoutExceeded) return reject(adapterError('Adapter output exceeded the limit', 'stdout_limit'));
+        if (stderrExceeded) return reject(adapterError('Adapter error output exceeded the limit', 'stderr_limit'));
+        if (code !== 0) {
+          return reject(
+            adapterError('Adapter exited unsuccessfully', adapterReasonFromStderr(stderr) || 'process_exit'),
+          );
+        }
         try {
           resolvePromise(JSON.parse(stdout.trim()));
         } catch {
-          reject(adapterError('Adapter returned invalid JSON'));
+          reject(adapterError('Adapter returned invalid JSON', 'invalid_json'));
         }
       });
       child.stdin.end(JSON.stringify(payload));
@@ -105,6 +120,7 @@ function parseArgs(argv) {
     trials: 3,
     execute: false,
     limit: 10,
+    lane: 'model',
     adapterArgs: [],
     adapterTimeoutMs: 120_000,
   };
@@ -121,6 +137,7 @@ function parseArgs(argv) {
     else if (arg === '--output') options.output = nextValue(argv, ++index, arg);
     else if (arg === '--trials') options.trials = integer(nextValue(argv, ++index, arg), arg);
     else if (arg === '--limit') options.limit = integer(nextValue(argv, ++index, arg), arg);
+    else if (arg === '--lane') options.lane = lane(nextValue(argv, ++index, arg));
     else if (arg === '--adapter-timeout-ms') options.adapterTimeoutMs = integer(nextValue(argv, ++index, arg), arg);
     else throw new Error(`Unknown argument: ${arg}`);
   }
@@ -142,10 +159,25 @@ function integer(value, flag) {
   return parsed;
 }
 
-function adapterError(message) {
+function lane(value) {
+  if (!['model', 'oracle', 'pinned-model', 'current-model'].includes(value)) {
+    throw new Error('--lane must be model, oracle, pinned-model, or current-model');
+  }
+  return value;
+}
+
+function adapterError(message, reason) {
   const error = new Error(message);
   error.benchmarkStage = 'adapter';
+  error.benchmarkReason = reason;
   return error;
+}
+
+function adapterReasonFromStderr(stderr) {
+  const match = stderr.match(
+    /QVERIS_BENCHMARK_ADAPTER_ERROR=(tool_use_rejected|model_failed|invalid_events|invalid_output|cli_failed|start_failed|output_limit|missing_oracle|missing_oracle_candidate|unsupported_stage)/,
+  );
+  return match?.[1] ?? null;
 }
 
 function resolveToolkitRevision(explicit) {
@@ -159,7 +191,7 @@ function resolveToolkitRevision(explicit) {
 }
 
 function helpText() {
-  return `QVeris discover→call benchmark\n\nUsage:\n  node src/run.mjs --model MODEL --adapter COMMAND --adapter-revision REVISION [options]\n\nOptions:\n  --adapter-arg VALUE       Repeatable adapter argument (no shell parsing)\n  --adapter-revision VALUE  Immutable adapter source/config revision (required)\n  --toolkit-revision VALUE  Toolkit revision (auto-detected in git/GitHub Actions)\n  --tasks PATH              Task-set JSONL (default: tasks/v1.jsonl)\n  --output PATH             Run-record JSONL (default: benchmark-runs.jsonl)\n  --trials N                Trials per task (default: 3)\n  --limit N                 Discover result limit (default: 10)\n  --execute                 Perform billed call requests (required for workflow success)\n  --adapter-timeout-ms N    Per-stage adapter timeout (default: 120000)\n`;
+  return `QVeris discover→call benchmark\n\nUsage:\n  node src/run.mjs --model MODEL --adapter COMMAND --adapter-revision REVISION [options]\n\nOptions:\n  --adapter-arg VALUE       Repeatable adapter argument (no shell parsing)\n  --adapter-revision VALUE  Immutable adapter source/config revision (required)\n  --toolkit-revision VALUE  Toolkit revision (auto-detected in git/GitHub Actions)\n  --tasks PATH              Task-set JSONL (default: tasks/v1.jsonl)\n  --output PATH             Run-record JSONL (default: benchmark-runs.jsonl)\n  --trials N                Trials per task (default: 3)\n  --limit N                 Discover result limit (default: 10)\n  --lane VALUE              model, oracle, pinned-model, or current-model\n  --execute                 Perform billed call requests (required for workflow success)\n  --adapter-timeout-ms N    Per-stage adapter timeout (default: 120000)\n`;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

@@ -34,7 +34,9 @@ The scorer reports these metrics separately:
 - **required-parameter accuracy**: fraction of required schema parameters supplied;
 - **constraint accuracy**: fraction of task facts represented through accepted parameter aliases;
 - **call success**: successful real executions among attempted calls;
-- **workflow success**: all preceding checks equal 100% and the real call succeeds.
+- **result validity**: successful calls returned a non-empty result;
+- **workflow success**: all preceding checks equal 100%, the real call succeeds,
+  and its result is non-empty.
 
 The transport retries `429` and `503` responses before recording an API-stage
 failure, matching the public clients' transient-failure behavior. The summary
@@ -58,6 +60,11 @@ Task sets are versioned and immutable once referenced by a published result:
   multiple parameterizable capabilities within the default discovery limit,
   and constraint aliases were taken from the actual parameter names of those
   capabilities.
+- `tasks/v3.jsonl` — the 18-task comparison set for lane-based baselines. It
+  preserves the v2 prompts and discovery queries, adds explicit Oracle
+  candidates, recognizes combined parameters such as `symbol=USD/EUR`, and
+  applies URL decoding only where a task opts into it. An empty Oracle candidate
+  list records a verified discovery-coverage gap; it is not silently excluded.
 
 New tasks land as a new `tasks/vN.jsonl` revision, never by editing an
 existing file, and must still score deterministically at the contract level.
@@ -74,6 +81,7 @@ must use separately named credentials for their model provider.
 ```bash
 node src/run.mjs \
   --model provider/model-version \
+  --lane pinned-model \
   --adapter node \
   --adapter-arg /absolute/path/to/model-adapter.mjs \
   --adapter-revision adapter-git-sha-or-config-hash \
@@ -84,6 +92,43 @@ node src/run.mjs \
 
 `--execute` performs billed calls. Omit it while validating an adapter, but do
 not publish dry-run records as benchmark results.
+
+### Comparison lanes
+
+Use the lanes together; none is a substitute for the others:
+
+- `oracle` measures the current platform ceiling for the fixed discovery query.
+  The deterministic adapter selects only a configured candidate that appears in
+  the current Top 10 and supplies fixed valid parameters. A task with no suitable
+  returned candidate remains a strict failure.
+- `pinned-model` measures longitudinal changes with one immutable model,
+  reasoning configuration, CLI, adapter revision, and task set.
+- `current-model` measures the currently recommended model under the same task
+  contract.
+- `model` is retained for backward-compatible records that predate explicit
+  lanes.
+
+The primary routing gap is `oracle workflow success - model workflow success`.
+Compare component metrics and failure reasons alongside it so discovery
+coverage, model routing, parameter construction, execution, and result validity
+are not collapsed into one diagnosis.
+
+Run the deterministic Oracle lane with the same task file supplied both to the
+harness and adapter:
+
+```bash
+node src/run.mjs \
+  --model oracle-v1 \
+  --lane oracle \
+  --adapter node \
+  --adapter-arg "$PWD/adapters/oracle.mjs" \
+  --adapter-arg "$PWD/tasks/v3.jsonl" \
+  --adapter-revision toolkit-git-sha/oracle-v1 \
+  --tasks tasks/v3.jsonl \
+  --trials 3 \
+  --execute \
+  --output runs/oracle-v1.jsonl
+```
 
 Score the records:
 

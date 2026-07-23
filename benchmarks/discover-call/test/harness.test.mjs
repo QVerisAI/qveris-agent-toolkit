@@ -38,7 +38,7 @@ test('orchestrates discover, select, inspect, parameterize, and call', async () 
       },
       async call(input) {
         events.push(['call', input]);
-        return { success: true, execution_id: 'exec-1' };
+        return { success: true, execution_id: 'exec-1', result: { forecast: [{ temperature: 20 }] } };
       },
     },
     async invokeAdapter(payload) {
@@ -64,6 +64,7 @@ test('orchestrates discover, select, inspect, parameterize, and call', async () 
   assert.deepEqual(records[0].inspection.required_parameters, ['city']);
   assert.deepEqual(records[0].parameters, { city: 'London' });
   assert.equal(records[0].call.success, true);
+  assert.equal(records[0].call.result_valid, true);
   assert.equal(records[0].call.execution_id, 'exec-1');
   assert.equal(records[0].metadata.adapter_revision, 'adapter-sha');
 });
@@ -136,6 +137,7 @@ test('records adapter failures without copying their error text', async () => {
     async invokeAdapter() {
       const error = new Error('adapter failed with secret-token');
       error.benchmarkStage = 'adapter';
+      error.benchmarkReason = 'tool_use_rejected';
       throw error;
     },
   });
@@ -143,11 +145,21 @@ test('records adapter failures without copying their error text', async () => {
   assert.equal(records[0].status, 'failed');
   assert.equal(records[0].error.stage, 'adapter');
   assert.equal(records[0].error.message, 'Adapter invocation failed');
+  assert.equal(records[0].error.reason_code, 'tool_use_rejected');
   assert.equal(JSON.stringify(records[0]).includes('secret-token'), false);
 });
 
 test('validates task constraints and trial bounds', async () => {
   assert.throws(() => validateTask({ id: 'bad', prompt: 'x', constraints: [] }), /constraints/);
+  assert.throws(
+    () =>
+      validateTask({
+        ...task,
+        constraints: [{ ...task.constraints[0], normalizers: ['unknown'] }],
+      }),
+    /normalizers/,
+  );
+  assert.throws(() => validateTask({ ...task, oracle: { candidates: [] } }), /unavailable_reason/);
   await assert.rejects(
     runBenchmark({ tasks: [task], model: 'model-a', trials: 0, api: {}, invokeAdapter() {} }),
     /trials/,

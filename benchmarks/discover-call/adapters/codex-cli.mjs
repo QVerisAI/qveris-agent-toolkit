@@ -65,7 +65,7 @@ export function parseCodexEvents(stdout) {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
-  if (lines.length === 0) throw new Error('Codex CLI returned no events');
+  if (lines.length === 0) throw adapterFailure('Codex CLI returned no events', 'invalid_events');
 
   let finalMessage;
   for (const line of lines) {
@@ -73,34 +73,36 @@ export function parseCodexEvents(stdout) {
     try {
       event = JSON.parse(line);
     } catch {
-      throw new Error('Codex CLI returned invalid JSONL');
+      throw adapterFailure('Codex CLI returned invalid JSONL', 'invalid_events');
     }
-    if (!isObject(event)) throw new Error('Codex CLI returned an invalid event');
+    if (!isObject(event)) throw adapterFailure('Codex CLI returned an invalid event', 'invalid_events');
     if (event.type === 'error' || event.type === 'turn.failed') {
-      throw new Error('Codex CLI reported an unsuccessful result');
+      throw adapterFailure('Codex CLI reported an unsuccessful result', 'model_failed');
     }
 
     if ((event.type === 'item.started' || event.type === 'item.completed') && isObject(event.item)) {
       if (!ALLOWED_ITEM_TYPES.has(event.item.type)) {
-        throw new Error('Codex CLI attempted to use a tool');
+        throw adapterFailure('Codex CLI attempted to use a tool', 'tool_use_rejected');
       }
       if (event.type === 'item.completed' && event.item.type === 'agent_message') {
         if (typeof event.item.text !== 'string') {
-          throw new Error('Codex CLI returned an invalid agent message');
+          throw adapterFailure('Codex CLI returned an invalid agent message', 'invalid_output');
         }
         finalMessage = event.item.text;
       }
     }
   }
 
-  if (typeof finalMessage !== 'string') throw new Error('Codex CLI returned no structured output');
+  if (typeof finalMessage !== 'string') {
+    throw adapterFailure('Codex CLI returned no structured output', 'invalid_output');
+  }
   try {
     const result = JSON.parse(finalMessage);
     if (isObject(result)) return result;
   } catch {
     // Fall through to the generic, non-sensitive error below.
   }
-  throw new Error('Codex CLI returned no structured output');
+  throw adapterFailure('Codex CLI returned no structured output', 'invalid_output');
 }
 
 export async function invokeCodex(payload) {
@@ -158,7 +160,7 @@ function runCodex(invocation) {
     child.stderr.resume();
     child.on('error', () => {
       cleanup();
-      reject(new Error('Codex CLI could not be started'));
+      reject(adapterFailure('Codex CLI could not be started', 'start_failed'));
     });
     child.on('close', (code) => {
       cleanup();
@@ -166,9 +168,11 @@ function runCodex(invocation) {
         process.kill(process.pid, forwardedSignal);
         return;
       }
-      if (outputExceeded) return reject(new Error('Codex CLI output exceeded the adapter limit'));
+      if (outputExceeded) {
+        return reject(adapterFailure('Codex CLI output exceeded the adapter limit', 'output_limit'));
+      }
       if (code === 0) resolve(output);
-      else reject(new Error('Codex CLI invocation failed'));
+      else reject(adapterFailure('Codex CLI invocation failed', 'cli_failed'));
     });
     child.stdin.end(invocation.stdin);
   });
@@ -176,6 +180,12 @@ function runCodex(invocation) {
 
 function isObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function adapterFailure(message, code) {
+  const error = new Error(message);
+  error.adapterCode = code;
+  return error;
 }
 
 async function main() {
@@ -187,7 +197,8 @@ async function main() {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main().catch((error) => {
-    process.stderr.write(`${error.message}\n`);
+    const code = typeof error?.adapterCode === 'string' ? error.adapterCode : 'invalid_output';
+    process.stderr.write(`QVERIS_BENCHMARK_ADAPTER_ERROR=${code}\n`);
     process.exitCode = 1;
   });
 }
