@@ -15,7 +15,27 @@ Each package releases independently via an annotated git tag; the matching GitHu
 1. **Bump the version** in the package's `package.json` / `pyproject.toml`.
 2. **Update `CHANGELOG.md`** (Keep a Changelog format): move the `## [Unreleased]` notes into a new `## [<version>] - <YYYY-MM-DD>` section, and update the compare links at the bottom. The publish workflow **fails if `CHANGELOG.md` has no `## [<version>]` section** for the tagged version.
 3. Open a PR with the bump + changelog; merge it.
-4. **Tag the release commit with an annotated tag**, using the new CHANGELOG section as the tag message — this is what powers the release Highlights (#101), so the changelog and the tag stay one source of truth:
+4. For a coordinated CLI, MCP, JavaScript SDK, and Python SDK release, check the merged metadata and publish all four tags from an up-to-date, clean `main`:
+
+   ```bash
+   npm run release:clients:check
+   npm run release:clients:publish
+   ```
+
+   The coordinator validates package versions, npm/Python lockfiles, MCP
+   `server.json`, each versioned Changelog section, and that every configured
+   publish workflow exists and listens for the matching tag prefix. It creates
+   annotated tags from those sections, pushes exactly one tag at a time,
+   confirms the matching Actions run is registered before pushing the next
+   tag, and then waits for all four publish workflows. If a run is interrupted,
+   rerun the command: tags already present at the release commit are verified
+   and resumed instead of recreated. Use `-- --no-watch` only when another
+   operator will monitor the registered runs.
+
+   For an individual package release, **tag the release commit with an
+   annotated tag**, using the new Changelog section as the tag message — this
+   is what powers the release Highlights (#101), so the Changelog and the tag
+   stay one source of truth:
 
    ```bash
    # Example for the MCP server (stops at the next heading or the link
@@ -26,11 +46,10 @@ Each package releases independently via an annotated git tag; the matching GitHu
    git push origin mcp-v0.8.0
    ```
 
-   > **Releasing several packages at once? Push each tag separately.** GitHub
-   > does not create push events when more than three tags are pushed in a
-   > single `git push`, so a combined push silently triggers **zero** publish
-   > workflows (observed in the 2026-07-09 release wave). One `git push origin
-   > <tag>` per package is the reliable form.
+   > **Never batch release tags in one push.** GitHub does not create push
+   > events when more than three tags are pushed in a single `git push`, so a
+   > combined push can trigger **zero** publish workflows. The coordinated
+   > command above enforces one push event per tag.
 
 5. The publish workflow verifies **version == tag** and **CHANGELOG has the section**, runs the full test matrix (ubuntu + windows), publishes, and creates the GitHub Release. Python releases also require a current `uv.lock`. MCP releases verify `server.json` uses the same version and publish its metadata to the official MCP Registry with GitHub OIDC.
 

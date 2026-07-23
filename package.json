@@ -16,8 +16,11 @@
     "install:all": "npm --prefix packages/cli ci && npm --prefix packages/mcp ci && npm --prefix packages/js-sdk ci && npm --prefix packages/openclaw-qveris-plugin ci && npm run install:py",
     "install:py": "cd packages/python-sdk && uv sync --frozen --extra dev",
     "build": "npm --prefix packages/mcp run build && npm --prefix packages/js-sdk run build && npm --prefix packages/openclaw-qveris-plugin run build",
+    "release:clients:check": "node scripts/release-client-packages.mjs check",
+    "release:clients:publish": "node scripts/release-client-packages.mjs publish",
+    "test:release-clients": "node --test scripts/release-client-packages.test.mjs",
     "typecheck": "npm --prefix packages/mcp run typecheck && npm --prefix packages/js-sdk run typecheck && npm --prefix packages/openclaw-qveris-plugin run typecheck",
-    "test": "npm --prefix packages/cli test && npm --prefix packages/mcp test && npm --prefix packages/js-sdk test && npm --prefix packages/openclaw-qveris-plugin test && npm run test:py",
+    "test": "npm --prefix packages/cli test && npm --prefix packages/mcp test && npm --prefix packages/js-sdk test && npm --prefix packages/openclaw-qveris-plugin test && npm run test:py && npm run test:release-clients",
     "test:py": "cd packages/python-sdk && uv run --frozen --extra dev pytest -q",
     "lint": "npm --prefix packages/cli run lint && npm --prefix packages/mcp run lint && npm --prefix packages/js-sdk run lint && npm --prefix packages/openclaw-qveris-plugin run lint && npm run lint:py",
     "lint:py": "cd packages/python-sdk && uv run --frozen --extra dev ruff check qveris tests examples docs-api && uv run --frozen --extra dev ruff format --check qveris tests examples docs-api"
