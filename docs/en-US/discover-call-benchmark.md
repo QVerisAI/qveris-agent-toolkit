@@ -1,85 +1,93 @@
 # Discover → Call accuracy benchmark
 
-QVeris evaluates the complete agent workflow instead of publishing an
-unverifiable adjective or scoring only search relevance. The public harness is
-in [`benchmarks/discover-call`](../../benchmarks/discover-call/README.md).
+QVeris evaluates the complete agent workflow instead of scoring search
+relevance alone. The public harness is in
+[`benchmarks/discover-call`](../../benchmarks/discover-call/README.md).
 
-This benchmark is scoped to the contract level: deterministic, per-release
-scoring of the public discover → inspect → call workflow, reproducible by
-anyone with an API key. Domain-level evaluation of long-horizon professional
-tasks with judged scoring is a separate instrument and is intentionally not
-part of this harness.
+This benchmark stays at the contract level: it measures the public discover →
+inspect → call workflow with deterministic scoring and real executions.
+Long-horizon, judged domain evaluations are a separate instrument.
 
 ## Methodology
 
-For every task and model trial, the harness runs `discover`, asks the model to
-select a returned capability, runs `inspect`, asks the model to construct
-parameters from the current schema, and then performs a real `call` when
-execution is enabled.
+For every task and trial, the harness runs `discover`, asks the adapter to
+select a returned capability, runs `inspect`, asks the adapter to construct
+parameters from the current schema, and performs a real `call`.
 
-The scorer publishes grounded selection, grounded inspection, required-parameter
-accuracy, task-constraint accuracy, call success, and strict end-to-end workflow
-success. A successful call must also return a non-empty result to satisfy the
-result-validity and strict-workflow gates. Workflow success requires every
-component to pass and therefore cannot be reported from dry runs. The aggregate
-includes a 95% Wilson interval and safe failure counts by stage and reason.
-Transient `429` and `503` responses are retried first; exhausted API failures
-remain in the denominator and are reported separately by failure stage.
+The scorer reports grounded selection and inspection, required-parameter
+accuracy, task-constraint accuracy, call success, structural result
+non-emptiness, and strict end-to-end workflow success. Non-empty does not mean
+semantically correct. Dry runs never count as workflow success. The 95%
+interval uses task-cluster bootstrap resampling so repeated trials of one task
+are not treated as independent task draws.
 
-The task set uses semantic parameter aliases rather than a single fixed tool ID.
-This avoids penalizing a model for selecting a different capability that fulfills
-the same task while still requiring its choice to come from the actual discovery
-response. Model adapters receive canonical messages and a response schema but
-never receive the scorer's ground-truth constraints.
+Task sets use semantic parameter aliases rather than one fixed tool ID. Model
+adapters receive canonical messages and a response schema, but never the
+scorer's ground-truth constraints.
 
-The v3 task set adds explicit handling for combined parameters such as
-`symbol=USD/EUR` and opt-in URL decoding, without changing the historical v2
-scoring contract. It also supports three complementary comparison lanes:
+The comparison lanes are:
 
-- the deterministic Oracle lane measures the current platform ceiling by
-  selecting a fixed valid candidate only when it appears in the query's Top 10;
-- the pinned-model lane measures changes over time with an immutable model and
-  adapter configuration;
-- the current-model lane measures the currently recommended model.
+- `reference`: a curated reference route that uses a fixed candidate only when
+  it appears in the observed Top 10. It represents those candidates, not every
+  possible platform route.
+- `configured-model`: a recorded model, CLI, reasoning, adapter, and task-set
+  configuration when the provider does not expose a verifiable immutable model
+  revision.
+- `pinned-model`: reserved for a provider model revision that can be verified
+  as immutable; the runner requires `--model-revision`.
+- `current-model`: the currently recommended model under the same task
+  contract.
 
-The difference between Oracle and model strict-workflow success is the routing
-gap. Component metrics and failure reasons identify whether the remaining loss
-comes from discovery coverage, model routing, parameter construction,
-execution, or result validity.
+The difference between reference and model strict-workflow success is the
+**strict benchmark gap**. It is not automatically a pure routing effect:
+sequential lanes can observe different live catalog snapshots. Component
+metrics, failure reasons, API revision, and catalog-observation digests must be
+considered with it.
 
-## Reproducibility requirements
+## Reproducibility and publication
 
-Published results must retain failures, use at least three trials per task, name
-an immutable model version and adapter revision, record the toolkit commit, and
-include raw JSONL records plus the generated summary. Credentials and raw
-provider error bodies must never be published.
+Published results retain every failed trial and use at least three trials per
+task. They record the model identifier and provider revision (or
+`unreported`), adapter and toolkit revisions, task-set digest, runtime, API
+revision, catalog revision when reported, catalog-observation digest, endpoint,
+and discovery limit.
+
+Only sanitized JSONL is committed. Public artifacts omit execution, search, and
+connection identifiers and the ordered discovery catalog. Approved selected
+tool IDs may remain visible; other selected tools are represented only by a
+digest. See the
+[publication policy](../../benchmarks/discover-call/PUBLICATION_POLICY.md).
 
 ## Published results
 
-The v3 comparison was run on 2026-07-23 with three trials per task and real
-execution. The deterministic Oracle measures the current fixed-query platform
-ceiling; the pinned model uses `gpt-5.6-sol`, medium reasoning effort, and Codex
-CLI 0.144.1.
+The official v4 baseline was run on 2026-07-23 over 18 immutable tasks, three
+trials each, with real calls.
 
-| Metric | Oracle | Pinned model |
+| Metric | Curated reference route | `gpt-5.6-sol` configured model |
 | --- | ---: | ---: |
-| Completed and executed | 51 / 54 | 52 / 54 |
-| Constraint accuracy | 94.44% | 83.33% |
-| Call and non-empty-result success | 100% (51 / 51) | 88.46% (46 / 52) |
-| Strict workflow success | 94.44% (51 / 54) | 72.22% (39 / 54) |
-| Workflow success, 95% Wilson interval | 84.89%–98.09% | 59.11%–82.38% |
+| Completed and executed | 51 / 54 | 51 / 54 |
+| Constraint accuracy | 94.44% | 88.89% |
+| Call and non-empty-result success | 100% (51 / 51) | 88.24% (45 / 51) |
+| Strict workflow success | 94.44% (51 / 54) | 77.78% (42 / 54) |
+| Workflow success, 95% task-cluster bootstrap | 83.33%–100% | 55.56%–94.44% |
 
-The strict routing gap is 22.22 percentage points. The Oracle's only failures
-were the three Tokyo-timezone trials, where the fixed query returned no Top 10
-capability accepting a city or coordinates. The pinned model had the same three
-semantic misses, six selected-tool execution failures, two safely classified
-disabled-tool attempts, and additional strict constraint misses. Three
-successful Bitcoin calls used CoinMarketCap's numeric `id=1`; because the v3
-constraint expects a value containing `BTC`, they remain known identifier-mapping
-false negatives rather than being reclassified after the run.
+The strict benchmark gap is 16.66 percentage points. The reference route's
+three failures are Tokyo-timezone coverage misses. The configured model's 12
+strict failures are three Tokyo constraint misses, three IP lookup call
+failures, three company-profile call failures, and three safely classified
+`tool_use_rejected` adapter failures.
 
-See the [result notes, immutable revisions, raw JSONL, and generated
-summary](../../benchmarks/discover-call/results/README.md). The synthetic scorer
-fixture remains test-only and is not a product-performance claim. The original
-v2 result remains preserved there as a historical baseline under its original
-scoring contract.
+The configured lane used `gpt-5.6-sol`, medium reasoning, and Codex CLI 0.144.1.
+Its provider model revision is `unreported`, so this is not presented as a
+pinned model snapshot. Both lanes observed API revision `2026-07-22.1`; the API
+did not report a catalog revision, and the separate catalog-observation digests
+differ.
+
+The earlier v3 run is retained only as a diagnostic baseline. Its three
+successful Bitcoin calls used provider-specific `id=1`, which v3 incorrectly
+scored as constraint failures. Immutable `tasks/v4.jsonl` explicitly recognizes
+that mapping, and all three Bitcoin trials pass in v4.
+
+See the [result notes, revisions, sanitized JSONL, and generated
+summaries](../../benchmarks/discover-call/results/README.md). The synthetic
+scorer fixture remains test-only and is not a product-performance claim.

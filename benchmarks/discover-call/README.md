@@ -157,7 +157,7 @@ npm run publish -- \
 
 Keep raw records outside the public repository. Publication removes operational
 identifiers and the ordered discovery catalog, adds count/digest attestations,
-and rejects selected tools that are not explicitly approved.
+and hashes selected tools that are not explicitly approved.
 
 Validate the checked-in task set, fixtures, and scorer:
 
@@ -276,7 +276,8 @@ discovery-limit, or execution settings.
 The catalog and artifact visibility boundary is defined in
 [`PUBLICATION_POLICY.md`](PUBLICATION_POLICY.md). Until discovery reports
 per-tool visibility, bulk catalog content defaults to private; only approved
-selected tool IDs may appear in public benchmark records.
+selected tool IDs may appear in public benchmark records. Other selected tools
+are represented only by a digest.
 
 The checked-in fixture validates the scorer only. It is synthetic and must not
 be presented as product performance.

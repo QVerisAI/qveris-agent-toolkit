@@ -3,6 +3,7 @@
   "policy_id": "public-artifact-v1",
   "catalog_visibility_default": "private",
   "publish_parameters": true,
+  "unapproved_selected_tool_handling": "hash",
   "legacy_lane_rewrites": {
     "oracle": "reference",
     "pinned-model": "configured-model"

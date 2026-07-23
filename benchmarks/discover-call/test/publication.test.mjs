@@ -8,6 +8,7 @@ const policy = {
   policy_id: 'test-public-v1',
   catalog_visibility_default: 'private',
   publish_parameters: true,
+  unapproved_selected_tool_handling: 'hash',
   legacy_lane_rewrites: { 'pinned-model': 'configured-model' },
   approved_selected_tool_ids: ['weather.tool'],
   forbidden_fields: [
@@ -65,18 +66,17 @@ test('publishes grounded attestations and hashes instead of operational identifi
   assert.doesNotThrow(() => validatePublicRecords([record], policy));
 });
 
-test('refuses to publish an unapproved selected tool', () => {
-  assert.throws(
-    () =>
-      sanitizePublicRecords(
-        [
-          {
-            selection: { tool_id: 'private.tool' },
-            discovery: { result_tool_ids: ['private.tool'] },
-          },
-        ],
-        policy,
-      ),
-    /not approved/,
+test('hashes an unapproved selected tool instead of expanding the public catalog', () => {
+  const [record] = sanitizePublicRecords(
+    [
+      {
+        selection: { tool_id: 'private.tool' },
+        discovery: { result_tool_ids: ['private.tool'] },
+      },
+    ],
+    policy,
   );
+  assert.equal(record.selection.tool_id, null);
+  assert.equal(record.selection.tool_id_sha256.length, 64);
+  assert.equal(record.discovery.selection_grounded, true);
 });

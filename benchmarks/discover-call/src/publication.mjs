@@ -26,9 +26,7 @@ export function sanitizePublicRecord(
   catalogObservationSha256 = record.metadata?.catalog_observation_sha256 ?? 'unreported',
 ) {
   const selectedToolId = record.selection?.tool_id ?? null;
-  if (selectedToolId && !approvedToolIds.has(selectedToolId)) {
-    throw new Error(`Selected tool is not approved for public artifacts: ${selectedToolId}`);
-  }
+  const selectedToolApproved = selectedToolId ? approvedToolIds.has(selectedToolId) : false;
 
   const resultToolIds = array(record.discovery?.result_tool_ids);
   const returnedToolIds = array(record.inspection?.returned_tool_ids);
@@ -59,7 +57,12 @@ export function sanitizePublicRecord(
       snapshot_sha256: sha256(JSON.stringify(resultToolIds)),
       selection_grounded: selectionGrounded,
     },
-    selection: { tool_id: selectedToolId },
+    selection: {
+      tool_id: selectedToolApproved ? selectedToolId : null,
+      ...(selectedToolId && !selectedToolApproved
+        ? { tool_id_sha256: sha256(selectedToolId) }
+        : {}),
+    },
     inspection: {
       selection_grounded: inspectionGrounded,
       required_parameters: array(record.inspection?.required_parameters),
@@ -100,6 +103,9 @@ export function validatePolicy(policy) {
   ) {
     throw new Error('Publication policy legacy_lane_rewrites must map strings to strings');
   }
+  if (policy.unapproved_selected_tool_handling !== 'hash') {
+    throw new Error('Publication policy must hash unapproved selected tools');
+  }
 }
 
 export function validatePublicRecords(records, policy) {
@@ -114,6 +120,14 @@ export function validatePublicRecords(records, policy) {
     const selectedToolId = record.selection?.tool_id;
     if (selectedToolId && !approvedToolIds.has(selectedToolId)) {
       throw new Error(`Public artifact contains an unapproved selected tool: ${selectedToolId}`);
+    }
+    if (
+      record.selection?.tool_id_sha256 !== undefined &&
+      (typeof record.selection.tool_id_sha256 !== 'string' ||
+        record.selection.tool_id_sha256.length !== 64 ||
+        selectedToolId)
+    ) {
+      throw new Error('Public artifact selected tool digest is invalid');
     }
     if (
       !Number.isInteger(record.discovery?.result_count) ||

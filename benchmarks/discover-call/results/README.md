@@ -1,5 +1,68 @@
 # Published benchmark results
 
+## 2026-07-23 — v4 public quality baseline
+
+The v4 baseline compares the curated reference route and the configured model
+over immutable `tasks/v4.jsonl`: 18 tasks, three trials per task, Top 10
+discovery, and real calls. All 54 trials in each lane are retained.
+
+| Metric | Curated reference route | `gpt-5.6-sol` configured model |
+| --- | ---: | ---: |
+| Runs | 54 | 54 |
+| Completed and executed | 51 / 54 | 51 / 54 |
+| Selection grounded | 94.44% | 100% |
+| Inspection grounded | 94.44% | 100% |
+| Required-parameter accuracy | 100% | 100% |
+| Constraint accuracy | 94.44% | 88.89% |
+| Call success among attempted calls | 100% (51 / 51) | 88.24% (45 / 51) |
+| Non-empty result among attempted calls | 100% (51 / 51) | 88.24% (45 / 51) |
+| Strict workflow success | 94.44% (51 / 54) | 77.78% (42 / 54) |
+| Workflow success, 95% task-cluster bootstrap | 83.33%–100% | 55.56%–94.44% |
+
+The v4 strict benchmark gap is **16.66 percentage points**. This is an
+end-to-end benchmark difference, not a pure routing effect: the two sequential
+lanes observed different live Top-10 catalog snapshots, as recorded by their
+different catalog-observation digests.
+
+Shared metadata:
+
+- task set: `tasks/v4.jsonl`
+- task-set SHA-256:
+  `afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed`
+- source revision:
+  `deeda797e50a0dae649bf91d7503d09ec497b324`
+- API base URL: `https://qveris.ai/api/v1`
+- observed API revision: `2026-07-22.1`
+- catalog revision: `unreported`
+- discovery limit: `10`
+- runtime: Node.js `v24.2.0`, macOS arm64
+- publication policy: `public-artifact-v1`
+
+Lane metadata:
+
+- curated reference route: model `reference-v1`, model revision
+  `deterministic-reference-v1`, catalog-observation SHA-256
+  `7b342ab2738b78597c650fec975b92a919883cf3ad87dadc3fc5316360e6e9a1`
+- configured model: model `gpt-5.6-sol`, provider model revision `unreported`,
+  reasoning effort `medium`, Codex CLI `0.144.1`,
+  catalog-observation SHA-256
+  `e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054`
+
+The reference route's three failures are the expected `timezone-tokyo`
+coverage misses; its 51 calls all succeeded and returned structurally non-empty
+results. The configured model has 12 strict failures: three Tokyo constraint
+misses, three IP lookup call failures, three company-profile call failures, and
+three domain-intelligence `tool_use_rejected` adapter failures. All three
+Bitcoin trials pass in v4, confirming that the task-versioned `id=1` mapping
+removed the known v3 scoring false negative.
+
+Artifacts:
+
+- [`2026-07-23-reference-v1-v4.runs.jsonl`](2026-07-23-reference-v1-v4.runs.jsonl)
+- [`2026-07-23-reference-v1-v4.summary.json`](2026-07-23-reference-v1-v4.summary.json)
+- [`2026-07-23-gpt-5.6-sol-configured-v4.runs.jsonl`](2026-07-23-gpt-5.6-sol-configured-v4.runs.jsonl)
+- [`2026-07-23-gpt-5.6-sol-configured-v4.summary.json`](2026-07-23-gpt-5.6-sol-configured-v4.summary.json)
+
 ## 2026-07-23 — v3 diagnostic comparison
 
 This diagnostic run compares the curated reference route and a configured model
