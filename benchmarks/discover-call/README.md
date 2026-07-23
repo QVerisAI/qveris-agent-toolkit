@@ -127,9 +127,36 @@ print prompts, keys, tokens, or provider error bodies to stdout. A first-result
 heuristic adapter is included only as a transport example; it does not construct
 parameters and is not an official model result.
 
+### Codex CLI adapter
+
+`adapters/codex-cli.mjs` supports authenticated Codex CLI installations. It
+maps the canonical system message to `developer_instructions`, sends the
+canonical user message unchanged on stdin, and writes the unchanged response
+schema to a temporary file for `--output-schema`. The adapter uses an ephemeral
+session in an isolated temporary directory, ignores user configuration and
+rules, uses a read-only sandbox, and rejects runs that emit tool-use events.
+Reasoning effort is fixed at `medium`; record the exact Codex CLI version
+alongside the adapter commit in `--adapter-revision`:
+
+```bash
+node src/run.mjs \
+  --model gpt-5.6-sol \
+  --adapter node \
+  --adapter-arg "$PWD/adapters/codex-cli.mjs" \
+  --adapter-revision adapter-git-sha/codex-cli-0.144.1/medium \
+  --tasks tasks/v2.jsonl \
+  --trials 3 \
+  --execute \
+  --output runs/gpt-5.6-sol.jsonl
+```
+
+The adapter reuses the CLI's existing authentication and never receives
+`QVERIS_API_KEY` (both the harness and adapter remove it from the model
+subprocess environment).
+
 ### Claude CLI adapter
 
-`adapters/claude-cli.mjs` is the reference adapter for authenticated Claude CLI
+`adapters/claude-cli.mjs` remains available for authenticated Claude CLI
 installations. It passes the canonical system message as `--system-prompt`, the
 canonical user message on stdin, and the unchanged response schema through
 `--json-schema`. Safe mode disables project customizations, tools are disabled,

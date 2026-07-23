@@ -5,6 +5,11 @@ import { fileURLToPath } from 'node:url';
 
 import { createProcessAdapter, main } from '../src/run.mjs';
 import { buildClaudeInvocation, parseClaudeEnvelope } from '../adapters/claude-cli.mjs';
+import {
+  buildCodexInvocation,
+  CODEX_REASONING_EFFORT,
+  parseCodexEvents,
+} from '../adapters/codex-cli.mjs';
 
 const adapterPath = resolve(fileURLToPath(new URL('../adapters/first-result.mjs', import.meta.url)));
 
@@ -95,4 +100,87 @@ test('Claude adapter extracts only structured model output', () => {
     /unsuccessful result/,
   );
   assert.throws(() => parseClaudeEnvelope(JSON.stringify({ result: 'not-json' })), /no structured output/);
+});
+
+test('Codex adapter preserves canonical messages and response schema', () => {
+  const payload = {
+    model: 'gpt-5.6-sol',
+    messages: [
+      { role: 'system', content: 'Return one grounded tool.' },
+      { role: 'user', content: '{"input":"unchanged"}' },
+    ],
+    response_schema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['tool_id'],
+      properties: { tool_id: { type: 'string' } },
+    },
+  };
+
+  const invocation = buildCodexInvocation(payload, {
+    schemaPath: '/tmp/response-schema.json',
+    workingDirectory: '/tmp/codex-adapter',
+  });
+  const configs = invocation.args
+    .map((value, index) => (value === '--config' ? invocation.args[index + 1] : undefined))
+    .filter(Boolean);
+
+  assert.equal(invocation.stdin, payload.messages[1].content);
+  assert.deepEqual(invocation.schema, payload.response_schema);
+  assert.equal(invocation.args[invocation.args.indexOf('--model') + 1], payload.model);
+  assert.equal(invocation.args[invocation.args.indexOf('--output-schema') + 1], '/tmp/response-schema.json');
+  assert.equal(
+    configs.includes(`developer_instructions=${JSON.stringify(payload.messages[0].content)}`),
+    true,
+  );
+  assert.equal(
+    configs.includes(`model_reasoning_effort=${JSON.stringify(CODEX_REASONING_EFFORT)}`),
+    true,
+  );
+  assert.equal(invocation.args.includes('--ephemeral'), true);
+  assert.equal(invocation.args.includes('--ignore-user-config'), true);
+  assert.equal(invocation.args.includes('--ignore-rules'), true);
+  assert.equal(invocation.args[invocation.args.indexOf('--sandbox') + 1], 'read-only');
+});
+
+test('Codex adapter extracts the final structured message and rejects tool use', () => {
+  assert.deepEqual(
+    parseCodexEvents(
+      [
+        JSON.stringify({ type: 'thread.started', thread_id: 'test' }),
+        JSON.stringify({ type: 'turn.started' }),
+        JSON.stringify({ type: 'item.completed', item: { type: 'reasoning', text: 'internal' } }),
+        JSON.stringify({
+          type: 'item.completed',
+          item: { type: 'agent_message', text: '{"tool_id":"weather.forecast"}' },
+        }),
+        JSON.stringify({ type: 'turn.completed', usage: { input_tokens: 1, output_tokens: 1 } }),
+      ].join('\n'),
+    ),
+    { tool_id: 'weather.forecast' },
+  );
+  assert.throws(
+    () =>
+      parseCodexEvents(
+        JSON.stringify({
+          type: 'item.started',
+          item: { type: 'command_execution', command: 'pwd' },
+        }),
+      ),
+    /attempted to use a tool/,
+  );
+  assert.throws(
+    () => parseCodexEvents(JSON.stringify({ type: 'turn.failed', error: { message: 'private' } })),
+    /unsuccessful result/,
+  );
+  assert.throws(
+    () =>
+      parseCodexEvents(
+        JSON.stringify({
+          type: 'item.completed',
+          item: { type: 'agent_message', text: 'not-json' },
+        }),
+      ),
+    /no structured output/,
+  );
 });
