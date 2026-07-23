@@ -11,6 +11,7 @@ import {
   buildCodexInvocation,
   CODEX_REASONING_EFFORT,
   parseCodexEvents,
+  runCodex,
 } from '../adapters/codex-cli.mjs';
 
 const adapterPath = resolve(fileURLToPath(new URL('../adapters/first-result.mjs', import.meta.url)));
@@ -282,6 +283,23 @@ test('Codex adapter extracts the final structured message and rejects tool use',
         }),
       ),
     /no structured output/,
+  );
+});
+
+test('Codex adapter force-kills a child that ignores the output-limit signal', async () => {
+  await assert.rejects(
+    runCodex(
+      {
+        command: process.execPath,
+        args: [
+          '-e',
+          "process.on('SIGTERM', () => {}); process.stdout.write('x'.repeat(100)); setInterval(() => {}, 1000)",
+        ],
+        stdin: '',
+      },
+      { outputLimit: 10, forceKillAfterMs: 20 },
+    ),
+    (error) => error.adapterCode === 'output_limit',
   );
 });
 

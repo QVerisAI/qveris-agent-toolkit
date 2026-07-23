@@ -2,12 +2,15 @@
   "schema_version": 1,
   "policy_id": "public-artifact-v1",
   "catalog_visibility_default": "private",
-  "publish_parameters": true,
+  "publish_parameters": false,
   "unapproved_selected_tool_handling": "hash",
   "legacy_lane_rewrites": {
     "oracle": "reference",
     "pinned-model": "configured-model"
   },
+  "approved_api_base_urls": [
+    "https://qveris.ai/api/v1"
+  ],
   "approved_selected_tool_ids": [
     "amap_webservice.geocode.geo.retrieve.v3",
     "api-football.standings.list.v3.76f7703e",
@@ -50,6 +53,8 @@
     "oauth_token",
     "authorization",
     "client_secret",
-    "password"
+    "password",
+    "parameters",
+    "required_parameters"
   ]
 }

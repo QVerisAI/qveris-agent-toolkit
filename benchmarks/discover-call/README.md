@@ -71,7 +71,8 @@ Task sets are versioned and immutable once referenced by a published result:
 - `tasks/v4.jsonl` — the current immutable quality-baseline contract. It copies
   v3 and explicitly accepts `id=1` only for the crypto task's `id` alias.
   This task-versioned mapping fixes the known v3 scoring false negative without
-  retroactively changing v3.
+  retroactively changing v3. Provider-specific `alias_values` use exact
+  matching even when the human-readable constraint uses `contains`.
 
 New tasks land as a new `tasks/vN.jsonl` revision, never by editing an
 existing file, and must still score deterministically at the contract level.
@@ -159,7 +160,10 @@ npm run publish -- \
 
 Keep raw records outside the public repository. Publication removes operational
 identifiers and the ordered discovery catalog, adds count/digest attestations,
-and hashes selected tools that are not explicitly approved.
+hashes selected tools that are not explicitly approved, and replaces raw
+parameter values with required-parameter and constraint-accuracy attestations.
+Inspected parameter names are omitted so a hashed tool cannot leak schema
+details.
 
 Validate the checked-in task set, fixtures, and scorer:
 
@@ -267,13 +271,16 @@ An official result must include:
 - at least three trials per task;
 - `--execute` records for every reported workflow-success denominator;
 - failures retained in the denominator; no selective reruns or task removal;
-- no API keys, access tokens, private prompts, raw provider error bodies,
+- no API keys, access tokens, parameter values, private prompts, raw provider error bodies,
   execution/search/connection identifiers, or unfiltered catalog results.
 
 The scorer rejects missing tasks, unequal trial counts, duplicate trials, and
 non-consecutive trial numbering for every model. It also rejects duplicate run
 IDs and aggregation across different adapter, toolkit, task-set, endpoint,
 discovery-limit, or execution settings.
+The checked-in-artifact validator also verifies the exact task-set digest,
+requires real execution and at least three trials per task, and rejects fields
+outside the public artifact schema.
 
 The catalog and artifact visibility boundary is defined in
 [`PUBLICATION_POLICY.md`](PUBLICATION_POLICY.md). Until discovery reports

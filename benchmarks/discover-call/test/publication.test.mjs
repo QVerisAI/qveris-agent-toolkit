@@ -3,17 +3,26 @@ import test from 'node:test';
 
 import {
   sanitizePublicRecords,
+  validateOfficialPublicRun,
   validatePolicy,
   validatePublicRecords,
 } from '../src/publication.mjs';
 
+const taskSetSha256 = 'a'.repeat(64);
+const task = {
+  id: 'weather',
+  prompt: 'Weather in Shanghai',
+  constraints: [{ id: 'city', aliases: ['city'], value: 'Shanghai' }],
+};
+const tasks = [task];
 const policy = {
   schema_version: 1,
   policy_id: 'test-public-v1',
   catalog_visibility_default: 'private',
-  publish_parameters: true,
+  publish_parameters: false,
   unapproved_selected_tool_handling: 'hash',
   legacy_lane_rewrites: { 'pinned-model': 'configured-model' },
+  approved_api_base_urls: ['https://qveris.ai/api/v1'],
   approved_selected_tool_ids: ['weather.tool'],
   forbidden_fields: [
     'execution_id',
@@ -29,41 +38,38 @@ const policy = {
     'authorization',
     'client_secret',
     'password',
+    'parameters',
+    'required_parameters',
   ],
 };
 
-test('publishes grounded attestations and hashes instead of operational identifiers or catalog rows', () => {
+test('publishes score attestations and hashes instead of raw parameters or catalog rows', () => {
   const [record] = sanitizePublicRecords(
     [
-      {
-        schema_version: 1,
-        benchmark_version: 'v4',
-        run_id: 'run-1',
-        model: 'model-a',
+      rawRecord({
         metadata: {
           lane: 'configured-model',
           api_revision: '2026-07-22.1',
+          task_set_sha256: taskSetSha256,
+          api_base_url: 'https://qveris.ai/api/v1',
+          discovery_limit: 10,
+          execute: true,
           internal_note: 'must-not-publish',
         },
-        task_id: 'weather',
-        trial: 1,
-        status: 'completed',
         discovery: {
           search_id: 'search-1',
           result_tool_ids: ['other.tool', 'weather.tool'],
         },
-        selection: { tool_id: 'weather.tool' },
-        inspection: { returned_tool_ids: ['weather.tool'], required_parameters: ['city'] },
-        parameters: { city: 'Shanghai' },
         call: {
           attempted: true,
           success: true,
           execution_id: 'execution-1',
           result_nonempty: true,
         },
-      },
+      }),
     ],
     policy,
+    tasks,
   );
 
   assert.equal(record.discovery.result_count, 2);
@@ -71,6 +77,11 @@ test('publishes grounded attestations and hashes instead of operational identifi
   assert.equal(record.discovery.selection_grounded, true);
   assert.equal(record.inspection.selection_grounded, true);
   assert.equal(record.call.result_nonempty, true);
+  assert.deepEqual(record.parameterization, {
+    required_parameter_accuracy: 1,
+    constraint_accuracy: 1,
+  });
+  assert.equal(JSON.stringify(record).includes('Shanghai'), false);
   assert.equal(record.metadata.publication_policy, policy.policy_id);
   assert.equal(record.metadata.model_revision, 'unreported');
   assert.equal(record.metadata.catalog_revision, 'unreported');
@@ -85,37 +96,70 @@ test('publishes grounded attestations and hashes instead of operational identifi
 test('hashes an unapproved selected tool instead of expanding the public catalog', () => {
   const [record] = sanitizePublicRecords(
     [
-      {
-        selection: { tool_id: 'private.tool' },
+      rawRecord({
         discovery: { result_tool_ids: ['private.tool'] },
-      },
+        selection: { tool_id: 'private.tool' },
+        inspection: { returned_tool_ids: ['private.tool'], required_parameters: [] },
+        parameters: {},
+      }),
     ],
     policy,
+    tasks,
   );
   assert.equal(record.selection.tool_id, null);
   assert.equal(record.selection.tool_id_sha256.length, 64);
   assert.equal(record.discovery.selection_grounded, true);
 });
 
-test('projects safe error fields and rejects credential-shaped parameter keys', () => {
+test('recomputes parameterization scores instead of trusting raw attestations', () => {
   const [record] = sanitizePublicRecords(
     [
-      {
+      rawRecord({
+        parameters: { city: 'Wrong city' },
+        parameterization: {
+          required_parameter_accuracy: 1,
+          constraint_accuracy: 1,
+        },
+      }),
+    ],
+    policy,
+    tasks,
+  );
+  assert.deepEqual(record.parameterization, {
+    required_parameter_accuracy: 1,
+    constraint_accuracy: 0,
+  });
+});
+
+test('projects safe errors and rejects unsupported public fields at every boundary', () => {
+  const [record] = sanitizePublicRecords(
+    [
+      rawRecord({
+        status: 'failed',
         selection: { tool_id: null },
+        inspection: { returned_tool_ids: [], required_parameters: [] },
+        parameters: { query: 'private customer prompt' },
+        call: { attempted: false, success: null },
         error: {
           stage: 'adapter',
           reason_code: 'tool_use_rejected',
           message: 'raw provider body with a secret',
           provider_response: 'private',
         },
-      },
+      }),
     ],
     policy,
+    tasks,
   );
   assert.deepEqual(record.error, {
     stage: 'adapter',
     reason_code: 'tool_use_rejected',
   });
+  assert.equal(JSON.stringify(record).includes('private customer prompt'), false);
+  assert.throws(
+    () => validatePublicRecords([{ ...record, provider_response: 'private' }], policy),
+    /unsupported field at \$\.provider_response/,
+  );
   assert.throws(
     () =>
       validatePublicRecords(
@@ -127,7 +171,20 @@ test('projects safe error fields and rejects credential-shaped parameter keys', 
         ],
         policy,
       ),
-    /unsupported metadata/,
+    /unsupported field at \$\.metadata\.internal_note/,
+  );
+  assert.throws(
+    () =>
+      validatePublicRecords(
+        [
+          {
+            ...record,
+            call: { ...record.call, provider_response: 'private' },
+          },
+        ],
+        policy,
+      ),
+    /unsupported field at \$\.call\.provider_response/,
   );
   assert.throws(
     () =>
@@ -140,25 +197,28 @@ test('projects safe error fields and rejects credential-shaped parameter keys', 
         ],
         policy,
       ),
-    /unsupported fields/,
+    /unsupported field at \$\.error\.message/,
   );
-
   assert.throws(
     () =>
-      sanitizePublicRecords(
+      validatePublicRecords(
         [
           {
-            selection: { tool_id: null },
-            parameters: { apiKey: 'must-not-publish' },
+            ...record,
+            call: { ...record.call, success: 'raw provider value' },
           },
         ],
         policy,
       ),
-    /Forbidden public artifact field/,
+    /call fields have invalid types/,
   );
 });
 
-test('publication policy cannot omit a required protected field', () => {
+test('publication policy cannot expose parameters or omit a required protected field', () => {
+  assert.throws(
+    () => validatePolicy({ ...policy, publish_parameters: true }),
+    /must not publish raw parameter values/,
+  );
   assert.throws(
     () =>
       validatePolicy({
@@ -167,4 +227,78 @@ test('publication policy cannot omit a required protected field', () => {
       }),
     /must forbid protected fields: api_key/,
   );
+  assert.throws(
+    () =>
+      sanitizePublicRecords(
+        [
+          rawRecord({
+            metadata: {
+              ...rawRecord().metadata,
+              api_base_url: 'https://internal.example/api/v1',
+            },
+          }),
+        ],
+        policy,
+        tasks,
+      ),
+    /unapproved public API base URL/,
+  );
 });
+
+test('official public runs require the exact task digest, execution, and three trials', () => {
+  const records = sanitizePublicRecords(
+    [1, 2, 3].map((trial) => rawRecord({ run_id: `run-${trial}`, trial })),
+    policy,
+    tasks,
+  );
+  assert.doesNotThrow(() => validateOfficialPublicRun(records, { taskSetSha256 }));
+  assert.throws(
+    () => validateOfficialPublicRun(records, { taskSetSha256: 'b'.repeat(64) }),
+    /task-set digest does not match/,
+  );
+  assert.throws(
+    () => validateOfficialPublicRun(records.slice(0, 2), { taskSetSha256 }),
+    /at least 3 trials/,
+  );
+  assert.throws(
+    () =>
+      validateOfficialPublicRun(
+        [
+          {
+            ...records[0],
+            metadata: { ...records[0].metadata, execute: false },
+          },
+          ...records.slice(1),
+        ],
+        { taskSetSha256 },
+      ),
+    /must execute every trial/,
+  );
+});
+
+function rawRecord(overrides = {}) {
+  return {
+    schema_version: 1,
+    benchmark_version: 'v1',
+    run_id: 'run-1',
+    model: 'model-a',
+    metadata: {
+      lane: 'configured-model',
+      task_set_sha256: taskSetSha256,
+      api_base_url: 'https://qveris.ai/api/v1',
+      discovery_limit: 10,
+      execute: true,
+    },
+    task_id: task.id,
+    trial: 1,
+    status: 'completed',
+    started_at: '2026-07-23T00:00:00.000Z',
+    discovery: { result_tool_ids: ['weather.tool'] },
+    selection: { tool_id: 'weather.tool' },
+    inspection: { returned_tool_ids: ['weather.tool'], required_parameters: ['city'] },
+    parameters: { city: 'Shanghai' },
+    call: { attempted: true, success: true, result_nonempty: true },
+    finished_at: '2026-07-23T00:00:01.000Z',
+    ...overrides,
+  };
+}

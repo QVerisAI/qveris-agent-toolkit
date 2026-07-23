@@ -118,7 +118,16 @@ export async function invokeCodex(payload) {
   }
 }
 
-function runCodex(invocation) {
+export function runCodex(
+  invocation,
+  { outputLimit = 1_000_000, forceKillAfterMs = 1_000 } = {},
+) {
+  if (!Number.isInteger(outputLimit) || outputLimit < 1) {
+    throw new Error('outputLimit must be a positive integer');
+  }
+  if (!Number.isInteger(forceKillAfterMs) || forceKillAfterMs < 1) {
+    throw new Error('forceKillAfterMs must be a positive integer');
+  }
   return new Promise((resolve, reject) => {
     const env = { ...process.env };
     delete env.QVERIS_API_KEY;
@@ -128,21 +137,32 @@ function runCodex(invocation) {
       env,
     });
     let output = '';
-    let outputExceeded = false;
     let forwardedSignal;
     let forceKillTimer;
+    let terminationError;
+    let settled = false;
 
     const cleanup = () => {
       process.off('SIGINT', forwardSigint);
       process.off('SIGTERM', forwardSigterm);
       if (forceKillTimer) clearTimeout(forceKillTimer);
     };
+    const rejectOnce = (error) => {
+      if (settled) return;
+      settled = true;
+      reject(error);
+    };
+    const terminate = (error, signal = 'SIGTERM') => {
+      if (terminationError || settled) return;
+      terminationError = error;
+      child.kill(signal);
+      forceKillTimer = setTimeout(() => child.kill('SIGKILL'), forceKillAfterMs);
+      forceKillTimer.unref();
+    };
     const forwardSignal = (signal) => {
       if (forwardedSignal) return;
       forwardedSignal = signal;
-      child.kill(signal);
-      forceKillTimer = setTimeout(() => child.kill('SIGKILL'), 1_000);
-      forceKillTimer.unref();
+      terminate(adapterFailure('Codex CLI interrupted', 'interrupted'), signal);
     };
     const forwardSigint = () => forwardSignal('SIGINT');
     const forwardSigterm = () => forwardSignal('SIGTERM');
@@ -151,26 +171,26 @@ function runCodex(invocation) {
 
     child.stdin.on('error', () => {});
     child.stdout.on('data', (chunk) => {
+      if (terminationError) return;
       output += chunk;
-      if (output.length > 1_000_000 && !outputExceeded) {
-        outputExceeded = true;
-        child.kill('SIGTERM');
+      if (output.length > outputLimit) {
+        terminate(adapterFailure('Codex CLI output exceeded the adapter limit', 'output_limit'));
       }
     });
     child.stderr.resume();
     child.on('error', () => {
       cleanup();
-      reject(adapterFailure('Codex CLI could not be started', 'start_failed'));
+      rejectOnce(adapterFailure('Codex CLI could not be started', 'start_failed'));
     });
     child.on('close', (code) => {
       cleanup();
+      if (settled) return;
       if (forwardedSignal) {
         process.kill(process.pid, forwardedSignal);
         return;
       }
-      if (outputExceeded) {
-        return reject(adapterFailure('Codex CLI output exceeded the adapter limit', 'output_limit'));
-      }
+      if (terminationError) return rejectOnce(terminationError);
+      settled = true;
       if (code === 0) resolve(output);
       else reject(adapterFailure('Codex CLI invocation failed', 'cli_failed'));
     });

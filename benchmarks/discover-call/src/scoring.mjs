@@ -10,12 +10,16 @@ export function scoreRecords(tasks, records) {
   }
   const scored = records.map((record) => scoreRecord(taskById.get(record.task_id), record));
   const byModel = new Map();
-  for (const result of scored) {
+  const rawByModel = new Map();
+  for (const [index, result] of scored.entries()) {
     const group = byModel.get(result.model) || [];
     group.push(result);
     byModel.set(result.model, group);
+    const rawGroup = rawByModel.get(result.model) || [];
+    rawGroup.push(records[index]);
+    rawByModel.set(result.model, rawGroup);
   }
-  for (const [model, results] of byModel) validateCompleteModelRun(model, tasks, results);
+  for (const [model] of byModel) validateCompleteModelRun(model, tasks, rawByModel.get(model));
 
   return {
     schema_version: 1,
@@ -52,6 +56,10 @@ function validateCompleteModelRun(model, tasks, records) {
   // Never aggregate records collected under different benchmark conditions.
   // Undefined is a valid shared value for old/synthetic fixtures, but mixing
   // it with runner metadata is rejected.
+  for (const field of ['schema_version', 'benchmark_version']) {
+    const values = new Set(records.map((record) => JSON.stringify(record[field])));
+    if (values.size > 1) throw new Error(`Model ${model} mixes different ${field} values`);
+  }
   const comparableMetadata = [
     'lane',
     'model_revision',
@@ -62,6 +70,7 @@ function validateCompleteModelRun(model, tasks, records) {
     'api_revision',
     'catalog_revision',
     'catalog_observation_sha256',
+    'runtime',
     'discovery_limit',
     'execute',
   ];
@@ -83,6 +92,7 @@ export function scoreRecord(task, record) {
   const inspected = array(record.inspection?.returned_tool_ids);
   const required = array(record.inspection?.required_parameters);
   const parameters = plainObject(record.parameters) ? record.parameters : {};
+  const parameterization = parameterizationMetrics(record.parameterization);
   const completed = record.status === 'completed';
   const selectionGrounded =
     typeof record.discovery?.selection_grounded === 'boolean'
@@ -97,8 +107,11 @@ export function scoreRecord(task, record) {
         ? inspected.includes(selected)
         : false;
   const requiredParameterAccuracy =
-    required.length === 0 ? 1 : mean(required.map((name) => hasValue(parameters[name])));
-  const constraintAccuracy = mean(task.constraints.map((constraint) => constraintSatisfied(parameters, constraint)));
+    parameterization?.required_parameter_accuracy ??
+    (required.length === 0 ? 1 : mean(required.map((name) => hasValue(parameters[name]))));
+  const constraintAccuracy =
+    parameterization?.constraint_accuracy ??
+    mean(task.constraints.map((constraint) => constraintSatisfied(parameters, constraint)));
   const executed = record.call?.attempted === true;
   const callSuccess = executed ? record.call?.success === true : null;
   const resultNonempty =
@@ -187,13 +200,13 @@ function constraintSatisfied(parameters, constraint) {
   for (const alias of constraint.aliases) {
     if (!hasValue(parameters[alias])) continue;
     const actual = parameters[alias];
-    const expectedValues = [constraint.value, ...array(constraint.alias_values?.[alias])];
-    for (const expected of expectedValues) {
-      if (constraint.match === 'contains') {
-        if (normalize(actual, constraint).includes(normalize(expected, constraint))) return 1;
-      } else if (normalize(actual, constraint) === normalize(expected, constraint)) {
-        return 1;
-      }
+    if (constraint.match === 'contains') {
+      if (normalize(actual, constraint).includes(normalize(constraint.value, constraint))) return 1;
+    } else if (normalize(actual, constraint) === normalize(constraint.value, constraint)) {
+      return 1;
+    }
+    for (const expected of array(constraint.alias_values?.[alias])) {
+      if (normalize(actual, constraint) === normalize(expected, constraint)) return 1;
     }
   }
   for (const alias of array(constraint.composite_aliases)) {
@@ -284,4 +297,20 @@ function plainObject(value) {
 
 function booleanOrNull(value) {
   return typeof value === 'boolean' ? value : null;
+}
+
+function parameterizationMetrics(value) {
+  if (value === undefined) return null;
+  if (
+    !plainObject(value) ||
+    !metric(value.required_parameter_accuracy) ||
+    !metric(value.constraint_accuracy)
+  ) {
+    throw new Error('Run record parameterization metrics must be between 0 and 1');
+  }
+  return value;
+}
+
+function metric(value) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
 }

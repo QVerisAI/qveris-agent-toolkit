@@ -38,8 +38,10 @@ reference 与模型的严格工作流成功率之差称为 **strict benchmark ga
 `unreported`）、adapter 与 toolkit revision、任务集摘要、runtime、API revision、服务端有返回时
 的 catalog revision、catalog observation 摘要、endpoint 和 discovery limit。
 
-仓库只提交脱敏后的 JSONL。公开 artifact 不包含 execution、search、connection 标识，也不包含完整
-有序 discovery 目录。已批准的 selected tool ID 可以保留；其他 selected tool 只保留摘要。详见
+仓库只提交脱敏后的 JSONL。公开 artifact 不包含 execution、search、connection 标识、原始参数值，
+也不包含完整有序 discovery 目录。已批准的 selected tool ID 可以保留；其他 selected tool 只保留
+摘要。参数质量仅以必填参数完整率和任务约束准确率证明的形式公开；inspect 返回的参数名也会移除，
+避免已哈希工具泄露 schema 细节。详见
 [公开策略](../../benchmarks/discover-call/PUBLICATION_POLICY.md)。
 
 ## 已发布结果

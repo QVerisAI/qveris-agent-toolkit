@@ -213,6 +213,7 @@ test('scores aliases with task-versioned accepted values', () => {
         id: 'symbol',
         aliases: ['symbol', 'id'],
         value: 'BTC',
+        match: 'contains',
         alias_values: { id: ['1'] },
       },
     ],
@@ -234,6 +235,38 @@ test('scores aliases with task-versioned accepted values', () => {
   assert.equal(result.inspection_grounded, true);
   assert.equal(result.constraint_accuracy, 1);
   assert.equal(result.workflow_success, true);
+  assert.equal(
+    scoreRecord(btcTask, {
+      ...resultRecord({ taskId: btcTask.id }),
+      parameters: { id: 10 },
+    }).constraint_accuracy,
+    0,
+  );
+});
+
+test('scores sanitized parameterization attestations without publishing parameter values', () => {
+  const result = scoreRecord(task, {
+    ...resultRecord({ taskId: task.id }),
+    parameterization: {
+      required_parameter_accuracy: 1,
+      constraint_accuracy: 1,
+    },
+  });
+
+  assert.equal(result.required_parameter_accuracy, 1);
+  assert.equal(result.constraint_accuracy, 1);
+  assert.equal(result.workflow_success, true);
+  assert.throws(
+    () =>
+      scoreRecord(task, {
+        ...resultRecord({ taskId: task.id }),
+        parameterization: {
+          required_parameter_accuracy: 2,
+          constraint_accuracy: 1,
+        },
+      }),
+    /parameterization metrics/,
+  );
 });
 
 test('rejects run records for unknown tasks', () => {
@@ -242,6 +275,20 @@ test('rejects run records for unknown tasks', () => {
     /unknown task/,
   );
 });
+
+function resultRecord({ taskId }) {
+  return {
+    run_id: `run-${taskId}`,
+    task_id: taskId,
+    model: 'model-a',
+    trial: 1,
+    status: 'completed',
+    discovery: { selection_grounded: true },
+    selection: { tool_id: 'tool' },
+    inspection: { selection_grounded: true, required_parameters: [] },
+    call: { attempted: true, success: true, result_nonempty: true },
+  };
+}
 
 test('rejects missing tasks and duplicate trial numbers', () => {
   const completeRecord = {
@@ -289,5 +336,37 @@ test('rejects duplicate run ids and mixed benchmark conditions', () => {
         [record, { ...record, run_id: 'run-2', trial: 2, metadata: { adapter_revision: 'adapter-b', execute: true } }],
       ),
     /adapter_revision/,
+  );
+  assert.throws(
+    () =>
+      scoreRecords(
+        [task],
+        [
+          {
+            ...record,
+            schema_version: 1,
+            metadata: { ...record.metadata, runtime: { node: 'v22', platform: 'linux', arch: 'x64' } },
+          },
+          {
+            ...record,
+            run_id: 'run-2',
+            trial: 2,
+            schema_version: 1,
+            metadata: { ...record.metadata, runtime: { node: 'v24', platform: 'linux', arch: 'x64' } },
+          },
+        ],
+      ),
+    /runtime/,
+  );
+  assert.throws(
+    () =>
+      scoreRecords(
+        [task],
+        [
+          { ...record, schema_version: 1 },
+          { ...record, run_id: 'run-2', trial: 2, schema_version: 2 },
+        ],
+      ),
+    /schema_version/,
   );
 });

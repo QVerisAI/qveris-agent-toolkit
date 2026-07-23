@@ -5,6 +5,9 @@
 The v4 baseline compares the curated reference route and the configured model
 over immutable `tasks/v4.jsonl`: 18 tasks, three trials per task, Top 10
 discovery, and real calls. All 54 trials in each lane are retained.
+Public run records omit raw parameter values and retain only their scored
+required-parameter and constraint-accuracy attestations. Inspected parameter
+names are also omitted.
 
 | Metric | Curated reference route | `gpt-5.6-sol` configured model |
 | --- | ---: | ---: |

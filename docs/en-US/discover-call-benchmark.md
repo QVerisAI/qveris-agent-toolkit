@@ -53,9 +53,11 @@ revision, catalog revision when reported, catalog-observation digest, endpoint,
 and discovery limit.
 
 Only sanitized JSONL is committed. Public artifacts omit execution, search, and
-connection identifiers and the ordered discovery catalog. Approved selected
-tool IDs may remain visible; other selected tools are represented only by a
-digest. See the
+connection identifiers, raw parameter values, and the ordered discovery
+catalog. Approved selected tool IDs may remain visible; other selected tools
+are represented only by a digest. Parameter quality is published only as
+required-parameter and constraint-accuracy attestations; inspected parameter
+names are omitted so hashed tools do not leak schema details. See the
 [publication policy](../../benchmarks/discover-call/PUBLICATION_POLICY.md).
 
 ## Published results

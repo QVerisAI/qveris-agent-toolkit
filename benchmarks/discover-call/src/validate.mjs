@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -5,7 +6,11 @@ import { isDeepStrictEqual } from 'node:util';
 
 import { validateTask } from './harness.mjs';
 import { readJsonLines } from './io.mjs';
-import { validatePolicy, validatePublicRecords } from './publication.mjs';
+import {
+  validateOfficialPublicRun,
+  validatePolicy,
+  validatePublicRecords,
+} from './publication.mjs';
 import { scoreRecords } from './scoring.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -41,9 +46,13 @@ const resultFiles = (await readdir(resolve(root, 'results')))
 for (const file of resultFiles) {
   const version = file.match(/-v(\d+)\.runs\.jsonl$/)?.[1];
   if (!version) throw new Error(`${file}: result filename must identify its task-set version`);
-  const tasks = await readJsonLines(resolve(root, `tasks/v${version}.jsonl`));
+  const taskPath = resolve(root, `tasks/v${version}.jsonl`);
+  const taskBytes = await readFile(taskPath);
+  const taskSetSha256 = createHash('sha256').update(taskBytes).digest('hex');
+  const tasks = await readJsonLines(taskPath);
   const records = await readJsonLines(resolve(root, 'results', file));
   validatePublicRecords(records, policy);
+  validateOfficialPublicRun(records, { taskSetSha256 });
   const generatedSummary = scoreRecords(tasks, records);
   const summaryFile = file.replace(/\.runs\.jsonl$/, '.summary.json');
   const publishedSummary = JSON.parse(await readFile(resolve(root, 'results', summaryFile), 'utf8'));

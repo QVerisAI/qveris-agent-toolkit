@@ -1,26 +1,40 @@
 #!/usr/bin/env node
 
+import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { readJsonLines, writeJsonLines } from './io.mjs';
-import { sanitizePublicRecords } from './publication.mjs';
+import {
+  sanitizePublicRecords,
+  validateOfficialPublicRun,
+  validatePublicRecords,
+} from './publication.mjs';
 import { scoreRecords } from './scoring.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 async function main(argv = process.argv.slice(2)) {
   const options = parseArgs(argv);
-  const [tasks, records, policy] = await Promise.all([
-    readJsonLines(resolve(options.tasks)),
+  const taskPath = resolve(options.tasks);
+  const [taskBytes, tasks, records, policy] = await Promise.all([
+    readFile(taskPath),
+    readJsonLines(taskPath),
     readJsonLines(resolve(options.runs)),
     readFile(resolve(options.policy), 'utf8').then(JSON.parse),
   ]);
-  const publicRecords = sanitizePublicRecords(records, policy);
+  const publicRecords = sanitizePublicRecords(records, policy, tasks);
+  validatePublicRecords(publicRecords, policy);
+  validateOfficialPublicRun(publicRecords, {
+    taskSetSha256: createHash('sha256').update(taskBytes).digest('hex'),
+  });
   const summary = scoreRecords(tasks, publicRecords);
   const outputRuns = resolve(options.outputRuns);
   const outputSummary = resolve(options.outputSummary);
+  if (outputRuns === outputSummary) {
+    throw new Error('--output-runs and --output-summary must use different files');
+  }
   await Promise.all([mkdir(dirname(outputRuns), { recursive: true }), mkdir(dirname(outputSummary), { recursive: true })]);
   await writeJsonLines(outputRuns, publicRecords);
   await writeFile(outputSummary, JSON.stringify(summary, null, 2) + '\n', { encoding: 'utf8', mode: 0o600 });
