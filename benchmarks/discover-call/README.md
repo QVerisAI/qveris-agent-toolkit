@@ -133,8 +133,9 @@ official publication completeness checks.
 
 Within a trial, Discover, Inspect, and Execute share an independent private
 `session_id`, and Execute also records the model identifier in the API request.
-The session id is not derived from the public run id. Neither operational field
-is sent to the model adapter or retained in public artifacts.
+The session id is not derived from the public run id, sent to the model adapter,
+or retained in public artifacts. The model identifier remains part of the
+benchmark's public reproducibility metadata.
 
 ### Comparison lanes
 
