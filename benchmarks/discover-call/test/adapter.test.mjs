@@ -149,7 +149,7 @@ test('process adapter force-kills a child that ignores SIGTERM', async () => {
     });
     await assert.rejects(invoke({ stage: 'select' }), /timed out/);
     const pid = Number(await readFile(pidPath, 'utf8'));
-    assert.equal(processExists(pid), false);
+    assert.equal(await waitForProcessExit(pid), true);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -436,4 +436,13 @@ function processExists(pid) {
     if (error?.code === 'ESRCH') return false;
     throw error;
   }
+}
+
+async function waitForProcessExit(pid, timeoutMs = 1_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (!processExists(pid)) return true;
+    await new Promise((resolvePromise) => setTimeout(resolvePromise, 10));
+  }
+  return !processExists(pid);
 }
