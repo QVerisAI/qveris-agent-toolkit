@@ -1,6 +1,83 @@
 # Published benchmark results
 
-## 2026-07-23 — `gpt-5.6-sol`
+## 2026-07-23 — v3 comparison lanes
+
+The v3 baseline runs the deterministic Oracle and pinned-model lanes over the
+same 18 tasks, three trials per task, Top 10 discovery limit, and real QVeris
+calls. No failed trial was removed or selectively rerun.
+
+| Metric | Oracle | `gpt-5.6-sol` pinned model |
+| --- | ---: | ---: |
+| Runs | 54 | 54 |
+| Completed and executed | 51 / 54 | 52 / 54 |
+| Selection grounded | 94.44% | 100% |
+| Inspection grounded | 94.44% | 100% |
+| Required-parameter accuracy | 100% | 100% |
+| Constraint accuracy | 94.44% | 83.33% |
+| Call success among attempted calls | 100% (51 / 51) | 88.46% (46 / 52) |
+| Non-empty result among attempted calls | 100% (51 / 51) | 88.46% (46 / 52) |
+| Strict workflow success | 94.44% (51 / 54) | 72.22% (39 / 54) |
+| Workflow success, 95% Wilson interval | 84.89%–98.09% | 59.11%–82.38% |
+
+The strict routing gap is **22.22 percentage points**: Oracle 94.44% minus
+pinned model 72.22%.
+
+Shared reproducibility metadata:
+
+- toolkit revision: `5006c2a0789e2352944ffd87b1a154b96ec0566f`
+- task set: `tasks/v3.jsonl`
+- task-set SHA-256:
+  `d1e18b3affdecd65c09b632ab476b907d09b46ac11718d9aa92156bd0d6f8866`
+- API base URL: `https://qveris.ai/api/v1`
+- discovery limit: `10`
+
+Oracle metadata:
+
+- model: `oracle-v1`
+- lane: `oracle`
+- adapter revision:
+  `5006c2a0789e2352944ffd87b1a154b96ec0566f/oracle-v1`
+
+Pinned-model metadata:
+
+- model: `gpt-5.6-sol`
+- lane: `pinned-model`
+- reasoning effort: `medium`
+- Codex CLI: `0.144.1`
+- adapter revision:
+  `5006c2a0789e2352944ffd87b1a154b96ec0566f/codex-cli-0.144.1/medium`
+
+Artifacts:
+
+- [`2026-07-23-oracle-v1-v3.runs.jsonl`](2026-07-23-oracle-v1-v3.runs.jsonl)
+- [`2026-07-23-oracle-v1-v3.summary.json`](2026-07-23-oracle-v1-v3.summary.json)
+- [`2026-07-23-gpt-5.6-sol-v3.runs.jsonl`](2026-07-23-gpt-5.6-sol-v3.runs.jsonl)
+- [`2026-07-23-gpt-5.6-sol-v3.summary.json`](2026-07-23-gpt-5.6-sol-v3.summary.json)
+
+### v3 interpretation
+
+The Oracle's three strict failures are all `timezone-tokyo`: the fixed
+discovery query returned no Top 10 capability that accepts a city or
+coordinates. All 51 Oracle-selected calls succeeded and returned non-empty
+results.
+
+The pinned model also missed Tokyo semantically in all three trials: it selected
+a successful timezone-list capability with no Tokyo input. Six well-formed
+calls returned `success: false`: three selected
+`weather_api.ip_lookup.retrieve.v1.e095d904`, and three selected
+`tradefeeds.compinfo.retrieve.v1.c2314765`. Two domain-intelligence
+parameterization attempts were rejected because the isolated model session
+tried to use a disabled external tool; the remaining trial called the selected
+tool with `{}` and therefore missed the domain constraint.
+
+Three cryptocurrency calls succeeded and returned non-empty Bitcoin results via
+CoinMarketCap's provider-specific numeric `id=1`, but the deterministic task
+constraint expects a parameter value containing `BTC`; these remain strict
+constraint misses rather than being silently reclassified after the run. This
+known identifier-mapping limitation should be addressed in a future immutable
+task-set revision.
+
+## 2026-07-23 — `gpt-5.6-sol` historical v2 baseline
 
 This is the first controlled result for the versioned `tasks/v2.jsonl` contract
 benchmark. It contains 18 tasks, three trials per task, and real QVeris calls.

@@ -56,29 +56,30 @@ provider error bodies must never be published.
 
 ## Published results
 
-The first controlled result was run on 2026-07-23 with `gpt-5.6-sol`, medium
-reasoning effort, Codex CLI 0.144.1, `tasks/v2.jsonl`, and three trials per task.
-All 54 trials used real execution and all failures remain in the denominator.
+The v3 comparison was run on 2026-07-23 with three trials per task and real
+execution. The deterministic Oracle measures the current fixed-query platform
+ceiling; the pinned model uses `gpt-5.6-sol`, medium reasoning effort, and Codex
+CLI 0.144.1.
 
-| Metric | Result |
-| --- | ---: |
-| Completed and executed | 50 / 54 |
-| Selection grounded | 100% |
-| Inspection grounded | 100% |
-| Required-parameter accuracy | 100% |
-| Constraint accuracy | 75.93% |
-| Call success among attempted calls | 88.00% (44 / 50) |
-| Strict workflow success | 64.81% (35 / 54) |
-| Workflow success, 95% Wilson interval | 51.48%–76.18% |
+| Metric | Oracle | Pinned model |
+| --- | ---: | ---: |
+| Completed and executed | 51 / 54 | 52 / 54 |
+| Constraint accuracy | 94.44% | 83.33% |
+| Call and non-empty-result success | 100% (51 / 51) | 88.46% (46 / 52) |
+| Strict workflow success | 94.44% (51 / 54) | 72.22% (39 / 54) |
+| Workflow success, 95% Wilson interval | 84.89%–98.09% | 59.11%–82.38% |
 
-Call success and workflow success have different denominators: strict workflow
-success includes all 54 trials and also requires every preceding scoring
-component to pass. Four trials failed during model parameterization and six
-well-formed calls returned `success: false`. Additional constraint misses
-include a valid combined currency pair that the current v2 alias scorer does
-not split, URL-encoded news queries, and timezone-list selections that could not
-accept the requested city.
+The strict routing gap is 22.22 percentage points. The Oracle's only failures
+were the three Tokyo-timezone trials, where the fixed query returned no Top 10
+capability accepting a city or coordinates. The pinned model had the same three
+semantic misses, six selected-tool execution failures, two safely classified
+disabled-tool attempts, and additional strict constraint misses. Three
+successful Bitcoin calls used CoinMarketCap's numeric `id=1`; because the v3
+constraint expects a value containing `BTC`, they remain known identifier-mapping
+false negatives rather than being reclassified after the run.
 
 See the [result notes, immutable revisions, raw JSONL, and generated
 summary](../../benchmarks/discover-call/results/README.md). The synthetic scorer
-fixture remains test-only and is not a product-performance claim.
+fixture remains test-only and is not a product-performance claim. The original
+v2 result remains preserved there as a historical baseline under its original
+scoring contract.
