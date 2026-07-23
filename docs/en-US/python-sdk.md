@@ -54,12 +54,15 @@ async def main():
         inspected = await client.inspect([tool.tool_id], search_id=discovered.search_id)
         selected = inspected.results[0]
 
-        # 3. Call it (may consume credits)
+        # 3. Probe candidate parameters and quote without execution or credits
         params = (
             selected.examples.sample_parameters
             if selected.examples and selected.examples.sample_parameters
             else {"city": "London"}
         )
+        probe = await client.probe(selected.tool_id, params, checks=["schema", "quote"])
+
+        # 4. Call it (may consume credits)
         result = await client.call(
             selected.tool_id,
             params,
@@ -68,7 +71,7 @@ async def main():
         )
         print(result.success, result.result)
 
-        # 4. Audit the final charge outcome
+        # 5. Audit the final charge outcome
         usage = await client.usage(execution_id=result.execution_id, summary=True)
         ledger = await client.ledger(summary=True, limit=5)
         print(usage.total, ledger.total)

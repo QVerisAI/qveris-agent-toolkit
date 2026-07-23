@@ -157,6 +157,18 @@ qveris inspect 1 2 3
 
 ---
 
+### `qveris probe`
+
+Validate candidate parameters and obtain a zero-cost quote without executing the capability.
+
+```bash
+qveris probe <tool_id|index> --params '{"city":"London"}' --checks schema,quote
+```
+
+`--checks` accepts `schema`, `quote`, `coverage`, and `sample`; `--live-budget` accepts `none`, `metadata`, and `sampled`. The current contract implements schema and quote. Coverage and sample may return `unknown`. Probe does not execute the capability or consume credits.
+
+---
+
 ### `qveris call`
 
 Execute a capability with parameters. Returns structured result data, execution time, pre-settlement billing, and remaining credits. Final charge status is available through `qveris usage` and `qveris ledger`.
@@ -268,7 +280,7 @@ qveris mcp validate --target cursor
 qveris mcp validate --target cursor --output ~/.cursor/mcp.json
 ```
 
-Add `--probe` to start the configured stdio server and confirm the `discover`, `inspect`, and `call` tools are visible via `tools/list`.
+Add `--probe` to start the configured stdio server and confirm the `discover`, `inspect`, `probe`, and `call` tools are visible via `tools/list`.
 
 ```bash
 qveris mcp validate --target cursor --probe

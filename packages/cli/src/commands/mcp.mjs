@@ -10,7 +10,7 @@ import { bold, cyan, dim, green, red, yellow } from "../output/colors.mjs";
 import { outputJson } from "../output/json.mjs";
 
 const TARGETS = new Set(["cursor", "claude-desktop", "claude-code", "opencode", "openclaw", "generic"]);
-const EXPECTED_TOOLS = ["discover", "inspect", "call", "usage_history", "credits_ledger"];
+const EXPECTED_TOOLS = ["discover", "inspect", "probe", "call", "usage_history", "credits_ledger"];
 const API_KEY_PLACEHOLDER = "YOUR_QVERIS_API_KEY";
 
 export async function runMcp(subcommand, args, flags) {

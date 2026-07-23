@@ -182,7 +182,14 @@ test("mcp configure emits valid JSON fragments for each supported target", () =>
     assert.equal(payload.wrote, false);
     assert.equal(payload.includes_real_api_key, true);
     assert.equal(payload.base_url, "https://unit.test/api/v1");
-    assert.deepEqual(payload.expected_tools, ["discover", "inspect", "call", "usage_history", "credits_ledger"]);
+    assert.deepEqual(payload.expected_tools, [
+      "discover",
+      "inspect",
+      "probe",
+      "call",
+      "usage_history",
+      "credits_ledger",
+    ]);
     assert.equal(payload.validation.ok, true);
 
     if (target === "cursor" || target === "claude-desktop") {

@@ -399,6 +399,70 @@ async def test_inspect_empty_tool_ids_returns_empty_response_without_request() -
 
 
 @pytest.mark.asyncio
+async def test_probe_contract_posts_zero_cost_defaults_and_parses_results() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.method == "POST"
+        assert request.url.path == "/api/v1/tools/probe"
+        assert request.url.params["tool_id"] == "weather.forecast.v1"
+        assert json.loads(request.content) == {
+            "parameters": {"city": "London"},
+            "checks": ["schema", "quote"],
+            "live_budget": "none",
+        }
+        return httpx.Response(
+            200,
+            json={
+                "schema": {"valid": True},
+                "quote": {"estimate_credits": 3, "currency": "credits", "exact": True, "basis": "per_call"},
+            },
+        )
+
+    client = make_client(handler)
+    try:
+        response = await client.probe(
+            "weather.forecast.v1",
+            parameters={"city": "London"},
+            checks=["schema", "quote"],
+        )
+    finally:
+        await client.close()
+
+    assert response.schema_ is not None
+    assert response.schema_.valid is True
+    assert response.quote is not None
+    assert response.quote.estimate_credits == 3
+
+
+@pytest.mark.asyncio
+async def test_probe_preserves_explicit_empty_checks_for_server_validation() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert json.loads(request.content) == {
+            "parameters": {},
+            "checks": [],
+            "live_budget": "none",
+        }
+        return httpx.Response(
+            422,
+            json={
+                "detail": [
+                    {
+                        "type": "too_short",
+                        "loc": ["body", "checks"],
+                        "msg": "List should have at least 1 item after validation",
+                    }
+                ]
+            },
+        )
+
+    client = make_client(handler)
+    try:
+        with pytest.raises(httpx.HTTPStatusError):
+            await client.probe("weather.forecast.v1", parameters={}, checks=[])
+    finally:
+        await client.close()
+
+
+@pytest.mark.asyncio
 async def test_call_contract_parses_execution_outcome_and_billing() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.method == "POST"

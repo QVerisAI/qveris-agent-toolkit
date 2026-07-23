@@ -198,6 +198,27 @@ Query final credits ledger entries.
 
 `Promise`\<[`CreditsLedgerResponse`](#creditsledgerresponse)\>
 
+##### probe()
+
+> **probe**(`toolId`, `options?`): `Promise`\<[`ProbeResponse`](#proberesponse)\>
+
+Validate candidate parameters and request a zero-cost quote without
+executing the capability.
+
+###### Parameters
+
+###### toolId
+
+`string`
+
+###### options?
+
+[`ProbeOptions`](#probeoptions) = `{}`
+
+###### Returns
+
+`Promise`\<[`ProbeResponse`](#proberesponse)\>
+
 ##### usage()
 
 > **usage**(`filters?`): `Promise`\<[`UsageEventsResponse`](#usageeventsresponse)\>
@@ -1300,6 +1321,154 @@ Per-request timeout override in milliseconds
 
 ***
 
+### ProbeOptions
+
+Options for [Qveris.probe](#probe).
+
+#### Properties
+
+##### checks?
+
+> `optional` **checks?**: [`ProbeCheck`](#probecheck)[]
+
+Checks to run. Defaults to schema.
+
+##### liveBudget?
+
+> `optional` **liveBudget?**: [`ProbeLiveBudget`](#probelivebudget)
+
+Probe budget. Every current value avoids capability execution.
+
+##### parameters?
+
+> `optional` **parameters?**: `Record`\<`string`, `unknown`\>
+
+Candidate parameters to validate without executing the capability.
+
+##### timeoutMs?
+
+> `optional` **timeoutMs?**: `number`
+
+Per-request timeout override in milliseconds.
+
+***
+
+### ProbeQuoteResult
+
+#### Properties
+
+##### basis?
+
+> `optional` **basis?**: `string` \| `null`
+
+##### currency
+
+> **currency**: `"credits"`
+
+##### detail?
+
+> `optional` **detail?**: `Record`\<`string`, `unknown`\> \| `null`
+
+##### estimate\_credits?
+
+> `optional` **estimate\_credits?**: `number` \| `null`
+
+##### exact
+
+> **exact**: `boolean`
+
+***
+
+### ProbeRequest
+
+#### Properties
+
+##### checks?
+
+> `optional` **checks?**: [`ProbeCheck`](#probecheck)[]
+
+##### live\_budget?
+
+> `optional` **live\_budget?**: [`ProbeLiveBudget`](#probelivebudget)
+
+##### parameters?
+
+> `optional` **parameters?**: `Record`\<`string`, `unknown`\>
+
+***
+
+### ProbeResponse
+
+#### Properties
+
+##### coverage?
+
+> `optional` **coverage?**: [`ProbeUnknownResult`](#probeunknownresult)
+
+##### quote?
+
+> `optional` **quote?**: [`ProbeQuoteResult`](#probequoteresult)
+
+##### sample?
+
+> `optional` **sample?**: [`ProbeUnknownResult`](#probeunknownresult)
+
+##### schema?
+
+> `optional` **schema?**: [`ProbeSchemaResult`](#probeschemaresult)
+
+***
+
+### ProbeSchemaResult
+
+#### Properties
+
+##### note?
+
+> `optional` **note?**: `string` \| `null`
+
+##### valid
+
+> **valid**: `boolean`
+
+##### violations?
+
+> `optional` **violations?**: [`ProbeSchemaViolation`](#probeschemaviolation)[] \| `null`
+
+***
+
+### ProbeSchemaViolation
+
+#### Properties
+
+##### message
+
+> **message**: `string`
+
+##### param?
+
+> `optional` **param?**: `string` \| `null`
+
+##### type
+
+> **type**: `string`
+
+***
+
+### ProbeUnknownResult
+
+#### Properties
+
+##### reason
+
+> **reason**: `string`
+
+##### verdict
+
+> **verdict**: `"unknown"`
+
+***
+
 ### QverisClientConfig
 
 Configuration options for the Qveris API client.
@@ -1969,7 +2138,7 @@ Historical success rate (0.0 - 1.0)
 
 ### ApiOperation
 
-> **ApiOperation** = `"discover"` \| `"inspect"` \| `"call"` \| `"credits"` \| `"usage_history"` \| `"credits_ledger"`
+> **ApiOperation** = `"discover"` \| `"inspect"` \| `"probe"` \| `"call"` \| `"credits"` \| `"usage_history"` \| `"credits_ledger"`
 
 Error response from the Qveris API.
 
@@ -1980,6 +2149,18 @@ Error response from the Qveris API.
 > **ExecuteResult** = [`ExecuteResultData`](#executeresultdata) \| [`ExecuteResultTruncated`](#executeresulttruncated) \| [`ExecuteResultSummary`](#executeresultsummary) \| [`ExecuteResultFields`](#executeresultfields) \| `unknown`[] \| `string` \| `number` \| `boolean` \| `null`
 
 Union type for execution results (either full data or truncated).
+
+***
+
+### ProbeCheck
+
+> **ProbeCheck** = `"schema"` \| `"quote"` \| `"coverage"` \| `"sample"`
+
+***
+
+### ProbeLiveBudget
+
+> **ProbeLiveBudget** = `"none"` \| `"metadata"` \| `"sampled"`
 
 ***
 

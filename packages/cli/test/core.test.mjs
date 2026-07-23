@@ -6,6 +6,7 @@ import test from "node:test";
 
 import { normalizeLegacyArgs } from "../src/compat/aliases.mjs";
 import { resolveApiKey } from "../src/client/auth.mjs";
+import { resolveProbeChecks } from "../src/commands/probe.mjs";
 import { getSiteUrl, normalizeBaseUrl, resolveBaseUrl } from "../src/config/endpoint.mjs";
 import {
   buildLedgerQuery,
@@ -42,6 +43,12 @@ function withTempConfig(fn) {
       rmSync(dir, { recursive: true, force: true });
     });
 }
+
+test("probe checks default, deduplicate, and reject unsupported values", () => {
+  assert.deepEqual(resolveProbeChecks(), ["schema"]);
+  assert.deepEqual(resolveProbeChecks("schema,quote,schema"), ["schema", "quote"]);
+  assert.throws(() => resolveProbeChecks("schema,execute"), /Invalid --checks/);
+});
 
 test("endpoint resolution uses flag, environment, then default without key or region inference", async () => {
   await withTempConfig(() => {

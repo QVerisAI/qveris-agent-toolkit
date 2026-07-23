@@ -64,6 +64,16 @@ export async function main(argv) {
         await runCall(rest[0], flags);
         break;
       }
+      case "probe": {
+        if (rest.length === 0) {
+          console.error("  Usage: qveris probe <tool_id|index> [--params <json>] [--checks schema,quote]");
+          process.exitCode = 2;
+          return;
+        }
+        const { runProbe } = await import("./commands/probe.mjs");
+        await runProbe(rest[0], flags);
+        break;
+      }
       case "init": {
         const { runInit } = await import("./commands/init.mjs");
         await runInit(rest.join(" "), flags);
@@ -175,6 +185,8 @@ const VALUE_FLAGS = {
   params: "params",
   "max-size": "maxSize",
   "respond-with": "respondWith",
+  checks: "checks",
+  "live-budget": "liveBudget",
   codegen: "codegen",
   token: "token",
   query: "query",
@@ -333,6 +345,12 @@ function extractGlobalFlags(args) {
       case "--respond-with":
         flags.respondWith = takeNext(args, i++, arg);
         break;
+      case "--checks":
+        flags.checks = takeNext(args, i++, arg);
+        break;
+      case "--live-budget":
+        flags.liveBudget = takeNext(args, i++, arg);
+        break;
       case "--codegen":
         flags.codegen = takeNext(args, i++, arg);
         break;
@@ -422,6 +440,7 @@ function printUsage(flags = {}) {
     ${cyan("init")}                         Guided first-call wizard
     ${cyan("discover")} <query>             Find capabilities by natural language
     ${cyan("inspect")}  <tool_id|index>     View tool details, parameters, and stats
+    ${cyan("probe")}    <tool_id|index>     Validate parameters and quote without execution
     ${cyan("call")}     <tool_id|index>     Execute a capability
 
   ${bold("Account:")}
@@ -455,6 +474,8 @@ function printUsage(flags = {}) {
     --view <routing|full>  Discover response projection
     --lang <zh|en>         Discover response language
     --respond-with <mode>  Call projection: full | summary | fields:<JSONPath,...>
+    --checks <list>        Probe checks: schema,quote,coverage,sample
+    --live-budget <mode>   Probe budget: none | metadata | sampled
     --target <target>      MCP target: cursor | claude-desktop | claude-code | opencode | openclaw | generic
     --output <path>        MCP config output path
     --write                Write MCP config to disk
@@ -484,6 +505,7 @@ function printUsage(flags = {}) {
     qveris discover "weather forecast API"
     qveris discover "weather forecast API" --view routing --lang en
     qveris inspect 1
+    qveris probe 1 --params '{"city": "London"}' --checks schema,quote
     qveris call 1 --params '{"city": "London"}'
     qveris call 1 --params '{"city": "London"}' --respond-with summary
     qveris call 1 --params @params.json --codegen curl

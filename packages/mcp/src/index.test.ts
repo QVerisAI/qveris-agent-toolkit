@@ -8,6 +8,7 @@ import { executeQverisMcpTool, initializeQverisClient, isEntrypoint, listQverisM
 import type { QverisClient } from './api/client.js';
 import { creditsLedgerSchema } from './tools/credits-ledger.js';
 import { executeToolSchema } from './tools/execute.js';
+import { probeToolSchema } from './tools/probe.js';
 import { getToolsByIdsSchema } from './tools/get-by-ids.js';
 import { searchToolsSchema } from './tools/search.js';
 import { usageHistorySchema } from './tools/usage-history.js';
@@ -85,6 +86,7 @@ describe('MCP public tool interface', () => {
     expect(tools.map((tool) => tool.name)).toEqual([
       'discover',
       'inspect',
+      'probe',
       'call',
       'usage_history',
       'credits_ledger',
@@ -95,6 +97,7 @@ describe('MCP public tool interface', () => {
 
     expect(byName.get('discover')?.inputSchema).toBe(searchToolsSchema);
     expect(byName.get('inspect')?.inputSchema).toBe(getToolsByIdsSchema);
+    expect(byName.get('probe')?.inputSchema).toBe(probeToolSchema);
     expect(byName.get('call')?.inputSchema).toBe(executeToolSchema);
     expect(byName.get('usage_history')?.inputSchema).toBe(usageHistorySchema);
     expect(byName.get('credits_ledger')?.inputSchema).toBe(creditsLedgerSchema);
@@ -112,6 +115,7 @@ describe('MCP public tool interface', () => {
     const client = {
       searchTools: vi.fn().mockResolvedValue({ search_id: 'search-1', results: [] }),
       getToolsByIds: vi.fn().mockResolvedValue({ results: [{ tool_id: 'weather.tool.v1' }] }),
+      probeTool: vi.fn().mockResolvedValue({ schema: { valid: true } }),
       executeTool: vi.fn().mockResolvedValue({ execution_id: 'exec-1', success: true }),
       getUsageHistory: vi.fn(),
       getCreditsLedger: vi.fn(),
@@ -144,11 +148,17 @@ describe('MCP public tool interface', () => {
       },
       warn,
     );
+    const probe = await executeQverisMcpTool(client, 'session-1', 'probe', {
+      tool_id: 'weather.tool.v1',
+      parameters: { city: 'London' },
+      checks: ['schema', 'quote'],
+    });
 
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('Deprecated'));
     expect(payload(discover).search_id).toBe('search-1');
     expect(payload(inspect).results[0].tool_id).toBe('weather.tool.v1');
     expect(payload(call).execution_id).toBe('exec-1');
+    expect(payload(probe).schema.valid).toBe(true);
 
     expect(client.searchTools).toHaveBeenCalledWith({
       query: 'weather',
@@ -165,6 +175,11 @@ describe('MCP public tool interface', () => {
       session_id: 'session-1',
       parameters: { city: 'London' },
       max_response_size: 4096,
+    });
+    expect(client.probeTool).toHaveBeenCalledWith('weather.tool.v1', {
+      parameters: { city: 'London' },
+      checks: ['schema', 'quote'],
+      live_budget: 'none',
     });
   });
 
@@ -214,6 +229,7 @@ describe('MCP public tool interface', () => {
     expect(payload(unknown).available_tools).toEqual([
       'discover',
       'inspect',
+      'probe',
       'call',
       'usage_history',
       'credits_ledger',

@@ -44,6 +44,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { createClientFromEnv, QverisClient } from './api/client.js';
 import { searchToolsSchema, executeSearchTools, type SearchToolsInput } from './tools/search.js';
 import { executeToolSchema, executeExecuteTool, type ExecuteToolInput } from './tools/execute.js';
+import { probeToolSchema, executeProbeTool, type ProbeToolInput } from './tools/probe.js';
 import { getToolsByIdsSchema, executeGetToolsByIds, type GetToolsByIdsInput } from './tools/get-by-ids.js';
 import { usageHistorySchema, executeUsageHistory, type UsageHistoryInput } from './tools/usage-history.js';
 import { creditsLedgerSchema, executeCreditsLedger, type CreditsLedgerInput } from './tools/credits-ledger.js';
@@ -102,6 +103,14 @@ export function listQverisMcpTools() {
         'Use tool_ids from a previous discover call.',
       inputSchema: getToolsByIdsSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.inspect,
+    },
+    {
+      name: 'probe',
+      description:
+        'Validate candidate parameters and obtain a zero-cost quote without executing the capability. ' +
+        'Schema and quote are implemented; coverage and sample may return an explicit unknown verdict.',
+      inputSchema: probeToolSchema,
+      outputSchema: TOOL_OUTPUT_SCHEMAS.probe,
     },
     {
       name: 'call',
@@ -355,6 +364,21 @@ export async function executeQverisMcpTool(
       };
     }
 
+    if (name === 'probe') {
+      const input = (args ?? {}) as unknown as ProbeToolInput;
+      if (!input.tool_id || typeof input.tool_id !== 'string') {
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ error: 'Missing required parameter: tool_id' }) }],
+          isError: true,
+        };
+      }
+      const result = await executeProbeTool(client, input);
+      return {
+        content: [{ type: 'text', text: JSON.stringify(result) }],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }
+
     if (name === 'usage_history') {
       const input = (args ?? {}) as unknown as UsageHistoryInput;
       const result = await executeUsageHistory(client, input);
@@ -392,7 +416,7 @@ export async function executeQverisMcpTool(
           type: 'text',
           text: JSON.stringify({
             error: `Unknown tool: ${rawName}`,
-            available_tools: ['discover', 'inspect', 'call', 'usage_history', 'credits_ledger'],
+            available_tools: ['discover', 'inspect', 'probe', 'call', 'usage_history', 'credits_ledger'],
           }),
         },
       ],

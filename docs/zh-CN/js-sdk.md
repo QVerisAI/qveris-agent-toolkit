@@ -53,8 +53,14 @@ const tool = discovered.results[0];
 const inspected = await qveris.inspect(tool.tool_id, { searchId: discovered.search_id });
 const selected = inspected.results[0];
 
-// 3. 调用（可能消耗积分）
+// 3. 在不执行或扣费的情况下校验参数并获取报价
 const params = selected.examples?.sample_parameters ?? { city: 'London' };
+const probe = await qveris.probe(selected.tool_id, {
+  parameters: params,
+  checks: ['schema', 'quote'],
+});
+
+// 4. 调用（可能消耗积分）
 const result = await qveris.call(selected.tool_id, {
   parameters: params,
   searchId: discovered.search_id,
@@ -62,7 +68,7 @@ const result = await qveris.call(selected.tool_id, {
 });
 console.log(result.success, result.result);
 
-// 4. 审计最终扣费结果
+// 5. 审计最终扣费结果
 const usage = await qveris.usage({ execution_id: result.execution_id, summary: true });
 const ledger = await qveris.ledger({ summary: true, limit: 5 });
 console.log(usage.total, ledger.total);

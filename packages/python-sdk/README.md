@@ -73,6 +73,7 @@ async def main():
         selected = inspected.results[0]
 
         params = selected.examples.sample_parameters if selected.examples else {"city": "London"}
+        probe = await client.probe(selected.tool_id, params, checks=["schema", "quote"])
         result = await client.call(
             selected.tool_id,
             params,
@@ -83,7 +84,7 @@ async def main():
         usage = await client.usage(execution_id=result.execution_id, summary=True)
         ledger = await client.ledger(summary=True, limit=5)
 
-        print(result.success, result.billing, usage.total, ledger.total)
+        print(probe.schema_, probe.quote, result.success, result.billing, usage.total, ledger.total)
     finally:
         await client.close()
 

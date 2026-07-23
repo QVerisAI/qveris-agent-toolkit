@@ -231,6 +231,26 @@ export async function inspectToolsByIds({
   });
 }
 
+export async function probeTool({
+  apiKey,
+  credentialProvider,
+  baseUrl: baseUrlFlag,
+  toolId,
+  parameters = {},
+  checks = ["schema"],
+  liveBudget = "none",
+  timeoutMs = 30000,
+}) {
+  const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
+  return requestJson("/tools/probe", {
+    credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
+    baseUrl,
+    query: { tool_id: toolId },
+    body: { parameters, checks, live_budget: liveBudget },
+    timeoutMs,
+  });
+}
+
 export async function callTool({
   apiKey,
   credentialProvider,

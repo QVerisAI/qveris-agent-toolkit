@@ -43,6 +43,17 @@ const executeResponseSchema = {
   additionalProperties: true,
 } as const;
 
+const probeResponseSchema = {
+  type: 'object',
+  properties: {
+    schema: { type: 'object', additionalProperties: true },
+    quote: { type: 'object', additionalProperties: true },
+    coverage: { type: 'object', additionalProperties: true },
+    sample: { type: 'object', additionalProperties: true },
+  },
+  additionalProperties: true,
+} as const;
+
 const auditResponseSchema = {
   type: 'object',
   properties: {
@@ -58,6 +69,7 @@ const auditResponseSchema = {
 export const TOOL_OUTPUT_SCHEMAS: Record<string, object> = {
   discover: searchResponseSchema,
   inspect: searchResponseSchema,
+  probe: probeResponseSchema,
   call: executeResponseSchema,
   usage_history: auditResponseSchema,
   credits_ledger: auditResponseSchema,

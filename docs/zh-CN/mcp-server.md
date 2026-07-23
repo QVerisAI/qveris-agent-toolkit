@@ -8,6 +8,7 @@
 
 - `discover` — 用自然语言发现能力
 - `inspect` — 获取工具详情（参数、成功率、示例）
+- `probe` — 不执行能力的参数校验与报价
 - `call` — 执行工具并传入参数
 - `usage_history` — 上下文安全的调用审计摘要 / 精确查询 / 文件导出
 - `credits_ledger` — 上下文安全的最终积分账本摘要 / 精确查询 / 文件导出
@@ -36,6 +37,7 @@
 |---------|---------|---------|
 | **发现** | `discover` | `POST /search` |
 | **检查** | `inspect` | `POST /tools/by-ids` |
+| **探测** | `probe` | `POST /tools/probe` |
 | **调用** | `call` | `POST /tools/execute` |
 | **调用审计** | `usage_history` | `GET /auth/usage/history/v2` |
 | **积分账本** | `credits_ledger` | `GET /auth/credits/ledger` |
@@ -91,7 +93,7 @@ qveris mcp configure --target claude-code
 qveris mcp validate --target cursor
 ```
 
-对 stdio 客户端，可添加 `--probe` 启动配置中的 MCP server，并通过 `tools/list` 确认 `discover`、`inspect`、`call` 可见：
+对 stdio 客户端，可添加 `--probe` 启动配置中的 MCP server，并通过 `tools/list` 确认 `discover`、`inspect`、`probe`、`call` 可见：
 
 ```bash
 qveris mcp validate --target cursor --probe
@@ -173,7 +175,7 @@ claude mcp add --transport http qveris https://mcp.qveris.ai/mcp --scope user --
 
 1. 在[控制台/API 密钥](/account?page=api-keys)创建密钥。
 2. 将服务地址和 Bearer 请求头添加到客户端。客户端支持时，请用密钥管理或环境变量保存 API 密钥，切勿提交到源代码仓库。
-3. 重新连接客户端，确认 `discover`、`inspect`、`call` 可见。
+3. 重新连接客户端，确认 `discover`、`inspect`、`probe`、`call` 可见。
 
 服务会在会话启动时验证并绑定密钥。`401` 表示密钥缺失或无效；`503` 表示验证服务暂时不可用。更换密钥后请新建 MCP 会话。可前往[托管 MCP 页面](/hosted-mcp)复制配置。
 
@@ -252,7 +254,13 @@ claude mcp add --transport http qveris https://mcp.qveris.ai/mcp --scope user --
 
 ---
 
-### 3. `call`
+### 3. `probe`
+
+用于在不执行能力的情况下校验候选参数并获取零成本报价。输入包括 `tool_id`、可选 `parameters`、可选 `checks`（`schema`、`quote`、`coverage`、`sample`）以及可选 `live_budget`（`none`、`metadata`、`sampled`）。当前已实现 schema 与 quote；coverage 和 sample 可能返回 `unknown`。Probe 不执行能力，也不消耗积分。
+
+---
+
+### 4. `call`
 
 调用已发现的 QVeris 能力。
 
@@ -291,7 +299,7 @@ claude mcp add --transport http qveris https://mcp.qveris.ai/mcp --scope user --
 
 ---
 
-### 4. `usage_history`
+### 5. `usage_history`
 
 当用户询问某次调用是否成功、失败或扣费时使用。默认 `summary` 模式，不会把全量历史塞进上下文。
 
@@ -311,7 +319,7 @@ claude mcp add --transport http qveris https://mcp.qveris.ai/mcp --scope user --
 { "mode": "search", "execution_id": "EXECUTION_ID" }
 ```
 
-### 5. `credits_ledger`
+### 6. `credits_ledger`
 
 当用户询问余额为何变化时使用。默认 `summary` 模式。
 

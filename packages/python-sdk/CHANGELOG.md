@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 
 - Added `view` / `lang` discover arguments and `respond_with` call projection support, including compact routing-card model fields. Defaults remain full; an explicit legacy `422 extra_forbidden` response triggers one retry without only the rejected optional field.
+- Added `QverisClient.probe()` with typed zero-cost schema, quote, coverage, and sample results. ([#259])
 
 ## [0.4.0] - 2026-07-18
 
@@ -98,3 +99,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#97]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/97
 [#48]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/48
 [#34]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/34
+[#259]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/259

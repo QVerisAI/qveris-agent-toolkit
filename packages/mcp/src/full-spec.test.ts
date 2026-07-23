@@ -18,6 +18,10 @@ function fakeQverisClient() {
       this.calls.push('inspect');
       return { search_id: 's1', results: [{ tool_id: 't1', name: 'T', description: 'd' }] };
     },
+    async probeTool() {
+      this.calls.push('probe');
+      return { schema: { valid: true } };
+    },
     async executeTool() {
       this.calls.push('execute');
       return { execution_id: 'e1', success: true, result: { ok: 1 } };
@@ -42,10 +46,10 @@ async function connect(opts: { client?: QverisClient; elicitHandler?: (msg: stri
 }
 
 describe('output schemas + structured content', () => {
-  it('declares outputSchema on all five canonical tools', async () => {
+  it('declares outputSchema on all six canonical tools', async () => {
     const c = await connect();
     const { tools } = await c.listTools();
-    for (const name of ['discover', 'inspect', 'call', 'usage_history', 'credits_ledger']) {
+    for (const name of ['discover', 'inspect', 'probe', 'call', 'usage_history', 'credits_ledger']) {
       const tool = tools.find((t) => t.name === name);
       expect(tool?.outputSchema, `${name} outputSchema`).toBeDefined();
       expect((tool?.outputSchema as { additionalProperties?: boolean }).additionalProperties).toBe(true);

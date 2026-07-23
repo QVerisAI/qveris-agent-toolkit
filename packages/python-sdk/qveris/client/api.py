@@ -11,6 +11,7 @@ into your own agent framework.
 
 - `POST /search` -> `discover(...)`
 - `POST /tools/by-ids` -> `inspect(...)`
+- `POST /tools/probe?tool_id=...` -> `probe(...)`
 - `POST /tools/execute?tool_id=...` -> `call(...)`
 - `GET /auth/usage/history/v2` -> `usage(...)`
 - `GET /auth/credits/ledger` -> `ledger(...)`
@@ -25,7 +26,7 @@ Debug logs redact the token value.
 """
 
 import json
-from typing import Any, Callable, Dict, Iterable, Literal, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Set, Tuple, Union
 
 import httpx
 
@@ -46,7 +47,13 @@ from ..observability import (
     set_span_attributes,
     start_span,
 )
-from ..types import CreditsLedgerResponse, SearchResponse, ToolExecutionResponse, UsageHistoryResponse
+from ..types import (
+    CreditsLedgerResponse,
+    SearchResponse,
+    ToolExecutionResponse,
+    ToolProbeResponse,
+    UsageHistoryResponse,
+)
 from .retry import RetryPolicy
 
 
@@ -341,6 +348,32 @@ class QverisClient:
     ) -> SearchResponse:
         """Deprecated alias for `inspect(...)`."""
         return await self.inspect(tool_ids=tool_ids, search_id=search_id, session_id=session_id)
+
+    async def probe(
+        self,
+        tool_id: str,
+        parameters: Optional[Dict[str, Any]] = None,
+        checks: Optional[List[Literal["schema", "quote", "coverage", "sample"]]] = None,
+        live_budget: Literal["none", "metadata", "sampled"] = "none",
+    ) -> ToolProbeResponse:
+        """Validate candidate parameters and obtain a zero-cost quote without execution."""
+        url = self._url_for("POST", "tools/probe", params={"tool_id": tool_id})
+        payload: Dict[str, Any] = {
+            "parameters": parameters if parameters is not None else {},
+            "checks": checks if checks is not None else ["schema"],
+            "live_budget": live_budget,
+        }
+        with start_span("qveris.probe", {ATTR_OPERATION: "probe", ATTR_TOOL_ID: tool_id}) as span:
+            self._debug(f"[Qveris API] POST {url}")
+            self._debug(f"[Qveris API] Request body: {json.dumps(payload, indent=2)}")
+            self._debug_headers()
+            response = await self._send("POST", "tools/probe", json=payload, params={"tool_id": tool_id})
+            self._debug(f"[Qveris API] Response status: {response.status_code}")
+            data = self._unwrap_envelope(self._parse_response_json(response))
+            response.raise_for_status()
+            result = ToolProbeResponse(**data)
+            set_span_attributes(span, {ATTR_SUCCESS: result.schema_ is None or result.schema_.valid})
+            return result
 
     async def call(
         self,

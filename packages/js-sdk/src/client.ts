@@ -31,6 +31,9 @@ import type {
   CreditsLedgerResponse,
   CreditsResponse,
   ExecuteResponse,
+  ProbeCheck,
+  ProbeLiveBudget,
+  ProbeResponse,
   QverisClientConfig,
   SearchResponse,
   UsageEventsResponse,
@@ -153,6 +156,18 @@ export interface CallOptions {
   timeoutMs?: number;
 }
 
+/** Options for {@link Qveris.probe}. */
+export interface ProbeOptions {
+  /** Candidate parameters to validate without executing the capability. */
+  parameters?: Record<string, unknown>;
+  /** Checks to run. Defaults to schema. */
+  checks?: ProbeCheck[];
+  /** Probe budget. Every current value avoids capability execution. */
+  liveBudget?: ProbeLiveBudget;
+  /** Per-request timeout override in milliseconds. */
+  timeoutMs?: number;
+}
+
 /**
  * QVeris API client.
  *
@@ -264,6 +279,24 @@ export class Qveris {
         tool_ids: ids,
         ...(options.searchId !== undefined && { search_id: options.searchId }),
         ...(options.sessionId !== undefined && { session_id: options.sessionId }),
+      },
+      options.timeoutMs,
+    );
+  }
+
+  /**
+   * Validate candidate parameters and request a zero-cost quote without
+   * executing the capability.
+   */
+  async probe(toolId: string, options: ProbeOptions = {}): Promise<ProbeResponse> {
+    return this.request<ProbeResponse>(
+      'probe',
+      'POST',
+      `/tools/probe?tool_id=${encodeURIComponent(toolId)}`,
+      {
+        parameters: options.parameters ?? {},
+        checks: options.checks ?? ['schema'],
+        live_budget: options.liveBudget ?? 'none',
       },
       options.timeoutMs,
     );
