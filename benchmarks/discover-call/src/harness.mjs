@@ -72,11 +72,7 @@ export function validateTask(task) {
       throw new Error(`Task ${task.id}: an empty reference needs unavailable_reason`);
     }
     for (const candidate of reference.candidates) {
-      if (
-        typeof candidate?.tool_id !== 'string' ||
-        !candidate.tool_id ||
-        !isPlainObject(candidate.parameters)
-      ) {
+      if (typeof candidate?.tool_id !== 'string' || !candidate.tool_id || !isPlainObject(candidate.parameters)) {
         throw new Error(`Task ${task.id}: every reference candidate needs tool_id and parameters`);
       }
     }
@@ -144,16 +140,29 @@ async function runTrial({ task, model, trial, execute, limit, api, invokeAdapter
     record.discovery.result_tool_ids = results.map(toolId).filter(Boolean);
 
     const selection = await invokeAdapter(
-      adapterPayload({ stage: 'select', model, task, discovery: discovered, trial }),
+      adapterPayload({
+        stage: 'select',
+        model,
+        task,
+        discovery: discovered,
+        trial,
+        taskSetSha256: metadata.task_set_sha256,
+      }),
     );
     const selectedToolId = toolId(selection);
     if (!selectedToolId) throw stageError('select', 'Adapter did not return a non-empty tool_id');
     record.selection.tool_id = selectedToolId;
+    if (!record.discovery.result_tool_ids.includes(selectedToolId)) {
+      throw stageError('select', 'Adapter selected a tool outside the discovery results', 'ungrounded_tool_id');
+    }
 
     const inspected = await api.inspect({ toolIds: [selectedToolId], discoveryId: discovered?.search_id });
     const inspectedResults = array(inspected?.results);
     record.inspection.returned_tool_ids = inspectedResults.map(toolId).filter(Boolean);
-    const selectedTool = inspectedResults.find((item) => toolId(item) === selectedToolId) || inspectedResults[0];
+    const selectedTool = inspectedResults.find((item) => toolId(item) === selectedToolId);
+    if (!selectedTool) {
+      throw stageError('inspect', 'Inspect did not return the selected tool', 'selected_tool_not_returned');
+    }
     record.inspection.required_parameters = requiredParameterNames(selectedTool);
 
     const parameterized = await invokeAdapter(
@@ -164,6 +173,7 @@ async function runTrial({ task, model, trial, execute, limit, api, invokeAdapter
         selectedTool,
         discoveryId: discovered?.search_id ?? null,
         trial,
+        taskSetSha256: metadata.task_set_sha256,
       }),
     );
     if (!isPlainObject(parameterized?.parameters)) {
@@ -223,7 +233,7 @@ export function parameterResponseSchema(tool) {
   };
 }
 
-function adapterPayload({ stage, model, task, discovery, selectedTool, discoveryId, trial }) {
+function adapterPayload({ stage, model, task, discovery, selectedTool, discoveryId, trial, taskSetSha256 }) {
   const input =
     stage === 'select'
       ? { task_id: task.id, prompt: task.prompt, discovery }
@@ -246,6 +256,7 @@ function adapterPayload({ stage, model, task, discovery, selectedTool, discovery
     stage,
     model,
     trial,
+    task_set_sha256: taskSetSha256 ?? 'unreported',
     input,
     messages: [
       { role: 'system', content: instruction },
@@ -278,12 +289,8 @@ function strictParameterSchema(parameter, forceRequired = parameter?.required ==
     );
   } else if (type === 'object') {
     const nestedProperties = {};
-    for (const [name, definition] of Object.entries(
-      isPlainObject(parameter?.properties) ? parameter.properties : {},
-    )) {
-      nestedProperties[name] = strictParameterSchema(
-        isPlainObject(definition) ? definition : { type: 'string' },
-      );
+    for (const [name, definition] of Object.entries(isPlainObject(parameter?.properties) ? parameter.properties : {})) {
+      nestedProperties[name] = strictParameterSchema(isPlainObject(definition) ? definition : { type: 'string' });
     }
     schema.additionalProperties = false;
     schema.required = Object.keys(nestedProperties);
@@ -346,10 +353,10 @@ function isPlainObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function stageError(stage, message) {
+function stageError(stage, message, reason) {
   const error = new Error(message);
   error.benchmarkStage = stage;
-  error.benchmarkReason = stage === 'select' ? 'missing_tool_id' : 'invalid_parameters';
+  error.benchmarkReason = reason ?? (stage === 'select' ? 'missing_tool_id' : 'invalid_parameters');
   return error;
 }
 

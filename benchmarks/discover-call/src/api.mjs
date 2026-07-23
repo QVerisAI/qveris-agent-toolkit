@@ -17,58 +17,67 @@ export function createApiClient({
   if (!Number.isInteger(maxRetries) || maxRetries < 0 || maxRetries > 10) {
     throw new Error('maxRetries must be an integer from 0 to 10');
   }
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 1) {
+    throw new Error('timeoutMs must be a positive integer');
+  }
 
   async function request(path, body) {
-    let response;
     for (let attempt = 0; ; attempt++) {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
+      let retryDelay;
       try {
-        response = await fetchImpl(`${resolvedBaseUrl}${path}`, {
+        const response = await fetchImpl(`${resolvedBaseUrl}${path}`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
           signal: controller.signal,
+          redirect: 'error',
         });
-      } catch {
-        if (attempt >= maxRetries) throw apiError('Network request failed');
-        await sleep(retryDelayMs(null, attempt));
-        continue;
+        if (RETRYABLE_STATUS.has(response.status) && attempt < maxRetries) {
+          await Promise.resolve(response.body?.cancel?.()).catch(() => undefined);
+          retryDelay = retryDelayMs(response.headers.get('retry-after'), attempt);
+        } else {
+          observeRevision(response.headers, 'x-qveris-api-version', observedApiRevisions);
+          observeRevision(response.headers, 'x-qveris-catalog-version', observedCatalogRevisions);
+          if (!response.ok) {
+            await Promise.resolve(response.body?.cancel?.()).catch(() => undefined);
+            throw apiError(`HTTP ${response.status}`);
+          }
+          let payload;
+          try {
+            payload = await response.json();
+          } catch {
+            throw apiError(controller.signal.aborted ? 'API response timed out' : 'Invalid API response');
+          }
+          if (
+            payload &&
+            typeof payload === 'object' &&
+            'data' in payload &&
+            ('status' in payload || 'status_code' in payload || 'message' in payload)
+          ) {
+            const status = payload.status ?? payload.status_code;
+            if (
+              (typeof status === 'string' && ['failure', 'failed', 'error'].includes(status.toLowerCase())) ||
+              (typeof status === 'number' && status >= 400)
+            ) {
+              throw apiError('API returned a failure envelope');
+            }
+            return payload.data;
+          }
+          return payload;
+        }
+      } catch (error) {
+        if (error?.benchmarkStage === 'api') throw error;
+        if (attempt >= maxRetries) {
+          throw apiError(controller.signal.aborted ? 'API request timed out' : 'Network request failed');
+        }
+        retryDelay = retryDelayMs(null, attempt);
       } finally {
         clearTimeout(timeout);
       }
-      if (!RETRYABLE_STATUS.has(response.status) || attempt >= maxRetries) break;
-      await Promise.resolve(response.body?.cancel?.()).catch(() => undefined);
-      await sleep(retryDelayMs(response.headers.get('retry-after'), attempt));
+      await sleep(retryDelay);
     }
-    observeRevision(response.headers, 'x-qveris-api-version', observedApiRevisions);
-    observeRevision(response.headers, 'x-qveris-catalog-version', observedCatalogRevisions);
-    if (!response.ok) {
-      await Promise.resolve(response.body?.cancel?.()).catch(() => undefined);
-      throw apiError(`HTTP ${response.status}`);
-    }
-    let payload;
-    try {
-      payload = await response.json();
-    } catch {
-      throw apiError('Invalid API response');
-    }
-    if (
-      payload &&
-      typeof payload === 'object' &&
-      'data' in payload &&
-      ('status' in payload || 'status_code' in payload || 'message' in payload)
-    ) {
-      const status = payload.status ?? payload.status_code;
-      if (
-        (typeof status === 'string' && ['failure', 'failed', 'error'].includes(status.toLowerCase())) ||
-        (typeof status === 'number' && status >= 400)
-      ) {
-        throw apiError('API returned a failure envelope');
-      }
-      return payload.data;
-    }
-    return payload;
   }
 
   return {
@@ -103,9 +112,15 @@ function singleRevision(revisions) {
 }
 
 function retryDelayMs(retryAfter, attempt) {
-  const seconds = Number(retryAfter);
-  if (retryAfter !== null && Number.isFinite(seconds) && seconds >= 0) {
-    return Math.min(seconds * 1000, 60_000);
+  if (retryAfter !== null) {
+    const value = String(retryAfter).trim();
+    if (/^\d+(?:\.\d+)?$/.test(value)) {
+      return Math.min(Number(value) * 1000, 60_000);
+    }
+    if (/[a-z]/i.test(value)) {
+      const date = Date.parse(value);
+      if (Number.isFinite(date)) return Math.min(Math.max(0, date - Date.now()), 60_000);
+    }
   }
   return Math.min(500 * 2 ** attempt, 60_000);
 }

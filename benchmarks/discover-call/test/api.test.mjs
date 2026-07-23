@@ -56,6 +56,28 @@ test('retries rate limits and transient unavailability before scoring a failure'
   assert.deepEqual(delays, [0, 0]);
 });
 
+test('honors HTTP-date Retry-After values and disables redirects', async () => {
+  const delays = [];
+  const redirects = [];
+  let attempts = 0;
+  const client = createApiClient({
+    apiKey: 'test-key',
+    fetchImpl: async (_url, init) => {
+      redirects.push(init.redirect);
+      attempts++;
+      return new Response(JSON.stringify({ results: [] }), {
+        status: attempts === 1 ? 429 : 200,
+        headers: attempts === 1 ? { 'retry-after': 'Wed, 21 Oct 2015 07:28:00 GMT' } : {},
+      });
+    },
+    sleep: async (ms) => delays.push(ms),
+  });
+
+  assert.deepEqual(await client.discover({ query: 'weather', limit: 5 }), { results: [] });
+  assert.deepEqual(delays, [0]);
+  assert.deepEqual(redirects, ['error', 'error']);
+});
+
 test('retries transient network failures before succeeding', async () => {
   let attempts = 0;
   const delays = [];
@@ -74,6 +96,36 @@ test('retries transient network failures before succeeding', async () => {
   assert.deepEqual(delays, [500, 1000]);
 });
 
+test('request timeout covers a response body that stalls after headers', async () => {
+  let signal;
+  const client = createApiClient({
+    apiKey: 'test-key',
+    timeoutMs: 10,
+    maxRetries: 0,
+    fetchImpl: async (_url, init) => {
+      signal = init.signal;
+      return {
+        ok: true,
+        status: 200,
+        headers: new Headers(),
+        json: () =>
+          new Promise((resolve, reject) => {
+            signal.addEventListener(
+              'abort',
+              () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })),
+              { once: true },
+            );
+          }),
+      };
+    },
+  });
+
+  await assert.rejects(client.discover({ query: 'weather', limit: 5 }), (error) => {
+    return error.benchmarkStage === 'api' && error.message === 'API response timed out';
+  });
+  assert.equal(signal.aborted, true);
+});
+
 test('cancels unsuccessful response bodies before reporting API errors', async () => {
   let cancelled = false;
   const client = createApiClient({
@@ -82,7 +134,11 @@ test('cancels unsuccessful response bodies before reporting API errors', async (
       ok: false,
       status: 400,
       headers: new Headers(),
-      body: { async cancel() { cancelled = true; } },
+      body: {
+        async cancel() {
+          cancelled = true;
+        },
+      },
     }),
   });
 

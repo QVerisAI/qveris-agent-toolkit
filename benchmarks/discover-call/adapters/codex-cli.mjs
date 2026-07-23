@@ -68,6 +68,7 @@ export function parseCodexEvents(stdout) {
   if (lines.length === 0) throw adapterFailure('Codex CLI returned no events', 'invalid_events');
 
   let finalMessage;
+  let turnCompleted = false;
   for (const line of lines) {
     let event;
     try {
@@ -79,6 +80,7 @@ export function parseCodexEvents(stdout) {
     if (event.type === 'error' || event.type === 'turn.failed') {
       throw adapterFailure('Codex CLI reported an unsuccessful result', 'model_failed');
     }
+    if (event.type === 'turn.completed') turnCompleted = true;
 
     if ((event.type === 'item.started' || event.type === 'item.completed') && isObject(event.item)) {
       if (!ALLOWED_ITEM_TYPES.has(event.item.type)) {
@@ -95,6 +97,9 @@ export function parseCodexEvents(stdout) {
 
   if (typeof finalMessage !== 'string') {
     throw adapterFailure('Codex CLI returned no structured output', 'invalid_output');
+  }
+  if (!turnCompleted) {
+    throw adapterFailure('Codex CLI returned an incomplete event stream', 'invalid_events');
   }
   try {
     const result = JSON.parse(finalMessage);
@@ -118,10 +123,7 @@ export async function invokeCodex(payload) {
   }
 }
 
-export function runCodex(
-  invocation,
-  { outputLimit = 1_000_000, forceKillAfterMs = 1_000 } = {},
-) {
+export function runCodex(invocation, { outputLimit = 1_000_000, forceKillAfterMs = 1_000 } = {}) {
   if (!Number.isInteger(outputLimit) || outputLimit < 1) {
     throw new Error('outputLimit must be a positive integer');
   }
@@ -162,7 +164,9 @@ export function runCodex(
     const forwardSignal = (signal) => {
       if (forwardedSignal) return;
       forwardedSignal = signal;
-      terminate(adapterFailure('Codex CLI interrupted', 'interrupted'), signal);
+      const error = adapterFailure('Codex CLI interrupted', 'interrupted');
+      error.adapterSignal = signal;
+      terminate(error, signal);
     };
     const forwardSigint = () => forwardSignal('SIGINT');
     const forwardSigterm = () => forwardSignal('SIGTERM');
@@ -186,8 +190,7 @@ export function runCodex(
       cleanup();
       if (settled) return;
       if (forwardedSignal) {
-        process.kill(process.pid, forwardedSignal);
-        return;
+        return rejectOnce(terminationError);
       }
       if (terminationError) return rejectOnce(terminationError);
       settled = true;
@@ -217,6 +220,10 @@ async function main() {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main().catch((error) => {
+    if (error?.adapterSignal) {
+      process.kill(process.pid, error.adapterSignal);
+      return;
+    }
     const code = typeof error?.adapterCode === 'string' ? error.adapterCode : 'invalid_output';
     process.stderr.write(`QVERIS_BENCHMARK_ADAPTER_ERROR=${code}\n`);
     process.exitCode = 1;

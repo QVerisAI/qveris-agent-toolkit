@@ -131,6 +131,29 @@ test('recomputes parameterization scores instead of trusting raw attestations', 
   });
 });
 
+test('recomputes and verifies the catalog observation digest', () => {
+  const record = rawRecord();
+  const [published] = sanitizePublicRecords([record], policy, tasks);
+  assert.equal(published.metadata.catalog_observation_sha256.length, 64);
+  assert.notEqual(published.metadata.catalog_observation_sha256, 'b'.repeat(64));
+  assert.throws(
+    () =>
+      sanitizePublicRecords(
+        [
+          rawRecord({
+            metadata: {
+              ...record.metadata,
+              catalog_observation_sha256: 'b'.repeat(64),
+            },
+          }),
+        ],
+        policy,
+        tasks,
+      ),
+    /catalog observation digest does not match/,
+  );
+});
+
 test('projects safe errors and rejects unsupported public fields at every boundary', () => {
   const [record] = sanitizePublicRecords(
     [
@@ -214,11 +237,51 @@ test('projects safe errors and rejects unsupported public fields at every bounda
   );
 });
 
-test('publication policy cannot expose parameters or omit a required protected field', () => {
+test('rejects contradictory public lifecycle attestations', () => {
+  const [record] = sanitizePublicRecords([rawRecord()], policy, tasks);
   assert.throws(
-    () => validatePolicy({ ...policy, publish_parameters: true }),
-    /must not publish raw parameter values/,
+    () =>
+      validatePublicRecords(
+        [
+          {
+            ...record,
+            finished_at: '2026-07-22T23:59:59.000Z',
+          },
+        ],
+        policy,
+      ),
+    /inconsistent lifecycle fields/,
   );
+  assert.throws(
+    () =>
+      validatePublicRecords(
+        [
+          {
+            ...record,
+            status: 'failed',
+          },
+        ],
+        policy,
+      ),
+    /inconsistent lifecycle fields/,
+  );
+  assert.throws(
+    () =>
+      validatePublicRecords(
+        [
+          {
+            ...record,
+            call: { attempted: false, success: true, result_nonempty: true },
+          },
+        ],
+        policy,
+      ),
+    /inconsistent call lifecycle/,
+  );
+});
+
+test('publication policy cannot expose parameters or omit a required protected field', () => {
+  assert.throws(() => validatePolicy({ ...policy, publish_parameters: true }), /must not publish raw parameter values/);
   assert.throws(
     () =>
       validatePolicy({
@@ -256,10 +319,7 @@ test('official public runs require the exact task digest, execution, and three t
     () => validateOfficialPublicRun(records, { taskSetSha256: 'b'.repeat(64) }),
     /task-set digest does not match/,
   );
-  assert.throws(
-    () => validateOfficialPublicRun(records.slice(0, 2), { taskSetSha256 }),
-    /at least 3 trials/,
-  );
+  assert.throws(() => validateOfficialPublicRun(records.slice(0, 2), { taskSetSha256 }), /at least 3 trials/);
   assert.throws(
     () =>
       validateOfficialPublicRun(

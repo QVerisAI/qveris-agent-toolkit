@@ -10,6 +10,8 @@ QVeris 评测完整的 Agent 工作流，而不只对搜索相关性打分。公
 
 每个任务和 trial 都按同一流程运行：调用 `discover`，让 adapter 从实际返回结果中选择能力，调用
 `inspect`，让 adapter 根据当前 schema 构造参数，最后执行真实 `call`。
+选择结果不在 discovery 返回中，或 inspect 未返回完全一致的已选能力时，runner 会立即终止该
+trial；后续 inspect、参数构造或付费 call 不会越过未通过的 grounding 步骤。
 
 评分分别报告选择与检查是否有真实返回依据、必填参数完整率、任务约束准确率、call 成功率、结果结构
 是否非空，以及严格的端到端工作流成功率。“结果非空”不代表语义正确。Dry run 不计为工作流成功。

@@ -13,6 +13,9 @@ Long-horizon, judged domain evaluations are a separate instrument.
 For every task and trial, the harness runs `discover`, asks the adapter to
 select a returned capability, runs `inspect`, asks the adapter to construct
 parameters from the current schema, and performs a real `call`.
+Selection outside the discovery results and inspection that omits the exact
+selected capability are hard gates, so no later inspect, parameterization, or
+billed call crosses an ungrounded step.
 
 The scorer reports grounded selection and inspection, required-parameter
 accuracy, task-constraint accuracy, call success, structural result

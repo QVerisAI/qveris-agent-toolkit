@@ -61,21 +61,13 @@ export async function main(argv = process.argv.slice(2)) {
     invokeAdapter,
     metadata,
   });
-  Object.assign(
-    metadata,
-    api.observedRevisions?.() ?? { api_revision: 'unreported', catalog_revision: 'unreported' },
-  );
+  Object.assign(metadata, api.observedRevisions?.() ?? { api_revision: 'unreported', catalog_revision: 'unreported' });
   metadata.catalog_observation_sha256 = catalogObservationSha256(records);
   await writeJsonLines(output, records);
   process.stdout.write(`Wrote ${records.length} benchmark records to ${output}\n`);
 }
 
-export function createProcessAdapter({
-  command,
-  args = [],
-  timeoutMs = 120_000,
-  forceKillAfterMs = 1_000,
-}) {
+export function createProcessAdapter({ command, args = [], timeoutMs = 120_000, forceKillAfterMs = 1_000 }) {
   if (typeof command !== 'string' || !command) throw new Error('--adapter is required');
   if (!Number.isInteger(forceKillAfterMs) || forceKillAfterMs < 1 || forceKillAfterMs > 10_000) {
     throw new Error('forceKillAfterMs must be an integer from 1 to 10000');
@@ -207,9 +199,7 @@ function integer(value, flag) {
 
 function lane(value) {
   if (!['model', 'oracle', 'reference', 'configured-model', 'pinned-model', 'current-model'].includes(value)) {
-    throw new Error(
-      '--lane must be model, oracle, reference, configured-model, pinned-model, or current-model',
-    );
+    throw new Error('--lane must be model, oracle, reference, configured-model, pinned-model, or current-model');
   }
   return value;
 }
@@ -232,7 +222,7 @@ function adapterError(message, reason) {
 
 function adapterReasonFromStderr(stderr) {
   const match = stderr.match(
-    /QVERIS_BENCHMARK_ADAPTER_ERROR=(tool_use_rejected|model_failed|invalid_events|invalid_output|cli_failed|start_failed|output_limit|missing_reference|missing_reference_candidate|missing_oracle|missing_oracle_candidate|unsupported_stage)/,
+    /QVERIS_BENCHMARK_ADAPTER_ERROR=(tool_use_rejected|model_failed|invalid_events|invalid_output|cli_failed|start_failed|output_limit|missing_reference|missing_reference_candidate|missing_oracle|missing_oracle_candidate|task_set_mismatch|unsupported_stage)/,
   );
   return match?.[1] ?? null;
 }

@@ -149,6 +149,44 @@ test('records adapter failures without copying their error text', async () => {
   assert.equal(JSON.stringify(records[0]).includes('secret-token'), false);
 });
 
+test('does not inspect or execute a tool outside the discovery results', async () => {
+  const events = [];
+  const [record] = await runBenchmark({
+    tasks: [task],
+    model: 'model-a',
+    trials: 1,
+    execute: true,
+    api: {
+      async discover() {
+        events.push('discover');
+        return { results: [{ tool_id: 'weather.forecast' }] };
+      },
+      async inspect() {
+        events.push('inspect');
+        throw new Error('not reached');
+      },
+      async call() {
+        events.push('call');
+        throw new Error('not reached');
+      },
+    },
+    async invokeAdapter() {
+      events.push('select');
+      return { tool_id: 'unrelated.tool' };
+    },
+  });
+
+  assert.deepEqual(events, ['discover', 'select']);
+  assert.equal(record.status, 'failed');
+  assert.equal(record.selection.tool_id, 'unrelated.tool');
+  assert.equal(record.call.attempted, false);
+  assert.deepEqual(record.error, {
+    stage: 'select',
+    reason_code: 'ungrounded_tool_id',
+    message: 'Adapter selected a tool outside the discovery results',
+  });
+});
+
 test('validates task constraints and trial bounds', async () => {
   assert.throws(() => validateTask({ id: 'bad', prompt: 'x', constraints: [] }), /constraints/);
   assert.throws(
@@ -183,32 +221,40 @@ test('validates task constraints and trial bounds', async () => {
   );
 });
 
-test('keeps selected_tool explicit when inspection returns no tools', async () => {
-  let parameterizeInput;
-  await runBenchmark({
+test('does not parameterize or execute when inspection omits the selected tool', async () => {
+  const events = [];
+  const [record] = await runBenchmark({
     tasks: [task],
     model: 'model-a',
     trials: 1,
+    execute: true,
     api: {
       async discover() {
+        events.push('discover');
         return { results: [{ tool_id: 'weather.forecast' }] };
       },
       async inspect() {
-        return { results: [] };
+        events.push('inspect');
+        return { results: [{ tool_id: 'different.tool', params: [] }] };
       },
       async call() {
+        events.push('call');
         throw new Error('not reached');
       },
     },
     async invokeAdapter(payload) {
-      if (payload.stage === 'parameterize') {
-        parameterizeInput = payload.input;
-        return { parameters: {} };
-      }
+      events.push(payload.stage);
       return { tool_id: 'weather.forecast' };
     },
   });
 
-  assert.equal(Object.hasOwn(parameterizeInput, 'selected_tool'), true);
-  assert.equal(parameterizeInput.selected_tool, null);
+  assert.deepEqual(events, ['discover', 'select', 'inspect']);
+  assert.equal(record.status, 'failed');
+  assert.deepEqual(record.inspection.returned_tool_ids, ['different.tool']);
+  assert.equal(record.call.attempted, false);
+  assert.deepEqual(record.error, {
+    stage: 'inspect',
+    reason_code: 'selected_tool_not_returned',
+    message: 'Inspect did not return the selected tool',
+  });
 });

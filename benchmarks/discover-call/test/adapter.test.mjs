@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { createHash } from 'node:crypto';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -7,12 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 import { createProcessAdapter, main } from '../src/run.mjs';
 import { buildClaudeInvocation, parseClaudeEnvelope } from '../adapters/claude-cli.mjs';
-import {
-  buildCodexInvocation,
-  CODEX_REASONING_EFFORT,
-  parseCodexEvents,
-  runCodex,
-} from '../adapters/codex-cli.mjs';
+import { buildCodexInvocation, CODEX_REASONING_EFFORT, parseCodexEvents, runCodex } from '../adapters/codex-cli.mjs';
 
 const adapterPath = resolve(fileURLToPath(new URL('../adapters/first-result.mjs', import.meta.url)));
 const referenceAdapterPath = resolve(fileURLToPath(new URL('../adapters/reference.mjs', import.meta.url)));
@@ -86,7 +82,7 @@ test('process adapter records safe failure reasons without provider stderr', asy
 test('process adapter classifies timeouts', async () => {
   const invoke = createProcessAdapter({
     command: process.execPath,
-    args: ['-e', "process.stdin.resume(); setInterval(() => {}, 1000)"],
+    args: ['-e', 'process.stdin.resume(); setInterval(() => {}, 1000)'],
     timeoutMs: 25,
   });
   await assert.rejects(invoke({ stage: 'select' }), (error) => {
@@ -118,6 +114,9 @@ test('process adapter force-kills a child that ignores SIGTERM', async () => {
 });
 
 test('reference adapter selects only configured candidates present in discovery', async () => {
+  const taskSetSha256 = createHash('sha256')
+    .update(await readFile(v4TasksPath))
+    .digest('hex');
   const invoke = createProcessAdapter({
     command: process.execPath,
     args: [referenceAdapterPath, v4TasksPath],
@@ -126,13 +125,11 @@ test('reference adapter selects only configured candidates present in discovery'
   assert.deepEqual(
     await invoke({
       stage: 'select',
+      task_set_sha256: taskSetSha256,
       input: {
         task_id: 'weather-london',
         discovery: {
-          results: [
-            { tool_id: 'unrelated.tool' },
-            { tool_id: 'visualcrossing.timeline.retrieve.v1' },
-          ],
+          results: [{ tool_id: 'unrelated.tool' }, { tool_id: 'visualcrossing.timeline.retrieve.v1' }],
         },
       },
     }),
@@ -141,6 +138,7 @@ test('reference adapter selects only configured candidates present in discovery'
   assert.deepEqual(
     await invoke({
       stage: 'parameterize',
+      task_set_sha256: taskSetSha256,
       input: {
         task_id: 'weather-london',
         selected_tool: { tool_id: 'visualcrossing.timeline.retrieve.v1' },
@@ -151,12 +149,24 @@ test('reference adapter selects only configured candidates present in discovery'
   assert.deepEqual(
     await invoke({
       stage: 'select',
+      task_set_sha256: taskSetSha256,
       input: {
         task_id: 'timezone-tokyo',
         discovery: { results: [{ tool_id: 'api_sports.timezone.retrieve.v1.e993615d' }] },
       },
     }),
     { tool_id: null },
+  );
+  await assert.rejects(
+    invoke({
+      stage: 'select',
+      task_set_sha256: '0'.repeat(64),
+      input: {
+        task_id: 'weather-london',
+        discovery: { results: [{ tool_id: 'visualcrossing.timeline.retrieve.v1' }] },
+      },
+    }),
+    (error) => error.benchmarkReason === 'task_set_mismatch',
   );
 });
 
@@ -230,14 +240,8 @@ test('Codex adapter preserves canonical messages and response schema', () => {
   assert.deepEqual(invocation.schema, payload.response_schema);
   assert.equal(invocation.args[invocation.args.indexOf('--model') + 1], payload.model);
   assert.equal(invocation.args[invocation.args.indexOf('--output-schema') + 1], '/tmp/response-schema.json');
-  assert.equal(
-    configs.includes(`developer_instructions=${JSON.stringify(payload.messages[0].content)}`),
-    true,
-  );
-  assert.equal(
-    configs.includes(`model_reasoning_effort=${JSON.stringify(CODEX_REASONING_EFFORT)}`),
-    true,
-  );
+  assert.equal(configs.includes(`developer_instructions=${JSON.stringify(payload.messages[0].content)}`), true);
+  assert.equal(configs.includes(`model_reasoning_effort=${JSON.stringify(CODEX_REASONING_EFFORT)}`), true);
   assert.equal(invocation.args.includes('--ephemeral'), true);
   assert.equal(invocation.args.includes('--ignore-user-config'), true);
   assert.equal(invocation.args.includes('--ignore-rules'), true);
@@ -277,12 +281,25 @@ test('Codex adapter extracts the final structured message and rejects tool use',
   assert.throws(
     () =>
       parseCodexEvents(
-        JSON.stringify({
-          type: 'item.completed',
-          item: { type: 'agent_message', text: 'not-json' },
-        }),
+        [
+          JSON.stringify({
+            type: 'item.completed',
+            item: { type: 'agent_message', text: 'not-json' },
+          }),
+          JSON.stringify({ type: 'turn.completed' }),
+        ].join('\n'),
       ),
     /no structured output/,
+  );
+  assert.throws(
+    () =>
+      parseCodexEvents(
+        JSON.stringify({
+          type: 'item.completed',
+          item: { type: 'agent_message', text: '{"tool_id":"weather.forecast"}' },
+        }),
+      ),
+    (error) => error.adapterCode === 'invalid_events' && /incomplete event stream/.test(error.message),
   );
 });
 

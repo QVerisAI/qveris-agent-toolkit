@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
 try {
   const tasksPath = parseTasksPath(process.argv.slice(2));
-  const tasks = await readTasks(tasksPath);
+  const { tasks, sha256 } = await readTasks(tasksPath);
   const taskById = new Map(tasks.map((task) => [task.id, task]));
 
   let input = '';
   for await (const chunk of process.stdin) input += chunk;
   const payload = JSON.parse(input);
+  if (payload.task_set_sha256 !== sha256) throw referenceFailure('task_set_mismatch');
   const task = taskById.get(payload.input?.task_id);
   const reference = task?.reference ?? task?.oracle;
   if (!reference || !Array.isArray(reference.candidates)) throw referenceFailure('missing_reference');
@@ -36,12 +38,16 @@ try {
 }
 
 async function readTasks(path) {
-  const text = await readFile(path, 'utf8');
-  return text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('#'))
-    .map((line) => JSON.parse(line));
+  const bytes = await readFile(path);
+  return {
+    sha256: createHash('sha256').update(bytes).digest('hex'),
+    tasks: bytes
+      .toString('utf8')
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith('#'))
+      .map((line) => JSON.parse(line)),
+  };
 }
 
 function parseTasksPath(argv) {

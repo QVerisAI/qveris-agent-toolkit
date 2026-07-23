@@ -27,6 +27,11 @@ Each task runs the same sequence:
 4. Ask the adapter to construct parameters from the inspected schema.
 5. Optionally execute the billed `call`.
 
+The runner treats both grounding checks as execution gates: it stops before
+`inspect` when selection is outside the discovery results, and stops before
+parameterization or `call` when inspection does not return the exact selected
+tool.
+
 The scorer reports these metrics separately:
 
 - **selection grounded**: the selected tool was returned by `discover`;
@@ -176,9 +181,11 @@ npm run validate
 
 The harness invokes the adapter once per decision stage. It writes one JSON
 object to stdin and expects exactly one JSON object on stdout. Each request
-contains canonical `messages` and a `response_schema`; model adapters must send
-both unchanged so model comparisons use the same prompt and output contract.
-Ground-truth scoring constraints are deliberately not exposed to adapters.
+contains the immutable `task_set_sha256`, canonical `messages`, and a
+`response_schema`; model adapters must send the messages and schema unchanged
+so model comparisons use the same prompt and output contract. The bundled
+reference adapter rejects a task-file digest mismatch. Ground-truth scoring
+constraints are deliberately not exposed to model adapters.
 
 Selection input uses `stage: "select"`; `input` contains the user prompt and the
 complete discovery response. Return:

@@ -41,17 +41,10 @@ const PUBLIC_METADATA_FIELDS = new Set([
 ]);
 
 const PUBLIC_RUNTIME_FIELDS = new Set(['node', 'platform', 'arch']);
-const PUBLIC_DISCOVERY_FIELDS = new Set([
-  'result_count',
-  'snapshot_sha256',
-  'selection_grounded',
-]);
+const PUBLIC_DISCOVERY_FIELDS = new Set(['result_count', 'snapshot_sha256', 'selection_grounded']);
 const PUBLIC_SELECTION_FIELDS = new Set(['tool_id', 'tool_id_sha256']);
 const PUBLIC_INSPECTION_FIELDS = new Set(['selection_grounded']);
-const PUBLIC_PARAMETERIZATION_FIELDS = new Set([
-  'required_parameter_accuracy',
-  'constraint_accuracy',
-]);
+const PUBLIC_PARAMETERIZATION_FIELDS = new Set(['required_parameter_accuracy', 'constraint_accuracy']);
 const PUBLIC_CALL_FIELDS = new Set(['attempted', 'success', 'result_nonempty']);
 const PUBLIC_ERROR_FIELDS = new Set(['stage', 'reason_code']);
 
@@ -77,25 +70,28 @@ export function sanitizePublicRecords(records, policy, tasks) {
   validatePolicy(policy);
   const taskById = taskMap(tasks);
   const approvedToolIds = new Set(policy.approved_selected_tool_ids);
-  const catalogObservationSha256 =
-    commonMetadataValue(records, 'catalog_observation_sha256') ??
-    sha256(
-      JSON.stringify(
-        records.map((record) => ({
-          task_id: record.task_id,
-          trial: record.trial,
-          result_tool_ids: array(record.discovery?.result_tool_ids),
-        })),
-      ),
-    );
-  return records.map((record) =>
-    sanitizePublicRecord(
-      record,
-      taskById.get(record.task_id),
-      policy,
-      approvedToolIds,
-      catalogObservationSha256,
+  const catalogObservationSha256 = sha256(
+    JSON.stringify(
+      records.map((record) => ({
+        task_id: record.task_id,
+        trial: record.trial,
+        result_tool_ids: array(record.discovery?.result_tool_ids),
+      })),
     ),
+  );
+  const declaredCatalogDigests = new Set(
+    records
+      .map((record) => record.metadata?.catalog_observation_sha256)
+      .filter((value) => value !== undefined && value !== 'pending'),
+  );
+  if (
+    declaredCatalogDigests.size > 1 ||
+    (declaredCatalogDigests.size === 1 && !declaredCatalogDigests.has(catalogObservationSha256))
+  ) {
+    throw new Error('Raw benchmark catalog observation digest does not match its records');
+  }
+  return records.map((record) =>
+    sanitizePublicRecord(record, taskById.get(record.task_id), policy, approvedToolIds, catalogObservationSha256),
   );
 }
 
@@ -145,9 +141,7 @@ function sanitizePublicRecord(
     },
     selection: {
       tool_id: selectedToolApproved ? selectedToolId : null,
-      ...(selectedToolId && !selectedToolApproved
-        ? { tool_id_sha256: sha256(selectedToolId) }
-        : {}),
+      ...(selectedToolId && !selectedToolApproved ? { tool_id_sha256: sha256(selectedToolId) } : {}),
     },
     inspection: {
       selection_grounded: inspectionGrounded,
@@ -192,13 +186,9 @@ export function validatePolicy(policy) {
     throw new Error('Publication policy needs forbidden_fields');
   }
   const forbidden = forbiddenFieldSet(policy);
-  const missingForbidden = REQUIRED_FORBIDDEN_FIELDS.filter(
-    (field) => !forbidden.has(normalizeFieldName(field)),
-  );
+  const missingForbidden = REQUIRED_FORBIDDEN_FIELDS.filter((field) => !forbidden.has(normalizeFieldName(field)));
   if (missingForbidden.length > 0) {
-    throw new Error(
-      `Publication policy must forbid protected fields: ${missingForbidden.join(', ')}`,
-    );
+    throw new Error(`Publication policy must forbid protected fields: ${missingForbidden.join(', ')}`);
   }
   if (
     policy.legacy_lane_rewrites !== undefined &&
@@ -236,6 +226,12 @@ export function validatePublicRecords(records, policy) {
     ) {
       throw new Error('Public artifact has invalid record identity or lifecycle fields');
     }
+    if (
+      Date.parse(record.finished_at) < Date.parse(record.started_at) ||
+      (record.status === 'failed') !== (record.error !== undefined)
+    ) {
+      throw new Error('Public artifact has inconsistent lifecycle fields');
+    }
     if (record.metadata?.publication_policy !== policy.policy_id) {
       throw new Error(`Public artifact is missing publication policy ${policy.policy_id}`);
     }
@@ -244,11 +240,7 @@ export function validatePublicRecords(records, policy) {
     assertObjectFields(record.discovery, PUBLIC_DISCOVERY_FIELDS, '$.discovery');
     assertObjectFields(record.selection, PUBLIC_SELECTION_FIELDS, '$.selection');
     assertObjectFields(record.inspection, PUBLIC_INSPECTION_FIELDS, '$.inspection');
-    assertObjectFields(
-      record.parameterization,
-      PUBLIC_PARAMETERIZATION_FIELDS,
-      '$.parameterization',
-    );
+    assertObjectFields(record.parameterization, PUBLIC_PARAMETERIZATION_FIELDS, '$.parameterization');
     assertObjectFields(record.call, PUBLIC_CALL_FIELDS, '$.call');
     if (record.error !== undefined) {
       assertObjectFields(record.error, PUBLIC_ERROR_FIELDS, '$.error');
@@ -303,10 +295,17 @@ export function validatePublicRecords(records, policy) {
     if (
       typeof record.call?.attempted !== 'boolean' ||
       !booleanOrNull(record.call?.success) ||
-      (record.call?.result_nonempty !== undefined &&
-        typeof record.call.result_nonempty !== 'boolean')
+      (record.call?.result_nonempty !== undefined && typeof record.call.result_nonempty !== 'boolean')
     ) {
       throw new Error('Public artifact call fields have invalid types');
+    }
+    if (
+      (!record.call.attempted && (record.call.success !== null || record.call.result_nonempty !== undefined)) ||
+      (record.call.result_nonempty === true && record.call.success !== true) ||
+      (record.call.attempted && record.metadata.execute !== true) ||
+      (record.status === 'completed' && record.metadata.execute === true && record.call.attempted !== true)
+    ) {
+      throw new Error('Public artifact has inconsistent call lifecycle');
     }
     if (
       record.error !== undefined &&
@@ -318,10 +317,7 @@ export function validatePublicRecords(records, policy) {
   }
 }
 
-export function validateOfficialPublicRun(
-  records,
-  { taskSetSha256, minTrialsPerTask = 3 } = {},
-) {
+export function validateOfficialPublicRun(records, { taskSetSha256, minTrialsPerTask = 3 } = {}) {
   if (!isSha256(taskSetSha256)) throw new Error('Official public run needs the task-set SHA-256');
   if (!Number.isInteger(minTrialsPerTask) || minTrialsPerTask < 1) {
     throw new Error('minTrialsPerTask must be a positive integer');
@@ -340,9 +336,7 @@ export function validateOfficialPublicRun(
   for (const [key, count] of trials) {
     if (count < minTrialsPerTask) {
       const taskId = key.slice(key.indexOf('\0') + 1);
-      throw new Error(
-        `Official public artifact needs at least ${minTrialsPerTask} trials for ${taskId}`,
-      );
+      throw new Error(`Official public artifact needs at least ${minTrialsPerTask} trials for ${taskId}`);
     }
   }
 }
@@ -371,14 +365,6 @@ function publicMetadata(metadata = {}, policy, catalogObservationSha256) {
     execute: metadata.execute === true,
     publication_policy: policy.policy_id,
   };
-}
-
-function commonMetadataValue(records, field) {
-  if (records.length === 0) return null;
-  const values = records.map((record) => record.metadata?.[field]);
-  if (values.some((value) => !isSha256(value))) return null;
-  const unique = new Set(values);
-  return unique.size === 1 ? values[0] : null;
 }
 
 function assertNoForbiddenFields(value, forbidden, path = '$') {
@@ -444,11 +430,7 @@ function nonemptyString(value) {
 }
 
 function validTimestamp(value) {
-  return (
-    typeof value === 'string' &&
-    /^\d{4}-\d{2}-\d{2}T/.test(value) &&
-    Number.isFinite(Date.parse(value))
-  );
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value) && Number.isFinite(Date.parse(value));
 }
 
 function safePublicApiUrl(value) {
