@@ -4,7 +4,7 @@
 
 `@qverisai/mcp` 是面向 Cursor、Claude Desktop 及其他编程智能体等 MCP 兼容客户端的官方 QVeris MCP 服务器。
 
-它通过少量 MCP 工具为智能体提供 QVeris 访问能力：
+`@qverisai/mcp` v0.12.0 是最新测试版本，通过六个规范 MCP 工具为智能体提供 QVeris 访问能力：
 
 - `discover` — 用自然语言发现能力
 - `inspect` — 获取工具详情（参数、成功率、示例）

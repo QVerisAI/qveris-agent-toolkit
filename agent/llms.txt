@@ -11,6 +11,7 @@
 ## Core protocol
 - Discover: find capabilities with natural language (free)
 - Inspect: view capability details, parameters, success rate, latency
+- Probe: validate candidate parameters and obtain a quote without execution (free)
 - Call: invoke any capability, get structured results and compact pre-settlement billing when available
 - Audit: query usage history and credits ledger with summaries or precise filters
 - Covers finance, search, weather, maps, docs, social, blockchain, healthcare, and 15+ categories
@@ -27,22 +28,25 @@
 - They are runtime + capability routing network, complementary not competing
 
 ## Access methods (recommended order)
-- CLI v0.5.0 (recommended for agents): npm install -g @qverisai/cli — zero prompt tokens, deterministic output, 10,000+ tools without prompt bloat
-- MCP Server v0.6.0: npx @qverisai/mcp — for IDE integrations (Cursor, Claude Desktop, OpenCode)
-- Python SDK: pip install qveris
+- CLI v0.9.0 (recommended for agents): npm install -g @qverisai/cli — zero prompt tokens, deterministic output, 10,000+ tools without prompt bloat
+- MCP Server v0.12.0: npx @qverisai/mcp — for IDE integrations (Cursor, Claude Desktop, OpenCode)
+- JavaScript SDK v0.6.0: npm install @qverisai/sdk
+- Python SDK v0.5.0: pip install qveris
 - REST API: https://qveris.ai/api/v1
 - Explicit endpoint override: QVERIS_BASE_URL
 
 ## QVeris CLI — token-efficient agent tool use
-- Agents call tools via subprocess (qveris discover/inspect/call/usage/ledger), not prompt injection
+- Agents call tools via subprocess (qveris discover/inspect/probe/call/usage/ledger), not prompt injection
 - Zero tokens consumed per tool invocation — CLI runs outside the LLM context
 - Zero external dependencies — only Node.js built-ins, instant install via npx
 - Deterministic output schema: same command, same format, every time
 - 10,000+ real-world, verified tools accessible without adding any schema to the prompt
+- `qveris auth login/status/logout` — OAuth Device Flow session management; API keys remain supported
 - `qveris login` — browser-assisted API key retrieval and validation
 - `qveris doctor` — self-check diagnostics (Node.js, API key, endpoint, connectivity)
 - `qveris interactive` — REPL mode for discover/inspect/call loop
-- `--json` flag for structured agent output, `--dry-run` to validate without credits
+- `qveris probe` — validate parameters and obtain a quote without execution or credits
+- `--json` flag for structured agent output, `--dry-run` to preview a request without executing
 - `--codegen curl|js|python` to generate code snippets from successful calls
 - Session index shortcuts: `qveris inspect 1`, `qveris call 2` (references last discover results)
 - Shell completions: `qveris completions bash|zsh|fish`
@@ -52,6 +56,7 @@
 ## MCP Server tools
 - `discover` — find capabilities by natural language query (free)
 - `inspect` — view capability details, parameters, stats (free)
+- `probe` — validate candidate parameters and obtain a quote without execution (free)
 - `call` — execute a capability with parameters; response may include pre-settlement billing
 - `usage_history` — summarize/search/export request-level charge outcomes
 - `credits_ledger` — summarize/search/export final credit balance movements

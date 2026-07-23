@@ -1,10 +1,10 @@
 # QVeris Python SDK
 
-QVeris Python SDK v0.4.0 是最新测试版本。使用异步客户端，在你自己的 Agent 和应用中发现、检查、调用并审计 10,000+ 真实已验证的 API 能力。
+QVeris Python SDK v0.5.0 是最新测试版本。使用异步客户端，在你自己的 Agent 和应用中发现、检查、探测、调用并审计 10,000+ 真实已验证的 API 能力。
 
 SDK 提供两种控制粒度：
 
-- **`QverisClient`** —— QVeris REST API 的轻量类型化封装（`discover`、`inspect`、`call`、`usage`、`ledger`）。
+- **`QverisClient`** —— QVeris REST API 的轻量类型化封装（`discover`、`inspect`、`probe`、`call`、`usage`、`ledger`）。
 - **`Agent`** —— 开箱即用的 LLM 工具循环，让模型自主发现并调用能力。
 
 需要完全控制时用 client；想几行代码就跑起来一个可用助手时用 agent。
