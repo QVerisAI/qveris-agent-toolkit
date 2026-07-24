@@ -1,5 +1,5 @@
 {
-  "contract_version": "2026-07-22.1",
+  "contract_version": "2026-07-23.2",
   "compatibility": {
     "legacy_service_ignores_projection": {
       "request": {"query": "查询当前天气", "view": "routing"},
