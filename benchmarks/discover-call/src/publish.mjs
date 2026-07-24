@@ -5,7 +5,7 @@ import { mkdir, readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { readJsonLines, validatePathSeparation, writeJsonLines, writeTextAtomic } from './io.mjs';
+import { readJsonLines, validatePathSeparation, writeFileSetTransactional } from './io.mjs';
 import { sanitizePublicRecords, validateOfficialPublicRun, validatePublicRecords } from './publication.mjs';
 import { scoreRecords } from './scoring.mjs';
 
@@ -39,8 +39,16 @@ export async function main(argv = process.argv.slice(2)) {
     mkdir(dirname(outputRuns), { recursive: true }),
     mkdir(dirname(outputSummary), { recursive: true }),
   ]);
-  await writeJsonLines(outputRuns, publicRecords);
-  await writeTextAtomic(outputSummary, JSON.stringify(summary, null, 2) + '\n');
+  await writeFileSetTransactional([
+    {
+      path: outputRuns,
+      content: publicRecords.map((record) => JSON.stringify(record)).join('\n') + '\n',
+    },
+    {
+      path: outputSummary,
+      content: JSON.stringify(summary, null, 2) + '\n',
+    },
+  ]);
   process.stdout.write(`Wrote ${publicRecords.length} sanitized records and summary\n`);
 }
 

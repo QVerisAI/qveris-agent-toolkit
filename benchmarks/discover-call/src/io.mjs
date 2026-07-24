@@ -39,6 +39,62 @@ export async function writeTextAtomic(path, content) {
   }
 }
 
+export async function writeFileSetTransactional(
+  files,
+  { openFile = open, renameFile = rename, unlinkFile = unlink } = {},
+) {
+  if (
+    !Array.isArray(files) ||
+    files.length < 2 ||
+    files.some(
+      (file) =>
+        !file ||
+        typeof file.path !== 'string' ||
+        !file.path ||
+        typeof file.content !== 'string',
+    )
+  ) {
+    throw new Error('Transactional output requires at least two path/content files');
+  }
+  if (new Set(files.map((file) => resolve(file.path))).size !== files.length) {
+    throw new Error('Transactional output paths must be unique');
+  }
+
+  const transactionId = `${process.pid}.${randomUUID()}`;
+  const entries = files.map((file) => ({
+    path: file.path,
+    content: file.content,
+    temporaryPath: `${file.path}.${transactionId}.tmp`,
+    backupPath: `${file.path}.${transactionId}.bak`,
+    originalMoved: false,
+    installed: false,
+  }));
+
+  try {
+    for (const entry of entries) {
+      await writeStagedText(entry.temporaryPath, entry.content, openFile, unlinkFile);
+    }
+    for (const entry of entries) {
+      try {
+        await renameFile(entry.path, entry.backupPath);
+        entry.originalMoved = true;
+      } catch (error) {
+        if (error?.code !== 'ENOENT') throw error;
+      }
+      await renameFile(entry.temporaryPath, entry.path);
+      entry.installed = true;
+    }
+  } catch (error) {
+    const rollbackErrors = await rollbackFileSet(entries, { renameFile, unlinkFile });
+    if (rollbackErrors.length > 0) {
+      throw new AggregateError([error, ...rollbackErrors], 'Transactional output failed and rollback was incomplete');
+    }
+    throw error;
+  }
+
+  await Promise.all(entries.filter((entry) => entry.originalMoved).map((entry) => unlinkFile(entry.backupPath)));
+}
+
 export async function validatePathSeparation({ inputs, outputs }) {
   if (!Array.isArray(inputs) || !Array.isArray(outputs) || outputs.length === 0) {
     throw new Error('Path validation needs input and output arrays');
@@ -57,6 +113,48 @@ export async function validatePathSeparation({ inputs, outputs }) {
       throw new Error('Output files must not overwrite input files');
     }
   }
+}
+
+async function writeStagedText(path, content, openFile, unlinkFile) {
+  let handle;
+  try {
+    handle = await openFile(path, 'wx', 0o600);
+    await handle.writeFile(content, { encoding: 'utf8' });
+    await handle.sync();
+    await handle.close();
+    handle = undefined;
+  } catch (error) {
+    await handle?.close().catch(() => {});
+    await unlinkFile(path).catch(() => {});
+    throw error;
+  }
+}
+
+async function rollbackFileSet(entries, { renameFile, unlinkFile }) {
+  const errors = [];
+  for (const entry of [...entries].reverse()) {
+    if (entry.installed) {
+      try {
+        await unlinkFile(entry.path);
+      } catch (error) {
+        if (error?.code !== 'ENOENT') errors.push(error);
+      }
+    }
+    if (entry.originalMoved) {
+      try {
+        await renameFile(entry.backupPath, entry.path);
+        entry.originalMoved = false;
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+    try {
+      await unlinkFile(entry.temporaryPath);
+    } catch (error) {
+      if (error?.code !== 'ENOENT') errors.push(error);
+    }
+  }
+  return errors;
 }
 
 async function fileIdentities(path) {

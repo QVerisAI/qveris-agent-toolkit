@@ -308,6 +308,12 @@ The adapter uses the CLI's existing authentication and never receives
 
 ## Publication rules
 
+The publication command stages and synchronizes the public runs and summary
+before replacing either destination. If any replacement fails, it restores the
+previous pair before returning an error. Repository validation also rejects
+missing or orphaned counterparts, so an interrupted process cannot silently
+leave a publishable mixed generation.
+
 An official result must include:
 
 - sanitized public JSONL records and generated summary; raw records remain
