@@ -266,28 +266,74 @@ test('result insertion is idempotent per release SHA', () => {
 });
 
 test('cadence duplicate and orphan-branch recovery matrix fails closed before paid work', () => {
-  assert.deepEqual(cadenceRunDisposition([], { branchExists: false }), {
+  const repository = 'QVerisAI/qveris-agent-toolkit';
+  const sameRepositoryPr = (value) => ({
+    isCrossRepository: false,
+    headRepository: { nameWithOwner: repository },
+    ...value,
+  });
+  assert.deepEqual(cadenceRunDisposition([], { branchExists: false, repository }), {
     skip: false,
     message: 'No prior cadence result exists; the protected paid job may proceed.',
   });
-  assert.equal(cadenceRunDisposition([{ state: 'OPEN', mergedAt: null, url: 'https://example.test/pr/1' }]).skip, true);
   assert.equal(
-    cadenceRunDisposition([{ state: 'CLOSED', mergedAt: '2026-07-25T00:00:00Z', url: 'https://example.test/pr/1' }])
-      .skip,
+    cadenceRunDisposition([sameRepositoryPr({ state: 'OPEN', mergedAt: null, url: 'https://example.test/pr/1' })], {
+      repository,
+    }).skip,
+    true,
+  );
+  assert.equal(
+    cadenceRunDisposition(
+      [
+        sameRepositoryPr({
+          state: 'CLOSED',
+          mergedAt: '2026-07-25T00:00:00Z',
+          url: 'https://example.test/pr/1',
+        }),
+      ],
+      { repository },
+    ).skip,
     true,
   );
   assert.throws(
-    () => cadenceRunDisposition([{ state: 'CLOSED', mergedAt: null, url: 'https://example.test/pr/1' }]),
+    () =>
+      cadenceRunDisposition([sameRepositoryPr({ state: 'CLOSED', mergedAt: null, url: 'https://example.test/pr/1' })], {
+        repository,
+      }),
     /closed, unmerged/,
   );
-  assert.throws(() => cadenceRunDisposition([], { branchExists: true }), /result branch exists without a PR/);
+  assert.throws(
+    () => cadenceRunDisposition([], { branchExists: true, repository }),
+    /result branch exists without a PR/,
+  );
   assert.throws(
     () =>
-      cadenceRunDisposition([
-        { state: 'CLOSED', mergedAt: null, url: 'https://example.test/pr/1' },
-        { state: 'OPEN', mergedAt: null, url: 'https://example.test/pr/2' },
-      ]),
+      cadenceRunDisposition(
+        [
+          sameRepositoryPr({ state: 'CLOSED', mergedAt: null, url: 'https://example.test/pr/1' }),
+          sameRepositoryPr({ state: 'OPEN', mergedAt: null, url: 'https://example.test/pr/2' }),
+        ],
+        { repository },
+      ),
     /Multiple cadence PRs/,
+  );
+  assert.deepEqual(
+    cadenceRunDisposition(
+      [
+        {
+          state: 'OPEN',
+          mergedAt: null,
+          url: 'https://example.test/fork-pr',
+          isCrossRepository: true,
+          headRepository: { nameWithOwner: 'someone/qveris-agent-toolkit' },
+        },
+      ],
+      { branchExists: false, repository },
+    ),
+    {
+      skip: false,
+      message: 'No prior cadence result exists; the protected paid job may proceed.',
+    },
   );
 });
 

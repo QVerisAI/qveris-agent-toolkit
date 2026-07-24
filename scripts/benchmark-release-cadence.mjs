@@ -127,12 +127,18 @@ export function validateCadenceConfig(config, { taskCount } = {}) {
   return null;
 }
 
-export function cadenceRunDisposition(prs, { branchExists = false } = {}) {
+export function cadenceRunDisposition(prs, { branchExists = false, repository } = {}) {
   if (!Array.isArray(prs)) throw new Error('Cadence PR lookup must return an array');
   if (typeof branchExists !== 'boolean') throw new Error('Cadence branch existence must be a boolean');
-  if (prs.length > 1) throw new Error('Multiple cadence PRs exist for the same release branch');
-  if (prs.length === 1) {
-    const pr = prs[0];
+  if (typeof repository !== 'string' || !/^[^/\s]+\/[^/\s]+$/.test(repository)) {
+    throw new Error('Cadence repository must be owner/name');
+  }
+  const repositoryPrs = prs.filter(
+    (pr) => pr?.isCrossRepository === false && pr?.headRepository?.nameWithOwner === repository,
+  );
+  if (repositoryPrs.length > 1) throw new Error('Multiple cadence PRs exist for the same release branch');
+  if (repositoryPrs.length === 1) {
+    const pr = repositoryPrs[0];
     const state = pr?.mergedAt ? 'MERGED' : String(pr?.state || '').toUpperCase();
     const url = typeof pr?.url === 'string' && pr.url ? pr.url : '(unknown PR)';
     if (state === 'OPEN' || state === 'MERGED') {
@@ -437,6 +443,7 @@ function planCommand(options) {
 function guardCommand(options) {
   if (!options.prsJson) throw new Error('--prs-json is required');
   if (!options.branchExists) throw new Error('--branch-exists is required');
+  if (!options.repository) throw new Error('--repository is required');
   if (!options.githubOutput) throw new Error('--github-output is required');
   if (!['true', 'false'].includes(options.branchExists)) {
     throw new Error('--branch-exists must be true or false');
@@ -447,7 +454,10 @@ function guardCommand(options) {
   } catch (error) {
     throw new Error(`--prs-json must be valid JSON: ${error.message}`);
   }
-  const disposition = cadenceRunDisposition(prs, { branchExists: options.branchExists === 'true' });
+  const disposition = cadenceRunDisposition(prs, {
+    branchExists: options.branchExists === 'true',
+    repository: options.repository,
+  });
   process.stdout.write(`${disposition.message}\n`);
   writeGithubOutput(options.githubOutput, { skip: disposition.skip });
 }

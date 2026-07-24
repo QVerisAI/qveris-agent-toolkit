@@ -80,7 +80,7 @@ jobs:
         run: |
           set -euo pipefail
           PR="$(gh pr list --repo "${GITHUB_REPOSITORY}" --state all --head "${BRANCH}" \
-            --json number,state,mergedAt,url --limit 100)"
+            --json number,state,mergedAt,url,headRepository,isCrossRepository --limit 100)"
           BRANCH_EXISTS=false
           set +e
           git ls-remote --exit-code --heads origin "refs/heads/${BRANCH}" >/dev/null
@@ -95,6 +95,7 @@ jobs:
           node scripts/benchmark-release-cadence.mjs guard \
             --prs-json "${PR}" \
             --branch-exists "${BRANCH_EXISTS}" \
+            --repository "${GITHUB_REPOSITORY}" \
             --github-output "${GITHUB_OUTPUT}"
 
   benchmark:

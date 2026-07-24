@@ -10,7 +10,13 @@ const BLOCKED_NAMES = new Set([
 export function stripAdapterSecrets(env) {
   for (const name of Object.keys(env)) {
     const normalized = name.toUpperCase();
-    if (normalized.startsWith('QVERIS_') || normalized.startsWith('ACTIONS_') || BLOCKED_NAMES.has(normalized)) {
+    if (
+      normalized.startsWith('QVERIS_') ||
+      normalized.startsWith('ACTIONS_') ||
+      normalized.startsWith('GITHUB_') ||
+      normalized.startsWith('RUNNER_') ||
+      BLOCKED_NAMES.has(normalized)
+    ) {
       delete env[name];
     }
   }

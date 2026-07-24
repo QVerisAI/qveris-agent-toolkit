@@ -10,8 +10,10 @@ import {
   CLIENTS,
   benchmarkCadenceDispatchArgs,
   extractChangelogRelease,
+  githubRepositoryFromRemoteUrl,
   publishReleasePlan,
   readReleasePlan,
+  selectWorkflowRun,
   workflowDispatchInputs,
   workflowTagPatterns,
 } from "./release-client-packages.mjs";
@@ -92,6 +94,22 @@ test("workflowDispatchInputs reads only direct workflow_dispatch inputs", () => 
     ),
     ["other"],
   );
+});
+
+test("Git remote URLs resolve to the explicit repository used by gh operations", () => {
+  assert.equal(
+    githubRepositoryFromRemoteUrl("git@github.com:QVerisAI/qveris-agent-toolkit.git"),
+    "QVerisAI/qveris-agent-toolkit",
+  );
+  assert.equal(
+    githubRepositoryFromRemoteUrl("https://github.com/QVerisAI/qveris-agent-toolkit.git"),
+    "QVerisAI/qveris-agent-toolkit",
+  );
+  assert.equal(
+    githubRepositoryFromRemoteUrl("ssh://git@example.test/QVerisAI/qveris-agent-toolkit.git"),
+    "example.test/QVerisAI/qveris-agent-toolkit",
+  );
+  assert.throws(() => githubRepositoryFromRemoteUrl("../local-repository"), /Unsupported Git remote URL/);
 });
 
 test("readReleasePlan validates and coordinates all four package tags", () => {
@@ -202,6 +220,10 @@ test("publishReleasePlan pushes one tag at a time and confirms each run before t
       return { local: null, remote: null };
     },
     validateTag: () => {},
+    listRuns: async (release) => {
+      events.push(`snapshot:${release.tag}`);
+      return [];
+    },
     createTag: async (release) => events.push(`create:${release.tag}`),
     pushTag: async (release) => events.push(`push:${release.tag}`),
     waitForRun: async (release) => {
@@ -219,6 +241,12 @@ test("publishReleasePlan pushes one tag at a time and confirms each run before t
       `${releases[index].tag} must register before the next tag push`,
     );
   }
+  for (const release of releases) {
+    assert.ok(
+      events.indexOf(`snapshot:${release.tag}`) < events.indexOf(`push:${release.tag}`),
+      `${release.tag} must snapshot old workflow runs before its tag push`,
+    );
+  }
   assert.deepEqual(
     events.filter((event) => event.startsWith("push:")),
     releases.map((release) => `push:${release.tag}`),
@@ -231,7 +259,7 @@ test("publishReleasePlan pushes one tag at a time and confirms each run before t
 
 test("publishReleasePlan fault injection stops at each asynchronous boundary", async (t) => {
   const releases = readReleasePlan(fixtureRoot()).slice(0, 2);
-  for (const failurePoint of ["inspect", "create", "push", "register", "watch", "dispatch"]) {
+  for (const failurePoint of ["inspect", "snapshot", "create", "push", "register", "watch", "dispatch"]) {
     await t.test(failurePoint, async () => {
       const events = [];
       const operation = async (name, release) => {
@@ -250,6 +278,10 @@ test("publishReleasePlan fault injection stops at each asynchronous boundary", a
               return { local: null, remote: null };
             },
             validateTag: () => {},
+            listRuns: async (release) => {
+              await operation("snapshot", release);
+              return [];
+            },
             createTag: async (release) => operation("create", release),
             pushTag: async (release) => operation("push", release),
             waitForRun: async (release) => {
@@ -264,6 +296,7 @@ test("publishReleasePlan fault injection stops at each asynchronous boundary", a
 
       if (
         failurePoint === "inspect" ||
+        failurePoint === "snapshot" ||
         failurePoint === "create" ||
         failurePoint === "push" ||
         failurePoint === "register"
@@ -304,6 +337,10 @@ test("publishReleasePlan recovers a dispatch failure without recreating or repus
           };
     },
     validateTag: () => {},
+    listRuns: async (release) => {
+      events.push(`snapshot:${release.tag}`);
+      return [];
+    },
     createTag: async (release) => events.push(`create:${release.tag}`),
     pushTag: async (release) => events.push(`push:${release.tag}`),
     waitForRun: async (release) => {
@@ -344,6 +381,9 @@ test("publishReleasePlan resumes an existing tag without pushing it again", asyn
       remote: { commit: "release-head", annotated: true },
     }),
     validateTag: () => {},
+    listRuns: async () => {
+      throw new Error("existing remote tags must not snapshot old runs");
+    },
     createTag: async () => events.push("create"),
     pushTag: async () => events.push("push"),
     waitForRun: async () => {
@@ -366,6 +406,7 @@ test("publishReleasePlan never watches or dispatches in no-watch mode", async ()
     log: () => {},
     inspectTag: async () => ({ local: null, remote: null }),
     validateTag: () => {},
+    listRuns: async () => [],
     createTag: async () => {},
     pushTag: async () => {},
     waitForRun: async (release) => {
@@ -382,16 +423,59 @@ test("publishReleasePlan never watches or dispatches in no-watch mode", async ()
   );
 });
 
+test("publishReleasePlan excludes historical runs when registering a newly pushed tag", async () => {
+  const [release] = readReleasePlan(fixtureRoot());
+  const historicalRun = { databaseId: 7, headBranch: release.tag, headSha: "release-head" };
+  let receivedExclusions;
+
+  await publishReleasePlan([release], {
+    head: "release-head",
+    watch: true,
+    log: () => {},
+    inspectTag: async () => ({ local: null, remote: null }),
+    validateTag: () => {},
+    listRuns: async () => [historicalRun],
+    createTag: async () => {},
+    pushTag: async () => {},
+    waitForRun: async (_release, { excludeRunIds }) => {
+      receivedExclusions = excludeRunIds;
+      assert.equal(excludeRunIds.has("7"), true);
+      return { databaseId: 8 };
+    },
+    watchRun: async (run) => assert.equal(run.databaseId, 8),
+    dispatchCadence: async () => {},
+  });
+
+  assert.deepEqual([...receivedExclusions], ["7"]);
+});
+
+test("workflow registration selects only a fresh matching run after a new tag push", () => {
+  const release = { tag: "cli-v1.0.0" };
+  const head = "a".repeat(40);
+  const historical = { databaseId: 7, headBranch: release.tag, headSha: head };
+  const fresh = { databaseId: 8, headBranch: release.tag, headSha: head };
+  const unrelated = { databaseId: 9, headBranch: "other-tag", headSha: head };
+
+  assert.equal(selectWorkflowRun([historical], release, head, new Set(["7"])), undefined);
+  assert.deepEqual(selectWorkflowRun([unrelated, historical, fresh], release, head, new Set(["7"])), fresh);
+});
+
 test("benchmark cadence dispatch pins the coordinated release commit", () => {
   const head = "a".repeat(40);
-  assert.deepEqual(benchmarkCadenceDispatchArgs(head), [
+  assert.deepEqual(benchmarkCadenceDispatchArgs(head, "QVerisAI/qveris-agent-toolkit"), [
     "workflow",
     "run",
     "discover-call-cadence.yml",
+    "--repo",
+    "QVerisAI/qveris-agent-toolkit",
     "--ref",
     "main",
     "--field",
     `release_sha=${head}`,
   ]);
-  assert.throws(() => benchmarkCadenceDispatchArgs("main"), /40-character commit SHA/);
+  assert.throws(
+    () => benchmarkCadenceDispatchArgs("main", "QVerisAI/qveris-agent-toolkit"),
+    /40-character commit SHA/,
+  );
+  assert.throws(() => benchmarkCadenceDispatchArgs(head), /explicit GitHub repository/);
 });
