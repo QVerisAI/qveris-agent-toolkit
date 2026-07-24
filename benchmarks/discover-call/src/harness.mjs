@@ -171,6 +171,7 @@ export async function runBenchmark({
         throw new Error('newRunId must return a safe non-empty string');
       }
       if (runIds.has(runId)) throw new Error(`Duplicate benchmark run id: ${runId}`);
+      if (sessionIds.has(runId)) throw new Error('Benchmark run and session ids must be disjoint');
       const sessionId = newSessionId();
       if (
         typeof sessionId !== 'string' ||
@@ -181,6 +182,9 @@ export async function runBenchmark({
         throw new Error('newSessionId must return a safe non-empty string');
       }
       if (sessionIds.has(sessionId)) throw new Error('Duplicate benchmark session id');
+      if (sessionId === runId || runIds.has(sessionId)) {
+        throw new Error('Benchmark run and session ids must be disjoint');
+      }
       runIds.add(runId);
       sessionIds.add(sessionId);
       runPlan.push({ task, trial, runId, sessionId });
@@ -339,7 +343,7 @@ function validateAdapterParameters(tool, parameters) {
     validateParameterValue(value, definition);
   }
   for (const definition of definitions.values()) {
-    if (definition.required === true && !hasParameterValue(parameters[definition.name])) {
+    if (definition.required === true && !hasOwnParameterValue(parameters, definition.name)) {
       throw stageError(
         'parameterize',
         `Adapter omitted required parameter ${definition.name}`,
@@ -348,7 +352,7 @@ function validateAdapterParameters(tool, parameters) {
     }
   }
   for (const group of oneOfRequiredGroups(tool)) {
-    if (!group.some((name) => hasParameterValue(parameters[name]))) {
+    if (!group.some((name) => hasOwnParameterValue(parameters, name))) {
       throw stageError(
         'parameterize',
         `Adapter omitted one_of_required group ${group.join(',')}`,
@@ -407,7 +411,7 @@ function validateParameterValue(value, parameter, forceRequired = parameter?.req
       validateParameterValue(child, properties[name]);
     }
     for (const [name, child] of Object.entries(properties)) {
-      if (child?.required === true && !hasParameterValue(value[name])) {
+      if (child?.required === true && !hasOwnParameterValue(value, name)) {
         throw stageError('parameterize', 'Adapter omitted a required nested parameter', 'invalid_parameter_values');
       }
     }
@@ -429,7 +433,7 @@ export function parameterResponseSchema(tool) {
         'unsupported_parameter_schema',
       );
     }
-    properties[parameter.name] = strictParameterSchema(parameter);
+    defineOwn(properties, parameter.name, strictParameterSchema(parameter));
   }
   return {
     type: 'object',
@@ -557,7 +561,11 @@ function strictParameterSchema(parameter, forceRequired = parameter?.required ==
     }
     const nestedProperties = {};
     for (const [name, definition] of Object.entries(nestedDefinitions)) {
-      nestedProperties[name] = strictParameterSchema(isPlainObject(definition) ? definition : { type: 'string' });
+      defineOwn(
+        nestedProperties,
+        name,
+        strictParameterSchema(isPlainObject(definition) ? definition : { type: 'string' }),
+      );
     }
     schema.additionalProperties = false;
     schema.required = Object.keys(nestedProperties);
@@ -605,6 +613,19 @@ function omitNullParameters(parameters) {
 
 function hasParameterValue(value) {
   return value !== undefined && value !== null && value !== '';
+}
+
+function hasOwnParameterValue(parameters, name) {
+  return Object.hasOwn(parameters, name) && hasParameterValue(parameters[name]);
+}
+
+function defineOwn(object, name, value) {
+  Object.defineProperty(object, name, {
+    configurable: true,
+    enumerable: true,
+    value,
+    writable: true,
+  });
 }
 
 function hasNonemptyResult(result) {

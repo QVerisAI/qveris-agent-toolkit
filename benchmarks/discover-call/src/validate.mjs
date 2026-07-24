@@ -31,7 +31,19 @@ scoreRecords(v1, fixture);
 
 const policy = JSON.parse(await readFile(resolve(root, 'publication-policy.json'), 'utf8'));
 validatePolicy(policy);
-const resultFiles = (await readdir(resolve(root, 'results'))).filter((name) => /\.runs\.jsonl$/.test(name)).sort();
+const resultDirectoryFiles = await readdir(resolve(root, 'results'));
+const resultFiles = resultDirectoryFiles.filter((name) => /\.runs\.jsonl$/.test(name)).sort();
+const resultStems = new Set(resultFiles.map((name) => name.replace(/\.runs\.jsonl$/, '')));
+const summaryStems = new Set(
+  resultDirectoryFiles.filter((name) => /\.summary\.json$/.test(name)).map((name) => name.replace(/\.summary\.json$/, '')),
+);
+const orphanRuns = [...resultStems].filter((stem) => !summaryStems.has(stem));
+const orphanSummaries = [...summaryStems].filter((stem) => !resultStems.has(stem));
+if (orphanRuns.length || orphanSummaries.length) {
+  throw new Error(
+    `Public results need matching runs and summary files; missing summaries: ${orphanRuns.join(', ') || 'none'}; missing runs: ${orphanSummaries.join(', ') || 'none'}`,
+  );
+}
 for (const file of resultFiles) {
   const version = file.match(/-v(\d+)\.runs\.jsonl$/)?.[1];
   if (!version) throw new Error(`${file}: result filename must identify its task-set version`);

@@ -134,6 +134,11 @@ test('builds a strict provider-neutral schema from inspected parameters', () => 
     },
   );
   assert.doesNotThrow(() => parameterResponseSchema({ params: [], one_of_required: [] }));
+  const prototypeNamedSchema = parameterResponseSchema({
+    params: [{ name: '__proto__', type: 'string', required: true }],
+  });
+  assert.equal(Object.hasOwn(prototypeNamedSchema.properties.parameters.properties, '__proto__'), true);
+  assert.deepEqual(prototypeNamedSchema.properties.parameters.required, ['__proto__']);
 });
 
 test('rejects required object parameters without a usable property schema', () => {
@@ -507,7 +512,70 @@ test('validates execution controls and all run ids before external calls', async
     }),
     /Duplicate benchmark session id/,
   );
+  await assert.rejects(
+    runBenchmark({
+      tasks: [task],
+      model: 'model-a',
+      trials: 1,
+      api,
+      invokeAdapter,
+      newRunId: () => 'shared-id',
+      newSessionId: () => 'shared-id',
+    }),
+    /run and session ids must be disjoint/,
+  );
+  let plannedRun = 0;
+  let plannedSession = 0;
+  await assert.rejects(
+    runBenchmark({
+      tasks: [task],
+      model: 'model-a',
+      trials: 2,
+      api,
+      invokeAdapter,
+      newRunId: () => ['run-1', 'session-1'][plannedRun++],
+      newSessionId: () => ['session-1', 'session-2'][plannedSession++],
+    }),
+    /run and session ids must be disjoint/,
+  );
   assert.equal(externalCalls, 0);
+});
+
+test('prototype-named parameters cannot bypass the billed-call gate', async () => {
+  let callCount = 0;
+  const [record] = await runBenchmark({
+    tasks: [task],
+    model: 'model-a',
+    trials: 1,
+    execute: true,
+    api: {
+      async discover() {
+        return { search_id: 'search-1', results: [{ tool_id: 'weather.forecast' }] };
+      },
+      async inspect() {
+        return {
+          results: [
+            {
+              tool_id: 'weather.forecast',
+              params: [{ name: 'toString', type: 'string', required: true }],
+            },
+          ],
+        };
+      },
+      async call() {
+        callCount++;
+        return { success: true, result: { data: 'unexpected' } };
+      },
+    },
+    async invokeAdapter(payload) {
+      return payload.stage === 'select' ? { tool_id: 'weather.forecast' } : { parameters: {} };
+    },
+  });
+
+  assert.equal(callCount, 0);
+  assert.equal(record.status, 'failed');
+  assert.equal(record.error.stage, 'parameterize');
+  assert.equal(record.error.reason_code, 'invalid_parameter_values');
 });
 
 test('stops before selection when discover omits its correlation id', async () => {

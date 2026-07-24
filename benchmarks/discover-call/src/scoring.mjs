@@ -137,8 +137,8 @@ export function scoreRecord(task, record) {
       : mean(
           required.map((requirement) =>
             Array.isArray(requirement)
-              ? requirement.some((name) => hasValue(parameters[name]))
-              : hasValue(parameters[requirement]),
+              ? requirement.some((name) => hasOwnValue(parameters, name))
+              : hasOwnValue(parameters, requirement),
           ),
         ));
   const constraintAccuracy =
@@ -241,7 +241,7 @@ function strictFailure(record) {
 
 function constraintSatisfied(parameters, constraint, constraints) {
   for (const alias of constraint.aliases) {
-    if (!hasValue(parameters[alias])) continue;
+    if (!hasOwnValue(parameters, alias)) continue;
     const actual = parameters[alias];
     if (constraint.match === 'contains') {
       if (normalize(actual, constraint).includes(normalize(constraint.value, constraint))) return 1;
@@ -253,7 +253,7 @@ function constraintSatisfied(parameters, constraint, constraints) {
     }
   }
   for (const alias of array(constraint.composite_aliases)) {
-    if (!hasValue(parameters[alias])) continue;
+    if (!hasOwnValue(parameters, alias)) continue;
     const compositeConstraints = constraints.filter((candidate) => array(candidate.composite_aliases).includes(alias));
     const values = compositeConstraints.map((candidate) => normalize(candidate.value, candidate));
     const representations = new Set([
@@ -297,6 +297,10 @@ function safeUrlDecode(value) {
 
 function hasValue(value) {
   return value !== undefined && value !== null && value !== '';
+}
+
+function hasOwnValue(parameters, name) {
+  return Object.hasOwn(parameters, name) && hasValue(parameters[name]);
 }
 
 function mean(values) {

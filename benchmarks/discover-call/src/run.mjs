@@ -155,7 +155,7 @@ export function createProcessAdapter({ command, args = [], timeoutMs = 120_000, 
 
 function stripQverisEnvironment(env) {
   for (const name of Object.keys(env)) {
-    if (name.startsWith('QVERIS_')) delete env[name];
+    if (name.toUpperCase().startsWith('QVERIS_')) delete env[name];
   }
 }
 
@@ -192,6 +192,11 @@ function parseArgs(argv) {
   if (!options.help && !options.adapterRevision) throw new Error('--adapter-revision is required');
   if (!options.help && !options.tasks) throw new Error('--tasks is required');
   if (!options.help && !options.lane) throw new Error('--lane is required');
+  if (!options.help) {
+    safeProvenanceValue(options.model, '--model');
+    safeProvenanceValue(options.adapterRevision, '--adapter-revision');
+    safeProvenanceValue(options.modelRevision, '--model-revision');
+  }
   if (!options.help && ['reference', 'pinned-model'].includes(options.lane) && options.modelRevision === 'unreported') {
     throw new Error(`--model-revision is required for --lane ${options.lane}`);
   }
@@ -213,6 +218,18 @@ function integer(value, flag) {
 function lane(value) {
   if (!['reference', 'configured-model', 'pinned-model', 'current-model'].includes(value)) {
     throw new Error('--lane must be reference, configured-model, pinned-model, or current-model');
+  }
+  return value;
+}
+
+function safeProvenanceValue(value, flag) {
+  if (
+    typeof value !== 'string' ||
+    !value.trim() ||
+    value.length > 256 ||
+    /[\p{Cc}\p{Cf}]/u.test(value)
+  ) {
+    throw new Error(`${flag} must be a safe non-empty string of at most 256 characters`);
   }
   return value;
 }
@@ -262,14 +279,17 @@ export function resolveToolkitRevision(
   if (dirty) {
     throw new Error('Working tree has tracked changes; commit them before running the benchmark');
   }
-  if (declaredRevision) return declaredRevision;
   let revision;
   try {
     revision = execFile('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
   } catch {
     throw new Error('--toolkit-revision is required outside a clean git checkout');
   }
-  return commitSha(revision, 'git HEAD');
+  const headRevision = commitSha(revision, 'git HEAD');
+  if (declaredRevision && declaredRevision !== headRevision) {
+    throw new Error('Declared toolkit revision does not match the checked-out git HEAD');
+  }
+  return declaredRevision ?? headRevision;
 }
 
 function commitSha(value, source) {

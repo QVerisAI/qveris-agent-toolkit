@@ -348,6 +348,26 @@ test('scores each one-of-required group as one requirement', () => {
   );
 });
 
+test('does not score inherited prototype properties as supplied parameters', () => {
+  const prototypeTask = {
+    id: 'prototype-parameter',
+    prompt: 'Prototype parameter',
+    constraints: [{ id: 'prototype', aliases: ['__proto__'], value: '{}' }],
+  };
+  const result = scoreRecord(prototypeTask, {
+    ...resultRecord({ taskId: prototypeTask.id }),
+    inspection: {
+      selection_grounded: true,
+      required_parameters: ['toString'],
+    },
+    parameters: {},
+  });
+
+  assert.equal(result.required_parameter_accuracy, 0);
+  assert.equal(result.constraint_accuracy, 0);
+  assert.equal(result.workflow_success, false);
+});
+
 test('rejects run records for unknown tasks', () => {
   assert.throws(
     () => scoreRecords([task], [{ run_id: 'run-unknown', task_id: 'unknown', model: 'model-a', trial: 1 }]),

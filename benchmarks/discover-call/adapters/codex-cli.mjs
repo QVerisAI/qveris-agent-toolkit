@@ -204,7 +204,7 @@ export function runCodex(invocation, { outputLimit = 1_000_000, forceKillAfterMs
 
 function stripQverisEnvironment(env) {
   for (const name of Object.keys(env)) {
-    if (name.startsWith('QVERIS_')) delete env[name];
+    if (name.toUpperCase().startsWith('QVERIS_')) delete env[name];
   }
 }
 

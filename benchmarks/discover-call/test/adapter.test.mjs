@@ -32,14 +32,16 @@ test('process adapter exchanges one JSON object without shell parsing', async ()
 test('process adapter cannot read QVeris environment values', async () => {
   const previousKey = process.env.QVERIS_API_KEY;
   const previousToken = process.env.QVERIS_MCP_HTTP_AUTH_TOKEN;
+  const previousLowercaseProbe = process.env.qveris_lowercase_probe;
   process.env.QVERIS_API_KEY = 'must-not-reach-adapter';
   process.env.QVERIS_MCP_HTTP_AUTH_TOKEN = 'must-also-not-reach-adapter';
+  process.env.qveris_lowercase_probe = 'must-not-reach-adapter-either';
   try {
     const invoke = createProcessAdapter({
       command: process.execPath,
       args: [
         '-e',
-        "process.stdin.resume(); process.stdin.on('end', () => process.stdout.write(JSON.stringify({visible: Object.keys(process.env).some((name) => name.startsWith('QVERIS_'))})))",
+        "process.stdin.resume(); process.stdin.on('end', () => process.stdout.write(JSON.stringify({visible: Object.keys(process.env).some((name) => name.toUpperCase().startsWith('QVERIS_'))})))",
       ],
       timeoutMs: 5_000,
     });
@@ -49,11 +51,28 @@ test('process adapter cannot read QVeris environment values', async () => {
     else process.env.QVERIS_API_KEY = previousKey;
     if (previousToken === undefined) delete process.env.QVERIS_MCP_HTTP_AUTH_TOKEN;
     else process.env.QVERIS_MCP_HTTP_AUTH_TOKEN = previousToken;
+    if (previousLowercaseProbe === undefined) delete process.env.qveris_lowercase_probe;
+    else process.env.qveris_lowercase_probe = previousLowercaseProbe;
   }
 });
 
 test('runner requires an immutable adapter revision before API setup', async () => {
   await assert.rejects(main(['--model', 'model-a', '--adapter', process.execPath]), /adapter-revision/);
+  await assert.rejects(
+    main([
+      '--model',
+      'model-a\ninjected',
+      '--lane',
+      'configured-model',
+      '--adapter',
+      process.execPath,
+      '--adapter-revision',
+      'adapter-sha',
+      '--tasks',
+      v4TasksPath,
+    ]),
+    /--model must be a safe non-empty string/,
+  );
   await assert.rejects(
     main([
       '--model',
@@ -80,6 +99,7 @@ test('runner records only commit-shaped toolkit revisions from a clean checkout'
     },
   };
   assert.equal(resolveToolkitRevision(sha.toUpperCase(), cleanGit), sha);
+  assert.throws(() => resolveToolkitRevision('b'.repeat(40), cleanGit), /does not match.*HEAD/);
   assert.throws(() => resolveToolkitRevision('main'), /commit SHA/);
   assert.equal(resolveToolkitRevision(undefined, cleanGit), sha);
   assert.throws(
@@ -258,12 +278,17 @@ test('Claude adapter extracts only structured model output', () => {
 test('Claude adapter removes QVeris environment values from its model subprocess', async () => {
   const previousKey = process.env.QVERIS_API_KEY;
   const previousToken = process.env.QVERIS_MCP_HTTP_AUTH_TOKEN;
+  const previousLowercaseProbe = process.env.qveris_lowercase_probe;
   process.env.QVERIS_API_KEY = 'must-not-reach-model';
   process.env.QVERIS_MCP_HTTP_AUTH_TOKEN = 'must-also-not-reach-model';
+  process.env.qveris_lowercase_probe = 'must-not-reach-model-either';
   try {
     const output = await runClaude({
       command: process.execPath,
-      args: ['-e', "process.stdout.write(String(Object.keys(process.env).some((name) => name.startsWith('QVERIS_'))))"],
+      args: [
+        '-e',
+        "process.stdout.write(String(Object.keys(process.env).some((name) => name.toUpperCase().startsWith('QVERIS_'))))",
+      ],
       stdin: '',
     });
     assert.equal(output, 'false');
@@ -272,6 +297,8 @@ test('Claude adapter removes QVeris environment values from its model subprocess
     else process.env.QVERIS_API_KEY = previousKey;
     if (previousToken === undefined) delete process.env.QVERIS_MCP_HTTP_AUTH_TOKEN;
     else process.env.QVERIS_MCP_HTTP_AUTH_TOKEN = previousToken;
+    if (previousLowercaseProbe === undefined) delete process.env.qveris_lowercase_probe;
+    else process.env.qveris_lowercase_probe = previousLowercaseProbe;
   }
 });
 
@@ -385,15 +412,17 @@ test('Codex adapter extracts the final structured message and rejects tool use',
 test('Codex adapter removes QVeris environment values from its model subprocess', async () => {
   const previousKey = process.env.QVERIS_API_KEY;
   const previousToken = process.env.QVERIS_MCP_HTTP_AUTH_TOKEN;
+  const previousLowercaseProbe = process.env.qveris_lowercase_probe;
   process.env.QVERIS_API_KEY = 'must-not-reach-model';
   process.env.QVERIS_MCP_HTTP_AUTH_TOKEN = 'must-also-not-reach-model';
+  process.env.qveris_lowercase_probe = 'must-not-reach-model-either';
   try {
     const result = parseCodexEvents(
       await runCodex({
         command: process.execPath,
         args: [
           '-e',
-          `const visible = Object.keys(process.env).some((name) => name.startsWith('QVERIS_'));
+          `const visible = Object.keys(process.env).some((name) => name.toUpperCase().startsWith('QVERIS_'));
            process.stdout.write([
              JSON.stringify({type:'item.completed',item:{type:'agent_message',text:JSON.stringify({visible})}}),
              JSON.stringify({type:'turn.completed'})
@@ -408,6 +437,8 @@ test('Codex adapter removes QVeris environment values from its model subprocess'
     else process.env.QVERIS_API_KEY = previousKey;
     if (previousToken === undefined) delete process.env.QVERIS_MCP_HTTP_AUTH_TOKEN;
     else process.env.QVERIS_MCP_HTTP_AUTH_TOKEN = previousToken;
+    if (previousLowercaseProbe === undefined) delete process.env.qveris_lowercase_probe;
+    else process.env.qveris_lowercase_probe = previousLowercaseProbe;
   }
 });
 
