@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
@@ -12,6 +12,7 @@ import {
   extractChangelogRelease,
   publishReleasePlan,
   readReleasePlan,
+  workflowDispatchInputs,
   workflowTagPatterns,
 } from "./release-client-packages.mjs";
 
@@ -78,6 +79,21 @@ test("workflowTagPatterns reads only push tag triggers", () => {
   );
 });
 
+test("workflowDispatchInputs reads only direct workflow_dispatch inputs", () => {
+  assert.deepEqual(
+    workflowDispatchInputs(
+      "name: Test\n\non:\n  workflow_dispatch:\n    inputs:\n      release_sha:\n        required: true\n      dry_run:\n        type: boolean\n\njobs:\n  test:\n    release_sha: not-an-input\n",
+    ),
+    ["release_sha", "dry_run"],
+  );
+  assert.deepEqual(
+    workflowDispatchInputs(
+      "name: Test\n\non:\n  workflow_dispatch:\n    # release_sha:\n    inputs:\n      other:\n        description: release_sha\n\njobs:\n  release_sha:\n    runs-on: ubuntu-latest\n",
+    ),
+    ["other"],
+  );
+});
+
 test("readReleasePlan validates and coordinates all four package tags", () => {
   const releases = readReleasePlan(fixtureRoot());
   assert.deepEqual(
@@ -105,6 +121,19 @@ test("repository publish workflows exist and listen for every coordinated tag", 
   );
 });
 
+test("repository cadence workflow passes the task set to the reference adapter and verifies the exact CLI version", () => {
+  const workflow = readFileSync(
+    join(REPOSITORY_ROOT, ".github/workflows", BENCHMARK_CADENCE_WORKFLOW),
+    "utf8",
+  );
+  assert.match(
+    workflow,
+    /--adapter-arg "\$\{REFERENCE_ADAPTER\}"\s+--adapter-arg "\$\{TASK_SET\}"/,
+  );
+  assert.match(workflow, /\[\[ "\$\{ACTUAL_VERSION\}" != "codex-cli \$\{CLI_VERSION\}" \]\]/);
+  assert.match(workflow, /git ls-remote --exit-code --heads origin "refs\/heads\/\$\{BRANCH\}"/);
+});
+
 test("release preflight requires the protected benchmark cadence dispatch input", () => {
   const missingRoot = fixtureRoot();
   rmSync(join(missingRoot, ".github/workflows", BENCHMARK_CADENCE_WORKFLOW));
@@ -116,6 +145,13 @@ test("release preflight requires the protected benchmark cadence dispatch input"
     "name: Benchmark cadence\n\non:\n  workflow_dispatch:\n\njobs: {}\n",
   );
   assert.throws(() => readReleasePlan(mismatchedRoot), /must expose a workflow_dispatch release_sha input/);
+
+  const deceptiveRoot = fixtureRoot();
+  writeFileSync(
+    join(deceptiveRoot, ".github/workflows", BENCHMARK_CADENCE_WORKFLOW),
+    "name: Benchmark cadence\n\non:\n  workflow_dispatch:\n    inputs:\n      other:\n        description: release_sha\n\njobs:\n  release_sha:\n    runs-on: ubuntu-latest\n",
+  );
+  assert.throws(() => readReleasePlan(deceptiveRoot), /must expose a workflow_dispatch release_sha input/);
 });
 
 test("readReleasePlan rejects drift between package and release metadata", () => {
@@ -187,7 +223,112 @@ test("publishReleasePlan pushes one tag at a time and confirms each run before t
     events.filter((event) => event.startsWith("push:")),
     releases.map((release) => `push:${release.tag}`),
   );
-  assert.equal(events.at(-1), "cadence:release-head");
+  assert.deepEqual(
+    events.slice(-5),
+    [...releases.map((release) => `watch:${release.tag}`), "cadence:release-head"],
+  );
+});
+
+test("publishReleasePlan fault injection stops at each asynchronous boundary", async (t) => {
+  const releases = readReleasePlan(fixtureRoot()).slice(0, 2);
+  for (const failurePoint of ["inspect", "create", "push", "register", "watch", "dispatch"]) {
+    await t.test(failurePoint, async () => {
+      const events = [];
+      const operation = async (name, release) => {
+        const event = `${name}:${release?.tag ?? "cadence"}`;
+        events.push(event);
+        if (name === failurePoint) throw new Error(`injected ${failurePoint} failure`);
+      };
+      await assert.rejects(
+        () =>
+          publishReleasePlan(releases, {
+            head: "release-head",
+            watch: true,
+            log: () => {},
+            inspectTag: async (release) => {
+              await operation("inspect", release);
+              return { local: null, remote: null };
+            },
+            validateTag: () => {},
+            createTag: async (release) => operation("create", release),
+            pushTag: async (release) => operation("push", release),
+            waitForRun: async (release) => {
+              await operation("register", release);
+              return { databaseId: release.tag };
+            },
+            watchRun: async (run) => operation("watch", { tag: run.databaseId }),
+            dispatchCadence: async () => operation("dispatch"),
+          }),
+        new RegExp(`injected ${failurePoint} failure`),
+      );
+
+      if (
+        failurePoint === "inspect" ||
+        failurePoint === "create" ||
+        failurePoint === "push" ||
+        failurePoint === "register"
+      ) {
+        assert.equal(
+          events.some((event) => event.includes(releases[1].tag)),
+          false,
+        );
+      }
+      if (failurePoint === "watch") {
+        assert.equal(
+          events.some((event) => event.startsWith("dispatch:")),
+          false,
+        );
+      }
+      if (failurePoint === "dispatch") {
+        assert.equal(events.filter((event) => event.startsWith("watch:")).length, releases.length);
+      }
+    });
+  }
+});
+
+test("publishReleasePlan recovers a dispatch failure without recreating or repushing tags", async () => {
+  const releases = readReleasePlan(fixtureRoot());
+  const events = [];
+  let dispatchAttempts = 0;
+  const operations = {
+    head: "release-head",
+    watch: true,
+    log: () => {},
+    inspectTag: async (release) => {
+      events.push(`inspect:${release.tag}`);
+      return dispatchAttempts === 0
+        ? { local: null, remote: null }
+        : {
+            local: { commit: "release-head", annotated: true },
+            remote: { commit: "release-head", annotated: true },
+          };
+    },
+    validateTag: () => {},
+    createTag: async (release) => events.push(`create:${release.tag}`),
+    pushTag: async (release) => events.push(`push:${release.tag}`),
+    waitForRun: async (release) => {
+      events.push(`registered:${release.tag}`);
+      return { databaseId: release.tag };
+    },
+    watchRun: async (run) => events.push(`watch:${run.databaseId}`),
+    dispatchCadence: async () => {
+      dispatchAttempts += 1;
+      events.push(`cadence:${dispatchAttempts}`);
+      if (dispatchAttempts === 1) throw new Error("injected dispatch failure");
+    },
+  };
+
+  await assert.rejects(() => publishReleasePlan(releases, operations), /injected dispatch failure/);
+  await publishReleasePlan(releases, operations);
+
+  assert.equal(events.filter((event) => event.startsWith("create:")).length, releases.length);
+  assert.equal(events.filter((event) => event.startsWith("push:")).length, releases.length);
+  assert.equal(events.filter((event) => event.startsWith("registered:")).length, releases.length * 2);
+  assert.equal(events.filter((event) => event.startsWith("watch:")).length, releases.length * 2);
+  assert.deepEqual(
+    events.filter((event) => event.startsWith("cadence:")),
+    ["cadence:1", "cadence:2"],
+  );
 });
 
 test("publishReleasePlan resumes an existing tag without pushing it again", async () => {
@@ -214,6 +355,31 @@ test("publishReleasePlan resumes an existing tag without pushing it again", asyn
   });
 
   assert.deepEqual(events, ["registered"]);
+});
+
+test("publishReleasePlan never watches or dispatches in no-watch mode", async () => {
+  const releases = readReleasePlan(fixtureRoot());
+  const events = [];
+  await publishReleasePlan(releases, {
+    head: "release-head",
+    watch: false,
+    log: () => {},
+    inspectTag: async () => ({ local: null, remote: null }),
+    validateTag: () => {},
+    createTag: async () => {},
+    pushTag: async () => {},
+    waitForRun: async (release) => {
+      events.push(`registered:${release.tag}`);
+      return { databaseId: release.tag };
+    },
+    watchRun: async () => events.push("watch"),
+    dispatchCadence: async () => events.push("cadence"),
+  });
+  assert.equal(events.length, releases.length);
+  assert.equal(
+    events.some((event) => event === "watch" || event === "cadence"),
+    false,
+  );
 });
 
 test("benchmark cadence dispatch pins the coordinated release commit", () => {

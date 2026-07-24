@@ -80,21 +80,22 @@ jobs:
         run: |
           set -euo pipefail
           PR="$(gh pr list --repo "${GITHUB_REPOSITORY}" --state all --head "${BRANCH}" \
-            --json number,state,mergedAt,url --limit 1)"
-          COUNT="$(jq 'length' <<<"${PR}")"
-          if [ "${COUNT}" = "0" ]; then
-            echo "skip=false" >> "${GITHUB_OUTPUT}"
-            exit 0
+            --json number,state,mergedAt,url --limit 100)"
+          BRANCH_EXISTS=false
+          set +e
+          git ls-remote --exit-code --heads origin "refs/heads/${BRANCH}" >/dev/null
+          STATUS="$?"
+          set -e
+          if [ "${STATUS}" = "0" ]; then
+            BRANCH_EXISTS=true
+          elif [ "${STATUS}" != "2" ]; then
+            echo "::error::Could not determine whether cadence branch ${BRANCH} exists"
+            exit "${STATUS}"
           fi
-          STATE="$(jq -r '.[0] | if .mergedAt then "MERGED" else .state end' <<<"${PR}")"
-          URL="$(jq -r '.[0].url' <<<"${PR}")"
-          if [ "${STATE}" = "OPEN" ] || [ "${STATE}" = "MERGED" ]; then
-            echo "Cadence already represented by ${URL} (${STATE}); no paid rerun will start."
-            echo "skip=true" >> "${GITHUB_OUTPUT}"
-            exit 0
-          fi
-          echo "::error::A closed, unmerged cadence PR already exists for ${BRANCH}: ${URL}"
-          exit 1
+          node scripts/benchmark-release-cadence.mjs guard \
+            --prs-json "${PR}" \
+            --branch-exists "${BRANCH_EXISTS}" \
+            --github-output "${GITHUB_OUTPUT}"
 
   benchmark:
     name: Paid reference and configured-model sample
@@ -168,8 +169,8 @@ jobs:
           npm --prefix benchmarks/discover-call ci
           npm install --global "${CLI_PACKAGE}@${CLI_VERSION}"
           ACTUAL_VERSION="$(codex --version)"
-          if [[ "${ACTUAL_VERSION}" != *"${CLI_VERSION}"* ]]; then
-            echo "::error::Installed CLI version '${ACTUAL_VERSION}' does not contain expected ${CLI_VERSION}"
+          if [[ "${ACTUAL_VERSION}" != "codex-cli ${CLI_VERSION}" ]]; then
+            echo "::error::Installed CLI version '${ACTUAL_VERSION}' does not exactly match codex-cli ${CLI_VERSION}"
             exit 1
           fi
 
@@ -197,6 +198,7 @@ jobs:
           --lane reference
           --adapter node
           --adapter-arg "${REFERENCE_ADAPTER}"
+          --adapter-arg "${TASK_SET}"
           --adapter-revision "${RELEASE_SHA}/reference-v1"
           --toolkit-revision "${RELEASE_SHA}"
           --tasks "${TASK_SET}"

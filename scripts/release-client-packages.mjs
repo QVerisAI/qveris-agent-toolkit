@@ -100,6 +100,60 @@ export function workflowTagPatterns(content) {
   return patterns;
 }
 
+export function workflowDispatchInputs(content) {
+  const inputs = [];
+  let section = null;
+  let onIndent = -1;
+  let dispatchIndent = -1;
+  let inputsIndent = -1;
+  let inputIndent = -1;
+
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.replace(/\s+#.*$/, "");
+    if (!line.trim()) continue;
+    const indent = line.match(/^\s*/)[0].length;
+    const value = line.trim();
+
+    if (indent === 0) {
+      section = value === "on:" ? "on" : null;
+      onIndent = section ? indent : -1;
+      dispatchIndent = -1;
+      inputsIndent = -1;
+      inputIndent = -1;
+      continue;
+    }
+    if (section === "on" && indent > onIndent && value === "workflow_dispatch:") {
+      section = "dispatch";
+      dispatchIndent = indent;
+      continue;
+    }
+    if ((section === "dispatch" || section === "inputs") && indent <= dispatchIndent) {
+      section = indent > onIndent && value === "workflow_dispatch:" ? "dispatch" : "on";
+      inputsIndent = -1;
+      inputIndent = -1;
+      continue;
+    }
+    if (section === "dispatch" && indent > dispatchIndent && value === "inputs:") {
+      section = "inputs";
+      inputsIndent = indent;
+      inputIndent = -1;
+      continue;
+    }
+    if (section === "inputs") {
+      if (indent <= inputsIndent) {
+        section = indent > dispatchIndent ? "dispatch" : indent > onIndent ? "on" : null;
+        inputIndent = -1;
+        continue;
+      }
+      if (inputIndent < 0) inputIndent = indent;
+      if (indent !== inputIndent) continue;
+      const match = value.match(/^([A-Za-z_][A-Za-z0-9_-]*):(?:\s|$)/);
+      if (match) inputs.push(match[1]);
+    }
+  }
+  return inputs;
+}
+
 function validateWorkflow(root, client, errors) {
   const workflowPath = `.github/workflows/${client.workflow}`;
   if (!existsSync(resolve(root, workflowPath))) {
@@ -124,7 +178,7 @@ function validateCadenceWorkflow(root, errors) {
     return;
   }
   const content = read(root, workflowPath);
-  if (!/^\s{2}workflow_dispatch:\s*$/m.test(content) || !/^\s{6}release_sha:\s*$/m.test(content)) {
+  if (!workflowDispatchInputs(content).includes("release_sha")) {
     errors.push(`${workflowPath} must expose a workflow_dispatch release_sha input`);
   }
 }

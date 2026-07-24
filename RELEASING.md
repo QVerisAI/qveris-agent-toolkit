@@ -33,7 +33,7 @@ Each package releases independently via an annotated git tag; the matching GitHu
    operator will monitor the registered runs.
 
    After all four workflows finish successfully, the coordinator dispatches
-   `discover-call-cadence.yml` exactly once for the shared release commit. The
+   `discover-call-cadence.yml` for the shared release commit. The
    workflow validates that all four annotated tags point to that commit, then
    waits for approval in the protected `benchmark-production` environment.
    Approval authorizes the fixed call budget recorded in
@@ -93,6 +93,12 @@ The current 18-task, three-trial, two-lane configuration permits at most 108
 tool calls. Discover/Inspect traffic and model requests are additional, but no
 failed trial is selectively retried by the cadence. Failed jobs do not upload
 raw records or open a partial artifact PR.
+
+If a run pushes its result branch but fails before opening the draft PR, the
+next dispatch fails closed before making paid calls. Inspect and validate the
+existing `benchmark/cadence-<release-sha-prefix>` branch, then recover it by
+opening the draft PR manually. Do not delete the branch and rerun the paid
+sample merely to replace a completed attempt.
 
 For a material individual-package release that also needs a new quality
 baseline, dispatch the same protected workflow after its publish job succeeds,

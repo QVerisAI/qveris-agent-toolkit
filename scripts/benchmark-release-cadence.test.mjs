@@ -5,7 +5,9 @@ import {
   assertPublicArtifactSafe,
   buildCadencePlan,
   buildResultSection,
+  cadenceRunDisposition,
   insertResultSection,
+  parseTaskSet,
   validateCadenceConfig,
 } from './benchmark-release-cadence.mjs';
 
@@ -105,6 +107,73 @@ test('cadence config rejects mutable task names and non-exact CLI versions', () 
   );
 });
 
+test('cadence manifest tamper matrix rejects executable substitutions, unknown fields, and runner-limit drift', () => {
+  const cases = [
+    ['top-level unknown field', { ...config, maximum_billed_calls: 1 }, /unknown: maximum_billed_calls/],
+    [
+      'reference unknown field',
+      { ...config, reference: { ...config.reference, task_set: config.task_set } },
+      /reference has invalid fields/,
+    ],
+    [
+      'configured unknown field',
+      { ...config, configured_model: { ...config.configured_model, fallback_model: 'other' } },
+      /configured_model has invalid fields/,
+    ],
+    [
+      'reference adapter traversal',
+      {
+        ...config,
+        reference: {
+          ...config.reference,
+          adapter: 'benchmarks/discover-call/adapters/../../../scripts/benchmark-release-cadence.mjs',
+        },
+      },
+      /reference\.adapter must be/,
+    ],
+    [
+      'configured adapter substitution',
+      {
+        ...config,
+        configured_model: {
+          ...config.configured_model,
+          adapter: 'benchmarks/discover-call/adapters/claude-cli.mjs',
+        },
+      },
+      /configured_model\.adapter must be/,
+    ],
+    [
+      'CLI package substitution',
+      {
+        ...config,
+        configured_model: { ...config.configured_model, cli_package: 'alternate-codex-package' },
+      },
+      /configured_model\.cli_package must be/,
+    ],
+    [
+      'reference identity substitution',
+      { ...config, reference: { ...config.reference, model_revision: 'unreported' } },
+      /reference model identity/,
+    ],
+    ['trial overflow', { ...config, trials: 101 }, /runner limit of 100/],
+    ['discovery overflow', { ...config, discovery_limit: 101 }, /runner limit of 100/],
+  ];
+
+  for (const [label, candidate, expected] of cases) {
+    assert.throws(() => validateCadenceConfig(candidate, { taskCount: 18 }), expected, label);
+  }
+});
+
+test('task-set parsing matches JSONL comment semantics before the paid plan is approved', () => {
+  const task = {
+    id: 'task-1',
+    prompt: 'Find a tool',
+    constraints: [{ id: 'query', aliases: ['q'], value: 'Shanghai' }],
+  };
+  assert.equal(parseTaskSet(`# reviewed task\n${JSON.stringify(task)}\n\n`).length, 1);
+  assert.throws(() => parseTaskSet('# comments only\n'), /At least one benchmark task/);
+});
+
 test('cadence plan requires all four release tags at the release commit', () => {
   assert.throws(
     () =>
@@ -193,6 +262,32 @@ test('result insertion is idempotent per release SHA', () => {
         releaseSha,
       ),
     /already contains/,
+  );
+});
+
+test('cadence duplicate and orphan-branch recovery matrix fails closed before paid work', () => {
+  assert.deepEqual(cadenceRunDisposition([], { branchExists: false }), {
+    skip: false,
+    message: 'No prior cadence result exists; the protected paid job may proceed.',
+  });
+  assert.equal(cadenceRunDisposition([{ state: 'OPEN', mergedAt: null, url: 'https://example.test/pr/1' }]).skip, true);
+  assert.equal(
+    cadenceRunDisposition([{ state: 'CLOSED', mergedAt: '2026-07-25T00:00:00Z', url: 'https://example.test/pr/1' }])
+      .skip,
+    true,
+  );
+  assert.throws(
+    () => cadenceRunDisposition([{ state: 'CLOSED', mergedAt: null, url: 'https://example.test/pr/1' }]),
+    /closed, unmerged/,
+  );
+  assert.throws(() => cadenceRunDisposition([], { branchExists: true }), /result branch exists without a PR/);
+  assert.throws(
+    () =>
+      cadenceRunDisposition([
+        { state: 'CLOSED', mergedAt: null, url: 'https://example.test/pr/1' },
+        { state: 'OPEN', mergedAt: null, url: 'https://example.test/pr/2' },
+      ]),
+    /Multiple cadence PRs/,
   );
 });
 

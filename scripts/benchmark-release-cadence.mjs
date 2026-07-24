@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { validateTaskSet } from '../benchmarks/discover-call/src/harness.mjs';
 import { readReleasePlan } from './release-client-packages.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -12,6 +13,9 @@ const CONFIG_PATH = 'benchmarks/discover-call/cadence.json';
 const SHA_RE = /^[0-9a-f]{40}$/;
 const VERSION_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 const SAFE_VALUE_RE = /^[0-9A-Za-z@._/+:-]+$/;
+const REFERENCE_ADAPTER = 'benchmarks/discover-call/adapters/reference.mjs';
+const CONFIGURED_ADAPTER = 'benchmarks/discover-call/adapters/codex-cli.mjs';
+const CONFIGURED_CLI_PACKAGE = '@openai/codex';
 const FORBIDDEN_PUBLIC_KEYS = new Set([
   'api_key',
   'authorization',
@@ -39,10 +43,27 @@ function positiveInteger(value, label) {
   return value;
 }
 
+function exactObjectKeys(value, expected, label) {
+  const actual = Object.keys(value).sort();
+  const wanted = [...expected].sort();
+  const missing = wanted.filter((key) => !Object.hasOwn(value, key));
+  const unknown = actual.filter((key) => !wanted.includes(key));
+  if (missing.length || unknown.length) {
+    throw new Error(
+      `${label} has invalid fields; missing: ${missing.join(', ') || 'none'}; unknown: ${unknown.join(', ') || 'none'}`,
+    );
+  }
+}
+
 export function validateCadenceConfig(config, { taskCount } = {}) {
   if (!config || typeof config !== 'object' || Array.isArray(config)) {
     throw new Error('Cadence config must be an object');
   }
+  exactObjectKeys(
+    config,
+    ['schema_version', 'task_set', 'task_version', 'trials', 'discovery_limit', 'reference', 'configured_model'],
+    'Cadence config',
+  );
   if (config.schema_version !== 1) throw new Error('Cadence config schema_version must be 1');
   safeValue(config.task_set, 'task_set');
   if (!/^benchmarks\/discover-call\/tasks\/v\d+\.jsonl$/.test(config.task_set)) {
@@ -53,22 +74,42 @@ export function validateCadenceConfig(config, { taskCount } = {}) {
   }
   positiveInteger(config.trials, 'trials');
   if (config.trials < 3) throw new Error('trials must be at least 3 for an official cadence run');
+  if (config.trials > 100) throw new Error('trials must not exceed the benchmark runner limit of 100');
   positiveInteger(config.discovery_limit, 'discovery_limit');
+  if (config.discovery_limit > 100) {
+    throw new Error('discovery_limit must not exceed the benchmark runner limit of 100');
+  }
 
   for (const [label, lane] of [
     ['reference', config.reference],
     ['configured_model', config.configured_model],
   ]) {
     if (!lane || typeof lane !== 'object' || Array.isArray(lane)) throw new Error(`${label} must be an object`);
+    exactObjectKeys(
+      lane,
+      label === 'reference'
+        ? ['model', 'model_revision', 'adapter']
+        : ['model', 'model_revision', 'adapter', 'cli_package', 'cli_version', 'reasoning_effort'],
+      label,
+    );
     safeValue(lane.model, `${label}.model`);
     safeValue(lane.model_revision, `${label}.model_revision`);
     safeValue(lane.adapter, `${label}.adapter`);
-    if (!lane.adapter.startsWith('benchmarks/discover-call/adapters/') || !lane.adapter.endsWith('.mjs')) {
-      throw new Error(`${label}.adapter must select a discover-call adapter`);
-    }
   }
 
+  if (config.reference.model !== 'reference-v1' || config.reference.model_revision !== 'deterministic-reference-v1') {
+    throw new Error('reference model identity must match the deterministic reference adapter');
+  }
+  if (config.reference.adapter !== REFERENCE_ADAPTER) {
+    throw new Error(`reference.adapter must be ${REFERENCE_ADAPTER}`);
+  }
+  if (config.configured_model.adapter !== CONFIGURED_ADAPTER) {
+    throw new Error(`configured_model.adapter must be ${CONFIGURED_ADAPTER}`);
+  }
   safeValue(config.configured_model.cli_package, 'configured_model.cli_package');
+  if (config.configured_model.cli_package !== CONFIGURED_CLI_PACKAGE) {
+    throw new Error(`configured_model.cli_package must be ${CONFIGURED_CLI_PACKAGE}`);
+  }
   if (!VERSION_RE.test(config.configured_model.cli_version)) {
     throw new Error('configured_model.cli_version must be an exact semantic version');
   }
@@ -84,6 +125,30 @@ export function validateCadenceConfig(config, { taskCount } = {}) {
     };
   }
   return null;
+}
+
+export function cadenceRunDisposition(prs, { branchExists = false } = {}) {
+  if (!Array.isArray(prs)) throw new Error('Cadence PR lookup must return an array');
+  if (typeof branchExists !== 'boolean') throw new Error('Cadence branch existence must be a boolean');
+  if (prs.length > 1) throw new Error('Multiple cadence PRs exist for the same release branch');
+  if (prs.length === 1) {
+    const pr = prs[0];
+    const state = pr?.mergedAt ? 'MERGED' : String(pr?.state || '').toUpperCase();
+    const url = typeof pr?.url === 'string' && pr.url ? pr.url : '(unknown PR)';
+    if (state === 'OPEN' || state === 'MERGED') {
+      return {
+        skip: true,
+        message: `Cadence already represented by ${url} (${state}); no paid rerun will start.`,
+      };
+    }
+    throw new Error(`A closed, unmerged cadence PR already exists: ${url}`);
+  }
+  if (branchExists) {
+    throw new Error(
+      'A cadence result branch exists without a PR; recover that branch into a draft PR before any paid rerun',
+    );
+  }
+  return { skip: false, message: 'No prior cadence result exists; the protected paid job may proceed.' };
 }
 
 export function buildCadencePlan({
@@ -283,10 +348,22 @@ function gitSucceeds(args) {
   }
 }
 
-function taskCount(path) {
-  return readFileSync(path, 'utf8')
-    .split(/\r?\n/)
-    .filter((line) => line.trim()).length;
+export function parseTaskSet(text, path = '<task-set>') {
+  const tasks = [];
+  for (const [index, rawLine] of text.split(/\r?\n/).entries()) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+    try {
+      tasks.push(JSON.parse(line));
+    } catch (error) {
+      throw new Error(`${path}:${index + 1}: invalid JSON: ${error.message}`);
+    }
+  }
+  return validateTaskSet(tasks);
+}
+
+function readTaskSet(path) {
+  return parseTaskSet(readFileSync(path, 'utf8'), path);
 }
 
 function writeGithubOutput(path, values) {
@@ -315,7 +392,7 @@ function loadPlan(releaseSha) {
     config,
     releases,
     releaseSha,
-    taskCount: taskCount(taskPath),
+    taskCount: readTaskSet(taskPath).length,
     tagCommit: (tag) => {
       if (git(['cat-file', '-t', `refs/tags/${tag}`], { allowFailure: true }) !== 'tag') return null;
       return git(['rev-parse', `refs/tags/${tag}^{}`], { allowFailure: true });
@@ -355,6 +432,24 @@ function planCommand(options) {
     reference_stem: plan.referenceStem,
     configured_stem: plan.configuredStem,
   });
+}
+
+function guardCommand(options) {
+  if (!options.prsJson) throw new Error('--prs-json is required');
+  if (!options.branchExists) throw new Error('--branch-exists is required');
+  if (!options.githubOutput) throw new Error('--github-output is required');
+  if (!['true', 'false'].includes(options.branchExists)) {
+    throw new Error('--branch-exists must be true or false');
+  }
+  let prs;
+  try {
+    prs = JSON.parse(options.prsJson);
+  } catch (error) {
+    throw new Error(`--prs-json must be valid JSON: ${error.message}`);
+  }
+  const disposition = cadenceRunDisposition(prs, { branchExists: options.branchExists === 'true' });
+  process.stdout.write(`${disposition.message}\n`);
+  writeGithubOutput(options.githubOutput, { skip: disposition.skip });
 }
 
 function documentCommand(options) {
@@ -433,6 +528,7 @@ Closes no issue automatically. The draft must receive normal code and methodolog
 async function main() {
   const { command, options } = parseArgs(process.argv.slice(2));
   if (command === 'plan') planCommand(options);
+  else if (command === 'guard') guardCommand(options);
   else if (command === 'document') documentCommand(options);
   else throw new Error(`Unknown command: ${command || '(missing)'}`);
 }
