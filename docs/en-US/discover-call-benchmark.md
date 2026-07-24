@@ -65,6 +65,44 @@ parameter names are omitted so hashed tools do not leak schema details. See the
 
 ## Published results
 
+### Current official configured-model baseline
+
+The 2026-07-24 run is the first official configured-model baseline collected
+with corrected `discover-call-v2`, immutable `tasks/v4.jsonl`, three trials per
+task, real calls, and complete failed-trial retention.
+
+| 2026-07-24 baseline | Curated reference route | `gpt-5.6-sol` configured model |
+| --- | ---: | ---: |
+| Completed and executed | 51 / 54 | 52 / 54 |
+| Selection grounded | 94.44% | 100% |
+| Inspection grounded | 94.44% | 100% |
+| Required-parameter accuracy | 100% | 100% |
+| Constraint accuracy | 94.44% | 88.89% |
+| Call success | 100% (51 / 51) | 100% (52 / 52) |
+| Result non-empty | 100% (51 / 51) | 100% (52 / 52) |
+| Strict workflow success | 94.44% (51 / 54) | 88.89% (48 / 54) |
+| Workflow interval | 83.33%–100% | 72.22%–100% |
+
+The strict benchmark gap is **3 / 54 = 5.56 percentage points**. This is not a
+pure routing delta: both lanes observed API revision `2026-07-23.2`, but the
+API did not report a catalog revision and their catalog-observation digests
+differ. The intervals overlap, so this 18-task baseline is not evidence of a
+statistically significant difference.
+
+The reference route's three failures are Tokyo-timezone coverage misses. The
+configured model has six strict failures: three Tokyo constraint mismatches,
+two domain-intelligence `tool_use_rejected` adapter failures, and one
+domain-intelligence constraint mismatch. Every attempted call in both lanes
+reported success and a non-empty result.
+
+The configured lane used `gpt-5.6-sol`, medium reasoning, Codex CLI 0.144.1,
+and toolkit revision
+`a7f2aa60ef143dbbb35eaf9006ed8123d778fb13`. Its provider model revision is
+`unreported`, so this is an official configured-model baseline rather than a
+pinned-model snapshot.
+
+### Historical diagnostic
+
 The 2026-07-23 v4 run is a **diagnostic baseline candidate**, not an official
 quality baseline. It covers 18 immutable tasks, three trials each, with real
 calls, but a later collector audit found that result non-emptiness was tested
@@ -94,10 +132,9 @@ pinned model snapshot. Both lanes observed API revision `2026-07-22.1`; the API
 did not report a catalog revision, and the separate catalog-observation digests
 differ.
 
-Promotion requires a fresh run under the corrected collector, which now checks
-`result.data`, requests the full result projection, prevents ambiguous Execute
-retries, and pins the reproducibility inputs before the first external call.
-The earlier v3 run is also retained only as a diagnostic baseline. Its three
+The fresh corrected run above supersedes this diagnostic as the current
+configured-model baseline. The earlier v3 run is also retained only as a
+diagnostic baseline. Its three
 successful Bitcoin calls used provider-specific `id=1`, which v3 incorrectly
 scored as constraint failures. Immutable `tasks/v4.jsonl` explicitly recognizes
 that mapping, and all three Bitcoin trials pass in v4.

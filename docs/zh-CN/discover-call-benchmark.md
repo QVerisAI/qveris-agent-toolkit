@@ -48,6 +48,37 @@ tool 只保留摘要。参数质量仅以必填参数完整率和任务约束准
 
 ## 已发布结果
 
+### 当前正式 configured-model 基线
+
+2026-07-24 的运行是首个使用修正后 `discover-call-v2`、不可变 `tasks/v4.jsonl`、每个任务三个
+trial、真实调用并完整保留失败 trial 的正式 configured-model 基线。
+
+| 2026-07-24 基线 | Curated reference route | `gpt-5.6-sol` configured model |
+| --- | ---: | ---: |
+| 完成参数化并执行 | 51 / 54 | 52 / 54 |
+| Selection grounded | 94.44% | 100% |
+| Inspection grounded | 94.44% | 100% |
+| 必填参数准确率 | 100% | 100% |
+| 任务约束准确率 | 94.44% | 88.89% |
+| call 成功率 | 100%（51 / 51） | 100%（52 / 52） |
+| 结果非空率 | 100%（51 / 51） | 100%（52 / 52） |
+| 严格工作流成功率 | 94.44%（51 / 54） | 88.89%（48 / 54） |
+| 工作流区间 | 83.33%–100% | 72.22%–100% |
+
+strict benchmark gap 为 **3 / 54 = 5.56 个百分点**。它不是纯 routing 差值：两条 lane 都观察到
+API revision `2026-07-23.2`，但 API 未报告 catalog revision，且 catalog-observation 摘要不同。
+两个区间也存在重叠，因此这组 18 任务基线不能证明差异具有统计显著性。
+
+reference 的三次失败均为东京时区目录覆盖缺口。configured model 有六次严格失败：三次东京约束
+不匹配、两次 domain-intelligence `tool_use_rejected` adapter 失败，以及一次 domain-intelligence
+约束不匹配。两条 lane 的所有实际调用都返回 success 且结果非空。
+
+configured lane 使用 `gpt-5.6-sol`、medium reasoning、Codex CLI 0.144.1，以及 toolkit revision
+`a7f2aa60ef143dbbb35eaf9006ed8123d778fb13`。provider model revision 为 `unreported`，因此这是
+正式 configured-model 基线，而不是 pinned-model snapshot。
+
+### 历史诊断结果
+
 2026-07-23 的 v4 运行是 **diagnostic baseline candidate**，不是正式质量基线。它包含 18 个不可变
 任务、每个任务三个 trial，并启用真实调用；但后续 collector 审核发现，结果非空判断检查的是完整
 `result` wrapper，而不是 `result.data`。因此，即使 data 为空，只要 wrapper 非空也可能被记录为
@@ -71,9 +102,8 @@ configured lane 使用 `gpt-5.6-sol`、medium reasoning 和 Codex CLI 0.144.1。
 revision 为 `unreported`，因此不会称为 pinned model snapshot。两个 lane 都观察到 API revision
 `2026-07-22.1`；API 未报告 catalog revision，且两次独立运行的 catalog observation 摘要不同。
 
-只有在修正后的 collector 上重新运行，才能晋升为正式基线；当前 collector 已改为检查
-`result.data`、显式请求完整结果投影、禁止对结果不明确的 Execute 失败自动重试，并在首次外部调用前
-固定所有复现输入。较早的 v3 同样只保留为 diagnostic baseline。其三次 Bitcoin 调用通过 provider
+上面的修正后新运行已取代该诊断结果，成为当前 configured-model 基线。较早的 v3 同样只保留为
+diagnostic baseline。其三次 Bitcoin 调用通过 provider
 特定的 `id=1` 成功返回，但 v3 错误地将其计为约束失败。不可变 `tasks/v4.jsonl` 已明确识别该映射，
 v4 的三次 Bitcoin trial 全部通过。
 

@@ -1,5 +1,76 @@
 # Published benchmark results
 
+## 2026-07-24 — corrected v2 official configured-model baseline
+
+This is the first official configured-model baseline collected with benchmark
+methodology `discover-call-v2`. It compares the curated reference route and
+`gpt-5.6-sol` over immutable `tasks/v4.jsonl`: 18 tasks, three trials per task,
+Top 10 discovery, and real calls. No failed trial was removed or selectively
+rerun. Public artifacts were generated from the complete private records with
+`public-artifact-v1`.
+
+| Metric | Curated reference route | `gpt-5.6-sol` configured model |
+| --- | ---: | ---: |
+| Runs | 54 | 54 |
+| Completed and executed | 51 / 54 | 52 / 54 |
+| Selection grounded | 94.44% | 100% |
+| Inspection grounded | 94.44% | 100% |
+| Required-parameter accuracy | 100% | 100% |
+| Constraint accuracy | 94.44% | 88.89% |
+| Call success among attempted calls | 100% (51 / 51) | 100% (52 / 52) |
+| Result non-empty among successful calls | 100% (51 / 51) | 100% (52 / 52) |
+| Strict workflow success | 94.44% (51 / 54) | 88.89% (48 / 54) |
+| Task-cluster bootstrap 95% interval | 83.33%–100% | 72.22%–100% |
+
+The strict benchmark gap is **3 / 54 = 5.56 percentage points**. It is an
+end-to-end benchmark difference, not a pure model-routing effect: the
+sequential lanes observed different live Top-10 catalog snapshots. Their
+intervals also overlap, so this 18-task baseline is not a claim of a
+statistically significant difference.
+
+Shared reproducibility metadata:
+
+- task set: `tasks/v4.jsonl`
+- task-set SHA-256:
+  `afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed`
+- toolkit revision:
+  `a7f2aa60ef143dbbb35eaf9006ed8123d778fb13`
+- API base URL: `https://qveris.ai/api/v1`
+- observed API revision: `2026-07-23.2`
+- catalog revision: `unreported`
+- discovery limit: `10`
+- runtime: Node.js `v24.2.0`, macOS arm64
+- publication policy: `public-artifact-v1`
+
+Lane metadata:
+
+- curated reference route: model `reference-v1`, model revision
+  `deterministic-reference-v1`, adapter revision
+  `a7f2aa60ef143dbbb35eaf9006ed8123d778fb13/reference-v1`,
+  catalog-observation SHA-256
+  `7d416f6aba2e1c18ea1cbde2dd4edef70a5e99f0e91fcbecd048ca8d389d3e76`
+- configured model: model `gpt-5.6-sol`, provider model revision `unreported`,
+  reasoning effort `medium`, Codex CLI `0.144.1`, adapter revision
+  `a7f2aa60ef143dbbb35eaf9006ed8123d778fb13/codex-cli-0.144.1/medium`,
+  catalog-observation SHA-256
+  `ab0333ae9e7c68702ff76e7db8d3ce3a81095acba004a81523f90a553e5d20ad`
+
+The reference route's three strict failures are all `timezone-tokyo` coverage
+misses. The configured model completed and returned successful non-empty calls
+for all three Tokyo trials, but the selected capability accepted no Tokyo
+input, so they remain constraint failures. For `domain-intel`, two trials were
+safely rejected as `tool_use_rejected`; the remaining trial called
+successfully but did not encode the requested domain, producing one additional
+constraint failure. The configured model revision is unreported, so this is
+not a pinned-model snapshot.
+
+Artifacts:
+
+- [`2026-07-24-reference-v1-v4.runs.jsonl`](2026-07-24-reference-v1-v4.runs.jsonl)
+- [`2026-07-24-reference-v1-v4.summary.json`](2026-07-24-reference-v1-v4.summary.json)
+- [`2026-07-24-gpt-5.6-sol-configured-v4.runs.jsonl`](2026-07-24-gpt-5.6-sol-configured-v4.runs.jsonl)
+- [`2026-07-24-gpt-5.6-sol-configured-v4.summary.json`](2026-07-24-gpt-5.6-sol-configured-v4.summary.json)
+
 ## 2026-07-23 — v4 diagnostic baseline candidate
 
 This v4 run compares the curated reference route and the configured model
