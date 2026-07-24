@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const VERSION_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
+export const BENCHMARK_CADENCE_WORKFLOW = "discover-call-cadence.yml";
 
 export const CLIENTS = [
   {
@@ -50,6 +51,32 @@ function read(root, path) {
 
 function readJson(root, path) {
   return JSON.parse(read(root, path));
+}
+
+export function githubRepositoryFromRemoteUrl(remoteUrl) {
+  if (typeof remoteUrl !== "string" || !remoteUrl.trim()) {
+    throw new Error("Git remote URL is required");
+  }
+  let host;
+  let pathname;
+  try {
+    const parsed = new URL(remoteUrl);
+    host = parsed.hostname;
+    pathname = parsed.pathname;
+  } catch {
+    const scp = remoteUrl.match(/^(?:[^@/:]+@)?([^/:]+):(.+)$/);
+    if (!scp) throw new Error(`Unsupported Git remote URL: ${remoteUrl}`);
+    [, host, pathname] = scp;
+  }
+  const parts = pathname
+    .replace(/^\/+|\/+$/g, "")
+    .replace(/\.git$/, "")
+    .split("/");
+  if (!host || parts.length !== 2 || parts.some((part) => !part || /\s/.test(part))) {
+    throw new Error(`Git remote must identify a repository: ${remoteUrl}`);
+  }
+  const repository = parts.join("/");
+  return host === "github.com" ? repository : `${host}/${repository}`;
 }
 
 export function workflowTagPatterns(content) {
@@ -99,6 +126,60 @@ export function workflowTagPatterns(content) {
   return patterns;
 }
 
+export function workflowDispatchInputs(content) {
+  const inputs = [];
+  let section = null;
+  let onIndent = -1;
+  let dispatchIndent = -1;
+  let inputsIndent = -1;
+  let inputIndent = -1;
+
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.replace(/\s+#.*$/, "");
+    if (!line.trim()) continue;
+    const indent = line.match(/^\s*/)[0].length;
+    const value = line.trim();
+
+    if (indent === 0) {
+      section = value === "on:" ? "on" : null;
+      onIndent = section ? indent : -1;
+      dispatchIndent = -1;
+      inputsIndent = -1;
+      inputIndent = -1;
+      continue;
+    }
+    if (section === "on" && indent > onIndent && value === "workflow_dispatch:") {
+      section = "dispatch";
+      dispatchIndent = indent;
+      continue;
+    }
+    if ((section === "dispatch" || section === "inputs") && indent <= dispatchIndent) {
+      section = indent > onIndent && value === "workflow_dispatch:" ? "dispatch" : "on";
+      inputsIndent = -1;
+      inputIndent = -1;
+      continue;
+    }
+    if (section === "dispatch" && indent > dispatchIndent && value === "inputs:") {
+      section = "inputs";
+      inputsIndent = indent;
+      inputIndent = -1;
+      continue;
+    }
+    if (section === "inputs") {
+      if (indent <= inputsIndent) {
+        section = indent > dispatchIndent ? "dispatch" : indent > onIndent ? "on" : null;
+        inputIndent = -1;
+        continue;
+      }
+      if (inputIndent < 0) inputIndent = indent;
+      if (indent !== inputIndent) continue;
+      const match = value.match(/^([A-Za-z_][A-Za-z0-9_-]*):(?:\s|$)/);
+      if (match) inputs.push(match[1]);
+    }
+  }
+  return inputs;
+}
+
 function validateWorkflow(root, client, errors) {
   const workflowPath = `.github/workflows/${client.workflow}`;
   if (!existsSync(resolve(root, workflowPath))) {
@@ -113,6 +194,18 @@ function validateWorkflow(root, client, errors) {
         patterns.length ? patterns.map(JSON.stringify).join(", ") : "none"
       })`,
     );
+  }
+}
+
+function validateCadenceWorkflow(root, errors) {
+  const workflowPath = `.github/workflows/${BENCHMARK_CADENCE_WORKFLOW}`;
+  if (!existsSync(resolve(root, workflowPath))) {
+    errors.push(`Benchmark cadence workflow is missing: ${workflowPath}`);
+    return;
+  }
+  const content = read(root, workflowPath);
+  if (!workflowDispatchInputs(content).includes("release_sha")) {
+    errors.push(`${workflowPath} must expose a workflow_dispatch release_sha input`);
   }
 }
 
@@ -175,6 +268,7 @@ function validatePythonMetadata(root, client, errors) {
 
 export function readReleasePlan(root = ROOT) {
   const errors = [];
+  validateCadenceWorkflow(root, errors);
   const releases = CLIENTS.map((client) => {
     validateWorkflow(root, client, errors);
     const version =
@@ -306,10 +400,12 @@ function pushSingleTag(remote, release) {
   execute("git", ["push", remote, `refs/tags/${release.tag}`], { stdio: "inherit" });
 }
 
-function workflowRuns(release, head) {
+function workflowRuns(release, head, repository) {
   const raw = output("gh", [
     "run",
     "list",
+    "--repo",
+    repository,
     "--workflow",
     release.workflow,
     "--event",
@@ -326,11 +422,24 @@ function workflowRuns(release, head) {
   return JSON.parse(raw || "[]");
 }
 
-async function waitForWorkflowRun(release, head, { attempts = 18, intervalMs = 5_000 } = {}) {
+export function selectWorkflowRun(runs, release, head, excludeRunIds = new Set()) {
+  if (!Array.isArray(runs)) throw new Error("Workflow run lookup must return an array");
+  if (!(excludeRunIds instanceof Set)) throw new Error("Workflow run exclusions must be a Set");
+  return runs.find(
+    (candidate) =>
+      candidate.headSha === head &&
+      candidate.headBranch === release.tag &&
+      !excludeRunIds.has(String(candidate.databaseId)),
+  );
+}
+
+async function waitForWorkflowRun(
+  release,
+  head,
+  { attempts = 18, intervalMs = 5_000, excludeRunIds = new Set(), repository } = {},
+) {
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
-    const run = workflowRuns(release, head).find(
-      (candidate) => candidate.headSha === head && candidate.headBranch === release.tag,
-    );
+    const run = selectWorkflowRun(workflowRuns(release, head, repository), release, head, excludeRunIds);
     if (run) {
       console.log(`  workflow registered: ${run.url}`);
       return run;
@@ -340,8 +449,32 @@ async function waitForWorkflowRun(release, head, { attempts = 18, intervalMs = 5
   throw new Error(`${release.tag}: ${release.workflow} did not register a push run within ${attempts * intervalMs}ms`);
 }
 
-function watchWorkflowRun(run) {
-  execute("gh", ["run", "watch", String(run.databaseId), "--exit-status"], { stdio: "inherit" });
+function watchWorkflowRun(run, repository) {
+  execute("gh", ["run", "watch", String(run.databaseId), "--exit-status", "--repo", repository], {
+    stdio: "inherit",
+  });
+}
+
+export function benchmarkCadenceDispatchArgs(head, repository) {
+  if (!/^[0-9a-f]{40}$/.test(head)) throw new Error("Benchmark cadence requires a lowercase 40-character commit SHA");
+  if (typeof repository !== "string" || !/^(?:[^/\s]+\/){1,2}[^/\s]+$/.test(repository)) {
+    throw new Error("Benchmark cadence requires an explicit GitHub repository");
+  }
+  return [
+    "workflow",
+    "run",
+    BENCHMARK_CADENCE_WORKFLOW,
+    "--repo",
+    repository,
+    "--ref",
+    "main",
+    "--field",
+    `release_sha=${head}`,
+  ];
+}
+
+function dispatchBenchmarkCadence(head, repository) {
+  execute("gh", benchmarkCadenceDispatchArgs(head, repository));
 }
 
 export async function publishReleasePlan(releases, operations) {
@@ -350,6 +483,7 @@ export async function publishReleasePlan(releases, operations) {
   for (const release of releases) {
     const status = await operations.inspectTag(release);
     operations.validateTag(release, status);
+    let excludeRunIds = new Set();
 
     if (status.remote) {
       if (status.remote.commit !== operations.head) {
@@ -360,6 +494,19 @@ export async function publishReleasePlan(releases, operations) {
       if (status.local && status.local.commit !== operations.head) {
         throw new Error(`${release.tag}: local tag already points to ${status.local.commit}, not ${operations.head}`);
       }
+      if (typeof operations.listRuns !== "function") {
+        throw new Error(`${release.tag}: publishing a new tag requires a workflow-run snapshot`);
+      }
+      const priorRuns = await operations.listRuns(release);
+      if (!Array.isArray(priorRuns)) throw new Error(`${release.tag}: workflow-run snapshot must be an array`);
+      excludeRunIds = new Set(
+        priorRuns.map((run) => {
+          if (!run || !["number", "string"].includes(typeof run.databaseId)) {
+            throw new Error(`${release.tag}: workflow-run snapshot contains an invalid run id`);
+          }
+          return String(run.databaseId);
+        }),
+      );
       if (!status.local) {
         log(`\n${release.tag}: creating annotated tag`);
         await operations.createTag(release);
@@ -370,13 +517,17 @@ export async function publishReleasePlan(releases, operations) {
 
     // Confirm this event exists before sending the next tag push. This makes
     // the four-package release immune to GitHub's >3-tags-per-push limit.
-    runs.push({ release, run: await operations.waitForRun(release) });
+    runs.push({ release, run: await operations.waitForRun(release, { excludeRunIds }) });
   }
 
   if (operations.watch) {
     for (const { release, run } of runs) {
       log(`\n${release.tag}: waiting for ${release.workflow}`);
       await operations.watchRun(run);
+    }
+    if (operations.dispatchCadence) {
+      log("\nAll publish workflows succeeded; dispatching the protected benchmark cadence");
+      await operations.dispatchCadence(operations.head, releases);
     }
   }
   return runs;
@@ -417,6 +568,7 @@ async function main() {
   }
 
   const head = assertPublishableRepository(remote);
+  const repository = githubRepositoryFromRemoteUrl(git(["remote", "get-url", remote]));
   await publishReleasePlan(releases, {
     head,
     watch,
@@ -424,10 +576,16 @@ async function main() {
     validateTag: assertMatchingTags,
     createTag: createAnnotatedTag,
     pushTag: (release) => pushSingleTag(remote, release),
-    waitForRun: (release) => waitForWorkflowRun(release, head),
-    watchRun: watchWorkflowRun,
+    listRuns: (release) => workflowRuns(release, head, repository),
+    waitForRun: (release, options) => waitForWorkflowRun(release, head, { ...options, repository }),
+    watchRun: (run) => watchWorkflowRun(run, repository),
+    dispatchCadence: () => dispatchBenchmarkCadence(head, repository),
   });
-  console.log("\nAll four client release workflows completed successfully.");
+  console.log(
+    watch
+      ? "\nAll four client release workflows completed successfully; benchmark cadence dispatched."
+      : `\nAll four client release workflows registered. After they succeed, dispatch the protected benchmark cadence:\n  gh ${benchmarkCadenceDispatchArgs(head, repository).join(" ")}`,
+  );
 }
 
 if (resolve(process.argv[1] || "") === fileURLToPath(import.meta.url)) {

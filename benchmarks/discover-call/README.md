@@ -345,3 +345,28 @@ are represented only by a digest.
 
 The checked-in fixture validates the scorer only. It is synthetic and must not
 be presented as product performance.
+
+## Per-release cadence
+
+`cadence.json` is the reviewed, immutable input for coordinated client-release
+sampling. It fixes the task version, three-trial denominator, Top-K limit,
+reference route, configured model, reasoning effort, adapter paths, and exact
+CLI version. With the current 18-task, two-lane configuration, the protected
+workflow permits at most 108 tool calls.
+
+After all four coordinated publish workflows succeed,
+`release-client-packages.mjs` dispatches
+`.github/workflows/discover-call-cadence.yml` for their shared commit. The job
+waits for explicit approval in the `benchmark-production` environment before
+it can access credentials or make paid calls. Raw records remain in the
+ephemeral runner. Successful runs are sanitized and validated, then proposed
+in a draft PR; the workflow never commits directly to `main`.
+An orphaned result branch is treated as a recoverable publication failure and
+blocks another paid run until that branch has been inspected and opened as a
+draft PR.
+
+The generated PR remains a candidate until a reviewer confirms failure
+classification, catalog/API comparability, model-revision wording, and the
+matching English/Chinese headline documentation. A provider revision of
+`unreported` must remain a configured-model result rather than a pinned-model
+claim.

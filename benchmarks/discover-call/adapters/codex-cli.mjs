@@ -6,6 +6,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { stripAdapterSecrets } from '../src/adapter-environment.mjs';
+
 export const CODEX_REASONING_EFFORT = 'medium';
 
 const ALLOWED_ITEM_TYPES = new Set(['agent_message', 'reasoning']);
@@ -132,7 +134,7 @@ export function runCodex(invocation, { outputLimit = 1_000_000, forceKillAfterMs
   }
   return new Promise((resolve, reject) => {
     const env = { ...process.env };
-    stripQverisEnvironment(env);
+    stripAdapterSecrets(env);
     const child = spawn(invocation.command, invocation.args, {
       shell: false,
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -200,12 +202,6 @@ export function runCodex(invocation, { outputLimit = 1_000_000, forceKillAfterMs
     });
     child.stdin.end(invocation.stdin);
   });
-}
-
-function stripQverisEnvironment(env) {
-  for (const name of Object.keys(env)) {
-    if (name.toUpperCase().startsWith('QVERIS_')) delete env[name];
-  }
 }
 
 function isObject(value) {

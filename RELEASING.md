@@ -32,6 +32,16 @@ Each package releases independently via an annotated git tag; the matching GitHu
    and resumed instead of recreated. Use `-- --no-watch` only when another
    operator will monitor the registered runs.
 
+   After all four workflows finish successfully, the coordinator dispatches
+   `discover-call-cadence.yml` for the shared release commit. The
+   workflow validates that all four annotated tags point to that commit, then
+   waits for approval in the protected `benchmark-production` environment.
+   Approval authorizes the fixed call budget recorded in
+   `benchmarks/discover-call/cadence.json`; a rejected or timed-out approval
+   performs no model or QVeris calls. `--no-watch` deliberately does not
+   dispatch the cadence because the coordinator has not verified publication
+   success; it prints the exact manual dispatch command instead.
+
    For an individual package release, **tag the release commit with an
    annotated tag**, using the new Changelog section as the tag message — this
    is what powers the release Highlights (#101), so the Changelog and the tag
@@ -52,6 +62,53 @@ Each package releases independently via an annotated git tag; the matching GitHu
    > command above enforces one push event per tag.
 
 5. The publish workflow verifies **version == tag** and **CHANGELOG has the section**, runs the full test matrix (ubuntu + windows), publishes, and creates the GitHub Release. Python releases also require a current `uv.lock`. MCP releases verify `server.json` uses the same version and publish its metadata to the official MCP Registry with GitHub OIDC.
+
+## Discover-call release cadence
+
+The coordinated release cadence runs the immutable reference and configured
+model lanes from the exact release commit. Raw operational records stay only in
+the ephemeral Actions runner. If both complete, the workflow applies
+`public-artifact-v1`, validates the paired public artifacts, updates the result
+index, and opens a **draft** PR for normal methodology and code review. It never
+writes benchmark artifacts directly to `main`.
+
+One-time repository setup:
+
+1. Create a protected environment named `benchmark-production`.
+2. Require an explicit reviewer before deployments to that environment.
+3. Configure environment secrets:
+   - `QVERIS_API_KEY`: benchmark-only QVeris key with an intentionally bounded
+     credit balance.
+   - `OPENAI_API_KEY`: least-privilege credential used only by the pinned Codex
+     CLI adapter runtime.
+   - `BENCHMARK_PR_TOKEN`: repository-scoped automation credential able to push
+     the generated branch and open a draft PR. Using a non-`GITHUB_TOKEN`
+     credential ensures the normal PR checks are triggered.
+4. Review `benchmarks/discover-call/cadence.json` before a release. It pins the
+   immutable task version, trials, discovery limit, model identifiers, adapter
+   paths, reasoning effort, and exact CLI version. Config changes require the
+   same review as benchmark methodology changes.
+
+The current 18-task, three-trial, two-lane configuration permits at most 108
+tool calls. Discover/Inspect traffic and model requests are additional, but no
+failed trial is selectively retried by the cadence. Failed jobs do not upload
+raw records or open a partial artifact PR.
+
+If a run pushes its result branch but fails before opening the draft PR, the
+next dispatch fails closed before making paid calls. Inspect and validate the
+existing `benchmark/cadence-<release-sha-prefix>` branch, then recover it by
+opening the draft PR manually. Do not delete the branch and rerun the paid
+sample merely to replace a completed attempt.
+
+For a material individual-package release that also needs a new quality
+baseline, dispatch the same protected workflow after its publish job succeeds,
+using the commit shared by the current coordinated tags:
+
+```bash
+gh workflow run discover-call-cadence.yml \
+  --ref main \
+  --field release_sha="$(git rev-parse HEAD)"
+```
 
 ## Python: PyPI Trusted Publisher
 
