@@ -20,7 +20,7 @@ test('scores a grounded, complete, successful workflow', () => {
     selection: { tool_id: 'weather.forecast' },
     inspection: { returned_tool_ids: ['weather.forecast'], required_parameters: ['city'] },
     parameters: { city: 'london' },
-    call: { attempted: true, success: true },
+    call: { attempted: true, success: true, result_nonempty: true },
   });
 
   assert.equal(result.selection_grounded, true);
@@ -49,6 +49,101 @@ test('does not count dry runs as workflow success', () => {
   assert.equal(result.workflow_success, false);
 });
 
+test('v3 constraints support composite parameters and explicit URL decoding', () => {
+  const exchange = {
+    id: 'exchange',
+    prompt: 'USD to EUR',
+    constraints: [
+      { id: 'base', aliases: ['base'], composite_aliases: ['symbol'], value: 'USD' },
+      { id: 'quote', aliases: ['quote'], composite_aliases: ['symbol'], value: 'EUR' },
+    ],
+  };
+  const news = {
+    id: 'news',
+    prompt: 'AI news',
+    constraints: [
+      {
+        id: 'query',
+        aliases: ['q'],
+        value: 'artificial intelligence',
+        match: 'contains',
+        normalizers: ['url_decode'],
+      },
+    ],
+  };
+  const baseRecord = {
+    run_id: 'run',
+    model: 'model-a',
+    trial: 1,
+    status: 'completed',
+    discovery: { result_tool_ids: ['tool'] },
+    selection: { tool_id: 'tool' },
+    inspection: { returned_tool_ids: ['tool'], required_parameters: [] },
+    call: { attempted: true, success: true, result_nonempty: true },
+  };
+
+  assert.equal(
+    scoreRecord(exchange, { ...baseRecord, task_id: exchange.id, parameters: { symbol: 'USD/EUR' } })
+      .constraint_accuracy,
+    1,
+  );
+  assert.equal(
+    scoreRecord(exchange, {
+      ...baseRecord,
+      run_id: 'run-reversed',
+      task_id: exchange.id,
+      parameters: { symbol: 'EUR/USD' },
+    }).constraint_accuracy,
+    0,
+  );
+  assert.equal(
+    scoreRecord(exchange, {
+      ...baseRecord,
+      run_id: 'run-substring',
+      task_id: exchange.id,
+      parameters: { symbol: 'USDT/EUR' },
+    }).constraint_accuracy,
+    0,
+  );
+  assert.equal(
+    scoreRecord(exchange, {
+      ...baseRecord,
+      run_id: 'run-compact',
+      task_id: exchange.id,
+      parameters: { symbol: 'USDEUR' },
+    }).constraint_accuracy,
+    1,
+  );
+  assert.equal(
+    scoreRecord(news, {
+      ...baseRecord,
+      run_id: 'run-news',
+      task_id: news.id,
+      parameters: { q: '%22artificial%20intelligence%22' },
+    }).constraint_accuracy,
+    1,
+  );
+});
+
+test('requires a non-empty result when result non-emptiness is recorded', () => {
+  const record = {
+    run_id: 'run-empty',
+    task_id: task.id,
+    model: 'model-a',
+    trial: 1,
+    status: 'completed',
+    discovery: { result_tool_ids: ['weather.forecast'] },
+    selection: { tool_id: 'weather.forecast' },
+    inspection: { returned_tool_ids: ['weather.forecast'], required_parameters: ['city'] },
+    parameters: { city: 'London' },
+    call: { attempted: true, success: true, result_nonempty: false },
+  };
+  const result = scoreRecord(task, record);
+  assert.equal(result.call_success, true);
+  assert.equal(result.result_nonempty, false);
+  assert.equal(result.workflow_success, false);
+});
+
 test('aggregates per model with parameter and workflow rates', () => {
   const records = [
     {
@@ -61,7 +156,7 @@ test('aggregates per model with parameter and workflow rates', () => {
       selection: { tool_id: 'weather.forecast' },
       inspection: { returned_tool_ids: ['weather.forecast'], required_parameters: ['city'] },
       parameters: { city: 'London' },
-      call: { attempted: true, success: true },
+      call: { attempted: true, success: true, result_nonempty: true },
     },
     {
       run_id: 'run-2',
@@ -88,8 +183,10 @@ test('aggregates per model with parameter and workflow rates', () => {
       parameters: summary.models[0].required_parameter_accuracy,
       constraints: summary.models[0].constraint_accuracy,
       calls: summary.models[0].call_success_rate,
+      preResult: summary.models[0].pre_result_gate_workflow_success_rate,
       workflow: summary.models[0].workflow_success_rate,
       failures: summary.models[0].failures_by_stage,
+      failureReasons: summary.models[0].failures_by_reason,
     },
     {
       tasks: 1,
@@ -99,11 +196,176 @@ test('aggregates per model with parameter and workflow rates', () => {
       parameters: 0.5,
       constraints: 0.5,
       calls: 0.5,
+      preResult: 0.5,
       workflow: 0.5,
-      failures: {},
+      failures: { select: 1 },
+      failureReasons: { ungrounded_selection: 1 },
     },
   );
-  assert.equal(summary.models[0].workflow_success_wilson_95.length, 2);
+  assert.equal(summary.models[0].workflow_success_task_cluster_bootstrap_95.length, 2);
+});
+
+test('classifies the earliest failed strict gate in aggregate diagnostics', () => {
+  const records = [
+    {
+      ...resultRecord({ taskId: task.id }),
+      parameters: { city: 'Paris' },
+      call: { attempted: true, success: false, result_nonempty: false },
+    },
+  ];
+  const summary = scoreRecords([task], records);
+
+  assert.deepEqual(summary.models[0].failures_by_stage, { parameterize: 1 });
+  assert.deepEqual(summary.models[0].failures_by_reason, { constraint_mismatch: 1 });
+});
+
+test('does not infer non-empty results when a successful legacy call lacks evidence', () => {
+  const record = {
+    run_id: 'run-unobserved',
+    task_id: task.id,
+    model: 'model-a',
+    trial: 1,
+    status: 'completed',
+    discovery: { result_tool_ids: ['weather.forecast'] },
+    selection: { tool_id: 'weather.forecast' },
+    inspection: { returned_tool_ids: ['weather.forecast'], required_parameters: ['city'] },
+    parameters: { city: 'London' },
+    call: { attempted: true, success: true },
+  };
+
+  const result = scoreRecord(task, record);
+  assert.equal(result.result_nonempty, null);
+  assert.equal(result.pre_result_gate_workflow_success, true);
+  assert.equal(result.workflow_success, null);
+
+  const summary = scoreRecords([task], [record]);
+  assert.equal(summary.models[0].result_nonempty_rate, null);
+  assert.equal(summary.models[0].pre_result_gate_workflow_success_rate, 1);
+  assert.equal(summary.models[0].workflow_success_rate, null);
+  assert.equal(summary.models[0].workflow_success_task_cluster_bootstrap_95, null);
+});
+
+test('scores aliases with task-versioned accepted values', () => {
+  const btcTask = {
+    id: 'crypto-price',
+    prompt: 'BTC price',
+    constraints: [
+      {
+        id: 'symbol',
+        aliases: ['symbol', 'id'],
+        value: 'BTC',
+        match: 'contains',
+        alias_values: { id: ['1'] },
+      },
+    ],
+  };
+  const result = scoreRecord(btcTask, {
+    run_id: 'run-btc',
+    task_id: btcTask.id,
+    model: 'model-a',
+    trial: 1,
+    status: 'completed',
+    discovery: { selection_grounded: true },
+    selection: { tool_id: 'crypto.tool' },
+    inspection: { selection_grounded: true, required_parameters: ['id'] },
+    parameters: { id: 1 },
+    call: { attempted: true, success: true, result_nonempty: true },
+  });
+
+  assert.equal(result.selection_grounded, true);
+  assert.equal(result.inspection_grounded, true);
+  assert.equal(result.constraint_accuracy, 1);
+  assert.equal(result.workflow_success, true);
+  assert.equal(
+    scoreRecord(btcTask, {
+      ...resultRecord({ taskId: btcTask.id }),
+      parameters: { id: 10 },
+    }).constraint_accuracy,
+    0,
+  );
+});
+
+test('scores sanitized parameterization attestations without publishing parameter values', () => {
+  const result = scoreRecord(task, {
+    ...resultRecord({ taskId: task.id }),
+    parameterization: {
+      required_parameter_accuracy: 1,
+      constraint_accuracy: 1,
+    },
+  });
+
+  assert.equal(result.required_parameter_accuracy, 1);
+  assert.equal(result.constraint_accuracy, 1);
+  assert.equal(result.workflow_success, true);
+  assert.throws(
+    () =>
+      scoreRecord(task, {
+        ...resultRecord({ taskId: task.id }),
+        parameterization: {
+          required_parameter_accuracy: 2,
+          constraint_accuracy: 1,
+        },
+      }),
+    /parameterization metrics/,
+  );
+});
+
+test('does not trust parameterization attestations when raw parameters are present', () => {
+  const result = scoreRecord(task, {
+    ...resultRecord({ taskId: task.id }),
+    inspection: {
+      selection_grounded: true,
+      required_parameters: ['city', ['query', 'url']],
+    },
+    parameters: { city: '', query: '' },
+    parameterization: {
+      required_parameter_accuracy: 1,
+      constraint_accuracy: 1,
+    },
+  });
+
+  assert.equal(result.required_parameter_accuracy, 0);
+  assert.equal(result.constraint_accuracy, 0);
+  assert.equal(result.workflow_success, false);
+});
+
+test('scores each one-of-required group as one requirement', () => {
+  const base = {
+    ...resultRecord({ taskId: task.id }),
+    inspection: {
+      selection_grounded: true,
+      required_parameters: ['city', ['query', 'url']],
+    },
+    parameters: { city: 'London', url: 'https://example.com' },
+  };
+  assert.equal(scoreRecord(task, base).required_parameter_accuracy, 1);
+  assert.equal(
+    scoreRecord(task, {
+      ...base,
+      parameters: { city: 'London' },
+    }).required_parameter_accuracy,
+    0.5,
+  );
+});
+
+test('does not score inherited prototype properties as supplied parameters', () => {
+  const prototypeTask = {
+    id: 'prototype-parameter',
+    prompt: 'Prototype parameter',
+    constraints: [{ id: 'prototype', aliases: ['__proto__'], value: '{}' }],
+  };
+  const result = scoreRecord(prototypeTask, {
+    ...resultRecord({ taskId: prototypeTask.id }),
+    inspection: {
+      selection_grounded: true,
+      required_parameters: ['toString'],
+    },
+    parameters: {},
+  });
+
+  assert.equal(result.required_parameter_accuracy, 0);
+  assert.equal(result.constraint_accuracy, 0);
+  assert.equal(result.workflow_success, false);
 });
 
 test('rejects run records for unknown tasks', () => {
@@ -112,6 +374,28 @@ test('rejects run records for unknown tasks', () => {
     /unknown task/,
   );
 });
+
+test('rejects duplicate task definitions before scoring', () => {
+  assert.throws(
+    () =>
+      scoreRecords([task, { ...task, prompt: 'Different duplicate definition' }], [resultRecord({ taskId: task.id })]),
+    /Duplicate benchmark task id/,
+  );
+});
+
+function resultRecord({ taskId }) {
+  return {
+    run_id: `run-${taskId}`,
+    task_id: taskId,
+    model: 'model-a',
+    trial: 1,
+    status: 'completed',
+    discovery: { selection_grounded: true },
+    selection: { tool_id: 'tool' },
+    inspection: { selection_grounded: true, required_parameters: [] },
+    call: { attempted: true, success: true, result_nonempty: true },
+  };
+}
 
 test('rejects missing tasks and duplicate trial numbers', () => {
   const completeRecord = {
@@ -159,5 +443,67 @@ test('rejects duplicate run ids and mixed benchmark conditions', () => {
         [record, { ...record, run_id: 'run-2', trial: 2, metadata: { adapter_revision: 'adapter-b', execute: true } }],
       ),
     /adapter_revision/,
+  );
+  assert.throws(
+    () =>
+      scoreRecords(
+        [task],
+        [
+          {
+            ...record,
+            schema_version: 1,
+            metadata: { ...record.metadata, runtime: { node: 'v22', platform: 'linux', arch: 'x64' } },
+          },
+          {
+            ...record,
+            run_id: 'run-2',
+            trial: 2,
+            schema_version: 1,
+            metadata: { ...record.metadata, runtime: { node: 'v24', platform: 'linux', arch: 'x64' } },
+          },
+        ],
+      ),
+    /runtime/,
+  );
+  assert.throws(
+    () =>
+      scoreRecords(
+        [task],
+        [
+          { ...record, schema_version: 1 },
+          { ...record, run_id: 'run-2', trial: 2, schema_version: 2 },
+        ],
+      ),
+    /schema_version/,
+  );
+  assert.throws(
+    () =>
+      scoreRecords(
+        [task],
+        [
+          { ...record, benchmark_version: 'v1' },
+          { ...record, run_id: 'run-2', trial: 2, benchmark_version: 'v2' },
+        ],
+      ),
+    /cannot mix benchmark versions/,
+  );
+  assert.throws(
+    () =>
+      scoreRecords([task], [{ ...record, metadata: { ...record.metadata, task_set_sha256: 'b'.repeat(64) } }], {
+        taskSetSha256: 'a'.repeat(64),
+      }),
+    /task-set digest does not match/,
+  );
+  assert.doesNotThrow(() =>
+    scoreRecords([task], [{ ...record, benchmark_version: 'v1' }], {
+      taskSetSha256: 'a'.repeat(64),
+    }),
+  );
+  assert.throws(
+    () =>
+      scoreRecords([task], [{ ...record, benchmark_version: 'v2' }], {
+        taskSetSha256: 'a'.repeat(64),
+      }),
+    /task-set digest does not match/,
   );
 });
