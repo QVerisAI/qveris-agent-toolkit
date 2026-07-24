@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const VERSION_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
+export const BENCHMARK_CADENCE_WORKFLOW = "discover-call-cadence.yml";
 
 export const CLIENTS = [
   {
@@ -116,6 +117,18 @@ function validateWorkflow(root, client, errors) {
   }
 }
 
+function validateCadenceWorkflow(root, errors) {
+  const workflowPath = `.github/workflows/${BENCHMARK_CADENCE_WORKFLOW}`;
+  if (!existsSync(resolve(root, workflowPath))) {
+    errors.push(`Benchmark cadence workflow is missing: ${workflowPath}`);
+    return;
+  }
+  const content = read(root, workflowPath);
+  if (!/^\s{2}workflow_dispatch:\s*$/m.test(content) || !/^\s{6}release_sha:\s*$/m.test(content)) {
+    errors.push(`${workflowPath} must expose a workflow_dispatch release_sha input`);
+  }
+}
+
 function packageVersionFromUvLock(content) {
   const section = content
     .split(/^\[\[package\]\]\s*$/m)
@@ -175,6 +188,7 @@ function validatePythonMetadata(root, client, errors) {
 
 export function readReleasePlan(root = ROOT) {
   const errors = [];
+  validateCadenceWorkflow(root, errors);
   const releases = CLIENTS.map((client) => {
     validateWorkflow(root, client, errors);
     const version =
@@ -344,6 +358,23 @@ function watchWorkflowRun(run) {
   execute("gh", ["run", "watch", String(run.databaseId), "--exit-status"], { stdio: "inherit" });
 }
 
+export function benchmarkCadenceDispatchArgs(head) {
+  if (!/^[0-9a-f]{40}$/.test(head)) throw new Error("Benchmark cadence requires a lowercase 40-character commit SHA");
+  return [
+    "workflow",
+    "run",
+    BENCHMARK_CADENCE_WORKFLOW,
+    "--ref",
+    "main",
+    "--field",
+    `release_sha=${head}`,
+  ];
+}
+
+function dispatchBenchmarkCadence(head) {
+  execute("gh", benchmarkCadenceDispatchArgs(head));
+}
+
 export async function publishReleasePlan(releases, operations) {
   const log = operations.log || console.log;
   const runs = [];
@@ -377,6 +408,10 @@ export async function publishReleasePlan(releases, operations) {
     for (const { release, run } of runs) {
       log(`\n${release.tag}: waiting for ${release.workflow}`);
       await operations.watchRun(run);
+    }
+    if (operations.dispatchCadence) {
+      log("\nAll publish workflows succeeded; dispatching the protected benchmark cadence");
+      await operations.dispatchCadence(operations.head, releases);
     }
   }
   return runs;
@@ -426,8 +461,13 @@ async function main() {
     pushTag: (release) => pushSingleTag(remote, release),
     waitForRun: (release) => waitForWorkflowRun(release, head),
     watchRun: watchWorkflowRun,
+    dispatchCadence: () => dispatchBenchmarkCadence(head),
   });
-  console.log("\nAll four client release workflows completed successfully.");
+  console.log(
+    watch
+      ? "\nAll four client release workflows completed successfully; benchmark cadence dispatched."
+      : `\nAll four client release workflows registered. After they succeed, dispatch the protected benchmark cadence:\n  gh ${benchmarkCadenceDispatchArgs(head).join(" ")}`,
+  );
 }
 
 if (resolve(process.argv[1] || "") === fileURLToPath(import.meta.url)) {

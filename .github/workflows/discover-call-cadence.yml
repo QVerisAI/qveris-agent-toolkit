@@ -1,0 +1,296 @@
+name: Discover-call release cadence
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_sha:
+        description: Exact coordinated-release commit shared by all four client tags
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: discover-call-cadence-${{ inputs.release_sha }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Validate coordinated release
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.duplicate.outputs.skip }}
+      release_sha: ${{ steps.plan.outputs.release_sha }}
+      release_short_sha: ${{ steps.plan.outputs.release_short_sha }}
+      branch: ${{ steps.plan.outputs.branch }}
+      release_tags: ${{ steps.plan.outputs.release_tags }}
+      task_set: ${{ steps.plan.outputs.task_set }}
+      task_version: ${{ steps.plan.outputs.task_version }}
+      trials: ${{ steps.plan.outputs.trials }}
+      discovery_limit: ${{ steps.plan.outputs.discovery_limit }}
+      records_per_lane: ${{ steps.plan.outputs.records_per_lane }}
+      maximum_billed_calls: ${{ steps.plan.outputs.maximum_billed_calls }}
+      reference_model: ${{ steps.plan.outputs.reference_model }}
+      reference_model_revision: ${{ steps.plan.outputs.reference_model_revision }}
+      reference_adapter: ${{ steps.plan.outputs.reference_adapter }}
+      configured_model: ${{ steps.plan.outputs.configured_model }}
+      configured_model_revision: ${{ steps.plan.outputs.configured_model_revision }}
+      configured_adapter: ${{ steps.plan.outputs.configured_adapter }}
+      cli_package: ${{ steps.plan.outputs.cli_package }}
+      cli_version: ${{ steps.plan.outputs.cli_version }}
+      reasoning_effort: ${{ steps.plan.outputs.reasoning_effort }}
+      reference_stem: ${{ steps.plan.outputs.reference_stem }}
+      configured_stem: ${{ steps.plan.outputs.configured_stem }}
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Validate release input and checkout
+        env:
+          RELEASE_SHA: ${{ inputs.release_sha }}
+        run: |
+          set -euo pipefail
+          if ! [[ "${RELEASE_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::release_sha must be a lowercase 40-character commit SHA"
+            exit 1
+          fi
+          git fetch --force --tags origin main
+          git checkout --detach "${RELEASE_SHA}"
+
+      - name: Build immutable cadence plan
+        id: plan
+        env:
+          RELEASE_SHA: ${{ inputs.release_sha }}
+        run: >-
+          node scripts/benchmark-release-cadence.mjs plan
+          --release-sha "${RELEASE_SHA}"
+          --github-output "${GITHUB_OUTPUT}"
+
+      - name: Reject duplicate release cadence
+        id: duplicate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.plan.outputs.branch }}
+        run: |
+          set -euo pipefail
+          PR="$(gh pr list --repo "${GITHUB_REPOSITORY}" --state all --head "${BRANCH}" \
+            --json number,state,mergedAt,url --limit 1)"
+          COUNT="$(jq 'length' <<<"${PR}")"
+          if [ "${COUNT}" = "0" ]; then
+            echo "skip=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          STATE="$(jq -r '.[0] | if .mergedAt then "MERGED" else .state end' <<<"${PR}")"
+          URL="$(jq -r '.[0].url' <<<"${PR}")"
+          if [ "${STATE}" = "OPEN" ] || [ "${STATE}" = "MERGED" ]; then
+            echo "Cadence already represented by ${URL} (${STATE}); no paid rerun will start."
+            echo "skip=true" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          echo "::error::A closed, unmerged cadence PR already exists for ${BRANCH}: ${URL}"
+          exit 1
+
+  benchmark:
+    name: Paid reference and configured-model sample
+    needs: plan
+    if: needs.plan.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    environment:
+      name: benchmark-production
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      RELEASE_SHA: ${{ needs.plan.outputs.release_sha }}
+      RELEASE_SHORT_SHA: ${{ needs.plan.outputs.release_short_sha }}
+      RELEASE_TAGS: ${{ needs.plan.outputs.release_tags }}
+      BRANCH: ${{ needs.plan.outputs.branch }}
+      TASK_SET: ${{ needs.plan.outputs.task_set }}
+      TASK_VERSION: ${{ needs.plan.outputs.task_version }}
+      TRIALS: ${{ needs.plan.outputs.trials }}
+      DISCOVERY_LIMIT: ${{ needs.plan.outputs.discovery_limit }}
+      RECORDS_PER_LANE: ${{ needs.plan.outputs.records_per_lane }}
+      MAXIMUM_BILLED_CALLS: ${{ needs.plan.outputs.maximum_billed_calls }}
+      REFERENCE_MODEL: ${{ needs.plan.outputs.reference_model }}
+      REFERENCE_MODEL_REVISION: ${{ needs.plan.outputs.reference_model_revision }}
+      REFERENCE_ADAPTER: ${{ needs.plan.outputs.reference_adapter }}
+      CONFIGURED_MODEL: ${{ needs.plan.outputs.configured_model }}
+      CONFIGURED_MODEL_REVISION: ${{ needs.plan.outputs.configured_model_revision }}
+      CONFIGURED_ADAPTER: ${{ needs.plan.outputs.configured_adapter }}
+      CLI_PACKAGE: ${{ needs.plan.outputs.cli_package }}
+      CLI_VERSION: ${{ needs.plan.outputs.cli_version }}
+      REASONING_EFFORT: ${{ needs.plan.outputs.reasoning_effort }}
+      REFERENCE_STEM: ${{ needs.plan.outputs.reference_stem }}
+      CONFIGURED_STEM: ${{ needs.plan.outputs.configured_stem }}
+    steps:
+      - name: Check protected environment configuration
+        env:
+          QVERIS_API_KEY: ${{ secrets.QVERIS_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          BENCHMARK_PR_TOKEN: ${{ secrets.BENCHMARK_PR_TOKEN }}
+        run: |
+          set -euo pipefail
+          missing=()
+          [ -n "${QVERIS_API_KEY}" ] || missing+=("QVERIS_API_KEY")
+          [ -n "${OPENAI_API_KEY}" ] || missing+=("OPENAI_API_KEY")
+          [ -n "${BENCHMARK_PR_TOKEN}" ] || missing+=("BENCHMARK_PR_TOKEN")
+          if [ "${#missing[@]}" -ne 0 ]; then
+            echo "::error title=Benchmark environment is incomplete::Missing protected environment secrets: ${missing[*]}"
+            exit 1
+          fi
+
+      - name: Checkout release commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.plan.outputs.release_sha }}
+          fetch-depth: 0
+          fetch-tags: true
+          token: ${{ secrets.BENCHMARK_PR_TOKEN }}
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: benchmarks/discover-call/package-lock.json
+
+      - name: Install benchmark and pinned model adapter runtime
+        run: |
+          set -euo pipefail
+          npm --prefix benchmarks/discover-call ci
+          npm install --global "${CLI_PACKAGE}@${CLI_VERSION}"
+          ACTUAL_VERSION="$(codex --version)"
+          if [[ "${ACTUAL_VERSION}" != *"${CLI_VERSION}"* ]]; then
+            echo "::error::Installed CLI version '${ACTUAL_VERSION}' does not contain expected ${CLI_VERSION}"
+            exit 1
+          fi
+
+      - name: Record approved call budget
+        run: |
+          {
+            echo "### Approved paid benchmark"
+            echo ""
+            echo "- Release: \`${RELEASE_SHA}\`"
+            echo "- Tags: \`${RELEASE_TAGS}\`"
+            echo "- Records per lane: ${RECORDS_PER_LANE}"
+            echo "- Maximum possible billed calls: ${MAXIMUM_BILLED_CALLS}"
+            echo "- Model: \`${CONFIGURED_MODEL}\`"
+            echo "- CLI: \`${CLI_PACKAGE}@${CLI_VERSION}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Run curated reference lane
+        working-directory: benchmarks/discover-call
+        env:
+          QVERIS_API_KEY: ${{ secrets.QVERIS_API_KEY }}
+        run: >-
+          node src/run.mjs
+          --model "${REFERENCE_MODEL}"
+          --model-revision "${REFERENCE_MODEL_REVISION}"
+          --lane reference
+          --adapter node
+          --adapter-arg "${REFERENCE_ADAPTER}"
+          --adapter-revision "${RELEASE_SHA}/reference-v1"
+          --toolkit-revision "${RELEASE_SHA}"
+          --tasks "${TASK_SET}"
+          --trials "${TRIALS}"
+          --limit "${DISCOVERY_LIMIT}"
+          --execute
+          --output "${RUNNER_TEMP}/reference-private.runs.jsonl"
+
+      - name: Run configured-model lane
+        working-directory: benchmarks/discover-call
+        env:
+          QVERIS_API_KEY: ${{ secrets.QVERIS_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: >-
+          node src/run.mjs
+          --model "${CONFIGURED_MODEL}"
+          --model-revision "${CONFIGURED_MODEL_REVISION}"
+          --lane configured-model
+          --adapter node
+          --adapter-arg "${CONFIGURED_ADAPTER}"
+          --adapter-revision "${RELEASE_SHA}/codex-cli-${CLI_VERSION}/${REASONING_EFFORT}"
+          --toolkit-revision "${RELEASE_SHA}"
+          --tasks "${TASK_SET}"
+          --trials "${TRIALS}"
+          --limit "${DISCOVERY_LIMIT}"
+          --execute
+          --output "${RUNNER_TEMP}/configured-private.runs.jsonl"
+
+      - name: Publish sanitized artifact pairs
+        working-directory: benchmarks/discover-call
+        run: |
+          set -euo pipefail
+          node src/publish.mjs \
+            --tasks "${TASK_SET}" \
+            --runs "${RUNNER_TEMP}/reference-private.runs.jsonl" \
+            --output-runs "results/${REFERENCE_STEM}.runs.jsonl" \
+            --output-summary "results/${REFERENCE_STEM}.summary.json"
+          node src/publish.mjs \
+            --tasks "${TASK_SET}" \
+            --runs "${RUNNER_TEMP}/configured-private.runs.jsonl" \
+            --output-runs "results/${CONFIGURED_STEM}.runs.jsonl" \
+            --output-summary "results/${CONFIGURED_STEM}.summary.json"
+
+      - name: Generate candidate result notes
+        run: >-
+          node scripts/benchmark-release-cadence.mjs document
+          --release-sha "${RELEASE_SHA}"
+          --reference-runs "benchmarks/discover-call/results/${REFERENCE_STEM}.runs.jsonl"
+          --reference-summary "benchmarks/discover-call/results/${REFERENCE_STEM}.summary.json"
+          --configured-runs "benchmarks/discover-call/results/${CONFIGURED_STEM}.runs.jsonl"
+          --configured-summary "benchmarks/discover-call/results/${CONFIGURED_STEM}.summary.json"
+          --readme "benchmarks/discover-call/results/README.md"
+          --pr-body "${RUNNER_TEMP}/pr-body.md"
+
+      - name: Validate sanitized publication
+        working-directory: benchmarks/discover-call
+        run: |
+          set -euo pipefail
+          npm run validate
+          npm test
+          test "$(wc -l < "results/${REFERENCE_STEM}.runs.jsonl")" -eq "${RECORDS_PER_LANE}"
+          test "$(wc -l < "results/${CONFIGURED_STEM}.runs.jsonl")" -eq "${RECORDS_PER_LANE}"
+
+      - name: Confirm raw records were not added
+        run: |
+          set -euo pipefail
+          if git ls-files --others --cached --exclude-standard \
+            | grep -E '(^|/)(private|raw|runs)/|private\.runs\.jsonl$'; then
+            echo "::error::A private/raw benchmark path was added to git"
+            exit 1
+          fi
+
+      - name: Commit candidate artifacts
+        env:
+          GH_TOKEN: ${{ secrets.BENCHMARK_PR_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "qveris-benchmark[bot]"
+          git config user.email "qveris-benchmark@users.noreply.github.com"
+          git switch -C "${BRANCH}"
+          git add \
+            "benchmarks/discover-call/results/${REFERENCE_STEM}.runs.jsonl" \
+            "benchmarks/discover-call/results/${REFERENCE_STEM}.summary.json" \
+            "benchmarks/discover-call/results/${CONFIGURED_STEM}.runs.jsonl" \
+            "benchmarks/discover-call/results/${CONFIGURED_STEM}.summary.json" \
+            "benchmarks/discover-call/results/README.md"
+          git diff --cached --check
+          git commit -m "benchmark: publish release cadence ${RELEASE_SHORT_SHA}"
+          gh auth setup-git
+          git push --force-with-lease origin "HEAD:refs/heads/${BRANCH}"
+          gh pr create \
+            --repo "${GITHUB_REPOSITORY}" \
+            --base main \
+            --head "${BRANCH}" \
+            --draft \
+            --title "benchmark: publish release cadence ${RELEASE_SHORT_SHA}" \
+            --body-file "${RUNNER_TEMP}/pr-body.md"

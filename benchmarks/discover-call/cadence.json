@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "task_set": "benchmarks/discover-call/tasks/v4.jsonl",
+  "task_version": "v4",
+  "trials": 3,
+  "discovery_limit": 10,
+  "reference": {
+    "model": "reference-v1",
+    "model_revision": "deterministic-reference-v1",
+    "adapter": "benchmarks/discover-call/adapters/reference.mjs"
+  },
+  "configured_model": {
+    "model": "gpt-5.6-sol",
+    "model_revision": "unreported",
+    "adapter": "benchmarks/discover-call/adapters/codex-cli.mjs",
+    "cli_package": "@openai/codex",
+    "cli_version": "0.144.1",
+    "reasoning_effort": "medium"
+  }
+}

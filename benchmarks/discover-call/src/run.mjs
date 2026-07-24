@@ -7,6 +7,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { createApiClient } from './api.mjs';
+import { stripAdapterSecrets } from './adapter-environment.mjs';
 import { runBenchmark } from './harness.mjs';
 import { readJsonLines, validatePathSeparation, writeJsonLines } from './io.mjs';
 
@@ -75,7 +76,7 @@ export function createProcessAdapter({ command, args = [], timeoutMs = 120_000, 
     throw new Error('forceKillAfterMs must be an integer from 1 to 10000');
   }
   const adapterEnv = { ...process.env };
-  stripQverisEnvironment(adapterEnv);
+  stripAdapterSecrets(adapterEnv);
   return (payload) =>
     new Promise((resolvePromise, reject) => {
       const child = spawn(command, args, {
@@ -151,12 +152,6 @@ export function createProcessAdapter({ command, args = [], timeoutMs = 120_000, 
       });
       child.stdin.end(JSON.stringify(payload));
     });
-}
-
-function stripQverisEnvironment(env) {
-  for (const name of Object.keys(env)) {
-    if (name.toUpperCase().startsWith('QVERIS_')) delete env[name];
-  }
 }
 
 function parseArgs(argv) {

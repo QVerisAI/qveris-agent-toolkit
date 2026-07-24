@@ -6,7 +6,9 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import {
+  BENCHMARK_CADENCE_WORKFLOW,
   CLIENTS,
+  benchmarkCadenceDispatchArgs,
   extractChangelogRelease,
   publishReleasePlan,
   readReleasePlan,
@@ -52,6 +54,10 @@ function fixtureRoot(overrides = {}) {
       `name: Publish ${client.label}\n\non:\n  workflow_dispatch:\n  push:\n    tags:\n      - "${client.tagPrefix}*"\n\njobs: {}\n`,
     );
   }
+  writeFileSync(
+    join(root, ".github/workflows", BENCHMARK_CADENCE_WORKFLOW),
+    "name: Benchmark cadence\n\non:\n  workflow_dispatch:\n    inputs:\n      release_sha:\n        required: true\n\njobs: {}\n",
+  );
   return root;
 }
 
@@ -97,6 +103,19 @@ test("repository publish workflows exist and listen for every coordinated tag", 
       ["python-sdk-publish.yml", "python-sdk-v*"],
     ],
   );
+});
+
+test("release preflight requires the protected benchmark cadence dispatch input", () => {
+  const missingRoot = fixtureRoot();
+  rmSync(join(missingRoot, ".github/workflows", BENCHMARK_CADENCE_WORKFLOW));
+  assert.throws(() => readReleasePlan(missingRoot), /Benchmark cadence workflow is missing/);
+
+  const mismatchedRoot = fixtureRoot();
+  writeFileSync(
+    join(mismatchedRoot, ".github/workflows", BENCHMARK_CADENCE_WORKFLOW),
+    "name: Benchmark cadence\n\non:\n  workflow_dispatch:\n\njobs: {}\n",
+  );
+  assert.throws(() => readReleasePlan(mismatchedRoot), /must expose a workflow_dispatch release_sha input/);
 });
 
 test("readReleasePlan rejects drift between package and release metadata", () => {
@@ -154,6 +173,7 @@ test("publishReleasePlan pushes one tag at a time and confirms each run before t
       return { databaseId: release.tag };
     },
     watchRun: async (run) => events.push(`watch:${run.databaseId}`),
+    dispatchCadence: async (head) => events.push(`cadence:${head}`),
   });
 
   assert.equal(runs.length, 4);
@@ -167,6 +187,7 @@ test("publishReleasePlan pushes one tag at a time and confirms each run before t
     events.filter((event) => event.startsWith("push:")),
     releases.map((release) => `push:${release.tag}`),
   );
+  assert.equal(events.at(-1), "cadence:release-head");
 });
 
 test("publishReleasePlan resumes an existing tag without pushing it again", async () => {
@@ -189,7 +210,22 @@ test("publishReleasePlan resumes an existing tag without pushing it again", asyn
       return { databaseId: 1 };
     },
     watchRun: async () => events.push("watch"),
+    dispatchCadence: async () => events.push("cadence"),
   });
 
   assert.deepEqual(events, ["registered"]);
+});
+
+test("benchmark cadence dispatch pins the coordinated release commit", () => {
+  const head = "a".repeat(40);
+  assert.deepEqual(benchmarkCadenceDispatchArgs(head), [
+    "workflow",
+    "run",
+    "discover-call-cadence.yml",
+    "--ref",
+    "main",
+    "--field",
+    `release_sha=${head}`,
+  ]);
+  assert.throws(() => benchmarkCadenceDispatchArgs("main"), /40-character commit SHA/);
 });
