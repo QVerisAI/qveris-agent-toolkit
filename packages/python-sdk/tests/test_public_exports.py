@@ -4,12 +4,17 @@ from qveris import (
     CredentialContext,
     CredentialProvider,
     Message,
+    ProbeQuoteResult,
+    ProbeSchemaResult,
+    ProbeSchemaViolation,
+    ProbeUnknownResult,
     QverisApiError,
     QverisClient,
     QverisError,
     RequestMetadata,
     SearchResponse,
     ToolExecutionResponse,
+    ToolProbeResponse,
 )
 from qveris.client import (
     CALL_TOOL_DEF,
@@ -34,6 +39,13 @@ def test_public_sdk_exports_cover_core_classes_and_models() -> None:
     assert Message(role="user", content="hello").role == "user"
     assert SearchResponse(results=[{"tool_id": "tool-1"}]).results[0].tool_id == "tool-1"
     assert ToolExecutionResponse(execution_id="exec-1", success=True).success is True
+    violation = ProbeSchemaViolation(type="required", message="city is required", param="city")
+    schema = ProbeSchemaResult(valid=False, violations=[violation])
+    quote = ProbeQuoteResult(currency="credits", exact=False, estimate_credits=1.5)
+    unknown = ProbeUnknownResult(verdict="unknown", reason="not available")
+    probe = ToolProbeResponse(schema=schema, quote=quote, coverage=unknown, sample=unknown)
+    assert probe.schema_ is schema
+    assert probe.quote is quote
 
 
 def test_tool_models_accept_additive_and_multilingual_api_fields() -> None:

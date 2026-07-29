@@ -229,8 +229,7 @@ Capability Resolve/Query、selection token、idempotency key 和 execution looku
 
 ## API 参考
 
-[根据源码生成的 API 参考](python-sdk-api.md)列出当前公开 client、Agent、配置和响应模型的签名。
-Sphinx 会根据 Python 对象与 docstring 重新生成该页面，CI 同时检查是否漂移。
+以下章节概述当前公开 client、Agent、配置和响应模型的签名。
 
 ### `QverisClient`
 

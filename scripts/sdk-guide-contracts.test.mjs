@@ -22,6 +22,11 @@ const JS_GUIDES = [
   "docs/cn/zh-CN/js-sdk.md",
 ];
 
+const PYTHON_API_REFERENCES = [
+  "docs/en-US/python-sdk-api.md",
+  "docs/zh-CN/python-sdk-api.md",
+];
+
 test("all Python SDK guides document the v0.6 paid-call contract", () => {
   for (const path of PYTHON_GUIDES) {
     const guide = read(path);
@@ -53,13 +58,42 @@ test("all TypeScript SDK guides document Probe and strict paid calls", () => {
   }
 });
 
+test("generated Python API references document public Probe response models", () => {
+  for (const path of PYTHON_API_REFERENCES) {
+    const reference = read(path);
+    for (const model of [
+      "ProbeSchemaViolation",
+      "ProbeSchemaResult",
+      "ProbeQuoteResult",
+      "ProbeUnknownResult",
+      "ToolProbeResponse",
+    ]) {
+      assert.ok(
+        reference.includes(`<a id="qveris.${model}"></a>`),
+        `${path} is missing ${model}`,
+      );
+    }
+    assert.match(
+      reference,
+      /probe\([^)]*\) → \[ToolProbeResponse\]\(#qveris\.ToolProbeResponse\)/,
+      `${path} does not link probe() to ToolProbeResponse`,
+    );
+  }
+});
+
 test("China SDK guides keep the China endpoint boundary", () => {
-  for (const path of [
-    "docs/cn/zh-CN/python-sdk.md",
-    "docs/cn/zh-CN/js-sdk.md",
-  ]) {
+  const guides = [
+    ["docs/cn/zh-CN/python-sdk.md", "python-sdk-api.md"],
+    ["docs/cn/zh-CN/js-sdk.md", "js-sdk-api.md"],
+  ];
+
+  for (const [path, unavailableReference] of guides) {
     const guide = read(path);
     assert.ok(guide.includes("https://qveris.cn/api/v1"), `${path} is missing the China API endpoint`);
     assert.ok(!guide.includes("qveris.ai"), `${path} crosses the public deployment boundary`);
+    assert.ok(
+      !guide.includes(`](${unavailableReference})`),
+      `${path} links to a global-only API reference`,
+    );
   }
 });
