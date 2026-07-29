@@ -24,7 +24,7 @@ Rate-limit backoff is retried pressure, not failure — surface this rather than
 
 <a id="qveris.QverisClient.close"></a>
 
-#### *async* close()
+#### *async* close() → None
 
 Close the underlying HTTP client.
 

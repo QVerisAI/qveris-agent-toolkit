@@ -93,6 +93,7 @@ _SENSITIVE_KEYS = frozenset(
 )
 _BEARER_PATTERN = re.compile(r"(?i)\bBearer\s+[^\s,;]+")
 _API_KEY_PATTERN = re.compile(r"(?i)\bsk-[a-z0-9._-]{8,}")
+_URL_PATTERN = re.compile(r"(?i)https?://[^\s\"'<>]+")
 _SIGNED_URL_MARKERS = (
     "x-amz-signature=",
     "x-goog-signature=",
@@ -100,6 +101,7 @@ _SIGNED_URL_MARKERS = (
     "sig=",
     "token=",
 )
+_NORMALIZED_SENSITIVE_KEYS = frozenset(re.sub(r"[^a-z0-9]", "", key.lower()) for key in _SENSITIVE_KEYS)
 
 
 @dataclass
@@ -452,26 +454,32 @@ class QverisClient:
         if depth >= 8:
             return "<diagnostic value omitted>"
         if isinstance(value, dict):
-            safe: Dict[Any, Any] = {}
+            safe_dict: Dict[Any, Any] = {}
             for index, (key, item) in enumerate(value.items()):
                 if index >= 100:
-                    safe["__truncated__"] = True
+                    safe_dict["__truncated__"] = True
                     break
-                safe[key] = "***" if str(key).lower() in _SENSITIVE_KEYS else self._redact_sensitive(item, depth + 1)
-            return safe
+                normalized_key = re.sub(r"[^a-z0-9]", "", str(key).lower())
+                safe_dict[key] = (
+                    "***" if normalized_key in _NORMALIZED_SENSITIVE_KEYS else self._redact_sensitive(item, depth + 1)
+                )
+            return safe_dict
         if isinstance(value, list):
             return [self._redact_sensitive(item, depth + 1) for item in value[:100]]
         if isinstance(value, tuple):
             return tuple(self._redact_sensitive(item, depth + 1) for item in value[:100])
         if isinstance(value, str):
-            safe = _BEARER_PATTERN.sub("Bearer ***", value)
-            safe = _API_KEY_PATTERN.sub("***", safe)
-            lower = safe.lower()
-            if safe.startswith(("http://", "https://")) and any(marker in lower for marker in _SIGNED_URL_MARKERS):
-                return "***"
-            if len(safe) > 8192:
-                return safe[:8192] + "..."
-            return safe
+            safe_text = _BEARER_PATTERN.sub("Bearer ***", value)
+            safe_text = _API_KEY_PATTERN.sub("***", safe_text)
+
+            def redact_signed_url(match: re.Match[str]) -> str:
+                url = match.group(0)
+                return "***" if any(marker in url.lower() for marker in _SIGNED_URL_MARKERS) else url
+
+            safe_text = _URL_PATTERN.sub(redact_signed_url, safe_text)
+            if len(safe_text) > 8192:
+                return safe_text[:8192] + "..."
+            return safe_text
         return value
 
     def _safe_message(self, value: Any, fallback: str) -> str:
@@ -575,7 +583,7 @@ class QverisClient:
             return status >= 400
         return False
 
-    async def close(self):
+    async def close(self) -> None:
         """
         Close the underlying HTTP client.
 
@@ -588,14 +596,37 @@ class QverisClient:
                 self._closing = True
             try:
                 await self._no_active_requests.wait()
-                if self._owns_http_client:
-                    await self.client.aclose()
             except asyncio.CancelledError:
-                async with self._lifecycle_lock:
+                # No transport close has started, so cancellation can safely
+                # return the wrapper to its open state.
+                self._closing = False
+                raise
+
+            if not self._owns_http_client:
+                self._closed = True
+                self._closing = False
+                return
+
+            # httpx marks AsyncClient closed before awaiting transport.aclose().
+            # Once that boundary is crossed, cancellation must not make this
+            # wrapper appear reusable while its transport is half-closed.
+            close_task = asyncio.create_task(self.client.aclose())
+            try:
+                await asyncio.shield(close_task)
+            except asyncio.CancelledError:
+                try:
+                    await close_task
+                finally:
+                    self._closed = True
                     self._closing = False
                 raise
-            async with self._lifecycle_lock:
+            except Exception:
                 self._closed = True
+                self._closing = False
+                raise
+
+            self._closed = True
+            self._closing = False
 
     async def discover(
         self,

@@ -230,14 +230,17 @@ async def test_paid_call_cancellation_preserves_cancellation_without_replay() ->
 @pytest.mark.asyncio
 async def test_debug_and_api_error_details_redact_credentials_and_signed_urls() -> None:
     debug: List[str] = []
+    embedded_signed_url = "https://files.example/result?X-Amz-Signature=embedded-secret"
+    selection_token = "opaque-selection-secret-273"
 
     def handler(_request: httpx.Request) -> httpx.Response:
         return httpx.Response(
             401,
             json={
-                "message": f"Rejected Bearer {SYNTHETIC_TOKEN}",
+                "message": f"Rejected Bearer {SYNTHETIC_TOKEN}; inspect {embedded_signed_url}",
                 "authorization": f"Bearer {SYNTHETIC_TOKEN}",
                 "full_content_file_url": "https://files.example/result?X-Amz-Signature=secret",
+                "selectionToken": selection_token,
             },
         )
 
@@ -251,8 +254,11 @@ async def test_debug_and_api_error_details_redact_credentials_and_signed_urls() 
     rendered = repr(exc_info.value.details) + "\n" + "\n".join(debug)
     assert SYNTHETIC_TOKEN not in rendered
     assert "X-Amz-Signature=secret" not in rendered
+    assert "X-Amz-Signature=embedded-secret" not in rendered
+    assert selection_token not in rendered
     assert exc_info.value.details["authorization"] == "***"
     assert exc_info.value.details["full_content_file_url"] == "***"
+    assert exc_info.value.details["selectionToken"] == "***"
 
     traceback = exc_info.value.__traceback__
     while traceback is not None:
@@ -416,6 +422,68 @@ async def test_owned_client_close_waits_for_inflight_request_and_closes_once() -
     await request_task
     await asyncio.gather(*close_tasks)
 
+    assert transport.close_count == 1
+
+
+@pytest.mark.asyncio
+async def test_cancelling_owned_transport_close_finishes_close_and_keeps_state_consistent() -> None:
+    close_started = asyncio.Event()
+    release_close = asyncio.Event()
+
+    class BlockingCloseTransport(httpx.AsyncBaseTransport):
+        def __init__(self) -> None:
+            self.close_count = 0
+
+        async def handle_async_request(self, _request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, json={"search_id": "search-1", "results": []})
+
+        async def aclose(self) -> None:
+            self.close_count += 1
+            close_started.set()
+            await release_close.wait()
+
+    transport = BlockingCloseTransport()
+    client = QverisClient(QverisConfig(api_key=SYNTHETIC_TOKEN), transport=transport)
+    close_task = asyncio.create_task(client.close())
+    await close_started.wait()
+
+    close_task.cancel()
+    await asyncio.sleep(0)
+    assert not close_task.done()
+
+    release_close.set()
+    with pytest.raises(asyncio.CancelledError):
+        await close_task
+
+    assert transport.close_count == 1
+    with pytest.raises(QverisClientClosedError):
+        await client.discover("weather")
+    await client.close()
+
+
+@pytest.mark.asyncio
+async def test_owned_transport_close_failure_still_seals_client_state() -> None:
+    class FailingCloseTransport(httpx.AsyncBaseTransport):
+        def __init__(self) -> None:
+            self.close_count = 0
+
+        async def handle_async_request(self, _request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, json={"search_id": "search-1", "results": []})
+
+        async def aclose(self) -> None:
+            self.close_count += 1
+            raise RuntimeError("synthetic close failure")
+
+    transport = FailingCloseTransport()
+    client = QverisClient(QverisConfig(api_key=SYNTHETIC_TOKEN), transport=transport)
+
+    with pytest.raises(RuntimeError, match="synthetic close failure"):
+        await client.close()
+
+    assert transport.close_count == 1
+    with pytest.raises(QverisClientClosedError):
+        await client.discover("weather")
+    await client.close()
     assert transport.close_count == 1
 
 
