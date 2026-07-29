@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-07-29
+
 ### Changed
 
 - Paid `call()` operations are strict single-submit by default and no longer retry `429`/`503`, follow HTTP redirects, or automatically remove a rejected projection field and replay. The deprecated `compatibilityMode: "legacyOptionalFields"` opt-in preserves the legacy projection replay when explicitly required. ([#273])
@@ -54,7 +56,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - `0.1.x` under this npm name was an early MCP-focused SDK, superseded by `@qverisai/mcp`.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.6.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.7.0...HEAD
+[0.7.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.6.0...js-sdk-v0.7.0
 [0.6.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.5.0...js-sdk-v0.6.0
 [0.5.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.4.0...js-sdk-v0.5.0
 [0.4.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.3.0...js-sdk-v0.4.0
