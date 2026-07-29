@@ -54,12 +54,18 @@ test("all TypeScript SDK guides document Probe and strict paid calls", () => {
 });
 
 test("China SDK guides keep the China endpoint boundary", () => {
-  for (const path of [
-    "docs/cn/zh-CN/python-sdk.md",
-    "docs/cn/zh-CN/js-sdk.md",
-  ]) {
+  const guides = [
+    ["docs/cn/zh-CN/python-sdk.md", "python-sdk-api.md"],
+    ["docs/cn/zh-CN/js-sdk.md", "js-sdk-api.md"],
+  ];
+
+  for (const [path, unavailableReference] of guides) {
     const guide = read(path);
     assert.ok(guide.includes("https://qveris.cn/api/v1"), `${path} is missing the China API endpoint`);
     assert.ok(!guide.includes("qveris.ai"), `${path} crosses the public deployment boundary`);
+    assert.ok(
+      !guide.includes(`](${unavailableReference})`),
+      `${path} links to a global-only API reference`,
+    );
   }
 });
