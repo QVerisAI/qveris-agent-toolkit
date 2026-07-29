@@ -191,7 +191,7 @@ agent = Agent(
 
 ## Safe paid calls and transport ownership
 
-Paid `call()` requests are strict single-submit by default. The SDK does not automatically retry `429`/`503`, timeout, or transport failures, and it does not remove a rejected projection field and resubmit. A typed error reports `request_metadata.http_attempts == 1`. If an older service requires the former projection fallback, opt in explicitly:
+Paid `call()` requests are strict single-submit by default. The SDK does not follow HTTP redirects or automatically retry `429`/`503`, timeout, or transport failures, and it does not remove a rejected projection field and resubmit. A typed error reports `request_metadata.http_attempts == 1`. If an older service requires the former projection fallback, opt in explicitly:
 
 ```python
 result = await client.call(

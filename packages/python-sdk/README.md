@@ -103,7 +103,7 @@ First-class typed APIs:
 
 Backward-compatible aliases remain available: `search_tools`, `get_tools_by_ids`, and `execute_tool`.
 
-Projection arguments are never sent unless explicitly configured. A paid `call()` is strict single-submit by default: it does not retry `429`/`503`, transport/timeout failures, or a rejected optional field. If an older service requires projection fallback, `compatibility_mode="legacy_optional_fields"` explicitly opts into one deprecated replay and records it in `response.request_metadata`.
+Projection arguments are never sent unless explicitly configured. A paid `call()` is strict single-submit by default: it does not retry `429`/`503`, follow HTTP redirects, retry transport/timeout failures, or replay a rejected optional field. If an older service requires projection fallback, `compatibility_mode="legacy_optional_fields"` explicitly opts into one deprecated replay and records it in `response.request_metadata`.
 
 ## Typed Models
 

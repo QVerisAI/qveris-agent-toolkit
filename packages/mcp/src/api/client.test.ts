@@ -9,7 +9,7 @@ import { QverisClient, createClientFromEnv } from './client.js';
 const PAID_CALL_POLICY = JSON.parse(
   readFileSync(new URL('../../../../test-fixtures/paid-call-policy.json', import.meta.url), 'utf8'),
 ) as {
-  paid_call: { expected_http_attempts: number };
+  paid_call: { expected_http_attempts: number; allow_redirect_replay: boolean };
   read_operations: { retryable_statuses: number[] };
   contract_fixtures: {
     n_minus_1: { status: number; body: Record<string, unknown> };
@@ -532,6 +532,8 @@ describe('QverisClient', () => {
       ).rejects.toMatchObject({ status: 422 });
 
       expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(PAID_CALL_POLICY.paid_call.allow_redirect_replay).toBe(false);
+      expect(fetchMock.mock.calls[0][1]).toMatchObject({ redirect: 'error' });
     });
 
     it('should not downgrade an invalid projection', async () => {

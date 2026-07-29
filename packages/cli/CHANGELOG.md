@@ -8,7 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
-- Paid `qveris call` requests are now strict single-submit: the CLI does not retry `429`/`503`, replay after OAuth refresh on `401`, or remove a rejected projection field and resubmit. Read commands retain bounded retry and OAuth refresh behavior. ([#273])
+- Paid `qveris call` requests are now strict single-submit: the CLI does not retry `429`/`503`, follow HTTP redirects, replay after OAuth refresh on `401`, or remove a rejected projection field and resubmit. Read commands retain bounded retry and OAuth refresh behavior. ([#273])
 
 ## [0.9.0] - 2026-07-23
 

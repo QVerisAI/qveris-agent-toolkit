@@ -191,7 +191,7 @@ agent = Agent(
 
 ## 安全付费调用与 transport 所有权
 
-付费 `call()` 默认严格 single-submit。SDK 不会自动重试 `429`/`503`、超时或 transport 失败，也不会删除被拒绝的投影字段后再次提交；类型化错误会报告 `request_metadata.http_attempts == 1`。如果旧服务仍需要原来的投影降级，可显式选择：
+付费 `call()` 默认严格 single-submit。SDK 不会跟随 HTTP 重定向，不会自动重试 `429`/`503`、超时或 transport 失败，也不会删除被拒绝的投影字段后再次提交；类型化错误会报告 `request_metadata.http_attempts == 1`。如果旧服务仍需要原来的投影降级，可显式选择：
 
 ```python
 result = await client.call(

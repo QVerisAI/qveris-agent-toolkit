@@ -13,12 +13,15 @@ from qveris.credentials import CredentialContext
 from qveris.errors import (
     QverisApiError,
     QverisClientClosedError,
+    QverisContractError,
     QverisTransportError,
 )
 from qveris.types import ExecuteResultTruncated, ToolExecutionResponse
 
 
 SYNTHETIC_TOKEN = "synthetic-credential-value-273"
+SYNTHETIC_SIGNED_URL = "https://files.example/result?X-Amz-Signature=contract-secret"
+SYNTHETIC_COOKIE = "synthetic-session-cookie-273"
 PAID_CALL_POLICY = json.loads(
     (Path(__file__).parents[3] / "test-fixtures" / "paid-call-policy.json").read_text(encoding="utf-8")
 )
@@ -97,6 +100,81 @@ async def test_paid_call_does_not_replay_unauthorized_response() -> None:
 
     assert len(requests) == PAID_CALL_POLICY["paid_call"]["expected_http_attempts"]
     assert exc_info.value.status == 401
+
+
+@pytest.mark.asyncio
+async def test_api_error_redacts_json_escaped_credential_echo() -> None:
+    escaped_credential = 'synthetic-"quoted\\credential-273'
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            403,
+            json={
+                "message": f"Rejected {escaped_credential}",
+                escaped_credential: "credential used as an object key",
+            },
+        )
+
+    client = QverisClient(
+        QverisConfig(api_key=escaped_credential),
+        transport=httpx.MockTransport(handler),
+    )
+    try:
+        with pytest.raises(QverisApiError) as exc_info:
+            await client.call("paid-tool", {})
+    finally:
+        await client.close()
+
+    error = exc_info.value
+    assert escaped_credential not in str(error)
+    assert escaped_credential not in repr(error.details)
+    assert "***" in str(error)
+
+
+@pytest.mark.asyncio
+async def test_paid_call_does_not_follow_redirects_from_injected_client() -> None:
+    requests: List[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if request.url.path.endswith("/redirected"):
+            return httpx.Response(200, json=call_success())
+        return httpx.Response(
+            307,
+            headers={
+                "location": SYNTHETIC_SIGNED_URL,
+                "set-cookie": f"session={SYNTHETIC_COOKIE}",
+            },
+            json={"message": "redirect"},
+        )
+
+    shared = httpx.AsyncClient(
+        transport=httpx.MockTransport(handler),
+        follow_redirects=True,
+        headers={
+            "cookie": f"session={SYNTHETIC_COOKIE}",
+            "x-api-key": SYNTHETIC_TOKEN,
+        },
+    )
+    client = QverisClient(QverisConfig(api_key=SYNTHETIC_TOKEN), http_client=shared)
+    try:
+        with pytest.raises(QverisApiError) as exc_info:
+            await client.call("paid-tool", {})
+    finally:
+        await client.close()
+        await shared.aclose()
+
+    assert PAID_CALL_POLICY["paid_call"]["allow_redirect_replay"] is False
+    assert len(requests) == PAID_CALL_POLICY["paid_call"]["expected_http_attempts"]
+    assert exc_info.value.status == 307
+    traceback = exc_info.value.__traceback__
+    while traceback is not None:
+        for value in traceback.tb_frame.f_locals.values():
+            rendered = repr(value)
+            assert SYNTHETIC_TOKEN not in rendered
+            assert SYNTHETIC_COOKIE not in rendered
+            assert SYNTHETIC_SIGNED_URL not in rendered
+        traceback = traceback.tb_next
 
 
 @pytest.mark.asyncio
@@ -222,6 +300,76 @@ async def test_paid_call_cancellation_preserves_cancellation_without_replay() ->
     assert transport.attempts == PAID_CALL_POLICY["paid_call"]["expected_http_attempts"]
     assert exc_info.value.__cause__ is None
     assert SYNTHETIC_TOKEN not in repr(exc_info.value.__context__)
+
+
+@pytest.mark.asyncio
+async def test_repeated_cancellation_cannot_leak_active_request_lifecycle() -> None:
+    started = asyncio.Event()
+
+    class BlockingTransport(httpx.AsyncBaseTransport):
+        async def handle_async_request(self, _request: httpx.Request) -> httpx.Response:
+            started.set()
+            await asyncio.Event().wait()
+            raise AssertionError("unreachable")
+
+    client = QverisClient(QverisConfig(api_key=SYNTHETIC_TOKEN), transport=BlockingTransport())
+    request_task = asyncio.create_task(client.call("paid-tool", {}))
+    await started.wait()
+
+    await client._lifecycle_lock.acquire()
+    request_task.cancel()
+    await asyncio.sleep(0)
+    request_task.cancel()
+    client._lifecycle_lock.release()
+    with pytest.raises(asyncio.CancelledError):
+        await request_task
+
+    await asyncio.wait_for(client._no_active_requests.wait(), timeout=1)
+    assert client._active_requests == 0
+    await client.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure_kind", ["invalid_json", "invalid_schema"])
+async def test_contract_errors_drop_raw_response_exception_context_and_secret_locals(failure_kind: str) -> None:
+    def handler(_request: httpx.Request) -> httpx.Response:
+        if failure_kind == "invalid_json":
+            return httpx.Response(
+                200,
+                text=f"{SYNTHETIC_TOKEN} {SYNTHETIC_SIGNED_URL}",
+                headers={"content-type": "application/json"},
+            )
+        return httpx.Response(
+            200,
+            json={
+                "success": True,
+                "result": {"full_content_file_url": SYNTHETIC_SIGNED_URL},
+                "credential_echo": SYNTHETIC_TOKEN,
+            },
+        )
+
+    client = make_client(handler)
+    try:
+        with pytest.raises(QverisContractError) as exc_info:
+            await client.call("paid-tool", {})
+    finally:
+        await client.close()
+
+    error = exc_info.value
+    assert error.__cause__ is None
+    assert error.__context__ is None
+    assert not hasattr(error, "request")
+    assert not hasattr(error, "response")
+    assert SYNTHETIC_TOKEN not in repr(error)
+    assert SYNTHETIC_SIGNED_URL not in repr(error)
+
+    traceback = error.__traceback__
+    while traceback is not None:
+        for value in traceback.tb_frame.f_locals.values():
+            rendered = repr(value)
+            assert SYNTHETIC_TOKEN not in rendered
+            assert SYNTHETIC_SIGNED_URL not in rendered
+        traceback = traceback.tb_next
 
 
 @pytest.mark.asyncio
@@ -490,6 +638,9 @@ async def test_cancelling_owned_transport_close_finishes_close_and_keeps_state_c
     close_task.cancel()
     await asyncio.sleep(0)
     assert not close_task.done()
+    close_task.cancel()
+    await asyncio.sleep(0)
+    assert not close_task.done()
 
     release_close.set()
     with pytest.raises(asyncio.CancelledError):
@@ -538,9 +689,11 @@ def test_signed_url_is_serialized_but_excluded_from_repr() -> None:
         execution_id="exec-1",
         success=True,
         result={"full_content_file_url": signed_url},
+        parameters={"download_url": signed_url},
     )
 
     assert truncated.model_dump()["full_content_file_url"] == signed_url
     assert signed_url not in repr(truncated)
     assert response.model_dump()["result"]["full_content_file_url"] == signed_url
+    assert response.model_dump()["parameters"]["download_url"] == signed_url
     assert signed_url not in repr(response)

@@ -286,7 +286,7 @@ claude mcp add --transport http qveris https://mcp.qveris.ai/mcp --scope user --
 }
 ```
 
-投影参数仅在显式指定时发送。付费 `call` / `execute_tool` 请求严格 single-submit：MCP server 不会重试 `429`/`503`，也不会删除被拒绝的投影字段后再次提交。投影错误仍按错误返回；`QVERIS_MAX_RETRIES` 仅用于读和审计工具。
+投影参数仅在显式指定时发送。付费 `call` / `execute_tool` 请求严格 single-submit：MCP server 不会重试 `429`/`503`，不会跟随 HTTP 重定向，也不会删除被拒绝的投影字段后再次提交。投影错误仍按错误返回；`QVERIS_MAX_RETRIES` 仅用于读和审计工具。
 
 典型成功响应字段：
 

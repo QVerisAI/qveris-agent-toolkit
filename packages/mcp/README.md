@@ -174,7 +174,7 @@ Call a discovered tool with specific parameters.
 
 The `call` response may include compact pre-settlement `billing`. Final charge status should be checked with `usage_history` or `credits_ledger`.
 
-Projection inputs are opt-in. Paid `call` / `execute_tool` requests are always single-submit: the MCP server does not retry `429`/`503` or remove a rejected projection field and resubmit. Projection errors remain errors.
+Projection inputs are opt-in. Paid `call` / `execute_tool` requests are always single-submit: the MCP server does not retry `429`/`503`, follow HTTP redirects, or remove a rejected projection field and resubmit. Projection errors remain errors.
 
 ### `usage_history`
 
