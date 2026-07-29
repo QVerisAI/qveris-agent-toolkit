@@ -4,7 +4,10 @@ from qveris import (
     CredentialContext,
     CredentialProvider,
     Message,
+    QverisApiError,
     QverisClient,
+    QverisError,
+    RequestMetadata,
     SearchResponse,
     ToolExecutionResponse,
 )
@@ -23,6 +26,8 @@ from qveris.types import ToolInfo, ToolParameter
 def test_public_sdk_exports_cover_core_classes_and_models() -> None:
     assert Agent.__name__ == "Agent"
     assert QverisClient.__name__ == "QverisClient"
+    assert issubclass(QverisApiError, QverisError)
+    assert RequestMetadata(operation="discover").http_attempts == 0
     assert ApiKeyCredentialProvider.__name__ == "ApiKeyCredentialProvider"
     assert CredentialContext(resource="https://qveris.ai/api/v1").scopes == ()
     assert CredentialProvider.__name__ == "CredentialProvider"

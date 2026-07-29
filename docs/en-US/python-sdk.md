@@ -164,6 +164,11 @@ status = agent.budget_status()   # {"limit": 25, "spent": 12.0, "remaining": 13.
 |-------|---------|---------|-------------|
 | `api_key` | `QVERIS_API_KEY` | `None` | API key, sent as `Authorization: Bearer ...` |
 | `base_url` | `QVERIS_BASE_URL` | `https://qveris.ai/api/v1` | API base URL |
+| `credential_audience` | `QVERIS_CREDENTIAL_AUDIENCE` | `None` | Optional audience forwarded to the credential provider |
+| `credential_scopes` | `QVERIS_CREDENTIAL_SCOPES` | `()` | Optional scopes forwarded to the credential provider |
+| `max_retries` | `QVERIS_MAX_RETRIES` | `3` | Bounded `429`/`503` retries for read/audit operations; never applies to paid calls |
+| `read_timeout` | `QVERIS_READ_TIMEOUT` | `30` | Default HTTP timeout in seconds for read/audit operations |
+| `call_timeout` | `QVERIS_CALL_TIMEOUT` | `120` | Default HTTP timeout in seconds for paid calls |
 | `enable_history_pruning` | — | `True` | Prune/compress old tool outputs to save tokens (agent loop) |
 | `max_iterations` | — | `50` | Max agent tool-loop iterations |
 
@@ -184,6 +189,36 @@ agent = Agent(
 )
 ```
 
+## Safe paid calls and transport ownership
+
+Paid `call()` requests are strict single-submit by default. The SDK does not automatically retry `429`/`503`, timeout, or transport failures, and it does not remove a rejected projection field and resubmit. A typed error reports `request_metadata.http_attempts == 1`. If an older service requires the former projection fallback, opt in explicitly:
+
+```python
+result = await client.call(
+    "tool.id",
+    {"symbol": "AAPL"},
+    respond_with="summary",
+    compatibility_mode="legacy_optional_fields",  # deprecated; may submit twice
+)
+```
+
+The opt-in emits `DeprecationWarning`; `request_metadata.compatibility_replays` records the replay. Read and audit operations continue to use bounded `max_retries`.
+
+`QverisClient` accepts either an injected shared `http_client` or SDK-owned `transport` / `limits` settings. These forms are mutually exclusive. `close()` waits for in-flight operations, is safe to call concurrently, closes only SDK-owned clients, and rejects new work with `QverisClientClosedError` after shutdown.
+
+Credential providers receive an immutable `CredentialContext` for every physical attempt, including resource, configured audience/scopes, operation, purpose, session ID, and an optional non-sensitive `correlation_id`. HTTP timeout starts after credential acquisition.
+
+Public failures use the `QverisError` hierarchy (`QverisApiError`, `QverisTransportError`, `QverisCredentialError`, `QverisContractError`, `QverisClientClosedError`). They retain safe machine fields and immutable `RequestMetadata`, but not raw HTTP requests/responses, bearer credentials, signed URLs, or underlying exception objects.
+
+### Migration from 0.5
+
+- `max_retries` now applies only to read and audit operations; it no longer controls paid calls.
+- `call(..., respond_with=...)` no longer performs a silent legacy replay. Use `compatibility_mode="legacy_optional_fields"` only during a short migration window.
+- Catch `QverisError` or its typed subclasses instead of `httpx.HTTPStatusError` / raw transport errors.
+- Response metadata is available as `response.request_metadata` and is excluded from wire serialization.
+
+Capability Resolve/Query methods, selection tokens, idempotency keys, and execution lookup will be added only after those fields and endpoints are published in the public OpenAPI contract; the client does not invent interim wire fields.
+
 ## API reference
 
 The [source-generated API reference](python-sdk-api.md) lists the current
@@ -195,11 +230,10 @@ drift.
 
 | Method | REST endpoint | Purpose |
 |--------|---------------|---------|
-| `discover(query, limit=20, session_id=None, view=None, lang=None)` | `POST /search` | Find capabilities; `view="routing"` returns compact routing cards (free) |
-| `inspect(tool_ids, search_id=None, session_id=None)` | `POST /tools/by-ids` | Fetch full capability metadata (free) |
-| `call(tool_id, parameters, search_id=None, session_id=None, max_response_size=None, respond_with=None)` | `POST /tools/execute` | Execute a capability; select full, summary, or JSONPath fields |
-
-Projection arguments are opt-in. A legacy `422 extra_forbidden` response causes one retry without only the rejected optional field; invalid projections remain errors.
+| `discover(query, limit=20, session_id=None, view=None, lang=None, timeout=None, correlation_id=None)` | `POST /search` | Find capabilities; `view="routing"` returns compact routing cards (free) |
+| `inspect(tool_ids, search_id=None, session_id=None, timeout=None, correlation_id=None)` | `POST /tools/by-ids` | Fetch full capability metadata (free) |
+| `probe(tool_id, parameters=None, checks=None, live_budget="none", timeout=None, correlation_id=None)` | `POST /tools/probe` | Validate parameters and request a zero-cost quote |
+| `call(tool_id, parameters, ..., compatibility_mode="strict", timeout=None, correlation_id=None)` | `POST /tools/execute` | Execute with strict single-submit semantics |
 | `usage(**filters)` | `GET /auth/usage/history/v2` | Audit request status and charge outcome |
 | `ledger(**filters)` | `GET /auth/credits/ledger` | Inspect final credit balance movements |
 | `handle_tool_call(func_name, func_args, session_id=None)` | — | Bridge an LLM tool call to the right QVeris method |
@@ -208,6 +242,8 @@ Projection arguments are opt-in. A legacy `422 extra_forbidden` response causes 
 `tool_ids` accepts a single string or an iterable. `usage(...)` and `ledger(...)` take keyword-only filters such as `start_date`, `end_date`, `summary` (default `True`), `bucket`, `charge_outcome`, `execution_id`, `search_id`, `direction`, `entry_type`, `min_credits`, `max_credits`, `limit`, `page`, `page_size`.
 
 Backward-compatible aliases remain available: `search_tools` → `discover`, `get_tools_by_ids` → `inspect`, `execute_tool` → `call`.
+
+Projection arguments are opt-in. Read-side discover projection compatibility remains bounded; paid calls never replay unless the deprecated compatibility mode is explicitly selected. Invalid projections remain errors.
 
 ### `Agent`
 

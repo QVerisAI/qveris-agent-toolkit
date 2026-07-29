@@ -164,6 +164,11 @@ status = agent.budget_status()   # {"limit": 25, "spent": 12.0, "remaining": 13.
 |------|---------|--------|------|
 | `api_key` | `QVERIS_API_KEY` | `None` | API 密钥，以 `Authorization: Bearer ...` 发送 |
 | `base_url` | `QVERIS_BASE_URL` | `https://qveris.ai/api/v1` | API 基础地址 |
+| `credential_audience` | `QVERIS_CREDENTIAL_AUDIENCE` | `None` | 透传给凭据 provider 的可选 audience |
+| `credential_scopes` | `QVERIS_CREDENTIAL_SCOPES` | `()` | 透传给凭据 provider 的可选 scopes |
+| `max_retries` | `QVERIS_MAX_RETRIES` | `3` | 读/审计操作的有界 `429`/`503` 重试；不适用于付费调用 |
+| `read_timeout` | `QVERIS_READ_TIMEOUT` | `30` | 读/审计操作的默认 HTTP 超时（秒） |
+| `call_timeout` | `QVERIS_CALL_TIMEOUT` | `120` | 付费调用的默认 HTTP 超时（秒） |
 | `enable_history_pruning` | — | `True` | 裁剪/压缩旧的工具输出以节省 token（agent 循环） |
 | `max_iterations` | — | `50` | agent 工具循环的最大迭代次数 |
 
@@ -184,6 +189,36 @@ agent = Agent(
 )
 ```
 
+## 安全付费调用与 transport 所有权
+
+付费 `call()` 默认严格 single-submit。SDK 不会自动重试 `429`/`503`、超时或 transport 失败，也不会删除被拒绝的投影字段后再次提交；类型化错误会报告 `request_metadata.http_attempts == 1`。如果旧服务仍需要原来的投影降级，可显式选择：
+
+```python
+result = await client.call(
+    "tool.id",
+    {"symbol": "AAPL"},
+    respond_with="summary",
+    compatibility_mode="legacy_optional_fields",  # 已弃用；可能提交两次
+)
+```
+
+该模式会发出 `DeprecationWarning`，并用 `request_metadata.compatibility_replays` 记录重放。读和审计操作仍使用有界 `max_retries`。
+
+`QverisClient` 可以注入共享 `http_client`，或配置由 SDK 持有的 `transport` / `limits`；两种形式互斥。`close()` 会等待在途操作、支持并发幂等调用、只关闭 SDK 自己创建的 client；关闭后新请求会抛出 `QverisClientClosedError`。
+
+每次物理 attempt 都会给凭据 provider 传入不可变 `CredentialContext`，其中包含 resource、显式配置的 audience/scopes、operation、purpose、session ID 和可选的非敏感 `correlation_id`。HTTP 超时从凭据获取完成后开始计算。
+
+公开失败统一使用 `QverisError` 层级（`QverisApiError`、`QverisTransportError`、`QverisCredentialError`、`QverisContractError`、`QverisClientClosedError`）。错误会保留安全的机器字段和不可变 `RequestMetadata`，但不会保留原始 HTTP request/response、bearer credential、签名 URL 或底层异常对象。
+
+### 从 0.5 迁移
+
+- `max_retries` 仅用于读和审计操作，不再控制付费调用。
+- `call(..., respond_with=...)` 不再静默执行旧版重放；只应在短期迁移窗口使用 `compatibility_mode="legacy_optional_fields"`。
+- 捕获 `QverisError` 或其类型化子类，不再捕获 `httpx.HTTPStatusError` / 原始 transport 异常。
+- 响应元数据位于 `response.request_metadata`，不会进入 wire 序列化。
+
+Capability Resolve/Query、selection token、idempotency key 和 execution lookup 只会在对应端点及字段进入公开 OpenAPI 后提供；client 不会提前发明临时 wire 字段。
+
 ## API 参考
 
 [根据源码生成的 API 参考](python-sdk-api.md)列出当前公开 client、Agent、配置和响应模型的签名。
@@ -193,11 +228,10 @@ Sphinx 会根据 Python 对象与 docstring 重新生成该页面，CI 同时检
 
 | 方法 | REST 端点 | 用途 |
 |------|-----------|------|
-| `discover(query, limit=20, session_id=None, view=None, lang=None)` | `POST /search` | 发现能力；`view="routing"` 返回精简 routing card（免费） |
-| `inspect(tool_ids, search_id=None, session_id=None)` | `POST /tools/by-ids` | 获取能力完整元数据（免费） |
-| `call(tool_id, parameters, search_id=None, session_id=None, max_response_size=None, respond_with=None)` | `POST /tools/execute` | 执行能力；可选择完整、摘要或 JSONPath 字段 |
-
-投影参数仅在显式指定时发送。旧服务返回 `422 extra_forbidden` 时仅移除对应可选字段并重试一次；无效投影仍按错误返回。
+| `discover(query, limit=20, session_id=None, view=None, lang=None, timeout=None, correlation_id=None)` | `POST /search` | 发现能力；`view="routing"` 返回精简 routing card（免费） |
+| `inspect(tool_ids, search_id=None, session_id=None, timeout=None, correlation_id=None)` | `POST /tools/by-ids` | 获取能力完整元数据（免费） |
+| `probe(tool_id, parameters=None, checks=None, live_budget="none", timeout=None, correlation_id=None)` | `POST /tools/probe` | 校验参数并请求零成本报价 |
+| `call(tool_id, parameters, ..., compatibility_mode="strict", timeout=None, correlation_id=None)` | `POST /tools/execute` | 使用严格 single-submit 语义执行能力 |
 | `usage(**filters)` | `GET /auth/usage/history/v2` | 审计请求状态与扣费结果 |
 | `ledger(**filters)` | `GET /auth/credits/ledger` | 查看最终积分余额变动 |
 | `handle_tool_call(func_name, func_args, session_id=None)` | — | 把 LLM 工具调用桥接到对应的 QVeris 方法 |
@@ -206,6 +240,8 @@ Sphinx 会根据 Python 对象与 docstring 重新生成该页面，CI 同时检
 `tool_ids` 接受单个字符串或可迭代对象。`usage(...)` 和 `ledger(...)` 接受仅关键字过滤参数，如 `start_date`、`end_date`、`summary`（默认 `True`）、`bucket`、`charge_outcome`、`execution_id`、`search_id`、`direction`、`entry_type`、`min_credits`、`max_credits`、`limit`、`page`、`page_size`。
 
 仍保留向后兼容别名：`search_tools` → `discover`，`get_tools_by_ids` → `inspect`，`execute_tool` → `call`。
+
+投影参数仅在显式指定时发送。Discover 的读侧投影兼容仍然有界；付费调用只有在显式选择已弃用兼容模式时才会重放。无效投影仍按错误返回。
 
 ### `Agent`
 

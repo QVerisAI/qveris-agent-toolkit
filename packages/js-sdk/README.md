@@ -90,7 +90,7 @@ never pass through the SDK.
 | --- | --- | --- | --- |
 | `discover(query, options?)` | Free | `SearchResponse` | `options`: `limit`, `sessionId`, `view`, `lang`, `timeoutMs`. `view: 'routing'` returns compact routing cards; omitted/default is full. |
 | `inspect(toolIds, options?)` | Free | `SearchResponse` | `toolIds` is one id or an array; `options`: `searchId`, `sessionId`, `timeoutMs`. An empty array resolves locally with no request. |
-| `call(toolId, options)` | Credits | `ExecuteResponse` | `options`: `parameters` (required), `searchId`, `maxResponseSize`, `respondWith`, `sessionId`, `timeoutMs`. `respondWith` accepts `full`, `summary`, or `fields:<JSONPath,...>`. |
+| `call(toolId, options)` | Credits | `ExecuteResponse` | Strict single-submit by default. `respondWith` accepts `full`, `summary`, or `fields:<JSONPath,...>`; deprecated `compatibilityMode: 'legacyOptionalFields'` explicitly enables one projection replay. |
 | `credits()` | Free | `CreditsResponse` | Current balance and bucket details. |
 | `usage(filters?)` | Free | `UsageEventsResponse` | Request-level audit; filter by `execution_id`, `search_id`, dates, `summary`, `limit`. |
 | `ledger(filters?)` | Free | `CreditsLedgerResponse` | Settled credit movements; filter by `direction`, dates, `summary`, `limit`. |
@@ -102,7 +102,7 @@ Key response fields:
 - **`SearchResponse`** — `search_id`, `total`, `results: ToolInfo[]` (`tool_id`, `name`, `description`, `params`, `examples.sample_parameters`, `stats.success_rate`, `stats.avg_execution_time_ms`, `expected_cost`, `why_recommended`).
 - **`ExecuteResponse`** — `execution_id`, `success`, `result`, `billing` (pre-settlement estimate; the final charge is in `usage()` / `ledger()`).
 
-Projection options are never sent unless explicitly configured. If a legacy service returns `422 extra_forbidden` for an optional projection field, the SDK retries once without that field; validation errors for an invalid projection are returned unchanged.
+Projection options are never sent unless explicitly configured. Paid calls do not retry `429`/`503` or automatically replay a rejected optional field. The deprecated `compatibilityMode: 'legacyOptionalFields'` opt-in enables exactly one projection fallback when an older service returns `422 extra_forbidden`; invalid projections remain errors.
 
 All types are exported from the package root (`import type { SearchResponse, ExecuteResponse, ToolInfo } from '@qverisai/sdk'`).
 
@@ -114,13 +114,13 @@ All types are exported from the package root (`import type { SearchResponse, Exe
 | `credentialProvider` | Async-capable bearer credential source; mutually exclusive with `apiKey` |
 | `baseUrl` / `QVERIS_BASE_URL` | API endpoint: constructor option > environment variable > built-in default |
 | `timeoutMs` | Default request timeout (30s; `call` defaults to 120s) |
-| `maxRetries` | Retries for rate-limited (429) / transient (503) responses (default 3; `0` disables) |
+| `maxRetries` | Read-operation retries for rate-limited (429) / transient (503) responses (default 3; `0` disables); paid calls never inherit it |
 
 API keys never select the endpoint. Endpoint overrides must be HTTP(S) URLs without credentials, a query string, or a fragment.
 
 ## Rate limiting & retries
 
-The client transparently retries rate-limited (`429`) and transient (`503`) responses: it honors the `Retry-After` header when present, otherwise backs off exponentially with full jitter. Each wait is capped and retries are bounded by `maxRetries`, so a call never hangs.
+The client transparently retries rate-limited (`429`) and transient (`503`) responses for read/audit operations: it honors the `Retry-After` header when present, otherwise backs off exponentially with full jitter. Each wait is capped and retries are bounded by `maxRetries`; paid calls remain single-submit.
 
 ```ts
 const qveris = new Qveris({ apiKey: process.env.QVERIS_API_KEY!, maxRetries: 5 });

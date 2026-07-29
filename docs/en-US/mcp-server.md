@@ -288,7 +288,7 @@ Example:
 }
 ```
 
-Projection inputs are opt-in. A legacy `422 extra_forbidden` response causes one retry without only the rejected optional field; invalid projections remain errors.
+Projection inputs are opt-in. Paid `call` / `execute_tool` requests are strict single-submit: the MCP server does not retry `429`/`503` or remove a rejected projection field and resubmit. Projection errors remain errors; `QVERIS_MAX_RETRIES` applies only to read and audit tools.
 
 Typical successful response fields:
 

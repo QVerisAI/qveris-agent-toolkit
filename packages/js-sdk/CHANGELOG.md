@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- Paid `call()` operations are strict single-submit by default and no longer retry `429`/`503` or automatically remove a rejected projection field and replay. The deprecated `compatibilityMode: "legacyOptionalFields"` opt-in preserves the legacy projection replay when explicitly required. ([#273])
+
 ## [0.6.0] - 2026-07-23
 
 ### Added
@@ -66,3 +70,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#106]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/106
 [#259]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/259
 [#256]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/256
+[#273]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/273

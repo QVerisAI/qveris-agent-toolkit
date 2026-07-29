@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -12,6 +13,10 @@ import {
   unwrapApiResponse,
 } from "../src/client/api.mjs";
 import { CliError } from "../src/errors/handler.mjs";
+
+const PAID_CALL_POLICY = JSON.parse(
+  readFileSync(new URL("../../../test-fixtures/paid-call-policy.json", import.meta.url), "utf8"),
+);
 
 function withMockFetch(handler, fn) {
   const original = globalThis.fetch;
@@ -145,7 +150,7 @@ test("API client maps discover, inspect, probe, call, credits, usage, and ledger
   ]);
 });
 
-test("API client passes projections and retries once when a legacy service rejects optional fields", async () => {
+test("API client preserves read projection fallback but never resubmits a paid call", async () => {
   const discoverBodies = [];
   await withMockFetch(
     (_url, options) => {
@@ -179,24 +184,24 @@ test("API client passes projections and retries once when a legacy service rejec
   ]);
 
   const callBodies = [];
-  await withMockFetch(
-    (_url, options) => {
-      const body = JSON.parse(options.body);
-      callBodies.push(body);
-      if (callBodies.length === 1) {
-        return jsonResponse({ detail: [{ type: "extra_forbidden", loc: ["body", "respond_with"] }] }, { status: 422 });
-      }
-      return jsonResponse({ execution_id: "exec-1", success: true, result: { data: {} } });
-    },
-    () =>
-      callTool({
-        apiKey: "sk-test",
-        baseUrl: "https://unit.test/api/v1",
-        toolId: "weather-tool",
-        discoveryId: "search-1",
-        parameters: {},
-        respondWith: "summary",
-      }),
+  const previous = PAID_CALL_POLICY.contract_fixtures.n_minus_1;
+  await assert.rejects(
+    withMockFetch(
+      (_url, options) => {
+        callBodies.push(JSON.parse(options.body));
+        return jsonResponse(previous.body, { status: previous.status });
+      },
+      () =>
+        callTool({
+          apiKey: "sk-test",
+          baseUrl: "https://unit.test/api/v1",
+          toolId: "weather-tool",
+          discoveryId: "search-1",
+          parameters: {},
+          respondWith: "summary",
+        }),
+    ),
+    (error) => error instanceof CliError && error.status === 422,
   );
   assert.deepEqual(callBodies, [
     {
@@ -205,7 +210,6 @@ test("API client passes projections and retries once when a legacy service rejec
       max_response_size: 102400,
       respond_with: "summary",
     },
-    { search_id: "search-1", parameters: {}, max_response_size: 102400 },
   ]);
 });
 
@@ -315,6 +319,26 @@ test("OAuth credentials refresh once on 401 and business 403 is not retried", as
     /forbidden/,
   );
   assert.equal(requests, 1);
+  assert.equal(refreshes, 1);
+
+  let paidRequests = 0;
+  await assert.rejects(
+    withMockFetch(
+      () => {
+        paidRequests += 1;
+        return jsonResponse({ message: "expired" }, { status: 401 });
+      },
+      () =>
+        callTool({
+          credentialProvider: provider,
+          baseUrl: "https://unit.test/api/v1",
+          toolId: "paid-tool",
+          parameters: {},
+        }),
+    ),
+    (error) => error instanceof CliError && error.code === "AUTH_INVALID_KEY",
+  );
+  assert.equal(paidRequests, 1);
   assert.equal(refreshes, 1);
 
   const oauthProvider = {

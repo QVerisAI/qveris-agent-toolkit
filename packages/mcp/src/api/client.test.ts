@@ -2,8 +2,19 @@
  * Unit tests for the Qveris API Client
  */
 
+import { readFileSync } from 'node:fs';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { QverisClient, createClientFromEnv } from './client.js';
+
+const PAID_CALL_POLICY = JSON.parse(
+  readFileSync(new URL('../../../../test-fixtures/paid-call-policy.json', import.meta.url), 'utf8'),
+) as {
+  paid_call: { expected_http_attempts: number };
+  read_operations: { retryable_statuses: number[] };
+  contract_fixtures: {
+    n_minus_1: { status: number; body: Record<string, unknown> };
+  };
+};
 
 describe('QverisClient', () => {
   describe('constructor', () => {
@@ -502,30 +513,25 @@ describe('QverisClient', () => {
       );
     });
 
-    it('should retry without respond_with only for a legacy extra-field rejection', async () => {
-      fetchMock
-        .mockResolvedValueOnce({
-          ok: false,
-          status: 422,
-          statusText: 'Unprocessable Entity',
-          headers: new Headers(),
-          json: async () => ({
-            detail: [{ type: 'extra_forbidden', loc: ['body', 'respond_with'] }],
-          }),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ execution_id: 'exec-full', success: true, result: { data: {} } }),
-        });
-
-      await client.executeTool('weather-tool', {
-        search_id: 'search-123',
-        parameters: {},
-        respond_with: 'summary',
+    it('should not resubmit a paid call for a legacy extra-field rejection', async () => {
+      const previous = PAID_CALL_POLICY.contract_fixtures.n_minus_1;
+      fetchMock.mockResolvedValueOnce({
+        ok: false,
+        status: previous.status,
+        statusText: 'Unprocessable Entity',
+        headers: new Headers(),
+        json: async () => previous.body,
       });
 
-      expect(fetchMock).toHaveBeenCalledTimes(2);
-      expect(fetchMock.mock.calls[1][1].body).toBe(JSON.stringify({ search_id: 'search-123', parameters: {} }));
+      await expect(
+        client.executeTool('weather-tool', {
+          search_id: 'search-123',
+          parameters: {},
+          respond_with: 'summary',
+        }),
+      ).rejects.toMatchObject({ status: 422 });
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
     it('should not downgrade an invalid projection', async () => {
@@ -548,6 +554,28 @@ describe('QverisClient', () => {
       ).rejects.toMatchObject({ status: 422 });
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
+
+    it.each(PAID_CALL_POLICY.read_operations.retryable_statuses)(
+      'should single-submit a paid call on HTTP %s',
+      async (status) => {
+        fetchMock.mockResolvedValue({
+          ok: false,
+          status,
+          statusText: 'Retry later',
+          headers: new Headers(),
+          json: async () => ({ message: 'retry later' }),
+        });
+
+        await expect(
+          client.executeTool('weather-tool', {
+            search_id: 'search-123',
+            parameters: {},
+          }),
+        ).rejects.toMatchObject({ status });
+
+        expect(fetchMock).toHaveBeenCalledTimes(PAID_CALL_POLICY.paid_call.expected_http_attempts);
+      },
+    );
 
     it('should URL-encode tool_id', async () => {
       fetchMock.mockResolvedValueOnce({

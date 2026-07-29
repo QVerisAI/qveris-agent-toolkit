@@ -103,16 +103,21 @@ class RetryPolicy:
         url: str,
         *,
         prepare_attempt: Optional[Callable[[], Awaitable[Dict[str, Any]]]] = None,
+        max_retries: Optional[int] = None,
+        on_attempt: Optional[Callable[[], None]] = None,
         **kwargs: Any,
     ) -> httpx.Response:
         """Send a request through ``client``, retrying 429/503 with backoff."""
         attempt = 0
+        retry_limit = self.max_retries if max_retries is None else max(0, max_retries)
         while True:
             attempt_kwargs = dict(kwargs)
             if prepare_attempt is not None:
                 attempt_kwargs.update(await prepare_attempt())
+            if on_attempt is not None:
+                on_attempt()
             response = await client.request(method, url, **attempt_kwargs)
-            if response.status_code not in RETRYABLE_STATUS or attempt >= self.max_retries:
+            if response.status_code not in RETRYABLE_STATUS or attempt >= retry_limit:
                 return response
 
             # Release the pooled connection before sleeping and re-issuing.

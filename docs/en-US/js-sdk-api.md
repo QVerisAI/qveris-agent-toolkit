@@ -710,6 +710,19 @@ Options for [Qveris.call](#call).
 
 #### Properties
 
+##### compatibilityMode?
+
+> `optional` **compatibilityMode?**: `"strict"` \| `"legacyOptionalFields"`
+
+Strict mode never resubmits a paid call. The deprecated legacy mode may
+replay once without an optional field rejected by an older service.
+
+###### Default
+
+```ts
+'strict'
+```
+
 ##### maxResponseSize?
 
 > `optional` **maxResponseSize?**: `number`

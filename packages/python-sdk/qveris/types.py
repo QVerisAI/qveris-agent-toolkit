@@ -1,12 +1,23 @@
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
+
+from .errors import RequestMetadata
 
 
 class QverisModel(BaseModel):
     """Base SDK model that tolerates additive API fields."""
 
     model_config = ConfigDict(extra="allow")
+    _request_metadata: Optional[RequestMetadata] = PrivateAttr(default=None)
+
+    @property
+    def request_metadata(self) -> Optional[RequestMetadata]:
+        """Client-side attempt metadata; excluded from wire serialization."""
+        return self._request_metadata
+
+    def _set_request_metadata(self, metadata: RequestMetadata) -> None:
+        self._request_metadata = metadata
 
 
 # --- Capability and billing types ---
@@ -155,7 +166,7 @@ class SearchResponse(QverisModel):
 
 class ExecuteResultTruncated(QverisModel):
     message: str
-    full_content_file_url: str
+    full_content_file_url: str = Field(repr=False)
     truncated_content: str
     content_schema: Optional[Dict[str, Any]] = None
 
@@ -163,7 +174,7 @@ class ExecuteResultTruncated(QverisModel):
 class ToolExecutionResponse(QverisModel):
     execution_id: str
     success: bool
-    result: Optional[Any] = None
+    result: Optional[Any] = Field(default=None, repr=False)
     error_message: Optional[str] = None
     elapsed_time_ms: Optional[float] = None
     execution_time: Optional[float] = None

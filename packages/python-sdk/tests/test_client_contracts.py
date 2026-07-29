@@ -9,6 +9,7 @@ from qveris.client.api import QverisClient
 from qveris.client.retry import RetryPolicy
 from qveris.config import QverisConfig
 from qveris.credentials import ApiKeyCredentialProvider, CredentialContext
+from qveris.errors import QverisApiError, QverisContractError, QverisCredentialError
 
 
 def make_client(handler: Callable[[httpx.Request], httpx.Response]) -> QverisClient:
@@ -24,10 +25,10 @@ def make_client(handler: Callable[[httpx.Request], httpx.Response]) -> QverisCli
 
 @pytest.mark.asyncio
 async def test_api_key_provider_preserves_authorization_without_repr_leak() -> None:
-    requests = []
+    authorizations = []
 
     def handler(request: httpx.Request) -> httpx.Response:
-        requests.append(request)
+        authorizations.append(request.headers["Authorization"])
         return httpx.Response(200, json={"search_id": "search-1", "results": []})
 
     client = make_client(handler)
@@ -36,7 +37,7 @@ async def test_api_key_provider_preserves_authorization_without_repr_leak() -> N
     finally:
         await client.close()
 
-    assert requests[0].headers["Authorization"] == "Bearer sk-test"
+    assert authorizations == ["Bearer sk-test"]
     assert "sk-test" not in repr(ApiKeyCredentialProvider("sk-test"))
 
 
@@ -52,10 +53,10 @@ class RecordingCredentialProvider:
 
 @pytest.mark.asyncio
 async def test_async_credential_provider_receives_api_resource() -> None:
-    requests = []
+    authorizations = []
 
     def handler(request: httpx.Request) -> httpx.Response:
-        requests.append(request)
+        authorizations.append(request.headers["Authorization"])
         return httpx.Response(200, json={"search_id": "search-1", "results": []})
 
     provider = RecordingCredentialProvider()
@@ -75,7 +76,7 @@ async def test_async_credential_provider_receives_api_resource() -> None:
         await client.close()
 
     assert provider.contexts == [CredentialContext(resource="https://custom.example/api/v1", scopes=())]
-    assert requests[0].headers["Authorization"] == "Bearer short-lived-token"
+    assert authorizations == ["Bearer short-lived-token"]
 
 
 def test_rejects_api_key_and_credential_provider_together() -> None:
@@ -139,7 +140,7 @@ async def test_invalid_provider_credential_is_not_exposed() -> None:
     provider = RecordingCredentialProvider("secret-token\nforged-header")
     client = QverisClient(QverisConfig(api_key=None), credential_provider=provider)
     try:
-        with pytest.raises(ValueError, match="invalid credential") as exc_info:
+        with pytest.raises(QverisCredentialError, match="invalid credential") as exc_info:
             await client.discover("weather")
     finally:
         await client.close()
@@ -155,7 +156,7 @@ async def test_provider_failure_text_is_not_exposed() -> None:
 
     client = QverisClient(QverisConfig(api_key=None), credential_provider=FailingCredentialProvider())
     try:
-        with pytest.raises(RuntimeError, match="failed to provide a credential") as exc_info:
+        with pytest.raises(QverisCredentialError, match="failed to provide a credential") as exc_info:
             await client.discover("weather")
     finally:
         await client.close()
@@ -184,6 +185,20 @@ def test_qveris_config_reads_env_when_no_init_value(monkeypatch: pytest.MonkeyPa
 
     assert config.api_key == "sk-env"
     assert config.base_url == "https://env.example/api/v1"
+
+
+def test_qveris_config_reads_credential_context_and_timeout_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("QVERIS_CREDENTIAL_AUDIENCE", "qveris-api")
+    monkeypatch.setenv("QVERIS_CREDENTIAL_SCOPES", '["tools.read", "usage.read"]')
+    monkeypatch.setenv("QVERIS_READ_TIMEOUT", "9")
+    monkeypatch.setenv("QVERIS_CALL_TIMEOUT", "15")
+
+    config = QverisConfig(api_key="sk-test")
+
+    assert config.credential_audience == "qveris-api"
+    assert config.credential_scopes == ("tools.read", "usage.read")
+    assert config.read_timeout == 9
+    assert config.call_timeout == 15
 
 
 def test_qveris_config_ignores_generic_env_names(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -456,7 +471,7 @@ async def test_probe_preserves_explicit_empty_checks_for_server_validation() -> 
 
     client = make_client(handler)
     try:
-        with pytest.raises(httpx.HTTPStatusError):
+        with pytest.raises(QverisApiError):
             await client.probe("weather.forecast.v1", parameters={}, checks=[])
     finally:
         await client.close()
@@ -563,7 +578,13 @@ async def test_call_projection_retries_only_legacy_extra_field_rejection() -> No
 
     client = make_client(handler)
     try:
-        await client.call("weather.forecast.v1", {}, respond_with="summary")
+        with pytest.warns(DeprecationWarning, match="may resubmit"):
+            await client.call(
+                "weather.forecast.v1",
+                {},
+                respond_with="summary",
+                compatibility_mode="legacy_optional_fields",
+            )
     finally:
         await client.close()
 
@@ -587,7 +608,7 @@ async def test_call_invalid_projection_is_not_downgraded() -> None:
 
     client = make_client(handler)
     try:
-        with pytest.raises(httpx.HTTPStatusError):
+        with pytest.raises(QverisApiError):
             await client.call("weather.forecast.v1", {}, respond_with="fields:")
     finally:
         await client.close()
@@ -651,7 +672,7 @@ async def test_failure_envelope_raises_before_model_parsing() -> None:
 
     client = make_client(handler)
     try:
-        with pytest.raises(RuntimeError, match="quota exhausted"):
+        with pytest.raises(QverisContractError, match="quota exhausted"):
             await client.discover("weather forecast API")
     finally:
         await client.close()

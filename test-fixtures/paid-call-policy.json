@@ -1,0 +1,35 @@
+{
+  "paid_call": {
+    "automatic_retry_statuses": [],
+    "allow_auth_replay": false,
+    "optional_field_fallback": "never",
+    "expected_http_attempts": 1
+  },
+  "read_operations": {
+    "retryable_statuses": [429, 503]
+  },
+  "contract_fixtures": {
+    "n": {
+      "status": 200,
+      "body": {
+        "execution_id": "exec-current",
+        "success": true,
+        "result": {
+          "ok": true
+        }
+      }
+    },
+    "n_minus_1": {
+      "status": 422,
+      "body": {
+        "detail": [
+          {
+            "type": "extra_forbidden",
+            "loc": ["body", "respond_with"],
+            "msg": "Extra input"
+          }
+        ]
+      }
+    }
+  }
+}

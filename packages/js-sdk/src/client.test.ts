@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Qveris } from './client.js';
@@ -7,6 +8,16 @@ import { QverisApiError } from './errors.js';
 import type { ToolCategory, ToolCapability } from './types.js';
 
 const API_KEY = 'sk-test-key';
+const PAID_CALL_POLICY = JSON.parse(
+  readFileSync(new URL('../../../test-fixtures/paid-call-policy.json', import.meta.url), 'utf8'),
+) as {
+  paid_call: { expected_http_attempts: number };
+  read_operations: { retryable_statuses: number[] };
+  contract_fixtures: {
+    n: { status: number; body: { execution_id: string; success: boolean; result: { ok: boolean } } };
+    n_minus_1: { status: number; body: Record<string, unknown> };
+  };
+};
 
 function jsonResponse(body: unknown, status = 200): Response {
   return {
@@ -407,31 +418,39 @@ describe('Qveris client', () => {
     expect(response.result).toMatchObject({ respond_with: 'summary' });
   });
 
-  it('call retries without respond_with only when a legacy service rejects the extra field', async () => {
-    const success = {
-      execution_id: 'exec-full',
-      success: true,
-      result: { data: { temperature: 18 } },
-    };
+  it('call strict mode does not resubmit when a legacy service rejects respond_with', async () => {
+    const previous = PAID_CALL_POLICY.contract_fixtures.n_minus_1;
+    const fetchMock = mockFetch(previous.body, previous.status);
+    globalThis.fetch = fetchMock;
+
+    await expect(
+      new Qveris({ apiKey: API_KEY }).call('weather.forecast.v1', {
+        parameters: { city: 'London' },
+        respondWith: 'summary',
+      }),
+    ).rejects.toMatchObject({ status: 422 });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('call legacy compatibility replays once without rejected respond_with', async () => {
+    const current = PAID_CALL_POLICY.contract_fixtures.n;
+    const previous = PAID_CALL_POLICY.contract_fixtures.n_minus_1;
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(
-        jsonResponse(
-          {
-            detail: [{ type: 'extra_forbidden', loc: ['body', 'respond_with'], msg: 'Extra input' }],
-          },
-          422,
-        ),
-      )
-      .mockResolvedValueOnce(jsonResponse(success));
+      .mockResolvedValueOnce(jsonResponse(previous.body, previous.status))
+      .mockResolvedValueOnce(jsonResponse(current.body, current.status));
     globalThis.fetch = fetchMock;
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
     await new Qveris({ apiKey: API_KEY }).call('weather.forecast.v1', {
       parameters: { city: 'London' },
       respondWith: 'summary',
+      compatibilityMode: 'legacyOptionalFields',
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(warning).toHaveBeenCalledWith(expect.stringContaining('may resubmit a paid call'));
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       parameters: { city: 'London' },
       search_id: null,
@@ -689,5 +708,21 @@ describe('Qveris client', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(client.rateLimitRetryCount).toBe(0);
     });
+
+    it.each(PAID_CALL_POLICY.read_operations.retryable_statuses)(
+      'paid call is single-submit on HTTP %s',
+      async (status) => {
+        const fetchMock = mockFetch({ message: 'retry later' }, status);
+        globalThis.fetch = fetchMock;
+
+        await expect(
+          new Qveris({ apiKey: API_KEY, maxRetries: 3 }).call('paid-tool', {
+            parameters: {},
+          }),
+        ).rejects.toMatchObject({ status });
+
+        expect(fetchMock).toHaveBeenCalledTimes(PAID_CALL_POLICY.paid_call.expected_http_attempts);
+      },
+    );
   });
 });

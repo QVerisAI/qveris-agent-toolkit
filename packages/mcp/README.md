@@ -174,7 +174,7 @@ Call a discovered tool with specific parameters.
 
 The `call` response may include compact pre-settlement `billing`. Final charge status should be checked with `usage_history` or `credits_ledger`.
 
-Projection inputs are opt-in. If an older service explicitly rejects one as an unknown field, the MCP server retries once without only that field. Invalid projection errors remain errors and are never silently downgraded.
+Projection inputs are opt-in. Paid `call` / `execute_tool` requests are always single-submit: the MCP server does not retry `429`/`503` or remove a rejected projection field and resubmit. Projection errors remain errors.
 
 ### `usage_history`
 
@@ -339,7 +339,7 @@ npx -y @qverisai/mcp
 |----------|----------|-------------|
 | `QVERIS_API_KEY` | ✓ | Your QVeris API key |
 | `QVERIS_BASE_URL` | | Override the built-in API base URL |
-| `QVERIS_MAX_RETRIES` | | Retries for rate-limited (429) / transient (503) responses (default 3; `0` disables). Honors `Retry-After`, else backs off with jitter. |
+| `QVERIS_MAX_RETRIES` | | Read-operation retries for rate-limited (429) / transient (503) responses (default 3; `0` disables). Paid calls never inherit this setting. |
 | `QVERIS_MCP_TRANSPORT` | | `stdio` (default) or `http` |
 | `QVERIS_MCP_HTTP_PORT` | | HTTP port (default `3000`; setting it implies HTTP mode) |
 | `QVERIS_MCP_HTTP_HOST` | | HTTP bind host (default `127.0.0.1`) |

@@ -97,13 +97,13 @@ First-class typed APIs:
 |--------|---------------|---------|
 | `discover(query, ..., view=None, lang=None)` | `POST /search` | Find capabilities; `view="routing"` returns compact routing cards |
 | `inspect(tool_ids, ...)` | `POST /tools/by-ids` | Fetch full capability metadata |
-| `call(tool_id, parameters, ..., respond_with=None)` | `POST /tools/execute` | Execute a selected capability; request `full`, `summary`, or selected JSONPath fields |
+| `call(tool_id, parameters, ..., respond_with=None)` | `POST /tools/execute` | Execute a selected capability with strict single-submit semantics |
 | `usage(...)` | `GET /auth/usage/history/v2` | Audit request status and charge outcome |
 | `ledger(...)` | `GET /auth/credits/ledger` | Inspect final credit balance movements |
 
 Backward-compatible aliases remain available: `search_tools`, `get_tools_by_ids`, and `execute_tool`.
 
-Projection arguments are never sent unless explicitly configured. If a legacy service returns `422 extra_forbidden` for an optional projection field, the SDK retries once without that field; invalid projection errors are returned unchanged.
+Projection arguments are never sent unless explicitly configured. A paid `call()` is strict single-submit by default: it does not retry `429`/`503`, transport/timeout failures, or a rejected optional field. If an older service requires projection fallback, `compatibility_mode="legacy_optional_fields"` explicitly opts into one deprecated replay and records it in `response.request_metadata`.
 
 ## Typed Models
 
@@ -152,7 +152,7 @@ Use the SDK at the level that matches your application:
 
 ## Rate limiting & retries
 
-The client transparently retries rate-limited (`429`) and transient (`503`) responses: it honors the `Retry-After` header when present, otherwise backs off exponentially with full jitter. Each sleep is capped and the number of retries is bounded, so a call never hangs indefinitely.
+The client transparently retries rate-limited (`429`) and transient (`503`) responses for read and audit operations: it honors the `Retry-After` header when present, otherwise backs off exponentially with full jitter. Paid `call()` requests never inherit this retry policy.
 
 ```python
 # Default is 3 retries; tune via config or QVERIS_MAX_RETRIES.
@@ -161,7 +161,7 @@ client = QverisClient(QverisConfig(max_retries=5))
 print(client.rate_limit_retries)  # how many times it backed off (pressure, not failures)
 ```
 
-Set `max_retries=0` to disable automatic retrying. Rate-limit backoff is retried pressure rather than failure — inspect `client.rate_limit_retries` to observe it instead of treating the retried `429`s as errors.
+Set `max_retries=0` to disable read-operation retrying. Rate-limit backoff is retried pressure rather than failure — inspect `client.rate_limit_retries` to observe it instead of treating the retried `429`s as errors. Every typed response and SDK error exposes immutable `request_metadata` with physical attempt, retry, compatibility replay, request ID, and elapsed-time counts.
 
 ## Custom LLM Providers
 

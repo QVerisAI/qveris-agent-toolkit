@@ -139,4 +139,10 @@ async def test_handle_tool_call_returns_structured_error_for_builtin_failures() 
 
     assert handled is True
     assert is_error is True
-    assert result == {"error": "HTTP 402: not enough credits"}
+    assert result == {
+        "error": "Payment Required",
+        "status": 402,
+        "code": None,
+        "operation": "call",
+        "http_attempts": 1,
+    }
