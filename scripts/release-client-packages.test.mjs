@@ -216,6 +216,14 @@ test("readReleasePlan rejects stale or missing public client version references"
   assert.throws(() => readReleasePlan(missingRoot), /public version surface is missing: agent\/llms\.txt/);
 });
 
+test("readReleasePlan accepts prerelease versions on public version surfaces", () => {
+  const root = fixtureRoot({ cli: "1.2.3-rc.1" });
+  assert.equal(
+    readReleasePlan(root).find(({ key }) => key === "cli").version,
+    "1.2.3-rc.1",
+  );
+});
+
 test("readReleasePlan rejects a missing or mismatched publish workflow before tagging", () => {
   const missingRoot = fixtureRoot();
   rmSync(join(missingRoot, ".github/workflows/js-sdk-publish.yml"));

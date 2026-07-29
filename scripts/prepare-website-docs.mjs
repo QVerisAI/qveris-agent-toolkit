@@ -5,6 +5,8 @@ import path from "node:path"
 import process from "node:process"
 import { spawnSync } from "node:child_process"
 
+import { latestReleaseTag } from "./release-tag-version.mjs"
+
 const SDK_RELEASES = [
   {
     outputName: "python_tag",
@@ -19,6 +21,21 @@ const SDK_RELEASES = [
     tagPrefix: "js-sdk-v",
     bootstrapTag: "js-sdk-v0.4.0",
     pathPrefix: "js-sdk",
+  },
+]
+
+const MAIN_GUIDE_RELEASES = [
+  {
+    outputName: "cli_tag",
+    tagPattern: "cli-v*",
+    tagPrefix: "cli-v",
+    pathPrefix: "cli",
+  },
+  {
+    outputName: "mcp_tag",
+    tagPattern: "mcp-v*",
+    tagPrefix: "mcp-v",
+    pathPrefix: "mcp-server",
   },
 ]
 
@@ -59,11 +76,13 @@ function runGit(toolkitDir, args) {
   return result.stdout ?? ""
 }
 
-function latestTag(toolkitDir, pattern) {
-  const tag = runGit(toolkitDir, ["tag", "--list", pattern, "--sort=-v:refname"])
+function latestTag(toolkitDir, pattern, prefix) {
+  const tag = latestReleaseTag(
+    runGit(toolkitDir, ["tag", "--list", pattern])
     .split("\n")
-    .map((value) => value.trim())
-    .find(Boolean)
+      .map((value) => value.trim()),
+    prefix,
+  )
   if (!tag) throw new Error(`No release tag matches ${pattern}`)
   return tag
 }
@@ -193,8 +212,23 @@ async function main() {
   await copyRequiredFile(toolkitDir, outputDir, "packages/cli/package.json")
 
   const releaseTags = {}
+  for (const release of MAIN_GUIDE_RELEASES) {
+    const tag = latestTag(toolkitDir, release.tagPattern, release.tagPrefix)
+    const releasePaths = toolkitOwnedPaths.filter(
+      (relPath) => path.basename(relPath) === `${release.pathPrefix}.md`,
+    )
+    if (releasePaths.length === 0) {
+      throw new Error(`website source manifest contains no ${release.pathPrefix} Markdown paths`)
+    }
+    releaseTags[release.outputName] = tag
+    for (const relPath of releasePaths) {
+      const content = await fs.readFile(path.join(outputDir, relPath), "utf8")
+      await writeFile(outputDir, relPath, withPinnedGuideVersion(content, release, tag, relPath))
+    }
+  }
+
   for (const release of SDK_RELEASES) {
-    const tag = latestTag(toolkitDir, release.tagPattern)
+    const tag = latestTag(toolkitDir, release.tagPattern, release.tagPrefix)
     const releasePaths = sdkPaths(toolkitOwnedPaths, release.pathPrefix)
     if (releasePaths.length === 0) {
       throw new Error(`website source manifest contains no ${release.pathPrefix} Markdown paths`)

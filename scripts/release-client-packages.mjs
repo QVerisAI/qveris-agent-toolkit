@@ -319,7 +319,9 @@ function validatePublicVersionReferences(root, releases, errors) {
       continue;
     }
 
-    const found = [...lines[0].matchAll(/\bv?(\d+\.\d+\.\d+)\b/g)].map((match) => match[1]);
+    const found = [...lines[0].matchAll(/\bv?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)\b/g)].map(
+      (match) => match[1],
+    );
     if (found.length !== 1) {
       errors.push(
         `${reference.key}: ${reference.path} ${JSON.stringify(reference.marker)} must contain exactly one semantic version (found ${found.length})`,
