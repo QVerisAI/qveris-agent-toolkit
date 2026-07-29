@@ -22,6 +22,11 @@ const JS_GUIDES = [
   "docs/cn/zh-CN/js-sdk.md",
 ];
 
+const PYTHON_API_REFERENCES = [
+  "docs/en-US/python-sdk-api.md",
+  "docs/zh-CN/python-sdk-api.md",
+];
+
 test("all Python SDK guides document the v0.6 paid-call contract", () => {
   for (const path of PYTHON_GUIDES) {
     const guide = read(path);
@@ -50,6 +55,29 @@ test("all TypeScript SDK guides document Probe and strict paid calls", () => {
     ]) {
       assert.ok(guide.includes(marker), `${path} is missing ${marker}`);
     }
+  }
+});
+
+test("generated Python API references document public Probe response models", () => {
+  for (const path of PYTHON_API_REFERENCES) {
+    const reference = read(path);
+    for (const model of [
+      "ProbeSchemaViolation",
+      "ProbeSchemaResult",
+      "ProbeQuoteResult",
+      "ProbeUnknownResult",
+      "ToolProbeResponse",
+    ]) {
+      assert.ok(
+        reference.includes(`<a id="qveris.${model}"></a>`),
+        `${path} is missing ${model}`,
+      );
+    }
+    assert.match(
+      reference,
+      /probe\([^)]*\) → \[ToolProbeResponse\]\(#qveris\.ToolProbeResponse\)/,
+      `${path} does not link probe() to ToolProbeResponse`,
+    );
   }
 });
 

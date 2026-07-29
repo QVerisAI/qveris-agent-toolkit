@@ -49,6 +49,26 @@ Response models
    :members:
    :exclude-members: model_config
 
+.. autoclass:: qveris.ProbeSchemaViolation
+   :members:
+   :exclude-members: model_config
+
+.. autoclass:: qveris.ProbeSchemaResult
+   :members:
+   :exclude-members: model_config
+
+.. autoclass:: qveris.ProbeQuoteResult
+   :members:
+   :exclude-members: model_config
+
+.. autoclass:: qveris.ProbeUnknownResult
+   :members:
+   :exclude-members: model_config
+
+.. autoclass:: qveris.ToolProbeResponse
+   :members:
+   :exclude-members: model_config
+
 .. autoclass:: qveris.SearchResponse
    :members:
    :exclude-members: model_config

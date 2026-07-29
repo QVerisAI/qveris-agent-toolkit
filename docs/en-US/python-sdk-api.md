@@ -72,7 +72,7 @@ Deprecated alias for inspect(…).
 
 <a id="qveris.QverisClient.probe"></a>
 
-#### *async* probe(tool_id: str, parameters: Dict[str, Any] | None = None, checks: List[Literal['schema', 'quote', 'coverage', 'sample']] | None = None, live_budget: Literal['none', 'metadata', 'sampled'] = 'none', timeout: float | None = None, correlation_id: str | None = None) → ToolProbeResponse
+#### *async* probe(tool_id: str, parameters: Dict[str, Any] | None = None, checks: List[Literal['schema', 'quote', 'coverage', 'sample']] | None = None, live_budget: Literal['none', 'metadata', 'sampled'] = 'none', timeout: float | None = None, correlation_id: str | None = None) → [ToolProbeResponse](#qveris.ToolProbeResponse)
 
 Validate candidate parameters and obtain a zero-cost quote without execution.
 
@@ -360,6 +360,86 @@ It takes context as an argument since that’s what pydantic-core passes when ca
 ### *class* qveris.Message(\*, role: str, content: str | None = None, tool_calls: List[Dict[str, Any]] | None = None, tool_call_id: str | None = None, name: str | None = None, reasoning_details: Any | None = None, \*\*extra_data: Any)
 
 <a id="qveris.Message.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
+<a id="qveris.ProbeSchemaViolation"></a>
+
+### *class* qveris.ProbeSchemaViolation(\*, param: str | None = None, type: str, message: str, \*\*extra_data: Any)
+
+<a id="qveris.ProbeSchemaViolation.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
+<a id="qveris.ProbeSchemaResult"></a>
+
+### *class* qveris.ProbeSchemaResult(\*, valid: bool, violations: List[[ProbeSchemaViolation](#qveris.ProbeSchemaViolation)] | None = None, note: str | None = None, \*\*extra_data: Any)
+
+<a id="qveris.ProbeSchemaResult.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
+<a id="qveris.ProbeQuoteResult"></a>
+
+### *class* qveris.ProbeQuoteResult(\*, estimate_credits: float | None = None, currency: Literal['credits'], exact: bool, basis: str | None = None, detail: Dict[str, Any] | None = None, \*\*extra_data: Any)
+
+<a id="qveris.ProbeQuoteResult.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
+<a id="qveris.ProbeUnknownResult"></a>
+
+### *class* qveris.ProbeUnknownResult(\*, verdict: Literal['unknown'], reason: str, \*\*extra_data: Any)
+
+<a id="qveris.ProbeUnknownResult.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
+<a id="qveris.ToolProbeResponse"></a>
+
+### *class* qveris.ToolProbeResponse(\*, schema: [ProbeSchemaResult](#qveris.ProbeSchemaResult) | None = None, quote: [ProbeQuoteResult](#qveris.ProbeQuoteResult) | None = None, coverage: [ProbeUnknownResult](#qveris.ProbeUnknownResult) | None = None, sample: [ProbeUnknownResult](#qveris.ProbeUnknownResult) | None = None, \*\*extra_data: Any)
+
+<a id="qveris.ToolProbeResponse.model_post_init"></a>
 
 #### model_post_init(context: Any, /) → None
 
