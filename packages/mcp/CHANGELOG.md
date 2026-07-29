@@ -12,6 +12,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Paid `call` / `execute_tool` requests are now strict single-submit: the MCP client does not retry `429`/`503`, follow HTTP redirects, or remove a rejected projection field and resubmit. Read tools retain bounded retry behavior. ([#273])
 
+### Security
+
+- Constrained the Model Context Protocol SDK to its Node.js 18-compatible 1.29.x line and added a fixed `fast-uri` dependency floor to exclude the published URI host-confusion vulnerability.
+
 ## [0.12.0] - 2026-07-23
 
 ### Added
