@@ -21,6 +21,9 @@ on:
       - "scripts/check-doc-locales.mjs"
       - "scripts/prepare-website-docs.mjs"
       - "scripts/prepare-website-docs.test.mjs"
+      - "scripts/release-tag-version.mjs"
+      - "scripts/sync-website-client-versions.mjs"
+      - "scripts/sync-website-client-versions.test.mjs"
       - ".github/workflows/docs-check.yml"
       - ".github/workflows/sync-docs-to-website.yml"
   push:
@@ -42,6 +45,9 @@ on:
       - "scripts/check-doc-locales.mjs"
       - "scripts/prepare-website-docs.mjs"
       - "scripts/prepare-website-docs.test.mjs"
+      - "scripts/release-tag-version.mjs"
+      - "scripts/sync-website-client-versions.mjs"
+      - "scripts/sync-website-client-versions.test.mjs"
       - ".github/workflows/docs-check.yml"
       - ".github/workflows/sync-docs-to-website.yml"
 
@@ -84,4 +90,7 @@ jobs:
       - name: Check doc locale consistency
         run: node scripts/check-doc-locales.mjs
       - name: Test release-aware website docs staging
-        run: node --test scripts/prepare-website-docs.test.mjs
+        run: >-
+          node --test
+          scripts/prepare-website-docs.test.mjs
+          scripts/sync-website-client-versions.test.mjs

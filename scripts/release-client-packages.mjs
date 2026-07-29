@@ -45,6 +45,38 @@ export const CLIENTS = [
   },
 ];
 
+export const PUBLIC_VERSION_REFERENCES = [
+  { key: "cli", path: "docs/en-US/cli.md", marker: "latest tested release" },
+  { key: "cli", path: "docs/zh-CN/cli.md", marker: "最新测试版本" },
+  { key: "cli", path: "docs/cn/zh-CN/cli.md", marker: "最新测试版本" },
+  { key: "mcp", path: "docs/en-US/mcp-server.md", marker: "latest tested release" },
+  { key: "mcp", path: "docs/zh-CN/mcp-server.md", marker: "最新测试版本" },
+  { key: "mcp", path: "docs/cn/zh-CN/mcp-server.md", marker: "最新测试版本" },
+  { key: "js-sdk", path: "docs/en-US/js-sdk.md", marker: "latest tested release" },
+  { key: "js-sdk", path: "docs/zh-CN/js-sdk.md", marker: "最新测试版本" },
+  { key: "js-sdk", path: "docs/cn/zh-CN/js-sdk.md", marker: "最新测试版本" },
+  { key: "python-sdk", path: "docs/en-US/python-sdk.md", marker: "latest tested release" },
+  { key: "python-sdk", path: "docs/zh-CN/python-sdk.md", marker: "最新测试版本" },
+  { key: "python-sdk", path: "docs/cn/zh-CN/python-sdk.md", marker: "最新测试版本" },
+  { key: "cli", path: "agent/GUIDELINES.md", marker: "When using the QVeris CLI" },
+  { key: "mcp", path: "agent/GUIDELINES.md", marker: "MCP backward compatibility:" },
+  { key: "mcp", path: "agent/SETUP.md", marker: "**MCP Server Setup:**" },
+  { key: "cli", path: "agent/llms.txt", marker: "- CLI v" },
+  { key: "mcp", path: "agent/llms.txt", marker: "- MCP Server v" },
+  { key: "js-sdk", path: "agent/llms.txt", marker: "- JavaScript SDK v" },
+  { key: "python-sdk", path: "agent/llms.txt", marker: "- Python SDK v" },
+  { key: "cli", path: "agent/llms-full.txt", marker: "The CLI (`@qverisai/cli`" },
+  { key: "mcp", path: "agent/llms-full.txt", marker: "The MCP server (`@qverisai/mcp`" },
+  { key: "cli", path: "agent/llms-full.txt", marker: "- **CLI (npm):**" },
+  { key: "mcp", path: "agent/llms-full.txt", marker: "- **MCP Server (npm):**" },
+  { key: "js-sdk", path: "agent/llms-full.txt", marker: "- **JavaScript SDK:**" },
+  { key: "python-sdk", path: "agent/llms-full.txt", marker: "- **Python SDK:**" },
+  { key: "cli", path: "agent/llms-full.txt", marker: "- **CLI Version:**" },
+  { key: "mcp", path: "agent/llms-full.txt", marker: "- **MCP Server Version:**" },
+  { key: "js-sdk", path: "agent/llms-full.txt", marker: "- **JavaScript SDK Version:**" },
+  { key: "python-sdk", path: "agent/llms-full.txt", marker: "- **Python SDK Version:**" },
+];
+
 function read(root, path) {
   return readFileSync(resolve(root, path), "utf8");
 }
@@ -266,6 +298,42 @@ function validatePythonMetadata(root, client, errors) {
   return version;
 }
 
+function validatePublicVersionReferences(root, releases, errors) {
+  const versions = new Map(releases.map(({ key, version }) => [key, version]));
+
+  for (const reference of PUBLIC_VERSION_REFERENCES) {
+    const expected = versions.get(reference.key);
+    const path = resolve(root, reference.path);
+    if (!existsSync(path)) {
+      errors.push(`${reference.key}: public version surface is missing: ${reference.path}`);
+      continue;
+    }
+
+    const lines = read(root, reference.path)
+      .split(/\r?\n/)
+      .filter((line) => line.includes(reference.marker));
+    if (lines.length !== 1) {
+      errors.push(
+        `${reference.key}: ${reference.path} must contain exactly one ${JSON.stringify(reference.marker)} version reference (found ${lines.length})`,
+      );
+      continue;
+    }
+
+    const found = [...lines[0].matchAll(/\bv?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)\b/g)].map(
+      (match) => match[1],
+    );
+    if (found.length !== 1) {
+      errors.push(
+        `${reference.key}: ${reference.path} ${JSON.stringify(reference.marker)} must contain exactly one semantic version (found ${found.length})`,
+      );
+    } else if (found[0] !== expected) {
+      errors.push(
+        `${reference.key}: ${reference.path} ${JSON.stringify(reference.marker)} version (${found[0]}) must equal ${expected}`,
+      );
+    }
+  }
+}
+
 export function readReleasePlan(root = ROOT) {
   const errors = [];
   validateCadenceWorkflow(root, errors);
@@ -292,6 +360,7 @@ export function readReleasePlan(root = ROOT) {
       notes,
     };
   });
+  validatePublicVersionReferences(root, releases, errors);
 
   if (errors.length) {
     throw new Error(`Coordinated release preflight failed:\n- ${errors.join("\n- ")}`);
