@@ -99,6 +99,7 @@ AI SDK 集成。该页面直接根据 TypeScript 源码重新生成，并由 CI 
 |------|-----------|------|
 | `discover(query, options?)` | `POST /search` | 发现能力；`view: 'routing'` 返回精简 routing card（免费） |
 | `inspect(toolIds, options?)` | `POST /tools/by-ids` | 获取能力完整元数据（免费） |
+| `probe(toolId, options?)` | `POST /tools/probe` | 校验参数并请求零成本报价 |
 | `call(toolId, options)` | `POST /tools/execute` | 执行能力；`respondWith` 可选择完整、摘要或 JSONPath 字段 |
 | `credits()` | `GET /auth/credits` | 当前积分余额与分桶 |
 | `usage(filters?)` | `GET /auth/usage/history/v2` | 审计请求状态与扣费结果 |
@@ -108,6 +109,7 @@ AI SDK 集成。该页面直接根据 TypeScript 源码重新生成，并由 CI 
 
 - `discover(query, { limit?, sessionId?, view?, lang?, timeoutMs? })`
 - `inspect(toolIds, { searchId?, sessionId?, timeoutMs? })` —— `toolIds` 接受单个字符串或数组；**空数组会短路**，直接返回空响应而不发起网络请求。
+- `probe(toolId, { parameters?, checks?, liveBudget?, timeoutMs? })`
 - `call(toolId, { parameters, searchId?, sessionId?, maxResponseSize?, respondWith?, timeoutMs?, compatibilityMode? })`
 
 投影参数仅在显式指定时发送。付费调用严格 single-submit：不会跟随 HTTP 重定向，`429`/`503` 和投影错误会直接返回，不会重放。已弃用的 `compatibilityMode: 'legacyOptionalFields'` 可显式允许一次删除旧服务拒绝的可选字段后重放；无效投影仍按错误返回。
