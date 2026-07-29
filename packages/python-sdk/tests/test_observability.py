@@ -144,6 +144,34 @@ async def test_transport_failure_span_does_not_record_credential(spans: InMemory
 
 
 @pytest.mark.asyncio
+async def test_api_failure_span_does_not_record_credential_or_signed_url(spans: InMemorySpanExporter) -> None:
+    synthetic_token = "sk-synthetic-api-observability-273"
+    signed_url = "https://files.example/result?X-Amz-Signature=otel-secret"
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            503,
+            json={"message": f"Rejected Bearer {synthetic_token}; inspect {signed_url}"},
+        )
+
+    client = QverisClient(
+        QverisConfig(api_key=synthetic_token),
+        transport=httpx.MockTransport(handler),
+    )
+    try:
+        with pytest.raises(QverisApiError):
+            await client.call("t1", {}, search_id="s1")
+    finally:
+        await client.close()
+
+    span = _span_by_name(spans, "qveris.call")
+    rendered = json.dumps(dict(span.attributes), default=str)
+    rendered += json.dumps([(event.name, dict(event.attributes or {})) for event in span.events], default=str)
+    assert synthetic_token not in rendered
+    assert "X-Amz-Signature=otel-secret" not in rendered
+
+
+@pytest.mark.asyncio
 async def test_broken_tracer_does_not_break_the_call(monkeypatch: pytest.MonkeyPatch) -> None:
     # A misbehaving tracer provider must never break the traced operation.
     class BrokenTracer:

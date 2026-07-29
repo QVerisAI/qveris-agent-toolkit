@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -12,6 +13,10 @@ import {
   unwrapApiResponse,
 } from "../src/client/api.mjs";
 import { CliError } from "../src/errors/handler.mjs";
+
+const PAID_CALL_POLICY = JSON.parse(
+  readFileSync(new URL("../../../test-fixtures/paid-call-policy.json", import.meta.url), "utf8"),
+);
 
 function withMockFetch(handler, fn) {
   const original = globalThis.fetch;
@@ -179,11 +184,12 @@ test("API client preserves read projection fallback but never resubmits a paid c
   ]);
 
   const callBodies = [];
+  const previous = PAID_CALL_POLICY.contract_fixtures.n_minus_1;
   await assert.rejects(
     withMockFetch(
       (_url, options) => {
         callBodies.push(JSON.parse(options.body));
-        return jsonResponse({ detail: [{ type: "extra_forbidden", loc: ["body", "respond_with"] }] }, { status: 422 });
+        return jsonResponse(previous.body, { status: previous.status });
       },
       () =>
         callTool({

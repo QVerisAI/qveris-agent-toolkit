@@ -25,7 +25,7 @@ PAID_CALL_POLICY = json.loads(
 
 
 def call_success() -> Dict[str, Any]:
-    return {"execution_id": "exec-1", "success": True, "result": {"ok": True}}
+    return PAID_CALL_POLICY["contract_fixtures"]["n"]["body"]
 
 
 def make_client(handler, *, debug_callback=None, max_retries: int = 3) -> QverisClient:
@@ -65,10 +65,8 @@ async def test_paid_call_strict_mode_does_not_replay_unsupported_projection() ->
 
     def handler(request: httpx.Request) -> httpx.Response:
         requests.append(request)
-        return httpx.Response(
-            422,
-            json={"detail": [{"type": "extra_forbidden", "loc": ["body", "respond_with"]}]},
-        )
+        fixture = PAID_CALL_POLICY["contract_fixtures"]["n_minus_1"]
+        return httpx.Response(fixture["status"], json=fixture["body"])
 
     client = make_client(handler)
     try:
@@ -108,11 +106,10 @@ async def test_paid_call_legacy_mode_replays_once_and_marks_metadata() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         requests.append(request)
         if len(requests) == 1:
-            return httpx.Response(
-                422,
-                json={"detail": [{"type": "extra_forbidden", "loc": ["body", "respond_with"]}]},
-            )
-        return httpx.Response(200, json=call_success())
+            fixture = PAID_CALL_POLICY["contract_fixtures"]["n_minus_1"]
+        else:
+            fixture = PAID_CALL_POLICY["contract_fixtures"]["n"]
+        return httpx.Response(fixture["status"], json=fixture["body"])
 
     client = make_client(handler)
     try:
@@ -228,14 +225,15 @@ async def test_paid_call_cancellation_preserves_cancellation_without_replay() ->
 
 
 @pytest.mark.asyncio
-async def test_debug_and_api_error_details_redact_credentials_and_signed_urls() -> None:
+@pytest.mark.parametrize("status", [401, 403, 429, 503])
+async def test_debug_and_api_error_details_redact_credentials_and_signed_urls(status: int) -> None:
     debug: List[str] = []
     embedded_signed_url = "https://files.example/result?X-Amz-Signature=embedded-secret"
     selection_token = "opaque-selection-secret-273"
 
     def handler(_request: httpx.Request) -> httpx.Response:
         return httpx.Response(
-            401,
+            status,
             json={
                 "message": f"Rejected Bearer {SYNTHETIC_TOKEN}; inspect {embedded_signed_url}",
                 "authorization": f"Bearer {SYNTHETIC_TOKEN}",
@@ -247,7 +245,7 @@ async def test_debug_and_api_error_details_redact_credentials_and_signed_urls() 
     client = make_client(handler, debug_callback=debug.append)
     try:
         with pytest.raises(QverisApiError) as exc_info:
-            await client.discover("weather")
+            await client.call("paid-tool", {})
     finally:
         await client.close()
 
@@ -308,6 +306,48 @@ async def test_credential_context_is_operation_aware_and_concurrent_tokens_do_no
     assert all(context.purpose == "data_read" for context in contexts)
     assert all(context.audience == "qveris-api" for context in contexts)
     assert all(context.scopes == ("tools.read",) for context in contexts)
+
+
+@pytest.mark.asyncio
+async def test_child_tasks_keep_credential_context_and_authorization_isolated() -> None:
+    contexts: Dict[str, CredentialContext] = {}
+
+    class ChildTaskCredentialProvider:
+        async def get_credential(self, context: CredentialContext) -> str:
+            assert context.correlation_id is not None
+            contexts[context.correlation_id] = context
+            await asyncio.sleep(0)
+            return f"child-token-{context.correlation_id}"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        query = json.loads(request.content)["query"]
+        assert request.headers["Authorization"] == f"Bearer child-token-{query}"
+        return httpx.Response(200, json={"search_id": query, "results": []})
+
+    client = QverisClient(
+        QverisConfig(api_key=None),
+        credential_provider=ChildTaskCredentialProvider(),
+        transport=httpx.MockTransport(handler),
+    )
+
+    async def parent(parent_id: str) -> None:
+        child_ids = [f"{parent_id}-child-{index}" for index in range(5)]
+        child_tasks = [
+            asyncio.create_task(client.discover(child_id, correlation_id=child_id)) for child_id in child_ids
+        ]
+        await asyncio.gather(*child_tasks)
+
+    try:
+        await asyncio.gather(*(parent(f"parent-{index}") for index in range(10)))
+    finally:
+        await client.close()
+
+    expected_ids = {
+        f"parent-{parent_index}-child-{child_index}" for parent_index in range(10) for child_index in range(5)
+    }
+    assert set(contexts) == expected_ids
+    assert all(context.correlation_id == correlation_id for correlation_id, context in contexts.items())
+    assert all(context.operation == "discover" for context in contexts.values())
 
 
 @pytest.mark.asyncio

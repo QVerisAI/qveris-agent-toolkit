@@ -11,6 +11,9 @@ const PAID_CALL_POLICY = JSON.parse(
 ) as {
   paid_call: { expected_http_attempts: number };
   read_operations: { retryable_statuses: number[] };
+  contract_fixtures: {
+    n_minus_1: { status: number; body: Record<string, unknown> };
+  };
 };
 
 describe('QverisClient', () => {
@@ -511,14 +514,13 @@ describe('QverisClient', () => {
     });
 
     it('should not resubmit a paid call for a legacy extra-field rejection', async () => {
+      const previous = PAID_CALL_POLICY.contract_fixtures.n_minus_1;
       fetchMock.mockResolvedValueOnce({
         ok: false,
-        status: 422,
+        status: previous.status,
         statusText: 'Unprocessable Entity',
         headers: new Headers(),
-        json: async () => ({
-          detail: [{ type: 'extra_forbidden', loc: ['body', 'respond_with'] }],
-        }),
+        json: async () => previous.body,
       });
 
       await expect(

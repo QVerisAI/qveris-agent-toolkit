@@ -13,6 +13,10 @@ const PAID_CALL_POLICY = JSON.parse(
 ) as {
   paid_call: { expected_http_attempts: number };
   read_operations: { retryable_statuses: number[] };
+  contract_fixtures: {
+    n: { status: number; body: { execution_id: string; success: boolean; result: { ok: boolean } } };
+    n_minus_1: { status: number; body: Record<string, unknown> };
+  };
 };
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -415,12 +419,8 @@ describe('Qveris client', () => {
   });
 
   it('call strict mode does not resubmit when a legacy service rejects respond_with', async () => {
-    const fetchMock = mockFetch(
-      {
-        detail: [{ type: 'extra_forbidden', loc: ['body', 'respond_with'], msg: 'Extra input' }],
-      },
-      422,
-    );
+    const previous = PAID_CALL_POLICY.contract_fixtures.n_minus_1;
+    const fetchMock = mockFetch(previous.body, previous.status);
     globalThis.fetch = fetchMock;
 
     await expect(
@@ -434,22 +434,12 @@ describe('Qveris client', () => {
   });
 
   it('call legacy compatibility replays once without rejected respond_with', async () => {
-    const success = {
-      execution_id: 'exec-full',
-      success: true,
-      result: { data: { temperature: 18 } },
-    };
+    const current = PAID_CALL_POLICY.contract_fixtures.n;
+    const previous = PAID_CALL_POLICY.contract_fixtures.n_minus_1;
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(
-        jsonResponse(
-          {
-            detail: [{ type: 'extra_forbidden', loc: ['body', 'respond_with'], msg: 'Extra input' }],
-          },
-          422,
-        ),
-      )
-      .mockResolvedValueOnce(jsonResponse(success));
+      .mockResolvedValueOnce(jsonResponse(previous.body, previous.status))
+      .mockResolvedValueOnce(jsonResponse(current.body, current.status));
     globalThis.fetch = fetchMock;
     const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
