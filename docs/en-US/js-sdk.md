@@ -101,6 +101,7 @@ in CI.
 |--------|---------------|---------|
 | `discover(query, options?)` | `POST /search` | Find capabilities; `view: 'routing'` returns compact routing cards (free) |
 | `inspect(toolIds, options?)` | `POST /tools/by-ids` | Fetch full capability metadata (free) |
+| `probe(toolId, options?)` | `POST /tools/probe` | Validate parameters and request a zero-cost quote |
 | `call(toolId, options)` | `POST /tools/execute` | Execute a capability; `respondWith` selects full, summary, or JSONPath fields |
 | `credits()` | `GET /auth/credits` | Current credit balance and buckets |
 | `usage(filters?)` | `GET /auth/usage/history/v2` | Audit request status and charge outcome |
@@ -110,6 +111,7 @@ Option shapes:
 
 - `discover(query, { limit?, sessionId?, view?, lang?, timeoutMs? })`
 - `inspect(toolIds, { searchId?, sessionId?, timeoutMs? })` — `toolIds` accepts a single string or an array; an **empty array short-circuits** and returns an empty response without a network request.
+- `probe(toolId, { parameters?, checks?, liveBudget?, timeoutMs? })`
 - `call(toolId, { parameters, searchId?, sessionId?, maxResponseSize?, respondWith?, timeoutMs?, compatibilityMode? })`
 
 Projection options are opt-in. Paid calls are strict single-submit: HTTP redirects are not followed, and `429`/`503` and projection errors are returned without replay. The deprecated `compatibilityMode: 'legacyOptionalFields'` opt-in permits exactly one replay without an optional field rejected by an older service; invalid projections remain errors.
