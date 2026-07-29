@@ -16,6 +16,11 @@ Both classes inherit from `pydantic_settings.BaseSettings`, so values can be sup
 `QverisConfig`
 - `QVERIS_API_KEY`: Qveris API key (sent as `Authorization: Bearer ...`)
 - `QVERIS_BASE_URL`: API base URL (defaults to `https://qveris.ai/api/v1`)
+- `QVERIS_CREDENTIAL_AUDIENCE`: optional audience for credential providers
+- `QVERIS_CREDENTIAL_SCOPES`: optional JSON array of credential scopes
+- `QVERIS_MAX_RETRIES`: bounded read-operation retries (paid calls never inherit it)
+- `QVERIS_READ_TIMEOUT`: read/audit HTTP timeout in seconds
+- `QVERIS_CALL_TIMEOUT`: paid-call HTTP timeout in seconds
 
 `AgentConfig`
 - no fixed env var aliases are defined here (pass values explicitly), but you can still rely on
@@ -74,13 +79,35 @@ class QverisConfig(BaseSettings):
     # the custom init source below (see settings_customise_sources / #136).
     api_key: Optional[str] = Field(default=None, validation_alias="QVERIS_API_KEY", repr=False)
     base_url: str = Field(default="https://qveris.ai/api/v1", validation_alias="QVERIS_BASE_URL")
+    credential_audience: Optional[str] = Field(
+        default=None,
+        validation_alias="QVERIS_CREDENTIAL_AUDIENCE",
+        description="Optional audience forwarded to the credential provider.",
+    )
+    credential_scopes: Tuple[str, ...] = Field(
+        default=(),
+        validation_alias="QVERIS_CREDENTIAL_SCOPES",
+        description="Optional scopes forwarded to the credential provider.",
+    )
 
-    # Transport settings. On a 429 (or 503) the client honors Retry-After and
-    # otherwise backs off exponentially with jitter, up to this many retries.
+    # Read-operation transport settings. Paid calls are always single-submit
+    # and do not inherit this retry count.
     max_retries: int = Field(
         default=3,
         validation_alias="QVERIS_MAX_RETRIES",
-        description="Max automatic retries for rate-limited (429) / transient (503) responses.",
+        description="Max automatic retries for read operations after 429/503 responses.",
+    )
+    read_timeout: float = Field(
+        default=30.0,
+        validation_alias="QVERIS_READ_TIMEOUT",
+        gt=0,
+        description="Default timeout in seconds for read and audit operations.",
+    )
+    call_timeout: float = Field(
+        default=120.0,
+        validation_alias="QVERIS_CALL_TIMEOUT",
+        gt=0,
+        description="Default timeout in seconds for paid call operations.",
     )
 
     # Agent behavior settings

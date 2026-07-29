@@ -208,7 +208,7 @@ qveris call 1 --params '{"city": "London"}' --respond-with summary
 qveris call 1 --params '{"city": "London"}' --respond-with 'fields:$.temperature,$.humidity'
 ```
 
-Projection flags are opt-in. If an older service explicitly rejects a projection field as unknown, the CLI retries once without only that field. Invalid projections remain `422` errors.
+Projection flags are opt-in. Paid calls are strict single-submit: the CLI does not retry `429`/`503`, refresh OAuth after `401` and replay, or remove a rejected projection field and resubmit. Projection rejections and invalid projections remain `422` errors. `QVERIS_MAX_RETRIES` continues to apply to read and audit commands only.
 
 **Dry run (no credits consumed):**
 

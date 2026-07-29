@@ -167,6 +167,7 @@ export class QverisClient {
     // Retry rate-limited (429) / transient (503) responses: honor Retry-After,
     // otherwise exponential backoff with jitter, bounded by maxRetries. Each
     // attempt is a fresh fetch with its own timeout.
+    const retryLimit = operation === 'call' ? 0 : this.maxRetries;
     for (let attempt = 0; ; attempt++) {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), resolvedTimeoutMs);
@@ -184,7 +185,7 @@ export class QverisClient {
           signal: controller.signal,
         });
 
-        if (RETRYABLE_STATUS.has(response.status) && attempt < this.maxRetries) {
+        if (RETRYABLE_STATUS.has(response.status) && attempt < retryLimit) {
           retryDelayMs = computeRetryDelayMs({
             retryAfterMs: parseRetryAfterMs(response.headers.get('retry-after')),
             attempt,
@@ -319,15 +320,7 @@ export class QverisClient {
    */
   async executeTool(toolId: string, request: ExecuteRequest): Promise<ExecuteResponse> {
     const endpoint = `/tools/execute?tool_id=${encodeURIComponent(toolId)}`;
-    const body: Record<string, unknown> = { ...request };
-    try {
-      return await this.request<ExecuteResponse>('call', 'POST', endpoint, body, EXECUTE_TIMEOUT_MS);
-    } catch (error) {
-      const unsupported = unsupportedOptionalFields(error, new Set(['respond_with']));
-      if (unsupported.length === 0) throw error;
-      delete body.respond_with;
-      return this.request<ExecuteResponse>('call', 'POST', endpoint, body, EXECUTE_TIMEOUT_MS);
-    }
+    return this.request<ExecuteResponse>('call', 'POST', endpoint, request, EXECUTE_TIMEOUT_MS);
   }
 
   /**

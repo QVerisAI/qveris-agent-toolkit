@@ -1,0 +1,11 @@
+{
+  "paid_call": {
+    "automatic_retry_statuses": [],
+    "allow_auth_replay": false,
+    "optional_field_fallback": "never",
+    "expected_http_attempts": 1
+  },
+  "read_operations": {
+    "retryable_statuses": [429, 503]
+  }
+}

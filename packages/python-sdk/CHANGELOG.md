@@ -6,6 +6,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Added credential-safe typed exceptions, immutable per-operation `RequestMetadata`, operation-aware `CredentialContext`, read/call timeout settings, and supported injection of a shared HTTP client or owned transport/connection limits. ([#273])
+
+### Changed
+
+- Paid `call()` operations are strict single-submit by default: they no longer retry `429`/`503` or automatically replay after a legacy projection rejection. The deprecated `compatibility_mode="legacy_optional_fields"` opt-in preserves the old projection fallback when explicitly required. Read operations continue to use bounded `max_retries`. ([#273])
+
+### Security
+
+- Removed raw `httpx` request, response, transport exception, credential-provider exception, signed URL, and unredacted response-body data from public error/debug paths. ([#273])
+
 ## [0.5.0] - 2026-07-23
 
 ### Added
@@ -104,3 +116,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#34]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/34
 [#259]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/259
 [#256]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/256
+[#273]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/273

@@ -10,7 +10,7 @@ This reference is generated from the public Python objects and docstrings. See t
 
 <a id="qveris.QverisClient"></a>
 
-### *class* qveris.QverisClient(config: [QverisConfig](#qveris.QverisConfig) | None = None, debug_callback: Callable[[str], None] | None = None, \*, credential_provider: CredentialProvider | None = None)
+### *class* qveris.QverisClient(config: [QverisConfig](#qveris.QverisConfig) | None = None, debug_callback: Callable[[str], None] | None = None, \*, credential_provider: CredentialProvider | None = None, http_client: AsyncClient | None = None, transport: AsyncBaseTransport | None = None, limits: Limits | None = None)
 
 Async client for Qveris API.
 
@@ -32,7 +32,7 @@ Call this if you create QverisClient directly and want to free network resources
 
 <a id="qveris.QverisClient.discover"></a>
 
-#### *async* discover(query: str, limit: int = 20, session_id: str | None = None, view: Literal['routing', 'full'] | None = None, lang: Literal['zh', 'en'] | None = None) → [SearchResponse](#qveris.SearchResponse)
+#### *async* discover(query: str, limit: int = 20, session_id: str | None = None, view: Literal['routing', 'full'] | None = None, lang: Literal['zh', 'en'] | None = None, timeout: float | None = None, correlation_id: str | None = None) → [SearchResponse](#qveris.SearchResponse)
 
 Discover capabilities using natural language.
 
@@ -53,7 +53,7 @@ Deprecated alias for discover(…).
 
 <a id="qveris.QverisClient.inspect"></a>
 
-#### *async* inspect(tool_ids: Iterable[str] | str, search_id: str | None = None, session_id: str | None = None) → [SearchResponse](#qveris.SearchResponse)
+#### *async* inspect(tool_ids: Iterable[str] | str, search_id: str | None = None, session_id: str | None = None, timeout: float | None = None, correlation_id: str | None = None) → [SearchResponse](#qveris.SearchResponse)
 
 Inspect one or more capabilities by tool ID.
 
@@ -72,13 +72,13 @@ Deprecated alias for inspect(…).
 
 <a id="qveris.QverisClient.probe"></a>
 
-#### *async* probe(tool_id: str, parameters: Dict[str, Any] | None = None, checks: List[Literal['schema', 'quote', 'coverage', 'sample']] | None = None, live_budget: Literal['none', 'metadata', 'sampled'] = 'none') → ToolProbeResponse
+#### *async* probe(tool_id: str, parameters: Dict[str, Any] | None = None, checks: List[Literal['schema', 'quote', 'coverage', 'sample']] | None = None, live_budget: Literal['none', 'metadata', 'sampled'] = 'none', timeout: float | None = None, correlation_id: str | None = None) → ToolProbeResponse
 
 Validate candidate parameters and obtain a zero-cost quote without execution.
 
 <a id="qveris.QverisClient.call"></a>
 
-#### *async* call(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, respond_with: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
+#### *async* call(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, respond_with: str | None = None, compatibility_mode: Literal['strict', 'legacy_optional_fields'] = 'strict', timeout: float | None = None, correlation_id: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
 
 Call a specific capability.
 
@@ -89,6 +89,9 @@ Call a specific capability.
   * **session_id** – Optional correlation id.
   * **max_response_size** – Optional max response size in bytes. Large responses may be truncated.
   * **respond_with** – Optional server-side projection (full, summary, or fields:<JSONPath,…>).
+  * **compatibility_mode** – Strict mode never resubmits a paid call. The deprecated legacy mode may replay once without an unsupported optional field.
+  * **timeout** – HTTP request timeout in seconds; credential acquisition is separate.
+  * **correlation_id** – Non-sensitive reference forwarded only to the credential provider.
 * **Returns:**
   ToolExecutionResponse with success, result, and metadata.
 
@@ -100,7 +103,7 @@ Deprecated alias for call(…).
 
 <a id="qveris.QverisClient.usage"></a>
 
-#### *async* usage(\*, start_date: str | None = None, end_date: str | None = None, summary: bool | None = True, bucket: str | None = None, event_type: str | None = None, kind: str | None = None, success: bool | None = None, charge_outcome: str | None = None, search_id: str | None = None, execution_id: str | None = None, min_credits: float | None = None, max_credits: float | None = None, limit: int | None = None, page: int | None = None, page_size: int | None = None) → [UsageHistoryResponse](#qveris.UsageHistoryResponse)
+#### *async* usage(\*, start_date: str | None = None, end_date: str | None = None, summary: bool | None = True, bucket: str | None = None, event_type: str | None = None, kind: str | None = None, success: bool | None = None, charge_outcome: str | None = None, search_id: str | None = None, execution_id: str | None = None, min_credits: float | None = None, max_credits: float | None = None, limit: int | None = None, page: int | None = None, page_size: int | None = None, timeout: float | None = None, correlation_id: str | None = None) → [UsageHistoryResponse](#qveris.UsageHistoryResponse)
 
 Query request-level usage audit history.
 
@@ -108,7 +111,7 @@ Use this to verify success, failure, charge outcome, and final settlement contex
 
 <a id="qveris.QverisClient.ledger"></a>
 
-#### *async* ledger(\*, start_date: str | None = None, end_date: str | None = None, summary: bool | None = True, bucket: str | None = None, entry_type: str | None = None, direction: str | None = None, min_credits: float | None = None, max_credits: float | None = None, limit: int | None = None, page: int | None = None, page_size: int | None = None) → [CreditsLedgerResponse](#qveris.CreditsLedgerResponse)
+#### *async* ledger(\*, start_date: str | None = None, end_date: str | None = None, summary: bool | None = True, bucket: str | None = None, entry_type: str | None = None, direction: str | None = None, min_credits: float | None = None, max_credits: float | None = None, limit: int | None = None, page: int | None = None, page_size: int | None = None, timeout: float | None = None, correlation_id: str | None = None) → [CreditsLedgerResponse](#qveris.CreditsLedgerResponse)
 
 Query final credits ledger entries.
 
@@ -308,25 +311,97 @@ Configuration for LLM behavior used by Agent.
 
 ### *class* qveris.CompactBillingStatement(\*, price: BillingPrice | None = None, quantity: float | None = None, charge_lines: List[BillingChargeLine] | None = None, minimum_charge_credits: float | None = None, list_amount_credits: float | None = None, requested_amount_credits: float | None = None, summary: str | None = None, \*\*extra_data: Any)
 
+<a id="qveris.CompactBillingStatement.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
 <a id="qveris.CreditsLedgerItem"></a>
 
 ### *class* qveris.CreditsLedgerItem(\*, id: str, entry_type: str, amount_credits: float, source_system: str, created_at: str, source_ref_type: str | None = None, source_ref_id: str | None = None, pre_settlement_bill: Dict[str, Any] | None = None, settlement_result: Dict[str, Any] | None = None, balance_before: Dict[str, Any] | None = None, balance_after: Dict[str, Any] | None = None, ledger_metadata: Dict[str, Any] | None = None, description: str | None = None, \*\*extra_data: Any)
+
+<a id="qveris.CreditsLedgerItem.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
 
 <a id="qveris.CreditsLedgerResponse"></a>
 
 ### *class* qveris.CreditsLedgerResponse(\*, items: ~typing.List[~qveris.types.CreditsLedgerItem] = <factory>, total: int = 0, page: int = 1, page_size: int = 0, summary: ~typing.Dict[str, ~typing.Any] | None = None, \*\*extra_data: ~typing.Any)
 
+<a id="qveris.CreditsLedgerResponse.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
 <a id="qveris.Message"></a>
 
 ### *class* qveris.Message(\*, role: str, content: str | None = None, tool_calls: List[Dict[str, Any]] | None = None, tool_call_id: str | None = None, name: str | None = None, reasoning_details: Any | None = None, \*\*extra_data: Any)
+
+<a id="qveris.Message.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
 
 <a id="qveris.SearchResponse"></a>
 
 ### *class* qveris.SearchResponse(\*, query: str | None = None, search_id: str | None = None, total: int | None = None, results: ~typing.List[~qveris.types.ToolInfo] = <factory>, stats: ~qveris.types.SearchStats | None = None, remaining_credits: float | None = None, elapsed_time_ms: float | None = None, \*\*extra_data: ~typing.Any)
 
+<a id="qveris.SearchResponse.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
 <a id="qveris.StreamEvent"></a>
 
 ### *class* qveris.StreamEvent(\*, type: Literal['content', 'reasoning', 'tool_call', 'tool_result', 'metrics', 'error', 'reasoning_details', 'budget_warning', 'budget_exceeded'], content: str | None = None, tool_call: Dict[str, Any] | None = None, tool_result: Dict[str, Any] | None = None, metrics: Dict[str, Any] | None = None, error: str | None = None, details: Any | None = None, budget: Dict[str, Any] | None = None, \*\*extra_data: Any)
+
+<a id="qveris.StreamEvent.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
 
 <a id="qveris.ToolCapability"></a>
 
@@ -336,11 +411,35 @@ Standardized capability descriptor attached to a tool.
 
 Example: `MKT.BARS.ADJUSTED` with market coverage tags.
 
+<a id="qveris.ToolCapability.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
 <a id="qveris.ToolCapabilityTag"></a>
 
 ### *class* qveris.ToolCapabilityTag(\*, id: str | None = None, name: str | None = None, type: str | None = None, description: str | None = None, \*\*extra_data: Any)
 
 Coverage tag attached to a capability (e.g. market coverage).
+
+<a id="qveris.ToolCapabilityTag.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
 
 <a id="qveris.ToolCategory"></a>
 
@@ -350,22 +449,94 @@ Category/tag attached to a tool.
 
 Current API responses return category objects; legacy responses returned plain strings, so `ToolInfo.categories` accepts both.
 
+<a id="qveris.ToolCategory.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
 <a id="qveris.ToolExecutionResponse"></a>
 
 ### *class* qveris.ToolExecutionResponse(\*, execution_id: str, success: bool, result: Any | None = None, error_message: str | None = None, elapsed_time_ms: float | None = None, execution_time: float | None = None, tool_id: str | None = None, parameters: Dict[str, Any] | None = None, cost: float | None = None, billing: [CompactBillingStatement](#qveris.CompactBillingStatement) | None = None, pre_settlement_bill: Dict[str, Any] | None = None, remaining_credits: float | None = None, created_at: str | None = None, \*\*extra_data: Any)
+
+<a id="qveris.ToolExecutionResponse.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
 
 <a id="qveris.ToolInfo"></a>
 
 ### *class* qveris.ToolInfo(\*, tool_id: str, name: str | None = None, description: Any | None = None, capability: str | None = None, cost_class: str | None = None, reliability: str | None = None, as_of_support: bool | None = None, categories: List[str | [ToolCategory](#qveris.ToolCategory)] | None = None, category: str | None = None, capabilities: List[[ToolCapability](#qveris.ToolCapability)] | None = None, provider_id: str | None = None, provider_name: str | None = None, provider_description: Any | None = None, provider_website_url: str | None = None, region: str | None = None, params: List[[ToolParameter](#qveris.ToolParameter)] | None = None, examples: ToolExamples | None = None, stats: ToolStats | None = None, billing_rule: BillingRule | None = None, expected_cost: str | float | None = None, final_score: float | None = None, score: float | None = None, why_recommended: str | None = None, has_last_execution: bool | None = None, last_execution_record: Dict[str, Any] | None = None, docs_url: str | None = None, protocol: str | None = None, \*\*extra_data: Any)
 
+<a id="qveris.ToolInfo.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
 <a id="qveris.ToolParameter"></a>
 
 ### *class* qveris.ToolParameter(\*, name: str, type: Any, required: bool = False, description: Any | None = None, enum: List[Any] | None = None, \*\*extra_data: Any)
+
+<a id="qveris.ToolParameter.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
 
 <a id="qveris.UsageEventItem"></a>
 
 ### *class* qveris.UsageEventItem(\*, id: str, event_type: str, source_system: str, success: bool, created_at: str, kind: str | None = None, source_ref_type: str | None = None, source_ref_id: str | None = None, session_id: str | None = None, search_id: str | None = None, execution_id: str | None = None, tool_id: str | None = None, model: str | None = None, query: str | None = None, charge_outcome: str | None = None, error_message: str | None = None, billing_snapshot_status: str | None = None, pre_settlement_bill: Dict[str, Any] | None = None, settlement_result: Dict[str, Any] | None = None, requested_amount_credits: float | None = None, actual_amount_credits: float | None = None, credits_ledger_entry_id: str | None = None, display_target: str | None = None, billing_summary: str | None = None, pre_settlement_amount_credits: float | None = None, settled_amount_credits: float | None = None, \*\*extra_data: Any)
 
+<a id="qveris.UsageEventItem.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
 <a id="qveris.UsageHistoryResponse"></a>
 
 ### *class* qveris.UsageHistoryResponse(\*, items: ~typing.List[~qveris.types.UsageEventItem] = <factory>, total: int = 0, page: int = 1, page_size: int = 0, summary: ~typing.Dict[str, ~typing.Any] | None = None, \*\*extra_data: ~typing.Any)
+
+<a id="qveris.UsageHistoryResponse.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.

@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { discoverTools } from "../src/client/api.mjs";
+import { callTool, discoverTools } from "../src/client/api.mjs";
 import { CliError } from "../src/errors/handler.mjs";
 import {
   computeRetryDelayMs,
@@ -9,6 +10,10 @@ import {
   parseRetryAfterMs,
   resolveMaxRetries,
 } from "../src/client/retry.mjs";
+
+const PAID_CALL_POLICY = JSON.parse(
+  readFileSync(new URL("../../../test-fixtures/paid-call-policy.json", import.meta.url), "utf8"),
+);
 
 // --- pure helpers ------------------------------------------------------------
 
@@ -140,3 +145,31 @@ test("QVERIS_MAX_RETRIES=0 disables retrying", async () => {
     ),
   );
 });
+
+for (const status of PAID_CALL_POLICY.read_operations.retryable_statuses) {
+  test(`paid call is single-submit on HTTP ${status}`, async () => {
+    let calls = 0;
+    await withEnv("QVERIS_MAX_RETRIES", "3", () =>
+      withMockFetch(
+        () => {
+          calls += 1;
+          return new Response(JSON.stringify({ message: "retry later" }), {
+            status,
+            headers: { "Content-Type": "application/json" },
+          });
+        },
+        async () => {
+          await assert.rejects(
+            callTool({
+              apiKey: "sk-test",
+              baseUrl: "https://unit.test/api/v1",
+              toolId: "paid-tool",
+              parameters: {},
+            }),
+          );
+          assert.equal(calls, PAID_CALL_POLICY.paid_call.expected_http_attempts);
+        },
+      ),
+    );
+  });
+}

@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- Paid `call` / `execute_tool` requests are now strict single-submit: the MCP client does not retry `429`/`503` or remove a rejected projection field and resubmit. Read tools retain bounded retry behavior. ([#273])
+
 ## [0.12.0] - 2026-07-23
 
 ### Added
@@ -158,6 +162,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#140]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/140
 [#139]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/139
 [#126]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/126
+[#273]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/273
 [#122]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/122
 [#117]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/117
 [#105]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/105

@@ -248,7 +248,7 @@ qveris call 1 --params '{"symbol": "AAPL"}' --codegen python
 qveris call 1 --params '{"symbol": "AAPL"}' --codegen js
 ```
 
-Projection flags are opt-in. If an older service explicitly rejects a projection field as unknown, the CLI retries once without only that field. Invalid projections are not downgraded and remain `422` errors.
+Projection flags are opt-in. A paid call is always single-submit: the CLI does not retry `429`/`503`, replay after OAuth refresh on `401`, or remove a rejected projection field and resubmit. Projection rejections and invalid projections remain `422` errors.
 
 #### Response Truncation
 
@@ -419,6 +419,8 @@ Rate-limited (`429`) and transient (`503`) responses are retried automatically: 
 # Tune or disable via env
 export QVERIS_MAX_RETRIES=5   # default 3; 0 disables
 ```
+
+This setting applies to read and audit commands only. `qveris call` never retries automatically.
 
 ### Config File
 

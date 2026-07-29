@@ -3,6 +3,15 @@ from .agent.core import Agent
 from .client.api import QverisClient
 from .config import QverisConfig, AgentConfig
 from .credentials import ApiKeyCredentialProvider, CredentialContext, CredentialProvider
+from .errors import (
+    QverisApiError,
+    QverisClientClosedError,
+    QverisContractError,
+    QverisCredentialError,
+    QverisError,
+    QverisTransportError,
+    RequestMetadata,
+)
 from .types import (
     CompactBillingStatement,
     CreditsLedgerItem,
@@ -29,6 +38,13 @@ __all__ = [
     "CredentialContext",
     "CredentialProvider",
     "ApiKeyCredentialProvider",
+    "RequestMetadata",
+    "QverisError",
+    "QverisApiError",
+    "QverisTransportError",
+    "QverisCredentialError",
+    "QverisContractError",
+    "QverisClientClosedError",
     "AgentConfig",
     "Message",
     "StreamEvent",

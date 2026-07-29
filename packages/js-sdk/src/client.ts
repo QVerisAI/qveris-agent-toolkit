@@ -154,6 +154,12 @@ export interface CallOptions {
   respondWith?: 'full' | 'summary' | `fields:${string}`;
   /** Per-request timeout override in milliseconds (default 120s) */
   timeoutMs?: number;
+  /**
+   * Strict mode never resubmits a paid call. The deprecated legacy mode may
+   * replay once without an optional field rejected by an older service.
+   * @default 'strict'
+   */
+  compatibilityMode?: 'strict' | 'legacyOptionalFields';
 }
 
 /** Options for {@link Qveris.probe}. */
@@ -318,11 +324,14 @@ export class Qveris {
       ...(options.respondWith !== undefined && { respond_with: options.respondWith }),
     };
     const timeoutMs = options.timeoutMs ?? EXECUTE_TIMEOUT_MS;
+    const compatibilityMode = options.compatibilityMode ?? 'strict';
     try {
       return await this.request<ExecuteResponse>('call', 'POST', endpoint, body, timeoutMs);
     } catch (error) {
+      if (compatibilityMode !== 'legacyOptionalFields') throw error;
       const unsupported = unsupportedOptionalFields(error, new Set(['respond_with']));
       if (unsupported.length === 0) throw error;
+      globalThis.console?.warn('QVeris legacyOptionalFields compatibility may resubmit a paid call and is deprecated.');
       delete body.respond_with;
       return this.request<ExecuteResponse>('call', 'POST', endpoint, body, timeoutMs);
     }
@@ -391,6 +400,7 @@ export class Qveris {
     // Retry rate-limited (429) / transient (503) responses: honor Retry-After,
     // otherwise exponential backoff with jitter, bounded by maxRetries. Each
     // attempt is a fresh fetch with its own timeout.
+    const retryLimit = operation === 'call' ? 0 : this.maxRetries;
     for (let attempt = 0; ; attempt++) {
       // Credential acquisition is not part of the API request timeout. Resolve
       // it for every attempt so a retry can refresh a short-lived token, and
@@ -414,7 +424,7 @@ export class Qveris {
           signal: controller.signal,
         });
 
-        if (RETRYABLE_STATUS.has(response.status) && attempt < this.maxRetries) {
+        if (RETRYABLE_STATUS.has(response.status) && attempt < retryLimit) {
           retryDelayMs = computeRetryDelayMs({
             retryAfterMs: parseRetryAfterMs(response.headers.get('retry-after')),
             attempt,

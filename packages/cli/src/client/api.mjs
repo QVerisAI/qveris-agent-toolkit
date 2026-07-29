@@ -43,6 +43,7 @@ async function requestJson(
     // Retry rate-limited (429) / transient (503) responses: honor Retry-After,
     // otherwise exponential backoff with jitter, bounded by maxRetries.
     maxRetries = resolveMaxRetries(process.env.QVERIS_MAX_RETRIES),
+    allowAuthReplay = true,
   },
 ) {
   const url = new URL(baseUrl.replace(/\/+$/, "") + path);
@@ -76,7 +77,12 @@ async function requestJson(
         redirect: "error",
       });
 
-      if (response.status === 401 && !authRetried && typeof credentialProvider.refreshCredential === "function") {
+      if (
+        allowAuthReplay &&
+        response.status === 401 &&
+        !authRetried &&
+        typeof credentialProvider.refreshCredential === "function"
+      ) {
         authRetried = true;
         await response.body?.cancel?.().catch(() => {});
         await credentialProvider.refreshCredential();
@@ -263,22 +269,20 @@ export async function callTool({
   timeoutMs = 120000,
 }) {
   const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
-  return requestWithOptionalFieldFallback(
-    "/tools/execute",
-    {
-      credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
-      baseUrl,
-      query: { tool_id: toolId },
-      body: {
-        search_id: discoveryId,
-        parameters,
-        max_response_size: maxResponseSize,
-        ...(respondWith !== undefined && { respond_with: respondWith }),
-      },
-      timeoutMs,
+  return requestJson("/tools/execute", {
+    credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
+    baseUrl,
+    query: { tool_id: toolId },
+    body: {
+      search_id: discoveryId,
+      parameters,
+      max_response_size: maxResponseSize,
+      ...(respondWith !== undefined && { respond_with: respondWith }),
     },
-    new Set(["respond_with"]),
-  );
+    timeoutMs,
+    maxRetries: 0,
+    allowAuthReplay: false,
+  });
 }
 
 export async function getCredits({ apiKey, credentialProvider, baseUrl: baseUrlFlag, timeoutMs = 30000 }) {

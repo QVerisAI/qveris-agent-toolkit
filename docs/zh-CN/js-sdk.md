@@ -108,9 +108,9 @@ AI SDK 集成。该页面直接根据 TypeScript 源码重新生成，并由 CI 
 
 - `discover(query, { limit?, sessionId?, view?, lang?, timeoutMs? })`
 - `inspect(toolIds, { searchId?, sessionId?, timeoutMs? })` —— `toolIds` 接受单个字符串或数组；**空数组会短路**，直接返回空响应而不发起网络请求。
-- `call(toolId, { parameters, searchId?, sessionId?, maxResponseSize?, respondWith?, timeoutMs? })`
+- `call(toolId, { parameters, searchId?, sessionId?, maxResponseSize?, respondWith?, timeoutMs?, compatibilityMode? })`
 
-投影参数仅在显式指定时发送。旧服务返回 `422 extra_forbidden` 时仅移除对应可选字段并重试一次；无效投影仍按错误返回。
+投影参数仅在显式指定时发送。付费调用严格 single-submit：`429`/`503` 和投影错误会直接返回，不会重放。已弃用的 `compatibilityMode: 'legacyOptionalFields'` 可显式允许一次删除旧服务拒绝的可选字段后重放；无效投影仍按错误返回。
 
 `usage(...)` 和 `ledger(...)` 接受过滤对象，如 `start_date`、`end_date`、`summary`、`bucket`、`charge_outcome`、`execution_id`、`search_id`、`direction`、`entry_type`、`min_credits`、`max_credits`、`limit`、`page`、`page_size`。
 

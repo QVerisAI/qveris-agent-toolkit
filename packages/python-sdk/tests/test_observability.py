@@ -13,6 +13,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 from qveris import observability  # noqa: E402
 from qveris.client.api import QverisClient  # noqa: E402
 from qveris.config import QverisConfig  # noqa: E402
+from qveris.errors import QverisApiError, QverisTransportError  # noqa: E402
 
 
 def make_client(handler: Callable[[httpx.Request], httpx.Response]) -> QverisClient:
@@ -110,13 +111,36 @@ async def test_call_span_marked_error_on_http_failure(spans: InMemorySpanExporte
 
     client = make_client(handler)
     try:
-        with pytest.raises(httpx.HTTPStatusError):
+        with pytest.raises(QverisApiError):
             await client.call("t1", {}, search_id="s1")
     finally:
         await client.close()
 
     span = _span_by_name(spans, "qveris.call")
     assert span.status.status_code == StatusCode.ERROR
+
+
+@pytest.mark.asyncio
+async def test_transport_failure_span_does_not_record_credential(spans: InMemorySpanExporter) -> None:
+    synthetic_token = "sk-synthetic-observability-273"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ReadTimeout("transport failed", request=request)
+
+    client = QverisClient(
+        QverisConfig(api_key=synthetic_token),
+        transport=httpx.MockTransport(handler),
+    )
+    try:
+        with pytest.raises(QverisTransportError):
+            await client.call("t1", {}, search_id="s1")
+    finally:
+        await client.close()
+
+    span = _span_by_name(spans, "qveris.call")
+    rendered = json.dumps(dict(span.attributes), default=str)
+    rendered += json.dumps([(event.name, dict(event.attributes or {})) for event in span.events], default=str)
+    assert synthetic_token not in rendered
 
 
 @pytest.mark.asyncio
