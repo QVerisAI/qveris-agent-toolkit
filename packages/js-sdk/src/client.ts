@@ -422,6 +422,7 @@ export class Qveris {
           },
           body: body ? JSON.stringify(body) : undefined,
           signal: controller.signal,
+          redirect: 'error',
         });
 
         if (RETRYABLE_STATUS.has(response.status) && attempt < retryLimit) {

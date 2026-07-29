@@ -208,7 +208,7 @@ qveris call 1 --params '{"city": "London"}' --respond-with summary
 qveris call 1 --params '{"city": "London"}' --respond-with 'fields:$.temperature,$.humidity'
 ```
 
-投影参数仅在显式指定时发送。付费调用严格 single-submit：CLI 不会重试 `429`/`503`，不会在 `401` 后刷新 OAuth 并重放，也不会删除被拒绝的投影字段后再次提交。投影拒绝和无效投影都按 `422` 错误返回。`QVERIS_MAX_RETRIES` 仅继续用于读和审计命令。
+投影参数仅在显式指定时发送。付费调用严格 single-submit：CLI 不会重试 `429`/`503`，不会跟随 HTTP 重定向，不会在 `401` 后刷新 OAuth 并重放，也不会删除被拒绝的投影字段后再次提交。投影拒绝和无效投影都按 `422` 错误返回。`QVERIS_MAX_RETRIES` 仅继续用于读和审计命令。
 
 **试运行（不消耗积分）：**
 

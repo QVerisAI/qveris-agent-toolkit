@@ -80,11 +80,17 @@ from .retry import RetryPolicy
 _SENSITIVE_KEYS = frozenset(
     {
         "authorization",
+        "proxy-authorization",
         "api_key",
         "apikey",
+        "x-api-key",
+        "x-auth-token",
         "access_token",
         "refresh_token",
         "token",
+        "credential",
+        "secret",
+        "password",
         "selection_token",
         "full_content_file_url",
         "cookie",
@@ -102,6 +108,25 @@ _SIGNED_URL_MARKERS = (
     "token=",
 )
 _NORMALIZED_SENSITIVE_KEYS = frozenset(re.sub(r"[^a-z0-9]", "", key.lower()) for key in _SENSITIVE_KEYS)
+_SENSITIVE_KEY_SUFFIXES = (
+    "authorization",
+    "apikey",
+    "authtoken",
+    "accesstoken",
+    "refreshtoken",
+    "selectiontoken",
+    "credential",
+    "secret",
+    "password",
+    "cookie",
+)
+
+
+def _is_sensitive_key(key: Any) -> bool:
+    normalized = re.sub(r"[^a-z0-9]", "", str(key).lower())
+    return normalized in _NORMALIZED_SENSITIVE_KEYS or any(
+        normalized.endswith(suffix) for suffix in _SENSITIVE_KEY_SUFFIXES
+    )
 
 
 @dataclass
@@ -117,6 +142,12 @@ class _RequestState:
 class _SendFailure:
     error_type: str
     message: str
+
+
+@dataclass(frozen=True)
+class _DecodedResponse:
+    value: Any = None
+    error_message: Optional[str] = None
 
 
 def _pre_settlement_credits(response: ToolExecutionResponse) -> Optional[float]:
@@ -199,6 +230,7 @@ class QverisClient:
         self._close_lock = asyncio.Lock()
         self._no_active_requests = asyncio.Event()
         self._no_active_requests.set()
+        self._request_cleanup_tasks: Set[asyncio.Task[None]] = set()
         self._active_requests = 0
         self._closing = False
         self._closed = False
@@ -229,6 +261,32 @@ class QverisClient:
             self._active_requests -= 1
             if self._active_requests == 0:
                 self._no_active_requests.set()
+
+    async def _finish_request(self) -> None:
+        """Complete lifecycle accounting even if the caller is cancelled again."""
+        cleanup_task = asyncio.create_task(self._end_request())
+        self._request_cleanup_tasks.add(cleanup_task)
+        cleanup_task.add_done_callback(self._request_cleanup_tasks.discard)
+        await self._await_task_completion(cleanup_task)
+
+    @staticmethod
+    async def _await_task_completion(task: asyncio.Task[None]) -> None:
+        """Wait for an internal cleanup task before propagating caller cancellation."""
+        pending_cancellation: Optional[asyncio.CancelledError] = None
+        while not task.done():
+            try:
+                await asyncio.shield(task)
+            except asyncio.CancelledError as error:
+                if pending_cancellation is None:
+                    pending_cancellation = error
+
+        if task.cancelled():
+            await task
+        task_error = task.exception()
+        if task_error is not None:
+            raise task_error
+        if pending_cancellation is not None:
+            raise pending_cancellation
 
     def _request_metadata(self, state: _RequestState) -> RequestMetadata:
         retries = max(0, state.http_attempts - 1 - state.compatibility_replays)
@@ -263,25 +321,63 @@ class QverisClient:
             correlation_id=correlation_id,
         )
 
-    @staticmethod
-    def _scrub_request_authorization(request: Any) -> None:
+    def _scrub_request_headers(self, request: Any, credential: Optional[str] = None) -> None:
         headers = getattr(request, "headers", None)
         if headers is None:
             return
         try:
-            if "Authorization" in headers:
-                headers["Authorization"] = "Bearer ***"
+            for key, value in list(headers.multi_items()):
+                normalized_key = re.sub(r"[^a-z0-9]", "", str(key).lower())
+                if _is_sensitive_key(key):
+                    headers[key] = "Bearer ***" if normalized_key in {"authorization", "proxyauthorization"} else "***"
+                    continue
+                safe_value = value.replace(credential, "***") if credential else value
+                headers[key] = self._redact_sensitive(safe_value)
         except Exception:
             pass
 
     @staticmethod
-    def _scrub_response_credential(response: httpx.Response, credential: Optional[str]) -> None:
+    def _replace_exact_secret(value: Any, secret: str, depth: int = 0) -> Any:
+        """Replace one exact secret in a JSON-compatible value."""
+        if depth >= 32:
+            return "<response value omitted>"
+        if isinstance(value, dict):
+            return {
+                key.replace(secret, "***") if isinstance(key, str) else key: QverisClient._replace_exact_secret(
+                    item, secret, depth + 1
+                )
+                for key, item in value.items()
+            }
+        if isinstance(value, list):
+            return [QverisClient._replace_exact_secret(item, secret, depth + 1) for item in value]
+        if isinstance(value, tuple):
+            return tuple(QverisClient._replace_exact_secret(item, secret, depth + 1) for item in value)
+        if isinstance(value, str):
+            return value.replace(secret, "***")
+        return value
+
+    def _scrub_response_credential(self, response: httpx.Response, credential: Optional[str]) -> None:
         """Remove the attempt credential before a response leaves the transport boundary."""
         if not credential:
             return
-        secret = credential.encode()
         try:
-            response._content = response.content.replace(secret, b"***")  # type: ignore[attr-defined]
+            content = response.content
+            variants = {
+                credential.encode(),
+                json.dumps(credential, ensure_ascii=False)[1:-1].encode(),
+                json.dumps(credential, ensure_ascii=True)[1:-1].encode(),
+            }
+            if any(variant and variant in content for variant in variants):
+                try:
+                    safe_body = self._replace_exact_secret(response.json(), credential)
+                    content = json.dumps(safe_body, ensure_ascii=False).encode()
+                    response._content = content  # type: ignore[attr-defined]
+                except Exception:
+                    for variant in variants:
+                        if variant:
+                            content = content.replace(variant, b"***")
+                    response._content = content  # type: ignore[attr-defined]
+                response.headers["content-length"] = str(len(content))
         except Exception:
             pass
         try:
@@ -290,11 +386,37 @@ class QverisClient:
                     response.headers[key] = value.replace(credential, "***")
         except Exception:
             pass
+        try:
+            reason = response.extensions.get("reason_phrase")
+            if isinstance(reason, bytes):
+                response.extensions["reason_phrase"] = reason.replace(credential.encode(), b"***")
+            elif isinstance(reason, str):
+                response.extensions["reason_phrase"] = reason.replace(credential, "***")
+        except Exception:
+            pass
+
+    def _scrub_response_headers(self, response: httpx.Response) -> None:
+        """Redact sensitive response headers and status metadata retained in tracebacks."""
+        try:
+            for key, value in list(response.headers.multi_items()):
+                response.headers[key] = "***" if _is_sensitive_key(key) else self._redact_sensitive(value)
+        except Exception:
+            pass
+        try:
+            reason = response.extensions.get("reason_phrase")
+            if isinstance(reason, bytes):
+                safe_reason = self._redact_sensitive(reason.decode(errors="replace"))
+                response.extensions["reason_phrase"] = safe_reason.encode()
+            elif isinstance(reason, str):
+                response.extensions["reason_phrase"] = self._redact_sensitive(reason)
+        except Exception:
+            pass
 
     def _scrub_error_response(self, response: httpx.Response) -> None:
         """Replace an error body with its bounded, recursively redacted form."""
-        if response.status_code < 400:
+        if 200 <= response.status_code < 300:
             return
+        self._scrub_response_headers(response)
         try:
             safe_body = self._redact_sensitive(response.json())
         except (json.JSONDecodeError, UnicodeDecodeError):
@@ -353,9 +475,10 @@ class QverisClient:
                     max_retries=retry_limit,
                     on_attempt=on_attempt,
                     timeout=request_timeout,
+                    follow_redirects=False,
                     **kwargs,
                 )
-                self._scrub_request_authorization(getattr(response, "request", None))
+                self._scrub_request_headers(getattr(response, "request", None), credential)
                 self._scrub_response_credential(response, credential)
                 self._scrub_error_response(response)
                 return response
@@ -364,20 +487,20 @@ class QverisClient:
             except CredentialResolutionError as exc:
                 return _SendFailure("credential", str(exc))
             except httpx.TimeoutException as exc:
-                self._scrub_request_authorization(getattr(exc, "request", None))
+                self._scrub_request_headers(getattr(exc, "request", None), credential)
                 return _SendFailure("timeout", "QVeris request timed out")
             except httpx.TransportError as exc:
-                self._scrub_request_authorization(getattr(exc, "request", None))
+                self._scrub_request_headers(getattr(exc, "request", None), credential)
                 return _SendFailure(type(exc).__name__.lower(), "QVeris transport request failed")
             except Exception as exc:
-                self._scrub_request_authorization(getattr(exc, "request", None))
+                self._scrub_request_headers(getattr(exc, "request", None), credential)
                 return _SendFailure("transport_error", "QVeris transport request failed")
 
         await self._begin_request(state)
         try:
             outcome = await perform()
         finally:
-            await self._end_request()
+            await self._finish_request()
 
         if isinstance(outcome, _SendFailure):
             metadata = self._request_metadata(state)
@@ -459,10 +582,8 @@ class QverisClient:
                 if index >= 100:
                     safe_dict["__truncated__"] = True
                     break
-                normalized_key = re.sub(r"[^a-z0-9]", "", str(key).lower())
-                safe_dict[key] = (
-                    "***" if normalized_key in _NORMALIZED_SENSITIVE_KEYS else self._redact_sensitive(item, depth + 1)
-                )
+                safe_key = self._redact_sensitive(str(key), depth + 1)
+                safe_dict[safe_key] = "***" if _is_sensitive_key(key) else self._redact_sensitive(item, depth + 1)
             return safe_dict
         if isinstance(value, list):
             return [self._redact_sensitive(item, depth + 1) for item in value[:100]]
@@ -488,16 +609,53 @@ class QverisClient:
             return fallback
         return safe[:2048]
 
-    def _parse_response_json(self, response: httpx.Response) -> Any:
-        """Parse response JSON once while still logging non-JSON bodies for debugging."""
+    def _scrub_contract_response(self, response: httpx.Response) -> None:
+        """Remove raw response data before a public contract error is raised."""
+        self._scrub_response_headers(response)
         try:
-            data = response.json()
+            safe_body = self._redact_sensitive(response.json())
+        except Exception:
+            safe_body = {"body": "<invalid API response omitted>"}
+        content = json.dumps(safe_body, ensure_ascii=False).encode()
+        response._content = content  # type: ignore[attr-defined]
+        response.headers["content-length"] = str(len(content))
+
+    def _decode_response_model(
+        self,
+        response: httpx.Response,
+        model_type: Callable[..., Any],
+        *,
+        operation: str,
+        state: _RequestState,
+    ) -> Any:
+        """Decode and validate a success response behind a safe exception boundary."""
+
+        def attempt() -> _DecodedResponse:
+            try:
+                data = response.json()
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                self._debug("[Qveris API] Response body: <non-JSON body omitted>")
+                return _DecodedResponse(error_message="Invalid JSON response from API")
+
             safe_data = self._redact_sensitive(data)
             self._debug(f"[Qveris API] Response body: {json.dumps(safe_data, indent=2)}")
-            return data
-        except json.JSONDecodeError:
-            self._debug("[Qveris API] Response body: <non-JSON body omitted>")
-            raise
+            try:
+                payload = self._unwrap_envelope(data, operation=operation, state=state)
+                return _DecodedResponse(value=model_type(**payload))
+            except QverisContractError as error:
+                return _DecodedResponse(error_message=str(error))
+            except Exception:
+                return _DecodedResponse(error_message="API response did not match the expected contract")
+
+        outcome = attempt()
+        if outcome.error_message is not None:
+            self._scrub_contract_response(response)
+            raise QverisContractError(
+                outcome.error_message,
+                operation=operation,
+                request_metadata=self._request_metadata(state),
+            ) from None
+        return outcome.value
 
     def _url_for(self, method: str, path: str, params: Optional[Dict[str, Any]] = None) -> str:
         """Build the effective request URL using the same httpx client settings."""
@@ -529,7 +687,7 @@ class QverisClient:
         operation: str,
         state: _RequestState,
     ) -> Optional[QverisApiError]:
-        if response.status_code < 400:
+        if 200 <= response.status_code < 300:
             return None
         try:
             raw_details = response.json()
@@ -612,13 +770,10 @@ class QverisClient:
             # wrapper appear reusable while its transport is half-closed.
             close_task = asyncio.create_task(self.client.aclose())
             try:
-                await asyncio.shield(close_task)
+                await self._await_task_completion(close_task)
             except asyncio.CancelledError:
-                try:
-                    await close_task
-                finally:
-                    self._closed = True
-                    self._closing = False
+                self._closed = True
+                self._closing = False
                 raise
             except Exception:
                 self._closed = True
@@ -690,8 +845,7 @@ class QverisClient:
             error = self._api_error_from_response(response, operation="discover", state=state)
             if error is not None:
                 raise error from None
-            data = self._unwrap_envelope(self._parse_response_json(response), operation="discover", state=state)
-            result = SearchResponse(**data)
+            result = self._decode_response_model(response, SearchResponse, operation="discover", state=state)
             result._set_request_metadata(self._request_metadata(state))
             set_span_attributes(
                 span,
@@ -769,8 +923,7 @@ class QverisClient:
             error = self._api_error_from_response(response, operation="inspect", state=state)
             if error is not None:
                 raise error from None
-            data = self._unwrap_envelope(self._parse_response_json(response), operation="inspect", state=state)
-            result = SearchResponse(**data)
+            result = self._decode_response_model(response, SearchResponse, operation="inspect", state=state)
             result._set_request_metadata(self._request_metadata(state))
             set_span_attributes(span, {ATTR_RESULT_COUNT: len(result.results or [])})
             return result
@@ -819,8 +972,7 @@ class QverisClient:
             error = self._api_error_from_response(response, operation="probe", state=state)
             if error is not None:
                 raise error from None
-            data = self._unwrap_envelope(self._parse_response_json(response), operation="probe", state=state)
-            result = ToolProbeResponse(**data)
+            result = self._decode_response_model(response, ToolProbeResponse, operation="probe", state=state)
             result._set_request_metadata(self._request_metadata(state))
             set_span_attributes(span, {ATTR_SUCCESS: result.schema_ is None or result.schema_.valid})
             return result
@@ -913,8 +1065,7 @@ class QverisClient:
             error = self._api_error_from_response(response, operation="call", state=state)
             if error is not None:
                 raise error from None
-            data = self._unwrap_envelope(self._parse_response_json(response), operation="call", state=state)
-            result = ToolExecutionResponse(**data)
+            result = self._decode_response_model(response, ToolExecutionResponse, operation="call", state=state)
             result._set_request_metadata(self._request_metadata(state))
             set_span_attributes(
                 span,
@@ -1005,8 +1156,7 @@ class QverisClient:
         error = self._api_error_from_response(response, operation="usage", state=state)
         if error is not None:
             raise error from None
-        data = self._unwrap_envelope(self._parse_response_json(response), operation="usage", state=state)
-        result = UsageHistoryResponse(**data)
+        result = self._decode_response_model(response, UsageHistoryResponse, operation="usage", state=state)
         result._set_request_metadata(self._request_metadata(state))
         return result
 
@@ -1063,8 +1213,7 @@ class QverisClient:
         error = self._api_error_from_response(response, operation="ledger", state=state)
         if error is not None:
             raise error from None
-        data = self._unwrap_envelope(self._parse_response_json(response), operation="ledger", state=state)
-        result = CreditsLedgerResponse(**data)
+        result = self._decode_response_model(response, CreditsLedgerResponse, operation="ledger", state=state)
         result._set_request_metadata(self._request_metadata(state))
         return result
 

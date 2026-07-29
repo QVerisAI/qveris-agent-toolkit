@@ -179,7 +179,7 @@ class ToolExecutionResponse(QverisModel):
     elapsed_time_ms: Optional[float] = None
     execution_time: Optional[float] = None
     tool_id: Optional[str] = None
-    parameters: Optional[Dict[str, Any]] = None
+    parameters: Optional[Dict[str, Any]] = Field(default=None, repr=False)
     cost: Optional[float] = None
     billing: Optional[CompactBillingStatement] = None
     pre_settlement_bill: Optional[Dict[str, Any]] = None

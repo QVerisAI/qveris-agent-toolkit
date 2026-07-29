@@ -120,7 +120,7 @@ API keys never select the endpoint. Endpoint overrides must be HTTP(S) URLs with
 
 ## Rate limiting & retries
 
-The client transparently retries rate-limited (`429`) and transient (`503`) responses for read/audit operations: it honors the `Retry-After` header when present, otherwise backs off exponentially with full jitter. Each wait is capped and retries are bounded by `maxRetries`; paid calls remain single-submit.
+The client transparently retries rate-limited (`429`) and transient (`503`) responses for read/audit operations: it honors the `Retry-After` header when present, otherwise backs off exponentially with full jitter. Each wait is capped and retries are bounded by `maxRetries`; paid calls remain single-submit and HTTP redirects are not followed.
 
 ```ts
 const qveris = new Qveris({ apiKey: process.env.QVERIS_API_KEY!, maxRetries: 5 });

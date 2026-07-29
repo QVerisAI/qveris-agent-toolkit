@@ -184,11 +184,13 @@ test("API client preserves read projection fallback but never resubmits a paid c
   ]);
 
   const callBodies = [];
+  const callRedirectModes = [];
   const previous = PAID_CALL_POLICY.contract_fixtures.n_minus_1;
   await assert.rejects(
     withMockFetch(
       (_url, options) => {
         callBodies.push(JSON.parse(options.body));
+        callRedirectModes.push(options.redirect);
         return jsonResponse(previous.body, { status: previous.status });
       },
       () =>
@@ -211,6 +213,8 @@ test("API client preserves read projection fallback but never resubmits a paid c
       respond_with: "summary",
     },
   ]);
+  assert.equal(PAID_CALL_POLICY.paid_call.allow_redirect_replay, false);
+  assert.deepEqual(callRedirectModes, ["error"]);
 });
 
 test("API client does not downgrade invalid projections", async () => {

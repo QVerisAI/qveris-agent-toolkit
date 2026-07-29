@@ -12,11 +12,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
-- Paid `call()` operations are strict single-submit by default: they no longer retry `429`/`503` or automatically replay after a legacy projection rejection. The deprecated `compatibility_mode="legacy_optional_fields"` opt-in preserves the old projection fallback when explicitly required. Read operations continue to use bounded `max_retries`. ([#273])
+- Paid `call()` operations are strict single-submit by default: they no longer retry `429`/`503`, follow HTTP redirects, or automatically replay after a legacy projection rejection. The deprecated `compatibility_mode="legacy_optional_fields"` opt-in preserves the old projection fallback when explicitly required. Read operations continue to use bounded `max_retries`. ([#273])
 
 ### Security
 
-- Removed raw `httpx` request, response, transport exception, credential-provider exception, signed URL, and unredacted response-body data from public error/debug paths. ([#273])
+- Removed raw `httpx` request, response, transport exception, credential-provider exception, signed URL, and unredacted response-body data from public error/debug paths. Invalid JSON, failure envelopes, and schema-invalid success responses now cross the same credential-safe `QverisContractError` boundary. ([#273])
 
 ## [0.5.0] - 2026-07-23
 

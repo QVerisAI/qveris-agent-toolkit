@@ -8,7 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
-- Paid `call()` operations are strict single-submit by default and no longer retry `429`/`503` or automatically remove a rejected projection field and replay. The deprecated `compatibilityMode: "legacyOptionalFields"` opt-in preserves the legacy projection replay when explicitly required. ([#273])
+- Paid `call()` operations are strict single-submit by default and no longer retry `429`/`503`, follow HTTP redirects, or automatically remove a rejected projection field and replay. The deprecated `compatibilityMode: "legacyOptionalFields"` opt-in preserves the legacy projection replay when explicitly required. ([#273])
 
 ## [0.6.0] - 2026-07-23
 

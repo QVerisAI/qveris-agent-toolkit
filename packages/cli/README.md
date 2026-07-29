@@ -248,7 +248,7 @@ qveris call 1 --params '{"symbol": "AAPL"}' --codegen python
 qveris call 1 --params '{"symbol": "AAPL"}' --codegen js
 ```
 
-Projection flags are opt-in. A paid call is always single-submit: the CLI does not retry `429`/`503`, replay after OAuth refresh on `401`, or remove a rejected projection field and resubmit. Projection rejections and invalid projections remain `422` errors.
+Projection flags are opt-in. A paid call is always single-submit: the CLI does not retry `429`/`503`, follow HTTP redirects, replay after OAuth refresh on `401`, or remove a rejected projection field and resubmit. Projection rejections and invalid projections remain `422` errors.
 
 #### Response Truncation
 
