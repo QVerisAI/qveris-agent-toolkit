@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-07-29
+
 ### Changed
 
 - Paid `qveris call` requests are now strict single-submit: the CLI does not retry `429`/`503`, follow HTTP redirects, replay after OAuth refresh on `401`, or remove a rejected projection field and resubmit. Read commands retain bounded retry and OAuth refresh behavior. ([#273])
@@ -94,7 +96,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial release: `discover` / `inspect` / `call` from the terminal against the QVeris API.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.9.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.10.0...HEAD
+[0.10.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.9.0...cli-v0.10.0
 [0.9.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.8.2...cli-v0.9.0
 [0.8.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.8.1...cli-v0.8.2
 [0.8.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.8.0...cli-v0.8.1
