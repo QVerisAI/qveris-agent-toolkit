@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import {
   BENCHMARK_CADENCE_WORKFLOW,
   CLIENTS,
+  PUBLIC_VERSION_REFERENCES,
   benchmarkCadenceDispatchArgs,
   extractChangelogRelease,
   githubRepositoryFromRemoteUrl,
@@ -61,6 +62,17 @@ function fixtureRoot(overrides = {}) {
     join(root, ".github/workflows", BENCHMARK_CADENCE_WORKFLOW),
     "name: Benchmark cadence\n\non:\n  workflow_dispatch:\n    inputs:\n      release_sha:\n        required: true\n\njobs: {}\n",
   );
+  const publicReferences = new Map();
+  for (const reference of PUBLIC_VERSION_REFERENCES) {
+    const lines = publicReferences.get(reference.path) || [];
+    lines.push(`${reference.marker} v${versions[reference.key]}`);
+    publicReferences.set(reference.path, lines);
+  }
+  for (const [path, lines] of publicReferences) {
+    const target = join(root, path);
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, `${lines.join("\n")}\n`);
+  }
   return root;
 }
 
@@ -186,6 +198,22 @@ test("readReleasePlan rejects drift between package and release metadata", () =>
       error.message.includes("MCP: server.json version (2.3.3) must equal 2.3.4") &&
       error.message.includes("Python SDK: uv.lock qveris version (4.5.5) must equal 4.5.6"),
   );
+});
+
+test("readReleasePlan rejects stale or missing public client version references", () => {
+  const staleRoot = fixtureRoot();
+  const reference = PUBLIC_VERSION_REFERENCES.find(
+    ({ key, path }) => key === "cli" && path === "docs/en-US/cli.md",
+  );
+  writeFileSync(join(staleRoot, reference.path), `${reference.marker} v1.2.2\n`);
+  assert.throws(
+    () => readReleasePlan(staleRoot),
+    /docs\/en-US\/cli\.md "latest tested release" version \(1\.2\.2\) must equal 1\.2\.3/,
+  );
+
+  const missingRoot = fixtureRoot();
+  rmSync(join(missingRoot, "agent/llms.txt"));
+  assert.throws(() => readReleasePlan(missingRoot), /public version surface is missing: agent\/llms\.txt/);
 });
 
 test("readReleasePlan rejects a missing or mismatched publish workflow before tagging", () => {

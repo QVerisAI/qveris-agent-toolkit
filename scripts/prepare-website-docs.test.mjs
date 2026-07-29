@@ -68,6 +68,11 @@ test("website staging holds published docs between releases and advances on new 
     for (const relPath of SDK_PATHS) {
       await write(website, relPath, `published ${relPath}\n`)
     }
+    await write(
+      website,
+      "docs/en-US/js-sdk.md",
+      "<!-- qveris-sdk-release: js-sdk-v0.4.0 -->\n`@qverisai/sdk` v0.3.0 is the latest tested release.\n",
+    )
 
     const result = spawnSync(
       process.execPath,
@@ -83,7 +88,7 @@ test("website staging holds published docs between releases and advances on new 
     )
     assert.equal(
       await fs.readFile(path.join(output, "docs/en-US/js-sdk.md"), "utf8"),
-      "<!-- qveris-sdk-release: js-sdk-v0.4.0 -->\npublished docs/en-US/js-sdk.md\n",
+      "<!-- qveris-sdk-release: js-sdk-v0.4.0 -->\n`@qverisai/sdk` v0.4.0 is the latest tested release.\n",
     )
     assert.equal(
       await fs.readFile(path.join(output, "docs/en-US/js-sdk-api.md"), "utf8"),
@@ -99,6 +104,11 @@ test("website staging holds published docs between releases and advances on new 
     for (const relPath of SDK_PATHS) {
       await write(toolkit, relPath, `next release ${relPath}\n`)
     }
+    await write(
+      toolkit,
+      "docs/en-US/python-sdk.md",
+      "QVeris Python SDK v0.3.2 is the latest tested release.\n",
+    )
     git(toolkit, "add", ".")
     git(toolkit, "commit", "-m", "next sdk release")
     git(toolkit, "tag", "python-sdk-v0.3.3")
@@ -113,7 +123,7 @@ test("website staging holds published docs between releases and advances on new 
     assert.equal(nextResult.status, 0, nextResult.stderr)
     assert.equal(
       await fs.readFile(path.join(output, "docs/en-US/python-sdk.md"), "utf8"),
-      "<!-- qveris-sdk-release: python-sdk-v0.3.3 -->\nnext release docs/en-US/python-sdk.md\n",
+      "<!-- qveris-sdk-release: python-sdk-v0.3.3 -->\nQVeris Python SDK v0.3.3 is the latest tested release.\n",
     )
     assert.equal(
       await fs.readFile(path.join(output, "docs/en-US/js-sdk-api.md"), "utf8"),

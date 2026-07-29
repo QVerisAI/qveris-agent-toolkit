@@ -9,12 +9,14 @@ const SDK_RELEASES = [
   {
     outputName: "python_tag",
     tagPattern: "python-sdk-v*",
+    tagPrefix: "python-sdk-v",
     bootstrapTag: "python-sdk-v0.3.2",
     pathPrefix: "python-sdk",
   },
   {
     outputName: "js_tag",
     tagPattern: "js-sdk-v*",
+    tagPrefix: "js-sdk-v",
     bootstrapTag: "js-sdk-v0.4.0",
     pathPrefix: "js-sdk",
   },
@@ -105,6 +107,32 @@ function withReleaseMarker(content, tag) {
   return `<!-- qveris-sdk-release: ${tag} -->\n${content.replace(RELEASE_MARKER, "")}`
 }
 
+function withPinnedGuideVersion(content, release, tag, relPath) {
+  if (path.basename(relPath) !== `${release.pathPrefix}.md`) return content
+
+  const version = tag.startsWith(release.tagPrefix) ? tag.slice(release.tagPrefix.length) : ""
+  if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) {
+    throw new Error(`${tag} does not match expected ${release.tagPrefix}<version> format`)
+  }
+
+  const lines = content.split("\n")
+  const currentReleaseLines = lines
+    .map((line, index) => ({ line, index }))
+    .filter(({ line }) => line.includes("latest tested release") || line.includes("最新测试版本"))
+  if (currentReleaseLines.length === 0) return content
+  if (currentReleaseLines.length !== 1) {
+    throw new Error(`${relPath} must contain at most one latest-tested release line`)
+  }
+
+  const { line, index } = currentReleaseLines[0]
+  const versions = [...line.matchAll(/\bv?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)\b/g)]
+  if (versions.length !== 1) {
+    throw new Error(`${relPath} latest-tested release line must contain exactly one semantic version`)
+  }
+  lines[index] = line.replace(versions[0][0], `${versions[0][0].startsWith("v") ? "v" : ""}${version}`)
+  return lines.join("\n")
+}
+
 function pathsOverlap(left, right) {
   const relative = path.relative(left, right)
   return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative))
@@ -180,7 +208,11 @@ async function main() {
       // Between SDK releases, keep the website's known-published snapshot.
       // Toolkit main may already contain the next release's APIs and guides.
       if (publishedContent !== null && publishedTag === tag) {
-        await writeFile(outputDir, relPath, withReleaseMarker(publishedContent, tag))
+        await writeFile(
+          outputDir,
+          relPath,
+          withReleaseMarker(withPinnedGuideVersion(publishedContent, release, tag, relPath), tag),
+        )
         continue
       }
 
@@ -196,7 +228,11 @@ async function main() {
         continue
       }
 
-      await writeFile(outputDir, relPath, withReleaseMarker(taggedContent, tag))
+      await writeFile(
+        outputDir,
+        relPath,
+        withReleaseMarker(withPinnedGuideVersion(taggedContent, release, tag, relPath), tag),
+      )
     }
   }
 
