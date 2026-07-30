@@ -65,6 +65,9 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Verify published npm artifact with OpenClaw
+        run: npm run check:runtime:registry -- --expected-git-head "$GITHUB_SHA"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:

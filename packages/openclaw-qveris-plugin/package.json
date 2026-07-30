@@ -34,13 +34,15 @@
     "check:pack": "node scripts/check-pack.mjs",
     "check:runtime": "npm run build && node scripts/check-openclaw-runtime.mjs",
     "check:runtime:packed": "npm run build && node scripts/check-openclaw-runtime.mjs --pack",
+    "check:runtime:registry": "node scripts/check-openclaw-registry-release.mjs",
     "prepack": "npm run build",
     "test:integration": "node scripts/run-integration-tests.mjs",
-    "test": "vitest run",
+    "test:registry-release": "node --test scripts/check-openclaw-registry-release.node-test.mjs",
+    "test": "vitest run && npm run test:registry-release",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . && prettier --check \"src/**/*.ts\" \"index.ts\" \"scripts/**/*.mjs\"",
     "lint:fix": "eslint . --fix && prettier --write \"src/**/*.ts\" \"index.ts\" \"scripts/**/*.mjs\"",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage && npm run test:registry-release"
   },
   "dependencies": {
     "@sinclair/typebox": "0.34.52"
