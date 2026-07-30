@@ -19,9 +19,14 @@ Three tools are registered into the agent's context once the plugin is loaded:
 
 The typical agent workflow is: `qveris_discover` → `qveris_inspect` (optional) → `qveris_call`.
 
+The native plugin manifest declares the same three names in `contracts.tools`, so current OpenClaw hosts can
+attribute and load the owning plugin before importing its runtime. Discover and Inspect are declared replay-safe;
+the paid Call tool is deliberately replay-unsafe.
+
 ## Requirements
 
-- Node.js >= 22.19.0
+- Node.js >= 22.22.3 for the current stable OpenClaw host; the plugin package itself retains its Node.js >=
+  22.19.0 compatibility floor for older supported hosts
 - OpenClaw >= 2026.6.11
 - A QVeris API key — sign up at [qveris.ai](https://qveris.ai)
 
@@ -52,7 +57,14 @@ Before publishing, verify the package contents:
 npm run build
 npm pack --dry-run --json
 npm run check:pack
+npm run check:runtime
+npm run check:runtime:packed
 ```
+
+The package check instantiates the compiled factory with config, environment, and missing-credential cases. The
+runtime checks separately validate OpenClaw's registration contract and installed-package provenance in an isolated
+state directory. All checks use synthetic credentials and do not call the QVeris API. CI runs the host contract
+against the minimum supported host, the extended-stable host, and the latest stable host.
 
 Real network integration tests must live under `integration/` and are disabled by default:
 
@@ -193,17 +205,24 @@ After restarting the gateway, verify the plugin is loaded and tools are register
 # Restart gateway
 openclaw gateway restart
 
-# Inspect plugin
-openclaw plugins inspect qveris
+# Inspect the loaded runtime, registered tools, and diagnostics
+openclaw plugins inspect qveris --runtime --json
 ```
 
-Expected output should include:
+Expected JSON should include:
 
+```json
+{
+  "plugin": {
+    "status": "loaded",
+    "toolNames": ["qveris_discover", "qveris_call", "qveris_inspect"]
+  },
+  "diagnostics": []
+}
 ```
-Status: loaded
-Tools:
-qveris_discover, qveris_call, qveris_inspect
-```
+
+`plugin.toolNames` and `tools[].names` describe the runtime registration contract; they do not prove that the
+credential-gated factory returned concrete tools for a particular agent turn.
 
 ---
 
@@ -215,7 +234,14 @@ Make sure `tools.alsoAllow: ["qveris"]` is set. Without this, plugin tools are e
 
 ### Plugin loaded but tools missing from `plugins inspect`
 
-The API key is not configured. Check:
+First inspect the runtime:
+
+```bash
+openclaw plugins inspect qveris --runtime --json
+```
+
+If diagnostics report that `contracts.tools` is missing, upgrade `@qverisai/qveris` to `2026.7.30` or later and
+restart the Gateway. If the registration is present but the agent does not receive the tools, check the API key:
 
 ```bash
 openclaw config get plugins.entries.qveris

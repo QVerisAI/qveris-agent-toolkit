@@ -269,6 +269,19 @@ jobs:
         run: npm run check:pack
         env:
           NPM_CONFIG_OFFLINE: "true"
+      - name: Verify runtime contract with locked latest stable OpenClaw
+        run: npm run check:runtime
+      - name: Verify packed-package installation with latest stable OpenClaw
+        if: runner.os == 'Linux'
+        run: npm run check:runtime:packed
+      - name: Verify minimum and extended-stable OpenClaw compatibility
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          for version in 2026.6.11 2026.6.33; do
+            npm install --no-save --package-lock=false "openclaw@${version}"
+            npm run check:runtime
+          done
 
   lint:
     needs: plan

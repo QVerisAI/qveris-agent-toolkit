@@ -6,9 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+## [2026.7.30] - 2026-07-30
+
+### Fixed
+
+- Declared all three runtime tools in `contracts.tools`, restoring tool registration on OpenClaw `>=2026.6.11`. The manifest now also declares explicit startup activation, API-key availability signals, and replay safety for read-only Discover/Inspect while keeping paid Call replay-unsafe. ([#272])
+- Added source, compiled-factory, packed-package provenance, and minimum/extended/latest OpenClaw compatibility checks so public tool names, credential gating, and manifest/runtime registration cannot drift silently.
+
 ### Changed
 
-- Aligned the full-toolkit development and CI Node.js pin with the `22.22.3` minimum required by the tested OpenClaw `2026.7.1` development dependency. The published plugin's existing runtime compatibility floor is unchanged.
+- Aligned the full-toolkit development and CI Node.js pin with the `22.22.3` minimum required by the tested OpenClaw `2026.7.1-2` development dependency. The published plugin's existing runtime compatibility floor is unchanged.
 
 ## [2026.7.15] - 2026-07-15
 
@@ -36,7 +43,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 - First published build with compiled `dist/` output. ([#90])
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.7.15...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.7.30...HEAD
+[2026.7.30]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.7.15...qveris-plugin-v2026.7.30
 [2026.7.15]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.6.4...qveris-plugin-v2026.7.15
 [2026.6.4]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/qveris-plugin-v2026.6.4
 [#206]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/206
@@ -45,3 +53,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 [#152]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/152
 [#104]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/104
 [#90]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/90
+[#272]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/272

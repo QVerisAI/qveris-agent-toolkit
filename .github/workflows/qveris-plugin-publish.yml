@@ -57,6 +57,9 @@ jobs:
         env:
           NPM_CONFIG_OFFLINE: "true"
 
+      - name: Verify packed plugin with the latest stable OpenClaw runtime
+        run: npm run check:runtime:packed
+
       - name: Publish to npm
         run: npm publish --provenance --access public
         env:
@@ -75,9 +78,10 @@ jobs:
 
             ## Highlights
 
-            - Publishes compiled JavaScript runtime files under `dist/`.
-            - Points `openclaw.extensions` at `./dist/index.js` for current OpenClaw package-install compatibility.
-            - Keeps TypeScript source in the package for inspection, but no longer depends on TypeScript runtime loading.
+            - Declares `qveris_discover`, `qveris_call`, and `qveris_inspect` in `contracts.tools`.
+            - Adds explicit startup activation and API-key availability metadata for current OpenClaw hosts.
+            - Marks read-only Discover/Inspect replay-safe while keeping paid Call replay-unsafe.
+            - Verifies source and packed-package registration against supported OpenClaw runtimes.
 
             See [README](packages/openclaw-qveris-plugin/README.md) for usage.
           generate_release_notes: true

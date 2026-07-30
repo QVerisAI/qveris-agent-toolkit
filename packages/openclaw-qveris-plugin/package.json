@@ -1,6 +1,6 @@
 {
   "name": "@qverisai/qveris",
-  "version": "2026.7.15",
+  "version": "2026.7.30",
   "description": "OpenClaw QVeris plugin — capability discovery, tool inspection, and tool calling",
   "repository": {
     "type": "git",
@@ -32,6 +32,8 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "check:pack": "node scripts/check-pack.mjs",
+    "check:runtime": "npm run build && node scripts/check-openclaw-runtime.mjs",
+    "check:runtime:packed": "npm run build && node scripts/check-openclaw-runtime.mjs --pack",
     "prepack": "npm run build",
     "test:integration": "node scripts/run-integration-tests.mjs",
     "test": "vitest run",
@@ -50,7 +52,7 @@
     "eslint": "^10.6.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.7.0",
-    "openclaw": "2026.7.1",
+    "openclaw": "2026.7.1-2",
     "prettier": "^3.9.5",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.63.0",
