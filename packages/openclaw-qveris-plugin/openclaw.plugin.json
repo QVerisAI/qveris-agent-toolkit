@@ -37,7 +37,8 @@
           "rootPath": "plugins.entries.qveris.config",
           "required": ["apiKey"]
         }
-      ]
+      ],
+      "replaySafe": false
     },
     "qveris_inspect": {
       "authSignals": [{ "provider": "qveris" }],

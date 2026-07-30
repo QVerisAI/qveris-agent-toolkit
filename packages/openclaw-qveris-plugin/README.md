@@ -61,8 +61,10 @@ npm run check:runtime
 npm run check:runtime:packed
 ```
 
-The runtime checks use an isolated OpenClaw state directory and a synthetic key. They do not call the QVeris API.
-CI runs the same contract against the minimum supported host, the extended-stable host, and the latest stable host.
+The package check instantiates the compiled factory with config, environment, and missing-credential cases. The
+runtime checks separately validate OpenClaw's registration contract and installed-package provenance in an isolated
+state directory. All checks use synthetic credentials and do not call the QVeris API. CI runs the host contract
+against the minimum supported host, the extended-stable host, and the latest stable host.
 
 Real network integration tests must live under `integration/` and are disabled by default:
 
@@ -219,6 +221,9 @@ Expected JSON should include:
 }
 ```
 
+`plugin.toolNames` and `tools[].names` describe the runtime registration contract; they do not prove that the
+credential-gated factory returned concrete tools for a particular agent turn.
+
 ---
 
 ## Troubleshooting
@@ -236,7 +241,7 @@ openclaw plugins inspect qveris --runtime --json
 ```
 
 If diagnostics report that `contracts.tools` is missing, upgrade `@qverisai/qveris` to `2026.7.30` or later and
-restart the Gateway. If the manifest contract is present but the instantiated tools are empty, check the API key:
+restart the Gateway. If the registration is present but the agent does not receive the tools, check the API key:
 
 ```bash
 openclaw config get plugins.entries.qveris

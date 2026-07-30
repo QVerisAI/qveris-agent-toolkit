@@ -1,9 +1,28 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { isDeepStrictEqual } from "node:util";
 
 const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
 const pluginManifest = JSON.parse(readFileSync("openclaw.plugin.json", "utf8"));
 const expectedRepositoryUrl = "https://github.com/QVerisAI/qveris-agent-toolkit";
+const minimumOpenClawVersion = "2026.6.11";
+const minimumOpenClawRange = `>=${minimumOpenClawVersion}`;
+const requiredToolNames = ["qveris_discover", "qveris_call", "qveris_inspect"];
+const expectedToolMetadata = Object.fromEntries(
+  requiredToolNames.map((toolName) => [
+    toolName,
+    {
+      authSignals: [{ provider: "qveris" }],
+      configSignals: [
+        {
+          rootPath: "plugins.entries.qveris.config",
+          required: ["apiKey"],
+        },
+      ],
+      replaySafe: toolName !== "qveris_call",
+    },
+  ]),
+);
 if (packageJson.repository?.url !== expectedRepositoryUrl) {
   fail("package.json repository.url must match the public provenance repository:", [
     `expected: ${expectedRepositoryUrl}`,
@@ -16,6 +35,33 @@ if (!Array.isArray(extensions) || !extensions.includes("./dist/index.js")) {
 }
 if (extensions.some((entry) => typeof entry === "string" && /\.tsx?$/.test(entry))) {
   fail("package.json openclaw.extensions must not point at TypeScript source entries for npm packages:", extensions);
+}
+const openclawCompatibilityValues = {
+  "peerDependencies.openclaw": packageJson.peerDependencies?.openclaw,
+  "openclaw.compat.pluginApi": packageJson.openclaw?.compat?.pluginApi,
+  "openclaw.build.openclawVersion": packageJson.openclaw?.build?.openclawVersion,
+  "openclaw.build.pluginSdkVersion": packageJson.openclaw?.build?.pluginSdkVersion,
+  "openclaw.install.minHostVersion": packageJson.openclaw?.install?.minHostVersion,
+};
+const expectedOpenClawCompatibilityValues = {
+  "peerDependencies.openclaw": minimumOpenClawRange,
+  "openclaw.compat.pluginApi": minimumOpenClawRange,
+  "openclaw.build.openclawVersion": minimumOpenClawVersion,
+  "openclaw.build.pluginSdkVersion": minimumOpenClawVersion,
+  "openclaw.install.minHostVersion": minimumOpenClawRange,
+};
+const invalidCompatibilityValues = Object.entries(openclawCompatibilityValues).filter(
+  ([key, value]) => value !== expectedOpenClawCompatibilityValues[key],
+);
+if (invalidCompatibilityValues.length > 0) {
+  fail("OpenClaw compatibility metadata must keep the verified minimum host aligned:", [
+    `expected exact version ${minimumOpenClawVersion} for build metadata`,
+    `expected range ${minimumOpenClawRange} for peer, compat, and install metadata`,
+    ...invalidCompatibilityValues.map(
+      ([key, value]) =>
+        `${key}: expected ${JSON.stringify(expectedOpenClawCompatibilityValues[key])}, received ${JSON.stringify(value)}`,
+    ),
+  ]);
 }
 
 const requiredFiles = new Set([
@@ -68,11 +114,13 @@ execFileSync("npm", ["run", "build"], { stdio: "inherit", shell });
 const runtimeModule = await import(new URL("../dist/index.js", import.meta.url));
 const runtimePlugin = runtimeModule.default;
 const registrations = [];
-runtimePlugin.register({
-  registerTool(_factory, options) {
-    registrations.push(options);
+const runtimeApi = {
+  pluginConfig: { apiKey: "synthetic-compiled-contract-key" },
+  registerTool(factory, options) {
+    registrations.push({ factory, options });
   },
-});
+};
+runtimePlugin.register(runtimeApi);
 
 if (pluginManifest.id !== runtimePlugin.id) {
   fail("openclaw.plugin.json id must match the compiled runtime plugin id:", [
@@ -95,12 +143,22 @@ if (pluginManifest.version !== packageJson.version) {
 if (pluginManifest.activation?.onStartup !== true) {
   fail("openclaw.plugin.json must explicitly activate this required-tool plugin at Gateway startup");
 }
-if (registrations.length !== 1 || !Array.isArray(registrations[0]?.names)) {
+if (
+  registrations.length !== 1 ||
+  typeof registrations[0]?.factory !== "function" ||
+  !Array.isArray(registrations[0]?.options?.names)
+) {
   fail("Compiled runtime must make exactly one named tool-factory registration");
 }
 
 const declaredToolNames = pluginManifest.contracts?.tools;
-const registeredToolNames = registrations[0]?.names;
+const registeredToolNames = registrations[0]?.options?.names;
+if (JSON.stringify(declaredToolNames) !== JSON.stringify(requiredToolNames)) {
+  fail("openclaw.plugin.json contracts.tools must preserve the public QVeris tool contract:", [
+    `expected: ${JSON.stringify(requiredToolNames)}`,
+    `manifest: ${JSON.stringify(declaredToolNames)}`,
+  ]);
+}
 if (!Array.isArray(declaredToolNames) || JSON.stringify(declaredToolNames) !== JSON.stringify(registeredToolNames)) {
   fail("openclaw.plugin.json contracts.tools must exactly match the compiled runtime registration:", [
     `manifest: ${JSON.stringify(declaredToolNames)}`,
@@ -111,33 +169,40 @@ if (new Set(declaredToolNames).size !== declaredToolNames.length) {
   fail("openclaw.plugin.json contracts.tools must not contain duplicate names");
 }
 
-const metadataToolNames = Object.keys(pluginManifest.toolMetadata ?? {}).sort();
-if (JSON.stringify(metadataToolNames) !== JSON.stringify([...declaredToolNames].sort())) {
-  fail("openclaw.plugin.json toolMetadata must cover exactly the declared tools:", [
-    `contracts.tools: ${JSON.stringify([...declaredToolNames].sort())}`,
-    `toolMetadata: ${JSON.stringify(metadataToolNames)}`,
+if (!isDeepStrictEqual(pluginManifest.toolMetadata, expectedToolMetadata)) {
+  fail("openclaw.plugin.json toolMetadata must preserve exact availability and replay semantics:", [
+    `expected: ${JSON.stringify(expectedToolMetadata)}`,
+    `manifest: ${JSON.stringify(pluginManifest.toolMetadata)}`,
   ]);
 }
-for (const toolName of declaredToolNames) {
-  const metadata = pluginManifest.toolMetadata[toolName];
-  const hasQverisAuthSignal = metadata.authSignals?.some((signal) => signal?.provider === "qveris");
-  const hasQverisConfigSignal = metadata.configSignals?.some(
-    (signal) =>
-      signal?.rootPath === "plugins.entries.qveris.config" &&
-      Array.isArray(signal.required) &&
-      signal.required.includes("apiKey"),
-  );
-  if (!hasQverisAuthSignal || !hasQverisConfigSignal) {
-    fail(`openclaw.plugin.json toolMetadata.${toolName} must declare QVeris auth and config signals`);
-  }
+const expectedSetup = {
+  providers: [{ id: "qveris", authMethods: ["api-key"], envVars: ["QVERIS_API_KEY"] }],
+  requiresRuntime: false,
+};
+if (!isDeepStrictEqual(pluginManifest.setup, expectedSetup)) {
+  fail("openclaw.plugin.json setup must preserve declarative API-key discovery:", [
+    `expected: ${JSON.stringify(expectedSetup)}`,
+    `manifest: ${JSON.stringify(pluginManifest.setup)}`,
+  ]);
 }
-for (const replaySafeTool of ["qveris_discover", "qveris_inspect"]) {
-  if (pluginManifest.toolMetadata[replaySafeTool]?.replaySafe !== true) {
-    fail(`openclaw.plugin.json toolMetadata.${replaySafeTool} must be replaySafe`);
+
+const toolFactory = registrations[0].factory;
+assertConcreteToolNames(toolFactory({}), requiredToolNames, "plugin-config credential");
+const originalApiKey = process.env.QVERIS_API_KEY;
+try {
+  runtimeApi.pluginConfig = {};
+  delete process.env.QVERIS_API_KEY;
+  if (toolFactory({}) !== null) {
+    fail("Compiled tool factory must return null when neither config nor environment credentials are present");
   }
-}
-if (pluginManifest.toolMetadata.qveris_call?.replaySafe === true) {
-  fail("Paid qveris_call must never be declared replaySafe");
+  process.env.QVERIS_API_KEY = "synthetic-compiled-environment-key";
+  assertConcreteToolNames(toolFactory({}), requiredToolNames, "environment credential");
+} finally {
+  if (originalApiKey === undefined) {
+    delete process.env.QVERIS_API_KEY;
+  } else {
+    process.env.QVERIS_API_KEY = originalApiKey;
+  }
 }
 
 const raw = execFileSync("npm", ["pack", "--dry-run", "--json", "--ignore-scripts"], {
@@ -180,3 +245,16 @@ if (riskyFiles.length > 0) {
 }
 
 console.log(`Pack check OK: ${files.length} files`);
+
+function assertConcreteToolNames(tools, expectedNames, credentialPath) {
+  if (!Array.isArray(tools)) {
+    fail(`Compiled tool factory did not return tools for the ${credentialPath}`);
+  }
+  const concreteNames = tools.map((tool) => tool?.name);
+  if (JSON.stringify(concreteNames) !== JSON.stringify(expectedNames)) {
+    fail(`Compiled tool factory names drifted for the ${credentialPath}:`, [
+      `expected: ${JSON.stringify(expectedNames)}`,
+      `received: ${JSON.stringify(concreteNames)}`,
+    ]);
+  }
+}

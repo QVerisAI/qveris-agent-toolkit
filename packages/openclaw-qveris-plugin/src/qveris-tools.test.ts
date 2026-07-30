@@ -119,7 +119,10 @@ describe("plugin registration", () => {
       version?: string;
       activation?: { onStartup?: boolean };
       contracts?: { tools?: string[] };
-      setup?: { providers?: Array<{ id?: string; envVars?: string[] }> };
+      setup?: {
+        providers?: Array<{ id?: string; authMethods?: string[]; envVars?: string[] }>;
+        requiresRuntime?: boolean;
+      };
       toolMetadata?: Record<
         string,
         {
@@ -130,20 +133,29 @@ describe("plugin registration", () => {
       >;
     };
     const packageJson = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
+      peerDependencies?: { openclaw?: string };
       version?: string;
+      openclaw?: {
+        compat?: { pluginApi?: string };
+        build?: { openclawVersion?: string; pluginSdkVersion?: string };
+        install?: { minHostVersion?: string };
+      };
     };
+    const canonicalToolNames = ["qveris_discover", "qveris_call", "qveris_inspect"];
 
+    expect(QVERIS_TOOL_NAMES).toEqual(canonicalToolNames);
     expect(manifest).toMatchObject({
       id: plugin.id,
       name: plugin.name,
       description: plugin.description,
       version: packageJson.version,
       activation: { onStartup: true },
-      contracts: { tools: [...QVERIS_TOOL_NAMES] },
+      contracts: { tools: canonicalToolNames },
+      setup: {
+        providers: [{ id: "qveris", authMethods: ["api-key"], envVars: ["QVERIS_API_KEY"] }],
+        requiresRuntime: false,
+      },
     });
-    expect(manifest.setup?.providers).toContainEqual(
-      expect.objectContaining({ id: "qveris", envVars: expect.arrayContaining(["QVERIS_API_KEY"]) }),
-    );
     expect(Object.keys(manifest.toolMetadata ?? {}).sort()).toEqual([...QVERIS_TOOL_NAMES].sort());
 
     for (const toolName of QVERIS_TOOL_NAMES) {
@@ -159,7 +171,15 @@ describe("plugin registration", () => {
     }
     expect(manifest.toolMetadata?.qveris_discover?.replaySafe).toBe(true);
     expect(manifest.toolMetadata?.qveris_inspect?.replaySafe).toBe(true);
-    expect(manifest.toolMetadata?.qveris_call?.replaySafe).not.toBe(true);
+    expect(manifest.toolMetadata?.qveris_call?.replaySafe).toBe(false);
+    expect(packageJson).toMatchObject({
+      peerDependencies: { openclaw: ">=2026.6.11" },
+      openclaw: {
+        compat: { pluginApi: ">=2026.6.11" },
+        build: { openclawVersion: "2026.6.11", pluginSdkVersion: "2026.6.11" },
+        install: { minHostVersion: ">=2026.6.11" },
+      },
+    });
   });
 
   it("registers tool factory with correct names", () => {
