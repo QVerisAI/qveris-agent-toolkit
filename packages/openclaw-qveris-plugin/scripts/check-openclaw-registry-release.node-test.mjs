@@ -396,14 +396,18 @@ test("keeps Registry verification between npm publish and GitHub Release creatio
   const workflow = readFileSync(path.join(repositoryRoot, ".github/workflows/qveris-plugin-publish.yml"), "utf8");
   const publishIndex = workflow.indexOf("- name: Publish to npm");
   const verificationJobIndex = workflow.indexOf("verify_release:");
+  const versionIndex = workflow.indexOf("- name: Load verified release version");
   const registryIndex = workflow.indexOf("- name: Verify published npm artifact with OpenClaw");
   const releaseIndex = workflow.indexOf("- name: Create GitHub Release");
 
   assert.ok(publishIndex >= 0);
   assert.ok(verificationJobIndex > publishIndex);
+  assert.ok(versionIndex > verificationJobIndex);
+  assert.ok(registryIndex > versionIndex);
   assert.ok(registryIndex > verificationJobIndex);
   assert.ok(releaseIndex > registryIndex);
   assert.match(workflow.slice(verificationJobIndex, registryIndex), /needs: publish/);
+  assert.match(workflow.slice(versionIndex, registryIndex), /echo "VERSION=\$PKG_VERSION" >> "\$GITHUB_ENV"/);
   assert.match(
     workflow.slice(registryIndex, releaseIndex),
     /check:runtime:registry -- --expected-git-head "\$GITHUB_SHA"/,

@@ -5,13 +5,14 @@ on:
     tags:
       - "qveris-plugin-v*"
 
-permissions:
-  contents: write
-  id-token: write # npm provenance
+permissions: {}
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # npm provenance
     defaults:
       run:
         working-directory: packages/openclaw-qveris-plugin
@@ -69,6 +70,8 @@ jobs:
     name: Verify Registry artifact and create release
     needs: publish
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: packages/openclaw-qveris-plugin
@@ -82,6 +85,16 @@ jobs:
         with:
           node-version: 22.22.3
           registry-url: https://registry.npmjs.org
+
+      - name: Load verified release version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#qveris-plugin-v}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+          echo "VERSION=$PKG_VERSION" >> "$GITHUB_ENV"
 
       - name: Install dependencies
         run: npm ci
