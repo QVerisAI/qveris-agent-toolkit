@@ -1,5 +1,8 @@
 {
   "id": "qveris",
+  "name": "QVeris Plugin",
+  "description": "QVeris capability discovery, tool inspection, and tool calling",
+  "version": "2026.7.30",
   "setup": {
     "providers": [
       {
@@ -9,6 +12,43 @@
       }
     ],
     "requiresRuntime": false
+  },
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": ["qveris_discover", "qveris_call", "qveris_inspect"]
+  },
+  "toolMetadata": {
+    "qveris_discover": {
+      "authSignals": [{ "provider": "qveris" }],
+      "configSignals": [
+        {
+          "rootPath": "plugins.entries.qveris.config",
+          "required": ["apiKey"]
+        }
+      ],
+      "replaySafe": true
+    },
+    "qveris_call": {
+      "authSignals": [{ "provider": "qveris" }],
+      "configSignals": [
+        {
+          "rootPath": "plugins.entries.qveris.config",
+          "required": ["apiKey"]
+        }
+      ]
+    },
+    "qveris_inspect": {
+      "authSignals": [{ "provider": "qveris" }],
+      "configSignals": [
+        {
+          "rootPath": "plugins.entries.qveris.config",
+          "required": ["apiKey"]
+        }
+      ],
+      "replaySafe": true
+    }
   },
   "uiHints": {
     "apiKey": {

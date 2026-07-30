@@ -1,9 +1,10 @@
+import { readFileSync } from "node:fs";
 import fsp from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-runtime";
-import plugin from "../index.js";
+import plugin, { QVERIS_TOOL_NAMES } from "../index.js";
 import { inferCsvAnalysis, inferJsonAnalysis, inferTextAnalysis } from "./qveris-materialization.js";
 import { createQverisTools } from "./qveris-tools.js";
 
@@ -110,6 +111,57 @@ const SAMPLE_INSPECT_RESPONSE = {
 // ---------------------------------------------------------------------------
 
 describe("plugin registration", () => {
+  it("keeps manifest ownership, activation, auth, and replay metadata aligned with runtime registration", () => {
+    const manifest = JSON.parse(readFileSync(new URL("../openclaw.plugin.json", import.meta.url), "utf8")) as {
+      id?: string;
+      name?: string;
+      description?: string;
+      version?: string;
+      activation?: { onStartup?: boolean };
+      contracts?: { tools?: string[] };
+      setup?: { providers?: Array<{ id?: string; envVars?: string[] }> };
+      toolMetadata?: Record<
+        string,
+        {
+          authSignals?: Array<{ provider?: string }>;
+          configSignals?: Array<{ rootPath?: string; required?: string[] }>;
+          replaySafe?: boolean;
+        }
+      >;
+    };
+    const packageJson = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
+      version?: string;
+    };
+
+    expect(manifest).toMatchObject({
+      id: plugin.id,
+      name: plugin.name,
+      description: plugin.description,
+      version: packageJson.version,
+      activation: { onStartup: true },
+      contracts: { tools: [...QVERIS_TOOL_NAMES] },
+    });
+    expect(manifest.setup?.providers).toContainEqual(
+      expect.objectContaining({ id: "qveris", envVars: expect.arrayContaining(["QVERIS_API_KEY"]) }),
+    );
+    expect(Object.keys(manifest.toolMetadata ?? {}).sort()).toEqual([...QVERIS_TOOL_NAMES].sort());
+
+    for (const toolName of QVERIS_TOOL_NAMES) {
+      expect(manifest.toolMetadata?.[toolName]).toMatchObject({
+        authSignals: [{ provider: "qveris" }],
+        configSignals: [
+          {
+            rootPath: "plugins.entries.qveris.config",
+            required: ["apiKey"],
+          },
+        ],
+      });
+    }
+    expect(manifest.toolMetadata?.qveris_discover?.replaySafe).toBe(true);
+    expect(manifest.toolMetadata?.qveris_inspect?.replaySafe).toBe(true);
+    expect(manifest.toolMetadata?.qveris_call?.replaySafe).not.toBe(true);
+  });
+
   it("registers tool factory with correct names", () => {
     const registrations: {
       factories: unknown[];
@@ -132,7 +184,7 @@ describe("plugin registration", () => {
     expect(registrations.factories).toHaveLength(1);
     expect(typeof registrations.factories[0]).toBe("function");
     expect(registrations.opts[0]).toEqual({
-      names: ["qveris_discover", "qveris_call", "qveris_inspect"],
+      names: [...QVERIS_TOOL_NAMES],
     });
   });
 });
