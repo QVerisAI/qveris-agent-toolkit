@@ -27,7 +27,7 @@ function metadata(overrides = {}) {
   return {
     version: expected.version,
     gitHead: expected.gitHead,
-    "dist.integrity": "sha512-test",
+    "dist.integrity": "sha512-dGVzdA==",
     ...overrides,
   };
 }
@@ -55,6 +55,13 @@ function runtimeFixture(root, overrides = {}) {
     installedPackage: {
       name: expected.packageName,
       version: expected.version,
+    },
+    installedIntegrity: metadata()["dist.integrity"],
+    compiledRuntime: {
+      pluginId: expected.pluginId,
+      exportedToolNames: [...expected.toolNames],
+      registrationNames: [...expected.toolNames],
+      concreteToolNames: [...expected.toolNames],
     },
   };
   return {
@@ -117,7 +124,7 @@ test("accepts exact Registry metadata", () => {
 for (const [label, value, pattern] of [
   ["version", metadata({ version: "2026.7.29" }), /version mismatch/],
   ["gitHead", metadata({ gitHead: "b".repeat(40) }), /gitHead mismatch/],
-  ["integrity", metadata({ "dist.integrity": "" }), /missing dist\.integrity/],
+  ["integrity", metadata({ "dist.integrity": "not-an-integrity" }), /invalid dist\.integrity/],
 ]) {
   test(`rejects Registry ${label} drift`, () => {
     assert.throws(() => validateRegistryMetadata(value, expected), ReleaseInvariantError);
@@ -127,16 +134,16 @@ for (const [label, value, pattern] of [
 
 test("retries delayed Registry visibility before installing", async () => {
   const fixture = fixtureOperations({
-    metadataSequence: [new ReleaseTransientError("not visible"), metadata()],
+    metadataSequence: [new ReleaseTransientError("not visible"), [], metadata()],
   });
   const result = await verifyRegistryRelease({
     expected,
     operations: fixture.operations,
-    metadataAttempts: 2,
+    metadataAttempts: 3,
     retryDelayMs: 7,
   });
   assert.equal(result.attempts, 1);
-  assert.deepEqual(fixture.sleeps, [7]);
+  assert.deepEqual(fixture.sleeps, [7, 7]);
   assert.deepEqual(fixture.cleaned, fixture.roots);
 });
 
@@ -205,7 +212,7 @@ test("rejects an out-of-state source fallback", () => {
   const sourceDir = mkdtempSync(path.join(os.tmpdir(), "qveris-registry-release-source-"));
   try {
     const result = runtimeFixture(sourceDir);
-    assert.throws(() => validateRuntimeResult(result, expected, stateDir), /must be inside/);
+    assert.throws(() => validateRuntimeResult(result, expected, metadata(), stateDir), /must be inside/);
   } finally {
     rmSync(stateDir, { recursive: true, force: true });
     rmSync(sourceDir, { recursive: true, force: true });
@@ -249,6 +256,34 @@ for (const [label, mutate, pattern] of [
     /runtime error diagnostics/,
   ],
   [
+    "registration group shape",
+    (value) => {
+      value.inspection.tools = {};
+    },
+    /runtime registration groups must be an array/,
+  ],
+  [
+    "diagnostics shape",
+    (value) => {
+      value.inspection.diagnostics = {};
+    },
+    /runtime diagnostics must be an array/,
+  ],
+  [
+    "tool-name shape",
+    (value) => {
+      value.inspection.plugin.toolNames = {};
+    },
+    /runtime tool names must be an array/,
+  ],
+  [
+    "manifest-contract shape",
+    (value) => {
+      value.inspection.plugin.contracts.tools = {};
+    },
+    /runtime manifest tool contract must be an array/,
+  ],
+  [
     "installed package name",
     (value) => {
       value.installedPackage.name = "@qverisai/not-qveris";
@@ -262,13 +297,48 @@ for (const [label, mutate, pattern] of [
     },
     /installed package version mismatch/,
   ],
+  [
+    "installed package integrity",
+    (value) => {
+      value.installedIntegrity = "sha512-b3RoZXI=";
+    },
+    /installed package integrity mismatch/,
+  ],
+  [
+    "compiled runtime plugin id",
+    (value) => {
+      value.compiledRuntime.pluginId = "not-qveris";
+    },
+    /compiled runtime plugin id mismatch/,
+  ],
+  [
+    "compiled exported tool names",
+    (value) => {
+      value.compiledRuntime.exportedToolNames = ["qveris_discover", "qveris_inspect"];
+    },
+    /compiled runtime exported tool names mismatch/,
+  ],
+  [
+    "compiled registration names",
+    (value) => {
+      value.compiledRuntime.registrationNames = ["qveris_discover", "qveris_inspect"];
+    },
+    /compiled runtime registration names mismatch/,
+  ],
+  [
+    "compiled concrete tool names",
+    (value) => {
+      value.compiledRuntime.concreteToolNames = ["qveris_discover", "qveris_inspect"];
+    },
+    /compiled runtime concrete tool names mismatch/,
+  ],
 ]) {
   test(`rejects runtime ${label} drift`, () => {
     const stateDir = mkdtempSync(path.join(os.tmpdir(), "qveris-registry-release-drift-"));
     try {
       const value = runtimeFixture(stateDir);
       mutate(value);
-      assert.throws(() => validateRuntimeResult(value, expected, stateDir), pattern);
+      assert.throws(() => validateRuntimeResult(value, expected, metadata(), stateDir), pattern);
     } finally {
       rmSync(stateDir, { recursive: true, force: true });
     }
@@ -325,12 +395,15 @@ test("reports retry exhaustion and redacts sensitive values", async () => {
 test("keeps Registry verification between npm publish and GitHub Release creation", () => {
   const workflow = readFileSync(path.join(repositoryRoot, ".github/workflows/qveris-plugin-publish.yml"), "utf8");
   const publishIndex = workflow.indexOf("- name: Publish to npm");
+  const verificationJobIndex = workflow.indexOf("verify_release:");
   const registryIndex = workflow.indexOf("- name: Verify published npm artifact with OpenClaw");
   const releaseIndex = workflow.indexOf("- name: Create GitHub Release");
 
   assert.ok(publishIndex >= 0);
-  assert.ok(registryIndex > publishIndex);
+  assert.ok(verificationJobIndex > publishIndex);
+  assert.ok(registryIndex > verificationJobIndex);
   assert.ok(releaseIndex > registryIndex);
+  assert.match(workflow.slice(verificationJobIndex, registryIndex), /needs: publish/);
   assert.match(
     workflow.slice(registryIndex, releaseIndex),
     /check:runtime:registry -- --expected-git-head "\$GITHUB_SHA"/,

@@ -8,6 +8,7 @@ const scriptPath = fileURLToPath(import.meta.url);
 const packageRoot = path.resolve(path.dirname(scriptPath), "..");
 const requiredToolNames = ["qveris_discover", "qveris_call", "qveris_inspect"];
 const syntheticApiKey = "synthetic-openclaw-registry-release-key";
+const publicRegistryUrl = "https://registry.npmjs.org";
 
 export class ReleaseInvariantError extends Error {
   constructor(message) {
@@ -37,31 +38,55 @@ export function validateRegistryMetadata(metadata, expected) {
       `npm Registry gitHead mismatch: expected ${JSON.stringify(expected.gitHead)}, received ${JSON.stringify(metadata.gitHead)}`,
     );
   }
-  if (typeof metadata["dist.integrity"] !== "string" || metadata["dist.integrity"].length === 0) {
-    throw new ReleaseInvariantError("npm Registry metadata is missing dist.integrity");
+  if (
+    typeof metadata["dist.integrity"] !== "string" ||
+    !/^sha512-[A-Za-z0-9+/]+={0,2}$/.test(metadata["dist.integrity"])
+  ) {
+    throw new ReleaseInvariantError("npm Registry metadata has an invalid dist.integrity");
   }
 }
 
-export function validateRuntimeResult(result, expected, stateDir) {
+export function validateRuntimeResult(result, expected, metadata, stateDir) {
   const inspection = result?.inspection;
   const installedPackage = result?.installedPackage;
   const plugin = inspection?.plugin;
   const expectedSortedNames = [...expected.toolNames].sort();
-  const registrationGroupNames = [...(inspection?.tools ?? [])]
+  const runtimeTools = assertArray(inspection?.tools, "runtime registration groups");
+  const diagnostics = assertArray(inspection?.diagnostics, "runtime diagnostics");
+  const runtimeToolNames = assertArray(plugin?.toolNames, "runtime tool names");
+  const manifestToolNames = assertArray(plugin?.contracts?.tools, "runtime manifest tool contract");
+  const registrationGroupNames = runtimeTools
     .flatMap((tool) => (Array.isArray(tool?.names) ? tool.names : [tool?.name]))
     .filter((name) => typeof name === "string")
     .sort();
-  const errorDiagnostics = [...(inspection?.diagnostics ?? [])].filter((diagnostic) => diagnostic?.level === "error");
+  const errorDiagnostics = diagnostics.filter((diagnostic) => diagnostic?.level === "error");
 
   assertEqual(plugin?.id, expected.pluginId, "runtime plugin id");
   assertEqual(plugin?.status, "loaded", "runtime plugin status");
   assertEqual(plugin?.version, expected.version, "runtime plugin version");
-  assertArrayEqual([...(plugin?.toolNames ?? [])].sort(), expectedSortedNames, "runtime tool names");
-  assertArrayEqual([...(plugin?.contracts?.tools ?? [])], expected.toolNames, "runtime manifest tool contract");
+  assertArrayEqual([...runtimeToolNames].sort(), expectedSortedNames, "runtime tool names");
+  assertArrayEqual([...manifestToolNames], expected.toolNames, "runtime manifest tool contract");
   assertArrayEqual(registrationGroupNames, expectedSortedNames, "runtime registration-group names");
   assertPathWithin(plugin?.rootDir, stateDir, "registry-installed plugin root");
   assertEqual(installedPackage?.name, expected.packageName, "installed package name");
   assertEqual(installedPackage?.version, expected.version, "installed package version");
+  assertEqual(result?.installedIntegrity, metadata["dist.integrity"], "installed package integrity");
+  assertEqual(result?.compiledRuntime?.pluginId, expected.pluginId, "compiled runtime plugin id");
+  assertArrayEqual(
+    result?.compiledRuntime?.exportedToolNames,
+    expected.toolNames,
+    "compiled runtime exported tool names",
+  );
+  assertArrayEqual(
+    result?.compiledRuntime?.registrationNames,
+    expected.toolNames,
+    "compiled runtime registration names",
+  );
+  assertArrayEqual(
+    result?.compiledRuntime?.concreteToolNames,
+    expected.toolNames,
+    "compiled runtime concrete tool names",
+  );
   if (errorDiagnostics.length > 0) {
     throw new ReleaseInvariantError(`OpenClaw reported runtime error diagnostics: ${JSON.stringify(errorDiagnostics)}`);
   }
@@ -92,9 +117,12 @@ export async function verifyRegistryRelease(options) {
     delayMs: retryDelayMs,
     sleep: operations.sleep,
     secrets,
-    operation: () => operations.fetchRegistryMetadata(spec),
+    operation: async () => {
+      const candidate = await operations.fetchRegistryMetadata(spec);
+      validateRegistryMetadata(candidate, expected);
+      return candidate;
+    },
   });
-  validateRegistryMetadata(metadata, expected);
 
   const failures = [];
   for (let attempt = 1; attempt <= installAttempts; attempt += 1) {
@@ -103,7 +131,7 @@ export async function verifyRegistryRelease(options) {
     let attemptError;
     try {
       result = await operations.installAndInspect({ spec, stateDir });
-      validateRuntimeResult(result, expected, stateDir);
+      validateRuntimeResult(result, expected, metadata, stateDir);
     } catch (error) {
       attemptError = error;
     }
@@ -132,7 +160,7 @@ export async function verifyRegistryRelease(options) {
   );
 }
 
-export function createDefaultOperations({ packageJson, manifest, expected }) {
+export function createDefaultOperations({ packageJson, manifest }) {
   const openclawPackagePath = path.join(packageRoot, "node_modules", "openclaw", "package.json");
   const openclawPackage = readJson(openclawPackagePath);
   const openclawBin = resolveOpenClawBin(openclawPackagePath, openclawPackage.bin);
@@ -142,7 +170,17 @@ export function createDefaultOperations({ packageJson, manifest, expected }) {
       const npm = process.platform === "win32" ? "npm.cmd" : "npm";
       const result = spawnSync(
         npm,
-        ["view", spec, "version", "dist.integrity", "gitHead", "--json", "--prefer-online"],
+        [
+          "view",
+          spec,
+          "version",
+          "dist.integrity",
+          "gitHead",
+          "--json",
+          "--prefer-online",
+          "--registry",
+          publicRegistryUrl,
+        ],
         {
           cwd: packageRoot,
           encoding: "utf8",
@@ -168,7 +206,7 @@ export function createDefaultOperations({ packageJson, manifest, expected }) {
     createStateDir() {
       return mkdtempSync(path.join(os.tmpdir(), "qveris-openclaw-registry-release-"));
     },
-    installAndInspect({ spec, stateDir }) {
+    async installAndInspect({ spec, stateDir }) {
       const homeDir = path.join(stateDir, "home");
       const configPath = path.join(stateDir, "openclaw.json");
       const env = {
@@ -179,6 +217,8 @@ export function createDefaultOperations({ packageJson, manifest, expected }) {
         OPENCLAW_STATE_DIR: stateDir,
         OPENCLAW_CONFIG_PATH: configPath,
         QVERIS_API_KEY: syntheticApiKey,
+        NPM_CONFIG_REGISTRY: publicRegistryUrl,
+        npm_config_registry: publicRegistryUrl,
       };
       delete env.QVERIS_BASE_URL;
 
@@ -203,7 +243,12 @@ export function createDefaultOperations({ packageJson, manifest, expected }) {
       const installedRoot = inspection?.plugin?.rootDir;
       assertPathWithin(installedRoot, stateDir, "registry-installed plugin root");
       const installedPackage = readJson(path.join(installedRoot, "package.json"));
-      return { inspection, installedPackage };
+      const managedProjectRoot = path.resolve(installedRoot, "../../..");
+      assertPathWithin(managedProjectRoot, stateDir, "OpenClaw managed npm project root");
+      const packageLock = readJson(path.join(managedProjectRoot, "package-lock.json"));
+      const installedIntegrity = packageLock?.packages?.[`node_modules/${packageJson.name}`]?.integrity;
+      const compiledRuntime = await inspectCompiledRuntime(installedRoot);
+      return { inspection, installedPackage, installedIntegrity, compiledRuntime };
     },
     cleanupStateDir(stateDir) {
       rmSync(stateDir, { recursive: true, force: true });
@@ -213,7 +258,6 @@ export function createDefaultOperations({ packageJson, manifest, expected }) {
     },
     openclawVersion: openclawPackage.version,
     packageVersion: packageJson.version,
-    expected,
   };
 }
 
@@ -249,6 +293,52 @@ function runOpenClaw(openclawBin, args, { cwd, env, timeoutMs }) {
     );
   }
   return result.stdout.trim();
+}
+
+async function inspectCompiledRuntime(installedRoot) {
+  try {
+    const entryUrl = pathToFileURL(path.join(installedRoot, "dist", "index.js"));
+    entryUrl.searchParams.set("registry-release-root", installedRoot);
+    const runtimeModule = await import(entryUrl.href);
+    const runtimePlugin = runtimeModule.default;
+    if (!runtimePlugin || typeof runtimePlugin.register !== "function") {
+      throw new ReleaseInvariantError("compiled runtime must export a plugin with register()");
+    }
+
+    const registrations = [];
+    const runtimeApi = {
+      pluginConfig: { apiKey: syntheticApiKey },
+      registerTool(factory, options) {
+        registrations.push({ factory, options });
+      },
+    };
+    runtimePlugin.register(runtimeApi);
+    if (
+      registrations.length !== 1 ||
+      typeof registrations[0]?.factory !== "function" ||
+      !Array.isArray(registrations[0]?.options?.names)
+    ) {
+      throw new ReleaseInvariantError("compiled runtime must make exactly one named tool-factory registration");
+    }
+    const concreteTools = registrations[0].factory({});
+    if (!Array.isArray(concreteTools)) {
+      throw new ReleaseInvariantError("compiled runtime tool factory must instantiate concrete tools with credentials");
+    }
+
+    return {
+      pluginId: runtimePlugin.id,
+      exportedToolNames: assertArray(runtimeModule.QVERIS_TOOL_NAMES, "compiled runtime exported tool names"),
+      registrationNames: registrations[0].options.names,
+      concreteToolNames: concreteTools.map((tool) => tool?.name),
+    };
+  } catch (error) {
+    if (error instanceof ReleaseInvariantError) {
+      throw error;
+    }
+    throw new ReleaseInvariantError(
+      `failed to inspect compiled Registry runtime: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
 
 function formatProcessOutput(result) {
@@ -305,6 +395,13 @@ function assertArrayEqual(actual, expected, label) {
   }
 }
 
+function assertArray(value, label) {
+  if (!Array.isArray(value)) {
+    throw new ReleaseInvariantError(`${label} must be an array`);
+  }
+  return value;
+}
+
 function assertPathWithin(actual, expectedParent, label) {
   const actualPath = resolveRealPath(actual, label);
   const parentPath = resolveRealPath(expectedParent, `${label} parent`);
@@ -352,7 +449,7 @@ async function main() {
     toolNames: requiredToolNames,
   };
   const sensitiveValues = [process.env.NODE_AUTH_TOKEN, process.env.NPM_TOKEN, process.env.QVERIS_API_KEY];
-  const operations = createDefaultOperations({ packageJson, manifest, expected });
+  const operations = createDefaultOperations({ packageJson, manifest });
   const result = await verifyRegistryRelease({ expected, operations, sensitiveValues });
   console.log(
     `npm Registry release OK: host ${operations.openclawVersion}, plugin ${expected.version}, ` +

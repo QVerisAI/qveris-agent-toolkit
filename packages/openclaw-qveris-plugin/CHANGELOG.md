@@ -8,7 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ### Changed
 
-- The release workflow now waits for the exact npm Registry artifact after publishing, verifies its version, integrity metadata, and source commit, then installs it through the official OpenClaw plugin manager in isolated state before creating the GitHub Release.
+- The release workflow now waits for the exact public npm Registry artifact after publishing, verifies its version, downloaded integrity, source commit, runtime metadata, and concrete compiled tools, then installs it through the official OpenClaw plugin manager in isolated state before creating the GitHub Release. Publishing and verification run as separate jobs so a failed post-publish check can be retried without attempting to republish an immutable npm version.
 
 ## [2026.7.30] - 2026-07-30
 
