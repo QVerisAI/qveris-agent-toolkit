@@ -5,9 +5,9 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import AnyUrl, BaseModel, ConfigDict, Field, conint, constr
+from pydantic import AnyUrl, BaseModel, ConfigDict, Field, PositiveInt, conint, constr
 
 
 class APIResponseDict(BaseModel):
@@ -73,6 +73,163 @@ class CreditsLedgerSummaryBucket(BaseModel):
     net_amount_credits: float = Field(..., title='Net Amount Credits')
 
 
+class OAuthAccessTokenResponse(BaseModel):
+    """
+    Authorization Code, Device Code, or Refresh Token success response.
+    """
+
+    access_token: str = Field(..., title='Access Token')
+    token_type: Literal['Bearer'] = Field(..., title='Token Type')
+    expires_in: PositiveInt = Field(..., title='Expires In')
+    scope: str = Field(..., title='Scope')
+    resource: str = Field(..., title='Resource')
+    refresh_token: Optional[str] = Field(None, title='Refresh Token')
+    refresh_token_expires_in: Optional[PositiveInt] = Field(
+        None, title='Refresh Token Expires In'
+    )
+    id_token: Optional[str] = Field(None, title='Id Token')
+    tool_api_key: Optional[str] = Field(None, title='Tool Api Key')
+    tool_api_key_name: Optional[str] = Field(None, title='Tool Api Key Name')
+
+
+class OAuthDelegationActor(BaseModel):
+    """
+    Confidential Agent Runtime that requested a delegation token.
+    """
+
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    client_id: str = Field(..., title='Client Id')
+
+
+class OAuthDelegationConstraints(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    model: Optional[constr(max_length=128)] = Field(None, title='Model')
+    tool_ids: Optional[List[str]] = Field(None, title='Tool Ids')
+    provider_ids: Optional[List[str]] = Field(None, title='Provider Ids')
+    run_id: Optional[constr(max_length=128)] = Field(None, title='Run Id')
+    max_credits: Optional[PositiveInt] = Field(None, title='Max Credits')
+
+
+class OAuthDeviceAuthorizationResponse(BaseModel):
+    """
+    RFC 8628 device authorization response.
+    """
+
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    device_code: str = Field(
+        ...,
+        description='Secret code used only to poll the token endpoint.',
+        title='Device Code',
+    )
+    user_code: str = Field(
+        ...,
+        description='Short code displayed to and verified by the user.',
+        title='User Code',
+    )
+    verification_uri: str = Field(
+        ...,
+        description='Browser URL where the user approves the request.',
+        title='Verification Uri',
+    )
+    verification_uri_complete: str = Field(
+        ...,
+        description='Verification URL with the user code prefilled.',
+        title='Verification Uri Complete',
+    )
+    expires_in: PositiveInt = Field(
+        ..., description='Device and user code lifetime in seconds.', title='Expires In'
+    )
+    interval: PositiveInt = Field(
+        ..., description='Minimum token polling interval in seconds.', title='Interval'
+    )
+
+
+class OAuthErrorResponse(BaseModel):
+    """
+    RFC 6749/RFC 8693 error response.
+    """
+
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    error: str = Field(..., description='Stable OAuth error code.', title='Error')
+    error_description: str = Field(
+        ..., description='Human-readable error detail.', title='Error Description'
+    )
+    error_uri: Optional[str] = Field(
+        None, description='Optional error documentation URI.', title='Error Uri'
+    )
+
+
+class TokenUse(Enum):
+    access = 'access'
+    delegation = 'delegation'
+
+
+class OAuthIntrospectionActiveResponse(BaseModel):
+    active: Literal[True] = Field(..., title='Active')
+    token_type: Literal['Bearer'] = Field(..., title='Token Type')
+    scope: str = Field(..., title='Scope')
+    client_id: str = Field(..., title='Client Id')
+    sub: str = Field(..., title='Sub')
+    token_use: TokenUse = Field(..., title='Token Use')
+    exp: int = Field(..., title='Exp')
+    iat: int = Field(..., title='Iat')
+    nbf: int = Field(..., title='Nbf')
+    aud: str = Field(..., title='Aud')
+    iss: str = Field(..., title='Iss')
+    jti: str = Field(..., title='Jti')
+    actor: Optional[OAuthDelegationActor] = None
+    parent_jti: Optional[str] = Field(None, title='Parent Jti')
+    delegation: Optional[OAuthDelegationConstraints] = None
+
+
+class OAuthIntrospectionInactiveResponse(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    active: Literal[False] = Field(..., title='Active')
+
+
+class OAuthRateLimitResponse(BaseModel):
+    """
+    Structured response returned when Device Authorization is throttled.
+    """
+
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    status: Literal['failure'] = Field(..., title='Status')
+    status_code: Literal[429] = Field(..., title='Status Code')
+    message: str = Field(..., title='Message')
+    data: None = Field(None, title='Data')
+
+
+class OAuthTokenExchangeResponse(BaseModel):
+    """
+    Successful Agent-to-QVeris token exchange. This schema deliberately does not contain refresh_token: delegation tokens cannot be refreshed.
+    """
+
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    access_token: str = Field(..., title='Access Token')
+    issued_token_type: Literal['urn:ietf:params:oauth:token-type:access_token'] = Field(
+        ..., title='Issued Token Type'
+    )
+    token_type: Literal['Bearer'] = Field(..., title='Token Type')
+    expires_in: conint(le=600, gt=0) = Field(..., title='Expires In')
+    scope: str = Field(..., title='Scope')
+    resource: str = Field(..., title='Resource')
+    constraints: Optional[OAuthDelegationConstraints] = None
+
+
 class PublicApiMetadata(BaseModel):
     """
     Unauthenticated metadata used by API clients for compatibility checks.
@@ -84,7 +241,7 @@ class PublicApiMetadata(BaseModel):
     contract_version: str = Field(
         ...,
         description='Version of the published QVeris REST API contract.',
-        examples=['2026-07-23.2'],
+        examples=['2026-07-30.1'],
         title='Contract Version',
     )
 

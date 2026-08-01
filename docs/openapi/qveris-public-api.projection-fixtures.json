@@ -1,5 +1,5 @@
 {
-  "contract_version": "2026-07-23.2",
+  "contract_version": "2026-07-30.1",
   "compatibility": {
     "legacy_service_ignores_projection": {
       "request": {"query": "current weather", "view": "routing"},

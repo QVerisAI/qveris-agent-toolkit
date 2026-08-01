@@ -1,6 +1,6 @@
 # QVeris REST API 文档
 
-版本：2026-07-23.2
+版本：2026-07-30.1
 
 公开 REST API 暴露核心 Agent 路径：
 
@@ -8,11 +8,14 @@
 | --- | --- | --- |
 | Discover | `POST /search` | 免费；返回排序后的能力和可选成本信号 |
 | Inspect | `POST /tools/by-ids` | 免费；返回完整 schema、示例、质量信号和成本信号 |
+| Probe | `POST /tools/probe` | 免费；校验参数并返回调用前报价，但不执行能力 |
 | Call | `POST /tools/execute` | 可能按所选能力的 `billing_rule` 消耗积分 |
 | 调用历史 | `GET /auth/usage/history/v2` | 最终请求状态和扣费结果 |
 | 积分账本 | `GET /auth/credits/ledger` | 最终积分余额变动 |
 
 请将示例中的 `srch_...`、`exec_...`、`led_...` 替换为你自己 API 响应中返回的 ID。
+
+聚焦参考页：[Discover](api-reference/discover.md)、[Inspect](api-reference/inspect.md)、[Probe](api-reference/probe.md)、[Call](api-reference/call.md)。侧栏和公共 [OpenAPI JSON](/openapi.json) 覆盖全部 24 个已发布操作。
 
 ## Base URL
 
@@ -30,15 +33,15 @@ Authorization: Bearer YOUR_API_KEY
 
 ## 成本与 session 合同
 
-Discover 和 Inspect 免费。它们可能返回 `expected_cost`、旧字段 `cost` 或 `billing_rule`，让客户端在花费积分前估算 Call 成本。
+Discover、Inspect 和 Probe 免费。Discover 与 Inspect 可能返回 `expected_cost`、旧字段 `cost` 或 `billing_rule`；Probe 会在花费积分前校验所选参数并返回零成本报价。
 
 默认/full Call 响应可能返回 `billing`、`cost` 等紧凑预结算字段。投影响应（`summary` 和 `fields:*`）会刻意省略计费内部详情，以保持结构精简。最终结算由调用历史和积分账本报告；客服、对账和用户账单历史应以这些端点为准。
 
 `session_id` 可选。建议每个用户任务或会话使用一个稳定值，用于追踪、分析和计费上下文。它不是缓存合同，也不承诺缓存复用或 `session_cache_hit`。
 
-## Search -> Execute 集成契约
+## Discover -> Inspect -> Probe -> Call 集成契约
 
-请把 Discover 和 Inspect 视为 Call 的唯一可信来源。Call 请求应从用户或智能体选中的那条能力结果构造。
+请把 Discover、Inspect 和 Probe 视为 Call 的可信来源。Call 请求应从用户或智能体选中的那条能力结果构造。
 
 推荐契约：
 
@@ -47,8 +50,9 @@ Discover 和 Inspect 免费。它们可能返回 `expected_cost`、旧字段 `co
 3. 保存返回的 `search_id`。
 4. 从 `results` 中选择一个 `tool_id`。
 5. 使用同一条结果里的 `params`、`one_of_required` 和 `examples.sample_parameters` 构造 `parameters`。
-6. 调用 `POST /tools/execute`，传入 `tool_id`、`parameters`、`search_id`、`session_id`；如果是智能体客户端，也传入 `model`。
-7. 保存 `execution_id`，用于审计和客服排查。
+6. 当 schema 较复杂、成本敏感或参数由 Agent 生成时，用这些参数调用 `POST /tools/probe?tool_id=...`。
+7. 调用 `POST /tools/execute`，传入 `tool_id`、`parameters`、`search_id`、`session_id`；如果是智能体客户端，也传入 `model`。
+8. 保存 `execution_id`，用于审计和客服排查。
 
 不要只根据工具名称猜参数。不要复用其他工具、其他 provider 或旧缓存 schema 的参数。如果客户端缓存工具元数据，请使用较短 TTL，或在新搜索返回该工具时刷新 schema。
 
@@ -91,6 +95,7 @@ QVeris 将调用前估价、执行结果、预结算账单和最终账本结算�
 | --- | --- |
 | Discover (`POST /search`) | 120 次/分钟 |
 | Inspect (`POST /tools/by-ids`) | 120 次/分钟 |
+| Probe (`POST /tools/probe`) | 120 次/分钟 |
 | Call (`POST /tools/execute`) | 200 次/分钟 |
 
 限流响应包含：
@@ -324,7 +329,47 @@ Inspect 返回与 Discover 相同的能力结果结构，通常包含更完整�
 }
 ```
 
-## 3. 调用能力
+## 3. 预检能力
+
+```text
+POST /tools/probe?tool_id={tool_id}
+```
+
+Probe 会校验候选参数并返回报价，但不会执行能力或消耗积分。`schema` 和 `quote` 检查会返回已实现的判定；`coverage` 与 `sample` 当前会明确返回 unknown 判定。
+
+### 请求
+
+```json
+{
+  "parameters": {
+    "q": "北京"
+  },
+  "checks": ["schema", "quote"],
+  "live_budget": "none"
+}
+```
+
+请使用 Discover 或 Inspect 选中的原始 `tool_id`。仅做校验时，应保持 `live_budget` 为 `none`。
+
+### 成功响应
+
+```json
+{
+  "schema": {
+    "valid": true
+  },
+  "quote": {
+    "estimate_credits": 5,
+    "currency": "credits",
+    "exact": true,
+    "basis": "per_call"
+  }
+}
+```
+
+输入无效时可返回 `400`，能力不存在时返回 `404`，触发限流时返回 `429`，Probe 服务不可用或超时时返回 `502`/`504`。精确 schema 和全部响应请查看 [Probe 聚焦参考页](api-reference/probe.md)。
+
+## 4. 调用能力
 
 ```text
 POST /tools/execute?tool_id={tool_id}
@@ -512,7 +557,7 @@ POST /tools/execute?tool_id={tool_id}
 | `message` | 适合给 LLM 读取的截断说明 |
 | `content_schema` | 完整内容的 JSON schema（如果可用） |
 
-## 4. 调用审计 — 最终请求状态
+## 5. 调用审计 — 最终请求状态
 
 调用审计用于回答：“这次请求是否成功？”、“失败请求是否扣费？”、“哪一次执行需要客服复核？”。Agent、CLI、MCP 客户端应优先使用精确过滤或 `summary=true`，不要把全量历史直接输出给 LLM。
 
@@ -761,7 +806,7 @@ curl -sS "$QVERIS_BASE_URL/auth/usage/history/v2?summary=true&bucket=day&kind=ca
 }
 ```
 
-## 5. Credits 账本 — 最终余额变动
+## 6. Credits 账本 — 最终余额变动
 
 Credits 账本用于解释最终账户余额。调用审计描述“请求发生了什么”；账本描述“余额如何不可变地变动”。一次已扣费的 Call 通常应该同时存在 `charge_outcome=charged` 的 usage event 和关联的账本行。
 
@@ -979,4 +1024,4 @@ Summary 字段：
 
 ## OpenAPI
 
-[QVeris 公开 OpenAPI](https://qveris.cn/openapi/qveris-public-api.openapi.json) 文档包含 Discover、Inspect 和 Call 路径的请求体、响应结构与示例。稳定的投影与旧服务兼容样例见[投影 fixtures](https://qveris.cn/openapi/qveris-public-api.projection-fixtures.json)。
+QVeris 公开 OpenAPI 提供稳定的 [JSON](https://qveris.cn/openapi.json) 和 [YAML](https://qveris.cn/openapi.yaml) 地址，并为固定版本的集成提供 [JSON](https://qveris.cn/openapi/v1.json) 与 [YAML](https://qveris.cn/openapi/v1.yaml) 地址。文档包含所有已发布操作的请求体、响应结构与示例；旧服务兼容样例仍见[投影 fixtures](https://qveris.cn/openapi/qveris-public-api.projection-fixtures.json)。
