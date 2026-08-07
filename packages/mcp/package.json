@@ -47,7 +47,7 @@
     "lint:fix": "eslint . --fix && prettier --write \"src/**/*.ts\" \"examples/**/*.ts\""
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "~1.29.0",
+    "@modelcontextprotocol/sdk": "~1.30.0",
     "fast-uri": "^3.1.4",
     "uuid": "^11.0.3"
   },
