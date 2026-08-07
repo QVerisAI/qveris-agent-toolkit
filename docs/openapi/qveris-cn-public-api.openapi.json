@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "QVeris Public REST API",
-    "version": "2026-07-23.2",
+    "version": "2026-07-30.1",
     "summary": "External REST API for enterprise integration.",
     "description": "OpenAPI 3.1 schema for the formally released public `/api/v1` REST API surface. It covers search, provider discovery, tool metadata lookup/execution, credits, and account audit endpoints. Unreleased API families are intentionally excluded from this customer-facing schema."
   },
@@ -118,7 +118,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -138,7 +138,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -172,7 +172,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -185,7 +185,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -464,7 +464,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -484,7 +484,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -510,7 +510,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -587,7 +587,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -607,7 +607,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -704,7 +704,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -754,7 +754,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -774,7 +774,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -887,7 +887,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -907,7 +907,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -1369,7 +1369,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -1389,7 +1389,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -1415,7 +1415,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -1710,7 +1710,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -2036,7 +2036,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -2056,7 +2056,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -2107,7 +2107,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -2127,7 +2127,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -2161,7 +2161,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -2200,7 +2200,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -2239,7 +2239,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -2248,6 +2248,800 @@
         "x-qveris-visibility": "public",
         "x-qveris-release-stage": "published",
         "security": []
+      }
+    },
+    "/oauth/device/authorize": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Device Authorize",
+        "operationId": "device_authorize_api_v1_oauth_device_authorize_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "properties": {
+                  "scope": {
+                    "type": "string",
+                    "title": "Scope"
+                  },
+                  "resource": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Resource"
+                  },
+                  "client_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Client Id"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "scope"
+                ],
+                "title": "Body_device_authorize_api_v1_oauth_device_authorize_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthDeviceAuthorizationResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "OAuth request or grant error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Client authentication or bearer-token error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Subject token has insufficient scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Device Authorization rate limit exceeded",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthRateLimitResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "security": [
+          {},
+          {
+            "OAuthClientBasic": []
+          }
+        ]
+      }
+    },
+    "/oauth/introspect": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Introspect a QVeris resource token",
+        "description": "RFC 7662-compatible introspection for allowlisted confidential Resource Server clients. resource is mandatory and must exactly match both the client registration and token audience. Invalid, expired, revoked, or wrong-audience tokens return only {\"active\": false}.",
+        "operationId": "introspect_api_v1_oauth_introspect_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "title": "Token"
+                  },
+                  "resource": {
+                    "type": "string",
+                    "title": "Resource"
+                  },
+                  "token_type_hint": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Token Type Hint"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "token",
+                  "resource"
+                ],
+                "title": "Body_introspect_api_v1_oauth_introspect_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/OAuthIntrospectionActiveResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/OAuthIntrospectionInactiveResponse"
+                    }
+                  ],
+                  "title": "Response Introspect Api V1 Oauth Introspect Post"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "OAuth request or grant error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Client authentication or bearer-token error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Subject token has insufficient scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "security": [
+          {
+            "OAuthClientBasic": []
+          }
+        ]
+      }
+    },
+    "/oauth/revoke": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Revoke",
+        "operationId": "revoke_api_v1_oauth_revoke_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "title": "Token"
+                  },
+                  "token_type_hint": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Token Type Hint"
+                  },
+                  "client_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Client Id"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "token"
+                ],
+                "title": "Body_revoke_api_v1_oauth_revoke_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "OAuth request or grant error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Client authentication or bearer-token error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Subject token has insufficient scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "security": [
+          {},
+          {
+            "OAuthClientBasic": []
+          }
+        ]
+      }
+    },
+    "/oauth/token": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Issue or exchange an OAuth token",
+        "description": "Supports Authorization Code, Refresh Token, Device Code, and RFC 8693 Token Exchange. Token Exchange requires HTTP Basic authentication for a registered confidential Agent Runtime. Its subject_token, subject_token_type, resource, and scope fields are required together. Delegation tokens have a maximum 600-second lifetime and never include a refresh_token.",
+        "operationId": "token_api_v1_oauth_token_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "grant_type",
+                      "code",
+                      "redirect_uri",
+                      "code_verifier"
+                    ],
+                    "properties": {
+                      "grant_type": {
+                        "type": "string",
+                        "const": "authorization_code"
+                      },
+                      "code": {
+                        "type": "string"
+                      },
+                      "redirect_uri": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "code_verifier": {
+                        "type": "string",
+                        "minLength": 43,
+                        "maxLength": 128
+                      },
+                      "client_id": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "grant_type",
+                      "refresh_token"
+                    ],
+                    "properties": {
+                      "grant_type": {
+                        "type": "string",
+                        "const": "refresh_token"
+                      },
+                      "refresh_token": {
+                        "type": "string"
+                      },
+                      "client_id": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "grant_type",
+                      "device_code"
+                    ],
+                    "properties": {
+                      "grant_type": {
+                        "type": "string",
+                        "const": "urn:ietf:params:oauth:grant-type:device_code"
+                      },
+                      "device_code": {
+                        "type": "string"
+                      },
+                      "client_id": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "grant_type",
+                      "subject_token",
+                      "subject_token_type",
+                      "resource",
+                      "scope"
+                    ],
+                    "properties": {
+                      "grant_type": {
+                        "type": "string",
+                        "const": "urn:ietf:params:oauth:grant-type:token-exchange"
+                      },
+                      "subject_token": {
+                        "type": "string"
+                      },
+                      "subject_token_type": {
+                        "type": "string",
+                        "const": "urn:ietf:params:oauth:token-type:access_token"
+                      },
+                      "requested_token_type": {
+                        "type": "string",
+                        "const": "urn:ietf:params:oauth:token-type:access_token"
+                      },
+                      "resource": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "scope": {
+                        "type": "string"
+                      },
+                      "model": {
+                        "type": "string",
+                        "maxLength": 128
+                      },
+                      "run_id": {
+                        "type": "string",
+                        "maxLength": 128
+                      },
+                      "max_credits": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "tool_ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "maxItems": 100
+                      },
+                      "provider_ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "maxItems": 100
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/OAuthAccessTokenResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/OAuthTokenExchangeResponse"
+                    }
+                  ],
+                  "title": "Response Token Api V1 Oauth Token Post"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "OAuth request or grant error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Client authentication or bearer-token error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Subject token has insufficient scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-07-30.1"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "security": [
+          {},
+          {
+            "OAuthClientBasic": []
+          }
+        ]
       }
     },
     "/providers": {
@@ -2357,7 +3151,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -2377,7 +3171,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -2409,7 +3203,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -2465,7 +3259,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             },
@@ -2541,7 +3335,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             },
@@ -2590,7 +3384,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             },
@@ -2642,7 +3436,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             },
@@ -2725,7 +3519,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             },
@@ -2804,7 +3598,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             },
@@ -2853,7 +3647,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             },
@@ -2886,7 +3680,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -3009,7 +3803,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -3046,7 +3840,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             },
@@ -3099,7 +3893,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             },
@@ -3153,7 +3947,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             },
@@ -3205,7 +3999,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -3311,7 +4105,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -3348,7 +4142,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             },
@@ -3397,7 +4191,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             },
@@ -3430,7 +4224,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -3454,7 +4248,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -3479,7 +4273,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -3504,7 +4298,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -3524,7 +4318,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-23.2"
+                  "const": "2026-07-30.1"
                 }
               }
             }
@@ -4452,6 +5246,486 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "OAuthAccessTokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "const": "Bearer",
+            "title": "Token Type"
+          },
+          "expires_in": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Expires In"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          },
+          "resource": {
+            "type": "string",
+            "title": "Resource"
+          },
+          "refresh_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refresh Token"
+          },
+          "refresh_token_expires_in": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refresh Token Expires In"
+          },
+          "id_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Token"
+          },
+          "tool_api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Api Key"
+          },
+          "tool_api_key_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Api Key Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in",
+          "scope",
+          "resource"
+        ],
+        "title": "OAuthAccessTokenResponse",
+        "description": "Authorization Code, Device Code, or Refresh Token success response."
+      },
+      "OAuthDelegationActor": {
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "title": "Client Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "client_id"
+        ],
+        "title": "OAuthDelegationActor",
+        "description": "Confidential Agent Runtime that requested a delegation token."
+      },
+      "OAuthDelegationConstraints": {
+        "properties": {
+          "model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "tool_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Ids"
+          },
+          "provider_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Ids"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "max_credits": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Credits"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "OAuthDelegationConstraints"
+      },
+      "OAuthDeviceAuthorizationResponse": {
+        "properties": {
+          "device_code": {
+            "type": "string",
+            "title": "Device Code",
+            "description": "Secret code used only to poll the token endpoint."
+          },
+          "user_code": {
+            "type": "string",
+            "title": "User Code",
+            "description": "Short code displayed to and verified by the user."
+          },
+          "verification_uri": {
+            "type": "string",
+            "title": "Verification Uri",
+            "description": "Browser URL where the user approves the request."
+          },
+          "verification_uri_complete": {
+            "type": "string",
+            "title": "Verification Uri Complete",
+            "description": "Verification URL with the user code prefilled."
+          },
+          "expires_in": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Expires In",
+            "description": "Device and user code lifetime in seconds."
+          },
+          "interval": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Interval",
+            "description": "Minimum token polling interval in seconds."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "device_code",
+          "user_code",
+          "verification_uri",
+          "verification_uri_complete",
+          "expires_in",
+          "interval"
+        ],
+        "title": "OAuthDeviceAuthorizationResponse",
+        "description": "RFC 8628 device authorization response."
+      },
+      "OAuthErrorResponse": {
+        "properties": {
+          "error": {
+            "type": "string",
+            "title": "Error",
+            "description": "Stable OAuth error code."
+          },
+          "error_description": {
+            "type": "string",
+            "title": "Error Description",
+            "description": "Human-readable error detail."
+          },
+          "error_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Uri",
+            "description": "Optional error documentation URI."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "error",
+          "error_description"
+        ],
+        "title": "OAuthErrorResponse",
+        "description": "RFC 6749/RFC 8693 error response."
+      },
+      "OAuthIntrospectionActiveResponse": {
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "const": true,
+            "title": "Active"
+          },
+          "token_type": {
+            "type": "string",
+            "const": "Bearer",
+            "title": "Token Type"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          },
+          "client_id": {
+            "type": "string",
+            "title": "Client Id"
+          },
+          "sub": {
+            "type": "string",
+            "title": "Sub"
+          },
+          "token_use": {
+            "type": "string",
+            "enum": [
+              "access",
+              "delegation"
+            ],
+            "title": "Token Use"
+          },
+          "exp": {
+            "type": "integer",
+            "title": "Exp"
+          },
+          "iat": {
+            "type": "integer",
+            "title": "Iat"
+          },
+          "nbf": {
+            "type": "integer",
+            "title": "Nbf"
+          },
+          "aud": {
+            "type": "string",
+            "title": "Aud"
+          },
+          "iss": {
+            "type": "string",
+            "title": "Iss"
+          },
+          "jti": {
+            "type": "string",
+            "title": "Jti"
+          },
+          "actor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OAuthDelegationActor"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parent_jti": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Jti"
+          },
+          "delegation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OAuthDelegationConstraints"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "active",
+          "token_type",
+          "scope",
+          "client_id",
+          "sub",
+          "token_use",
+          "exp",
+          "iat",
+          "nbf",
+          "aud",
+          "iss",
+          "jti"
+        ],
+        "title": "OAuthIntrospectionActiveResponse"
+      },
+      "OAuthIntrospectionInactiveResponse": {
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "const": false,
+            "title": "Active"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "active"
+        ],
+        "title": "OAuthIntrospectionInactiveResponse"
+      },
+      "OAuthRateLimitResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "failure",
+            "title": "Status"
+          },
+          "status_code": {
+            "type": "integer",
+            "const": 429,
+            "title": "Status Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "data": {
+            "type": "null",
+            "title": "Data"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "status_code",
+          "message"
+        ],
+        "title": "OAuthRateLimitResponse",
+        "description": "Structured response returned when Device Authorization is throttled."
+      },
+      "OAuthTokenExchangeResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "issued_token_type": {
+            "type": "string",
+            "const": "urn:ietf:params:oauth:token-type:access_token",
+            "title": "Issued Token Type"
+          },
+          "token_type": {
+            "type": "string",
+            "const": "Bearer",
+            "title": "Token Type"
+          },
+          "expires_in": {
+            "type": "integer",
+            "maximum": 600.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Expires In"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          },
+          "resource": {
+            "type": "string",
+            "title": "Resource"
+          },
+          "constraints": {
+            "$ref": "#/components/schemas/OAuthDelegationConstraints"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "access_token",
+          "issued_token_type",
+          "token_type",
+          "expires_in",
+          "scope",
+          "resource"
+        ],
+        "title": "OAuthTokenExchangeResponse",
+        "description": "Successful Agent-to-QVeris token exchange. This schema deliberately does not contain refresh_token: delegation tokens cannot be refreshed.",
+        "examples": [
+          {
+            "access_token": "eyJhbGciOiJSUzI1NiIs...",
+            "constraints": {
+              "max_credits": 25,
+              "provider_ids": [
+                "openweathermap"
+              ],
+              "run_id": "run-01J0QVERIS",
+              "tool_ids": [
+                "openweathermap.weather.execute.v1"
+              ]
+            },
+            "expires_in": 600,
+            "issued_token_type": "urn:ietf:params:oauth:token-type:access_token",
+            "resource": "https://api.qveris.cn/tools",
+            "scope": "tools.inspect tools.execute",
+            "token_type": "Bearer"
+          }
+        ]
+      },
       "PublicApiMetadata": {
         "properties": {
           "contract_version": {
@@ -4459,7 +5733,7 @@
             "title": "Contract Version",
             "description": "Version of the published QVeris REST API contract.",
             "examples": [
-              "2026-07-23.2"
+              "2026-07-30.1"
             ]
           }
         },
@@ -7114,6 +8388,11 @@
       "HTTPBearer": {
         "type": "http",
         "scheme": "bearer"
+      },
+      "OAuthClientBasic": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "HTTP Basic client authentication. Required for Token Exchange and Introspection; supported by confidential clients on Device Authorization and Revocation."
       }
     }
   },
@@ -7139,10 +8418,14 @@
     {
       "name": "Account",
       "description": "Credits, usage audit, and billing ledger APIs."
+    },
+    {
+      "name": "Authentication",
+      "description": "OAuth Device Flow, token issuance and exchange, introspection, and revocation."
     }
   ],
-  "x-qveris-route-count": 20,
-  "x-qveris-public-operation-count": 20,
+  "x-qveris-route-count": 24,
+  "x-qveris-public-operation-count": 24,
   "x-qveris-private-operation-count": 0,
   "x-qveris-generation-source": "Filtered from qveris-internal-api.openapi.json"
 }

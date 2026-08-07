@@ -1,6 +1,6 @@
 # QVeris REST API Documentation
 
-Version: 2026-07-23.2
+Version: 2026-07-30.1
 
 The public REST API exposes the core agent path:
 
@@ -8,11 +8,14 @@ The public REST API exposes the core agent path:
 | --- | --- | --- |
 | Discover | `POST /search` | Free; returns ranked capabilities and optional cost signals |
 | Inspect | `POST /tools/by-ids` | Free; returns full schemas, examples, quality signals, and cost signals |
+| Probe | `POST /tools/probe` | Free; validates parameters and returns a pre-call quote without execution |
 | Call | `POST /tools/execute` | May consume credits according to the selected capability's `billing_rule` |
 | Usage audit | `GET /auth/usage/history/v2` | Final request status and charge outcome |
 | Credits ledger | `GET /auth/credits/ledger` | Final credit balance movements |
 
 Replace sample ids such as `srch_...`, `exec_...`, and `led_...` with ids returned by your own API responses.
+
+Focused references: [Discover](api-reference/discover.md), [Inspect](api-reference/inspect.md), [Probe](api-reference/probe.md), [Call](api-reference/call.md). The sidebar and public [OpenAPI JSON](/openapi.json) cover all 24 published operations.
 
 ## Base URL
 
@@ -30,15 +33,15 @@ Authorization: Bearer YOUR_API_KEY
 
 ## Cost and session contract
 
-Discover and Inspect are free. They may return `expected_cost`, legacy `cost`, or `billing_rule` so clients can estimate Call cost before spending credits.
+Discover, Inspect, and Probe are free. Discover and Inspect may return `expected_cost`, legacy `cost`, or `billing_rule`; Probe validates the selected parameters and returns a zero-cost quote before spending credits.
 
 The default/full Call response can return compact pre-settlement fields such as `billing` and `cost`. Projection responses (`summary` and `fields:*`) intentionally omit billing internals to keep the response small. Final settlement is reported by usage audit and the credits ledger; use those endpoints for support, reconciliation, and user-facing billing history.
 
 `session_id` is optional. Use one stable value per user task or conversation for tracing, analytics, and pricing context. It is not a cache contract and does not promise cache reuse or `session_cache_hit`.
 
-## Search -> Execute integration contract
+## Discover -> Inspect -> Probe -> Call integration contract
 
-Treat Discover and Inspect as the source of truth for Call. A Call request should be built from the exact capability result that the user or agent selected.
+Treat Discover, Inspect, and Probe as the source of truth for Call. A Call request should be built from the exact capability result that the user or agent selected.
 
 Recommended contract:
 
@@ -47,8 +50,9 @@ Recommended contract:
 3. Save the returned `search_id`.
 4. Pick a `tool_id` from `results`.
 5. Build `parameters` from that same result's `params`, `one_of_required`, and `examples.sample_parameters`.
-6. Call `POST /tools/execute`, passing `tool_id`, `parameters`, `search_id`, `session_id`, and, for agent clients, `model`.
-7. Save `execution_id` for audit and support.
+6. Call `POST /tools/probe?tool_id=...` with those parameters when the schema is complex, the cost matters, or an agent generated the values.
+7. Call `POST /tools/execute`, passing `tool_id`, `parameters`, `search_id`, `session_id`, and, for agent clients, `model`.
+8. Save `execution_id` for audit and support.
 
 Do not infer parameters from the tool name alone. Do not reuse parameters from another tool, another provider, or an old cached schema. If you cache tool metadata, use a short TTL or refresh it whenever the selected tool is returned by a new search.
 
@@ -91,6 +95,7 @@ Authenticated rate limits are shared by all API keys owned by the same account. 
 | --- | --- |
 | Discover (`POST /search`) | 120 requests/minute |
 | Inspect (`POST /tools/by-ids`) | 120 requests/minute |
+| Probe (`POST /tools/probe`) | 120 requests/minute |
 | Call (`POST /tools/execute`) | 200 requests/minute |
 
 Rate-limited responses include:
@@ -324,7 +329,47 @@ Unexpected proxy failure:
 }
 ```
 
-## 3. Call a capability
+## 3. Probe a capability
+
+```text
+POST /tools/probe?tool_id={tool_id}
+```
+
+Probe validates candidate parameters and returns a quote without executing the capability or consuming credits. The `schema` and `quote` checks return implemented verdicts; `coverage` and `sample` currently return an explicit unknown verdict.
+
+### Request
+
+```json
+{
+  "parameters": {
+    "q": "London"
+  },
+  "checks": ["schema", "quote"],
+  "live_budget": "none"
+}
+```
+
+Use the exact `tool_id` selected during Discover or Inspect. Keep `live_budget` set to `none` for a validation-only probe.
+
+### Success response
+
+```json
+{
+  "schema": {
+    "valid": true
+  },
+  "quote": {
+    "estimate_credits": 5,
+    "currency": "credits",
+    "exact": true,
+    "basis": "per_call"
+  }
+}
+```
+
+A probe can return `400` for invalid input, `404` for an unknown capability, `429` when rate limited, or `502`/`504` when the probe service is unavailable. See the [focused Probe reference](api-reference/probe.md) for the exact schema and all responses.
+
+## 4. Call a capability
 
 ```text
 POST /tools/execute?tool_id={tool_id}
@@ -512,7 +557,7 @@ If the payload exceeds `max_response_size`, `result` may omit `data` and include
 | `message` | LLM-safe explanation of truncation |
 | `content_schema` | JSON schema for the full content when available |
 
-## 4. Usage audit — final request status
+## 5. Usage audit — final request status
 
 Use usage audit to answer: "Did this request succeed?", "Was a failed request charged?", and "Which execution should support review?" Agent, CLI, and MCP clients should prefer precise filters or `summary=true` instead of dumping full history into an LLM context.
 
@@ -761,7 +806,7 @@ Invalid credit range:
 }
 ```
 
-## 5. Credits ledger — final balance movements
+## 6. Credits ledger — final balance movements
 
 Use the credits ledger to explain the final account balance. Usage audit describes requests; the ledger describes immutable credit movements. A charged Call should normally have a usage event with `charge_outcome=charged` and a linked ledger item.
 
@@ -979,4 +1024,4 @@ Invalid credit range:
 
 ## OpenAPI
 
-The [QVeris Public OpenAPI](https://qveris.ai/openapi/qveris-public-api.openapi.json) document includes request bodies, response schemas, and examples for the Discover, Inspect, and Call path. Stable projection and legacy-compatibility fixtures are available from the [projection fixtures](https://qveris.ai/openapi/qveris-public-api.projection-fixtures.json).
+The QVeris Public OpenAPI document is available as stable [JSON](https://qveris.ai/openapi.json) and [YAML](https://qveris.ai/openapi.yaml), with versioned [JSON](https://qveris.ai/openapi/v1.json) and [YAML](https://qveris.ai/openapi/v1.yaml) URLs for pinned integrations. It includes request bodies, response schemas, and examples for every published operation. Legacy-compatibility fixtures remain available from the [projection fixtures](https://qveris.ai/openapi/qveris-public-api.projection-fixtures.json).
