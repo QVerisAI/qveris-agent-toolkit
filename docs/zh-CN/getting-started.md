@@ -53,7 +53,7 @@ CLI 还支持交互模式（`qveris interactive`）、代码生成（`--codegen 
 
 完整 MCP 参考文档见 [MCP 服务器文档](mcp-server.md) 或[托管 MCP 指南](https://qveris.ai/hosted-mcp)。
 
-**托管 MCP 配置（首选）**
+#### 托管 MCP 配置（首选）
 
 ```json
 {
@@ -69,7 +69,7 @@ CLI 还支持交互模式（`qveris interactive`）、代码生成（`--codegen 
 }
 ```
 
-**本地 stdio 备用方案（仅适用于不支持远程 HTTP 的客户端）**
+#### 本地 stdio 备用方案（仅适用于不支持远程 HTTP 的客户端）
 
 ```json
 {

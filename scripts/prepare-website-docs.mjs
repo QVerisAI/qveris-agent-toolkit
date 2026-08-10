@@ -40,6 +40,10 @@ const MAIN_GUIDE_RELEASES = [
 ]
 
 const RELEASE_MARKER = /^<!-- qveris-sdk-release: ([^ ]+) -->\n?/
+const WEBSITE_LOCAL_PAGE_LINKS = [
+  "https://qveris.ai/hosted-mcp",
+  "https://qveris.cn/hosted-mcp",
+]
 
 function parseArgs(argv) {
   const args = { toolkitDir: "", websiteDir: "", outputDir: "" }
@@ -124,6 +128,13 @@ function markedRelease(content) {
 
 function withReleaseMarker(content, tag) {
   return `<!-- qveris-sdk-release: ${tag} -->\n${content.replace(RELEASE_MARKER, "")}`
+}
+
+function localizeWebsitePageLinks(content) {
+  return WEBSITE_LOCAL_PAGE_LINKS.reduce(
+    (localized, absoluteUrl) => localized.replaceAll(absoluteUrl, "/hosted-mcp"),
+    content,
+  )
 }
 
 function withPinnedGuideVersion(content, release, tag, relPath) {
@@ -268,6 +279,14 @@ async function main() {
         withReleaseMarker(withPinnedGuideVersion(taggedContent, release, tag, relPath), tag),
       )
     }
+  }
+
+  // Toolkit docs are also rendered on GitHub, where their deployment-specific
+  // links are useful. The website mirror must instead keep its own origin so
+  // preview and test deployments do not navigate visitors to production.
+  for (const relPath of toolkitOwnedPaths) {
+    const content = await fs.readFile(path.join(outputDir, relPath), "utf8")
+    await writeFile(outputDir, relPath, localizeWebsitePageLinks(content))
   }
 
   if (process.env.GITHUB_OUTPUT) {

@@ -201,7 +201,9 @@ codex mcp add qveris --env QVERIS_API_KEY=your-api-key-here --env QVERIS_BASE_UR
 
 #### VS Code 中的 GitHub Copilot
 
-GitHub Copilot 的 `mcp.json` 使用顶层 `servers` 对象，而不是 `mcpServers`。请优先使用以下托管 MCP 配置：
+GitHub Copilot 的 `mcp.json` 使用顶层 `servers` 对象，而不是 `mcpServers`。
+
+##### 托管 MCP 配置
 
 ```json
 {
@@ -216,6 +218,8 @@ GitHub Copilot 的 `mcp.json` 使用顶层 `servers` 对象，而不是 `mcpServ
   }
 }
 ```
+
+##### 本地 stdio 备用方案
 
 如果客户端环境不能使用远程 HTTP，请保留同一 `servers` 外层键，改用以下本地 stdio 条目：
 
