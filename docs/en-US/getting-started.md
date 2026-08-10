@@ -45,15 +45,31 @@ The CLI also supports interactive mode (`qveris interactive`), code generation (
 
 ### Use QVeris MCP anywhere MCP is supported
 
-If your client supports **Model Context Protocol (MCP)**, you can add the official QVeris MCP server and immediately get:
+If your client supports **Model Context Protocol (MCP)** and remote Streamable HTTP, use Hosted MCP first. It requires no local package or Node.js process and immediately provides:
 
 - `discover` (Discover)
 - `inspect` (Inspect)
 - `call` (Call)
 
-For the full MCP reference, see [MCP Server documentation](mcp-server.md).
+For the full MCP reference, see [MCP Server documentation](mcp-server.md) or the [Hosted MCP guide](https://qveris.ai/hosted-mcp).
 
-**Configure (Cursor / any MCP client)**
+**Hosted MCP configuration (preferred)**
+
+```json
+{
+  "mcpServers": {
+    "qveris": {
+      "type": "http",
+      "url": "https://mcp.qveris.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+**Local stdio fallback (for clients without remote HTTP support)**
 
 ```json
 {

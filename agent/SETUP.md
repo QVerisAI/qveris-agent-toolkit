@@ -28,7 +28,7 @@ Before configuring QVeris, ensure the runtime environment is ready.
 **Note:** On Windows, use **cmd**, not PowerShell, for setup commands.
 
 ### Node.js
-The QVeris MCP server requires Node.js.
+Node.js is required only for the CLI and local stdio MCP fallback. Do not require it for Hosted MCP.
 1. Check if `node` is installed by running `node --version`.
 2. **If Node.js is NOT installed:**
    - Attempt to install it using the system's package manager (e.g., `winget install OpenJS.NodeJS` on Windows, `brew install node` on macOS, or `apt install nodejs` on Linux).
@@ -36,12 +36,13 @@ The QVeris MCP server requires Node.js.
 
 ## 2. Choose Integration Method
 
-QVeris supports two integration methods. Choose based on your environment:
+QVeris supports three integration methods. Prefer Hosted MCP whenever your client supports remote Streamable HTTP.
 
 | Method | Best For | How It Works |
 |--------|----------|--------------|
+| **Hosted MCP Server** (recommended) | Remote-MCP clients and browser-based agents | One HTTPS endpoint — no local process, Node.js, or package install |
 | **CLI** (recommended) | Agents with shell access (Claude Code, OpenClaw, terminals) | Subprocess calls — zero prompt tokens, 10,000+ real-world, verified tools without bloat |
-| **MCP Server** | MCP clients (Cursor, Claude Desktop, Cherry Studio, OpenCode) | MCP protocol — tools injected into agent context |
+| **Local MCP Server** (fallback) | Clients that require stdio | Local MCP process — tools injected into agent context |
 
 ### Option A: CLI Setup (Recommended for shell-capable agents)
 
@@ -82,7 +83,17 @@ qveris credits   # Check credit balance
 
 Skip to **Section 3: Verify Installation** once `qveris doctor` passes all checks.
 
-### Option B: MCP Server Setup
+### Option B: Hosted MCP Setup (Recommended for remote-capable clients)
+
+Hosted MCP is the preferred MCP connection because it avoids a local Node.js process and package install. Open the Hosted MCP guide on the QVeris site that issued the API key, copy that deployment's endpoint, and add it as a **Streamable HTTP** server with:
+
+```text
+Authorization: Bearer YOUR_QVERIS_API_KEY
+```
+
+Reconnect the client and confirm `discover`, `inspect`, `probe`, and `call` are available. If the client supports only local stdio MCP, continue with Option C.
+
+### Option C: Local MCP Server Setup (Fallback)
 
 Detect which MCP-capable desktop client you are currently running in. QVeris supports Claude Code, ChatGPT (Codex), OpenCode, Cursor, Cherry Studio, TRAE, GitHub Copilot, Cline, Roo Code, Continue, Kiro, Junie, Augment, Zed, Google Antigravity, Qoder, CodeBuddy, and WorkBuddy.
 

@@ -48,15 +48,37 @@ Both surfaces map to the same QVeris protocol:
 
 ## Requirements
 
-- Node.js `18+`
 - A valid `QVERIS_API_KEY`
 - An MCP-compatible client
+- Node.js `18+` only when using the local stdio fallback
 
 ---
 
 ## Quick Start
 
-### Install via `npx`
+### Hosted MCP (recommended)
+
+Prefer Hosted MCP whenever the client supports remote Streamable HTTP. It uses one managed endpoint and Bearer authentication, with no local package, Node.js process, or server lifecycle to maintain.
+
+```json
+{
+  "mcpServers": {
+    "qveris": {
+      "type": "http",
+      "url": "https://mcp.qveris.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_QVERIS_API_KEY"
+      }
+    }
+  }
+}
+```
+
+See the [Hosted MCP page](https://qveris.ai/hosted-mcp) for a copy-ready endpoint and client-specific guidance. Use the local stdio setup below only when your client does not support remote Streamable HTTP.
+
+### Local stdio fallback
+
+#### Install via `npx`
 
 ```bash
 npx -y @qverisai/mcp
@@ -69,7 +91,7 @@ QVERIS_API_KEY=your-api-key          # Required
 QVERIS_BASE_URL=https://qveris.ai/api/v1  # Optional: override API base URL
 ```
 
-### Configure with QVeris CLI
+#### Configure with QVeris CLI
 
 Use the CLI to generate client config without hand-editing JSON. By default it prints a safe config with `YOUR_QVERIS_API_KEY` placeholders; placeholder output intentionally fails API key validation until you replace it or use `--include-key`.
 
@@ -152,7 +174,7 @@ Save the server, enable it in the conversation, and confirm that `discover`, `in
 
 ### Desktop agent clients
 
-The following desktop agents support QVeris through a local stdio MCP server: **ChatGPT (Codex)**, **GitHub Copilot**, **Cline**, **Roo Code**, **Continue**, **Kiro**, **Junie**, **Augment**, **Zed**, **Google Antigravity**, **Qoder**, **CodeBuddy**, and **WorkBuddy**, alongside the clients shown above.
+The following desktop agents should use Hosted MCP when their remote Streamable HTTP connection is available, with local stdio as the fallback: **ChatGPT (Codex)**, **GitHub Copilot**, **Cline**, **Roo Code**, **Continue**, **Kiro**, **Junie**, **Augment**, **Zed**, **Google Antigravity**, **Qoder**, **CodeBuddy**, and **WorkBuddy**, alongside the clients shown above.
 
 For ChatGPT (Codex), run:
 
@@ -160,7 +182,7 @@ For ChatGPT (Codex), run:
 codex mcp add qveris --env QVERIS_API_KEY=your-api-key-here --env QVERIS_BASE_URL=https://qveris.ai/api/v1 -- npx -y @qverisai/mcp
 ```
 
-For the other clients, open the product's MCP settings and import the standard configuration below. GitHub Copilot uses the `servers` wrapper in its `mcp.json`; Zed exposes the same name, command, arguments, and environment fields in its Agent panel.
+For local-stdio-only clients, open the product's MCP settings and import the fallback configuration below. GitHub Copilot uses the `servers` wrapper in its `mcp.json`; Zed exposes the same name, command, arguments, and environment fields in its Agent panel.
 
 ```json
 {
@@ -187,9 +209,9 @@ For environment-specific setup guides, see:
 
 ---
 
-## Hosted MCP
+## Hosted MCP details
 
-QVeris provides a remote Streamable HTTP MCP service. It requires no local package or background process. If the endpoint is not yet available, continue using the local stdio package shown above while the hosted service rollout completes.
+QVeris provides a remote Streamable HTTP MCP service. It is the preferred MCP connection for clients that support it because it requires no local package or background process.
 
 ```text
 https://mcp.qveris.ai/mcp

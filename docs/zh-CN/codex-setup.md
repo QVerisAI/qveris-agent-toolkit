@@ -4,11 +4,25 @@
 
 ## 前置条件
 
-- Node.js 18.2 或更高版本
 - 已安装 ChatGPT 桌面端、Codex CLI 或 Codex IDE 扩展
 - QVeris API 密钥（在[控制台/API 密钥](/account?page=api-keys)中创建）
+- 仅使用本地 stdio 备用方案时才需要 Node.js 18.2 或更高版本
 
-## 1. 添加 QVeris MCP 服务器
+## 1. 添加托管 MCP（推荐）
+
+ChatGPT 桌面端、Codex CLI 和 Codex IDE 扩展支持带 Bearer 认证的 Streamable HTTP MCP 服务器，并共享同一份 Codex MCP 配置。添加一次远程服务后，即可在任一上述本地客户端中使用：
+
+```toml
+[mcp_servers.qveris]
+url = "https://mcp.qveris.ai/mcp"
+http_headers = { Authorization = "Bearer your-api-key-here" }
+```
+
+也可以在 **“设置 → MCP 服务器”** 中交互式添加同一服务：选择 **Streamable HTTP**，填写 `https://mcp.qveris.ai/mcp`，并添加 `Authorization: Bearer your-api-key-here` 请求头。保存后重启客户端。各客户端的具体步骤请参考官方 [MCP 配置文档](https://learn.chatgpt.com/docs/extend/mcp)。
+
+## 2. 本地 stdio 备用方案
+
+仅当客户端环境无法使用托管 MCP 时，才使用该方案。在终端运行以下命令，并将 `your-api-key-here` 替换为你的 API 密钥：
 
 在终端运行以下命令，并将 `your-api-key-here` 替换为你的 API 密钥：
 
@@ -22,7 +36,7 @@ codex mcp add qveris --env QVERIS_API_KEY=your-api-key-here -- npx -y @qverisai/
 codex mcp add qveris --env QVERIS_API_KEY=your-api-key-here --env QVERIS_BASE_URL=https://qveris.ai/api/v1 -- npx -y @qverisai/mcp
 ```
 
-ChatGPT 桌面端、Codex CLI 和 IDE 扩展都会从 `~/.codex/config.toml` 读取该服务器，因此只需添加一次。也可以在桌面端或 IDE 扩展的 **Settings → MCP servers** 中添加同一个 STDIO 服务器。不同客户端的详细步骤请参考官方 [MCP 配置文档](https://learn.chatgpt.com/docs/extend/mcp)。
+ChatGPT 桌面端、Codex CLI 和 IDE 扩展都会从 `~/.codex/config.toml` 读取该服务器，因此只需添加一次。也可以在桌面端或 IDE 扩展的 **Settings → MCP servers** 中添加同一个 STDIO 服务器。
 
 ### 手动配置
 
@@ -37,7 +51,7 @@ args = ["-y", "@qverisai/mcp"]
 QVERIS_API_KEY = "your-api-key-here"
 ```
 
-## 2. 安装 QVeris 技能
+## 3. 安装 QVeris 技能
 
 为当前用户安装 QVeris 技能：
 
@@ -65,7 +79,7 @@ Codex 会自动发现 `~/.agents/skills` 中的技能。如果技能没有出现
 
 ## 故障排查
 
-**服务器无法启动：**
+**本地 stdio 服务器无法启动：**
 
 - 检查 Node.js：`node --version`
 - 直接运行服务器：`QVERIS_API_KEY=your-api-key-here npx -y @qverisai/mcp`
@@ -78,4 +92,4 @@ Codex 会自动发现 `~/.agents/skills` 中的技能。如果技能没有出现
 
 **ChatGPT 网页版没有显示 QVeris：**
 
-- ChatGPT 网页版无法访问本地 `config.toml` 和 STDIO 服务器。在 QVeris 发布托管插件或远程 MCP 集成前，请使用上文列出的本地客户端。
+- ChatGPT 网页版不会读取本地 `config.toml`。当 ChatGPT Work 中可用 QVeris 插件时使用该插件；否则使用上文配置过的桌面端、Codex CLI 或 IDE 扩展。

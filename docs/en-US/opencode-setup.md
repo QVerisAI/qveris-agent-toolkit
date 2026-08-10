@@ -4,11 +4,35 @@ This guide explains how to configure the QVeris MCP server and skills in [OpenCo
 
 ## Prerequisites
 
-- Node.js installed
+- Node.js installed only for the local stdio fallback
 - OpenCode installed ([installation guide](https://opencode.ai/docs/))
 - QVeris API key (create one in [Dashboard / API Keys](/account?page=api-keys))
 
-## 1. MCP Server Configuration
+## 1. Hosted MCP Configuration (recommended)
+
+OpenCode supports remote Streamable HTTP MCP servers. Add the following server to the global OpenCode configuration; it avoids a local package and Node.js process:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      "qveris": {
+        "type": "remote",
+        "url": "https://mcp.qveris.ai/mcp",
+        "oauth": false,
+        "headers": {
+          "Authorization": "Bearer your-api-key-here"
+        }
+      }
+    }
+  }
+}
+```
+
+Restart OpenCode and confirm the QVeris tools appear. Use the local stdio fallback below only if remote HTTP is unavailable in the client environment.
+
+## 2. Local stdio fallback
 
 You can generate and write the config with QVeris CLI:
 
@@ -54,7 +78,7 @@ Add the following content (replace `your-api-key-here` with your actual API key)
 
 If you already have an `opencode.json` file, merge the `mcp.qveris` and `tools["qveris*"]` sections into your existing config.
 
-## 2. Skills Configuration
+## 3. Skills Configuration
 
 Download the QVeris MCP/client skill from the GitHub repository:
 
@@ -98,7 +122,7 @@ OpenCode's agent will automatically discover the QVeris skill and MCP server to 
 
 ## Troubleshooting
 
-**MCP Server Not Connecting:**
+**Local stdio MCP Server Not Connecting:**
 - Verify Node.js is installed: `node --version`
 - Test the MCP server manually: `npx -y @qverisai/mcp`
 - Check your API key is correct

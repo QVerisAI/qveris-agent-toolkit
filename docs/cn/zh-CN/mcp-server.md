@@ -48,15 +48,37 @@
 
 ## 环境要求
 
-- Node.js `18+`
 - 有效的 `QVERIS_API_KEY`
 - MCP 兼容客户端
+- 仅在使用本地 stdio 备用方案时需要 Node.js `18+`
 
 ---
 
 ## 快速开始
 
-### 通过 `npx` 安装
+### 托管 MCP（推荐）
+
+只要客户端支持远程 Streamable HTTP，就应优先使用托管 MCP。它使用一个受管端点和 Bearer 认证，无需维护本地软件包、Node.js 进程或服务器生命周期。
+
+```json
+{
+  "mcpServers": {
+    "qveris": {
+      "type": "http",
+      "url": "https://mcp.qveris.cn/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_QVERIS_API_KEY"
+      }
+    }
+  }
+}
+```
+
+可前往[托管 MCP 页面](https://qveris.cn/hosted-mcp)复制端点并查看各客户端的配置说明。只有当客户端不支持远程 Streamable HTTP 时，才使用下方本地 stdio 备用方案。
+
+### 本地 stdio 备用方案
+
+#### 通过 `npx` 安装
 
 ```bash
 npx -y @qverisai/mcp
@@ -69,7 +91,7 @@ QVERIS_API_KEY=your-api-key          # 必填
 QVERIS_BASE_URL=https://qveris.cn/api/v1  # 必填：设置 API 地址
 ```
 
-### 使用 QVeris CLI 配置
+#### 使用 QVeris CLI 配置
 
 可以用 CLI 生成客户端配置，无需手写 JSON。默认会打印带有 `YOUR_QVERIS_API_KEY` 占位符的安全配置；占位符输出会故意无法通过 API key 校验，直到你替换占位符或使用 `--include-key`。
 
@@ -135,9 +157,9 @@ qveris mcp validate --target cursor --probe
 
 ### 桌面端 Agent 客户端
 
-除上文客户端外，以下桌面端 Agent 也可通过本地 stdio MCP 使用 QVeris：**GitHub Copilot**、**Cline**、**Roo Code**、**Continue**、**Kiro**、**Junie**、**Augment**、**Zed**、**Google Antigravity**、**Qoder**、**CodeBuddy** 和 **WorkBuddy**。
+除上文客户端外，以下桌面端 Agent 在支持远程 Streamable HTTP 时应优先使用托管 MCP，本地 stdio 仅作为备用方案：**GitHub Copilot**、**Cline**、**Roo Code**、**Continue**、**Kiro**、**Junie**、**Augment**、**Zed**、**Google Antigravity**、**Qoder**、**CodeBuddy** 和 **WorkBuddy**。
 
-请在 MCP 设置中导入以下标准配置。GitHub Copilot 在 `mcp.json` 中使用 `servers` 外层键；Zed 在 Agent 面板中填写相同的名称、命令、参数和环境变量。
+对于仅支持本地 stdio 的客户端，请在 MCP 设置中导入以下备用配置。GitHub Copilot 在 `mcp.json` 中使用 `servers` 外层键；Zed 在 Agent 面板中填写相同的名称、命令、参数和环境变量。
 
 ```json
 {
@@ -162,9 +184,9 @@ qveris mcp validate --target cursor --probe
 
 ---
 
-## Hosted MCP
+## 托管 MCP 详细说明
 
-QVeris 提供远程 Streamable HTTP MCP 托管服务，无需安装本地软件包或运行后台进程。如果端点暂时不可用，请在托管服务发布完成前继续使用上文的本地 stdio 软件包。
+QVeris 提供远程 Streamable HTTP MCP 托管服务。对于支持它的客户端，这是首选 MCP 连接方式：无需安装本地软件包或运行后台进程。
 
 ```text
 https://mcp.qveris.cn/mcp

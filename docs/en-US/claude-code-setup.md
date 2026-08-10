@@ -4,11 +4,21 @@ This guide explains how to configure QVeris MCP server and skills in Claude Code
 
 ## Prerequisites
 
-- Node.js installed (for running MCP servers)
+- Node.js installed only for the local stdio fallback
 - Claude Code installed
 - QVeris API key (create one in [Dashboard / API Keys](/account?page=api-keys))
 
-## 1. MCP Server Configuration
+## 1. Hosted MCP Configuration (recommended)
+
+Claude Code supports remote HTTP MCP servers. Add QVeris as a user-scoped Streamable HTTP server with Bearer authentication:
+
+```bash
+claude mcp add --transport http qveris https://mcp.qveris.ai/mcp --scope user --header "Authorization: Bearer your-api-key-here"
+```
+
+Restart Claude Code, run `/mcp`, and confirm that QVeris is connected. Use the local stdio fallback below only when remote HTTP is not available in the client environment.
+
+## 2. Local stdio fallback
 
 You can generate the command with QVeris CLI:
 
@@ -37,7 +47,7 @@ claude mcp get qveris    # Get details for a specific server
 claude mcp remove qveris # Remove a server
 ```
 
-## 2. Skills Configuration
+## 3. Skills Configuration
 
 Download the QVeris MCP/client skill from the GitHub repository:
 
@@ -78,7 +88,7 @@ Write a python script that prints the current bitcoin price using @.claude/skill
 
 ## Troubleshooting
 
-**MCP Server Not Connecting:**
+**Local stdio MCP Server Not Connecting:**
 - Verify Node.js is installed: `node --version`
 - Test the MCP server manually: `npx -y @qverisai/mcp`
 - Check your API key is correct

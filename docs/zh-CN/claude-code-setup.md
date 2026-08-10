@@ -4,11 +4,21 @@
 
 ## 前置条件
 
-- 已安装 Node.js（用于运行 MCP 服务器）
+- 仅使用本地 stdio 备用方案时才需要安装 Node.js
 - 已安装 Claude Code
 - QVeris API 密钥（在[控制台/API密钥](/account?page=api-keys)中创建）
 
-## 1. MCP 服务器配置
+## 1. 托管 MCP 配置（推荐）
+
+Claude Code 支持远程 HTTP MCP 服务器。使用 Bearer 认证将 QVeris 添加为用户级 Streamable HTTP 服务：
+
+```bash
+claude mcp add --transport http qveris https://mcp.qveris.ai/mcp --scope user --header "Authorization: Bearer your-api-key-here"
+```
+
+重启 Claude Code，运行 `/mcp`，确认 QVeris 已连接。仅当客户端环境无法使用远程 HTTP 时，才使用下方本地 stdio 备用方案。
+
+## 2. 本地 stdio 备用方案
 
 可以用 QVeris CLI 生成命令：
 
@@ -37,7 +47,7 @@ claude mcp get qveris    # 查看指定服务器详情
 claude mcp remove qveris # 移除服务器
 ```
 
-## 2. 技能配置
+## 3. 技能配置
 
 从 GitHub 仓库下载 QVeris MCP/客户端技能：
 
@@ -78,7 +88,7 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/QVerisAI/qveris-agent-
 
 ## 故障排查
 
-**MCP 服务器未连接：**
+**本地 stdio MCP 服务器未连接：**
 - 验证 Node.js 是否已安装：`node --version`
 - 手动测试 MCP 服务器：`npx -y @qverisai/mcp`
 - 检查 API 密钥是否正确
