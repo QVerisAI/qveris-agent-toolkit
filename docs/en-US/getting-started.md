@@ -53,7 +53,7 @@ If your client supports **Model Context Protocol (MCP)** and remote Streamable H
 
 For the full MCP reference, see [MCP Server documentation](mcp-server.md) or the [Hosted MCP guide](https://qveris.ai/hosted-mcp).
 
-**Hosted MCP configuration (preferred)**
+#### Hosted MCP configuration (preferred)
 
 ```json
 {
@@ -69,7 +69,7 @@ For the full MCP reference, see [MCP Server documentation](mcp-server.md) or the
 }
 ```
 
-**Local stdio fallback (for clients without remote HTTP support)**
+#### Local stdio fallback (for clients without remote HTTP support)
 
 ```json
 {

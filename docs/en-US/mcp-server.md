@@ -201,7 +201,9 @@ For local-stdio-only clients other than GitHub Copilot, open the product's MCP s
 
 #### GitHub Copilot in VS Code
 
-GitHub Copilot's `mcp.json` uses a top-level `servers` object, not `mcpServers`. Use this Hosted MCP configuration first:
+GitHub Copilot's `mcp.json` uses a top-level `servers` object, not `mcpServers`.
+
+##### Hosted MCP configuration
 
 ```json
 {
@@ -216,6 +218,8 @@ GitHub Copilot's `mcp.json` uses a top-level `servers` object, not `mcpServers`.
   }
 }
 ```
+
+##### Local stdio fallback
 
 If the client environment cannot use remote HTTP, keep the same `servers` wrapper and use the local stdio entry instead:
 

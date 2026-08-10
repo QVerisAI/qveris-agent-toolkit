@@ -7,6 +7,7 @@ import test from "node:test"
 import { fileURLToPath } from "node:url"
 
 const SCRIPT = fileURLToPath(new URL("./prepare-website-docs.mjs", import.meta.url))
+const REPOSITORY_ROOT = path.resolve(path.dirname(SCRIPT), "..")
 
 const PYTHON_PATHS = [
   "docs/en-US/python-sdk.md",
@@ -29,6 +30,53 @@ async function write(root, relPath, content) {
 function git(cwd, ...args) {
   return execFileSync("git", args, { cwd, encoding: "utf8" })
 }
+
+function redactUnavailableHostedMcp(content) {
+  const output = []
+  let skippedHeadingLevel = null
+
+  for (const line of content.split("\n")) {
+    const heading = /^(#{1,6})\s+/.exec(line)
+    const headingLevel = heading?.[1].length ?? null
+
+    if (skippedHeadingLevel !== null) {
+      if (headingLevel === null || headingLevel > skippedHeadingLevel) continue
+      skippedHeadingLevel = null
+    }
+
+    if (headingLevel !== null && /hosted mcp/i.test(line)) {
+      skippedHeadingLevel = headingLevel
+      continue
+    }
+    if (/hosted mcp|\/hosted-mcp/i.test(line)) continue
+
+    output.push(line)
+  }
+
+  return output.join("\n")
+}
+
+test("hosted-MCP source sections remain removable when the website feature is disabled", async () => {
+  const sources = [
+    "agent/llms.txt",
+    "agent/llms-full.txt",
+    "docs/en-US/getting-started.md",
+    "docs/en-US/mcp-server.md",
+    "docs/en-US/codex-setup.md",
+    "docs/en-US/claude-code-setup.md",
+    "docs/en-US/opencode-setup.md",
+  ]
+
+  for (const relPath of sources) {
+    const source = await fs.readFile(path.join(REPOSITORY_ROOT, relPath), "utf8")
+    const redacted = redactUnavailableHostedMcp(source)
+    assert.doesNotMatch(
+      redacted,
+      /Hosted MCP|\/hosted-mcp|https:\/\/mcp\.qveris\.ai\/mcp/i,
+      `${relPath} leaves a hosted-MCP reference outside a removable section`,
+    )
+  }
+})
 
 test("website staging holds published docs between releases and advances on new SDK tags", async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "qveris-docs-source-"))
@@ -55,7 +103,11 @@ test("website staging holds published docs between releases and advances on new 
     git(toolkit, "tag", "js-sdk-v0.4.0-rc.1")
     git(toolkit, "tag", "js-sdk-v0.4.0")
 
-    await write(toolkit, "docs/en-US/getting-started.md", "main setup v2\n")
+    await write(
+      toolkit,
+      "docs/en-US/getting-started.md",
+      "[Global hosted MCP](https://qveris.ai/hosted-mcp)\n[China hosted MCP](https://qveris.cn/hosted-mcp)\n",
+    )
     await write(
       toolkit,
       "docs/en-US/cli.md",
@@ -105,7 +157,10 @@ test("website staging holds published docs between releases and advances on new 
     )
     assert.equal(result.status, 0, result.stderr)
 
-    assert.equal(await fs.readFile(path.join(output, "docs/en-US/getting-started.md"), "utf8"), "main setup v2\n")
+    assert.equal(
+      await fs.readFile(path.join(output, "docs/en-US/getting-started.md"), "utf8"),
+      "[Global hosted MCP](/hosted-mcp)\n[China hosted MCP](/hosted-mcp)\n",
+    )
     assert.equal(
       await fs.readFile(path.join(output, "docs/en-US/cli.md"), "utf8"),
       "`@qverisai/cli` v0.8.0 is the latest tested release.\n",
