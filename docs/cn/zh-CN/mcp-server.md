@@ -159,11 +159,46 @@ qveris mcp validate --target cursor --probe
 
 除上文客户端外，以下桌面端 Agent 在支持远程 Streamable HTTP 时应优先使用托管 MCP，本地 stdio 仅作为备用方案：**GitHub Copilot**、**Cline**、**Roo Code**、**Continue**、**Kiro**、**Junie**、**Augment**、**Zed**、**Google Antigravity**、**Qoder**、**CodeBuddy** 和 **WorkBuddy**。
 
-对于仅支持本地 stdio 的客户端，请在 MCP 设置中导入以下备用配置。GitHub Copilot 在 `mcp.json` 中使用 `servers` 外层键；Zed 在 Agent 面板中填写相同的名称、命令、参数和环境变量。
+对于 GitHub Copilot 以外的仅支持本地 stdio 的客户端，请在 MCP 设置中导入以下备用配置。Zed 在 Agent 面板中填写相同的名称、命令、参数和环境变量。
 
 ```json
 {
   "mcpServers": {
+    "qveris": {
+      "command": "npx",
+      "args": ["-y", "@qverisai/mcp"],
+      "env": {
+        "QVERIS_API_KEY": "your-api-key-here",
+        "QVERIS_BASE_URL": "https://qveris.cn/api/v1"
+      }
+    }
+  }
+}
+```
+
+#### VS Code 中的 GitHub Copilot
+
+GitHub Copilot 的 `mcp.json` 使用顶层 `servers` 对象，而不是 `mcpServers`。请优先使用以下托管 MCP 配置：
+
+```json
+{
+  "servers": {
+    "qveris": {
+      "type": "http",
+      "url": "https://mcp.qveris.cn/mcp",
+      "headers": {
+        "Authorization": "Bearer your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+如果客户端环境不能使用远程 HTTP，请保留同一 `servers` 外层键，改用以下本地 stdio 条目：
+
+```json
+{
+  "servers": {
     "qveris": {
       "command": "npx",
       "args": ["-y", "@qverisai/mcp"],

@@ -216,11 +216,26 @@ Save it as `.cursor/rules/qveris.mdc` in the project root.
 **Step 1: MCP Server Configuration**
 Use the client's MCP settings to add the standard STDIO server below. This applies to TRAE, Cline, Roo Code, Continue, Kiro, Junie, Augment, Google Antigravity, Qoder, CodeBuddy, and WorkBuddy.
 
-- **GitHub Copilot in VS Code:** add the server beneath the `servers` object in VS Code's `mcp.json`, not directly beneath `mcpServers`.
+- **GitHub Copilot in VS Code:** its `mcp.json` uses a top-level `servers` object, not `mcpServers`. For the Hosted MCP connection, use the endpoint from the QVeris Hosted MCP guide and the same `Authorization: Bearer YOUR_QVERIS_API_KEY` header. For the local stdio fallback, use this complete `mcp.json` shape:
+
+```json
+{
+  "servers": {
+    "qveris": {
+      "command": "npx",
+      "args": ["-y", "@qverisai/mcp"],
+      "env": {
+        "QVERIS_API_KEY": "YOUR_QVERIS_API_KEY"
+      }
+    }
+  }
+}
+```
+
 - **Zed:** create a custom server in the MCP settings and enter the command, arguments, and environment variables as fields rather than pasting a JSON file.
 - **TRAE:** its file is typically `~/.trae/mcp.json` or `%USERPROFILE%\.trae\mcp.json`.
 
-Add the standard MCP server configuration to the `mcpServers` object:
+For the other clients, add the standard MCP server configuration to the `mcpServers` object:
 ```json
 "qveris": {
   "command": "npx",

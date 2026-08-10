@@ -182,11 +182,46 @@ For ChatGPT (Codex), run:
 codex mcp add qveris --env QVERIS_API_KEY=your-api-key-here --env QVERIS_BASE_URL=https://qveris.ai/api/v1 -- npx -y @qverisai/mcp
 ```
 
-For local-stdio-only clients, open the product's MCP settings and import the fallback configuration below. GitHub Copilot uses the `servers` wrapper in its `mcp.json`; Zed exposes the same name, command, arguments, and environment fields in its Agent panel.
+For local-stdio-only clients other than GitHub Copilot, open the product's MCP settings and import the fallback configuration below. Zed exposes the same name, command, arguments, and environment fields in its Agent panel.
 
 ```json
 {
   "mcpServers": {
+    "qveris": {
+      "command": "npx",
+      "args": ["-y", "@qverisai/mcp"],
+      "env": {
+        "QVERIS_API_KEY": "your-api-key-here",
+        "QVERIS_BASE_URL": "https://qveris.ai/api/v1"
+      }
+    }
+  }
+}
+```
+
+#### GitHub Copilot in VS Code
+
+GitHub Copilot's `mcp.json` uses a top-level `servers` object, not `mcpServers`. Use this Hosted MCP configuration first:
+
+```json
+{
+  "servers": {
+    "qveris": {
+      "type": "http",
+      "url": "https://mcp.qveris.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+If the client environment cannot use remote HTTP, keep the same `servers` wrapper and use the local stdio entry instead:
+
+```json
+{
+  "servers": {
     "qveris": {
       "command": "npx",
       "args": ["-y", "@qverisai/mcp"],

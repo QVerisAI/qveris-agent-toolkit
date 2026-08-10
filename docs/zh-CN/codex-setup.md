@@ -24,8 +24,6 @@ http_headers = { Authorization = "Bearer your-api-key-here" }
 
 仅当客户端环境无法使用托管 MCP 时，才使用该方案。在终端运行以下命令，并将 `your-api-key-here` 替换为你的 API 密钥：
 
-在终端运行以下命令，并将 `your-api-key-here` 替换为你的 API 密钥：
-
 ```bash
 codex mcp add qveris --env QVERIS_API_KEY=your-api-key-here -- npx -y @qverisai/mcp
 ```

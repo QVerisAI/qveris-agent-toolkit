@@ -24,8 +24,6 @@ You can add the same server interactively in **Settings → MCP servers**: choos
 
 Use this only when Hosted MCP is unavailable in the client environment. Run the following command in a terminal, replacing `your-api-key-here` with your API key:
 
-Run the following command in a terminal, replacing `your-api-key-here` with your API key:
-
 ```bash
 codex mcp add qveris --env QVERIS_API_KEY=your-api-key-here -- npx -y @qverisai/mcp
 ```

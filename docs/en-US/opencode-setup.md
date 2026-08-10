@@ -32,6 +32,24 @@ OpenCode supports remote Streamable HTTP MCP servers. Add the following server t
 
 Restart OpenCode and confirm the QVeris tools appear. Use the local stdio fallback below only if remote HTTP is unavailable in the client environment.
 
+This is the OpenCode V2 `mcp.servers` format. If your installed OpenCode instead uses a direct server name below `mcp`, use the compatible direct format below rather than mixing the two shapes:
+
+```json
+{
+  "mcp": {
+    "qveris": {
+      "type": "remote",
+      "url": "https://mcp.qveris.ai/mcp",
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer your-api-key-here"
+      },
+      "enabled": true
+    }
+  }
+}
+```
+
 ## 2. Local stdio fallback
 
 You can generate and write the config with QVeris CLI:
@@ -42,6 +60,27 @@ qveris mcp validate --target opencode
 ```
 
 Or configure it manually:
+
+For OpenCode V2, retain the `mcp.servers` object used above and use this local server entry:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      "qveris": {
+        "type": "local",
+        "command": ["npx", "-y", "@qverisai/mcp"],
+        "environment": {
+          "QVERIS_API_KEY": "your-api-key-here"
+        }
+      }
+    }
+  }
+}
+```
+
+For the direct-`mcp` format, use the QVeris CLI output or the following manual configuration:
 
 Create or edit the global OpenCode config file:
 
@@ -76,7 +115,7 @@ Add the following content (replace `your-api-key-here` with your actual API key)
 }
 ```
 
-If you already have an `opencode.json` file, merge the `mcp.qveris` and `tools["qveris*"]` sections into your existing config.
+If you already have an `opencode.json` file, merge either the V2 `mcp.servers.qveris` entry or the direct `mcp.qveris` and `tools["qveris*"]` sections into your existing config. Do not nest one form inside the other.
 
 ## 3. Skills Configuration
 
