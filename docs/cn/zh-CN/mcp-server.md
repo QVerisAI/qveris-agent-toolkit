@@ -116,7 +116,7 @@ qveris mcp validate --target cursor --probe
 
 ### Cherry Studio 配置示例
 
-在 [Cherry Studio](https://cherryai.com/) 中打开**设置 → MCP 服务器**，新增服务器后将以下内容填入对应配置字段：
+在 [Cherry Studio](https://cherry-ai.com/) 中打开**设置 → MCP 服务器**，新增服务器后将以下内容填入对应配置字段：
 
 ```json
 {

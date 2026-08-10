@@ -133,7 +133,7 @@ qveris mcp validate --target cursor --probe
 
 ### Cherry Studio example
 
-In [Cherry Studio](https://cherryai.com/), open **Settings → MCP Server**, add a server, and enter these values in its configuration fields:
+In [Cherry Studio](https://cherry-ai.com/), open **Settings → MCP Server**, add a server, and enter these values in its configuration fields:
 
 ```json
 {

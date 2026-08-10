@@ -226,7 +226,7 @@ If the environment supports rule or skill files, add the file from:
 
 #### F. Cherry Studio
 
-Open **Settings → MCP Server** in [Cherry Studio](https://cherryai.com/) and add a server with these values:
+Open **Settings → MCP Server** in [Cherry Studio](https://cherry-ai.com/) and add a server with these values:
 
 ```json
 {
