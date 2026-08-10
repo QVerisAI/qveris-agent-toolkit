@@ -74,6 +74,7 @@ def build_qveris_workflow(
     client: QverisClient,
     *,
     session_id: Optional[str] = None,
+    model: Optional[str] = None,
 ) -> QverisWorkflow:
     """Bind the canonical discover/inspect/call functions to a client."""
 
@@ -115,6 +116,8 @@ def build_qveris_workflow(
             args["search_id"] = search_id
         if max_response_size is not None:
             args["max_response_size"] = max_response_size
+        if model is not None:
+            args["model"] = model
         return await _route("call", args)
 
     return QverisWorkflow(discover=qveris_discover, inspect=qveris_inspect, call=qveris_call)

@@ -266,6 +266,7 @@ export async function callTool({
   parameters,
   maxResponseSize = 102400,
   respondWith,
+  model,
   timeoutMs = 120000,
 }) {
   const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
@@ -278,6 +279,7 @@ export async function callTool({
       parameters,
       max_response_size: maxResponseSize,
       ...(respondWith !== undefined && { respond_with: respondWith }),
+      ...(model !== undefined && { model }),
     },
     timeoutMs,
     maxRetries: 0,

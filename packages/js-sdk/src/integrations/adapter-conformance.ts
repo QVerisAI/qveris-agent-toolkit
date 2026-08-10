@@ -38,7 +38,10 @@ export interface AdapterConformanceOptions {
   /** Display name for the describe block. */
   adapterName: string;
   /** The adapter's getQverisTools(client, options?). */
-  getTools: (client: FakeQveris, options?: { sessionId?: string }) => Record<string, { description?: string }>;
+  getTools: (
+    client: FakeQveris,
+    options?: { sessionId?: string; model?: string },
+  ) => Record<string, { description?: string }>;
   /** Invoke a tool produced by the adapter with raw tool arguments. */
   invoke: (tool: unknown, args: Record<string, unknown>) => Promise<unknown>;
 }
@@ -128,6 +131,21 @@ export function describeQverisAdapterConformance(opts: AdapterConformanceOptions
       });
 
       expect((client.calls[0].options as Record<string, unknown>).maxResponseSize).toBe(2048);
+    });
+
+    it('call forwards configured model attribution only to paid calls', async () => {
+      const client = new FakeQveris();
+      const tools = getTools(client, { model: 'router-model-v1' });
+
+      await invoke(tools.qveris_discover, { query: 'weather' });
+      await invoke(tools.qveris_call, { tool_id: 't1', params_to_tool: {} });
+
+      expect(client.calls[0]).toEqual({ method: 'discover', query: 'weather', options: {} });
+      expect(client.calls[1]).toEqual({
+        method: 'call',
+        toolId: 't1',
+        options: { parameters: {}, model: 'router-model-v1' },
+      });
     });
   });
 }

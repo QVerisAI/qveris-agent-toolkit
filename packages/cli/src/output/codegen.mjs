@@ -2,31 +2,32 @@ import { resolveBaseUrl } from "../config/endpoint.mjs";
 
 export function generateSnippet(
   lang,
-  { baseUrl: baseUrlFlag, toolId, discoveryId, parameters, maxResponseSize = 20480, respondWith },
+  { baseUrl: baseUrlFlag, toolId, discoveryId, parameters, maxResponseSize = 20480, respondWith, model },
 ) {
   const { baseUrl } = resolveBaseUrl({ baseUrlFlag });
 
   switch (lang) {
     case "curl":
-      return generateCurl({ baseUrl, toolId, discoveryId, parameters, maxResponseSize, respondWith });
+      return generateCurl({ baseUrl, toolId, discoveryId, parameters, maxResponseSize, respondWith, model });
     case "js":
     case "javascript":
-      return generateJs({ baseUrl, toolId, discoveryId, parameters, maxResponseSize, respondWith });
+      return generateJs({ baseUrl, toolId, discoveryId, parameters, maxResponseSize, respondWith, model });
     case "python":
     case "py":
-      return generatePython({ baseUrl, toolId, discoveryId, parameters, maxResponseSize, respondWith });
+      return generatePython({ baseUrl, toolId, discoveryId, parameters, maxResponseSize, respondWith, model });
     default:
       return `Unsupported language: ${lang}. Use: curl, js, python`;
   }
 }
 
-function generateCurl({ baseUrl, toolId, discoveryId, parameters, maxResponseSize, respondWith }) {
+function generateCurl({ baseUrl, toolId, discoveryId, parameters, maxResponseSize, respondWith, model }) {
   const body = JSON.stringify(
     {
       search_id: discoveryId,
       parameters,
       max_response_size: maxResponseSize,
       ...(respondWith !== undefined && { respond_with: respondWith }),
+      ...(model !== undefined && { model }),
     },
     null,
     2,
@@ -41,7 +42,7 @@ ${body}
 EOF`;
 }
 
-function generateJs({ baseUrl, toolId, discoveryId, parameters, maxResponseSize, respondWith }) {
+function generateJs({ baseUrl, toolId, discoveryId, parameters, maxResponseSize, respondWith, model }) {
   const paramsStr = JSON.stringify(parameters, null, 4);
   return `const resp = await fetch(
   "${baseUrl}/tools/execute?tool_id=${toolId}",
@@ -56,6 +57,7 @@ function generateJs({ baseUrl, toolId, discoveryId, parameters, maxResponseSize,
       parameters: ${paramsStr},
       max_response_size: ${maxResponseSize},
       ${respondWith === undefined ? "" : `respond_with: ${JSON.stringify(respondWith)},`}
+      ${model === undefined ? "" : `model: ${JSON.stringify(model)},`}
     }),
   }
 );
@@ -63,7 +65,7 @@ const data = await resp.json();
 console.log(data);`;
 }
 
-function generatePython({ baseUrl, toolId, discoveryId, parameters, maxResponseSize, respondWith }) {
+function generatePython({ baseUrl, toolId, discoveryId, parameters, maxResponseSize, respondWith, model }) {
   const paramsStr = JSON.stringify(parameters, null, 8);
   return `import os
 import requests
@@ -77,6 +79,7 @@ resp = requests.post(
         "parameters": ${paramsStr},
         "max_response_size": ${maxResponseSize},
         ${respondWith === undefined ? "" : `"respond_with": ${JSON.stringify(respondWith)},`}
+        ${model === undefined ? "" : `"model": ${JSON.stringify(model)},`}
     },
     timeout=60,
 )

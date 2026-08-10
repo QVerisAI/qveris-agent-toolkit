@@ -37,6 +37,12 @@ describe('call (execute_tool)', () => {
       expect(executeToolSchema.required).not.toContain('session_id');
     });
 
+    it('should define model as an optional bounded string', () => {
+      expect(executeToolSchema.properties.model.type).toBe('string');
+      expect(executeToolSchema.properties.model.maxLength).toBe(128);
+      expect(executeToolSchema.required).not.toContain('model');
+    });
+
     it('should define respond_with as an optional projection', () => {
       expect(executeToolSchema.properties.respond_with.pattern).toBe('^(full|summary|fields:.+)$');
       expect(executeToolSchema.required).not.toContain('respond_with');
@@ -170,6 +176,29 @@ describe('call (execute_tool)', () => {
         parameters: {},
         max_response_size: undefined,
         respond_with: 'summary',
+      });
+    });
+
+    it('should pass model attribution when provided', async () => {
+      executeToolMock.mockResolvedValueOnce({ execution_id: 'exec-model', success: true });
+
+      await executeExecuteTool(
+        mockClient,
+        {
+          tool_id: 'tool-1',
+          search_id: 'search-123',
+          params_to_tool: {},
+          model: 'router-model-v1',
+        },
+        'default-session',
+      );
+
+      expect(executeToolMock).toHaveBeenCalledWith('tool-1', {
+        search_id: 'search-123',
+        session_id: 'default-session',
+        parameters: {},
+        max_response_size: undefined,
+        model: 'router-model-v1',
       });
     });
 

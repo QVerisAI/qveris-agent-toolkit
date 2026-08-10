@@ -83,10 +83,19 @@ console.log(usage.total, ledger.total);
 | 字段 | 环境变量 | 默认值 | 说明 |
 |------|---------|--------|------|
 | `apiKey` | `QVERIS_API_KEY` | —（必填） | API 密钥，以 `Authorization: Bearer ...` 发送 |
+| `credentialProvider` | — | — | 异步 Bearer 凭证提供器；与 `apiKey` 互斥 |
+| `credentialAudience` | — | — | 传给凭证提供器的 audience |
+| `credentialScopes` | — | `[]` | 传给凭证提供器的 OAuth scopes |
 | `baseUrl` | `QVERIS_BASE_URL` | `https://qveris.ai/api/v1` | API 基础地址；构造参数优先级最高 |
 | `timeoutMs` | — | `30000` | 默认请求超时（`call` 默认 `120000`） |
 
 `Qveris.fromEnv(overrides?)` 从 `QVERIS_API_KEY` 构建客户端，并接受相同的非密钥选项。
+
+已登记的机密 Agent Runtime 可使用 `AgentDelegationCredentialProvider`，在
+`https://qveris.ai/api/v1/oauth/token` 用用户 access token 换取委托 token。
+客户端需配置相同的 `credentialAudience` 及其 `credentialScopes` 子集。委托 token
+只驻留内存、不刷新，并在 audience 或 scope 扩大时失败。机密客户端 secret 必须
+留在可信服务端，不能嵌入浏览器或移动端代码。
 
 ## API 参考
 
@@ -100,7 +109,7 @@ AI SDK 集成。该页面直接根据 TypeScript 源码重新生成，并由 CI 
 | `discover(query, options?)` | `POST /search` | 发现能力；`view: 'routing'` 返回精简 routing card（免费） |
 | `inspect(toolIds, options?)` | `POST /tools/by-ids` | 获取能力完整元数据（免费） |
 | `probe(toolId, options?)` | `POST /tools/probe` | 校验参数并请求零成本报价 |
-| `call(toolId, options)` | `POST /tools/execute` | 执行能力；`respondWith` 可选择完整、摘要或 JSONPath 字段 |
+| `call(toolId, options)` | `POST /tools/execute` | 执行能力；`model` 记录模型归因，`respondWith` 可选择完整、摘要或 JSONPath 字段 |
 | `credits()` | `GET /auth/credits` | 当前积分余额与分桶 |
 | `usage(filters?)` | `GET /auth/usage/history/v2` | 审计请求状态与扣费结果 |
 | `ledger(filters?)` | `GET /auth/credits/ledger` | 查看最终积分余额变动 |
@@ -110,7 +119,7 @@ AI SDK 集成。该页面直接根据 TypeScript 源码重新生成，并由 CI 
 - `discover(query, { limit?, sessionId?, view?, lang?, timeoutMs? })`
 - `inspect(toolIds, { searchId?, sessionId?, timeoutMs? })` —— `toolIds` 接受单个字符串或数组；**空数组会短路**，直接返回空响应而不发起网络请求。
 - `probe(toolId, { parameters?, checks?, liveBudget?, timeoutMs? })`
-- `call(toolId, { parameters, searchId?, sessionId?, maxResponseSize?, respondWith?, timeoutMs?, compatibilityMode? })`
+- `call(toolId, { parameters, searchId?, sessionId?, model?, maxResponseSize?, respondWith?, timeoutMs?, compatibilityMode? })`
 
 投影参数仅在显式指定时发送。付费调用严格 single-submit：不会跟随 HTTP 重定向，`429`/`503` 和投影错误会直接返回，不会重放。已弃用的 `compatibilityMode: 'legacyOptionalFields'` 可显式允许一次删除旧服务拒绝的可选字段后重放；无效投影仍按错误返回。
 

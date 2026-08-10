@@ -274,6 +274,7 @@ The call response may include compact pre-settlement `billing`. Final charge sta
 | `search_id` | string | Yes | Search ID from the discovery that found this tool |
 | `params_to_tool` | object | Yes | Dictionary of parameters to pass to the tool |
 | `session_id` | string | No | Session identifier for tracking |
+| `model` | string | No | Model that selected and parameterized the call (maximum 128 characters) |
 | `max_response_size` | number | No | Max response size in bytes (default `20480`) |
 | `respond_with` | string | No | `full`, `summary`, or `fields:<JSONPath,...>`; omitted defaults to full |
 
@@ -284,6 +285,7 @@ Example:
   "tool_id": "openweathermap.weather.execute.v1",
   "search_id": "YOUR_SEARCH_ID",
   "params_to_tool": {"city": "London", "units": "metric"},
+  "model": "router-model-v1",
   "respond_with": "summary"
 }
 ```

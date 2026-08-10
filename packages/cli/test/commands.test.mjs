@@ -125,6 +125,7 @@ test("discover, inspect, call, and history commands cover session-based workflow
             search_id: "search-1",
             parameters: { city: "London" },
             max_response_size: 123,
+            model: "router-model-v1",
           });
           return response({
             execution_id: "exec-1",
@@ -156,6 +157,7 @@ test("discover, inspect, call, and history commands cover session-based workflow
             ...flags,
             params: '{"city":"London"}',
             maxSize: "123",
+            model: "router-model-v1",
           }),
         );
         assert.equal(jsonFromStdout(call.stdout).execution_id, "exec-1");

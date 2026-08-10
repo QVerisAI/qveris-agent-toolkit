@@ -114,6 +114,8 @@ describe('Qveris client', () => {
     expect(getCredential).toHaveBeenCalledWith({
       resource: 'https://custom.example/api/v1',
       scopes: [],
+      operation: 'discover',
+      purpose: 'data_read',
     });
     expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer short-lived-token');
   });
@@ -377,6 +379,7 @@ describe('Qveris client', () => {
     const response = await client.call('weather.forecast.v1', {
       parameters: { city: 'London' },
       searchId: 'search-123',
+      model: 'router-model-v1',
       maxResponseSize: 20480,
     });
 
@@ -385,6 +388,7 @@ describe('Qveris client', () => {
     expect(JSON.parse(init.body)).toEqual({
       parameters: { city: 'London' },
       search_id: 'search-123',
+      model: 'router-model-v1',
       max_response_size: 20480,
     });
     expect(response.execution_id).toBe('exec-123');

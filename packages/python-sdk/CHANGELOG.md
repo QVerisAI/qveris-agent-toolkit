@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Added `AgentDelegationCredentialProvider` for RFC 8693 exchanges by registered confidential Agent Runtimes, with fail-closed audience/scope binding, constraint narrowing, memory-only caching, and no refresh-token support. ([#228])
+- Added optional `model` attribution to `call()` and all framework adapters. ([#273])
+
 ## [0.6.0] - 2026-07-29
 
 ### Added

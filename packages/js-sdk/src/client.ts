@@ -41,8 +41,12 @@ import type {
 } from './types.js';
 
 /** Configuration accepted by the QVeris REST client. */
-export type QverisClientOptions = Omit<QverisClientConfig, 'apiKey'> &
-  (
+export type QverisClientOptions = Omit<QverisClientConfig, 'apiKey'> & {
+  /** Exact OAuth audience/resource forwarded to credential providers. */
+  credentialAudience?: string;
+  /** OAuth scopes forwarded to credential providers. */
+  credentialScopes?: readonly string[];
+} & (
     | {
         /** API authentication token. Mutually exclusive with credentialProvider. */
         apiKey: string;
@@ -148,6 +152,8 @@ export interface CallOptions {
   searchId?: string;
   /** Session identifier for tracking */
   sessionId?: string;
+  /** Model that selected and parameterized this capability call. */
+  model?: string;
   /** Max response bytes before truncation (-1 for no limit, server default 20480) */
   maxResponseSize?: number;
   /** Server-side result projection. Omit for the legacy/full response. */
@@ -197,6 +203,8 @@ export class Qveris {
   private readonly baseUrl: string;
   private readonly defaultTimeoutMs: number;
   private readonly maxRetries: number;
+  private readonly credentialAudience?: string;
+  private readonly credentialScopes: readonly string[];
   private rateLimitRetries = 0;
 
   constructor(config: QverisClientOptions) {
@@ -216,6 +224,8 @@ export class Qveris {
     this.baseUrl = resolveBaseUrl(config.baseUrl);
     this.defaultTimeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.maxRetries = resolveMaxRetries(config.maxRetries);
+    this.credentialAudience = config.credentialAudience;
+    this.credentialScopes = Object.freeze([...(config.credentialScopes ?? [])]);
   }
 
   /**
@@ -318,6 +328,7 @@ export class Qveris {
       parameters: options.parameters,
       search_id: options.searchId ?? null,
       ...(options.sessionId !== undefined && { session_id: options.sessionId }),
+      ...(options.model !== undefined && { model: options.model }),
       ...(options.maxResponseSize !== undefined && {
         max_response_size: options.maxResponseSize,
       }),
@@ -407,7 +418,23 @@ export class Qveris {
       // let provider failures retain their authentication-specific error.
       const credential = await resolveCredential(this.credentialProvider, {
         resource: this.baseUrl,
-        scopes: [],
+        ...(this.credentialAudience !== undefined && { audience: this.credentialAudience }),
+        scopes: this.credentialScopes,
+        operation,
+        purpose:
+          operation === 'call'
+            ? 'paid_execution'
+            : operation === 'usage_history'
+              ? 'usage_audit'
+              : operation === 'credits_ledger'
+                ? 'ledger_audit'
+                : 'data_read',
+        ...(body &&
+        typeof body === 'object' &&
+        !Array.isArray(body) &&
+        typeof (body as Record<string, unknown>).session_id === 'string'
+          ? { sessionId: (body as Record<string, unknown>).session_id as string }
+          : {}),
       });
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), resolvedTimeoutMs);

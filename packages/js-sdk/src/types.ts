@@ -316,6 +316,9 @@ export interface ExecuteRequest {
   /** Session identifier for tracking user sessions. */
   session_id?: string;
 
+  /** Model that selected and parameterized this capability call. */
+  model?: string;
+
   /**
    * Key-value pairs of parameters to pass to the tool.
    * Must match the parameter schema from the tool's definition.

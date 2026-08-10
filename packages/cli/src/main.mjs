@@ -185,6 +185,7 @@ const VALUE_FLAGS = {
   params: "params",
   "max-size": "maxSize",
   "respond-with": "respondWith",
+  model: "model",
   checks: "checks",
   "live-budget": "liveBudget",
   codegen: "codegen",
@@ -345,6 +346,9 @@ function extractGlobalFlags(args) {
       case "--respond-with":
         flags.respondWith = takeNext(args, i++, arg);
         break;
+      case "--model":
+        flags.model = takeNext(args, i++, arg);
+        break;
       case "--checks":
         flags.checks = takeNext(args, i++, arg);
         break;
@@ -474,6 +478,7 @@ function printUsage(flags = {}) {
     --view <routing|full>  Discover response projection
     --lang <zh|en>         Discover response language
     --respond-with <mode>  Call projection: full | summary | fields:<JSONPath,...>
+    --model <model>        Model that selected and parameterized the Call
     --checks <list>        Probe checks: schema,quote,coverage,sample
     --live-budget <mode>   Probe budget: none | metadata | sampled
     --target <target>      MCP target: cursor | claude-desktop | claude-code | opencode | openclaw | generic

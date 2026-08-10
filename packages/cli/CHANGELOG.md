@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Added `qveris call --model <name>` and model attribution to generated call snippets. ([#273])
+
 ## [0.10.0] - 2026-07-29
 
 ### Changed

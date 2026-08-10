@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Added optional `model` attribution to the canonical `call` tool. ([#273])
+
 ## [0.13.0] - 2026-07-29
 
 ### Changed

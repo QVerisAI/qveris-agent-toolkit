@@ -78,7 +78,7 @@ Validate candidate parameters and obtain a zero-cost quote without execution.
 
 <a id="qveris.QverisClient.call"></a>
 
-#### *async* call(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, respond_with: str | None = None, compatibility_mode: Literal['strict', 'legacy_optional_fields'] = 'strict', timeout: float | None = None, correlation_id: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
+#### *async* call(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, respond_with: str | None = None, compatibility_mode: Literal['strict', 'legacy_optional_fields'] = 'strict', timeout: float | None = None, correlation_id: str | None = None, model: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
 
 Call a specific capability.
 
@@ -92,12 +92,13 @@ Call a specific capability.
   * **compatibility_mode** – Strict mode never resubmits a paid call. The deprecated legacy mode may replay once without an unsupported optional field.
   * **timeout** – HTTP request timeout in seconds; credential acquisition is separate.
   * **correlation_id** – Non-sensitive reference forwarded only to the credential provider.
+  * **model** – Model that selected and parameterized this capability call.
 * **Returns:**
   ToolExecutionResponse with success, result, and metadata.
 
 <a id="qveris.QverisClient.execute_tool"></a>
 
-#### *async* execute_tool(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
+#### *async* execute_tool(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, model: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
 
 Deprecated alias for call(…).
 

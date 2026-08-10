@@ -1,5 +1,12 @@
 from .api import QverisClient
-from ..credentials import ApiKeyCredentialProvider, CredentialContext, CredentialProvider
+from ..credentials import (
+    AgentDelegationConstraints,
+    AgentDelegationCredentialProvider,
+    AgentDelegationError,
+    ApiKeyCredentialProvider,
+    CredentialContext,
+    CredentialProvider,
+)
 from .tools import (
     CALL_TOOL_DEF,
     DEFAULT_SYSTEM_PROMPT,
@@ -15,6 +22,9 @@ __all__ = [
     "CredentialContext",
     "CredentialProvider",
     "ApiKeyCredentialProvider",
+    "AgentDelegationConstraints",
+    "AgentDelegationCredentialProvider",
+    "AgentDelegationError",
     "DEFAULT_SYSTEM_PROMPT",
     "DISCOVER_TOOL_DEF",
     "INSPECT_TOOL_DEF",

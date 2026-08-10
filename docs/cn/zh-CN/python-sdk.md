@@ -180,6 +180,12 @@ status = agent.budget_status()   # {"limit": 25, "spent": 12.0, "remaining": 13.
 | `enable_history_pruning` | — | `True` | 裁剪/压缩旧的工具输出以节省 token（agent 循环） |
 | `max_iterations` | — | `50` | agent 工具循环的最大迭代次数 |
 
+已登记的机密 Agent Runtime 可使用 `AgentDelegationCredentialProvider`，通过
+`https://qveris.cn/api/v1/oauth/token` 换取委托 token。将
+`credential_audience` 设为委托 resource，并把 `credential_scopes` 设为客户端所需
+scope。提供器只在内存缓存短期 token、不刷新 token，并拒绝 audience、scope、预算、
+工具、provider、run 或 model 扩大。机密客户端 secret 必须留在可信服务端。
+
 ### `AgentConfig`
 
 | 字段 | 默认值 | 说明 |
@@ -238,7 +244,7 @@ Capability Resolve/Query、selection token、idempotency key 和 execution looku
 | `discover(query, limit=20, session_id=None, view=None, lang=None, timeout=None, correlation_id=None)` | `POST /search` | 发现能力；`view="routing"` 返回精简 routing card（免费） |
 | `inspect(tool_ids, search_id=None, session_id=None, timeout=None, correlation_id=None)` | `POST /tools/by-ids` | 获取能力完整元数据（免费） |
 | `probe(tool_id, parameters=None, checks=None, live_budget="none", timeout=None, correlation_id=None)` | `POST /tools/probe` | 校验参数并请求零成本报价 |
-| `call(tool_id, parameters, ..., compatibility_mode="strict", timeout=None, correlation_id=None)` | `POST /tools/execute` | 使用严格 single-submit 语义执行能力 |
+| `call(tool_id, parameters, ..., model=None, compatibility_mode="strict", timeout=None, correlation_id=None)` | `POST /tools/execute` | 使用严格 single-submit 语义执行能力，并可记录模型归因 |
 | `usage(**filters)` | `GET /auth/usage/history/v2` | 审计请求状态与扣费结果 |
 | `ledger(**filters)` | `GET /auth/credits/ledger` | 查看最终积分余额变动 |
 | `handle_tool_call(func_name, func_args, session_id=None)` | — | 把 LLM 工具调用桥接到对应的 QVeris 方法 |

@@ -83,9 +83,12 @@ class QverisCredentialError(QverisError):
         *,
         operation: str,
         request_metadata: RequestMetadata,
+        code: Optional[str] = None,
+        status: Optional[int] = None,
     ) -> None:
         super().__init__(message, operation=operation, request_metadata=request_metadata)
-        self.status = 0
+        self.code = code
+        self.status = status or 0
 
 
 class QverisContractError(QverisError):
