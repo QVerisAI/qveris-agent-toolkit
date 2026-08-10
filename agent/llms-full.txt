@@ -126,7 +126,7 @@ QVeris supports five integration methods:
 
 ### QVeris CLI — Token-Efficient Agent Tool Use (Recommended)
 
-The CLI (`@qverisai/cli` v0.10.0) is the most efficient way for agents to access QVeris capabilities. Unlike MCP which injects tool schemas into every LLM prompt, CLI runs as a subprocess — zero prompt tokens consumed. Zero external dependencies — only Node.js built-ins.
+The CLI (`@qverisai/cli` v0.11.0) is the most efficient way for agents to access QVeris capabilities. Unlike MCP which injects tool schemas into every LLM prompt, CLI runs as a subprocess — zero prompt tokens consumed. Zero external dependencies — only Node.js built-ins.
 
 ```bash
 # Install
@@ -141,6 +141,7 @@ qveris discover "weather forecast API"     # Find tools (free)
 qveris inspect 1                            # Check params, stats (index from last discover)
 qveris probe 1 --params '{"city":"London"}' --checks schema,quote
 qveris call 1 --params '{"city":"London"}'  # Execute; response may include pre-settlement billing
+qveris call 1 --params '{"city":"London"}' --model router-model-v1  # Record model attribution
 
 # Preview the request locally without executing
 qveris call 1 --params '{"city":"London"}' --dry-run
@@ -161,7 +162,7 @@ qveris call 1 --params '{"city":"London"}' --codegen curl
 | `qveris discover <query>` | Find capabilities by natural language |
 | `qveris inspect <id\|index>` | View full tool details, parameters, examples |
 | `qveris probe <id\|index>` | Validate parameters and obtain a zero-cost quote without execution |
-| `qveris call <id\|index>` | Execute a capability with parameters |
+| `qveris call <id\|index>` | Execute a capability with parameters; `--model` records model attribution |
 | `qveris config <subcommand>` | Manage settings (set, get, list, reset, path) |
 | `qveris interactive` | Launch REPL mode (discover/inspect/call loop) |
 | `qveris doctor` | Self-check diagnostics (Node.js, API key, endpoint, connectivity) |
@@ -210,7 +211,7 @@ Full CLI docs: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/packag
 
 ### MCP Server Quick Start
 
-The MCP server (`@qverisai/mcp` v0.13.0) exposes six canonical agent-facing tools via the Model Context Protocol:
+The MCP server (`@qverisai/mcp` v0.14.0) exposes six canonical agent-facing tools via the Model Context Protocol:
 
 | MCP Tool | Description | Cost |
 |----------|-------------|------|
@@ -256,7 +257,7 @@ For Claude Desktop users, add to `claude_desktop_config.json`:
 
 - **`discover`**: `query` (string, required), `limit` (number, 1-100, default 20), `session_id` (string, optional)
 - **`inspect`**: `tool_ids` (string[], required), `search_id` (string, optional), `session_id` (string, optional)
-- **`call`**: `tool_id` (string, required), `search_id` (string, required), `params_to_tool` (object|string, required), `session_id` (string, optional), `max_response_size` (number, optional, default 20480)
+- **`call`**: `tool_id` (string, required), `search_id` (string, required), `params_to_tool` (object|string, required), `session_id` (string, optional), `model` (string, optional; model that selected and parameterized the call), `max_response_size` (number, optional, default 20480)
 
 > **Parameter naming:** The MCP `call` tool uses `params_to_tool` for tool arguments, while the REST API uses `parameters` and the CLI uses `--params`. The field names differ across interfaces but serve the same purpose.
 
@@ -295,6 +296,7 @@ Authorization: Bearer YOUR_API_KEY
    {
      "search_id": "from-previous-search",
      "session_id": "optional-session-id",
+     "model": "router-model-v1",
      "parameters": {
        "city": "Tokyo",
        "units": "metric"
@@ -556,10 +558,10 @@ Model improvement is a tailwind for QVeris, not a headwind.
 
 ### SDK & Tools
 
-- **CLI (npm):** https://www.npmjs.com/package/@qverisai/cli — `npm install -g @qverisai/cli` (v0.10.0)
-- **MCP Server (npm):** https://www.npmjs.com/package/@qverisai/mcp — `npx @qverisai/mcp` (v0.13.0)
-- **JavaScript SDK:** https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/js-sdk (v0.7.0)
-- **Python SDK:** https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/python-sdk (v0.6.0)
+- **CLI (npm):** https://www.npmjs.com/package/@qverisai/cli — `npm install -g @qverisai/cli` (v0.11.0)
+- **MCP Server (npm):** https://www.npmjs.com/package/@qverisai/mcp — `npx @qverisai/mcp` (v0.14.0)
+- **JavaScript SDK:** https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/js-sdk (v0.8.0)
+- **Python SDK:** https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/python-sdk (v0.7.0)
 - **Online Docs:** https://qveris.ai/docs
 
 ### Open Ecosystem
@@ -650,11 +652,11 @@ Generate a new UUID for each user session, and reuse it throughout that session.
 ## Version Information
 
 - **llms-full.txt Version:** 1.2.0
-- **CLI Version:** 0.10.0
-- **MCP Server Version:** 0.13.0
-- **JavaScript SDK Version:** 0.7.0
-- **Python SDK Version:** 0.6.0
-- **Last Updated:** 2026-07-23
+- **CLI Version:** 0.11.0
+- **MCP Server Version:** 0.14.0
+- **JavaScript SDK Version:** 0.8.0
+- **Python SDK Version:** 0.7.0
+- **Last Updated:** 2026-08-10
 
 For the latest updates, always refer to:
 

@@ -1,6 +1,6 @@
 # QVeris Python SDK
 
-QVeris Python SDK v0.6.0 is the latest tested release. Use its async client to discover, inspect, probe, call, and audit 10,000+ real-world API capabilities from your own agents and applications.
+QVeris Python SDK v0.7.0 is the latest tested release. Use its async client to discover, inspect, probe, call, and audit 10,000+ real-world API capabilities from your own agents and applications.
 
 The SDK gives you two levels of control:
 
@@ -86,6 +86,10 @@ asyncio.run(main())
 ## The Agent
 
 `Agent` wraps the same workflow into an LLM tool loop. The model is given the `discover`, `inspect`, and `call` tools and decides when to use them.
+
+For every built-in `call`, `Agent` automatically records `AgentConfig.model` as
+the Call `model` attribution. This value is agent-owned metadata, so generated
+tool arguments cannot omit or override it.
 
 The default agent uses an OpenAI-compatible provider, so set:
 

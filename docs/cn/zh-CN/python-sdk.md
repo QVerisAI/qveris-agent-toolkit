@@ -1,6 +1,6 @@
 # QVeris Python SDK
 
-QVeris Python SDK v0.6.0 是最新测试版本。使用异步客户端，在你自己的 Agent 和应用中发现、检查、探测、调用并审计 10,000+ 真实已验证的 API 能力。
+QVeris Python SDK v0.7.0 是最新测试版本。使用异步客户端，在你自己的 Agent 和应用中发现、检查、探测、调用并审计 10,000+ 真实已验证的 API 能力。
 
 SDK 提供两种控制粒度：
 
@@ -92,6 +92,8 @@ asyncio.run(main())
 ## Agent（智能体）
 
 `Agent` 把同一套流程封装成一个 LLM 工具循环。模型会拿到 `discover`、`inspect`、`call` 三个工具并自行决定何时调用。
+
+每次内置 `call` 都会自动将 `AgentConfig.model` 记录为 Call 的 `model` 归因。该值属于 Agent 自身的元数据，因此模型生成的工具参数不能省略或覆盖它。
 
 默认 agent 使用 OpenAI 兼容的 provider。配合国内可用的 OpenAI 兼容服务时，设置：
 

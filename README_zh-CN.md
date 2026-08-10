@@ -213,7 +213,7 @@ Agent 通过三个动作与 QVeris 交互：
 |------|---------|------|
 | **Discover** | `POST /search` | 用自然语言发现能力，返回候选列表 |
 | **Inspect** | `POST /tools/by-ids` | 按 ID 查看能力详情、参数、质量信号 |
-| **Call** | `POST /tools/execute` | 调用能力，获得结构化返回 |
+| **Call** | `POST /tools/execute` | 调用能力，获得结构化返回，并可选记录模型归因 |
 | **Usage audit** | `GET /auth/usage/history/v2` | 查询调用状态、收费结果和实际扣费 |
 | **Credits ledger** | `GET /auth/credits/ledger` | 查询最终 credits 余额变动 |
 

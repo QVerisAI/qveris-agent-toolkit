@@ -218,7 +218,7 @@ Agents interact with QVeris through three actions:
 |--------|-------------|-------------|
 | **Discover** | `POST /search` | Find capabilities with natural language, returns candidates |
 | **Inspect** | `POST /tools/by-ids` | View capability details, parameters, quality signals |
-| **Call** | `POST /tools/execute` | Invoke a capability, get structured results |
+| **Call** | `POST /tools/execute` | Invoke a capability, get structured results, and optionally record model attribution |
 | **Usage audit** | `GET /auth/usage/history/v2` | Check request status, charge outcome, and actual charge |
 | **Credits ledger** | `GET /auth/credits/ledger` | Check final credit balance movements |
 

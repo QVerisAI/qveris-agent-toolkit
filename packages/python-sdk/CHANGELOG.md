@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-08-10
+
 ### Added
 
 - Added `AgentDelegationCredentialProvider` for RFC 8693 exchanges by registered confidential Agent Runtimes, with fail-closed audience/scope binding, constraint narrowing, memory-only caching, and no refresh-token support. ([#228])
@@ -94,7 +96,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Generated OpenAPI contract models with drift CI. ([#48])
 - `Agent` runtime: LLM tool loop over the QVeris workflow with streaming events.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.6.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.0...HEAD
+[0.7.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.6.0...python-sdk-v0.7.0
 [0.6.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.5.0...python-sdk-v0.6.0
 [0.5.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.4.0...python-sdk-v0.5.0
 [0.4.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.3.2...python-sdk-v0.4.0

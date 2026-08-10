@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-08-10
+
 ### Added
 
 - Added optional `model` attribution to the canonical `call` tool. ([#273])
@@ -143,7 +145,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Handle empty/non-JSON success responses gracefully; `params_to_tool` documented as an object.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.13.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.0...HEAD
+[0.14.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.13.0...mcp-v0.14.0
 [0.13.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.12.0...mcp-v0.13.0
 [0.12.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.11.0...mcp-v0.12.0
 [0.11.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.10.0...mcp-v0.11.0

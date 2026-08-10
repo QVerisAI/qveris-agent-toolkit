@@ -223,7 +223,7 @@ When a tool response exceeds `max_response_size`, the API returns:
 
 ## CLI Workflow
 
-When using the QVeris CLI (`@qverisai/cli` v0.10.0) instead of MCP, use the same Discover → Inspect → Probe → Call pattern via shell commands.
+When using the QVeris CLI (`@qverisai/cli` v0.11.0) instead of MCP, use the same Discover → Inspect → Probe → Call pattern via shell commands.
 
 ### Basic Agent Workflow
 
@@ -240,6 +240,9 @@ qveris probe 1 --params '{"city": "London"}' --checks schema,quote --json
 # Call with parameters. The response may include pre-settlement billing.
 qveris call 1 --params '{"city": "London"}' --json
 
+# Record which model selected and parameterized the call.
+qveris call 1 --params '{"city": "London"}' --model router-model-v1 --json
+
 # Preview the request locally without executing
 qveris call 1 --params '{"city": "London"}' --dry-run --json
 
@@ -255,6 +258,7 @@ qveris call 1 --params '{"city": "London"}' --codegen curl
 | `--dry-run` | Preview the request locally without executing |
 | `--codegen <curl\|js\|python>` | Generate API call snippets from last successful call |
 | `--params <json\|@file\|->` | Pass parameters as inline JSON, from file (`@params.json`), or stdin (`-`) |
+| `--model <name>` | Record the model that selected and parameterized a Call |
 | `--limit <n>` | Limit discover results (default: 5) |
 | `--max-size <bytes>` | Response size limit; `-1` for unlimited (default: 4KB TTY, 20KB non-TTY). MCP default is 20KB. |
 
@@ -317,8 +321,8 @@ Run `qveris doctor` to check setup: Node.js version, API key validity, endpoint 
 | Discover | `{"query": "...", "limit": 10}` |
 | Inspect | `{"tool_ids": ["..."], "search_id": "..."}` |
 | Probe | `{"parameters": {...}, "checks": ["schema", "quote"], "live_budget": "none"}` |
-| Call | `{"search_id": "...", "parameters": {...}, "max_response_size": 20480}` |
+| Call | `{"search_id": "...", "parameters": {...}, "model": "router-model-v1", "max_response_size": 20480}` |
 
-> **MCP backward compatibility:** Old tool names `search_tools`, `get_tools_by_ids`, `execute_tool` are still supported as deprecated aliases in MCP server v0.13.0. Use the canonical names (`discover`, `inspect`, `probe`, `call`, `usage_history`, `credits_ledger`) going forward.
+> **MCP backward compatibility:** Old tool names `search_tools`, `get_tools_by_ids`, `execute_tool` are still supported as deprecated aliases in MCP server v0.14.0. Use the canonical names (`discover`, `inspect`, `probe`, `call`, `usage_history`, `credits_ledger`) going forward.
 
 Full API documentation: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/rest-api.md
