@@ -16,6 +16,26 @@ OpenCode 支持远程 Streamable HTTP MCP 服务器。将以下服务加入全�
 {
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
+    "qveris": {
+      "type": "remote",
+      "url": "https://mcp.qveris.ai/mcp",
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer your-api-key-here"
+      },
+      "enabled": true
+    }
+  }
+}
+```
+
+重启 OpenCode，确认 QVeris 工具已出现。仅当客户端环境无法使用远程 HTTP 时，才使用下方本地 stdio 备用方案。
+
+上例是 QVeris CLI 生成的直接 `mcp.qveris` 配置。如果已安装的 OpenCode 使用 OpenCode V2 的 `mcp.servers` 格式，请使用以下兼容配置，勿混用两种层级：
+
+```json
+{
+  "mcp": {
     "servers": {
       "qveris": {
         "type": "remote",
@@ -30,26 +50,6 @@ OpenCode 支持远程 Streamable HTTP MCP 服务器。将以下服务加入全�
 }
 ```
 
-重启 OpenCode，确认 QVeris 工具已出现。仅当客户端环境无法使用远程 HTTP 时，才使用下方本地 stdio 备用方案。
-
-上例是 OpenCode V2 的 `mcp.servers` 格式。如果已安装的 OpenCode 使用的是直接放在 `mcp` 下的服务名称，请使用下面兼容的直接格式，勿混用两种层级：
-
-```json
-{
-  "mcp": {
-    "qveris": {
-      "type": "remote",
-      "url": "https://mcp.qveris.ai/mcp",
-      "oauth": false,
-      "headers": {
-        "Authorization": "Bearer your-api-key-here"
-      },
-      "enabled": true
-    }
-  }
-}
-```
-
 ## 2. 本地 stdio 备用方案
 
 可以用 QVeris CLI 生成并写入配置：
@@ -59,7 +59,26 @@ qveris mcp configure --target opencode --write --include-key
 qveris mcp validate --target opencode
 ```
 
-也可以手动配置：
+也可以手动配置。QVeris CLI 目标会写入下面的直接 `mcp` 格式：
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "qveris": {
+      "type": "local",
+      "command": ["npx", "-y", "@qverisai/mcp"],
+      "environment": {
+        "QVERIS_API_KEY": "your-api-key-here"
+      },
+      "enabled": true
+    }
+  },
+  "tools": {
+    "qveris*": true
+  }
+}
+```
 
 对于 OpenCode V2，请保留上文的 `mcp.servers` 对象，并使用以下本地服务条目：
 
@@ -80,8 +99,6 @@ qveris mcp validate --target opencode
 }
 ```
 
-对于直接 `mcp` 格式，请使用 QVeris CLI 的输出或下列手动配置：
-
 创建或编辑全局 OpenCode 配置文件：
 
 **Mac/Linux：**
@@ -92,27 +109,6 @@ qveris mcp validate --target opencode
 **Windows：**
 ```
 %USERPROFILE%\.config\opencode\opencode.json
-```
-
-添加以下内容（将 `your-api-key-here` 替换为你的实际 API 密钥）：
-
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "mcp": {
-    "qveris": {
-      "type": "local",
-      "command": ["npx", "-y", "@qverisai/mcp"],
-      "environment": {
-        "QVERIS_API_KEY": "your-api-key-here"
-      },
-      "enabled": true
-    }
-  },
-  "tools": {
-    "qveris*": true
-  }
-}
 ```
 
 如果已有 `opencode.json` 文件，请合并 V2 的 `mcp.servers.qveris` 条目，或直接格式的 `mcp.qveris` 与 `tools["qveris*"]` 部分。不要将一种格式嵌套到另一种格式内。
