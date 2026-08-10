@@ -247,6 +247,7 @@ https://mcp.qveris.cn/mcp
 | `search_id` | string | 是 | 发现该工具的搜索 ID |
 | `params_to_tool` | object | 是 | 传递给工具的参数字典 |
 | `session_id` | string | 否 | 用于追踪的会话标识符 |
+| `model` | string | 否 | 选择能力并生成参数的模型（最多 128 个字符） |
 | `max_response_size` | number | 否 | 最大响应字节数（默认 `20480`） |
 | `respond_with` | string | 否 | `full`、`summary` 或 `fields:<JSONPath,...>`；省略时为 full |
 
@@ -257,6 +258,7 @@ https://mcp.qveris.cn/mcp
   "tool_id": "openweathermap.weather.execute.v1",
   "search_id": "YOUR_SEARCH_ID",
   "params_to_tool": {"city": "北京", "units": "metric"},
+  "model": "router-model-v1",
   "respond_with": "summary"
 }
 ```

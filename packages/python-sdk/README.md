@@ -48,9 +48,49 @@ client = QverisClient(
 )
 ```
 
-The provider receives the resolved API `resource` and requested `scopes`
-(currently empty). Configure either `api_key` or `credential_provider`, never
+The provider receives the resolved API `resource`, configured `audience` and
+requested `scopes`. Configure either `api_key` or `credential_provider`, never
 both. A provider does not select or change the API endpoint.
+
+For a registered confidential Agent Runtime, exchange a user's OAuth access
+token for a short-lived, non-refreshable delegation token:
+
+```python
+import os
+from qveris import (
+    AgentDelegationConstraints,
+    AgentDelegationCredentialProvider,
+    QverisClient,
+    QverisConfig,
+)
+
+resource = "https://api.qveris.ai/tools"
+provider = AgentDelegationCredentialProvider(
+    token_endpoint="https://qveris.ai/api/v1/oauth/token",
+    client_id=os.environ["QVERIS_AGENT_CLIENT_ID"],
+    client_secret=os.environ["QVERIS_AGENT_CLIENT_SECRET"],
+    subject_credential_provider=current_user_credential_provider,
+    resource=resource,
+    scopes=("tools.inspect", "tools.execute"),
+    constraints=AgentDelegationConstraints(
+        tool_ids=("openweathermap.weather.retrieve.v2",),
+        max_credits=25,
+    ),
+)
+client = QverisClient(
+    QverisConfig(
+        api_key=None,
+        credential_audience=resource,
+        credential_scopes=("tools.execute",),
+    ),
+    credential_provider=provider,
+)
+```
+
+Keep the confidential client secret on a trusted server; do not embed this
+provider in browser or mobile code. Delegation tokens stay in memory, are never
+refreshed, and fail closed when the requested audience or scopes exceed the
+configured ceiling.
 
 A credential provider supplies the bearer value that authenticates requests to
 the QVeris API itself. It is unrelated to the data and tool providers in the
@@ -97,7 +137,7 @@ First-class typed APIs:
 |--------|---------------|---------|
 | `discover(query, ..., view=None, lang=None)` | `POST /search` | Find capabilities; `view="routing"` returns compact routing cards |
 | `inspect(tool_ids, ...)` | `POST /tools/by-ids` | Fetch full capability metadata |
-| `call(tool_id, parameters, ..., respond_with=None)` | `POST /tools/execute` | Execute a selected capability with strict single-submit semantics |
+| `call(tool_id, parameters, ..., model=None, respond_with=None)` | `POST /tools/execute` | Execute a selected capability with strict single-submit semantics and optional model attribution |
 | `usage(...)` | `GET /auth/usage/history/v2` | Audit request status and charge outcome |
 | `ledger(...)` | `GET /auth/credits/ledger` | Inspect final credit balance movements |
 

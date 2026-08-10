@@ -37,6 +37,7 @@ import httpx
 
 from ..config import QverisConfig
 from ..credentials import (
+    AgentDelegationError,
     ApiKeyCredentialProvider,
     CredentialContext,
     CredentialProvider,
@@ -142,6 +143,8 @@ class _RequestState:
 class _SendFailure:
     error_type: str
     message: str
+    code: Optional[str] = None
+    status: Optional[int] = None
 
 
 @dataclass(frozen=True)
@@ -484,6 +487,8 @@ class QverisClient:
                 return response
             except asyncio.CancelledError:
                 return _SendFailure("cancelled", "QVeris request was cancelled")
+            except AgentDelegationError as exc:
+                return _SendFailure("credential", str(exc), code=exc.code, status=exc.status)
             except CredentialResolutionError as exc:
                 return _SendFailure("credential", str(exc))
             except httpx.TimeoutException as exc:
@@ -511,6 +516,8 @@ class QverisClient:
                     outcome.message,
                     operation=operation,
                     request_metadata=metadata,
+                    code=outcome.code,
+                    status=outcome.status,
                 ) from None
             raise QverisTransportError(
                 outcome.message,
@@ -988,6 +995,7 @@ class QverisClient:
         compatibility_mode: Literal["strict", "legacy_optional_fields"] = "strict",
         timeout: Optional[float] = None,
         correlation_id: Optional[str] = None,
+        model: Optional[str] = None,
     ) -> ToolExecutionResponse:
         """
         Call a specific capability.
@@ -1003,6 +1011,7 @@ class QverisClient:
                 legacy mode may replay once without an unsupported optional field.
             timeout: HTTP request timeout in seconds; credential acquisition is separate.
             correlation_id: Non-sensitive reference forwarded only to the credential provider.
+            model: Model that selected and parameterized this capability call.
 
         Returns:
             `ToolExecutionResponse` with `success`, `result`, and metadata.
@@ -1023,6 +1032,9 @@ class QverisClient:
 
         if respond_with is not None:
             payload["respond_with"] = respond_with
+
+        if model is not None:
+            payload["model"] = model
 
         if compatibility_mode not in {"strict", "legacy_optional_fields"}:
             raise ValueError("compatibility_mode must be 'strict' or 'legacy_optional_fields'")
@@ -1085,6 +1097,7 @@ class QverisClient:
         search_id: Optional[str] = None,
         session_id: Optional[str] = None,
         max_response_size: Optional[int] = None,
+        model: Optional[str] = None,
     ) -> ToolExecutionResponse:
         """Deprecated alias for `call(...)`."""
         return await self.call(
@@ -1093,6 +1106,7 @@ class QverisClient:
             search_id=search_id,
             session_id=session_id,
             max_response_size=max_response_size,
+            model=model,
         )
 
     async def usage(
@@ -1275,6 +1289,7 @@ class QverisClient:
                     search_id=func_args.get("search_id"),
                     session_id=session_id,
                     max_response_size=func_args.get("max_response_size"),
+                    model=func_args.get("model"),
                 )
                 return result.model_dump(), False, True
 

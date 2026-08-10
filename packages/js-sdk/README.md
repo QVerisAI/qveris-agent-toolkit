@@ -77,9 +77,46 @@ const credentialProvider: CredentialProvider = {
 const qveris = new Qveris({ credentialProvider });
 ```
 
-The provider receives the resolved API `resource` and the requested `scopes`
-(currently empty). Configure either `apiKey` or `credentialProvider`, never
+The provider receives the resolved API `resource`, configured `audience` and
+requested `scopes`. Configure either `apiKey` or `credentialProvider`, never
 both. A provider does not select or change the API endpoint.
+
+For a registered confidential Agent Runtime, exchange a user's OAuth access
+token for a short-lived, non-refreshable delegation token:
+
+```typescript
+import {
+  AgentDelegationCredentialProvider,
+  Qveris,
+  type CredentialProvider,
+} from '@qverisai/sdk';
+
+const delegatedResource = 'https://api.qveris.ai/tools';
+const subjectCredentialProvider: CredentialProvider = {
+  async getCredential() {
+    return loadCurrentUserAccessToken();
+  },
+};
+const credentialProvider = new AgentDelegationCredentialProvider({
+  tokenEndpoint: 'https://qveris.ai/api/v1/oauth/token',
+  clientId: process.env.QVERIS_AGENT_CLIENT_ID!,
+  clientSecret: process.env.QVERIS_AGENT_CLIENT_SECRET!,
+  subjectCredentialProvider,
+  resource: delegatedResource,
+  scopes: ['tools.inspect', 'tools.execute'],
+  constraints: { toolIds: ['openweathermap.weather.retrieve.v2'], maxCredits: 25 },
+});
+const qveris = new Qveris({
+  credentialProvider,
+  credentialAudience: delegatedResource,
+  credentialScopes: ['tools.execute'],
+});
+```
+
+Keep the confidential client secret on a trusted server; do not embed this
+provider in browser or mobile code. Delegation tokens stay in memory, are never
+refreshed, and fail closed when the requested audience or scopes exceed the
+configured ceiling.
 
 A credential provider supplies the bearer value that authenticates requests to
 the QVeris API itself. It is unrelated to the data and tool providers in the
@@ -90,7 +127,7 @@ never pass through the SDK.
 | --- | --- | --- | --- |
 | `discover(query, options?)` | Free | `SearchResponse` | `options`: `limit`, `sessionId`, `view`, `lang`, `timeoutMs`. `view: 'routing'` returns compact routing cards; omitted/default is full. |
 | `inspect(toolIds, options?)` | Free | `SearchResponse` | `toolIds` is one id or an array; `options`: `searchId`, `sessionId`, `timeoutMs`. An empty array resolves locally with no request. |
-| `call(toolId, options)` | Credits | `ExecuteResponse` | Strict single-submit by default. `respondWith` accepts `full`, `summary`, or `fields:<JSONPath,...>`; deprecated `compatibilityMode: 'legacyOptionalFields'` explicitly enables one projection replay. |
+| `call(toolId, options)` | Credits | `ExecuteResponse` | Strict single-submit by default. `model` records model attribution. `respondWith` accepts `full`, `summary`, or `fields:<JSONPath,...>`; deprecated `compatibilityMode: 'legacyOptionalFields'` explicitly enables one projection replay. |
 | `credits()` | Free | `CreditsResponse` | Current balance and bucket details. |
 | `usage(filters?)` | Free | `UsageEventsResponse` | Request-level audit; filter by `execution_id`, `search_id`, dates, `summary`, `limit`. |
 | `ledger(filters?)` | Free | `CreditsLedgerResponse` | Settled credit movements; filter by `direction`, dates, `summary`, `limit`. |
@@ -112,6 +149,8 @@ All types are exported from the package root (`import type { SearchResponse, Exe
 | --- | --- |
 | `apiKey` / `QVERIS_API_KEY` | Required. Create one at [qveris.ai](https://qveris.ai/account?page=api-keys) |
 | `credentialProvider` | Async-capable bearer credential source; mutually exclusive with `apiKey` |
+| `credentialAudience` | Audience forwarded to the credential provider for fail-closed binding |
+| `credentialScopes` | OAuth scopes forwarded to the credential provider |
 | `baseUrl` / `QVERIS_BASE_URL` | API endpoint: constructor option > environment variable > built-in default |
 | `timeoutMs` | Default request timeout (30s; `call` defaults to 120s) |
 | `maxRetries` | Read-operation retries for rate-limited (429) / transient (503) responses (default 3; `0` disables); paid calls never inherit it |

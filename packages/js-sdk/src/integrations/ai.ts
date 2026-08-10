@@ -35,11 +35,11 @@ import type { Qveris } from '../client.js';
  * Build Vercel AI SDK tools for the QVeris discover/inspect/call workflow.
  *
  * @param qveris - The Qveris client to route calls through.
- * @param options - Optional `sessionId` for correlation/pricing context.
+ * @param options - Optional session and model metadata for correlation and quality analysis.
  * @returns A tools object keyed by `qveris_discover` / `qveris_inspect` /
  *   `qveris_call`, ready to pass to `generateText`/`streamText`.
  */
-export function getQverisTools(qveris: Qveris, options: { sessionId?: string } = {}) {
+export function getQverisTools(qveris: Qveris, options: { sessionId?: string; model?: string } = {}) {
   if (
     !qveris ||
     typeof qveris.discover !== 'function' ||
@@ -48,7 +48,7 @@ export function getQverisTools(qveris: Qveris, options: { sessionId?: string } =
   ) {
     throw new TypeError('getQverisTools requires a valid Qveris client instance.');
   }
-  const { sessionId } = options;
+  const { sessionId, model } = options;
 
   return {
     qveris_discover: tool({
@@ -86,6 +86,7 @@ export function getQverisTools(qveris: Qveris, options: { sessionId?: string } =
           ...(search_id && { searchId: search_id }),
           ...(max_response_size !== undefined && { maxResponseSize: max_response_size }),
           ...(sessionId && { sessionId }),
+          ...(model && { model }),
         }),
     }),
   };

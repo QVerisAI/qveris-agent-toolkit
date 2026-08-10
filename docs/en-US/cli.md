@@ -183,6 +183,7 @@ qveris call <tool_id|index> [flags]
 |------|-------------|---------|
 | `--params <json\|@file\|->` | Parameters as JSON, file path, or stdin | `{}` |
 | `--discovery-id <id>` | Discovery session ID | auto from session |
+| `--model <name>` | Model that selected and parameterized the call | — |
 | `--max-size <bytes>` | Response size limit (-1 = unlimited) | 4KB (TTY) / 20KB (pipe) |
 | `--respond-with <mode>` | `full`, `summary`, or `fields:<JSONPath,...>` | full |
 | `--dry-run` | Preview request without executing | false |
@@ -194,6 +195,9 @@ qveris call <tool_id|index> [flags]
 ```bash
 # Inline JSON
 qveris call 1 --params '{"city": "London"}'
+
+# Record model attribution
+qveris call 1 --params '{"city": "London"}' --model router-model-v1
 
 # From file
 qveris call 1 --params @params.json

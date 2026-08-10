@@ -57,6 +57,7 @@ export async function runCall(idOrIndex, flags) {
         parameters,
         max_response_size: maxSize,
         ...(flags.respondWith !== undefined && { respond_with: flags.respondWith }),
+        ...(flags.model !== undefined && { model: flags.model }),
       });
     } else {
       console.log(`\n  ${bold("Dry run")} -- would send:\n`);
@@ -64,6 +65,7 @@ export async function runCall(idOrIndex, flags) {
       console.log(`  Discovery ID: ${dim(discoveryId)}`);
       console.log(`  Max size:     ${maxSize}`);
       if (flags.respondWith !== undefined) console.log(`  Respond with: ${flags.respondWith}`);
+      if (flags.model !== undefined) console.log(`  Model:        ${flags.model}`);
       console.log(`  Parameters:`);
       console.log(
         JSON.stringify(parameters, null, 2)
@@ -86,6 +88,7 @@ export async function runCall(idOrIndex, flags) {
       parameters,
       maxResponseSize: maxSize,
       respondWith: flags.respondWith,
+      model: flags.model,
       timeoutMs,
     });
 
@@ -105,6 +108,7 @@ export async function runCall(idOrIndex, flags) {
         parameters,
         maxResponseSize: maxSize,
         respondWith: flags.respondWith,
+        model: flags.model,
       });
       console.log(`\n  ${dim("--- Code snippet (" + flags.codegen + ") ---")}\n`);
       console.log(snippet);

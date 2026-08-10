@@ -239,6 +239,9 @@ qveris call 1 --params '{"symbol": "AAPL"}' --max-size -1
 # Compact schema/size summary with a signed full-content URL
 qveris call 1 --params '{"symbol": "AAPL"}' --respond-with summary
 
+# Record which model selected and parameterized the capability
+qveris call 1 --params '{"symbol": "AAPL"}' --model router-model-v1
+
 # Select fields rooted at result.data
 qveris call 1 --params '{"symbol": "AAPL"}' --respond-with 'fields:$.price,$.currency'
 

@@ -2,7 +2,14 @@ from .agent.budget import BudgetTracker
 from .agent.core import Agent
 from .client.api import QverisClient
 from .config import QverisConfig, AgentConfig
-from .credentials import ApiKeyCredentialProvider, CredentialContext, CredentialProvider
+from .credentials import (
+    AgentDelegationConstraints,
+    AgentDelegationCredentialProvider,
+    AgentDelegationError,
+    ApiKeyCredentialProvider,
+    CredentialContext,
+    CredentialProvider,
+)
 from .errors import (
     QverisApiError,
     QverisClientClosedError,
@@ -42,6 +49,9 @@ __all__ = [
     "CredentialContext",
     "CredentialProvider",
     "ApiKeyCredentialProvider",
+    "AgentDelegationConstraints",
+    "AgentDelegationCredentialProvider",
+    "AgentDelegationError",
     "RequestMetadata",
     "QverisError",
     "QverisApiError",

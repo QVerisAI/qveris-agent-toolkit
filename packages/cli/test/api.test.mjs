@@ -79,6 +79,7 @@ test("API client maps discover, inspect, probe, call, credits, usage, and ledger
         discoveryId: "search-1",
         parameters: { city: "London" },
         maxResponseSize: 123,
+        model: "router-model-v1",
         timeoutMs: 1000,
       });
       await getCredits({ apiKey: "sk-test", baseUrl: "https://unit.test/api/v1", timeoutMs: 1000 });
@@ -123,7 +124,12 @@ test("API client maps discover, inspect, probe, call, credits, usage, and ledger
       method: "POST",
       path: "/api/v1/tools/execute",
       query: { tool_id: "tool-1" },
-      body: { search_id: "search-1", parameters: { city: "London" }, max_response_size: 123 },
+      body: {
+        search_id: "search-1",
+        parameters: { city: "London" },
+        max_response_size: 123,
+        model: "router-model-v1",
+      },
       authorization: "Bearer sk-test",
     },
     {

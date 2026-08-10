@@ -35,6 +35,7 @@ def get_qveris_tools(
     client: QverisClient,
     *,
     session_id: Optional[str] = None,
+    model: Optional[str] = None,
 ) -> List[Any]:
     """Return OpenAI Agents SDK function tools for the QVeris workflow.
 
@@ -43,6 +44,7 @@ def get_qveris_tools(
             lifecycle — the tools hold a reference to it, so keep it open for
             as long as the tools are used and ``await client.close()`` when done.
         session_id: Optional session id for correlation/pricing context.
+        model: Optional model attribution forwarded only to capability calls.
 
     Returns:
         A list of three ``FunctionTool`` objects named ``qveris_discover``,
@@ -56,7 +58,7 @@ def get_qveris_tools(
     except ImportError as exc:  # pragma: no cover - exercised via install extras
         raise ImportError(_INSTALL_HINT) from exc
 
-    workflow = build_qveris_workflow(client, session_id=session_id)
+    workflow = build_qveris_workflow(client, session_id=session_id, model=model)
 
     # strict_mode=False: these expose a free-form dict / optional params that a
     # strict JSON schema cannot represent.

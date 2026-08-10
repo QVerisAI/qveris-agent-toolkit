@@ -230,9 +230,12 @@ test("code generation covers curl, JavaScript, Python, and unsupported languages
     assert.match(generateSnippet("python", input), /https:\/\/flag\.test\/api\/v1\/tools\/execute/);
     assert.match(generateSnippet("ruby", input), /Unsupported language/);
 
-    const projectedInput = { ...input, respondWith: "summary" };
+    const projectedInput = { ...input, respondWith: "summary", model: "router-model-v1" };
     assert.match(generateSnippet("curl", projectedInput), /"respond_with": "summary"/);
+    assert.match(generateSnippet("curl", projectedInput), /"model": "router-model-v1"/);
     assert.match(generateSnippet("js", projectedInput), /respond_with: "summary"/);
+    assert.match(generateSnippet("js", projectedInput), /model: "router-model-v1"/);
     assert.match(generateSnippet("python", projectedInput), /"respond_with": "summary"/);
+    assert.match(generateSnippet("python", projectedInput), /"model": "router-model-v1"/);
   });
 });

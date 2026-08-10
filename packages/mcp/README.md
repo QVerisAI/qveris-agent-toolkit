@@ -158,6 +158,7 @@ Call a discovered tool with specific parameters.
 | `search_id` | string | ✓ | Search ID from the discover call that found this tool |
 | `params_to_tool` | object | ✓ | A dictionary of parameters to pass to the tool |
 | `session_id` | string | | Session identifier (auto-generated if omitted) |
+| `model` | string | | Model that selected and parameterized the call (maximum 128 characters) |
 | `max_response_size` | number | | Max response size in bytes (default: 20480) |
 | `respond_with` | string | | `full`, `summary`, or `fields:<JSONPath,...>`; omitted defaults to full |
 
@@ -168,6 +169,7 @@ Call a discovered tool with specific parameters.
   "tool_id": "openweathermap.weather.execute.v1",
   "search_id": "abcd1234-ab12-ab12-ab12-abcdef123456",
   "params_to_tool": {"city": "London", "units": "metric"},
+  "model": "router-model-v1",
   "respond_with": "summary"
 }
 ```

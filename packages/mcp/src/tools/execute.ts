@@ -41,6 +41,9 @@ export interface ExecuteToolInput {
    */
   session_id?: string;
 
+  /** Model that selected and parameterized this capability call. */
+  model?: string;
+
   /**
    * Maximum size of response data in bytes.
    * If the tool generates data longer than this limit, the response
@@ -85,6 +88,11 @@ export const executeToolSchema = {
         'Session identifier for tracking user sessions. ' +
         'If not provided, an auto-generated session ID will be used.',
     },
+    model: {
+      type: 'string',
+      maxLength: 128,
+      description: 'Model that selected and parameterized this capability call.',
+    },
     max_response_size: {
       type: 'number',
       description:
@@ -123,6 +131,7 @@ export async function executeExecuteTool(
   const response = await client.executeTool(input.tool_id, {
     search_id: input.search_id,
     session_id: input.session_id ?? defaultSessionId,
+    ...(input.model !== undefined && { model: input.model }),
     parameters: input.params_to_tool,
     max_response_size: input.max_response_size,
     ...(input.respond_with !== undefined && { respond_with: input.respond_with }),

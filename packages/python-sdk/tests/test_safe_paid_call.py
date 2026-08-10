@@ -501,16 +501,21 @@ async def test_child_tasks_keep_credential_context_and_authorization_isolated() 
 @pytest.mark.asyncio
 async def test_paid_call_credential_context_includes_purpose_and_safe_references() -> None:
     contexts: List[CredentialContext] = []
+    requests: List[httpx.Request] = []
 
     class RecordingProvider:
         async def get_credential(self, context: CredentialContext) -> str:
             contexts.append(context)
             return "short-lived-token"
 
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, json=call_success())
+
     client = QverisClient(
         QverisConfig(api_key=None),
         credential_provider=RecordingProvider(),
-        transport=httpx.MockTransport(lambda _request: httpx.Response(200, json=call_success())),
+        transport=httpx.MockTransport(handler),
     )
     try:
         await client.call(
@@ -518,6 +523,7 @@ async def test_paid_call_credential_context_includes_purpose_and_safe_references
             {},
             session_id="session-1",
             correlation_id="correlation-1",
+            model="router-model-v1",
         )
     finally:
         await client.close()
@@ -531,6 +537,7 @@ async def test_paid_call_credential_context_includes_purpose_and_safe_references
             correlation_id="correlation-1",
         )
     ]
+    assert json.loads(requests[0].content)["model"] == "router-model-v1"
 
 
 @pytest.mark.asyncio

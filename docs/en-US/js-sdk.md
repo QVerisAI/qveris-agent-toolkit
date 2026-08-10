@@ -83,10 +83,20 @@ There is no connection to close — the client is stateless over `fetch`.
 | Field | Env var | Default | Description |
 |-------|---------|---------|-------------|
 | `apiKey` | `QVERIS_API_KEY` | — (required) | API key, sent as `Authorization: Bearer ...` |
+| `credentialProvider` | — | — | Async bearer provider; mutually exclusive with `apiKey` |
+| `credentialAudience` | — | — | Audience forwarded to the credential provider |
+| `credentialScopes` | — | `[]` | OAuth scopes forwarded to the credential provider |
 | `baseUrl` | `QVERIS_BASE_URL` | `https://qveris.ai/api/v1` | API base URL; constructor option has highest priority |
 | `timeoutMs` | — | `30000` | Default request timeout (`call` defaults to `120000`) |
 
 `Qveris.fromEnv(overrides?)` builds the client from `QVERIS_API_KEY` and accepts the same non-key options.
+
+Registered confidential Agent Runtimes can use `AgentDelegationCredentialProvider`
+to exchange a user access token at `https://qveris.ai/api/v1/oauth/token`.
+Configure the client with the same `credentialAudience` and a subset of
+`credentialScopes`. Delegation tokens stay in memory, are never refreshed, and
+fail closed on audience or scope widening. Keep the confidential client secret
+on a trusted server, never in browser or mobile code.
 
 ## API reference
 
@@ -102,7 +112,7 @@ in CI.
 | `discover(query, options?)` | `POST /search` | Find capabilities; `view: 'routing'` returns compact routing cards (free) |
 | `inspect(toolIds, options?)` | `POST /tools/by-ids` | Fetch full capability metadata (free) |
 | `probe(toolId, options?)` | `POST /tools/probe` | Validate parameters and request a zero-cost quote |
-| `call(toolId, options)` | `POST /tools/execute` | Execute a capability; `respondWith` selects full, summary, or JSONPath fields |
+| `call(toolId, options)` | `POST /tools/execute` | Execute a capability; `model` records attribution and `respondWith` selects full, summary, or JSONPath fields |
 | `credits()` | `GET /auth/credits` | Current credit balance and buckets |
 | `usage(filters?)` | `GET /auth/usage/history/v2` | Audit request status and charge outcome |
 | `ledger(filters?)` | `GET /auth/credits/ledger` | Inspect final credit balance movements |
@@ -112,7 +122,7 @@ Option shapes:
 - `discover(query, { limit?, sessionId?, view?, lang?, timeoutMs? })`
 - `inspect(toolIds, { searchId?, sessionId?, timeoutMs? })` — `toolIds` accepts a single string or an array; an **empty array short-circuits** and returns an empty response without a network request.
 - `probe(toolId, { parameters?, checks?, liveBudget?, timeoutMs? })`
-- `call(toolId, { parameters, searchId?, sessionId?, maxResponseSize?, respondWith?, timeoutMs?, compatibilityMode? })`
+- `call(toolId, { parameters, searchId?, sessionId?, model?, maxResponseSize?, respondWith?, timeoutMs?, compatibilityMode? })`
 
 Projection options are opt-in. Paid calls are strict single-submit: HTTP redirects are not followed, and `429`/`503` and projection errors are returned without replay. The deprecated `compatibilityMode: 'legacyOptionalFields'` opt-in permits exactly one replay without an optional field rejected by an older service; invalid projections remain errors.
 

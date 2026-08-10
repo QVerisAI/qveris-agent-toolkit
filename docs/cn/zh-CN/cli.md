@@ -185,6 +185,7 @@ qveris call <tool_id|index> [flags]
 |------|------|--------|
 | `--params <json\|@file\|->` | JSON、文件路径或 stdin | `{}` |
 | `--discovery-id <id>` | 发现会话 ID | 自动从会话获取 |
+| `--model <name>` | 选择能力并生成参数的模型 | — |
 | `--max-size <bytes>` | 响应大小限制（-1 = 无限制） | 4KB (TTY) / 20KB (管道) |
 | `--respond-with <mode>` | `full`、`summary` 或 `fields:<JSONPath,...>` | full |
 | `--dry-run` | 预览请求，不实际执行 | false |
@@ -196,6 +197,9 @@ qveris call <tool_id|index> [flags]
 ```bash
 # 内联 JSON
 qveris call 1 --params '{"city": "London"}'
+
+# 记录模型归因
+qveris call 1 --params '{"city": "London"}' --model router-model-v1
 
 # 从文件
 qveris call 1 --params @params.json

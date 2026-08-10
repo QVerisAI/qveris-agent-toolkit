@@ -172,6 +172,14 @@ status = agent.budget_status()   # {"limit": 25, "spent": 12.0, "remaining": 13.
 | `enable_history_pruning` | — | `True` | Prune/compress old tool outputs to save tokens (agent loop) |
 | `max_iterations` | — | `50` | Max agent tool-loop iterations |
 
+Registered confidential Agent Runtimes can use
+`AgentDelegationCredentialProvider` with
+`https://qveris.ai/api/v1/oauth/token`. Set `credential_audience` to the
+delegated resource and `credential_scopes` to the scopes needed by this client.
+The provider keeps short-lived delegation tokens in memory, never refreshes
+them, and rejects audience, scope, budget, tool, provider, run, or model
+widening. Keep the confidential client secret on a trusted server.
+
 ### `AgentConfig`
 
 | Field | Default | Description |
@@ -233,7 +241,7 @@ drift.
 | `discover(query, limit=20, session_id=None, view=None, lang=None, timeout=None, correlation_id=None)` | `POST /search` | Find capabilities; `view="routing"` returns compact routing cards (free) |
 | `inspect(tool_ids, search_id=None, session_id=None, timeout=None, correlation_id=None)` | `POST /tools/by-ids` | Fetch full capability metadata (free) |
 | `probe(tool_id, parameters=None, checks=None, live_budget="none", timeout=None, correlation_id=None)` | `POST /tools/probe` | Validate parameters and request a zero-cost quote |
-| `call(tool_id, parameters, ..., compatibility_mode="strict", timeout=None, correlation_id=None)` | `POST /tools/execute` | Execute with strict single-submit semantics |
+| `call(tool_id, parameters, ..., model=None, compatibility_mode="strict", timeout=None, correlation_id=None)` | `POST /tools/execute` | Execute with strict single-submit semantics and optional model attribution |
 | `usage(**filters)` | `GET /auth/usage/history/v2` | Audit request status and charge outcome |
 | `ledger(**filters)` | `GET /auth/credits/ledger` | Inspect final credit balance movements |
 | `handle_tool_call(func_name, func_args, session_id=None)` | — | Bridge an LLM tool call to the right QVeris method |
