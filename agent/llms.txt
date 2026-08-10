@@ -47,6 +47,7 @@
 - `qveris interactive` — REPL mode for discover/inspect/call loop
 - `qveris probe` — validate parameters and obtain a quote without execution or credits
 - `--json` flag for structured agent output, `--dry-run` to preview a request without executing
+- `qveris call --model <name>` records which model selected and parameterized a capability call
 - `--codegen curl|js|python` to generate code snippets from successful calls
 - Session index shortcuts: `qveris inspect 1`, `qveris call 2` (references last discover results)
 - Shell completions: `qveris completions bash|zsh|fish`

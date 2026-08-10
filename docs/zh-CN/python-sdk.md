@@ -87,6 +87,8 @@ asyncio.run(main())
 
 `Agent` 把同一套流程封装成一个 LLM 工具循环。模型会拿到 `discover`、`inspect`、`call` 三个工具并自行决定何时调用。
 
+每次内置 `call` 都会自动将 `AgentConfig.model` 记录为 Call 的 `model` 归因。该值属于 agent 自身的元数据，因此模型生成的工具参数不能省略或覆盖它。
+
 默认 agent 使用 OpenAI 兼容的 provider，因此需要设置：
 
 ```bash

@@ -87,6 +87,10 @@ asyncio.run(main())
 
 `Agent` wraps the same workflow into an LLM tool loop. The model is given the `discover`, `inspect`, and `call` tools and decides when to use them.
 
+For every built-in `call`, `Agent` automatically records `AgentConfig.model` as
+the Call `model` attribution. This value is agent-owned metadata, so generated
+tool arguments cannot omit or override it.
+
 The default agent uses an OpenAI-compatible provider, so set:
 
 ```bash

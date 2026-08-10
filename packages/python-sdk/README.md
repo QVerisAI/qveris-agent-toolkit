@@ -161,6 +161,9 @@ Models allow additive API fields so newer backend metadata does not break older 
 
 `qveris.Agent` wraps the same workflow into an LLM tool loop. It exposes canonical `discover`, `inspect`, and `call` tool definitions to OpenAI-compatible providers.
 
+For built-in `call` operations, `Agent` automatically forwards `AgentConfig.model`
+as agent-owned Call attribution; generated tool arguments cannot override it.
+
 ```python
 import asyncio
 from qveris import Agent, Message

@@ -240,6 +240,9 @@ qveris probe 1 --params '{"city": "London"}' --checks schema,quote --json
 # Call with parameters. The response may include pre-settlement billing.
 qveris call 1 --params '{"city": "London"}' --json
 
+# Record which model selected and parameterized the call.
+qveris call 1 --params '{"city": "London"}' --model router-model-v1 --json
+
 # Preview the request locally without executing
 qveris call 1 --params '{"city": "London"}' --dry-run --json
 
@@ -255,6 +258,7 @@ qveris call 1 --params '{"city": "London"}' --codegen curl
 | `--dry-run` | Preview the request locally without executing |
 | `--codegen <curl\|js\|python>` | Generate API call snippets from last successful call |
 | `--params <json\|@file\|->` | Pass parameters as inline JSON, from file (`@params.json`), or stdin (`-`) |
+| `--model <name>` | Record the model that selected and parameterized a Call |
 | `--limit <n>` | Limit discover results (default: 5) |
 | `--max-size <bytes>` | Response size limit; `-1` for unlimited (default: 4KB TTY, 20KB non-TTY). MCP default is 20KB. |
 
@@ -317,7 +321,7 @@ Run `qveris doctor` to check setup: Node.js version, API key validity, endpoint 
 | Discover | `{"query": "...", "limit": 10}` |
 | Inspect | `{"tool_ids": ["..."], "search_id": "..."}` |
 | Probe | `{"parameters": {...}, "checks": ["schema", "quote"], "live_budget": "none"}` |
-| Call | `{"search_id": "...", "parameters": {...}, "max_response_size": 20480}` |
+| Call | `{"search_id": "...", "parameters": {...}, "model": "router-model-v1", "max_response_size": 20480}` |
 
 > **MCP backward compatibility:** Old tool names `search_tools`, `get_tools_by_ids`, `execute_tool` are still supported as deprecated aliases in MCP server v0.14.0. Use the canonical names (`discover`, `inspect`, `probe`, `call`, `usage_history`, `credits_ledger`) going forward.
 
