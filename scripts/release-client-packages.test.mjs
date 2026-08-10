@@ -243,7 +243,7 @@ test("readReleasePlan rejects a missing or mismatched publish workflow before ta
   );
 });
 
-test("publishReleasePlan pushes one tag at a time and confirms each run before the next push", async () => {
+test("publishReleasePlan waits for each workflow to succeed before pushing the next tag", async () => {
   const releases = readReleasePlan(fixtureRoot());
   const events = [];
 
@@ -276,6 +276,10 @@ test("publishReleasePlan pushes one tag at a time and confirms each run before t
       events.indexOf(`registered:${releases[index].tag}`) < events.indexOf(`push:${releases[index + 1].tag}`),
       `${releases[index].tag} must register before the next tag push`,
     );
+    assert.ok(
+      events.indexOf(`watch:${releases[index].tag}`) < events.indexOf(`push:${releases[index + 1].tag}`),
+      `${releases[index].tag} must succeed before the next tag push`,
+    );
   }
   for (const release of releases) {
     assert.ok(
@@ -287,10 +291,7 @@ test("publishReleasePlan pushes one tag at a time and confirms each run before t
     events.filter((event) => event.startsWith("push:")),
     releases.map((release) => `push:${release.tag}`),
   );
-  assert.deepEqual(
-    events.slice(-5),
-    [...releases.map((release) => `watch:${release.tag}`), "cadence:release-head"],
-  );
+  assert.deepEqual(events.slice(-2), [`watch:${releases.at(-1).tag}`, "cadence:release-head"]);
 });
 
 test("publishReleasePlan fault injection stops at each asynchronous boundary", async (t) => {
@@ -335,7 +336,8 @@ test("publishReleasePlan fault injection stops at each asynchronous boundary", a
         failurePoint === "snapshot" ||
         failurePoint === "create" ||
         failurePoint === "push" ||
-        failurePoint === "register"
+        failurePoint === "register" ||
+        failurePoint === "watch"
       ) {
         assert.equal(
           events.some((event) => event.includes(releases[1].tag)),
