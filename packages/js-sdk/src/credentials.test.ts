@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   AgentDelegationCredentialProvider,
   AgentDelegationError,
+  ApiKeyCredentialProvider,
   resolveCredential,
   type CredentialContext,
   type CredentialProvider,
@@ -26,7 +27,9 @@ const CONTEXT: CredentialContext = {
   sessionId: 'session-1',
 };
 
-function tokenResponse(overrides: Record<string, unknown> = {}): Response {
+function tokenResponse(overrides: Record<string, unknown> = {}, init: ResponseInit = {}): Response {
+  const headers = new Headers(init.headers);
+  if (!headers.has('content-type')) headers.set('content-type', 'application/json');
   return new Response(
     JSON.stringify({
       access_token: DELEGATION_TOKEN,
@@ -38,12 +41,13 @@ function tokenResponse(overrides: Record<string, unknown> = {}): Response {
       constraints: {
         model: 'model-a',
         tool_ids: ['weather.tool.v1'],
+        provider_ids: ['openweather'],
         run_id: 'run-1',
         max_credits: 10,
       },
       ...overrides,
     }),
-    { status: 200, headers: { 'content-type': 'application/json' } },
+    { status: 200, ...init, headers },
   );
 }
 
@@ -62,6 +66,7 @@ function provider(fetchImpl: typeof fetch, subject?: CredentialProvider): AgentD
     constraints: {
       model: 'model-a',
       toolIds: ['weather.tool.v1'],
+      providerIds: ['openweather'],
       runId: 'run-1',
       maxCredits: 25,
     },
@@ -70,6 +75,46 @@ function provider(fetchImpl: typeof fetch, subject?: CredentialProvider): AgentD
 }
 
 describe('AgentDelegationCredentialProvider', () => {
+  it('validates credentials, endpoints, scopes, constraints, and cache settings', () => {
+    expect(() => new ApiKeyCredentialProvider('')).toThrow(/required/);
+    const options = {
+      tokenEndpoint: TOKEN_ENDPOINT,
+      clientId: CLIENT_ID,
+      clientSecret: CLIENT_SECRET,
+      subjectCredentialProvider: { getCredential: async () => SUBJECT_TOKEN },
+      resource: RESOURCE,
+      scopes: ['tools.execute'],
+      fetch: vi.fn<typeof fetch>(),
+    };
+    const invalid = [
+      { tokenEndpoint: 'not-a-url' },
+      { tokenEndpoint: 'https://user:secret@qveris.ai/token' },
+      { tokenEndpoint: 'https://qveris.ai/token?query=1' },
+      { resource: 'ftp://api.qveris.ai/tools' },
+      { clientSecret: 'bad\nsecret' },
+      { subjectCredentialProvider: null },
+      { scopes: [] },
+      { scopes: ['bad scope'] },
+      { scopes: 'tools.execute' },
+      { expirySkewSeconds: 600 },
+      { constraints: { model: '' } },
+      { constraints: { runId: 'x'.repeat(129) } },
+      { constraints: { toolIds: [] } },
+      { constraints: { providerIds: Array.from({ length: 101 }, (_, index) => `p-${index}`) } },
+      { constraints: { maxCredits: 0 } },
+    ];
+    for (const override of invalid) {
+      expect(() => new AgentDelegationCredentialProvider({ ...options, ...override } as never)).toThrow(
+        AgentDelegationError,
+      );
+    }
+
+    const originalFetch = globalThis.fetch;
+    vi.stubGlobal('fetch', undefined);
+    expect(() => new AgentDelegationCredentialProvider({ ...options, fetch: undefined })).toThrow(AgentDelegationError);
+    vi.stubGlobal('fetch', originalFetch);
+  });
+
   it('rejects insecure remote token endpoints and invalid exchange timeouts', () => {
     const options = {
       tokenEndpoint: TOKEN_ENDPOINT,
@@ -109,6 +154,7 @@ describe('AgentDelegationCredentialProvider', () => {
       expect(form.get('resource')).toBe(RESOURCE);
       expect(form.get('scope')).toBe('tools.execute tools.inspect');
       expect(form.getAll('tool_ids')).toEqual(['weather.tool.v1']);
+      expect(form.getAll('provider_ids')).toEqual(['openweather']);
       expect(form.get('model')).toBe('model-a');
       expect(form.get('run_id')).toBe('run-1');
       expect(form.get('max_credits')).toBe('25');
@@ -149,6 +195,80 @@ describe('AgentDelegationCredentialProvider', () => {
     });
 
     await expect(delegated.getCredential(CONTEXT)).rejects.toMatchObject({ code: 'token_exchange_failed' });
+  });
+
+  it('does not reuse a token after clear', async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () => tokenResponse());
+    const delegated = provider(fetchImpl);
+
+    await delegated.getCredential(CONTEXT);
+    delegated.clear();
+    await delegated.getCredential(CONTEXT);
+
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it('maps subject, transport, size, and JSON failures to safe errors', async () => {
+    const subjectFailure = provider(vi.fn<typeof fetch>(), {
+      getCredential: async () => {
+        throw new Error('synthetic subject failure');
+      },
+    });
+    await expect(subjectFailure.getCredential(CONTEXT)).rejects.toMatchObject({ code: 'subject_credential_failed' });
+
+    const transportFailure = provider(
+      vi.fn<typeof fetch>(async () => {
+        throw new Error('synthetic transport failure');
+      }),
+    );
+    await expect(transportFailure.getCredential(CONTEXT)).rejects.toMatchObject({ code: 'token_exchange_failed' });
+
+    const declaredOversize = provider(
+      vi.fn<typeof fetch>(async () => tokenResponse({}, { headers: { 'content-length': String(64 * 1024 + 1) } })),
+    );
+    await expect(declaredOversize.getCredential(CONTEXT)).rejects.toMatchObject({ code: 'invalid_token_response' });
+
+    const actualOversize = provider(
+      vi.fn<typeof fetch>(async () => new Response('x'.repeat(64 * 1024 + 1), { status: 200 })),
+    );
+    await expect(actualOversize.getCredential(CONTEXT)).rejects.toMatchObject({ code: 'invalid_token_response' });
+
+    const invalidJson = provider(vi.fn<typeof fetch>(async () => new Response('not json', { status: 200 })));
+    await expect(invalidJson.getCredential(CONTEXT)).rejects.toMatchObject({ code: 'invalid_token_response' });
+  });
+
+  it.each([
+    ['shape', null],
+    ['access token', { access_token: '' }],
+    ['token type', { token_type: 'Basic' }],
+    ['lifetime', { expires_in: 601 }],
+    ['resource', { resource: 'https://wrong.example' }],
+    ['scope widening', { scope: 'tools.execute admin' }],
+    ['model constraint', { constraints: { model: 'other' } }],
+    ['list constraint shape', { constraints: { model: 'model-a', tool_ids: 'bad', run_id: 'run-1', max_credits: 10 } }],
+    [
+      'provider constraint widening',
+      {
+        constraints: {
+          model: 'model-a',
+          tool_ids: ['weather.tool.v1'],
+          provider_ids: ['openweather', 'other'],
+          run_id: 'run-1',
+          max_credits: 10,
+        },
+      },
+    ],
+  ])('rejects invalid token response: %s', async (_name, override) => {
+    const response =
+      override === null ? new Response('null', { status: 200 }) : tokenResponse(override as Record<string, unknown>);
+    await expect(provider(vi.fn<typeof fetch>(async () => response)).getCredential(CONTEXT)).rejects.toMatchObject({
+      code: 'invalid_token_response',
+    });
+  });
+
+  it('rejects a token whose narrowed scope does not cover the current request', async () => {
+    const delegated = provider(vi.fn<typeof fetch>(async () => tokenResponse({ scope: 'tools.inspect' })));
+    await expect(delegated.getCredential(CONTEXT)).rejects.toMatchObject({ code: 'invalid_token_response' });
   });
 
   it('fails closed before exchange for audience or scope mismatches', async () => {
