@@ -142,15 +142,15 @@ Save it to:
 - Mac/Linux: `~/.claude/skills/qveris/SKILL.md`
 - Windows: `%USERPROFILE%\.claude\skills\qveris\SKILL.md`
 
-#### B. ChatGPT (Codex)
+#### B. ChatGPT Desktop and Codex
 
-The ChatGPT desktop app, Codex CLI, and Codex IDE extension share the same local MCP configuration. Run:
+For ChatGPT Desktop, prefer the Hosted MCP connection in Option B: add the QVeris endpoint as a **Streamable HTTP** server with the `Authorization: Bearer YOUR_QVERIS_API_KEY` header. The local STDIO fallback below is for the shared ChatGPT Desktop, Codex CLI, and Codex IDE MCP configuration.
 
 ```bash
 codex mcp add qveris --env QVERIS_API_KEY=YOUR_QVERIS_API_KEY -- npx -y @qverisai/mcp
 ```
 
-This adds the server to `~/.codex/config.toml`. You can also add the same STDIO server from **Settings → MCP servers** in the desktop app or IDE extension. ChatGPT on the web cannot read local STDIO configuration.
+This adds the server to `~/.codex/config.toml`. You can also add the same STDIO server from **Settings → MCP servers** in the desktop app or IDE extension. ChatGPT on the web cannot read local MCP configuration.
 
 **Skill Configuration**
 Download the skill definition file and save it to `~/.agents/skills/qveris/SKILL.md`, then restart the client if it does not appear.
@@ -164,20 +164,18 @@ Add or merge this JSON structure:
 ```json
 {
   "mcp": {
-    "qveris": {
-      "type": "local",
-      "command": ["npx", "-y", "@qverisai/mcp"],
-      "environment": { "QVERIS_API_KEY": "YOUR_QVERIS_API_KEY" },
-      "enabled": true
+    "servers": {
+      "qveris": {
+        "type": "local",
+        "command": ["npx", "-y", "@qverisai/mcp"],
+        "environment": { "QVERIS_API_KEY": "YOUR_QVERIS_API_KEY" }
+      }
     }
-  },
-  "tools": {
-    "qveris*": true
   }
 }
 ```
 
-> **Important:** The `tools` section is **required**. OpenCode connects MCP servers but **disables their tools by default**. Without `"tools": { "qveris*": true }`, the MCP server will show as connected but all `qveris_*` tools will be unavailable. The wildcard pattern `qveris*` enables all tools whose names start with `qveris`.
+> **OpenCode V2:** MCP tools are available automatically once the server is connected; do not add a separate `tools` allowlist.
 
 **Step 2: Skill Configuration**
 Download the skill definition file from:
