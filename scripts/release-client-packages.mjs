@@ -584,16 +584,19 @@ export async function publishReleasePlan(releases, operations) {
       await operations.pushTag(release);
     }
 
-    // Confirm this event exists before sending the next tag push. This makes
-    // the four-package release immune to GitHub's >3-tags-per-push limit.
-    runs.push({ release, run: await operations.waitForRun(release, { excludeRunIds }) });
-  }
-
-  if (operations.watch) {
-    for (const { release, run } of runs) {
+    // Wait for the complete publish workflow before sending the next tag.
+    // Beyond avoiding GitHub's >3-tags-per-push limit, this prevents a
+    // failure in a later workflow step (such as registry publication) from
+    // publishing the remaining packages.
+    const run = await operations.waitForRun(release, { excludeRunIds });
+    runs.push({ release, run });
+    if (operations.watch) {
       log(`\n${release.tag}: waiting for ${release.workflow}`);
       await operations.watchRun(run);
     }
+  }
+
+  if (operations.watch) {
     if (operations.dispatchCadence) {
       log("\nAll publish workflows succeeded; dispatching the protected benchmark cadence");
       await operations.dispatchCadence(operations.head, releases);
