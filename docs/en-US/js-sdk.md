@@ -82,7 +82,7 @@ There is no connection to close — the client is stateless over `fetch`.
 
 | Field | Env var | Default | Description |
 |-------|---------|---------|-------------|
-| `apiKey` | `QVERIS_API_KEY` | — (required) | API key, sent as `Authorization: Bearer ...` |
+| `apiKey` | `QVERIS_API_KEY` | — (required without `credentialProvider`) | API key, sent as `Authorization: Bearer ...` |
 | `credentialProvider` | — | — | Async bearer provider; mutually exclusive with `apiKey` |
 | `credentialAudience` | — | — | Audience forwarded to the credential provider |
 | `credentialScopes` | — | `[]` | OAuth scopes forwarded to the credential provider |

@@ -82,7 +82,7 @@ console.log(usage.total, ledger.total);
 
 | 字段 | 环境变量 | 默认值 | 说明 |
 |------|---------|--------|------|
-| `apiKey` | `QVERIS_API_KEY` | —（必填） | API 密钥，以 `Authorization: Bearer ...` 发送 |
+| `apiKey` | `QVERIS_API_KEY` | —（未提供 `credentialProvider` 时必填） | API 密钥，以 `Authorization: Bearer ...` 发送 |
 | `credentialProvider` | — | — | 异步 Bearer 凭证提供器；与 `apiKey` 互斥 |
 | `credentialAudience` | — | — | 传给凭证提供器的 audience |
 | `credentialScopes` | — | `[]` | 传给凭证提供器的 OAuth scopes |

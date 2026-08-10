@@ -58,6 +58,22 @@ test("all TypeScript SDK guides document Probe and strict paid calls", () => {
   }
 });
 
+test("all TypeScript SDK guides describe API key authentication as conditional", () => {
+  const requiredWithoutCredentialProvider = {
+    "docs/en-US/js-sdk.md": "— (required without `credentialProvider`)",
+    "docs/zh-CN/js-sdk.md": "—（未提供 `credentialProvider` 时必填）",
+    "docs/cn/zh-CN/js-sdk.md": "—（未提供 `credentialProvider` 时必填）",
+  };
+
+  for (const [path, expectation] of Object.entries(requiredWithoutCredentialProvider)) {
+    const guide = read(path);
+    assert.ok(
+      guide.includes(`| \`apiKey\` | \`QVERIS_API_KEY\` | ${expectation} |`),
+      `${path} must describe apiKey as conditional on credentialProvider`,
+    );
+  }
+});
+
 test("generated Python API references document public Probe response models", () => {
   for (const path of PYTHON_API_REFERENCES) {
     const reference = read(path);
