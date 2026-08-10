@@ -2,7 +2,7 @@
 
 ## What it is
 
-`@qverisai/mcp` is the official QVeris MCP server for MCP-compatible clients such as Cursor, Claude Desktop, and other coding agents.
+`@qverisai/mcp` is the official QVeris MCP server for MCP-compatible clients such as Cursor, Claude Desktop, Cherry Studio, and other coding agents.
 
 `@qverisai/mcp` v0.14.0 is the latest tested release. It gives agents access to QVeris through six canonical MCP tools:
 
@@ -21,7 +21,7 @@ In other words, the MCP server is the agent-facing transport for the same core Q
 
 Use the MCP server when:
 
-- You are integrating QVeris into Cursor, Claude Desktop, OpenCode, or another MCP client
+- You are integrating QVeris into Cursor, Claude Desktop, Cherry Studio, OpenCode, or another MCP client
 - You want the agent to call QVeris tools directly in chat
 - You want the client to manage tool invocation automatically
 
@@ -130,6 +130,25 @@ qveris mcp validate --target cursor --probe
   }
 }
 ```
+
+### Cherry Studio example
+
+In [Cherry Studio](https://cherryai.com/), open **Settings → MCP Server**, add a server, and enter these values in its configuration fields:
+
+```json
+{
+  "name": "QVeris",
+  "command": "npx",
+  "args": ["-y", "@qverisai/mcp"],
+  "env": {
+    "QVERIS_API_KEY": "your-api-key-here",
+    "QVERIS_BASE_URL": "https://qveris.ai/api/v1"
+  },
+  "disabledTools": []
+}
+```
+
+Save the server, enable it in the conversation, and confirm that `discover`, `inspect`, `probe`, and `call` are available.
 
 For environment-specific setup guides, see:
 

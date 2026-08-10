@@ -2,7 +2,7 @@
 
 ## 简介
 
-`@qverisai/mcp` 是面向 Cursor、Claude Desktop 及其他编程智能体等 MCP 兼容客户端的官方 QVeris MCP 服务器。
+`@qverisai/mcp` 是面向 Cursor、Claude Desktop、Cherry Studio 及其他编程智能体等 MCP 兼容客户端的官方 QVeris MCP 服务器。
 
 `@qverisai/mcp` v0.14.0 是最新测试版本，通过六个规范 MCP 工具为智能体提供 QVeris 访问能力：
 
@@ -21,7 +21,7 @@
 
 **适合使用 MCP 服务器的场景：**
 
-- 将 QVeris 集成到 Cursor、Claude Desktop、OpenCode 或其他 MCP 客户端
+- 将 QVeris 集成到 Cursor、Claude Desktop、Cherry Studio、OpenCode 或其他 MCP 客户端
 - 希望智能体在对话中直接调用 QVeris 工具
 - 希望客户端自动管理工具调用
 
@@ -130,6 +130,25 @@ qveris mcp validate --target cursor --probe
   }
 }
 ```
+
+### Cherry Studio 配置示例
+
+在 [Cherry Studio](https://cherryai.com/) 中打开**设置 → MCP 服务器**，新增服务器后将以下内容填入对应配置字段：
+
+```json
+{
+  "name": "QVeris",
+  "command": "npx",
+  "args": ["-y", "@qverisai/mcp"],
+  "env": {
+    "QVERIS_API_KEY": "your-api-key-here",
+    "QVERIS_BASE_URL": "https://qveris.ai/api/v1"
+  },
+  "disabledTools": []
+}
+```
+
+保存服务器，在对话中启用它，并确认可见 `discover`、`inspect`、`probe` 和 `call`。
 
 各环境的详细配置指南，请参考：
 

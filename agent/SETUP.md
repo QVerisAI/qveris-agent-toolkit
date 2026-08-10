@@ -41,7 +41,7 @@ QVeris supports two integration methods. Choose based on your environment:
 | Method | Best For | How It Works |
 |--------|----------|--------------|
 | **CLI** (recommended) | Agents with shell access (Claude Code, OpenClaw, terminals) | Subprocess calls — zero prompt tokens, 10,000+ real-world, verified tools without bloat |
-| **MCP Server** | IDE integrations (Cursor, Claude Desktop, OpenCode) | MCP protocol — tools injected into agent context |
+| **MCP Server** | MCP clients (Cursor, Claude Desktop, Cherry Studio, OpenCode) | MCP protocol — tools injected into agent context |
 
 ### Option A: CLI Setup (Recommended for shell-capable agents)
 
@@ -84,12 +84,14 @@ Skip to **Section 3: Verify Installation** once `qveris doctor` passes all check
 
 ### Option B: MCP Server Setup
 
-Detect which coding tool or environment you are currently running in (e.g., Claude Code, OpenCode, Cursor, Trae, VS Code).
+Detect which coding tool or environment you are currently running in (e.g., Claude Code, OpenCode, Cursor, Cherry Studio, Trae, VS Code).
 
 **Configuration involves two steps for all environments:**
 1. **MCP Server Setup:** Connects the QVeris tool server (`@qverisai/mcp` v0.14.0) to your environment.
 2. **Skill Configuration:** Teaches the agent how to use the tools using the MCP/client skill definition file.
    - **Skill URL:** `https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/skills/qveris/SKILL.md`
+
+> Cherry Studio uses the MCP server configuration only; it does not require a separate QVeris client skill file.
 
 **General Rule:**
 - **Prefer User/Global Scope:** Configure QVeris globally so it works across all projects.
@@ -206,7 +208,25 @@ Add the standard MCP server configuration to the `mcpServers` object:
 If the environment supports rule or skill files, add the file from:
 `https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/skills/qveris/SKILL.md`
 
-#### E. OpenClaw
+#### E. Cherry Studio
+
+Open **Settings → MCP Server** in [Cherry Studio](https://cherryai.com/) and add a server with these values:
+
+```json
+{
+  "name": "QVeris",
+  "command": "npx",
+  "args": ["-y", "@qverisai/mcp"],
+  "env": {
+    "QVERIS_API_KEY": "YOUR_QVERIS_API_KEY"
+  },
+  "disabledTools": []
+}
+```
+
+Save the server, enable it in the conversation, and confirm that `discover`, `inspect`, `probe`, and `call` are available.
+
+#### F. OpenClaw
 
 OpenClaw supports two integration methods. The Plugin method is recommended for full functionality.
 
