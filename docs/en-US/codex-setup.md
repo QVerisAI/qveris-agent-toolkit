@@ -4,13 +4,25 @@ This guide configures the QVeris MCP server and skill for the ChatGPT desktop ap
 
 ## Prerequisites
 
-- Node.js 18.2 or later
 - The ChatGPT desktop app, Codex CLI, or Codex IDE extension
 - A QVeris API key (create one in [Dashboard / API Keys](/account?page=api-keys))
+- Node.js 18.2 or later only for the local stdio fallback
 
-## 1. Add the QVeris MCP server
+## 1. Add Hosted MCP (recommended)
 
-Run the following command in a terminal, replacing `your-api-key-here` with your API key:
+The ChatGPT desktop app, Codex CLI, and Codex IDE extension support Streamable HTTP MCP servers with Bearer authentication and share the same Codex MCP configuration. Add this remote server once, then use it from any of those local clients:
+
+```toml
+[mcp_servers.qveris]
+url = "https://mcp.qveris.ai/mcp"
+http_headers = { Authorization = "Bearer your-api-key-here" }
+```
+
+You can add the same server interactively in **Settings → MCP servers**: choose **Streamable HTTP**, enter `https://mcp.qveris.ai/mcp`, and add the `Authorization: Bearer your-api-key-here` header. Restart the client after saving. See the official [MCP configuration guide](https://learn.chatgpt.com/docs/extend/mcp) for client-specific steps.
+
+## 2. Local stdio fallback
+
+Use this only when Hosted MCP is unavailable in the client environment. Run the following command in a terminal, replacing `your-api-key-here` with your API key:
 
 ```bash
 codex mcp add qveris --env QVERIS_API_KEY=your-api-key-here -- npx -y @qverisai/mcp
@@ -22,7 +34,7 @@ QVeris automatically uses `https://qveris.ai/api/v1` for this setup. If you need
 codex mcp add qveris --env QVERIS_API_KEY=your-api-key-here --env QVERIS_BASE_URL=https://qveris.ai/api/v1 -- npx -y @qverisai/mcp
 ```
 
-The ChatGPT desktop app, Codex CLI, and IDE extension read this server from `~/.codex/config.toml`, so you only need to add it once. You can also add the same STDIO server from **Settings → MCP servers** in the desktop app or IDE extension. See the official [MCP configuration guide](https://learn.chatgpt.com/docs/extend/mcp) for client-specific steps.
+The ChatGPT desktop app, Codex CLI, and IDE extension read this server from `~/.codex/config.toml`, so you only need to add it once. You can also add the same STDIO server from **Settings → MCP servers** in the desktop app or IDE extension.
 
 ### Manual configuration
 
@@ -37,7 +49,7 @@ args = ["-y", "@qverisai/mcp"]
 QVERIS_API_KEY = "your-api-key-here"
 ```
 
-## 2. Install the QVeris skill
+## 3. Install the QVeris skill
 
 Install the QVeris skill for your user account:
 
@@ -65,7 +77,7 @@ Codex detects skills in `~/.agents/skills`. If the skill does not appear, restar
 
 ## Troubleshooting
 
-**The server does not start:**
+**The local stdio server does not start:**
 
 - Verify Node.js: `node --version`
 - Run the server directly: `QVERIS_API_KEY=your-api-key-here npx -y @qverisai/mcp`
@@ -78,4 +90,4 @@ Codex detects skills in `~/.agents/skills`. If the skill does not appear, restar
 
 **ChatGPT web does not show QVeris:**
 
-- Local `config.toml` and STDIO servers are not available to ChatGPT on the web. Use one of the local clients listed above until a hosted QVeris plugin or remote MCP integration is published.
+- ChatGPT web does not read local `config.toml` files. Use a QVeris plugin when it is available in ChatGPT Work; otherwise use the desktop app, Codex CLI, or IDE extension configured above.

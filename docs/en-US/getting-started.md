@@ -45,15 +45,31 @@ The CLI also supports interactive mode (`qveris interactive`), code generation (
 
 ### Use QVeris MCP anywhere MCP is supported
 
-If your client supports **Model Context Protocol (MCP)**, you can add the official QVeris MCP server and immediately get:
+If your client supports **Model Context Protocol (MCP)** and remote Streamable HTTP, use Hosted MCP first. It requires no local package or Node.js process and immediately provides:
 
 - `discover` (Discover)
 - `inspect` (Inspect)
 - `call` (Call)
 
-For the full MCP reference, see [MCP Server documentation](mcp-server.md).
+For the full MCP reference, see [MCP Server documentation](mcp-server.md) or the [Hosted MCP guide](https://qveris.ai/hosted-mcp).
 
-**Configure (Cursor / any MCP client)**
+**Hosted MCP configuration (preferred)**
+
+```json
+{
+  "mcpServers": {
+    "qveris": {
+      "type": "http",
+      "url": "https://mcp.qveris.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+**Local stdio fallback (for clients without remote HTTP support)**
 
 ```json
 {
@@ -369,9 +385,9 @@ console.log(data);
 
 ### Set up QVeris in your AI Agent
 
-If you are configuring an AI coding agent (Claude Code, Cursor, OpenCode, Trae, etc.), you can give the [Agent Setup Guide](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/SETUP.md) to your agent along with your API key. It will auto-detect the environment and configure both the MCP server and skill definition automatically.
+If you are configuring an AI coding agent or desktop agent (ChatGPT (Codex), Claude Code, Cursor, GitHub Copilot, Cline, Roo Code, Continue, Kiro, Junie, Augment, Zed, Google Antigravity, Qoder, CodeBuddy, WorkBuddy, OpenCode, TRAE, and others), you can give the [Agent Setup Guide](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/SETUP.md) to your agent along with your API key. It will auto-detect the environment and configure the available MCP server and skill definition.
 
-Supported environments: Claude Code, OpenCode, Cursor, Trae, VS Code, and OpenClaw.
+Supported MCP desktop clients include ChatGPT (Codex), Claude Desktop, Cursor, GitHub Copilot, Cherry Studio, Cline, Roo Code, Continue, Kiro, Junie, Augment, Zed, Google Antigravity, Qoder, CodeBuddy, WorkBuddy, OpenCode, TRAE, Windsurf, and VS Code.
 
 ---
 

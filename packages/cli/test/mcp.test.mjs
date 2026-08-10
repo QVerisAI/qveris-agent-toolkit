@@ -197,9 +197,9 @@ test("mcp configure emits valid JSON fragments for each supported target", () =>
       assert.deepEqual(payload.config.mcpServers.qveris.args, ["-y", "@qverisai/mcp"]);
       assert.equal(payload.config.mcpServers.qveris.env.QVERIS_API_KEY, "sk-test");
     } else if (target === "opencode") {
-      assert.deepEqual(payload.config.mcp.qveris.command, ["npx", "-y", "@qverisai/mcp"]);
-      assert.equal(payload.config.mcp.qveris.environment.QVERIS_API_KEY, "sk-test");
-      assert.equal(payload.config.tools["qveris*"], true);
+      assert.deepEqual(payload.config.mcp.servers.qveris.command, ["npx", "-y", "@qverisai/mcp"]);
+      assert.equal(payload.config.mcp.servers.qveris.environment.QVERIS_API_KEY, "sk-test");
+      assert.equal(payload.config.mcp.servers.qveris.enabled, undefined);
     } else if (target === "openclaw") {
       assert.deepEqual(payload.config.plugins.allow, ["qveris"]);
       assert.equal(payload.config.plugins.entries.qveris.config.apiKey, "sk-test");
@@ -297,6 +297,53 @@ test("mcp configure write merges cursor config and validate reads it back", () =
         ["api_key_env", true],
       ],
     );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("mcp configure migrates OpenCode QVeris config to mcp.servers", () => {
+  const dir = mkdtempSync(join(tmpdir(), "qveris-cli-mcp-"));
+  try {
+    const path = join(dir, "opencode-mcp.json");
+    writeFileSync(
+      path,
+      JSON.stringify(
+        {
+          mcp: {
+            qveris: { type: "local", command: ["old-qveris"] },
+            servers: { existing: { type: "local", command: ["existing-server"] } },
+          },
+        },
+        null,
+        2,
+      ) + "\n",
+    );
+
+    const configureResult = runCli([
+      "mcp",
+      "configure",
+      "--target",
+      "opencode",
+      "--output",
+      path,
+      "--write",
+      "--include-key",
+      "--api-key",
+      "sk-test",
+      "--json",
+    ]);
+    assert.equal(configureResult.status, 0, configureResult.stderr);
+    const fileConfig = JSON.parse(readFileSync(path, "utf8"));
+
+    assert.equal(fileConfig.mcp.qveris, undefined);
+    assert.deepEqual(fileConfig.mcp.servers.existing.command, ["existing-server"]);
+    assert.deepEqual(fileConfig.mcp.servers.qveris.command, ["npx", "-y", "@qverisai/mcp"]);
+    assert.equal(fileConfig.mcp.servers.qveris.environment.QVERIS_API_KEY, "sk-test");
+
+    const validateResult = runCli(["mcp", "validate", "--target", "opencode", "--output", path, "--json"]);
+    assert.equal(validateResult.status, 0, validateResult.stderr);
+    assert.equal(parseCliJson(validateResult).ok, true);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

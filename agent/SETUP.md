@@ -27,21 +27,21 @@ Before configuring QVeris, ensure the runtime environment is ready.
 
 **Note:** On Windows, use **cmd**, not PowerShell, for setup commands.
 
-### Node.js
-The QVeris MCP server requires Node.js.
-1. Check if `node` is installed by running `node --version`.
-2. **If Node.js is NOT installed:**
-   - Attempt to install it using the system's package manager (e.g., `winget install OpenJS.NodeJS` on Windows, `brew install node` on macOS, or `apt install nodejs` on Linux).
-   - If you cannot install it automatically, stop and ask the user to install Node.js (LTS version recommended).
-
 ## 2. Choose Integration Method
 
-QVeris supports two integration methods. Choose based on your environment:
+QVeris supports three integration methods. Prefer Hosted MCP whenever your client supports remote Streamable HTTP.
 
 | Method | Best For | How It Works |
 |--------|----------|--------------|
+| **Hosted MCP Server** (recommended) | Remote-MCP clients and browser-based agents | One HTTPS endpoint — no local process, Node.js, or package install |
 | **CLI** (recommended) | Agents with shell access (Claude Code, OpenClaw, terminals) | Subprocess calls — zero prompt tokens, 10,000+ real-world, verified tools without bloat |
-| **MCP Server** | IDE integrations (Cursor, Claude Desktop, OpenCode) | MCP protocol — tools injected into agent context |
+| **Local MCP Server** (fallback) | Clients that require stdio | Local MCP process — tools injected into agent context |
+
+### Node.js prerequisite (CLI and Local MCP only)
+
+Skip this section when the selected method is Hosted MCP. Before following the CLI or Local MCP instructions, check whether `node` is installed with `node --version`.
+
+If Node.js is not installed, attempt to install it with the system package manager (for example, `winget install OpenJS.NodeJS` on Windows, `brew install node` on macOS, or `apt install nodejs` on Linux). If installation is not possible, stop and ask the user to install a current LTS version.
 
 ### Option A: CLI Setup (Recommended for shell-capable agents)
 
@@ -82,14 +82,26 @@ qveris credits   # Check credit balance
 
 Skip to **Section 3: Verify Installation** once `qveris doctor` passes all checks.
 
-### Option B: MCP Server Setup
+### Option B: Hosted MCP Setup (Recommended for remote-capable clients)
 
-Detect which coding tool or environment you are currently running in (e.g., Claude Code, OpenCode, Cursor, Trae, VS Code).
+Hosted MCP is the preferred MCP connection because it avoids a local Node.js process and package install. Open the Hosted MCP guide on the QVeris site that issued the API key, copy that deployment's endpoint, and add it as a **Streamable HTTP** server with:
+
+```text
+Authorization: Bearer YOUR_QVERIS_API_KEY
+```
+
+Reconnect the client and confirm `discover`, `inspect`, `probe`, and `call` are available. If the client supports only local stdio MCP, continue with Option C.
+
+### Option C: Local MCP Server Setup (Fallback)
+
+Detect which MCP-capable desktop client you are currently running in. QVeris supports Claude Code, ChatGPT (Codex), OpenCode, Cursor, Cherry Studio, TRAE, GitHub Copilot, Cline, Roo Code, Continue, Kiro, Junie, Augment, Zed, Google Antigravity, Qoder, CodeBuddy, and WorkBuddy.
 
 **Configuration involves two steps for all environments:**
 1. **MCP Server Setup:** Connects the QVeris tool server (`@qverisai/mcp` v0.14.0) to your environment.
 2. **Skill Configuration:** Teaches the agent how to use the tools using the MCP/client skill definition file.
    - **Skill URL:** `https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/skills/qveris/SKILL.md`
+
+> Cherry Studio uses the MCP server configuration only; it does not require a separate QVeris client skill file.
 
 **General Rule:**
 - **Prefer User/Global Scope:** Configure QVeris globally so it works across all projects.
@@ -130,7 +142,20 @@ Save it to:
 - Mac/Linux: `~/.claude/skills/qveris/SKILL.md`
 - Windows: `%USERPROFILE%\.claude\skills\qveris\SKILL.md`
 
-#### B. OpenCode
+#### B. ChatGPT Desktop and Codex
+
+For ChatGPT Desktop, prefer the Hosted MCP connection in Option B: add the QVeris endpoint as a **Streamable HTTP** server with the `Authorization: Bearer YOUR_QVERIS_API_KEY` header. The local STDIO fallback below is for the shared ChatGPT Desktop, Codex CLI, and Codex IDE MCP configuration.
+
+```bash
+codex mcp add qveris --env QVERIS_API_KEY=YOUR_QVERIS_API_KEY -- npx -y @qverisai/mcp
+```
+
+This adds the server to `~/.codex/config.toml`. You can also add the same STDIO server from **Settings → MCP servers** in the desktop app or IDE extension. ChatGPT on the web cannot read local MCP configuration.
+
+**Skill Configuration**
+Download the skill definition file and save it to `~/.agents/skills/qveris/SKILL.md`, then restart the client if it does not appear.
+
+#### C. OpenCode
 
 **Step 1: MCP Server Configuration**
 Edit the user configuration file at `~/.config/opencode/opencode.json` (Mac/Linux) or `%USERPROFILE%\.config\opencode\opencode.json` (Windows).
@@ -139,20 +164,18 @@ Add or merge this JSON structure:
 ```json
 {
   "mcp": {
-    "qveris": {
-      "type": "local",
-      "command": ["npx", "-y", "@qverisai/mcp"],
-      "environment": { "QVERIS_API_KEY": "YOUR_QVERIS_API_KEY" },
-      "enabled": true
+    "servers": {
+      "qveris": {
+        "type": "local",
+        "command": ["npx", "-y", "@qverisai/mcp"],
+        "environment": { "QVERIS_API_KEY": "YOUR_QVERIS_API_KEY" }
+      }
     }
-  },
-  "tools": {
-    "qveris*": true
   }
 }
 ```
 
-> **Important:** The `tools` section is **required**. OpenCode connects MCP servers but **disables their tools by default**. Without `"tools": { "qveris*": true }`, the MCP server will show as connected but all `qveris_*` tools will be unavailable. The wildcard pattern `qveris*` enables all tools whose names start with `qveris`.
+> **OpenCode V2:** MCP tools are available automatically once the server is connected; do not add a separate `tools` allowlist.
 
 **Step 2: Skill Configuration**
 Download the skill definition file from:
@@ -162,7 +185,7 @@ Save it to:
 - Mac/Linux: `~/.config/opencode/skill/qveris/SKILL.md`
 - Windows: `%USERPROFILE%\.config\opencode\skill\qveris\SKILL.md`
 
-#### C. Cursor
+#### D. Cursor
 
 **Step 1: MCP Server Configuration**
 Locate the MCP settings file: `~/.cursor/mcp.json` (Mac/Linux) or `%USERPROFILE%\.cursor\mcp.json` (Windows).
@@ -185,13 +208,31 @@ Download the skill definition file from:
 
 Save it as `.cursor/rules/qveris.mdc` in the project root.
 
-#### D. Other Environments (Trae, VSCode etc.)
+#### E. Other Desktop MCP Clients
 
 **Step 1: MCP Server Configuration**
-First figure out the MCP configuration file for your specific coding tool.
-- **Trae:** Typically `~/.trae/mcp.json` or `%USERPROFILE%\.trae\mcp.json`.
+Use the client's MCP settings to add the standard STDIO server below. This applies to TRAE, Cline, Roo Code, Continue, Kiro, Junie, Augment, Google Antigravity, Qoder, CodeBuddy, and WorkBuddy.
 
-Add the standard MCP server configuration to the `mcpServers` object:
+- **GitHub Copilot in VS Code:** its `mcp.json` uses a top-level `servers` object, not `mcpServers`. For the Hosted MCP connection, use the endpoint from the QVeris Hosted MCP guide and the same `Authorization: Bearer YOUR_QVERIS_API_KEY` header. For the local stdio fallback, use this complete `mcp.json` shape:
+
+```json
+{
+  "servers": {
+    "qveris": {
+      "command": "npx",
+      "args": ["-y", "@qverisai/mcp"],
+      "env": {
+        "QVERIS_API_KEY": "YOUR_QVERIS_API_KEY"
+      }
+    }
+  }
+}
+```
+
+- **Zed:** create a custom server in the MCP settings and enter the command, arguments, and environment variables as fields rather than pasting a JSON file.
+- **TRAE:** its file is typically `~/.trae/mcp.json` or `%USERPROFILE%\.trae\mcp.json`.
+
+For the other clients, add the standard MCP server configuration to the `mcpServers` object:
 ```json
 "qveris": {
   "command": "npx",
@@ -206,7 +247,25 @@ Add the standard MCP server configuration to the `mcpServers` object:
 If the environment supports rule or skill files, add the file from:
 `https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/skills/qveris/SKILL.md`
 
-#### E. OpenClaw
+#### F. Cherry Studio
+
+Open **Settings → MCP Server** in [Cherry Studio](https://cherry-ai.com/) and add a server with these values:
+
+```json
+{
+  "name": "QVeris",
+  "command": "npx",
+  "args": ["-y", "@qverisai/mcp"],
+  "env": {
+    "QVERIS_API_KEY": "YOUR_QVERIS_API_KEY"
+  },
+  "disabledTools": []
+}
+```
+
+Save the server, enable it in the conversation, and confirm that `discover`, `inspect`, `probe`, and `call` are available.
+
+#### G. OpenClaw
 
 OpenClaw supports two integration methods. The Plugin method is recommended for full functionality.
 

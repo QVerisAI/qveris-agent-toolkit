@@ -46,15 +46,31 @@ CLI 还支持交互模式（`qveris interactive`）、代码生成（`--codegen 
 
 ### 通过 MCP 使用 QVeris
 
-如果你的客户端支持 **Model Context Protocol (MCP)**，可以添加官方 QVeris MCP 服务器，立即获得：
+如果你的客户端支持 **Model Context Protocol (MCP)** 和远程 Streamable HTTP，应优先使用托管 MCP。它无需本地软件包或 Node.js 进程，立即获得：
 
 - `discover`（发现）
 - `inspect`（检查）
 - `call`（调用）
 
-完整 MCP 参考文档见 [MCP 服务器文档](mcp-server.md)。
+完整 MCP 参考文档见 [MCP 服务器文档](mcp-server.md) 或[托管 MCP 指南](https://qveris.cn/hosted-mcp)。
 
-**配置方式（Cursor / 任意 MCP 客户端）**
+**托管 MCP 配置（首选）**
+
+```json
+{
+  "mcpServers": {
+    "qveris": {
+      "type": "http",
+      "url": "https://mcp.qveris.cn/mcp",
+      "headers": {
+        "Authorization": "Bearer your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+**本地 stdio 备用方案（仅适用于不支持远程 HTTP 的客户端）**
 
 ```json
 {
@@ -379,9 +395,9 @@ console.log(data);
 
 ### 在 AI Agent 中安装 QVeris
 
-如果你正在配置 AI 编程助手（Cursor、OpenCode、Trae 等），可以将 [Agent 安装指南](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/SETUP.md) 连同你的 API 密钥一起提供给 Agent。它会自动检测运行环境，并完成 MCP 服务器和技能定义的配置。
+如果你正在配置 AI 编程助手或桌面端 Agent（Cursor、GitHub Copilot、Cline、Roo Code、Continue、Kiro、Junie、Augment、Zed、Google Antigravity、Qoder、CodeBuddy、WorkBuddy、OpenCode、TRAE 等），可以将 [Agent 安装指南](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/SETUP.md) 连同你的 API 密钥一起提供给 Agent。它会自动检测运行环境，并完成可用 MCP 服务器和技能定义的配置。
 
-支持的环境：OpenCode、Cursor、Trae、VS Code、OpenClaw。
+支持 MCP 的桌面端客户端包括：Cursor、GitHub Copilot、Cherry Studio、Cline、Roo Code、Continue、Kiro、Junie、Augment、Zed、Google Antigravity、Qoder、CodeBuddy、WorkBuddy、OpenCode、TRAE、Windsurf 和 VS Code。
 
 ---
 

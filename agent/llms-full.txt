@@ -114,12 +114,13 @@ Every capability includes:
 
 ## Integration Methods
 
-QVeris supports five integration methods:
+QVeris supports six integration methods:
 
 | Method | Use Case | Documentation |
 |--------|----------|--------------|
 | **CLI** (recommended) | Agents with shell access (Claude Code, OpenClaw, terminals) | https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/packages/cli/README.md |
-| **MCP Server** | Cursor / Claude Desktop / Any MCP client | https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/mcp-server.md |
+| **Hosted MCP** (recommended) | Remote Streamable HTTP MCP clients | Hosted MCP guide on the QVeris site that issued the API key |
+| **Local MCP Server** (fallback) | stdio-only MCP clients | https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/mcp-server.md |
 | **JavaScript SDK** | TypeScript/JavaScript projects, Agent frameworks | https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/js-sdk |
 | **Python SDK** | Python projects, Agent frameworks | https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/python-sdk |
 | **REST API** | Any language, Custom integrations | https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/rest-api.md |

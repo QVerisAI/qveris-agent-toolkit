@@ -4,11 +4,37 @@
 
 ## 前置条件
 
-- 已安装 Node.js
+- 仅使用本地 stdio 备用方案时才需要安装 Node.js
 - 已安装 OpenCode（[安装指南](https://opencode.ai/docs/)）
 - QVeris API 密钥（在[控制台/API密钥](/account?page=api-keys)中创建）
 
-## 1. MCP 服务器配置
+## 1. 托管 MCP 配置（推荐）
+
+OpenCode 支持远程 Streamable HTTP MCP 服务器。将以下服务加入全局 OpenCode 配置；它无需本地软件包或 Node.js 进程：
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      "qveris": {
+        "type": "remote",
+        "url": "https://mcp.qveris.cn/mcp",
+        "oauth": false,
+        "headers": {
+          "Authorization": "Bearer your-api-key-here"
+        }
+      }
+    }
+  }
+}
+```
+
+重启 OpenCode，确认 QVeris 工具已出现。仅当客户端环境无法使用远程 HTTP 时，才使用下方本地 stdio 备用方案。
+
+OpenCode V2 会在 `mcp.servers` 下发现具名 MCP 服务器，并自动暴露其工具，因此不需要额外的 `tools` 允许列表。
+
+## 2. 本地 stdio 备用方案
 
 可以用 QVeris CLI 生成并写入配置：
 
@@ -18,7 +44,25 @@ qveris mcp configure --target opencode --write --include-key
 qveris mcp validate --target opencode
 ```
 
-也可以手动配置：
+也可以手动配置。QVeris CLI 目标会写入下面的 OpenCode V2 格式：
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      "qveris": {
+        "type": "local",
+        "command": ["npx", "-y", "@qverisai/mcp"],
+        "environment": {
+          "QVERIS_API_KEY": "your-api-key-here",
+          "QVERIS_BASE_URL": "https://qveris.cn/api/v1"
+        }
+      }
+    }
+  }
+}
+```
 
 创建或编辑全局 OpenCode 配置文件：
 
@@ -32,31 +76,9 @@ qveris mcp validate --target opencode
 %USERPROFILE%\.config\opencode\opencode.json
 ```
 
-添加以下内容（将 `your-api-key-here` 替换为你的实际 API 密钥）：
+如果已有 `opencode.json` 文件，请将 `mcp.servers.qveris` 条目合并到现有的 `servers` 对象中。
 
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "mcp": {
-    "qveris": {
-      "type": "local",
-      "command": ["npx", "-y", "@qverisai/mcp"],
-      "environment": {
-        "QVERIS_API_KEY": "your-api-key-here",
-        "QVERIS_BASE_URL": "https://qveris.cn/api/v1"
-      },
-      "enabled": true
-    }
-  },
-  "tools": {
-    "qveris*": true
-  }
-}
-```
-
-如果已有 `opencode.json` 文件，请将 `mcp.qveris` 和 `tools["qveris*"]` 部分合并到现有配置中。
-
-## 2. 技能配置
+## 3. 技能配置
 
 从 GitHub 仓库下载 QVeris MCP/客户端技能：
 
@@ -100,7 +122,7 @@ OpenCode 的 Agent 会自动发现 QVeris 技能和 MCP 服务器，找到并执
 
 ## 故障排查
 
-**MCP 服务器未连接：**
+**本地 stdio MCP 服务器未连接：**
 - 验证 Node.js 是否已安装：`node --version`
 - 手动测试 MCP 服务器：`npx -y @qverisai/mcp`
 - 检查 API 密钥是否正确
