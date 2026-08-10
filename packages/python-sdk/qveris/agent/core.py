@@ -345,6 +345,11 @@ class Agent:
                     # budget *before* sending it, and surface a budget_exceeded
                     # event so the model can pick a cheaper capability or stop.
                     is_call = func_name in ("call", "execute_tool")
+                    if is_call:
+                        # Model attribution is agent-owned metadata. Keep it out
+                        # of the public tool schema while preventing generated
+                        # tool arguments from spoofing or omitting it.
+                        func_args = {**func_args, "model": self.agent_config.model}
                     block = self.budget.check(func_args.get("tool_id")) if is_call else None
                     if block is not None:
                         result = {

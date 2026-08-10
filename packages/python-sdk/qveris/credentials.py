@@ -150,8 +150,12 @@ class AgentDelegationCredentialProvider:
                 "expiry_skew_seconds must be between 0 and 599",
             )
         self._expiry_skew_seconds = expiry_skew_seconds
+        # This lock protects only cache/in-flight bookkeeping. Token exchanges
+        # themselves run outside it so independent user+scope requests do not
+        # block each other.
         self._lock = asyncio.Lock()
         self._cached: Dict[Tuple[str, Tuple[str, ...]], _DelegationToken] = {}
+        self._exchanges: Dict[Tuple[str, Tuple[str, ...]], asyncio.Task[_DelegationToken]] = {}
 
     async def get_credential(self, context: CredentialContext) -> str:
         required_scopes = self._validate_context(context)
@@ -165,14 +169,27 @@ class AgentDelegationCredentialProvider:
             token = self._cached.get(cache_key)
             if token is not None and token.expires_at > time.monotonic() and required_scopes.issubset(token.scopes):
                 return token.access_token
-            token = await self._exchange_token(subject_token, required_scopes)
-            if not required_scopes.issubset(token.scopes):
-                raise AgentDelegationError(
-                    "invalid_token_response",
-                    "Delegation token does not cover the requested scopes",
-                )
-            self._cached[cache_key] = token
-            return token.access_token
+            exchange = self._exchanges.get(cache_key)
+            if exchange is None:
+                exchange = asyncio.create_task(self._exchange_token(subject_token, required_scopes))
+                self._exchanges[cache_key] = exchange
+
+                def drop_completed_exchange(completed: asyncio.Task[_DelegationToken]) -> None:
+                    if self._exchanges.get(cache_key) is completed:
+                        self._exchanges.pop(cache_key, None)
+
+                exchange.add_done_callback(drop_completed_exchange)
+
+        # Shield the shared exchange so cancellation of one consumer cannot
+        # cancel another consumer waiting on the same subject/scope token.
+        token = await asyncio.shield(exchange)
+        if not required_scopes.issubset(token.scopes):
+            raise AgentDelegationError(
+                "invalid_token_response",
+                "Delegation token does not cover the requested scopes",
+            )
+        self._cached[cache_key] = token
+        return token.access_token
 
     def clear(self) -> None:
         """Drop the cached in-memory token without persisting or revoking it."""

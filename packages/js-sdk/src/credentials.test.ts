@@ -259,10 +259,23 @@ describe('AgentDelegationCredentialProvider', () => {
     );
     await expect(transportFailure.getCredential(CONTEXT)).rejects.toMatchObject({ code: 'token_exchange_failed' });
 
+    let declaredBodyCancelled = false;
+    const declaredOversizeBody = new ReadableStream<Uint8Array>({
+      cancel() {
+        declaredBodyCancelled = true;
+      },
+    });
     const declaredOversize = provider(
-      vi.fn<typeof fetch>(async () => tokenResponse({}, { headers: { 'content-length': String(64 * 1024 + 1) } })),
+      vi.fn<typeof fetch>(
+        async () =>
+          new Response(declaredOversizeBody, {
+            headers: { 'content-length': String(64 * 1024 + 1) },
+            status: 200,
+          }),
+      ),
     );
     await expect(declaredOversize.getCredential(CONTEXT)).rejects.toMatchObject({ code: 'invalid_token_response' });
+    expect(declaredBodyCancelled).toBe(true);
 
     const actualOversize = provider(
       vi.fn<typeof fetch>(async () => new Response('x'.repeat(64 * 1024 + 1), { status: 200 })),

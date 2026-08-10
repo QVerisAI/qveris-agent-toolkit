@@ -180,6 +180,7 @@ class BudgetScenarioLLM:
 class BudgetScenarioClient:
     def __init__(self) -> None:
         self.calls: List[str] = []
+        self.call_args: List[Dict[str, Any]] = []
         self.closed = False
 
     async def handle_tool_call(self, func_name, func_args, session_id=None):
@@ -187,6 +188,7 @@ class BudgetScenarioClient:
         if func_name == "discover":
             return {"search_id": "s1", "results": [{"tool_id": "pricey.tool.v1", "expected_cost": "50"}]}, False, True
         if func_name == "call":
+            self.call_args.append(func_args)
             return {"execution_id": "e1", "success": True, "billing": {"list_amount_credits": 50}}, False, True
         return None, False, False
 
@@ -244,6 +246,14 @@ async def test_agent_executes_and_records_within_budget_call() -> None:
     assert client.calls == ["discover", "call"]
     assert agent.budget_status() == {"limit": 100, "spent": 50.0, "remaining": 50.0}
     assert "budget_exceeded" not in [event.type for event in events]
+    assert client.call_args == [
+        {
+            "tool_id": "pricey.tool.v1",
+            "search_id": "s1",
+            "params_to_tool": {},
+            "model": "unit-test-model",
+        }
+    ]
 
 
 @pytest.mark.asyncio

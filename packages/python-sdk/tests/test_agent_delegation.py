@@ -153,6 +153,37 @@ async def test_delegation_exchange_is_exact_cached_and_concurrency_safe() -> Non
 
 
 @pytest.mark.asyncio
+async def test_delegation_exchanges_independent_subjects_concurrently() -> None:
+    both_exchanges_started = asyncio.Event()
+    release_exchanges = asyncio.Event()
+    requests: List[httpx.Request] = []
+
+    class CorrelationSubjectProvider:
+        async def get_credential(self, context: CredentialContext) -> str:
+            assert context.correlation_id is not None
+            return f"subject-{context.correlation_id}"
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if len(requests) == 2:
+            both_exchanges_started.set()
+        await release_exchanges.wait()
+        return httpx.Response(200, json=token_payload())
+
+    first_context = CredentialContext(**{**CONTEXT.__dict__, "correlation_id": "first"})
+    second_context = CredentialContext(**{**CONTEXT.__dict__, "correlation_id": "second"})
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        provider = build_provider(client, CorrelationSubjectProvider())
+        first = asyncio.create_task(provider.get_credential(first_context))
+        second = asyncio.create_task(provider.get_credential(second_context))
+        await asyncio.wait_for(both_exchanges_started.wait(), timeout=0.25)
+        release_exchanges.set()
+        assert await asyncio.gather(first, second) == [DELEGATION_TOKEN, DELEGATION_TOKEN]
+
+    assert len(requests) == 2
+
+
+@pytest.mark.asyncio
 async def test_delegation_cache_isolated_by_subject_credential() -> None:
     subject = SubjectProvider()
     subject.token = "subject-a"  # type: ignore[attr-defined]

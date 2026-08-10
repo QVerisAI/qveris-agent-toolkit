@@ -260,6 +260,9 @@ export class AgentDelegationCredentialProvider implements CredentialProvider {
 
     const contentLength = Number(response.headers.get('content-length') ?? 0);
     if (Number.isFinite(contentLength) && contentLength > MAX_TOKEN_RESPONSE_BYTES) {
+      // A declared oversize response has not been read yet, so explicitly
+      // cancel the body rather than leaving its connection/stream open.
+      void response.body?.cancel().catch(() => undefined);
       clearTimeout(timeout);
       throw new AgentDelegationError('invalid_token_response', 'Agent token response exceeded the size limit.');
     }
