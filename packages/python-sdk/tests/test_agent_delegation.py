@@ -204,6 +204,31 @@ async def test_delegation_rejects_refresh_tokens_and_widened_constraints() -> No
 
 
 @pytest.mark.asyncio
+async def test_delegation_stops_streaming_oversized_token_responses() -> None:
+    emitted: List[int] = []
+
+    class OversizedStream(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            emitted.append(64 * 1024)
+            yield b"x" * (64 * 1024)
+            emitted.append(1)
+            yield b"x"
+
+        async def aclose(self) -> None:
+            return None
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, stream=OversizedStream())
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        with pytest.raises(AgentDelegationError) as captured:
+            await build_provider(client).get_credential(CONTEXT)
+
+    assert captured.value.code == "invalid_token_response"
+    assert emitted == [64 * 1024, 1]
+
+
+@pytest.mark.asyncio
 async def test_delegation_errors_do_not_include_credentials_or_response_body() -> None:
     def handler(_request: httpx.Request) -> httpx.Response:
         return httpx.Response(

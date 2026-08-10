@@ -219,40 +219,76 @@ class AgentDelegationCredentialProvider:
         try:
             if self._http_client is None:
                 async with httpx.AsyncClient(timeout=self._exchange_timeout, follow_redirects=False) as client:
-                    response = await client.post(self._token_endpoint, content=encoded_form, headers=headers)
+                    response_status, response_content = await self._send_token_exchange(
+                        client,
+                        encoded_form,
+                        headers,
+                    )
             else:
-                response = await self._http_client.post(
-                    self._token_endpoint,
-                    content=encoded_form,
-                    headers=headers,
-                    timeout=self._exchange_timeout,
-                    follow_redirects=False,
+                response_status, response_content = await self._send_token_exchange(
+                    self._http_client,
+                    encoded_form,
+                    headers,
                 )
+        except AgentDelegationError:
+            raise
         except Exception:
             raise AgentDelegationError(
                 "token_exchange_failed",
                 "Agent token exchange failed before a response was received",
             ) from None
 
-        if len(response.content) > self._MAX_RESPONSE_BYTES:
-            raise AgentDelegationError(
-                "invalid_token_response",
-                "Agent token response exceeded the size limit",
-            )
-        if not response.is_success:
+        if not 200 <= response_status < 300:
             raise AgentDelegationError(
                 "token_exchange_failed",
                 "Agent token exchange was rejected",
-                status=response.status_code,
+                status=response_status,
             )
         try:
-            payload = json.loads(response.content)
+            payload = json.loads(response_content)
         except Exception:
             raise AgentDelegationError(
                 "invalid_token_response",
                 "Agent token response was not valid JSON",
             ) from None
         return self._validate_token_response(payload)
+
+    async def _send_token_exchange(
+        self,
+        client: httpx.AsyncClient,
+        encoded_form: str,
+        headers: Mapping[str, str],
+    ) -> tuple[int, bytes]:
+        """Stream a token response and abort before retaining an oversized body."""
+        request = client.build_request("POST", self._token_endpoint, content=encoded_form, headers=headers)
+        response = await client.send(
+            request,
+            stream=True,
+            follow_redirects=False,
+        )
+        try:
+            declared_size = response.headers.get("content-length")
+            if declared_size is not None:
+                try:
+                    if int(declared_size) > self._MAX_RESPONSE_BYTES:
+                        raise AgentDelegationError(
+                            "invalid_token_response",
+                            "Agent token response exceeded the size limit",
+                        )
+                except ValueError:
+                    pass
+
+            chunks = bytearray()
+            async for chunk in response.aiter_bytes():
+                if len(chunks) + len(chunk) > self._MAX_RESPONSE_BYTES:
+                    raise AgentDelegationError(
+                        "invalid_token_response",
+                        "Agent token response exceeded the size limit",
+                    )
+                chunks.extend(chunk)
+            return response.status_code, bytes(chunks)
+        finally:
+            await response.aclose()
 
     def _validate_token_response(self, value: Any) -> _DelegationToken:
         if not isinstance(value, dict):

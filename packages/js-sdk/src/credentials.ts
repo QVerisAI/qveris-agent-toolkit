@@ -258,14 +258,12 @@ export class AgentDelegationCredentialProvider implements CredentialProvider {
     }
     let responseText: string;
     try {
-      responseText = await response.text();
-    } catch {
+      responseText = await readBoundedResponseText(response);
+    } catch (error) {
+      if (error instanceof AgentDelegationError) throw error;
       throw new AgentDelegationError('token_exchange_failed', 'Agent token exchange response could not be read.');
     } finally {
       clearTimeout(timeout);
-    }
-    if (Buffer.byteLength(responseText, 'utf8') > MAX_TOKEN_RESPONSE_BYTES) {
-      throw new AgentDelegationError('invalid_token_response', 'Agent token response exceeded the size limit.');
     }
     if (!response.ok) {
       throw new AgentDelegationError('token_exchange_failed', 'Agent token exchange was rejected.', response.status);
@@ -365,6 +363,39 @@ function validateSecret(value: string, label: string): string {
 function encodeClientCredentials(clientId: string, clientSecret: string): string {
   const encode = (value: string): string => new URLSearchParams({ value }).toString().slice('value='.length);
   return Buffer.from(`${encode(clientId)}:${encode(clientSecret)}`, 'utf8').toString('base64');
+}
+
+/** Read a token response without allowing an unbounded body into memory. */
+async function readBoundedResponseText(response: Response): Promise<string> {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    // Some fetch-compatible test doubles expose only text(). Production fetch
+    // implementations provide a stream, so this path cannot weaken the live cap.
+    const text = await response.text();
+    if (Buffer.byteLength(text, 'utf8') > MAX_TOKEN_RESPONSE_BYTES) {
+      throw new AgentDelegationError('invalid_token_response', 'Agent token response exceeded the size limit.');
+    }
+    return text;
+  }
+
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      size += value.byteLength;
+      if (size > MAX_TOKEN_RESPONSE_BYTES) {
+        await reader.cancel().catch(() => undefined);
+        throw new AgentDelegationError('invalid_token_response', 'Agent token response exceeded the size limit.');
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  return Buffer.concat(chunks).toString('utf8');
 }
 
 function validateReturnedToken(value: unknown): string {

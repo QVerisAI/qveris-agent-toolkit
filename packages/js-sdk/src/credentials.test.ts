@@ -237,6 +237,23 @@ describe('AgentDelegationCredentialProvider', () => {
     await expect(invalidJson.getCredential(CONTEXT)).rejects.toMatchObject({ code: 'invalid_token_response' });
   });
 
+  it('cancels a streaming response immediately after the size ceiling', async () => {
+    let cancelled = false;
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new Uint8Array(64 * 1024));
+        controller.enqueue(new Uint8Array([0]));
+      },
+      cancel() {
+        cancelled = true;
+      },
+    });
+    const delegated = provider(vi.fn<typeof fetch>(async () => new Response(body, { status: 200 })));
+
+    await expect(delegated.getCredential(CONTEXT)).rejects.toMatchObject({ code: 'invalid_token_response' });
+    expect(cancelled).toBe(true);
+  });
+
   it.each([
     ['shape', null],
     ['access token', { access_token: '' }],
