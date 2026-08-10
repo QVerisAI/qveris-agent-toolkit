@@ -130,14 +130,14 @@ function buildTargetFragment(target, { apiKey, baseUrl, includeBaseUrl }) {
   if (target === "opencode") {
     return {
       mcp: {
-        qveris: {
-          type: "local",
-          command: ["npx", "-y", "@qverisai/mcp"],
-          environment: env,
-          enabled: true,
+        servers: {
+          qveris: {
+            type: "local",
+            command: ["npx", "-y", "@qverisai/mcp"],
+            environment: env,
+          },
         },
       },
-      tools: { "qveris*": true },
     };
   }
 
@@ -206,15 +206,15 @@ function mergeConfig(target, existing, fragment) {
     };
   }
   if (target === "opencode") {
+    const { qveris: _legacyQveris, ...existingMcp } = existing.mcp || {};
     return {
       ...existing,
       mcp: {
-        ...(existing.mcp || {}),
-        qveris: fragment.mcp.qveris,
-      },
-      tools: {
-        ...(existing.tools || {}),
-        ...fragment.tools,
+        ...existingMcp,
+        servers: {
+          ...(existing.mcp?.servers || {}),
+          qveris: fragment.mcp.servers.qveris,
+        },
       },
     };
   }
@@ -254,10 +254,6 @@ function validateConfigObject(target, config) {
   checks.push(
     check("api_key_env", hasUsableApiKey(server, target), "QVERIS_API_KEY is configured and is not a placeholder"),
   );
-
-  if (target === "opencode") {
-    checks.push(check("tools_enabled", config?.tools?.["qveris*"] === true, "OpenCode qveris tools are enabled"));
-  }
 
   const ok = checks.every((item) => item.ok);
   return { ok, checks, expected_tools: EXPECTED_TOOLS };
@@ -536,7 +532,7 @@ function quoteWindowsCommandArgument(value, escapePercent = false) {
 
 function extractServer(target, config) {
   if (target === "cursor" || target === "claude-desktop") return config?.mcpServers?.qveris;
-  if (target === "opencode") return config?.mcp?.qveris;
+  if (target === "opencode") return config?.mcp?.servers?.qveris;
   if (target === "openclaw") return config?.plugins?.entries?.qveris;
   if (target === "generic") return config;
   return null;

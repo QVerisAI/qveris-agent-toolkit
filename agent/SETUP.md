@@ -27,13 +27,6 @@ Before configuring QVeris, ensure the runtime environment is ready.
 
 **Note:** On Windows, use **cmd**, not PowerShell, for setup commands.
 
-### Node.js
-Node.js is required only for the CLI and local stdio MCP fallback. Do not require it for Hosted MCP.
-1. Check if `node` is installed by running `node --version`.
-2. **If Node.js is NOT installed:**
-   - Attempt to install it using the system's package manager (e.g., `winget install OpenJS.NodeJS` on Windows, `brew install node` on macOS, or `apt install nodejs` on Linux).
-   - If you cannot install it automatically, stop and ask the user to install Node.js (LTS version recommended).
-
 ## 2. Choose Integration Method
 
 QVeris supports three integration methods. Prefer Hosted MCP whenever your client supports remote Streamable HTTP.
@@ -43,6 +36,12 @@ QVeris supports three integration methods. Prefer Hosted MCP whenever your clien
 | **Hosted MCP Server** (recommended) | Remote-MCP clients and browser-based agents | One HTTPS endpoint — no local process, Node.js, or package install |
 | **CLI** (recommended) | Agents with shell access (Claude Code, OpenClaw, terminals) | Subprocess calls — zero prompt tokens, 10,000+ real-world, verified tools without bloat |
 | **Local MCP Server** (fallback) | Clients that require stdio | Local MCP process — tools injected into agent context |
+
+### Node.js prerequisite (CLI and Local MCP only)
+
+Skip this section when the selected method is Hosted MCP. Before following the CLI or Local MCP instructions, check whether `node` is installed with `node --version`.
+
+If Node.js is not installed, attempt to install it with the system package manager (for example, `winget install OpenJS.NodeJS` on Windows, `brew install node` on macOS, or `apt install nodejs` on Linux). If installation is not possible, stop and ask the user to install a current LTS version.
 
 ### Option A: CLI Setup (Recommended for shell-capable agents)
 

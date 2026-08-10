@@ -16,26 +16,6 @@ OpenCode supports remote Streamable HTTP MCP servers. Add the following server t
 {
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
-    "qveris": {
-      "type": "remote",
-      "url": "https://mcp.qveris.ai/mcp",
-      "oauth": false,
-      "headers": {
-        "Authorization": "Bearer your-api-key-here"
-      },
-      "enabled": true
-    }
-  }
-}
-```
-
-Restart OpenCode and confirm the QVeris tools appear. Use the local stdio fallback below only if remote HTTP is unavailable in the client environment.
-
-This is the direct `mcp.qveris` configuration produced by the QVeris CLI. If your installed OpenCode uses the V2 `mcp.servers` format, use this compatible alternative rather than mixing the two shapes:
-
-```json
-{
-  "mcp": {
     "servers": {
       "qveris": {
         "type": "remote",
@@ -50,6 +30,10 @@ This is the direct `mcp.qveris` configuration produced by the QVeris CLI. If you
 }
 ```
 
+Restart OpenCode and confirm the QVeris tools appear. Use the local stdio fallback below only if remote HTTP is unavailable in the client environment.
+
+OpenCode V2 discovers named MCP servers under `mcp.servers` and exposes their tools automatically, so this configuration does not need a separate `tools` allowlist.
+
 ## 2. Local stdio fallback
 
 You can generate and write the config with QVeris CLI:
@@ -59,28 +43,7 @@ qveris mcp configure --target opencode --write --include-key
 qveris mcp validate --target opencode
 ```
 
-Or configure it manually. The QVeris CLI target writes the direct-`mcp` format below:
-
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "mcp": {
-    "qveris": {
-      "type": "local",
-      "command": ["npx", "-y", "@qverisai/mcp"],
-      "environment": {
-        "QVERIS_API_KEY": "your-api-key-here"
-      },
-      "enabled": true
-    }
-  },
-  "tools": {
-    "qveris*": true
-  }
-}
-```
-
-For OpenCode V2, retain the `mcp.servers` object used above and use this local server entry:
+Or configure it manually. The QVeris CLI target writes the OpenCode V2 format below:
 
 ```json
 {
@@ -111,7 +74,7 @@ Create or edit the global OpenCode config file:
 %USERPROFILE%\.config\opencode\opencode.json
 ```
 
-If you already have an `opencode.json` file, merge either the V2 `mcp.servers.qveris` entry or the direct `mcp.qveris` and `tools["qveris*"]` sections into your existing config. Do not nest one form inside the other.
+If you already have an `opencode.json` file, merge the `mcp.servers.qveris` entry into the existing `servers` object.
 
 ## 3. Skills Configuration
 
