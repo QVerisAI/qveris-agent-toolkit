@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import hashlib
 import json
 import math
 import time
 from dataclasses import dataclass
-from typing import Any, FrozenSet, Literal, Mapping, Optional, Protocol, Sequence, Tuple
+from typing import Any, Dict, FrozenSet, Literal, Mapping, Optional, Protocol, Sequence, Tuple
 from urllib.parse import quote_plus, urlencode, urlsplit
 
 import httpx
@@ -150,31 +151,33 @@ class AgentDelegationCredentialProvider:
             )
         self._expiry_skew_seconds = expiry_skew_seconds
         self._lock = asyncio.Lock()
-        self._cached: Optional[_DelegationToken] = None
+        self._cached: Dict[Tuple[str, Tuple[str, ...]], _DelegationToken] = {}
 
     async def get_credential(self, context: CredentialContext) -> str:
         required_scopes = self._validate_context(context)
-        token = self._cached
+        subject_token = await self._resolve_subject_token(context)
+        cache_key = _delegation_cache_key(subject_token, required_scopes)
+        token = self._cached.get(cache_key)
         if token is not None and token.expires_at > time.monotonic() and required_scopes.issubset(token.scopes):
             return token.access_token
 
         async with self._lock:
-            token = self._cached
+            token = self._cached.get(cache_key)
             if token is not None and token.expires_at > time.monotonic() and required_scopes.issubset(token.scopes):
                 return token.access_token
-            token = await self._exchange_token(context)
+            token = await self._exchange_token(subject_token, required_scopes)
             if not required_scopes.issubset(token.scopes):
                 raise AgentDelegationError(
                     "invalid_token_response",
                     "Delegation token does not cover the requested scopes",
                 )
-            self._cached = token
+            self._cached[cache_key] = token
             return token.access_token
 
     def clear(self) -> None:
         """Drop the cached in-memory token without persisting or revoking it."""
 
-        self._cached = None
+        self._cached.clear()
 
     def _validate_context(self, context: CredentialContext) -> FrozenSet[str]:
         if context.audience != self._resource:
@@ -190,22 +193,27 @@ class AgentDelegationCredentialProvider:
             )
         return requested
 
-    async def _exchange_token(self, context: CredentialContext) -> _DelegationToken:
+    async def _resolve_subject_token(self, context: CredentialContext) -> str:
         try:
-            subject_token = await resolve_credential(self._subject_credential_provider, context)
+            return await resolve_credential(self._subject_credential_provider, context)
         except Exception:
             raise AgentDelegationError(
                 "subject_credential_failed",
                 "The subject credential provider failed to provide a user access token",
             ) from None
 
+    async def _exchange_token(
+        self,
+        subject_token: str,
+        required_scopes: FrozenSet[str],
+    ) -> _DelegationToken:
         form: list[tuple[str, str]] = [
             ("grant_type", self._TOKEN_EXCHANGE_GRANT),
             ("subject_token", subject_token),
             ("subject_token_type", self._ACCESS_TOKEN_TYPE),
             ("requested_token_type", self._ACCESS_TOKEN_TYPE),
             ("resource", self._resource),
-            ("scope", " ".join(self._scopes)),
+            ("scope", " ".join(sorted(required_scopes))),
         ]
         _append_constraints(form, self._constraints)
         basic_value = f"{quote_plus(self._client_id)}:{quote_plus(self._client_secret)}"
@@ -219,16 +227,14 @@ class AgentDelegationCredentialProvider:
         try:
             if self._http_client is None:
                 async with httpx.AsyncClient(timeout=self._exchange_timeout, follow_redirects=False) as client:
-                    response_status, response_content = await self._send_token_exchange(
-                        client,
-                        encoded_form,
-                        headers,
+                    response_status, response_content = await asyncio.wait_for(
+                        self._send_token_exchange(client, encoded_form, headers),
+                        timeout=self._exchange_timeout,
                     )
             else:
-                response_status, response_content = await self._send_token_exchange(
-                    self._http_client,
-                    encoded_form,
-                    headers,
+                response_status, response_content = await asyncio.wait_for(
+                    self._send_token_exchange(self._http_client, encoded_form, headers),
+                    timeout=self._exchange_timeout,
                 )
         except AgentDelegationError:
             raise
@@ -251,7 +257,7 @@ class AgentDelegationCredentialProvider:
                 "invalid_token_response",
                 "Agent token response was not valid JSON",
             ) from None
-        return self._validate_token_response(payload)
+        return self._validate_token_response(payload, required_scopes)
 
     async def _send_token_exchange(
         self,
@@ -290,7 +296,7 @@ class AgentDelegationCredentialProvider:
         finally:
             await response.aclose()
 
-    def _validate_token_response(self, value: Any) -> _DelegationToken:
+    def _validate_token_response(self, value: Any, required_scopes: FrozenSet[str]) -> _DelegationToken:
         if not isinstance(value, dict):
             raise AgentDelegationError("invalid_token_response", "Agent token response had an invalid shape")
         if "refresh_token" in value:
@@ -316,7 +322,7 @@ class AgentDelegationCredentialProvider:
                 "Agent token response changed the delegated resource or scope",
             )
         response_scopes = frozenset(_normalize_scopes(value["scope"].split()))
-        if not response_scopes.issubset(self._scope_set):
+        if not response_scopes.issubset(required_scopes):
             raise AgentDelegationError(
                 "invalid_token_response",
                 "Agent token response widened the requested scopes",
@@ -328,6 +334,11 @@ class AgentDelegationCredentialProvider:
             expires_at=time.monotonic() + expires_in - skew,
             scopes=response_scopes,
         )
+
+
+def _delegation_cache_key(subject_token: str, scopes: FrozenSet[str]) -> Tuple[str, Tuple[str, ...]]:
+    """Build a non-secret cache key for one subject credential and exact scope set."""
+    return hashlib.sha256(subject_token.encode("utf-8")).hexdigest(), tuple(sorted(scopes))
 
 
 async def resolve_credential(provider: CredentialProvider, context: CredentialContext) -> str:

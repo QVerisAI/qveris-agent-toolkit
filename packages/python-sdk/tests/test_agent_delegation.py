@@ -39,7 +39,7 @@ def token_payload(**overrides: object) -> dict[str, object]:
         "issued_token_type": "urn:ietf:params:oauth:token-type:access_token",
         "token_type": "Bearer",
         "expires_in": 600,
-        "scope": "tools.inspect tools.execute",
+        "scope": "tools.execute",
         "resource": RESOURCE,
         "constraints": {
             "model": "model-a",
@@ -134,7 +134,7 @@ async def test_delegation_exchange_is_exact_cached_and_concurrency_safe() -> Non
         assert form["grant_type"] == ["urn:ietf:params:oauth:grant-type:token-exchange"]
         assert form["subject_token"] == [SUBJECT_TOKEN]
         assert form["resource"] == [RESOURCE]
-        assert form["scope"] == ["tools.execute tools.inspect"]
+        assert form["scope"] == ["tools.execute"]
         assert form["tool_ids"] == ["weather.tool.v1"]
         assert form["model"] == ["model-a"]
         assert form["run_id"] == ["run-1"]
@@ -149,7 +149,52 @@ async def test_delegation_exchange_is_exact_cached_and_concurrency_safe() -> Non
         assert await provider.get_credential(CONTEXT) == DELEGATION_TOKEN
 
     assert len(requests) == 1
-    assert subject.contexts == [CONTEXT]
+    assert subject.contexts == [CONTEXT] * 101
+
+
+@pytest.mark.asyncio
+async def test_delegation_cache_isolated_by_subject_credential() -> None:
+    subject = SubjectProvider()
+    subject.token = "subject-a"  # type: ignore[attr-defined]
+
+    async def get_credential(context: CredentialContext) -> str:
+        subject.contexts.append(context)
+        return subject.token  # type: ignore[attr-defined]
+
+    subject.get_credential = get_credential  # type: ignore[method-assign]
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        subject_token = parse_qs(request.content.decode())["subject_token"][0]
+        return httpx.Response(200, json=token_payload(access_token=f"delegated-{subject_token}"))
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        provider = build_provider(client, subject)
+        assert await provider.get_credential(CONTEXT) == "delegated-subject-a"
+        subject.token = "subject-b"  # type: ignore[attr-defined]
+        assert await provider.get_credential(CONTEXT) == "delegated-subject-b"
+
+
+@pytest.mark.asyncio
+async def test_delegation_applies_timeout_with_injected_http_client() -> None:
+    async def handler(_request: httpx.Request) -> httpx.Response:
+        await asyncio.sleep(1)
+        return httpx.Response(200, json=token_payload())
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler), timeout=None) as client:
+        provider = AgentDelegationCredentialProvider(
+            token_endpoint=TOKEN_ENDPOINT,
+            client_id=CLIENT_ID,
+            client_secret=CLIENT_SECRET,
+            subject_credential_provider=SubjectProvider(),
+            resource=RESOURCE,
+            scopes=("tools.execute",),
+            http_client=client,
+            exchange_timeout=0.01,
+        )
+        with pytest.raises(AgentDelegationError) as captured:
+            await provider.get_credential(CONTEXT)
+
+    assert captured.value.code == "token_exchange_failed"
 
 
 @pytest.mark.asyncio

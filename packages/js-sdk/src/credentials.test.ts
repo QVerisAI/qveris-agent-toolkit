@@ -36,7 +36,7 @@ function tokenResponse(overrides: Record<string, unknown> = {}, init: ResponseIn
       issued_token_type: 'urn:ietf:params:oauth:token-type:access_token',
       token_type: 'Bearer',
       expires_in: 600,
-      scope: 'tools.inspect tools.execute',
+      scope: 'tools.execute',
       resource: RESOURCE,
       constraints: {
         model: 'model-a',
@@ -152,7 +152,7 @@ describe('AgentDelegationCredentialProvider', () => {
       expect(form.get('grant_type')).toBe('urn:ietf:params:oauth:grant-type:token-exchange');
       expect(form.get('subject_token')).toBe(SUBJECT_TOKEN);
       expect(form.get('resource')).toBe(RESOURCE);
-      expect(form.get('scope')).toBe('tools.execute tools.inspect');
+      expect(form.get('scope')).toBe('tools.execute');
       expect(form.getAll('tool_ids')).toEqual(['weather.tool.v1']);
       expect(form.getAll('provider_ids')).toEqual(['openweather']);
       expect(form.get('model')).toBe('model-a');
@@ -167,9 +167,10 @@ describe('AgentDelegationCredentialProvider', () => {
 
     expect(tokens).toEqual(Array.from({ length: 20 }, () => DELEGATION_TOKEN));
     expect(fetchImpl).toHaveBeenCalledTimes(1);
-    expect(contexts).toEqual([CONTEXT]);
+    expect(contexts).toEqual(Array.from({ length: 20 }, () => CONTEXT));
     expect(await delegated.getCredential(CONTEXT)).toBe(DELEGATION_TOKEN);
     expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(contexts).toEqual(Array.from({ length: 21 }, () => CONTEXT));
   });
 
   it('keeps the exchange timeout active while reading the response body', async () => {
@@ -205,6 +206,41 @@ describe('AgentDelegationCredentialProvider', () => {
     delegated.clear();
     await delegated.getCredential(CONTEXT);
 
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it('isolates cached and in-flight exchanges by subject credential', async () => {
+    let subjectToken = 'subject-a';
+    let releaseExchange!: () => void;
+    const exchangeGate = new Promise<void>((resolve) => {
+      releaseExchange = resolve;
+    });
+    let firstExchangeStarted!: () => void;
+    const firstExchange = new Promise<void>((resolve) => {
+      firstExchangeStarted = resolve;
+    });
+    const subject: CredentialProvider = {
+      async getCredential() {
+        return subjectToken;
+      },
+    };
+    const fetchImpl = vi.fn<typeof fetch>(async (_input, init) => {
+      const form = new URLSearchParams(String(init?.body));
+      firstExchangeStarted();
+      await exchangeGate;
+      return tokenResponse({ access_token: `delegated-${form.get('subject_token')}` });
+    });
+    const delegated = provider(fetchImpl, subject);
+
+    const subjectA = delegated.getCredential(CONTEXT);
+    await firstExchange;
+    subjectToken = 'subject-b';
+    const subjectB = delegated.getCredential(CONTEXT);
+    await vi.waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(2));
+    releaseExchange();
+
+    await expect(subjectA).resolves.toBe('delegated-subject-a');
+    await expect(subjectB).resolves.toBe('delegated-subject-b');
     expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 
@@ -260,7 +296,7 @@ describe('AgentDelegationCredentialProvider', () => {
     ['token type', { token_type: 'Basic' }],
     ['lifetime', { expires_in: 601 }],
     ['resource', { resource: 'https://wrong.example' }],
-    ['scope widening', { scope: 'tools.execute admin' }],
+    ['scope widening', { scope: 'tools.execute tools.inspect' }],
     ['model constraint', { constraints: { model: 'other' } }],
     ['list constraint shape', { constraints: { model: 'model-a', tool_ids: 'bad', run_id: 'run-1', max_credits: 10 } }],
     [

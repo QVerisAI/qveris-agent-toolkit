@@ -1,4 +1,5 @@
 import { Buffer } from 'node:buffer';
+import { createHash } from 'node:crypto';
 
 import type { ApiOperation } from './types.js';
 
@@ -132,8 +133,8 @@ export class AgentDelegationCredentialProvider implements CredentialProvider {
   readonly #fetch: typeof fetch;
   readonly #exchangeTimeoutMs: number;
   readonly #expirySkewSeconds: number;
-  #cached?: DelegationToken;
-  #exchange?: Promise<DelegationToken>;
+  readonly #cached = new Map<string, DelegationToken>();
+  readonly #exchanges = new Map<string, Promise<DelegationToken>>();
 
   constructor(options: AgentDelegationCredentialProviderOptions) {
     this.#tokenEndpoint = validateHttpUrl(options.tokenEndpoint, 'tokenEndpoint', true);
@@ -168,27 +169,32 @@ export class AgentDelegationCredentialProvider implements CredentialProvider {
 
   async getCredential(context: CredentialContext): Promise<string> {
     const requiredScopes = this.#validateContext(context);
+    const subjectToken = await this.#resolveSubjectToken(context);
+    const cacheKey = delegationCacheKey(subjectToken, requiredScopes);
     const now = Date.now();
-    if (this.#cached && this.#cached.expiresAtMs > now && isSubset(requiredScopes, this.#cached.scope)) {
-      return this.#cached.accessToken;
+    const cached = this.#cached.get(cacheKey);
+    if (cached && cached.expiresAtMs > now && isSubset(requiredScopes, cached.scope)) {
+      return cached.accessToken;
     }
 
-    if (!this.#exchange) {
-      this.#exchange = this.#exchangeToken(context).finally(() => {
-        this.#exchange = undefined;
+    let exchange = this.#exchanges.get(cacheKey);
+    if (!exchange) {
+      exchange = this.#exchangeToken(subjectToken, requiredScopes).finally(() => {
+        this.#exchanges.delete(cacheKey);
       });
+      this.#exchanges.set(cacheKey, exchange);
     }
-    const token = await this.#exchange;
+    const token = await exchange;
     if (!isSubset(requiredScopes, token.scope)) {
       throw new AgentDelegationError('invalid_token_response', 'Delegation token does not cover the requested scopes.');
     }
-    this.#cached = token;
+    this.#cached.set(cacheKey, token);
     return token.accessToken;
   }
 
   /** Drop the in-memory token without revoking or persisting it. */
   clear(): void {
-    this.#cached = undefined;
+    this.#cached.clear();
   }
 
   #validateContext(context: CredentialContext): ReadonlySet<string> {
@@ -208,24 +214,25 @@ export class AgentDelegationCredentialProvider implements CredentialProvider {
     return requested;
   }
 
-  async #exchangeToken(context: CredentialContext): Promise<DelegationToken> {
-    let subjectToken: string;
+  async #resolveSubjectToken(context: CredentialContext): Promise<string> {
     try {
-      subjectToken = await resolveCredential(this.#subjectCredentialProvider, context);
+      return await resolveCredential(this.#subjectCredentialProvider, context);
     } catch {
       throw new AgentDelegationError(
         'subject_credential_failed',
         'The subject credential provider failed to provide a user access token.',
       );
     }
+  }
 
+  async #exchangeToken(subjectToken: string, requiredScopes: ReadonlySet<string>): Promise<DelegationToken> {
     const form = new URLSearchParams({
       grant_type: TOKEN_EXCHANGE_GRANT,
       subject_token: subjectToken,
       subject_token_type: ACCESS_TOKEN_TYPE,
       requested_token_type: ACCESS_TOKEN_TYPE,
       resource: this.#resource,
-      scope: this.#scopes.join(' '),
+      scope: [...requiredScopes].sort().join(' '),
     });
     appendConstraints(form, this.#constraints);
 
@@ -275,10 +282,10 @@ export class AgentDelegationCredentialProvider implements CredentialProvider {
     } catch {
       throw new AgentDelegationError('invalid_token_response', 'Agent token response was not valid JSON.');
     }
-    return this.#validateTokenResponse(payload);
+    return this.#validateTokenResponse(payload, requiredScopes);
   }
 
-  #validateTokenResponse(value: unknown): DelegationToken {
+  #validateTokenResponse(value: unknown, requiredScopes: ReadonlySet<string>): DelegationToken {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
       throw new AgentDelegationError('invalid_token_response', 'Agent token response had an invalid shape.');
     }
@@ -304,7 +311,7 @@ export class AgentDelegationCredentialProvider implements CredentialProvider {
       );
     }
     const responseScopes = new Set(normalizeScopes(payload.scope.split(/\s+/)));
-    if (!isSubset(responseScopes, this.#scopeSet)) {
+    if (!isSubset(responseScopes, requiredScopes)) {
       throw new AgentDelegationError('invalid_token_response', 'Agent token response widened the requested scopes.');
     }
     validateReturnedConstraints(payload.constraints, this.#constraints);
@@ -315,6 +322,15 @@ export class AgentDelegationCredentialProvider implements CredentialProvider {
       scope: responseScopes,
     };
   }
+}
+
+/**
+ * Keep caches non-secret while partitioning every token by the user credential
+ * that authorized its exchange and by the exact scope request.
+ */
+function delegationCacheKey(subjectToken: string, requiredScopes: ReadonlySet<string>): string {
+  const subjectFingerprint = createHash('sha256').update(subjectToken).digest('base64url');
+  return `${subjectFingerprint}:${JSON.stringify([...requiredScopes].sort())}`;
 }
 
 /** Resolve and validate a provider value without exposing it in errors. */
