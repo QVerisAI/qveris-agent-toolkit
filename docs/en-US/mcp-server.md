@@ -2,7 +2,7 @@
 
 ## What it is
 
-`@qverisai/mcp` is the official QVeris MCP server for MCP-compatible clients such as Cursor, Claude Desktop, Cherry Studio, and other coding agents.
+`@qverisai/mcp` is the official QVeris MCP server for MCP-compatible clients such as ChatGPT (Codex), Cursor, Claude Desktop, Cherry Studio, GitHub Copilot, Cline, Roo Code, Kiro, Qoder, CodeBuddy, WorkBuddy, and other coding agents.
 
 `@qverisai/mcp` v0.14.0 is the latest tested release. It gives agents access to QVeris through six canonical MCP tools:
 
@@ -21,7 +21,7 @@ In other words, the MCP server is the agent-facing transport for the same core Q
 
 Use the MCP server when:
 
-- You are integrating QVeris into Cursor, Claude Desktop, Cherry Studio, OpenCode, or another MCP client
+- You are integrating QVeris into ChatGPT (Codex), Cursor, Claude Desktop, Cherry Studio, GitHub Copilot, Cline, Roo Code, Continue, Kiro, Junie, Augment, Zed, Google Antigravity, Qoder, CodeBuddy, WorkBuddy, OpenCode, or another MCP client
 - You want the agent to call QVeris tools directly in chat
 - You want the client to manage tool invocation automatically
 
@@ -149,6 +149,33 @@ In [Cherry Studio](https://cherryai.com/), open **Settings → MCP Server**, add
 ```
 
 Save the server, enable it in the conversation, and confirm that `discover`, `inspect`, `probe`, and `call` are available.
+
+### Desktop agent clients
+
+The following desktop agents support QVeris through a local stdio MCP server: **ChatGPT (Codex)**, **GitHub Copilot**, **Cline**, **Roo Code**, **Continue**, **Kiro**, **Junie**, **Augment**, **Zed**, **Google Antigravity**, **Qoder**, **CodeBuddy**, and **WorkBuddy**, alongside the clients shown above.
+
+For ChatGPT (Codex), run:
+
+```bash
+codex mcp add qveris --env QVERIS_API_KEY=your-api-key-here --env QVERIS_BASE_URL=https://qveris.ai/api/v1 -- npx -y @qverisai/mcp
+```
+
+For the other clients, open the product's MCP settings and import the standard configuration below. GitHub Copilot uses the `servers` wrapper in its `mcp.json`; Zed exposes the same name, command, arguments, and environment fields in its Agent panel.
+
+```json
+{
+  "mcpServers": {
+    "qveris": {
+      "command": "npx",
+      "args": ["-y", "@qverisai/mcp"],
+      "env": {
+        "QVERIS_API_KEY": "your-api-key-here",
+        "QVERIS_BASE_URL": "https://qveris.ai/api/v1"
+      }
+    }
+  }
+}
+```
 
 For environment-specific setup guides, see:
 

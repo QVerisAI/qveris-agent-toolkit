@@ -84,7 +84,7 @@ Skip to **Section 3: Verify Installation** once `qveris doctor` passes all check
 
 ### Option B: MCP Server Setup
 
-Detect which coding tool or environment you are currently running in (e.g., Claude Code, OpenCode, Cursor, Cherry Studio, Trae, VS Code).
+Detect which MCP-capable desktop client you are currently running in. QVeris supports Claude Code, ChatGPT (Codex), OpenCode, Cursor, Cherry Studio, TRAE, GitHub Copilot, Cline, Roo Code, Continue, Kiro, Junie, Augment, Zed, Google Antigravity, Qoder, CodeBuddy, and WorkBuddy.
 
 **Configuration involves two steps for all environments:**
 1. **MCP Server Setup:** Connects the QVeris tool server (`@qverisai/mcp` v0.14.0) to your environment.
@@ -132,7 +132,20 @@ Save it to:
 - Mac/Linux: `~/.claude/skills/qveris/SKILL.md`
 - Windows: `%USERPROFILE%\.claude\skills\qveris\SKILL.md`
 
-#### B. OpenCode
+#### B. ChatGPT (Codex)
+
+The ChatGPT desktop app, Codex CLI, and Codex IDE extension share the same local MCP configuration. Run:
+
+```bash
+codex mcp add qveris --env QVERIS_API_KEY=YOUR_QVERIS_API_KEY -- npx -y @qverisai/mcp
+```
+
+This adds the server to `~/.codex/config.toml`. You can also add the same STDIO server from **Settings → MCP servers** in the desktop app or IDE extension. ChatGPT on the web cannot read local STDIO configuration.
+
+**Skill Configuration**
+Download the skill definition file and save it to `~/.agents/skills/qveris/SKILL.md`, then restart the client if it does not appear.
+
+#### C. OpenCode
 
 **Step 1: MCP Server Configuration**
 Edit the user configuration file at `~/.config/opencode/opencode.json` (Mac/Linux) or `%USERPROFILE%\.config\opencode\opencode.json` (Windows).
@@ -164,7 +177,7 @@ Save it to:
 - Mac/Linux: `~/.config/opencode/skill/qveris/SKILL.md`
 - Windows: `%USERPROFILE%\.config\opencode\skill\qveris\SKILL.md`
 
-#### C. Cursor
+#### D. Cursor
 
 **Step 1: MCP Server Configuration**
 Locate the MCP settings file: `~/.cursor/mcp.json` (Mac/Linux) or `%USERPROFILE%\.cursor\mcp.json` (Windows).
@@ -187,11 +200,14 @@ Download the skill definition file from:
 
 Save it as `.cursor/rules/qveris.mdc` in the project root.
 
-#### D. Other Environments (Trae, VSCode etc.)
+#### E. Other Desktop MCP Clients
 
 **Step 1: MCP Server Configuration**
-First figure out the MCP configuration file for your specific coding tool.
-- **Trae:** Typically `~/.trae/mcp.json` or `%USERPROFILE%\.trae\mcp.json`.
+Use the client's MCP settings to add the standard STDIO server below. This applies to TRAE, Cline, Roo Code, Continue, Kiro, Junie, Augment, Google Antigravity, Qoder, CodeBuddy, and WorkBuddy.
+
+- **GitHub Copilot in VS Code:** add the server beneath the `servers` object in VS Code's `mcp.json`, not directly beneath `mcpServers`.
+- **Zed:** create a custom server in the MCP settings and enter the command, arguments, and environment variables as fields rather than pasting a JSON file.
+- **TRAE:** its file is typically `~/.trae/mcp.json` or `%USERPROFILE%\.trae\mcp.json`.
 
 Add the standard MCP server configuration to the `mcpServers` object:
 ```json
@@ -208,7 +224,7 @@ Add the standard MCP server configuration to the `mcpServers` object:
 If the environment supports rule or skill files, add the file from:
 `https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/skills/qveris/SKILL.md`
 
-#### E. Cherry Studio
+#### F. Cherry Studio
 
 Open **Settings → MCP Server** in [Cherry Studio](https://cherryai.com/) and add a server with these values:
 
@@ -226,7 +242,7 @@ Open **Settings → MCP Server** in [Cherry Studio](https://cherryai.com/) and a
 
 Save the server, enable it in the conversation, and confirm that `discover`, `inspect`, `probe`, and `call` are available.
 
-#### F. OpenClaw
+#### G. OpenClaw
 
 OpenClaw supports two integration methods. The Plugin method is recommended for full functionality.
 

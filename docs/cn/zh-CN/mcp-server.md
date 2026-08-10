@@ -2,7 +2,7 @@
 
 ## 简介
 
-`@qverisai/mcp` 是面向 Cursor、Cherry Studio 及其他编程 Agent 等 MCP 兼容客户端的官方 QVeris MCP 服务器。
+`@qverisai/mcp` 是面向 Cursor、Cherry Studio、GitHub Copilot、Cline、Roo Code、Kiro、Qoder、CodeBuddy、WorkBuddy 及其他编程 Agent 等 MCP 兼容客户端的官方 QVeris MCP 服务器。
 
 `@qverisai/mcp` v0.14.0 是最新测试版本，通过六个规范 MCP 工具为 Agent 提供 QVeris 访问能力：
 
@@ -21,7 +21,7 @@
 
 **适合使用 MCP 服务器的场景：**
 
-- 将 QVeris 集成到 Cursor、Cherry Studio、OpenCode 或其他 MCP 客户端
+- 将 QVeris 集成到 Cursor、Cherry Studio、GitHub Copilot、Cline、Roo Code、Continue、Kiro、Junie、Augment、Zed、Google Antigravity、Qoder、CodeBuddy、WorkBuddy、OpenCode 或其他 MCP 客户端
 - 希望 Agent 在对话中直接调用 QVeris 工具
 - 希望客户端自动管理工具调用
 
@@ -132,6 +132,27 @@ qveris mcp validate --target cursor --probe
 ```
 
 保存服务器，在对话中启用它，并确认可见 `discover`、`inspect`、`probe` 和 `call`。
+
+### 桌面端 Agent 客户端
+
+除上文客户端外，以下桌面端 Agent 也可通过本地 stdio MCP 使用 QVeris：**GitHub Copilot**、**Cline**、**Roo Code**、**Continue**、**Kiro**、**Junie**、**Augment**、**Zed**、**Google Antigravity**、**Qoder**、**CodeBuddy** 和 **WorkBuddy**。
+
+请在 MCP 设置中导入以下标准配置。GitHub Copilot 在 `mcp.json` 中使用 `servers` 外层键；Zed 在 Agent 面板中填写相同的名称、命令、参数和环境变量。
+
+```json
+{
+  "mcpServers": {
+    "qveris": {
+      "command": "npx",
+      "args": ["-y", "@qverisai/mcp"],
+      "env": {
+        "QVERIS_API_KEY": "your-api-key-here",
+        "QVERIS_BASE_URL": "https://qveris.cn/api/v1"
+      }
+    }
+  }
+}
+```
 
 各环境的详细配置指南，请参考：
 

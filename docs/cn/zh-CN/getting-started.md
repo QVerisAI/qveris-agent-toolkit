@@ -379,9 +379,9 @@ console.log(data);
 
 ### 在 AI Agent 中安装 QVeris
 
-如果你正在配置 AI 编程助手（Cursor、OpenCode、Trae 等），可以将 [Agent 安装指南](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/SETUP.md) 连同你的 API 密钥一起提供给 Agent。它会自动检测运行环境，并完成 MCP 服务器和技能定义的配置。
+如果你正在配置 AI 编程助手或桌面端 Agent（Cursor、GitHub Copilot、Cline、Roo Code、Continue、Kiro、Junie、Augment、Zed、Google Antigravity、Qoder、CodeBuddy、WorkBuddy、OpenCode、TRAE 等），可以将 [Agent 安装指南](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/SETUP.md) 连同你的 API 密钥一起提供给 Agent。它会自动检测运行环境，并完成可用 MCP 服务器和技能定义的配置。
 
-支持的环境：OpenCode、Cursor、Cherry Studio、Trae、VS Code、OpenClaw。
+支持 MCP 的桌面端客户端包括：Cursor、GitHub Copilot、Cherry Studio、Cline、Roo Code、Continue、Kiro、Junie、Augment、Zed、Google Antigravity、Qoder、CodeBuddy、WorkBuddy、OpenCode、TRAE、Windsurf 和 VS Code。
 
 ---
 
