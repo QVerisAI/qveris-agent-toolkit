@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-08-10
+
 ### Added
 
 - Added `AgentDelegationCredentialProvider` for RFC 8693 exchanges by registered confidential Agent Runtimes, with fail-closed audience/scope binding, constraint narrowing, memory-only caching, and no refresh-token support. ([#228])
@@ -61,7 +63,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - `0.1.x` under this npm name was an early MCP-focused SDK, superseded by `@qverisai/mcp`.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.7.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.0...HEAD
+[0.8.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.7.0...js-sdk-v0.8.0
 [0.7.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.6.0...js-sdk-v0.7.0
 [0.6.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.5.0...js-sdk-v0.6.0
 [0.5.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.4.0...js-sdk-v0.5.0

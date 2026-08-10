@@ -4,7 +4,7 @@
 
 `@qverisai/mcp` is the official QVeris MCP server for MCP-compatible clients such as Cursor, Claude Desktop, and other coding agents.
 
-`@qverisai/mcp` v0.13.0 is the latest tested release. It gives agents access to QVeris through six canonical MCP tools:
+`@qverisai/mcp` v0.14.0 is the latest tested release. It gives agents access to QVeris through six canonical MCP tools:
 
 - `discover` — Find capabilities by natural language
 - `inspect` — Get detailed tool info (params, success rate, examples)
