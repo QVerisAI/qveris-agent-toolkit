@@ -1,3 +1,5 @@
+[![MCP Toplist](https://mcptoplist.com/badge/io.github.QVerisAI%2Fmcp.svg)](https://mcptoplist.com/server/io.github.QVerisAI%2Fmcp)
+
 
 <div align="center">
   <img src="assets/logo-light.png" width="120" alt="QVeris Logo" />
