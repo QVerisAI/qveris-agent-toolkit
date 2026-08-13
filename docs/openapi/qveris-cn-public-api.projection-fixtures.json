@@ -1,5 +1,5 @@
 {
-  "contract_version": "2026-07-30.1",
+  "contract_version": "2026-08-13.1",
   "compatibility": {
     "legacy_service_ignores_projection": {
       "request": {"query": "查询当前天气", "view": "routing"},
@@ -81,6 +81,34 @@
       "execution_id": "exec_fixture_fields",
       "success": true,
       "result": {"respond_with": "fields:$.temperature", "data": {"temperature": 28.5}}
+    }
+  },
+  "capability_detail": {
+    "request": {"capability_id": "MKT.BARS.EOD"},
+    "response_status": 200,
+    "response": {
+      "capability_id": "MKT.BARS.EOD",
+      "name": "日线行情",
+      "description": "按证券代码查询每日市场行情。",
+      "contract_version": 7,
+      "schema_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  "capability_query": {
+    "request": {
+      "capability_id": "MKT.BARS.EOD",
+      "parameters": {"symbol": "600519.SH"},
+      "max_credits": 3.5
+    },
+    "response_status": 200,
+    "response": {
+      "execution_id": "exec_fixture_cap_query",
+      "capability_id": "MKT.BARS.EOD",
+      "success": true,
+      "result": {"status_code": 200, "data": [{"close": 1426.95}]},
+      "contract_version": 7,
+      "schema_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "cost": 2.5
     }
   },
   "invalid_projection": {

@@ -7,7 +7,17 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import AnyUrl, BaseModel, ConfigDict, Field, PositiveInt, conint, constr
+from pydantic import (
+    AnyUrl,
+    BaseModel,
+    ConfigDict,
+    Field,
+    PositiveFloat,
+    PositiveInt,
+    RootModel,
+    conint,
+    constr,
+)
 
 
 class APIResponseDict(BaseModel):
@@ -88,6 +98,7 @@ class OAuthAccessTokenResponse(BaseModel):
         None, title='Refresh Token Expires In'
     )
     id_token: Optional[str] = Field(None, title='Id Token')
+    resource_tokens: Optional[Dict[str, str]] = Field(None, title='Resource Tokens')
     tool_api_key: Optional[str] = Field(None, title='Tool Api Key')
     tool_api_key_name: Optional[str] = Field(None, title='Tool Api Key Name')
 
@@ -241,7 +252,7 @@ class PublicApiMetadata(BaseModel):
     contract_version: str = Field(
         ...,
         description='Version of the published QVeris REST API contract.',
-        examples=['2026-07-30.1'],
+        examples=['2026-08-13.1'],
         title='Contract Version',
     )
 
@@ -495,6 +506,94 @@ class PublicApiError(BaseModel):
     execution_id: Optional[str] = None
     total: Optional[int] = None
     results: Optional[List[Dict[str, Any]]] = None
+
+
+class PublicCapabilityDetailResponse(BaseModel):
+    model_config = ConfigDict(
+        extra='allow',
+    )
+    capability_id: str
+    name: Optional[str] = None
+    description: Optional[str] = None
+    params: Optional[List[Dict[str, Any]]] = None
+    field_spec: Optional[Dict[str, Any]] = None
+    contract_version: Optional[conint(ge=1)] = Field(
+        None, description='Published CAP contract version.'
+    )
+    schema_hash: Optional[constr(pattern=r'^[0-9a-f]{64}$')] = Field(
+        None, description='SHA-256 identity of the published CAP contract.'
+    )
+    remaining_credits: Optional[float] = None
+
+
+class PublicCapabilityQueryRequest1(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    capability_id: constr(pattern=r'\S', min_length=1)
+    query: Optional[constr(pattern=r'\S', min_length=1)] = None
+    parameters: Optional[Dict[str, Any]] = {}
+    params: Optional[Dict[str, Any]] = {}
+    session_id: Optional[str] = None
+    search_id: Optional[str] = None
+    run_id: Optional[str] = None
+    provider_id: Optional[str] = None
+    provider_ids: Optional[List[str]] = None
+    max_response_size: Optional[conint(ge=-1)] = 20480
+    max_credits: Optional[PositiveFloat] = Field(
+        None,
+        description='Maximum credits allowed for this execution. Candidates without a provable upper bound are excluded.',
+    )
+
+
+class PublicCapabilityQueryRequest2(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    capability_id: Optional[constr(pattern=r'\S', min_length=1)] = None
+    query: constr(pattern=r'\S', min_length=1)
+    parameters: Optional[Dict[str, Any]] = {}
+    params: Optional[Dict[str, Any]] = {}
+    session_id: Optional[str] = None
+    search_id: Optional[str] = None
+    run_id: Optional[str] = None
+    provider_id: Optional[str] = None
+    provider_ids: Optional[List[str]] = None
+    max_response_size: Optional[conint(ge=-1)] = 20480
+    max_credits: Optional[PositiveFloat] = Field(
+        None,
+        description='Maximum credits allowed for this execution. Candidates without a provable upper bound are excluded.',
+    )
+
+
+class PublicCapabilityQueryRequest(
+    RootModel[Union[PublicCapabilityQueryRequest1, PublicCapabilityQueryRequest2]]
+):
+    root: Union[PublicCapabilityQueryRequest1, PublicCapabilityQueryRequest2] = Field(
+        ..., title='PublicCapabilityQueryRequest'
+    )
+
+
+class PublicCapabilityQueryResponse(BaseModel):
+    model_config = ConfigDict(
+        extra='allow',
+    )
+    execution_id: str
+    capability_id: Optional[str] = None
+    parameters: Optional[Dict[str, Any]] = None
+    result: Optional[Dict[str, Any]] = None
+    success: bool
+    error_message: Optional[str] = None
+    billing: Optional[Dict[str, Any]] = None
+    cost: Optional[float] = None
+    credits_used: Optional[float] = None
+    remaining_credits: Optional[float] = None
+    contract_version: Optional[conint(ge=1)] = Field(
+        None, description='Published CAP contract version.'
+    )
+    schema_hash: Optional[constr(pattern=r'^[0-9a-f]{64}$')] = Field(
+        None, description='SHA-256 identity of the published CAP contract.'
+    )
 
 
 class View(Enum):

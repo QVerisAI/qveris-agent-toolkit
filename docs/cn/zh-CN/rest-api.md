@@ -1,6 +1,6 @@
 # QVeris REST API 文档
 
-版本：2026-07-30.1
+版本：2026-08-13.1
 
 公开 REST API 暴露核心 Agent 路径：
 
@@ -15,7 +15,7 @@
 
 请将示例中的 `srch_...`、`exec_...`、`led_...` 替换为你自己 API 响应中返回的 ID。
 
-聚焦参考页：[Discover](api-reference/discover.md)、[Inspect](api-reference/inspect.md)、[Probe](api-reference/probe.md)、[Call](api-reference/call.md)。侧栏和公共 [OpenAPI JSON](/openapi.json) 覆盖全部 24 个已发布操作。
+聚焦参考页：[Discover](api-reference/discover.md)、[Inspect](api-reference/inspect.md)、[Probe](api-reference/probe.md)、[Call](api-reference/call.md)。侧栏和公共 [OpenAPI JSON](/openapi.json) 覆盖全部 26 个已发布操作。
 
 ## Base URL
 
