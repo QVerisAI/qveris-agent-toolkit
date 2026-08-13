@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "QVeris Public REST API",
-    "version": "2026-07-30.1",
+    "version": "2026-08-13.1",
     "summary": "External REST API for enterprise integration.",
     "description": "OpenAPI 3.1 schema for the formally released public `/api/v1` REST API surface. It covers search, provider discovery, tool metadata lookup/execution, credits, and account audit endpoints. Unreleased API families are intentionally excluded from this customer-facing schema."
   },
@@ -118,7 +118,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -138,7 +138,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -172,7 +172,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -185,7 +185,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -464,7 +464,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -484,7 +484,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -510,7 +510,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -587,7 +587,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -607,7 +607,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -704,7 +704,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -754,7 +754,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -774,7 +774,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -887,7 +887,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -907,7 +907,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -1369,7 +1369,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -1389,7 +1389,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -1415,7 +1415,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -1710,7 +1710,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2036,7 +2036,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2056,7 +2056,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2107,7 +2107,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2127,7 +2127,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2161,7 +2161,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2172,6 +2172,514 @@
             "OAuth2PasswordBearer": []
           }
         ],
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published"
+      }
+    },
+    "/capabilities/query": {
+      "post": {
+        "tags": [
+          "Capabilities"
+        ],
+        "summary": "Execute a CAP within a credit budget",
+        "description": "Execute a CAP through capability-aware routing. `max_credits` is forwarded unchanged and excludes candidates whose upper-bound price cannot be proven within the budget. The response identifies the contract used by the actual execution.",
+        "operationId": "capabilities_query_api_v1_capabilities_query_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCapabilityQueryResponse"
+                },
+                "example": {
+                  "execution_id": "exec_01HZX9R2R4S2E",
+                  "capability_id": "MKT.BARS.EOD",
+                  "success": true,
+                  "result": {
+                    "status_code": 200,
+                    "data": [
+                      {
+                        "close": 201.0
+                      }
+                    ]
+                  },
+                  "contract_version": 7,
+                  "schema_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                  "cost": 2.5,
+                  "credits_used": 2.5,
+                  "remaining_credits": 992.5
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-08-13.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "message": "Invalid API key"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-08-13.1"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient credits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "message": "Insufficient credits"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-08-13.1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Delegation constraint rejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "message": "Delegation constraint rejected"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-08-13.1"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Account unavailable during credit settlement",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "message": "Account unavailable during credit settlement"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-08-13.1"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Capabilities query request timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "message": "Capabilities query request timeout"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-08-13.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "No candidate fits max_credits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "message": "No candidate fits max_credits"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-08-13.1"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Capabilities query failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "message": "Capabilities query failed"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-08-13.1"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Capability routing unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "message": "Capability routing unavailable"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-08-13.1"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicCapabilityQueryRequest"
+              },
+              "example": {
+                "capability_id": "MKT.BARS.EOD",
+                "parameters": {
+                  "symbol": "AAPL"
+                },
+                "max_credits": 3.5
+              }
+            }
+          }
+        }
+      }
+    },
+    "/capabilities/{capability_id}": {
+      "get": {
+        "tags": [
+          "Capabilities"
+        ],
+        "summary": "Inspect a CAP contract",
+        "description": "Return the current published CAP contract. `contract_version` and `schema_hash` identify the exact contract; legacy CAP records may omit both fields.",
+        "operationId": "capabilities_detail_api_v1_capabilities__capability_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "capability_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S",
+              "title": "Capability Id"
+            }
+          },
+          {
+            "name": "run_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Run identifier required by constrained delegation tokens."
+          },
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Provider target required by constrained delegation tokens."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCapabilityDetailResponse"
+                },
+                "example": {
+                  "capability_id": "MKT.BARS.EOD",
+                  "name": "End-of-Day Bars",
+                  "description": "Daily market bars for a symbol.",
+                  "contract_version": 7,
+                  "schema_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                  "remaining_credits": 995
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-08-13.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-08-13.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "message": "Invalid API key"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-08-13.1"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient credits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "message": "Insufficient credits"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-08-13.1"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Delegation constraint rejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "message": "Delegation constraint rejected"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-08-13.1"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Capability not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "message": "Capability not found"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-08-13.1"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Request timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "message": "Capability detail request timeout"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-08-13.1"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Request failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "message": "Capability detail request failed"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-08-13.1"
+                }
+              }
+            }
+          }
+        },
         "x-qveris-visibility": "public",
         "x-qveris-release-stage": "published"
       }
@@ -2200,7 +2708,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2239,7 +2747,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2315,7 +2823,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2335,7 +2843,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2355,7 +2863,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2375,7 +2883,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2412,7 +2920,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             },
@@ -2439,7 +2947,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2523,7 +3031,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2543,7 +3051,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2563,7 +3071,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2583,7 +3091,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2603,7 +3111,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2656,6 +3164,28 @@
                       }
                     ],
                     "title": "Client Id"
+                  },
+                  "client_assertion": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Client Assertion"
+                  },
+                  "client_assertion_type": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Client Assertion Type"
                   }
                 },
                 "type": "object",
@@ -2681,7 +3211,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2701,7 +3231,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2721,7 +3251,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2741,7 +3271,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2761,7 +3291,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2948,7 +3478,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2968,7 +3498,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -2988,7 +3518,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -3008,7 +3538,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -3028,7 +3558,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -3151,7 +3681,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -3171,7 +3701,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -3203,7 +3733,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -3259,7 +3789,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             },
@@ -3335,7 +3865,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             },
@@ -3384,7 +3914,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             },
@@ -3436,7 +3966,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             },
@@ -3519,7 +4049,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             },
@@ -3598,7 +4128,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             },
@@ -3647,7 +4177,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             },
@@ -3680,7 +4210,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -3803,7 +4333,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -3840,7 +4370,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             },
@@ -3893,7 +4423,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             },
@@ -3947,7 +4477,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             },
@@ -3999,7 +4529,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -4105,7 +4635,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -4142,7 +4672,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             },
@@ -4191,7 +4721,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             },
@@ -4224,7 +4754,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -4248,7 +4778,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -4273,7 +4803,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -4298,7 +4828,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -4318,7 +4848,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-07-30.1"
+                  "const": "2026-08-13.1"
                 }
               }
             }
@@ -5304,6 +5834,20 @@
             ],
             "title": "Id Token"
           },
+          "resource_tokens": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Tokens"
+          },
           "tool_api_key": {
             "anyOf": [
               {
@@ -5733,7 +6277,7 @@
             "title": "Contract Version",
             "description": "Version of the published QVeris REST API contract.",
             "examples": [
-              "2026-07-30.1"
+              "2026-08-13.1"
             ]
           }
         },
@@ -7515,6 +8059,235 @@
           }
         }
       },
+      "PublicCapabilityDetailResponse": {
+        "type": "object",
+        "title": "PublicCapabilityDetailResponse",
+        "additionalProperties": true,
+        "required": [
+          "capability_id"
+        ],
+        "dependentRequired": {
+          "contract_version": [
+            "schema_hash"
+          ],
+          "schema_hash": [
+            "contract_version"
+          ]
+        },
+        "properties": {
+          "capability_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "params": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "field_spec": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "contract_version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Published CAP contract version."
+          },
+          "schema_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "SHA-256 identity of the published CAP contract."
+          },
+          "remaining_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "PublicCapabilityQueryRequest": {
+        "type": "object",
+        "title": "PublicCapabilityQueryRequest",
+        "additionalProperties": false,
+        "anyOf": [
+          {
+            "required": [
+              "capability_id"
+            ]
+          },
+          {
+            "required": [
+              "query"
+            ]
+          }
+        ],
+        "properties": {
+          "capability_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": true,
+            "default": {}
+          },
+          "params": {
+            "type": "object",
+            "additionalProperties": true,
+            "default": {}
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "search_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "provider_id": {
+            "type": "string"
+          },
+          "provider_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "max_response_size": {
+            "type": "integer",
+            "minimum": -1,
+            "default": 20480
+          },
+          "max_credits": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Maximum credits allowed for this execution. Candidates without a provable upper bound are excluded."
+          }
+        }
+      },
+      "PublicCapabilityQueryResponse": {
+        "type": "object",
+        "title": "PublicCapabilityQueryResponse",
+        "additionalProperties": true,
+        "required": [
+          "execution_id",
+          "success"
+        ],
+        "dependentRequired": {
+          "contract_version": [
+            "schema_hash"
+          ],
+          "schema_hash": [
+            "contract_version"
+          ]
+        },
+        "properties": {
+          "execution_id": {
+            "type": "string"
+          },
+          "capability_id": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "result": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "billing": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "credits_used": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "remaining_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "contract_version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Published CAP contract version."
+          },
+          "schema_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "SHA-256 identity of the published CAP contract."
+          }
+        }
+      },
       "PublicSearchRequest": {
         "type": "object",
         "title": "PublicSearchRequest",
@@ -8416,6 +9189,10 @@
       "description": "Tool metadata lookup and execution."
     },
     {
+      "name": "Capabilities",
+      "description": "Stable CAP contract inspection and budget-aware execution."
+    },
+    {
       "name": "Account",
       "description": "Credits, usage audit, and billing ledger APIs."
     },
@@ -8424,8 +9201,8 @@
       "description": "OAuth Device Flow, token issuance and exchange, introspection, and revocation."
     }
   ],
-  "x-qveris-route-count": 24,
-  "x-qveris-public-operation-count": 24,
+  "x-qveris-route-count": 26,
+  "x-qveris-public-operation-count": 26,
   "x-qveris-private-operation-count": 0,
   "x-qveris-generation-source": "Filtered from qveris-internal-api.openapi.json"
 }

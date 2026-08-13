@@ -1,6 +1,6 @@
 # QVeris REST API Documentation
 
-Version: 2026-07-30.1
+Version: 2026-08-13.1
 
 The public REST API exposes the core agent path:
 
@@ -15,7 +15,7 @@ The public REST API exposes the core agent path:
 
 Replace sample ids such as `srch_...`, `exec_...`, and `led_...` with ids returned by your own API responses.
 
-Focused references: [Discover](api-reference/discover.md), [Inspect](api-reference/inspect.md), [Probe](api-reference/probe.md), [Call](api-reference/call.md). The sidebar and public [OpenAPI JSON](/openapi.json) cover all 24 published operations.
+Focused references: [Discover](api-reference/discover.md), [Inspect](api-reference/inspect.md), [Probe](api-reference/probe.md), [Call](api-reference/call.md). The sidebar and public [OpenAPI JSON](/openapi.json) cover all 26 published operations.
 
 ## Base URL
 
