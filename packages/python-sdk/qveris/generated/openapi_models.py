@@ -252,7 +252,7 @@ class PublicApiMetadata(BaseModel):
     contract_version: str = Field(
         ...,
         description='Version of the published QVeris REST API contract.',
-        examples=['2026-08-13.1'],
+        examples=['2026-08-21.1'],
         title='Contract Version',
     )
 
