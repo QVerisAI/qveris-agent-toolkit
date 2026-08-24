@@ -1,6 +1,6 @@
 # QVeris REST API 文档
 
-版本：2026-08-13.1
+版本：2026-08-21.1
 
 公开 REST API 暴露核心 Agent 路径：
 
