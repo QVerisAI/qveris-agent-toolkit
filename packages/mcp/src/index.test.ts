@@ -116,14 +116,53 @@ describe('MCP public tool interface', () => {
 
   it('declares complete annotations and keeps aliases identical to canonical tools', () => {
     const byName = new Map(listQverisMcpTools().map((tool) => [tool.name, tool]));
+    const canonicalTools = ['discover', 'inspect', 'call', 'usage_history', 'credits_ledger'] as const;
     const aliases = {
       search_tools: 'discover',
       get_tools_by_ids: 'inspect',
       execute_tool: 'call',
     } as const;
 
-    for (const [name, annotations] of Object.entries(QVERIS_MCP_TOOL_ANNOTATIONS)) {
-      expect(byName.get(name)?.annotations).toEqual(annotations);
+    expect(QVERIS_MCP_TOOL_ANNOTATIONS).toEqual({
+      discover: {
+        title: 'Discover QVeris capabilities',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+      inspect: {
+        title: 'Inspect QVeris capabilities',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+      call: {
+        title: 'Call a third-party capability',
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+      usage_history: {
+        title: 'Query QVeris usage history',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+      credits_ledger: {
+        title: 'Query QVeris credits ledger',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    });
+
+    for (const name of canonicalTools) {
+      expect(byName.get(name)?.annotations).toEqual(QVERIS_MCP_TOOL_ANNOTATIONS[name]);
     }
     for (const [alias, canonical] of Object.entries(aliases)) {
       expect(byName.get(alias)?.annotations).toEqual(QVERIS_MCP_TOOL_ANNOTATIONS[canonical]);

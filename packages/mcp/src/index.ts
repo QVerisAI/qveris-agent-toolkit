@@ -34,6 +34,7 @@ import {
   ReadResourceRequestSchema,
   SUPPORTED_PROTOCOL_VERSIONS,
   type CallToolResult,
+  type ToolAnnotations,
 } from '@modelcontextprotocol/sdk/types.js';
 import { resolveTransportConfig, startHttpServer } from './http.js';
 import { buildServerCard, type ServerCardInfo } from './server-card.js';
@@ -65,6 +66,10 @@ export const SERVER_VERSION: string = pkg.version;
  * Client-facing MCP safety metadata. Deprecated aliases reuse the canonical
  * classification so directory and approval behavior cannot drift by name.
  */
+type CompleteToolAnnotations = Required<
+  Pick<ToolAnnotations, 'title' | 'readOnlyHint' | 'destructiveHint' | 'idempotentHint' | 'openWorldHint'>
+>;
+
 export const QVERIS_MCP_TOOL_ANNOTATIONS = {
   discover: {
     title: 'Discover QVeris capabilities',
@@ -101,7 +106,7 @@ export const QVERIS_MCP_TOOL_ANNOTATIONS = {
     idempotentHint: true,
     openWorldHint: false,
   },
-} as const;
+} as const satisfies Record<string, CompleteToolAnnotations>;
 
 /** Discovery metadata (Server Card + Catalog) derived from package.json. */
 export function getQverisServerCardInfo(): ServerCardInfo {
