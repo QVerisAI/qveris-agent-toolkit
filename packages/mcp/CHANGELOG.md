@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Added complete MCP tool annotations (`title`, read-only, destructive, idempotent, and open-world hints) for every canonical tool and deprecated alias. The `call` family is conservatively marked as non-idempotent, destructive, and open-world. ([#316])
+
 ## [0.14.0] - 2026-08-10
 
 ### Added

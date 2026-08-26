@@ -62,6 +62,56 @@ const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
 export const SERVER_VERSION: string = pkg.version;
 
+/**
+ * Client-facing MCP safety metadata. Registries use these hints to describe
+ * approval expectations before a tool is called, so aliases deliberately
+ * reuse the canonical entry rather than duplicating a second classification.
+ */
+export const QVERIS_MCP_TOOL_ANNOTATIONS = {
+  discover: {
+    title: 'Discover QVeris capabilities',
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  inspect: {
+    title: 'Inspect QVeris capabilities',
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  probe: {
+    title: 'Probe a QVeris capability',
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  call: {
+    title: 'Call a third-party capability',
+    readOnlyHint: false,
+    destructiveHint: true,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
+  usage_history: {
+    title: 'Query QVeris usage history',
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  credits_ledger: {
+    title: 'Query QVeris credits ledger',
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+} as const;
+
 /** Discovery metadata (Server Card + Catalog) derived from package.json. */
 export function getQverisServerCardInfo(): ServerCardInfo {
   const repoUrl: string | undefined = pkg.repository?.url?.replace(/^git\+/, '').replace(/\.git$/, '');
@@ -94,6 +144,7 @@ export function listQverisMcpTools() {
         'Results may include billing_rule metadata for rule-level pricing.',
       inputSchema: searchToolsSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.discover,
+      annotations: QVERIS_MCP_TOOL_ANNOTATIONS.discover,
     },
     {
       name: 'inspect',
@@ -103,6 +154,7 @@ export function listQverisMcpTools() {
         'Use tool_ids from a previous discover call.',
       inputSchema: getToolsByIdsSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.inspect,
+      annotations: QVERIS_MCP_TOOL_ANNOTATIONS.inspect,
     },
     {
       name: 'probe',
@@ -111,6 +163,7 @@ export function listQverisMcpTools() {
         'Schema and quote are implemented; coverage and sample may return an explicit unknown verdict.',
       inputSchema: probeToolSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.probe,
+      annotations: QVERIS_MCP_TOOL_ANNOTATIONS.probe,
     },
     {
       name: 'call',
@@ -121,6 +174,7 @@ export function listQverisMcpTools() {
         'The response may include pre-settlement billing; use usage_history or credits_ledger for final charge status.',
       inputSchema: executeToolSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.call,
+      annotations: QVERIS_MCP_TOOL_ANNOTATIONS.call,
     },
     {
       name: 'usage_history',
@@ -128,6 +182,7 @@ export function listQverisMcpTools() {
         'Context-safe usage audit query. Defaults to aggregated summary, supports precise search by execution_id/search_id/charge_outcome/credit range, and writes large exports to a local JSONL file instead of returning all rows.',
       inputSchema: usageHistorySchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.usage_history,
+      annotations: QVERIS_MCP_TOOL_ANNOTATIONS.usage_history,
     },
     {
       name: 'credits_ledger',
@@ -135,6 +190,7 @@ export function listQverisMcpTools() {
         'Context-safe final credits ledger query. Defaults to aggregated summary, supports precise search by entry type/direction/credit range, and writes large exports to a local JSONL file instead of returning all rows.',
       inputSchema: creditsLedgerSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.credits_ledger,
+      annotations: QVERIS_MCP_TOOL_ANNOTATIONS.credits_ledger,
     },
     // Deprecated aliases (backward compatibility)
     {
@@ -142,18 +198,21 @@ export function listQverisMcpTools() {
       description: '[Deprecated: use "discover" instead] Search for available tools based on natural language queries.',
       inputSchema: searchToolsSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.discover,
+      annotations: QVERIS_MCP_TOOL_ANNOTATIONS.discover,
     },
     {
       name: 'get_tools_by_ids',
       description: '[Deprecated: use "inspect" instead] Get descriptions of tools based on their tool IDs.',
       inputSchema: getToolsByIdsSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.inspect,
+      annotations: QVERIS_MCP_TOOL_ANNOTATIONS.inspect,
     },
     {
       name: 'execute_tool',
       description: '[Deprecated: use "call" instead] Execute a specific remote tool with provided parameters.',
       inputSchema: executeToolSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.call,
+      annotations: QVERIS_MCP_TOOL_ANNOTATIONS.call,
     },
   ];
 }
