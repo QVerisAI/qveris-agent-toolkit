@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "QVeris Public REST API",
-    "version": "2026-08-13.1",
+    "version": "2026-08-21.1",
     "summary": "External REST API for enterprise integration.",
     "description": "OpenAPI 3.1 schema for the formally released public `/api/v1` REST API surface. It covers search, provider discovery, tool metadata lookup/execution, credits, and account audit endpoints. Unreleased API families are intentionally excluded from this customer-facing schema."
   },
@@ -118,7 +118,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -138,7 +138,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -172,7 +172,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -185,7 +185,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -464,7 +464,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -484,7 +484,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -510,7 +510,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -587,7 +587,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -607,7 +607,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -704,7 +704,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -754,7 +754,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -774,7 +774,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -887,7 +887,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -907,7 +907,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -1369,7 +1369,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -1389,7 +1389,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -1415,7 +1415,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -1710,7 +1710,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2036,7 +2036,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2056,7 +2056,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2107,7 +2107,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2127,7 +2127,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2161,7 +2161,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2218,7 +2218,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2242,7 +2242,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2266,7 +2266,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2290,7 +2290,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2314,7 +2314,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2338,7 +2338,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2362,7 +2362,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2386,7 +2386,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2410,7 +2410,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2510,7 +2510,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2530,7 +2530,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2554,7 +2554,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2578,7 +2578,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2602,7 +2602,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2626,7 +2626,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2650,7 +2650,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2674,7 +2674,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2708,7 +2708,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2747,7 +2747,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2823,7 +2823,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2843,7 +2843,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2863,7 +2863,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2883,7 +2883,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -2920,7 +2920,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             },
@@ -2947,7 +2947,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3031,7 +3031,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3051,7 +3051,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3071,7 +3071,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3091,7 +3091,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3111,7 +3111,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3211,7 +3211,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3231,7 +3231,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3251,7 +3251,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3271,7 +3271,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3291,7 +3291,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3478,7 +3478,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3498,7 +3498,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3518,7 +3518,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3538,7 +3538,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3558,7 +3558,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3681,7 +3681,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3701,7 +3701,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3733,7 +3733,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -3789,7 +3789,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             },
@@ -3865,7 +3865,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             },
@@ -3914,7 +3914,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             },
@@ -3966,7 +3966,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             },
@@ -4049,7 +4049,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             },
@@ -4128,7 +4128,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             },
@@ -4177,7 +4177,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             },
@@ -4210,7 +4210,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -4273,6 +4273,24 @@
               "title": "Tool Id"
             },
             "description": "Tool ID (optional if provided in request body)"
+          },
+          {
+            "name": "X-QVeris-Cache-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "缓存策略：default（默认）或 bypass（跳过provider缓存）",
+              "title": "X-Qveris-Cache-Mode"
+            },
+            "description": "缓存策略：default（默认）或 bypass（跳过provider缓存）"
           }
         ],
         "responses": {
@@ -4333,7 +4351,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -4370,7 +4388,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             },
@@ -4423,7 +4441,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             },
@@ -4477,7 +4495,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             },
@@ -4529,7 +4547,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -4635,7 +4653,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -4672,7 +4690,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             },
@@ -4721,7 +4739,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             },
@@ -4754,7 +4772,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -4778,7 +4796,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -4803,7 +4821,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -4828,7 +4846,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -4848,7 +4866,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-13.1"
+                  "const": "2026-08-21.1"
                 }
               }
             }
@@ -6277,7 +6295,7 @@
             "title": "Contract Version",
             "description": "Version of the published QVeris REST API contract.",
             "examples": [
-              "2026-08-13.1"
+              "2026-08-21.1"
             ]
           }
         },
