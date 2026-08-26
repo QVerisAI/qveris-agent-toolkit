@@ -4,7 +4,13 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { executeQverisMcpTool, initializeQverisClient, isEntrypoint, listQverisMcpTools } from './index.js';
+import {
+  executeQverisMcpTool,
+  initializeQverisClient,
+  isEntrypoint,
+  listQverisMcpTools,
+  QVERIS_MCP_TOOL_ANNOTATIONS,
+} from './index.js';
 import type { QverisClient } from './api/client.js';
 import { creditsLedgerSchema } from './tools/credits-ledger.js';
 import { executeToolSchema } from './tools/execute.js';
@@ -106,6 +112,62 @@ describe('MCP public tool interface', () => {
     expect(byName.get('search_tools')?.description).toContain('Deprecated');
     expect(byName.get('get_tools_by_ids')?.description).toContain('Deprecated');
     expect(byName.get('execute_tool')?.description).toContain('Deprecated');
+  });
+
+  it('declares complete annotations and keeps aliases identical to canonical tools', () => {
+    const byName = new Map(listQverisMcpTools().map((tool) => [tool.name, tool]));
+    const canonicalTools = ['discover', 'inspect', 'call', 'usage_history', 'credits_ledger'] as const;
+    const aliases = {
+      search_tools: 'discover',
+      get_tools_by_ids: 'inspect',
+      execute_tool: 'call',
+    } as const;
+
+    expect(QVERIS_MCP_TOOL_ANNOTATIONS).toEqual({
+      discover: {
+        title: 'Discover QVeris capabilities',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+      inspect: {
+        title: 'Inspect QVeris capabilities',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+      call: {
+        title: 'Call a third-party capability',
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+      usage_history: {
+        title: 'Query QVeris usage history',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+      credits_ledger: {
+        title: 'Query QVeris credits ledger',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    });
+
+    for (const name of canonicalTools) {
+      expect(byName.get(name)?.annotations).toEqual(QVERIS_MCP_TOOL_ANNOTATIONS[name]);
+    }
+    for (const [alias, canonical] of Object.entries(aliases)) {
+      expect(byName.get(alias)?.annotations).toEqual(QVERIS_MCP_TOOL_ANNOTATIONS[canonical]);
+      expect(byName.get(alias)?.annotations).toEqual(byName.get(canonical)?.annotations);
+    }
   });
 
   it('routes canonical and deprecated tool calls through the server-level dispatcher', async () => {
