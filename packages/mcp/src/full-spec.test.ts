@@ -3,7 +3,7 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { ElicitRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { createQverisServer } from './index.js';
+import { createQverisServer, QVERIS_MCP_TOOL_ANNOTATIONS } from './index.js';
 import type { QverisClient } from './api/client.js';
 
 /** Client-shaped fake covering the methods the tool executors use. */
@@ -66,13 +66,17 @@ describe('output schemas + structured content', () => {
     await c.close();
   });
 
-  it('deprecated aliases declare the same outputSchema as their canonical tools', async () => {
+  it('returns complete safety annotations from tools/list', async () => {
     const c = await connect();
     const { tools } = await c.listTools();
-    const byName = new Map(tools.map((t) => [t.name, t]));
-    const aliases = { search_tools: 'discover', get_tools_by_ids: 'inspect', execute_tool: 'call' };
+    const byName = new Map(tools.map((tool) => [tool.name, tool]));
+    const aliases = { search_tools: 'discover', get_tools_by_ids: 'inspect', execute_tool: 'call' } as const;
+
+    for (const [name, annotations] of Object.entries(QVERIS_MCP_TOOL_ANNOTATIONS)) {
+      expect(byName.get(name)?.annotations, `${name} annotations`).toEqual(annotations);
+    }
     for (const [alias, canonical] of Object.entries(aliases)) {
-      expect(byName.get(alias)?.outputSchema, `${alias} outputSchema`).toEqual(byName.get(canonical)?.outputSchema);
+      expect(byName.get(alias)?.annotations, `${alias} annotations`).toEqual(byName.get(canonical)?.annotations);
     }
     await c.close();
   });
