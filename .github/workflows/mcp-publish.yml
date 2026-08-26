@@ -86,6 +86,15 @@ jobs:
           fi
           echo "VERSION=$PKG_VERSION" >> "$GITHUB_ENV"
 
+      - name: Resolve npm dist-tag
+        run: |
+          NPM_DIST_TAG=$(node -p "require('./package.json').publishConfig?.tag || 'latest'")
+          if ! [[ "$NPM_DIST_TAG" =~ ^[a-z0-9][a-z0-9._-]*$ ]]; then
+            echo "::error::Invalid npm dist-tag: $NPM_DIST_TAG"
+            exit 1
+          fi
+          echo "NPM_DIST_TAG=$NPM_DIST_TAG" >> "$GITHUB_ENV"
+
       - name: Verify CHANGELOG has an entry for this version
         run: |
           if ! grep -qE "^## \[$VERSION\]" CHANGELOG.md; then
@@ -100,7 +109,7 @@ jobs:
         run: npm run build
 
       - name: Publish to npm
-        run: npm publish --provenance --access public
+        run: npm publish --provenance --access public --tag "$NPM_DIST_TAG"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

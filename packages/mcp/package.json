@@ -1,7 +1,7 @@
 {
   "name": "@qverisai/mcp",
   "mcpName": "io.github.QVerisAI/mcp",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "QVeris MCP server for agent tool discovery, inspection, and calling",
   "keywords": [
     "qveris",
@@ -32,6 +32,10 @@
     "dist",
     "CHANGELOG.md"
   ],
+  "publishConfig": {
+    "access": "public",
+    "tag": "legacy-0.10"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",

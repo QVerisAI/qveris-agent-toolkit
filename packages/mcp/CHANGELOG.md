@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-08-26
+
+### Added
+
+- Added complete MCP tool annotations (`title`, read-only, destructive, idempotent, and open-world hints) for every tool returned by `tools/list`. Deprecated aliases reuse their canonical tool annotations; `call` / `execute_tool` remain conservatively classified as destructive, non-idempotent, and open-world. ([#316])
+
 ## [0.10.0] - 2026-07-14
 
 ### Changed
@@ -115,7 +121,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Handle empty/non-JSON success responses gracefully; `params_to_tool` documented as an object.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.10.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.10.1...HEAD
+[0.10.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.10.0...mcp-v0.10.1
 [0.10.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.9.0...mcp-v0.10.0
 [0.9.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.8.0...mcp-v0.9.0
 [0.8.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.7.5...mcp-v0.8.0
