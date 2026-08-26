@@ -66,17 +66,6 @@ describe('output schemas + structured content', () => {
     await c.close();
   });
 
-  it('deprecated aliases declare the same outputSchema as their canonical tools', async () => {
-    const c = await connect();
-    const { tools } = await c.listTools();
-    const byName = new Map(tools.map((t) => [t.name, t]));
-    const aliases = { search_tools: 'discover', get_tools_by_ids: 'inspect', execute_tool: 'call' };
-    for (const [alias, canonical] of Object.entries(aliases)) {
-      expect(byName.get(alias)?.outputSchema, `${alias} outputSchema`).toEqual(byName.get(canonical)?.outputSchema);
-    }
-    await c.close();
-  });
-
   it('returns complete safety annotations from tools/list', async () => {
     const c = await connect();
     const { tools } = await c.listTools();

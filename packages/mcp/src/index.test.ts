@@ -126,6 +126,51 @@ describe('MCP public tool interface', () => {
       execute_tool: 'call',
     } as const;
 
+    expect(QVERIS_MCP_TOOL_ANNOTATIONS).toEqual({
+      discover: {
+        title: 'Discover QVeris capabilities',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+      inspect: {
+        title: 'Inspect QVeris capabilities',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+      probe: {
+        title: 'Probe a QVeris capability',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+      call: {
+        title: 'Call a third-party capability',
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+      usage_history: {
+        title: 'Query QVeris usage history',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+      credits_ledger: {
+        title: 'Query QVeris credits ledger',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    });
+
     for (const name of canonicalTools) {
       expect(byName.get(name)?.annotations).toEqual(QVERIS_MCP_TOOL_ANNOTATIONS[name]);
     }

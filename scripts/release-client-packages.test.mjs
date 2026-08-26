@@ -151,6 +151,14 @@ test("repository publish workflows exist and listen for every coordinated tag", 
   );
 });
 
+test("MCP publishing validates and passes through its package-configured npm dist-tag", () => {
+  const workflow = readFileSync(join(REPOSITORY_ROOT, ".github/workflows", "mcp-publish.yml"), "utf8");
+
+  assert.match(workflow, /NPM_DIST_TAG=\$\(node -p "require\('\.\/package\.json'\)\.publishConfig\?\.tag \|\| 'latest'"\)/);
+  assert.match(workflow, /Invalid npm dist-tag: \$NPM_DIST_TAG/);
+  assert.match(workflow, /npm publish --provenance --access public --tag "\$NPM_DIST_TAG"/);
+});
+
 test("repository cadence workflow passes the task set to the reference adapter and verifies the exact CLI version", () => {
   const workflow = readFileSync(
     join(REPOSITORY_ROOT, ".github/workflows", BENCHMARK_CADENCE_WORKFLOW),

@@ -34,6 +34,7 @@ import {
   ReadResourceRequestSchema,
   SUPPORTED_PROTOCOL_VERSIONS,
   type CallToolResult,
+  type ToolAnnotations,
 } from '@modelcontextprotocol/sdk/types.js';
 import { resolveTransportConfig, startHttpServer } from './http.js';
 import { buildServerCard, type ServerCardInfo } from './server-card.js';
@@ -67,6 +68,10 @@ export const SERVER_VERSION: string = pkg.version;
  * approval expectations before a tool is called, so aliases deliberately
  * reuse the canonical entry rather than duplicating a second classification.
  */
+type CompleteToolAnnotations = Required<
+  Pick<ToolAnnotations, 'title' | 'readOnlyHint' | 'destructiveHint' | 'idempotentHint' | 'openWorldHint'>
+>;
+
 export const QVERIS_MCP_TOOL_ANNOTATIONS = {
   discover: {
     title: 'Discover QVeris capabilities',
@@ -110,7 +115,7 @@ export const QVERIS_MCP_TOOL_ANNOTATIONS = {
     idempotentHint: true,
     openWorldHint: false,
   },
-} as const;
+} as const satisfies Record<string, CompleteToolAnnotations>;
 
 /** Discovery metadata (Server Card + Catalog) derived from package.json. */
 export function getQverisServerCardInfo(): ServerCardInfo {
@@ -197,21 +202,18 @@ export function listQverisMcpTools() {
       name: 'search_tools',
       description: '[Deprecated: use "discover" instead] Search for available tools based on natural language queries.',
       inputSchema: searchToolsSchema,
-      outputSchema: TOOL_OUTPUT_SCHEMAS.discover,
       annotations: QVERIS_MCP_TOOL_ANNOTATIONS.discover,
     },
     {
       name: 'get_tools_by_ids',
       description: '[Deprecated: use "inspect" instead] Get descriptions of tools based on their tool IDs.',
       inputSchema: getToolsByIdsSchema,
-      outputSchema: TOOL_OUTPUT_SCHEMAS.inspect,
       annotations: QVERIS_MCP_TOOL_ANNOTATIONS.inspect,
     },
     {
       name: 'execute_tool',
       description: '[Deprecated: use "call" instead] Execute a specific remote tool with provided parameters.',
       inputSchema: executeToolSchema,
-      outputSchema: TOOL_OUTPUT_SCHEMAS.call,
       annotations: QVERIS_MCP_TOOL_ANNOTATIONS.call,
     },
   ];
