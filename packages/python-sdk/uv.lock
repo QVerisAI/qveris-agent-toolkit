@@ -3965,7 +3965,7 @@ wheels = [
 
 [[package]]
 name = "openai-agents"
-version = "0.18.2"
+version = "0.20.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "griffelib", marker = "python_full_version >= '3.10'" },
@@ -3976,9 +3976,9 @@ dependencies = [
     { name = "typing-extensions", version = "4.15.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "websockets", marker = "python_full_version >= '3.10'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/05/0c/52e9aeff5549b225d5666a0eb84a8a22b4c47db08b6f44dbd45876fcfba3/openai_agents-0.18.2.tar.gz", hash = "sha256:9f418bb563eddff1e01f245ae8a4964b7649396f444b569b4113d105e41ca1d3", size = 5546139, upload-time = "2026-07-11T01:08:18.537Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/57/18/1204bde976436ad85498b759d5297843ebd2e0a214f729eb2dc4423cdfc7/openai_agents-0.20.0.tar.gz", hash = "sha256:a6b37954877868ac233876a27dab1e2a461c53ecbd5fcf6e19e2d276d3e848cd", size = 6146452, upload-time = "2026-08-11T03:12:49.556Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9c/23/b5b6b80a3e36f021ca2a8c4637684f0d722d646b19d3616768a68802c302/openai_agents-0.18.2-py3-none-any.whl", hash = "sha256:c7aea341b256a90b87b17b7e444bab29a12655864a2f0094f65561223d867185", size = 874310, upload-time = "2026-07-11T01:08:16.851Z" },
+    { url = "https://files.pythonhosted.org/packages/9f/8b/18528f00cb1a5d0b8e00f457f7dc88e7b17439bc520861aae2b638b88710/openai_agents-0.20.0-py3-none-any.whl", hash = "sha256:aaff662b802fa90762ad539e131b9ea387e12e3664b87bc75157ad1b3fc88850", size = 1064338, upload-time = "2026-08-11T03:12:47.615Z" },
 ]
 
 [[package]]
@@ -6107,7 +6107,7 @@ requires-dist = [
     { name = "llama-index-core", marker = "python_full_version >= '3.10' and extra == 'dev'", specifier = ">=0.14.23" },
     { name = "llama-index-core", marker = "python_full_version >= '3.10' and extra == 'llamaindex'", specifier = ">=0.14.23" },
     { name = "openai", specifier = ">=1.0.0" },
-    { name = "openai-agents", marker = "python_full_version >= '3.10' and extra == 'dev'", specifier = ">=0.1.0" },
+    { name = "openai-agents", marker = "python_full_version >= '3.10' and extra == 'dev'", specifier = ">=0.20.0" },
     { name = "openai-agents", marker = "python_full_version >= '3.10' and extra == 'openai-agents'", specifier = ">=0.1.0" },
     { name = "opentelemetry-api", marker = "extra == 'dev'", specifier = ">=1.20.0" },
     { name = "opentelemetry-api", marker = "extra == 'otel'", specifier = ">=1.20.0" },
@@ -6123,7 +6123,7 @@ requires-dist = [
     { name = "rich", marker = "extra == 'dev'", specifier = ">=13.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.0" },
     { name = "sphinx", marker = "python_full_version >= '3.10' and extra == 'dev'", specifier = "==8.1.3" },
-    { name = "sphinx-markdown-builder", marker = "python_full_version >= '3.10' and extra == 'dev'", specifier = "==0.6.10" },
+    { name = "sphinx-markdown-builder", marker = "python_full_version >= '3.10' and extra == 'dev'", specifier = "==0.6.11" },
 ]
 provides-extras = ["langchain", "openai-agents", "crewai", "autogen", "llamaindex", "pydantic-ai", "otel", "dev"]
 
@@ -6716,16 +6716,16 @@ wheels = [
 
 [[package]]
 name = "sphinx-markdown-builder"
-version = "0.6.10"
+version = "0.6.11"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils", marker = "python_full_version >= '3.10'" },
     { name = "sphinx", marker = "python_full_version >= '3.10'" },
     { name = "tabulate", marker = "python_full_version >= '3.10'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a0/58/0b7b9a7d071140b3705885d51932e8b62f520388c2772e4952189971727b/sphinx_markdown_builder-0.6.10.tar.gz", hash = "sha256:cd5acf88d52ea0146a712fd557404f10326dff3428a78ba928e59b1727fd4a86", size = 22688, upload-time = "2026-03-11T10:56:57.639Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ad/13/102d7134743120db25e636ffb57a30818e95a416583dca83aadac9c5dd87/sphinx_markdown_builder-0.6.11.tar.gz", hash = "sha256:ba3bf33e0e42ff30ae686ac73957a95e6d045790dcfbaca012dd8ae01794e577", size = 24020, upload-time = "2026-08-16T06:51:38.158Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c2/8f/9fecf3d081d5cd49eff83a17b9fef50ed741e6223ab3bb906de4ab0068f9/sphinx_markdown_builder-0.6.10-py3-none-any.whl", hash = "sha256:16d86738b9ac69fcbc86e373c31c6402c30af1fa8d98d0f62cc5f38bfe5fc26e", size = 16700, upload-time = "2026-03-11T10:56:56.135Z" },
+    { url = "https://files.pythonhosted.org/packages/c9/71/06b415631c2e494c80546073b46013d1715dceb3abe30bd63b34b4e7d9ca/sphinx_markdown_builder-0.6.11-py3-none-any.whl", hash = "sha256:acfb94d6ee66c7a47da0ca0420578fa16f115812af25b8fd21755d5909aacf51", size = 18088, upload-time = "2026-08-16T06:51:36.81Z" },
 ]
 
 [[package]]
