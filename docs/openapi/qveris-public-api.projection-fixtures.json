@@ -1,5 +1,5 @@
 {
-  "contract_version": "2026-08-21.1",
+  "contract_version": "2026-08-26.1",
   "compatibility": {
     "legacy_service_ignores_projection": {
       "request": {"query": "current weather", "view": "routing"},
@@ -54,6 +54,7 @@
   "summary_execute": {
     "request": {
       "tool_id": "openweathermap.weather.execute.v1",
+      "model": "deepseek-v4-pro",
       "parameters": {"q": "London"},
       "respond_with": "summary"
     },
