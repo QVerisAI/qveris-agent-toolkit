@@ -60,7 +60,7 @@ dev = [
     "python-dotenv",
     "rich>=13.0.0",
     "langchain-core>=0.3.0; python_version >= '3.9'",  # for the LangChain integration tests
-    "openai-agents>=0.1.0; python_version >= '3.10'",  # for the OpenAI Agents integration tests
+    "openai-agents>=0.20.0; python_version >= '3.10'",  # for the OpenAI Agents integration tests
     "autogen-core>=0.7.5; python_version >= '3.10'",  # for the AutoGen integration tests
     "llama-index-core>=0.14.23; python_version >= '3.10'",  # for the LlamaIndex integration tests
     "pydantic-ai-slim>=2.11.0; python_version >= '3.10'",  # for the Pydantic AI integration tests
