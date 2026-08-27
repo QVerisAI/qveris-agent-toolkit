@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "QVeris Public REST API",
-    "version": "2026-08-21.1",
+    "version": "2026-08-26.1",
     "summary": "External REST API for enterprise integration.",
     "description": "OpenAPI 3.1 schema for the formally released public `/api/v1` REST API surface. It covers search, provider discovery, tool metadata lookup/execution, credits, and account audit endpoints. Unreleased API families are intentionally excluded from this customer-facing schema."
   },
@@ -118,7 +118,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -138,7 +138,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -172,7 +172,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -185,7 +185,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -464,7 +464,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -484,7 +484,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -510,7 +510,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -587,7 +587,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -607,7 +607,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -704,7 +704,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -754,7 +754,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -774,7 +774,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -887,7 +887,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -907,7 +907,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -1198,6 +1198,44 @@
             "description": "API Key 归因过滤"
           },
           {
+            "name": "oauth_client_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 2048
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "OAuth client_id 归因过滤",
+              "title": "Oauth Client Id"
+            },
+            "description": "OAuth client_id 归因过滤"
+          },
+          {
+            "name": "credential_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 32
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "凭证类型过滤",
+              "title": "Credential Type"
+            },
+            "description": "凭证类型过滤"
+          },
+          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -1369,7 +1407,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -1389,7 +1427,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -1415,7 +1453,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -1691,6 +1729,44 @@
               "title": "Api Key Id"
             },
             "description": "API Key 归因过滤"
+          },
+          {
+            "name": "oauth_client_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 2048
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "OAuth client_id 归因过滤",
+              "title": "Oauth Client Id"
+            },
+            "description": "OAuth client_id 归因过滤"
+          },
+          {
+            "name": "credential_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 32
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "凭证类型过滤",
+              "title": "Credential Type"
+            },
+            "description": "凭证类型过滤"
           }
         ],
         "responses": {
@@ -1710,7 +1786,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -1988,6 +2064,44 @@
             "description": "API Key 归因过滤"
           },
           {
+            "name": "oauth_client_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 2048
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "OAuth client_id 归因过滤",
+              "title": "Oauth Client Id"
+            },
+            "description": "OAuth client_id 归因过滤"
+          },
+          {
+            "name": "credential_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 32
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "凭证类型过滤",
+              "title": "Credential Type"
+            },
+            "description": "凭证类型过滤"
+          },
+          {
             "name": "cursor",
             "in": "query",
             "required": false,
@@ -2036,7 +2150,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2056,7 +2170,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2107,7 +2221,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2127,7 +2241,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2161,7 +2275,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2218,7 +2332,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2242,7 +2356,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2266,7 +2380,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2290,7 +2404,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2314,7 +2428,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2338,7 +2452,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2362,7 +2476,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2386,7 +2500,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2410,7 +2524,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2510,7 +2624,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2530,7 +2644,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2554,7 +2668,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2578,7 +2692,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2602,7 +2716,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2626,7 +2740,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2650,7 +2764,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2674,7 +2788,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2708,7 +2822,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2747,7 +2861,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2823,7 +2937,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2843,7 +2957,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2863,7 +2977,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2883,7 +2997,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -2920,7 +3034,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             },
@@ -2947,7 +3061,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3031,7 +3145,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3051,7 +3165,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3071,7 +3185,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3091,7 +3205,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3111,7 +3225,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3211,7 +3325,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3231,7 +3345,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3251,7 +3365,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3271,7 +3385,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3291,7 +3405,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3478,7 +3592,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3498,7 +3612,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3518,7 +3632,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3538,7 +3652,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3558,7 +3672,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3681,7 +3795,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3701,7 +3815,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3733,7 +3847,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -3789,7 +3903,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             },
@@ -3865,7 +3979,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             },
@@ -3914,7 +4028,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             },
@@ -3966,7 +4080,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             },
@@ -4049,7 +4163,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             },
@@ -4128,7 +4242,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             },
@@ -4177,7 +4291,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             },
@@ -4210,7 +4324,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -4351,7 +4465,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -4388,7 +4502,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             },
@@ -4441,7 +4555,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             },
@@ -4495,7 +4609,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             },
@@ -4547,7 +4661,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -4565,6 +4679,7 @@
               "example": {
                 "search_id": "srch_01HZX9QK7J3M9T",
                 "session_id": "sess_7Q9m",
+                "model": "deepseek-v4-pro",
                 "parameters": {
                   "q": "London"
                 },
@@ -4653,7 +4768,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -4690,7 +4805,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             },
@@ -4739,7 +4854,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             },
@@ -4772,7 +4887,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -4796,7 +4911,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -4821,7 +4936,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -4846,7 +4961,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -4866,7 +4981,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-08-21.1"
+                  "const": "2026-08-26.1"
                 }
               }
             }
@@ -6295,7 +6410,7 @@
             "title": "Contract Version",
             "description": "Version of the published QVeris REST API contract.",
             "examples": [
-              "2026-08-21.1"
+              "2026-08-26.1"
             ]
           }
         },
@@ -6613,6 +6728,28 @@
           "api_key_attribution_status": {
             "type": "string",
             "title": "Api Key Attribution Status",
+            "default": "historical_unknown"
+          },
+          "oauth_client": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UsageEventOAuthClient"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "credential_attribution_status": {
+            "type": "string",
+            "enum": [
+              "api_key",
+              "oauth_client",
+              "user_session",
+              "non_api_key",
+              "historical_unknown"
+            ],
+            "title": "Credential Attribution Status",
             "default": "historical_unknown"
           },
           "session_id": {
@@ -7185,6 +7322,19 @@
         ],
         "title": "UsageEventItem"
       },
+      "UsageEventOAuthClient": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "UsageEventOAuthClient"
+      },
       "UsageEventSummaryItem": {
         "properties": {
           "id": {
@@ -7245,6 +7395,28 @@
           "api_key_attribution_status": {
             "type": "string",
             "title": "Api Key Attribution Status",
+            "default": "historical_unknown"
+          },
+          "oauth_client": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UsageEventOAuthClient"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "credential_attribution_status": {
+            "type": "string",
+            "enum": [
+              "api_key",
+              "oauth_client",
+              "user_session",
+              "non_api_key",
+              "historical_unknown"
+            ],
+            "title": "Credential Attribution Status",
             "default": "historical_unknown"
           },
           "session_id": {
@@ -8589,6 +8761,13 @@
           "session_id": {
             "type": "string",
             "description": "Optional tracking and pricing-context identifier. If omitted, the service may use the execution id."
+          },
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[^\\s\\x00-\\x1f\\x7f]+$",
+            "description": "Model that selected the capability or generated its parameters."
           },
           "parameters": {
             "type": "object",

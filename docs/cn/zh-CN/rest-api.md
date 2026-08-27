@@ -1,6 +1,6 @@
 # QVeris REST API 文档
 
-版本：2026-08-21.1
+版本：2026-08-26.1
 
 公开 REST API 暴露核心 Agent 路径：
 
@@ -396,7 +396,7 @@ POST /tools/execute?tool_id={tool_id}
 | `tool_id` | string | 整体必填 | 要执行的工具唯一标识符；可作为 query 参数或 JSON body 字段提供。 |
 | `search_id` | string | 推荐 | 返回所选工具的 search id |
 | `session_id` | string | 否 | 追踪和计费上下文 ID；省略时服务可能使用 execution id |
-| `model` | string | 智能体推荐 | 选择工具或生成参数的模型，例如 `gpt-4.1`、`deepseek-v4-pro` 或 `claude-sonnet-4` |
+| `model` | string | 智能体推荐 | 选择工具或生成参数的不含空白或控制字符的非空模型标识，最长 128 个字符，例如 `gpt-4.1`、`deepseek-v4-pro` 或 `claude-sonnet-4` |
 | `parameters` | object | 是 | Inspect 返回的能力专属参数 |
 | `max_response_size` | integer | 否 | 长响应截断阈值；默认 `20480`，`-1` 表示不截断 |
 | `respond_with` | string | 否 | 服务端结果投影：`full`（默认，与既有版本一致）、`fields:<JSONPath,...>`（以 `result.data` 为根的逗号分隔 JSONPath 表达式，至少一个非空表达式）或 `summary`（返回 schema、大小/行数统计与完整内容的 `full_content_file_url`）|

@@ -252,7 +252,7 @@ class PublicApiMetadata(BaseModel):
     contract_version: str = Field(
         ...,
         description='Version of the published QVeris REST API contract.',
-        examples=['2026-08-21.1'],
+        examples=['2026-08-26.1'],
         title='Contract Version',
     )
 
@@ -301,91 +301,16 @@ class UsageEventApiKey(BaseModel):
     masked_value: str = Field(..., title='Masked Value')
 
 
-class UsageEventItem(BaseModel):
+class CredentialAttributionStatus(Enum):
+    api_key = 'api_key'
+    oauth_client = 'oauth_client'
+    user_session = 'user_session'
+    non_api_key = 'non_api_key'
+    historical_unknown = 'historical_unknown'
+
+
+class UsageEventOAuthClient(BaseModel):
     id: str = Field(..., title='Id')
-    event_type: str = Field(..., title='Event Type')
-    source_system: str = Field(..., title='Source System')
-    source_ref_type: Optional[str] = Field(None, title='Source Ref Type')
-    source_ref_id: Optional[str] = Field(None, title='Source Ref Id')
-    credential_type: Optional[str] = Field(None, title='Credential Type')
-    api_key: Optional[UsageEventApiKey] = None
-    api_key_attribution_status: Optional[str] = Field(
-        'historical_unknown', title='Api Key Attribution Status'
-    )
-    session_id: Optional[str] = Field(None, title='Session Id')
-    search_id: Optional[str] = Field(None, title='Search Id')
-    execution_id: Optional[str] = Field(None, title='Execution Id')
-    tool_id: Optional[str] = Field(None, title='Tool Id')
-    model: Optional[str] = Field(None, title='Model')
-    query: Optional[str] = Field(None, title='Query')
-    success: bool = Field(..., title='Success')
-    charge_outcome: str = Field(..., title='Charge Outcome')
-    error_message: Optional[str] = Field(None, title='Error Message')
-    duration_ms: Optional[float] = Field(None, title='Duration Ms')
-    request_payload: Optional[Dict[str, Any]] = Field(None, title='Request Payload')
-    response_payload_summary: Optional[Dict[str, Any]] = Field(
-        None, title='Response Payload Summary'
-    )
-    execution_outcome: Optional[Dict[str, Any]] = Field(None, title='Execution Outcome')
-    outcome_schema_version: Optional[str] = Field(None, title='Outcome Schema Version')
-    transport_success: Optional[bool] = Field(None, title='Transport Success')
-    provider_success: Optional[bool] = Field(None, title='Provider Success')
-    result_valid: Optional[bool] = Field(None, title='Result Valid')
-    billable_success: Optional[bool] = Field(None, title='Billable Success')
-    outcome: Optional[str] = Field(None, title='Outcome')
-    outcome_status: Optional[str] = Field(None, title='Outcome Status')
-    reason_code: Optional[str] = Field(None, title='Reason Code')
-    outcome_message: Optional[str] = Field(None, title='Outcome Message')
-    provider_status_code: Optional[str] = Field(None, title='Provider Status Code')
-    provider_status_message: Optional[str] = Field(
-        None, title='Provider Status Message'
-    )
-    http_status_code: Optional[int] = Field(None, title='Http Status Code')
-    valid_result_count: Optional[int] = Field(None, title='Valid Result Count')
-    raw_result_count: Optional[int] = Field(None, title='Raw Result Count')
-    chargeable_quantity: Optional[float] = Field(None, title='Chargeable Quantity')
-    retryable: Optional[bool] = Field(None, title='Retryable')
-    display_severity: Optional[str] = Field(None, title='Display Severity')
-    billing_snapshot_status: Optional[str] = Field(
-        None, title='Billing Snapshot Status'
-    )
-    billing_rule_snapshot: Optional[Dict[str, Any]] = Field(
-        None, title='Billing Rule Snapshot'
-    )
-    pre_settlement_bill: Optional[Dict[str, Any]] = Field(
-        None, title='Pre Settlement Bill'
-    )
-    settlement_result: Optional[Dict[str, Any]] = Field(None, title='Settlement Result')
-    requested_amount_credits: Optional[float] = Field(
-        None, title='Requested Amount Credits'
-    )
-    actual_amount_credits: Optional[float] = Field(None, title='Actual Amount Credits')
-    credits_ledger_entry_id: Optional[str] = Field(
-        None, title='Credits Ledger Entry Id'
-    )
-    display_target: Optional[str] = Field(None, title='Display Target')
-    billing_unit: Optional[str] = Field(None, title='Billing Unit')
-    unit_price_credits: Optional[float] = Field(None, title='Unit Price Credits')
-    quantity: Optional[float] = Field(None, title='Quantity')
-    list_amount_credits: Optional[float] = Field(None, title='List Amount Credits')
-    minimum_charge_credits: Optional[float] = Field(
-        None, title='Minimum Charge Credits'
-    )
-    pricing_profile_id: Optional[str] = Field(None, title='Pricing Profile Id')
-    billing_summary: Optional[str] = Field(None, title='Billing Summary')
-    pre_settlement_amount_credits: Optional[float] = Field(
-        None, title='Pre Settlement Amount Credits'
-    )
-    settled_amount_credits: Optional[float] = Field(
-        None, title='Settled Amount Credits'
-    )
-    pricing_context_id: Optional[str] = Field(None, title='Pricing Context Id')
-    harbor_snapshot_id: Optional[str] = Field(None, title='Harbor Snapshot Id')
-    harbor_snapshot_version: Optional[str] = Field(
-        None, title='Harbor Snapshot Version'
-    )
-    resolver_version: Optional[str] = Field(None, title='Resolver Version')
-    created_at: datetime = Field(..., title='Created At')
 
 
 class UsageEventSummaryItem(BaseModel):
@@ -398,6 +323,10 @@ class UsageEventSummaryItem(BaseModel):
     api_key: Optional[UsageEventApiKey] = None
     api_key_attribution_status: Optional[str] = Field(
         'historical_unknown', title='Api Key Attribution Status'
+    )
+    oauth_client: Optional[UsageEventOAuthClient] = None
+    credential_attribution_status: Optional[CredentialAttributionStatus] = Field(
+        'historical_unknown', title='Credential Attribution Status'
     )
     session_id: Optional[str] = Field(None, title='Session Id')
     search_id: Optional[str] = Field(None, title='Search Id')
@@ -758,6 +687,12 @@ class PublicExecuteToolRequest(BaseModel):
         None,
         description='Optional tracking and pricing-context identifier. If omitted, the service may use the execution id.',
     )
+    model: Optional[
+        constr(pattern=r'^[^\s\x00-\x1f\x7f]+$', min_length=1, max_length=128)
+    ] = Field(
+        None,
+        description='Model that selected the capability or generated its parameters.',
+    )
     parameters: Dict[str, Any] = Field(
         ...,
         description='Capability-specific parameters validated by the selected tool schema.',
@@ -1065,14 +1000,6 @@ class APIResponseUsageCreditsSpentResponse(BaseModel):
     message_key: Optional[str] = Field(None, title='Message Key')
 
 
-class APIResponseUsageEventItem(BaseModel):
-    status: str = Field(..., title='Status')
-    message: str = Field(..., title='Message')
-    status_code: Optional[int] = Field(0, title='Status Code')
-    data: Optional[UsageEventItem] = None
-    message_key: Optional[str] = Field(None, title='Message Key')
-
-
 class APIResponseUsageEventSummaryResponse(BaseModel):
     status: str = Field(..., title='Status')
     message: str = Field(..., title='Message')
@@ -1099,6 +1026,97 @@ class HTTPValidationError(BaseModel):
     detail: Optional[List[ValidationError]] = Field(None, title='Detail')
 
 
+class UsageEventItem(BaseModel):
+    id: str = Field(..., title='Id')
+    event_type: str = Field(..., title='Event Type')
+    source_system: str = Field(..., title='Source System')
+    source_ref_type: Optional[str] = Field(None, title='Source Ref Type')
+    source_ref_id: Optional[str] = Field(None, title='Source Ref Id')
+    credential_type: Optional[str] = Field(None, title='Credential Type')
+    api_key: Optional[UsageEventApiKey] = None
+    api_key_attribution_status: Optional[str] = Field(
+        'historical_unknown', title='Api Key Attribution Status'
+    )
+    oauth_client: Optional[UsageEventOAuthClient] = None
+    credential_attribution_status: Optional[CredentialAttributionStatus] = Field(
+        'historical_unknown', title='Credential Attribution Status'
+    )
+    session_id: Optional[str] = Field(None, title='Session Id')
+    search_id: Optional[str] = Field(None, title='Search Id')
+    execution_id: Optional[str] = Field(None, title='Execution Id')
+    tool_id: Optional[str] = Field(None, title='Tool Id')
+    model: Optional[str] = Field(None, title='Model')
+    query: Optional[str] = Field(None, title='Query')
+    success: bool = Field(..., title='Success')
+    charge_outcome: str = Field(..., title='Charge Outcome')
+    error_message: Optional[str] = Field(None, title='Error Message')
+    duration_ms: Optional[float] = Field(None, title='Duration Ms')
+    request_payload: Optional[Dict[str, Any]] = Field(None, title='Request Payload')
+    response_payload_summary: Optional[Dict[str, Any]] = Field(
+        None, title='Response Payload Summary'
+    )
+    execution_outcome: Optional[Dict[str, Any]] = Field(None, title='Execution Outcome')
+    outcome_schema_version: Optional[str] = Field(None, title='Outcome Schema Version')
+    transport_success: Optional[bool] = Field(None, title='Transport Success')
+    provider_success: Optional[bool] = Field(None, title='Provider Success')
+    result_valid: Optional[bool] = Field(None, title='Result Valid')
+    billable_success: Optional[bool] = Field(None, title='Billable Success')
+    outcome: Optional[str] = Field(None, title='Outcome')
+    outcome_status: Optional[str] = Field(None, title='Outcome Status')
+    reason_code: Optional[str] = Field(None, title='Reason Code')
+    outcome_message: Optional[str] = Field(None, title='Outcome Message')
+    provider_status_code: Optional[str] = Field(None, title='Provider Status Code')
+    provider_status_message: Optional[str] = Field(
+        None, title='Provider Status Message'
+    )
+    http_status_code: Optional[int] = Field(None, title='Http Status Code')
+    valid_result_count: Optional[int] = Field(None, title='Valid Result Count')
+    raw_result_count: Optional[int] = Field(None, title='Raw Result Count')
+    chargeable_quantity: Optional[float] = Field(None, title='Chargeable Quantity')
+    retryable: Optional[bool] = Field(None, title='Retryable')
+    display_severity: Optional[str] = Field(None, title='Display Severity')
+    billing_snapshot_status: Optional[str] = Field(
+        None, title='Billing Snapshot Status'
+    )
+    billing_rule_snapshot: Optional[Dict[str, Any]] = Field(
+        None, title='Billing Rule Snapshot'
+    )
+    pre_settlement_bill: Optional[Dict[str, Any]] = Field(
+        None, title='Pre Settlement Bill'
+    )
+    settlement_result: Optional[Dict[str, Any]] = Field(None, title='Settlement Result')
+    requested_amount_credits: Optional[float] = Field(
+        None, title='Requested Amount Credits'
+    )
+    actual_amount_credits: Optional[float] = Field(None, title='Actual Amount Credits')
+    credits_ledger_entry_id: Optional[str] = Field(
+        None, title='Credits Ledger Entry Id'
+    )
+    display_target: Optional[str] = Field(None, title='Display Target')
+    billing_unit: Optional[str] = Field(None, title='Billing Unit')
+    unit_price_credits: Optional[float] = Field(None, title='Unit Price Credits')
+    quantity: Optional[float] = Field(None, title='Quantity')
+    list_amount_credits: Optional[float] = Field(None, title='List Amount Credits')
+    minimum_charge_credits: Optional[float] = Field(
+        None, title='Minimum Charge Credits'
+    )
+    pricing_profile_id: Optional[str] = Field(None, title='Pricing Profile Id')
+    billing_summary: Optional[str] = Field(None, title='Billing Summary')
+    pre_settlement_amount_credits: Optional[float] = Field(
+        None, title='Pre Settlement Amount Credits'
+    )
+    settled_amount_credits: Optional[float] = Field(
+        None, title='Settled Amount Credits'
+    )
+    pricing_context_id: Optional[str] = Field(None, title='Pricing Context Id')
+    harbor_snapshot_id: Optional[str] = Field(None, title='Harbor Snapshot Id')
+    harbor_snapshot_version: Optional[str] = Field(
+        None, title='Harbor Snapshot Version'
+    )
+    resolver_version: Optional[str] = Field(None, title='Resolver Version')
+    created_at: datetime = Field(..., title='Created At')
+
+
 class UsageEventsSummary(BaseModel):
     start_date: Optional[datetime] = Field(None, title='Start Date')
     end_date: Optional[datetime] = Field(None, title='End Date')
@@ -1111,6 +1129,14 @@ class UsageEventsSummary(BaseModel):
     settled_credits: float = Field(..., title='Settled Credits')
     max_charge_items: List[UsageEventItem] = Field(..., title='Max Charge Items')
     buckets: List[UsageEventsSummaryBucket] = Field(..., title='Buckets')
+
+
+class APIResponseUsageEventItem(BaseModel):
+    status: str = Field(..., title='Status')
+    message: str = Field(..., title='Message')
+    status_code: Optional[int] = Field(0, title='Status Code')
+    data: Optional[UsageEventItem] = None
+    message_key: Optional[str] = Field(None, title='Message Key')
 
 
 class CreditsLedgerResponse(BaseModel):

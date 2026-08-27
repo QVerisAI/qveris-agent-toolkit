@@ -1,6 +1,6 @@
 # QVeris REST API Documentation
 
-Version: 2026-08-21.1
+Version: 2026-08-26.1
 
 The public REST API exposes the core agent path:
 
@@ -396,7 +396,7 @@ You may pass `tool_id` as a query parameter or in the JSON body. Use the query p
 | `tool_id` | string | Required overall | Unique id of the tool to execute. Provide it as the query parameter or in this JSON body. |
 | `search_id` | string | Recommended | Search id that returned the selected tool |
 | `session_id` | string | No | Tracking and pricing-context id; if omitted, the service may use the execution id |
-| `model` | string | Recommended for agents | Model that selected the tool or generated the parameters, such as `gpt-4.1`, `deepseek-v4-pro`, or `claude-sonnet-4` |
+| `model` | string | Recommended for agents | Non-blank model identifier without whitespace or control characters, at most 128 characters, that selected the tool or generated the parameters, such as `gpt-4.1`, `deepseek-v4-pro`, or `claude-sonnet-4` |
 | `parameters` | object | Yes | Capability-specific parameters from Inspect |
 | `max_response_size` | integer | No | Truncate long responses; default `20480`, `-1` disables truncation |
 | `respond_with` | string | No | Server-side result projection: `full` (default, identical to previous releases), `fields:<JSONPath,...>` (comma-separated JSONPath expressions rooted at `result.data`; at least one non-empty expression), or `summary` (schema + size/row statistics + `full_content_file_url` for the complete payload) |
