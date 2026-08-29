@@ -208,7 +208,12 @@ jobs:
             --output-runs "results/${CONFIGURED_STEM}.runs.jsonl" \
             --output-summary "results/${CONFIGURED_STEM}.summary.json"
 
-      - name: Generate sanitized result index
+      - name: Prepare standalone result section
+        run: |
+          set -euo pipefail
+          printf '# Published benchmark results\n' > "benchmarks/discover-call/results/README.md"
+
+      - name: Generate standalone result section
         run: >-
           node scripts/benchmark-release-cadence.mjs document
           --release-sha "${RELEASE_SHA}"
@@ -218,6 +223,13 @@ jobs:
           --configured-summary "benchmarks/discover-call/results/${CONFIGURED_STEM}.summary.json"
           --readme "benchmarks/discover-call/results/README.md"
           --pr-body "${RUNNER_TEMP}/pr-body.md"
+
+      - name: Extract standalone result section
+        run: |
+          set -euo pipefail
+          sed '1,2d' "benchmarks/discover-call/results/README.md" > "${RUNNER_TEMP}/result-section.md"
+          test -s "${RUNNER_TEMP}/result-section.md"
+          grep -F "<!-- benchmark-cadence:${RELEASE_SHA} -->" "${RUNNER_TEMP}/result-section.md"
 
       - name: Validate sanitized publication
         working-directory: benchmarks/discover-call
@@ -248,7 +260,7 @@ jobs:
             benchmarks/discover-call/results/${{ env.REFERENCE_STEM }}.summary.json
             benchmarks/discover-call/results/${{ env.CONFIGURED_STEM }}.runs.jsonl
             benchmarks/discover-call/results/${{ env.CONFIGURED_STEM }}.summary.json
-            benchmarks/discover-call/results/README.md
+            ${{ runner.temp }}/result-section.md
 
       - name: Record artifact location
         run: |
@@ -256,5 +268,5 @@ jobs:
             echo "### Sanitized benchmark artifacts"
             echo ""
             echo "Download artifact \`discover-call-${RELEASE_SHORT_SHA}\` from this workflow run."
-            echo "It contains the two sanitized run/summary pairs and the generated result index."
+            echo "It contains the two sanitized run/summary pairs and a standalone result section."
           } >> "${GITHUB_STEP_SUMMARY}"

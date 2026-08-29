@@ -177,7 +177,9 @@ test("repository cadence workflow passes the task set to the reference adapter, 
   assert.match(workflow, /results\/\$\{\{ env\.REFERENCE_STEM \}\}\.summary\.json/);
   assert.match(workflow, /results\/\$\{\{ env\.CONFIGURED_STEM \}\}\.runs\.jsonl/);
   assert.match(workflow, /results\/\$\{\{ env\.CONFIGURED_STEM \}\}\.summary\.json/);
-  assert.match(workflow, /benchmarks\/discover-call\/results\/README\.md/);
+  assert.match(workflow, /Prepare standalone result section/);
+  assert.match(workflow, /\$\{\{ runner\.temp \}\}\/result-section\.md/);
+  assert.match(workflow, /grep -F "<!-- benchmark-cadence:\$\{RELEASE_SHA\} -->"/);
   assert.doesNotMatch(workflow, /BENCHMARK_PR_TOKEN/);
   assert.doesNotMatch(workflow, /contents: write|pull-requests: write|git push|gh pr create/);
 });

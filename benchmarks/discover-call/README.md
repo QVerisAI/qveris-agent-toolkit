@@ -360,12 +360,15 @@ After all four coordinated publish workflows succeed,
 waits for explicit approval in the `benchmark-production` environment before
 it can access credentials or make paid calls. Raw records remain in the
 ephemeral runner. Successful runs are sanitized and validated, then uploaded
-as a named Actions artifact; the workflow never commits directly to `main` or
-creates a result branch. A rerun requires a fresh protected-environment
-approval and is a deliberate new sample, not an automatic retry.
+as a named Actions artifact; it contains the public records and a standalone
+result section, not a complete result index. The workflow never commits
+directly to `main` or creates a result branch. A rerun requires a fresh
+protected-environment approval and is a deliberate new sample, not an
+automatic retry.
 
 Before a maintainer promotes an artifact into a normal reviewable PR, they must
-confirm failure classification, catalog/API comparability, model-revision
-wording, and the matching English/Chinese headline documentation. A provider
-revision of `unreported` must remain a configured-model result rather than a
-pinned-model claim.
+insert its result section into the latest result index and confirm failure
+classification, catalog/API comparability, model-revision wording, and the
+matching English/Chinese headline documentation. A provider revision of
+`unreported` must remain a configured-model result rather than a pinned-model
+claim.

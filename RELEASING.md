@@ -92,10 +92,11 @@ failed trial is selectively retried by the cadence. Failed jobs do not upload
 raw records or a partial artifact. A rerun requires a fresh protected-environment
 approval; use it only for a deliberate new sample, not as an automatic retry.
 
-Successful artifacts are retained for 90 days. Review the generated result
-index, all public records, failure classes, catalog/API comparability, and
-model-revision wording before deciding whether to commit the results in a
-normal reviewable PR.
+Successful artifacts are retained for 90 days. They contain the paired public
+records and a standalone result section, rather than a complete result index.
+Review that section, all public records, failure classes, catalog/API
+comparability, and model-revision wording before inserting it into the latest
+result index in a normal reviewable PR.
 
 For a material individual-package release that also needs a new quality
 baseline, dispatch the same protected workflow after its publish job succeeds,
