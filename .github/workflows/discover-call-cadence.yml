@@ -10,7 +10,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
 
 concurrency:
   group: discover-call-cadence-${{ inputs.release_sha }}
@@ -21,10 +20,8 @@ jobs:
     name: Validate coordinated release
     runs-on: ubuntu-latest
     outputs:
-      skip: ${{ steps.duplicate.outputs.skip }}
       release_sha: ${{ steps.plan.outputs.release_sha }}
       release_short_sha: ${{ steps.plan.outputs.release_short_sha }}
-      branch: ${{ steps.plan.outputs.branch }}
       release_tags: ${{ steps.plan.outputs.release_tags }}
       task_set: ${{ steps.plan.outputs.task_set }}
       task_version: ${{ steps.plan.outputs.task_version }}
@@ -72,48 +69,19 @@ jobs:
           --release-sha "${RELEASE_SHA}"
           --github-output "${GITHUB_OUTPUT}"
 
-      - name: Reject duplicate release cadence
-        id: duplicate
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BRANCH: ${{ steps.plan.outputs.branch }}
-        run: |
-          set -euo pipefail
-          PR="$(gh pr list --repo "${GITHUB_REPOSITORY}" --state all --head "${BRANCH}" \
-            --json number,state,mergedAt,url,headRepository,isCrossRepository --limit 100)"
-          BRANCH_EXISTS=false
-          set +e
-          git ls-remote --exit-code --heads origin "refs/heads/${BRANCH}" >/dev/null
-          STATUS="$?"
-          set -e
-          if [ "${STATUS}" = "0" ]; then
-            BRANCH_EXISTS=true
-          elif [ "${STATUS}" != "2" ]; then
-            echo "::error::Could not determine whether cadence branch ${BRANCH} exists"
-            exit "${STATUS}"
-          fi
-          node scripts/benchmark-release-cadence.mjs guard \
-            --prs-json "${PR}" \
-            --branch-exists "${BRANCH_EXISTS}" \
-            --repository "${GITHUB_REPOSITORY}" \
-            --github-output "${GITHUB_OUTPUT}"
-
   benchmark:
     name: Paid reference and configured-model sample
     needs: plan
-    if: needs.plan.outputs.skip != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     environment:
       name: benchmark-production
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
     env:
       RELEASE_SHA: ${{ needs.plan.outputs.release_sha }}
       RELEASE_SHORT_SHA: ${{ needs.plan.outputs.release_short_sha }}
       RELEASE_TAGS: ${{ needs.plan.outputs.release_tags }}
-      BRANCH: ${{ needs.plan.outputs.branch }}
       TASK_SET: ${{ needs.plan.outputs.task_set }}
       TASK_VERSION: ${{ needs.plan.outputs.task_version }}
       TRIALS: ${{ needs.plan.outputs.trials }}
@@ -136,13 +104,11 @@ jobs:
         env:
           QVERIS_API_KEY: ${{ secrets.QVERIS_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          BENCHMARK_PR_TOKEN: ${{ secrets.BENCHMARK_PR_TOKEN }}
         run: |
           set -euo pipefail
           missing=()
           [ -n "${QVERIS_API_KEY}" ] || missing+=("QVERIS_API_KEY")
           [ -n "${OPENAI_API_KEY}" ] || missing+=("OPENAI_API_KEY")
-          [ -n "${BENCHMARK_PR_TOKEN}" ] || missing+=("BENCHMARK_PR_TOKEN")
           if [ "${#missing[@]}" -ne 0 ]; then
             echo "::error title=Benchmark environment is incomplete::Missing protected environment secrets: ${missing[*]}"
             exit 1
@@ -154,7 +120,6 @@ jobs:
           ref: ${{ needs.plan.outputs.release_sha }}
           fetch-depth: 0
           fetch-tags: true
-          token: ${{ secrets.BENCHMARK_PR_TOKEN }}
           persist-credentials: false
 
       - name: Setup Node.js
@@ -243,7 +208,12 @@ jobs:
             --output-runs "results/${CONFIGURED_STEM}.runs.jsonl" \
             --output-summary "results/${CONFIGURED_STEM}.summary.json"
 
-      - name: Generate candidate result notes
+      - name: Prepare standalone result section
+        run: |
+          set -euo pipefail
+          printf '# Published benchmark results\n' > "benchmarks/discover-call/results/README.md"
+
+      - name: Generate standalone result section
         run: >-
           node scripts/benchmark-release-cadence.mjs document
           --release-sha "${RELEASE_SHA}"
@@ -253,6 +223,13 @@ jobs:
           --configured-summary "benchmarks/discover-call/results/${CONFIGURED_STEM}.summary.json"
           --readme "benchmarks/discover-call/results/README.md"
           --pr-body "${RUNNER_TEMP}/pr-body.md"
+
+      - name: Extract standalone result section
+        run: |
+          set -euo pipefail
+          sed '1,2d' "benchmarks/discover-call/results/README.md" > "${RUNNER_TEMP}/result-section.md"
+          test -s "${RUNNER_TEMP}/result-section.md"
+          grep -F "<!-- benchmark-cadence:${RELEASE_SHA} -->" "${RUNNER_TEMP}/result-section.md"
 
       - name: Validate sanitized publication
         working-directory: benchmarks/discover-call
@@ -272,28 +249,24 @@ jobs:
             exit 1
           fi
 
-      - name: Commit candidate artifacts
-        env:
-          GH_TOKEN: ${{ secrets.BENCHMARK_PR_TOKEN }}
+      - name: Upload sanitized benchmark artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: discover-call-${{ env.RELEASE_SHORT_SHA }}
+          if-no-files-found: error
+          retention-days: 90
+          path: |
+            benchmarks/discover-call/results/${{ env.REFERENCE_STEM }}.runs.jsonl
+            benchmarks/discover-call/results/${{ env.REFERENCE_STEM }}.summary.json
+            benchmarks/discover-call/results/${{ env.CONFIGURED_STEM }}.runs.jsonl
+            benchmarks/discover-call/results/${{ env.CONFIGURED_STEM }}.summary.json
+            ${{ runner.temp }}/result-section.md
+
+      - name: Record artifact location
         run: |
-          set -euo pipefail
-          git config user.name "qveris-benchmark[bot]"
-          git config user.email "qveris-benchmark@users.noreply.github.com"
-          git switch -C "${BRANCH}"
-          git add \
-            "benchmarks/discover-call/results/${REFERENCE_STEM}.runs.jsonl" \
-            "benchmarks/discover-call/results/${REFERENCE_STEM}.summary.json" \
-            "benchmarks/discover-call/results/${CONFIGURED_STEM}.runs.jsonl" \
-            "benchmarks/discover-call/results/${CONFIGURED_STEM}.summary.json" \
-            "benchmarks/discover-call/results/README.md"
-          git diff --cached --check
-          git commit -m "benchmark: publish release cadence ${RELEASE_SHORT_SHA}"
-          gh auth setup-git
-          git push --force-with-lease origin "HEAD:refs/heads/${BRANCH}"
-          gh pr create \
-            --repo "${GITHUB_REPOSITORY}" \
-            --base main \
-            --head "${BRANCH}" \
-            --draft \
-            --title "benchmark: publish release cadence ${RELEASE_SHORT_SHA}" \
-            --body-file "${RUNNER_TEMP}/pr-body.md"
+          {
+            echo "### Sanitized benchmark artifacts"
+            echo ""
+            echo "Download artifact \`discover-call-${RELEASE_SHORT_SHA}\` from this workflow run."
+            echo "It contains the two sanitized run/summary pairs and a standalone result section."
+          } >> "${GITHUB_STEP_SUMMARY}"

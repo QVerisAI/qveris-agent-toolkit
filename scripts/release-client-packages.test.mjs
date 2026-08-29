@@ -159,7 +159,7 @@ test("MCP publishing validates and passes through its package-configured npm dis
   assert.match(workflow, /npm publish --provenance --access public --tag "\$NPM_DIST_TAG"/);
 });
 
-test("repository cadence workflow passes the task set to the reference adapter and verifies the exact CLI version", () => {
+test("repository cadence workflow passes the task set to the reference adapter, verifies the exact CLI version, and uploads sanitized artifacts", () => {
   const workflow = readFileSync(
     join(REPOSITORY_ROOT, ".github/workflows", BENCHMARK_CADENCE_WORKFLOW),
     "utf8",
@@ -169,7 +169,19 @@ test("repository cadence workflow passes the task set to the reference adapter a
     /--adapter-arg "\$\{REFERENCE_ADAPTER\}"\s+--adapter-arg "\$\{TASK_SET\}"/,
   );
   assert.match(workflow, /\[\[ "\$\{ACTUAL_VERSION\}" != "codex-cli \$\{CLI_VERSION\}" \]\]/);
-  assert.match(workflow, /git ls-remote --exit-code --heads origin "refs\/heads\/\$\{BRANCH\}"/);
+  assert.match(workflow, /uses: actions\/upload-artifact@v7/);
+  assert.match(workflow, /retention-days: 90/);
+  assert.match(workflow, /persist-credentials: false/);
+  assert.match(workflow, /--pr-body "\$\{RUNNER_TEMP\}\/pr-body\.md"/);
+  assert.match(workflow, /results\/\$\{\{ env\.REFERENCE_STEM \}\}\.runs\.jsonl/);
+  assert.match(workflow, /results\/\$\{\{ env\.REFERENCE_STEM \}\}\.summary\.json/);
+  assert.match(workflow, /results\/\$\{\{ env\.CONFIGURED_STEM \}\}\.runs\.jsonl/);
+  assert.match(workflow, /results\/\$\{\{ env\.CONFIGURED_STEM \}\}\.summary\.json/);
+  assert.match(workflow, /Prepare standalone result section/);
+  assert.match(workflow, /\$\{\{ runner\.temp \}\}\/result-section\.md/);
+  assert.match(workflow, /grep -F "<!-- benchmark-cadence:\$\{RELEASE_SHA\} -->"/);
+  assert.doesNotMatch(workflow, /BENCHMARK_PR_TOKEN/);
+  assert.doesNotMatch(workflow, /contents: write|pull-requests: write|git push|gh pr create/);
 });
 
 test("release preflight requires the protected benchmark cadence dispatch input", () => {
