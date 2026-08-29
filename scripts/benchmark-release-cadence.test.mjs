@@ -5,7 +5,6 @@ import {
   assertPublicArtifactSafe,
   buildCadencePlan,
   buildResultSection,
-  cadenceRunDisposition,
   insertResultSection,
   parseTaskSet,
   validateCadenceConfig,
@@ -188,9 +187,8 @@ test('cadence plan requires all four release tags at the release commit', () => 
   );
 });
 
-test('cadence plan derives deterministic branch, artifacts, and budget', () => {
+test('cadence plan derives deterministic artifacts and budget', () => {
   const value = plan();
-  assert.equal(value.branch, 'benchmark/cadence-aaaaaaaaaaaa');
   assert.equal(value.referenceStem, '2026-07-25-reference-v1-release-aaaaaaaaaaaa-v4');
   assert.equal(value.configuredStem, '2026-07-25-gpt-5.6-sol-configured-release-aaaaaaaaaaaa-v4');
   assert.equal(value.recordsPerLane, 54);
@@ -262,78 +260,6 @@ test('result insertion is idempotent per release SHA', () => {
         releaseSha,
       ),
     /already contains/,
-  );
-});
-
-test('cadence duplicate and orphan-branch recovery matrix fails closed before paid work', () => {
-  const repository = 'QVerisAI/qveris-agent-toolkit';
-  const sameRepositoryPr = (value) => ({
-    isCrossRepository: false,
-    headRepository: { nameWithOwner: repository },
-    ...value,
-  });
-  assert.deepEqual(cadenceRunDisposition([], { branchExists: false, repository }), {
-    skip: false,
-    message: 'No prior cadence result exists; the protected paid job may proceed.',
-  });
-  assert.equal(
-    cadenceRunDisposition([sameRepositoryPr({ state: 'OPEN', mergedAt: null, url: 'https://example.test/pr/1' })], {
-      repository,
-    }).skip,
-    true,
-  );
-  assert.equal(
-    cadenceRunDisposition(
-      [
-        sameRepositoryPr({
-          state: 'CLOSED',
-          mergedAt: '2026-07-25T00:00:00Z',
-          url: 'https://example.test/pr/1',
-        }),
-      ],
-      { repository },
-    ).skip,
-    true,
-  );
-  assert.throws(
-    () =>
-      cadenceRunDisposition([sameRepositoryPr({ state: 'CLOSED', mergedAt: null, url: 'https://example.test/pr/1' })], {
-        repository,
-      }),
-    /closed, unmerged/,
-  );
-  assert.throws(
-    () => cadenceRunDisposition([], { branchExists: true, repository }),
-    /result branch exists without a PR/,
-  );
-  assert.throws(
-    () =>
-      cadenceRunDisposition(
-        [
-          sameRepositoryPr({ state: 'CLOSED', mergedAt: null, url: 'https://example.test/pr/1' }),
-          sameRepositoryPr({ state: 'OPEN', mergedAt: null, url: 'https://example.test/pr/2' }),
-        ],
-        { repository },
-      ),
-    /Multiple cadence PRs/,
-  );
-  assert.deepEqual(
-    cadenceRunDisposition(
-      [
-        {
-          state: 'OPEN',
-          mergedAt: null,
-          url: 'https://example.test/fork-pr',
-          isCrossRepository: true,
-          headRepository: { nameWithOwner: 'someone/qveris-agent-toolkit' },
-        },
-      ],
-      { branchExists: false, repository },
-    ),
-    {
-      skip: false,
-      message: 'No prior cadence result exists; the protected paid job may proceed.',
-    },
   );
 });
 

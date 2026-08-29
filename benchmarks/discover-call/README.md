@@ -359,14 +359,13 @@ After all four coordinated publish workflows succeed,
 `.github/workflows/discover-call-cadence.yml` for their shared commit. The job
 waits for explicit approval in the `benchmark-production` environment before
 it can access credentials or make paid calls. Raw records remain in the
-ephemeral runner. Successful runs are sanitized and validated, then proposed
-in a draft PR; the workflow never commits directly to `main`.
-An orphaned result branch is treated as a recoverable publication failure and
-blocks another paid run until that branch has been inspected and opened as a
-draft PR.
+ephemeral runner. Successful runs are sanitized and validated, then uploaded
+as a named Actions artifact; the workflow never commits directly to `main` or
+creates a result branch. A rerun requires a fresh protected-environment
+approval and is a deliberate new sample, not an automatic retry.
 
-The generated PR remains a candidate until a reviewer confirms failure
-classification, catalog/API comparability, model-revision wording, and the
-matching English/Chinese headline documentation. A provider revision of
-`unreported` must remain a configured-model result rather than a pinned-model
-claim.
+Before a maintainer promotes an artifact into a normal reviewable PR, they must
+confirm failure classification, catalog/API comparability, model-revision
+wording, and the matching English/Chinese headline documentation. A provider
+revision of `unreported` must remain a configured-model result rather than a
+pinned-model claim.

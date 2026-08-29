@@ -69,8 +69,8 @@ The coordinated release cadence runs the immutable reference and configured
 model lanes from the exact release commit. Raw operational records stay only in
 the ephemeral Actions runner. If both complete, the workflow applies
 `public-artifact-v1`, validates the paired public artifacts, updates the result
-index, and opens a **draft** PR for normal methodology and code review. It never
-writes benchmark artifacts directly to `main`.
+index, and uploads a named Actions artifact. It never writes benchmark artifacts
+directly to `main` or creates a result branch.
 
 One-time repository setup:
 
@@ -81,10 +81,7 @@ One-time repository setup:
      credit balance.
    - `OPENAI_API_KEY`: least-privilege credential used only by the pinned Codex
      CLI adapter runtime.
-   - `BENCHMARK_PR_TOKEN`: repository-scoped automation credential able to push
-     the generated branch and open a draft PR. Using a non-`GITHUB_TOKEN`
-     credential ensures the normal PR checks are triggered.
-4. Review `benchmarks/discover-call/cadence.json` before a release. It pins the
+3. Review `benchmarks/discover-call/cadence.json` before a release. It pins the
    immutable task version, trials, discovery limit, model identifiers, adapter
    paths, reasoning effort, and exact CLI version. Config changes require the
    same review as benchmark methodology changes.
@@ -92,13 +89,13 @@ One-time repository setup:
 The current 18-task, three-trial, two-lane configuration permits at most 108
 tool calls. Discover/Inspect traffic and model requests are additional, but no
 failed trial is selectively retried by the cadence. Failed jobs do not upload
-raw records or open a partial artifact PR.
+raw records or a partial artifact. A rerun requires a fresh protected-environment
+approval; use it only for a deliberate new sample, not as an automatic retry.
 
-If a run pushes its result branch but fails before opening the draft PR, the
-next dispatch fails closed before making paid calls. Inspect and validate the
-existing `benchmark/cadence-<release-sha-prefix>` branch, then recover it by
-opening the draft PR manually. Do not delete the branch and rerun the paid
-sample merely to replace a completed attempt.
+Successful artifacts are retained for 90 days. Review the generated result
+index, all public records, failure classes, catalog/API comparability, and
+model-revision wording before deciding whether to commit the results in a
+normal reviewable PR.
 
 For a material individual-package release that also needs a new quality
 baseline, dispatch the same protected workflow after its publish job succeeds,
