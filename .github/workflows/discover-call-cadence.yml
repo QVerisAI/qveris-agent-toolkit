@@ -217,6 +217,7 @@ jobs:
           --configured-runs "benchmarks/discover-call/results/${CONFIGURED_STEM}.runs.jsonl"
           --configured-summary "benchmarks/discover-call/results/${CONFIGURED_STEM}.summary.json"
           --readme "benchmarks/discover-call/results/README.md"
+          --pr-body "${RUNNER_TEMP}/pr-body.md"
 
       - name: Validate sanitized publication
         working-directory: benchmarks/discover-call
