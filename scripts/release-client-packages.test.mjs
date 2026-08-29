@@ -169,10 +169,16 @@ test("repository cadence workflow passes the task set to the reference adapter, 
     /--adapter-arg "\$\{REFERENCE_ADAPTER\}"\s+--adapter-arg "\$\{TASK_SET\}"/,
   );
   assert.match(workflow, /\[\[ "\$\{ACTUAL_VERSION\}" != "codex-cli \$\{CLI_VERSION\}" \]\]/);
-  assert.match(workflow, /uses: actions\/upload-artifact@v4/);
+  assert.match(workflow, /uses: actions\/upload-artifact@v7/);
   assert.match(workflow, /retention-days: 90/);
+  assert.match(workflow, /persist-credentials: false/);
+  assert.match(workflow, /results\/\$\{\{ env\.REFERENCE_STEM \}\}\.runs\.jsonl/);
+  assert.match(workflow, /results\/\$\{\{ env\.REFERENCE_STEM \}\}\.summary\.json/);
+  assert.match(workflow, /results\/\$\{\{ env\.CONFIGURED_STEM \}\}\.runs\.jsonl/);
+  assert.match(workflow, /results\/\$\{\{ env\.CONFIGURED_STEM \}\}\.summary\.json/);
+  assert.match(workflow, /benchmarks\/discover-call\/results\/README\.md/);
   assert.doesNotMatch(workflow, /BENCHMARK_PR_TOKEN/);
-  assert.doesNotMatch(workflow, /git push|gh pr create/);
+  assert.doesNotMatch(workflow, /contents: write|pull-requests: write|git push|gh pr create/);
 });
 
 test("release preflight requires the protected benchmark cadence dispatch input", () => {
