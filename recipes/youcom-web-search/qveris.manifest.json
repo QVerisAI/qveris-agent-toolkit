@@ -40,12 +40,7 @@
     "network": [
       {
         "host": "qveris.ai",
-        "reason": "Call QVeris API endpoints for capability discovery and routing.",
-        "required": true
-      },
-      {
-        "host": "api.you.com",
-        "reason": "Execute You.com search API through QVeris capability routing.",
+        "reason": "Call QVeris API endpoints for capability discovery, routing, and execution.",
         "required": true
       }
     ],
@@ -54,18 +49,13 @@
         "scope": "QVERIS_API_KEY",
         "reason": "Authenticate QVeris API requests for capability discovery and execution.",
         "required": true
-      },
-      {
-        "scope": "YDC_API_KEY",
-        "reason": "Optional You.com API key for enhanced search features and higher rate limits.",
-        "required": false
       }
     ]
   },
   "compatibility": {
-    "cli": ">=0.5.0",
-    "mcp": ">=0.6.0",
-    "python_sdk": ">=0.1.0",
+    "cli": ">=0.6.0",
+    "mcp": ">=0.7.0",
+    "python_sdk": ">=0.2.0",
     "agent_skill": ">=0.1.0"
   },
   "marketplace": {
@@ -92,7 +82,7 @@
       "name": "CLI web search",
       "path": "README.md#cli",
       "language": "shell",
-      "command": "qveris init --query \"web search API\" --params '{\"query\":\"latest AI breakthroughs 2026\",\"count\":5}' --json"
+      "command": "qveris discover \"You.com web search API\" --json | jq '[.results[] | select((.provider_name // \"\") | test(\"you[.]?com\"; \"i\"))] | first'"
     },
     {
       "name": "Python SDK workflow",

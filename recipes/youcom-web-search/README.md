@@ -2,57 +2,61 @@
 
 Use this recipe to discover, inspect, call, and audit You.com web search capabilities through QVeris.
 
+**Important:** this recipe is fail-closed. It only executes searches on a capability whose provider is You.com. If You.com is not yet registered with the QVeris capability network, discovery will not return a You.com tool and the recipe exits before making any paid call (see [Provider onboarding](#provider-onboarding)).
+
 ## Quickstart
 
 ```bash
 export QVERIS_API_KEY="sk-..."
-qveris init --query "web search API" --params '{"query":"latest AI breakthroughs 2026","count":5}' --json
+qveris discover "You.com web search API" --json | jq '.results[] | {name, provider_name, tool_id}'
 ```
+
+The recipe is ready to use once discovery returns a result whose `provider_name` is You.com.
 
 ## CLI
 
-Use the first-call flow when you want QVeris to discover, inspect, select, and call a You.com web search capability in one command:
+Discover candidates, then select the You.com one explicitly:
 
 ```bash
-qveris init \
-  --query "web search API" \
-  --params '{"query":"latest AI breakthroughs 2026","count":5}' \
-  --max-size 20480 \
-  --json
-```
+# Find capabilities and show their providers
+qveris discover "You.com web search API" --limit 15 --json \
+  | jq -r '.results[] | "  • \(.name) by \(.provider_name // "Unknown")"'
 
-### Discover You.com capabilities specifically
-
-```bash
-# Find You.com search capabilities
-qveris discover "You.com web search API" --json
-
-# Alternative: search for web search and filter results
-qveris discover "web search API" --json | jq '.results[] | select(.provider | test("you.com"; "i"))'
+# Select only the You.com capability (fails closed if none exists)
+qveris discover "You.com web search API" --json \
+  | jq '[.results[] | select((.provider_name // "") | test("you[.]?com"; "i"))] | first'
 ```
 
 ### Step-by-step workflow
 
 ```bash
 # 1. Discover web search capabilities
-search_result=$(qveris discover "web search API" --json)
+search_result=$(qveris discover "You.com web search API" --json)
 search_id=$(echo "$search_result" | jq -r '.search_id')
-tool_id=$(echo "$search_result" | jq -r '.results[0].tool_id')
 
-# 2. Inspect the capability details
-qveris inspect "$tool_id" --search-id "$search_id" --json
+# 2. Select the You.com capability — exit if none is registered
+tool_id=$(echo "$search_result" | jq -r '
+  [.results[] | select((.provider_name // "") | test("you[.]?com"; "i"))] | first | .tool_id // empty')
+if [[ -z "$tool_id" ]]; then
+  echo "No You.com capability registered with QVeris yet; stopping." && exit 0
+fi
 
-# 3. Execute a search
+# 3. Inspect the capability to read its parameter schema
+inspect_result=$(qveris inspect "$tool_id" --search-id "$search_id" --json)
+echo "$inspect_result" | jq -r '.results[0] | [(.params[]?.name)]'
+
+# 4. Execute a search — build params from the schema the tool declares
+#    (capabilities differ: some take "query", others "q")
 execution=$(qveris call "$tool_id" \
   --search-id "$search_id" \
   --params '{"query":"latest developments in quantum computing","count":10}' \
   --json)
 
-# 4. Extract execution ID for audit
+# 5. Extract execution ID for audit
 execution_id=$(echo "$execution" | jq -r '.execution_id')
 
-# 5. Audit the call (optional)
-qveris usage --execution-id "$execution_id" --json
+# 6. Audit the call (optional)
+qveris usage --summary --execution-id "$execution_id" --json
 qveris ledger --limit 5 --json
 ```
 
@@ -61,47 +65,66 @@ qveris ledger --limit 5 --json
 ```python
 import asyncio
 from qveris import QverisClient
+from qveris.config import QverisConfig
+
+def is_youcom(provider_name):
+    return bool(provider_name) and "you.com" in provider_name.lower()
 
 async def search_web(query: str, count: int = 5) -> None:
-    """Search the web using You.com through QVeris capability routing."""
-    client = QverisClient()
+    """Search the web using You.com through QVeris capability routing.
+
+    Fails closed: if no You.com capability is registered with QVeris,
+    this returns without making any paid call.
+    """
+    client = QverisClient()  # reads QVERIS_API_KEY from the environment
     try:
-        # Discover web search capabilities
-        discovered = await client.discover("web search API", limit=10)
+        # Discover candidate capabilities
+        discovered = await client.discover("You.com web search API", limit=10)
         if not discovered.results:
-            print("No web search capabilities found.")
+            print("No search capabilities found.")
             return
-        
-        # Find You.com capability or use first available
-        youcom_tool = None
-        for tool in discovered.results:
-            if "you.com" in tool.provider.lower():
-                youcom_tool = tool
-                break
-        
-        selected_tool = youcom_tool or discovered.results[0]
-        print(f"Using: {selected_tool.name} by {selected_tool.provider}")
-        
-        # Inspect the capability (optional)
+
+        # Select the You.com capability explicitly — never fall back to the
+        # first result, which may be an unrelated paid provider.
+        youcom_tool = next(
+            (t for t in discovered.results if is_youcom(t.provider_name)), None
+        )
+        if youcom_tool is None:
+            print("No You.com capability registered with QVeris yet; not calling anything.")
+            return
+
+        print(f"Using: {youcom_tool.name} by {youcom_tool.provider_name}")
+
+        # Inspect the capability to read its parameter schema
         inspected = await client.inspect(
-            selected_tool.tool_id, 
+            youcom_tool.tool_id,
             search_id=discovered.search_id
         )
-        
+        declared = [p.name for p in (inspected.results[0].params or [])] if inspected.results else []
+        params = {}
+        if not declared or "query" in declared:
+            params["query"] = query
+        elif "q" in declared:
+            params["q"] = query
+        if "count" in declared or not declared:
+            params["count"] = count
+
         # Execute the search
         result = await client.call(
-            selected_tool.tool_id, 
-            {"query": query, "count": count}, 
+            youcom_tool.tool_id,
+            params,
             search_id=discovered.search_id
         )
-        
+
         print("Search Results:")
         print(result.model_dump_json(indent=2))
-        
-        # Audit the call (optional)
+
+        # Audit the call (optional). Totals live in the summary object.
         usage = await client.usage(execution_id=result.execution_id, summary=True)
-        print(f"Usage: {usage.model_dump_json(indent=2)}")
-        
+        summary = usage.model_dump().get("summary") or {}
+        print(f"Total events: {summary.get('total_events')}, "
+              f"Credits used: {summary.get('actual_amount_credits')}")
+
     finally:
         await client.close()
 
@@ -132,7 +155,7 @@ Add to your MCP configuration:
   "mcpServers": {
     "qveris": {
       "command": "npx",
-      "args": ["@qverisai/mcp"],
+      "args": ["-y", "@qverisai/mcp"],
       "env": {
         "QVERIS_API_KEY": "sk-your-key-here"
       }
@@ -155,59 +178,35 @@ Claude will use the QVeris MCP server to:
 
 ## Use Cases
 
+Once a You.com capability is registered, each scenario follows the same discover → select You.com → inspect → call flow from the [CLI section](#cli). Example queries:
+
 ### Research Current Events
 ```bash
-qveris init --query "news search API" --params '{"query":"breaking news technology","count":10}' --json
+qveris discover "You.com web search API" --json \
+  | jq -r '.results[] | select((.provider_name // "") | test("you[.]?com"; "i")) | .tool_id'
+# then inspect + call with query "breaking news technology", count 10
 ```
 
 ### Product Research
-```bash
-qveris init --query "web search API" --params '{"query":"iPhone 16 Pro reviews 2026","count":5}' --json
-```
+Same flow with query `"iPhone 16 Pro reviews 2026"`, count 5.
 
 ### Technical Documentation
-```bash
-qveris init --query "web search API" --params '{"query":"React 19 new features documentation","count":8}' --json
-```
+Same flow with query `"React 19 new features documentation"`, count 8.
 
 ### Trending Topics
-```bash
-qveris init --query "web search API" --params '{"query":"trending topics AI research","count":15}' --json
-```
+Same flow with query `"trending topics AI research"`, count 15.
 
 ## Advanced Configuration
 
-### With You.com API Key
+### Parameter names differ per capability
 
-If you have a You.com API key for enhanced features:
-
-```bash
-export YDC_API_KEY="your-you-com-api-key"
-qveris init --query "You.com authenticated web search" --params '{"query":"advanced AI research papers","count":20}' --json
-```
-
-### Multiple Search Providers
-
-Compare results from different search providers:
-
-```bash
-# Discover all web search capabilities
-qveris discover "web search API" --json > search_providers.json
-
-# Test multiple providers
-for provider_id in $(cat search_providers.json | jq -r '.results[].tool_id'); do
-  echo "Testing provider: $provider_id"
-  qveris call "$provider_id" --params '{"query":"test query","count":3}' --json
-done
-```
+Capabilities don't share one schema: some take `query`, others `q`, plus provider-specific fields. Always inspect the selected capability first and construct parameters from its declared `params` list (the Python example above shows the pattern) rather than fanning one assumed schema out across providers.
 
 ## Billing and Credits
 
 - **Discovery**: Free through QVeris
-- **Execution**: Priced per You.com API call through QVeris billing
+- **Execution**: Priced per call through QVeris billing — check the capability's cost signals (`expected_cost`, cost class) from `discover`/`inspect` before calling
 - **Audit**: Check exact charges with `qveris usage` and `qveris ledger`
-
-You.com search through QVeris typically costs 1-5 credits per search, depending on result count and search complexity. Free-tier searches may also be available.
 
 ## Troubleshooting
 
@@ -215,11 +214,14 @@ You.com search through QVeris typically costs 1-5 credits per search, depending 
 
 ```bash
 # Check all available search providers
-qveris discover "web search" --json | jq '.results[] | {name: .name, provider: .provider}'
-
-# If You.com isn't listed, it may not be registered yet
-# Use any available web search provider as fallback
+qveris discover "web search" --json | jq '.results[] | {name: .name, provider: .provider_name}'
 ```
+
+If You.com isn't listed, it isn't registered with QVeris yet — see [Provider onboarding](#provider-onboarding). The recipe deliberately does **not** fall back to another provider in that case, so no unrelated paid calls happen.
+
+## Provider onboarding
+
+Before this recipe can execute anything, You.com must be onboarded to the QVeris capability network and pass integration and capability validation (API docs, sandbox/test account, rate-limit and billing details). That process is handled between the provider and the QVeris team; once complete, the recipe's tool selection works against the registered capability's actual tool ID, parameter schema, response format, and billing metadata. Until then, discovery + the fail-closed selection above are as far as the recipe goes.
 
 ### API Key Issues
 
@@ -227,8 +229,8 @@ qveris discover "web search" --json | jq '.results[] | {name: .name, provider: .
 # Verify QVeris API key
 qveris auth status
 
-# Test with minimal search
-qveris init --query "simple web search" --params '{"query":"test"}' --json
+# Test discovery with a minimal query
+qveris discover "web search" --limit 5 --json
 ```
 
 ### Rate Limits
