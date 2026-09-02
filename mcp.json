@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "qveris": {
+      "type": "http",
+      "url": "https://mcp.qveris.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer ${QVERIS_API_KEY}"
+      }
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "qveris",
+  "displayName": "QVeris",
+  "version": "0.14.0",
+  "description": "Discover, inspect, validate, and call 10,000+ real-world API capabilities from Cursor through the hosted QVeris MCP, with usage and credit auditing.",
+  "author": {
+    "name": "QVeris AI",
+    "email": "support@qveris.ai"
+  },
+  "homepage": "https://qveris.ai",
+  "repository": "https://github.com/QVerisAI/qveris-agent-toolkit",
+  "license": "MIT",
+  "category": "Integrations",
+  "keywords": [
+    "api",
+    "mcp",
+    "tool-discovery",
+    "tool-calling",
+    "agent-tools"
+  ],
+  "logo": "assets/logo-color.png",
+  "skills": [
+    "skills/qveris",
+    "skills/qveris-cli"
+  ],
+  "mcpServers": "mcp.json",
+  "variables": {
+    "type": "object",
+    "properties": {
+      "QVERIS_API_KEY": {
+        "type": "string",
+        "title": "QVeris API key",
+        "description": "API key used to authenticate with the hosted QVeris MCP server. Create one at https://qveris.ai/account?page=api-keys."
+      }
+    },
+    "required": [
+      "QVERIS_API_KEY"
+    ]
+  }
+}
