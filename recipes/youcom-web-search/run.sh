@@ -68,7 +68,8 @@ inspect_result=$("${qv[@]}" inspect "$tool_id" --search-id "$search_id" --json)
 echo "$inspect_result" | jq -r '.results[0] | "Parameters: \([.params[]? | .name] | join(", ") // "None specified")"'
 
 # Build params from the declared schema so we only send fields this tool
-# accepts (tools use different names, e.g. "q" vs "query").
+# accepts (tools use different names, e.g. "q" vs "query"; only include
+# "count" when the capability declares it).
 param_names=$(jq -r '[.results[0].params[]?.name] | join(" ")' <<<"$inspect_result")
 query_param="query"
 if [[ "$param_names" == *" q "* || "$param_names" == "q" || "$param_names" == "q "* || "$param_names" == *" q" ]]; then
@@ -76,12 +77,16 @@ if [[ "$param_names" == *" q "* || "$param_names" == "q" || "$param_names" == "q
         query_param="q"
     fi
 fi
+params="{\"$query_param\":\"latest AI breakthroughs 2026\"}"
+if [[ "$param_names" == *"count"* ]]; then
+    params="${params%\}},\"count\":3}"
+fi
 
 echo
 echo "🌐 Searching: \"latest AI breakthroughs 2026\""
 execution=$("${qv[@]}" call "$tool_id" \
     --search-id "$search_id" \
-    --params "{\"$query_param\":\"latest AI breakthroughs 2026\",\"count\":3}" \
+    --params "$params" \
     --json)
 
 execution_id=$(jq -r '.execution_id' <<<"$execution")

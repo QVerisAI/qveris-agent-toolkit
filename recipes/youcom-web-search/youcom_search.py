@@ -19,14 +19,18 @@ from qveris import QverisClient
 from qveris.config import QverisConfig
 
 
-YOU_COM_PROVIDERS = ("you.com", "youcom", "you")
+YOU_COM_PROVIDERS = ("you.com", "youcom", "you-com")
 
 
 def is_youcom_provider(provider_name: Optional[str]) -> bool:
-    """Match You.com provider names returned by discovery."""
+    """Match You.com provider names returned by discovery.
+
+    Matches specific You.com spellings only — a bare "you" substring would
+    also match unrelated providers such as "YouTube".
+    """
     if not provider_name:
         return False
-    lowered = provider_name.lower()
+    lowered = provider_name.lower().replace(" ", "")
     return any(p in lowered for p in YOU_COM_PROVIDERS)
 
 
@@ -80,9 +84,18 @@ class YouComSearchClient:
         return None
 
     async def inspect_capability(self, tool) -> Dict[str, Any]:
-        """Inspect a capability and return its parameter schema."""
+        """Inspect a capability and return its parameter schema as a dict.
+
+        The SDK models inspect results as ToolInfo (an object, not a dict),
+        so convert via model_dump() before dictionary access.
+        """
         inspected = await self.client.inspect(tool.tool_id, search_id=self._search_id)
-        return inspected.results[0] if inspected.results else {}
+        if not inspected.results:
+            return {}
+        info = inspected.results[0]
+        if hasattr(info, "model_dump"):
+            return info.model_dump()
+        return dict(info)
 
     async def search(self, query: str, count: int = 5) -> Dict[str, Any]:
         """Execute a You.com web search via QVeris.
