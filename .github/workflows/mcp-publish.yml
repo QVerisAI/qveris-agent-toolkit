@@ -177,6 +177,20 @@ jobs:
             if (manifest.version !== tagVersion || packageEntry?.version !== tagVersion) {
               throw new Error(`server.json versions must match tag ${tagVersion}`);
             }
+            if (manifest.title !== "QVeris") {
+              throw new Error("server.json must declare the QVeris display title");
+            }
+            const remoteEntry = manifest.remotes?.find(
+              (entry) => entry.url === "https://mcp.qveris.ai/mcp",
+            );
+            if (remoteEntry?.type !== "streamable-http") {
+              throw new Error("server.json must declare the hosted Streamable HTTP endpoint");
+            }
+            if (remoteEntry.headers?.length) {
+              throw new Error(
+                "hosted MCP must rely on OAuth discovery instead of prompting for manual headers",
+              );
+            }
             const names = packageEntry.environmentVariables?.map(({ name }) => name) ?? [];
             if (!names.includes("QVERIS_API_KEY") || !names.includes("QVERIS_BASE_URL")) {
               throw new Error("server.json must declare QVERIS_API_KEY and QVERIS_BASE_URL");
