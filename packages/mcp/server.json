@@ -1,7 +1,8 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.QVerisAI/mcp",
-  "description": "Discover, inspect and call ranked external data & tool APIs with unified billing and usage audit",
+  "title": "QVeris",
+  "description": "Discover, inspect, quote, and call external tools, with usage and final credit settlement audits",
   "repository": {
     "url": "https://github.com/QVerisAI/qveris-agent-toolkit",
     "source": "github",
@@ -9,6 +10,20 @@
   },
   "websiteUrl": "https://qveris.ai",
   "version": "0.14.0",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.qveris.ai/mcp",
+      "headers": [
+        {
+          "name": "Authorization",
+          "description": "Bearer QVeris API key (format: Bearer YOUR_QVERIS_API_KEY)",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ],
   "packages": [
     {
       "registryType": "npm",
