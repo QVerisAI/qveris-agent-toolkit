@@ -40,9 +40,11 @@ echo "📋 Candidate capabilities:"
 jq -r '.results[] | "  • \(.name) by \(.provider_name // "Unknown")"' <<<"$search_result"
 
 # Select the You.com capability, if one is registered. Never fall back to
-# another provider: this recipe is specifically for You.com search.
+# another provider: this recipe is specifically for You.com search. Exact
+# match on the normalized provider name so "YouCommerce" or "NotYou.com"
+# cannot be selected.
 youcom_tool=$(jq -r '
-    [.results[] | select((.provider_name // "") | test("you[.]?com"; "i"))] | first
+    [.results[] | select((.provider_name // "" | ascii_downcase | gsub("[^a-z0-9]"; "")) == "youcom")] | first
 ' <<<"$search_result")
 
 if [[ -z "$youcom_tool" || "$youcom_tool" == "null" ]]; then

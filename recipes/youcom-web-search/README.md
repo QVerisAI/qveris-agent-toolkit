@@ -22,9 +22,11 @@ Discover candidates, then select the You.com one explicitly:
 qveris discover "You.com web search API" --limit 15 --json \
   | jq -r '.results[] | "  • \(.name) by \(.provider_name // "Unknown")"'
 
-# Select only the You.com capability (fails closed if none exists)
+# Select only the You.com capability (fails closed if none exists).
+# Exact match on the normalized provider name — a substring test would
+# also match unrelated providers such as "YouCommerce" or "NotYou.com".
 qveris discover "You.com web search API" --json \
-  | jq '[.results[] | select((.provider_name // "") | test("you[.]?com"; "i"))] | first'
+  | jq '[.results[] | select((.provider_name // "" | ascii_downcase | gsub("[^a-z0-9]"; "")) == "youcom")] | first'
 ```
 
 ### Step-by-step workflow
@@ -34,9 +36,11 @@ qveris discover "You.com web search API" --json \
 search_result=$(qveris discover "You.com web search API" --json)
 search_id=$(echo "$search_result" | jq -r '.search_id')
 
-# 2. Select the You.com capability — exit if none is registered
+# 2. Select the You.com capability — exit if none is registered.
+#    Exact match on the normalized provider name so unrelated providers
+#    ("YouCommerce", "NotYou.com") cannot be selected.
 tool_id=$(echo "$search_result" | jq -r '
-  [.results[] | select((.provider_name // "") | test("you[.]?com"; "i"))] | first | .tool_id // empty')
+  [.results[] | select((.provider_name // "" | ascii_downcase | gsub("[^a-z0-9]"; "")) == "youcom")] | first | .tool_id // empty')
 if [[ -z "$tool_id" ]]; then
   echo "No You.com capability registered with QVeris yet; stopping." && exit 0
 fi
@@ -45,11 +49,22 @@ fi
 inspect_result=$(qveris inspect "$tool_id" --search-id "$search_id" --json)
 echo "$inspect_result" | jq -r '.results[0] | [(.params[]?.name)]'
 
-# 4. Execute a search — build params from the schema the tool declares
-#    (capabilities differ: some take "query", others "q")
+# 4. Execute a search — construct params from the schema the tool declares
+#    in step 3 (capabilities differ: some take "query", others "q"; only
+#    send "count" when the capability declares it)
+query_field=$(echo "$inspect_result" | jq -r '
+  .results[0].params[]?.name | if . == "q" then "q" elif . == "query" then "query" else empty end' | head -1)
+[[ -z "$query_field" ]] && query_field="query"   # fallback when no schema is exposed
+has_count=$(echo "$inspect_result" | jq -r '
+  [.results[0].params[]?.name] | if index("count") then "yes" else "no" end')
+if [[ "$has_count" == "yes" ]]; then
+  params=$(jq -nc --arg f "$query_field" '{($f): "latest developments in quantum computing", count: 10}')
+else
+  params=$(jq -nc --arg f "$query_field" '{($f): "latest developments in quantum computing"}')
+fi
 execution=$(qveris call "$tool_id" \
   --search-id "$search_id" \
-  --params '{"query":"latest developments in quantum computing","count":10}' \
+  --params "$params" \
   --json)
 
 # 5. Extract execution ID for audit
@@ -68,7 +83,12 @@ from qveris import QverisClient
 from qveris.config import QverisConfig
 
 def is_youcom(provider_name):
-    return bool(provider_name) and "you.com" in provider_name.lower()
+    # Exact match on the normalized provider name — a substring test would
+    # also match unrelated providers such as "YouCommerce" or "NotYou.com".
+    if not provider_name:
+        return False
+    normalized = "".join(ch for ch in provider_name.lower() if ch.isalnum())
+    return normalized in ("youcom", "youdotcom")
 
 async def search_web(query: str, count: int = 5) -> None:
     """Search the web using You.com through QVeris capability routing.
@@ -167,14 +187,15 @@ Add to your MCP configuration:
 ### Usage in Claude Desktop
 
 ```
-I need to search for the latest developments in quantum computing. Use QVeris to discover a web search capability and execute a search with the query "latest quantum computing breakthroughs 2026".
+I need to search for the latest developments in quantum computing. Use QVeris to discover web search capabilities, select the one whose provider is You.com, inspect its parameter schema, and execute the search with the query "latest quantum computing breakthroughs 2026". If no You.com capability is registered, stop and tell me — do not call a different provider.
 ```
 
 Claude will use the QVeris MCP server to:
 1. Discover web search capabilities
-2. Inspect parameter requirements  
-3. Execute the search with your query
-4. Return formatted results with citations
+2. Select the You.com one (and stop if none exists — the MCP server's `discover`/`call` tools are generic and do not filter by provider, so the prompt must require it)
+3. Inspect parameter requirements  
+4. Execute the search with your query
+5. Return formatted results with citations
 
 ## Use Cases
 
@@ -183,7 +204,7 @@ Once a You.com capability is registered, each scenario follows the same discover
 ### Research Current Events
 ```bash
 qveris discover "You.com web search API" --json \
-  | jq -r '.results[] | select((.provider_name // "") | test("you[.]?com"; "i")) | .tool_id'
+  | jq -r '.results[] | select((.provider_name // "" | ascii_downcase | gsub("[^a-z0-9]"; "")) == "youcom") | .tool_id'
 # then inspect + call with query "breaking news technology", count 10
 ```
 

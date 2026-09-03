@@ -19,19 +19,28 @@ from qveris import QverisClient
 from qveris.config import QverisConfig
 
 
-YOU_COM_PROVIDERS = ("you.com", "youcom", "you-com")
+# Canonical You.com provider identities, compared after normalization
+# (lowercase, non-alphanumerics stripped). Compared for equality, never
+# as substrings, so unrelated providers like "YouCommerce" or "NotYou.com"
+# cannot match.
+_YOU_COM_PROVIDER_IDS = frozenset({"youcom", "youdotcom"})
+
+
+def _normalize_provider_name(provider_name: str) -> str:
+    """Lowercase and strip everything but [a-z0-9] from a provider name."""
+    return "".join(ch for ch in provider_name.lower() if ch.isalnum())
 
 
 def is_youcom_provider(provider_name: Optional[str]) -> bool:
     """Match You.com provider names returned by discovery.
 
-    Matches specific You.com spellings only — a bare "you" substring would
-    also match unrelated providers such as "YouTube".
+    Exact equality against the canonical identities above, so
+    "You.com", "YouCom", and "you com" all normalize to "youcom" and
+    match, while "YouTube", "YouCommerce", or "NotYou.com" do not.
     """
     if not provider_name:
         return False
-    lowered = provider_name.lower().replace(" ", "")
-    return any(p in lowered for p in YOU_COM_PROVIDERS)
+    return _normalize_provider_name(provider_name) in _YOU_COM_PROVIDER_IDS
 
 
 class YouComSearchClient:
