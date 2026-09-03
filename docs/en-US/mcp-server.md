@@ -205,19 +205,23 @@ GitHub Copilot's `mcp.json` uses a top-level `servers` object, not `mcpServers`.
 
 ##### Hosted MCP configuration
 
+When QVeris is installed from the VS Code MCP Gallery, VS Code uses the
+registered hosted endpoint and discovers OAuth automatically. Complete the
+browser sign-in when prompted. The equivalent workspace configuration is:
+
 ```json
 {
   "servers": {
     "qveris": {
       "type": "http",
-      "url": "https://mcp.qveris.ai/mcp",
-      "headers": {
-        "Authorization": "Bearer your-api-key-here"
-      }
+      "url": "https://mcp.qveris.ai/mcp"
     }
   }
 }
 ```
+
+Use the API-key header configuration in [Hosted MCP details](#hosted-mcp-details)
+only when the client does not support MCP OAuth discovery.
 
 ##### Local stdio fallback
 

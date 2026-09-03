@@ -182,19 +182,20 @@ GitHub Copilot 的 `mcp.json` 使用顶层 `servers` 对象，而不是 `mcpServ
 
 ##### 托管 MCP 配置
 
+从 VS Code MCP Gallery 安装 QVeris 时，VS Code 会使用已登记的托管端点并自动发现 OAuth。按提示在浏览器中完成登录即可。等效的工作区配置如下：
+
 ```json
 {
   "servers": {
     "qveris": {
       "type": "http",
-      "url": "https://mcp.qveris.cn/mcp",
-      "headers": {
-        "Authorization": "Bearer your-api-key-here"
-      }
+      "url": "https://mcp.qveris.cn/mcp"
     }
   }
 }
 ```
+
+仅当客户端不支持 MCP OAuth 自动发现时，才使用[托管 MCP 详情](#托管-mcp-详情)中的 API 密钥请求头配置。
 
 ##### 本地 stdio 备用方案
 
