@@ -139,6 +139,18 @@ The Cursor plugin in this repository bundles the hosted QVeris MCP connection an
 
 The API key is stored by Cursor as a plugin variable and is never committed to this repository.
 
+#### Gemini CLI extension
+
+Install QVeris directly from this repository:
+
+```bash
+gemini extensions install https://github.com/QVerisAI/qveris-agent-toolkit
+```
+
+During installation, enter your `QVERIS_API_KEY` when prompted. Gemini CLI stores it as a sensitive extension setting and connects to the hosted QVeris MCP server at `https://mcp.qveris.ai/mcp`.
+
+Restart Gemini CLI after installation, then run `/mcp` to confirm that the `qveris` server is connected and its tools are available.
+
 ### After setup
 
 Try a task: "Check the current weather in Tokyo"

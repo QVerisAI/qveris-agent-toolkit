@@ -127,6 +127,18 @@ Agent 会自动下载 [OpenClaw 官方技能](skills/openclaw/qveris-official/SK
 
 请按照 [安装指南 (agent/SETUP.md)](agent/SETUP.md) 操作 — Agent 会为你的环境配置 MCP server + [技能](skills/qveris/SKILL.md)。
 
+#### Gemini CLI 扩展
+
+可以直接从本仓库安装 QVeris：
+
+```bash
+gemini extensions install https://github.com/QVerisAI/qveris-agent-toolkit
+```
+
+安装时按提示输入 `QVERIS_API_KEY`。Gemini CLI 会将它作为敏感扩展设置安全保存，并连接到托管的 QVeris MCP 服务 `https://mcp.qveris.ai/mcp`。
+
+安装完成后重启 Gemini CLI，然后运行 `/mcp` 确认 `qveris` 服务器已连接且工具可用。
+
 ### 安装完成后
 
 试一个任务："帮我查一下东京现在的天气"

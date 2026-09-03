@@ -1,0 +1,21 @@
+{
+  "name": "qveris",
+  "version": "0.14.0",
+  "description": "Discover, inspect, and call 10,000+ real-world tools from Gemini CLI with QVeris.",
+  "mcpServers": {
+    "qveris": {
+      "httpUrl": "https://mcp.qveris.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer $QVERIS_API_KEY"
+      }
+    }
+  },
+  "settings": [
+    {
+      "name": "QVeris API Key",
+      "description": "Your QVeris API key. Get one at https://qveris.ai/account?page=api-keys.",
+      "envVar": "QVERIS_API_KEY",
+      "sensitive": true
+    }
+  ]
+}
