@@ -129,6 +129,16 @@ The Agent will download the [official OpenClaw skill](skills/openclaw/qveris-off
 
 Follow the [setup guide (agent/SETUP.md)](agent/SETUP.md) — your Agent will configure MCP server + [skill](skills/qveris/SKILL.md) for your environment.
 
+#### Cursor Marketplace plugin
+
+The Cursor plugin in this repository bundles the hosted QVeris MCP connection and the official QVeris skills. After installing it from Cursor Marketplace:
+
+1. Open the plugin configuration and enter your `QVERIS_API_KEY`.
+2. Start a new agent session so Cursor can connect to `https://mcp.qveris.ai/mcp`.
+3. Confirm that `discover`, `inspect`, `probe`, `call`, `usage_history`, and `credits_ledger` are available.
+
+The API key is stored by Cursor as a plugin variable and is never committed to this repository.
+
 ### After setup
 
 Try a task: "Check the current weather in Tokyo"
