@@ -31,9 +31,20 @@ interface RegistryManifest {
   packages?: RegistryPackage[];
 }
 
+interface PackageManifest {
+  name?: string;
+  mcpName?: string;
+  version?: string;
+}
+
 function loadRegistryManifest(): RegistryManifest {
   const path = join(process.cwd(), 'server.json');
   return JSON.parse(readFileSync(path, 'utf8')) as RegistryManifest;
+}
+
+function loadPackageManifest(): PackageManifest {
+  const path = join(process.cwd(), 'package.json');
+  return JSON.parse(readFileSync(path, 'utf8')) as PackageManifest;
 }
 
 describe('MCP Registry manifest', () => {
@@ -63,9 +74,12 @@ describe('MCP Registry manifest', () => {
 
   it('keeps the registry identity and schema aligned with the published package', () => {
     const manifest = loadRegistryManifest();
+    const packageManifest = loadPackageManifest();
+    const local = manifest.packages?.find((entry) => entry.identifier === packageManifest.name);
 
     expect(manifest.$schema).toBe('https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json');
-    expect(manifest.name).toBe('io.github.QVerisAI/mcp');
-    expect(manifest.version).toBe('0.14.0');
+    expect(manifest.name).toBe(packageManifest.mcpName);
+    expect(manifest.version).toBe(packageManifest.version);
+    expect(local?.version).toBe(packageManifest.version);
   });
 });
