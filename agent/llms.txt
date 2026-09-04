@@ -30,7 +30,7 @@
 ## Access methods (recommended order)
 - Hosted MCP (recommended for remote-capable MCP clients): open /hosted-mcp on the QVeris site that issued the API key for the correct Streamable HTTP endpoint and Bearer authentication setup — no local process, Node.js, or package install
 - CLI v0.11.0 (recommended for shell-capable agents): npm install -g @qverisai/cli — zero prompt tokens, deterministic output, 10,000+ tools without prompt bloat
-- MCP Server v0.14.0 (local stdio fallback): npx @qverisai/mcp — for stdio-only IDE integrations
+- MCP Server v0.14.1 (local stdio fallback): npx @qverisai/mcp — for stdio-only IDE integrations
 - JavaScript SDK v0.8.0: npm install @qverisai/sdk
 - Python SDK v0.7.0: pip install qveris
 - REST API: https://qveris.ai/api/v1

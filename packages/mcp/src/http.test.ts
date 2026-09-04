@@ -12,6 +12,8 @@ import {
   type RunningHttpServer,
 } from './http.js';
 import { bearerAuthHeaderInput } from './server-card.js';
+import type { QverisClient } from './api/client.js';
+import type { ExecuteRequest, SearchRequest } from './types.js';
 
 describe('resolveTransportConfig', () => {
   it('defaults to stdio with no flags or env', () => {
@@ -168,6 +170,47 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
     expect(names).toEqual(expect.arrayContaining(['discover', 'inspect', 'call', 'usage_history', 'credits_ledger']));
+    await client.close();
+  });
+
+  it('initializes, lists projection inputs, and forwards projections through MCP over HTTP', async () => {
+    const searchRequests: SearchRequest[] = [];
+    const executeRequests: Array<{ toolId: string; request: ExecuteRequest }> = [];
+    const qveris = {
+      async searchTools(request: SearchRequest) {
+        searchRequests.push(request);
+        return { search_id: 's1', total: 1, results: [] };
+      },
+      async executeTool(toolId: string, request: ExecuteRequest) {
+        executeRequests.push({ toolId, request });
+        return { execution_id: 'e1', success: true, result: { ok: true } };
+      },
+    } as unknown as QverisClient;
+    await startServer({}, undefined, (sessionId) => createQverisServer(qveris, sessionId));
+
+    const { client } = await connectClient();
+    const { tools } = await client.listTools();
+    const discover = tools.find((tool) => tool.name === 'discover');
+    const call = tools.find((tool) => tool.name === 'call');
+    expect((discover?.inputSchema as { properties?: Record<string, unknown> }).properties).toHaveProperty('view');
+    expect((discover?.inputSchema as { properties?: Record<string, unknown> }).properties).toHaveProperty('lang');
+    expect((call?.inputSchema as { properties?: Record<string, unknown> }).properties).toHaveProperty('respond_with');
+
+    await client.callTool({ name: 'discover', arguments: { query: 'weather', view: 'routing', lang: 'en' } });
+    await client.callTool({
+      name: 'call',
+      arguments: { tool_id: 'weather.v1', search_id: 's1', params_to_tool: {}, respond_with: 'summary' },
+    });
+    await client.callTool({ name: 'call', arguments: { tool_id: 'weather.v1', search_id: 's1', params_to_tool: {} } });
+
+    expect(searchRequests).toEqual([
+      { query: 'weather', limit: 20, session_id: expect.any(String), view: 'routing', lang: 'en' },
+    ]);
+    expect(executeRequests[0]).toMatchObject({
+      toolId: 'weather.v1',
+      request: { search_id: 's1', parameters: {}, respond_with: 'summary' },
+    });
+    expect(executeRequests[1]?.request).not.toHaveProperty('respond_with');
     await client.close();
   });
 

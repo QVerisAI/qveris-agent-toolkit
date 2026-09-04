@@ -323,6 +323,6 @@ Run `qveris doctor` to check setup: Node.js version, API key validity, endpoint 
 | Probe | `{"parameters": {...}, "checks": ["schema", "quote"], "live_budget": "none"}` |
 | Call | `{"search_id": "...", "parameters": {...}, "model": "router-model-v1", "max_response_size": 20480}` |
 
-> **MCP backward compatibility:** Old tool names `search_tools`, `get_tools_by_ids`, `execute_tool` are still supported as deprecated aliases in MCP server v0.14.0. Use the canonical names (`discover`, `inspect`, `probe`, `call`, `usage_history`, `credits_ledger`) going forward.
+> **MCP backward compatibility:** Old tool names `search_tools`, `get_tools_by_ids`, `execute_tool` are still supported as deprecated aliases in MCP server v0.14.1. Use the canonical names (`discover`, `inspect`, `probe`, `call`, `usage_history`, `credits_ledger`) going forward.
 
 Full API documentation: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/rest-api.md
