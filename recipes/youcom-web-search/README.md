@@ -139,11 +139,13 @@ async def search_web(query: str, count: int = 5) -> None:
         print("Search Results:")
         print(result.model_dump_json(indent=2))
 
-        # Audit the call (optional). Totals live in the summary object.
+        # Audit the call (optional). Totals live in the summary object. The
+        # raw UsageEventsSummary keeps the API field names (total_count /
+        # settled_credits); the CLI formatter renames them, so read both.
         usage = await client.usage(execution_id=result.execution_id, summary=True)
         summary = usage.model_dump().get("summary") or {}
-        print(f"Total events: {summary.get('total_events')}, "
-              f"Credits used: {summary.get('actual_amount_credits')}")
+        print(f"Total events: {summary.get('total_count', summary.get('total_events'))}, "
+              f"Credits used: {summary.get('settled_credits', summary.get('actual_amount_credits'))}")
 
     finally:
         await client.close()

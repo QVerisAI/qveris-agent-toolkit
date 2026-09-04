@@ -82,7 +82,7 @@
       "name": "CLI web search",
       "path": "README.md#cli",
       "language": "shell",
-      "command": "qveris discover \"You.com web search API\" --json | jq '[.results[] | select((.provider_name // \"\") | test(\"you[.]?com\"; \"i\"))] | first'"
+      "command": "qveris discover \"You.com web search API\" --json | jq '[.results[] | select((.provider_name // \"\" | ascii_downcase | gsub(\"[^a-z0-9]\"; \"\")) == \"youcom\")] | first'"
     },
     {
       "name": "Python SDK workflow",

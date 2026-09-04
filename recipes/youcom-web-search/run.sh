@@ -73,15 +73,18 @@ echo "$inspect_result" | jq -r '.results[0] | "Parameters: \([.params[]? | .name
 # accepts (tools use different names, e.g. "q" vs "query"; only include
 # "count" when the capability declares it).
 param_names=$(jq -r '[.results[0].params[]?.name] | join(" ")' <<<"$inspect_result")
+# Exact token match on the declared parameter names: a field like
+# "result_count" must not be treated as a declaration of "count".
+has_param() {
+    [[ " $param_names " == *" $1 "* ]]
+}
 query_param="query"
-if [[ "$param_names" == *" q "* || "$param_names" == "q" || "$param_names" == "q "* || "$param_names" == *" q" ]]; then
-    if [[ "$param_names" != *"query"* ]]; then
-        query_param="q"
-    fi
+if has_param "q" && ! has_param "query"; then
+    query_param="q"
 fi
 params="{\"$query_param\":\"latest AI breakthroughs 2026\"}"
-if [[ "$param_names" == *"count"* ]]; then
-    params="${params%\}},\"count\":3}"
+if has_param "count"; then
+    params="${params%}},\"count\":3}"
 fi
 
 echo
@@ -94,9 +97,10 @@ execution=$("${qv[@]}" call "$tool_id" \
 execution_id=$(jq -r '.execution_id' <<<"$execution")
 echo "Execution ID: $execution_id"
 
-# Show search results (truncated for readability)
+# Show search results (truncated for readability). The provider payload sits
+# under .result.data per the documented response contract.
 echo "Results:"
-jq -r '.result.results[]? | "  • \(.title // "No title"): \(.url // .link // "No URL")"' <<<"$execution" | head -3
+jq -r '.result.data.results[]? | "  • \(.title // "No title"): \(.url // .link // "No URL")"' <<<"$execution" | head -3
 
 # Audit the charge for this execution. The summary object carries the totals.
 echo

@@ -184,6 +184,10 @@ async def demo_searches() -> int:
 
         print(f"\nResults from {result['tool_used']['name']}:")
         payload = result["results"]
+        # The provider payload is nested under "data" in the documented
+        # response contract; unwrap it before reading the result list.
+        if isinstance(payload, dict) and isinstance(payload.get("data"), dict):
+            payload = payload["data"]
         if isinstance(payload, dict) and isinstance(payload.get("results"), list):
             for i, item in enumerate(payload["results"][:3], 1):
                 title = item.get("title", "No title")
@@ -197,8 +201,12 @@ async def demo_searches() -> int:
 
         usage = await search_client.get_usage_stats(result["execution_id"])
         summary = usage.get("summary") or {}
-        total_events = summary.get("total_events")
-        credits = summary.get("actual_amount_credits")
+        # The raw UsageEventsSummary keeps the API field names; the CLI
+        # formatter renames these, so read both shapes defensively.
+        total_events = summary.get("total_count", summary.get("total_events"))
+        credits = summary.get(
+            "settled_credits", summary.get("actual_amount_credits")
+        )
         if total_events is not None or credits is not None:
             print(f"Total events: {total_events}, Credits used: {credits}")
 
