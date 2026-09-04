@@ -10,6 +10,14 @@ import { fileURLToPath } from "node:url"
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const PUBLIC_ROOT = /^(?:README(?:_zh-CN)?\.md$|docs\/|agent\/|skills\/|packages\/|ecosystem\/|recipes\/)/
 const PUBLIC_TEXT = /\.(?:md|mdx|txt|html|svg)$/
+const ROOT_MANIFESTS = new Set(["gemini-extension.json", "glama.json", "mcp.json", "package.json"])
+
+export function isPublicManifest(file) {
+  return ROOT_MANIFESTS.has(file)
+    || /^packages\/[^/]+\/(?:package|server|openclaw\.plugin)\.json$/.test(file)
+    || /^recipes\/[^/]+\/qveris\.manifest\.json$/.test(file)
+    || /^ecosystem\/templates\/[^/]+-manifest\.template\.json$/.test(file)
+}
 const COPY_SOURCES = new Set([
   "packages/cli/src/main.mjs",
   "packages/cli/src/output/banner.mjs",
@@ -22,7 +30,7 @@ export function isPublicCopyFile(file) {
   // Historical release notes and test fixtures are not current public promises.
   if (/(?:^|\/)(?:CHANGELOG[^/]*|tests?|fixtures?|node_modules|dist)(?:\/|\.|$)/i.test(file)) return false
   if (/^docs\/(?:internal|design)\//.test(file)) return false
-  return COPY_SOURCES.has(file) || /^docs\/openapi\/.*\.json$/.test(file)
+  return isPublicManifest(file) || COPY_SOURCES.has(file) || /^docs\/openapi\/.*\.json$/.test(file)
     || (PUBLIC_ROOT.test(file) && PUBLIC_TEXT.test(file))
 }
 

@@ -1,5 +1,9 @@
 import assert from "node:assert/strict"
 import test from "node:test"
+import { execFileSync } from "node:child_process"
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises"
+import os from "node:os"
+import path from "node:path"
 import { checkPublicCopy, isPublicCopyFile, scanPublicCopy } from "./check-public-copy.mjs"
 
 test("blocks unsupported catalog and service promises in Markdown and runtime copy", () => {
@@ -47,6 +51,44 @@ test("rejects obsolete CLI guarantees while permitting optional dependencies", (
 test("covers public entry points and excludes historical and test data", () => {
   for (const file of ["README.md", "agent/llms.txt", "skills/qveris/SKILL.md", "packages/cli/src/main.mjs", "docs/openapi/example.json"]) assert.ok(isPublicCopyFile(file), file)
   for (const file of ["packages/cli/CHANGELOG.md", "packages/cli/test/example.md", "docs/internal/notes.md", "skills/openclaw", "packages/cli/node_modules/example/README.md"]) assert.ok(!isPublicCopyFile(file), file)
+})
+
+test("scans tracked distribution manifests, including root manifests", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "qveris-public-manifests-"))
+  const files = [
+    "gemini-extension.json", "glama.json", "mcp.json", "package.json",
+    "packages/cli/package.json", "packages/mcp/server.json",
+    "packages/openclaw-qveris-plugin/openclaw.plugin.json",
+    "recipes/finance-research/qveris.manifest.json",
+    "ecosystem/templates/plugin-manifest.template.json",
+  ]
+  try {
+    execFileSync("git", ["init", "--quiet", root])
+    for (const file of files) {
+      await mkdir(path.dirname(path.join(root, file)), { recursive: true })
+      await writeFile(path.join(root, file), JSON.stringify({ description: "Discover 10,000+ real-world tools" }))
+    }
+    execFileSync("git", ["add", "--", ...files], { cwd: root })
+    const { findings } = await scanPublicCopy(root)
+    assert.deepEqual(findings.map(f => f.file).sort(), [...files].sort())
+    assert.ok(findings.every(f => f.rule === "catalog-count"))
+    for (const file of [".prettierrc.json", "packages/cli/package-lock.json", "packages/js-sdk/tsconfig.json"]) {
+      assert.equal(isPublicCopyFile(file), false, file)
+    }
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+test("manifest-only changes trigger public-copy CI on PRs and main pushes", async () => {
+  const workflow = await readFile(new URL("../.github/workflows/docs-check.yml", import.meta.url), "utf8")
+  const pr = workflow.split("  pull_request:\n")[1].split("  push:\n")[0]
+  const push = workflow.split("  push:\n")[1].split("\npermissions:")[0]
+  for (const section of [pr, push]) {
+    for (const pattern of ["gemini-extension.json", "glama.json", "mcp.json", "package.json", "packages/**/package.json", "packages/**/server.json", "packages/**/openclaw.plugin.json", "recipes/**", "ecosystem/**"]) {
+      assert.ok(section.includes(`- "${pattern}"`), pattern)
+    }
+  }
 })
 
 test("current toolkit public sources pass the guard", async () => {
