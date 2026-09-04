@@ -97,7 +97,7 @@ Reconnect the client and confirm `discover`, `inspect`, `probe`, and `call` are 
 Detect which MCP-capable desktop client you are currently running in. QVeris supports Claude Code, ChatGPT (Codex), OpenCode, Cursor, Cherry Studio, TRAE, GitHub Copilot, Cline, Roo Code, Continue, Kiro, Junie, Augment, Zed, Google Antigravity, Qoder, CodeBuddy, and WorkBuddy.
 
 **Configuration involves two steps for all environments:**
-1. **MCP Server Setup:** Connects the QVeris tool server (`@qverisai/mcp` v0.14.0) to your environment.
+1. **MCP Server Setup:** Connects the QVeris tool server (`@qverisai/mcp` v0.14.1) to your environment.
 2. **Skill Configuration:** Teaches the agent how to use the tools using the MCP/client skill definition file.
    - **Skill URL:** `https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/skills/qveris/SKILL.md`
 
