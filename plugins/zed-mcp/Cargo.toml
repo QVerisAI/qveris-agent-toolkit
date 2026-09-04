@@ -1,0 +1,15 @@
+[package]
+name = "mcp_server_qveris"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "MIT"
+
+[lib]
+path = "src/mcp_server_qveris.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+schemars = "0.8"
+serde = "1.0"
+zed_extension_api = "0.7.0"
