@@ -10,12 +10,12 @@ CLI runs as a **separate process**. If a tool call fails or encounters corrupt d
 
 ### 2. Low Prompt Tokens
 
-Unlike MCP which injects tool schemas into every LLM prompt (consuming 200-500 tokens per tool), CLI runs as a subprocess — no schema definitions are added to the prompt, resulting in significantly lower prompt token usage.
+CLI runs as a subprocess and discovers tools on demand without preloading the full catalog. Instructions, commands, and results still consume context tokens. QVeris MCP also uses a small set of routing tools; actual token usage depends on the client and workflow.
 
 | | CLI | MCP |
 |---|---|---|
-| Token cost | Low (no schema overhead) | High (schemas per turn) |
-| Scalability | 10,000+ tools, no bloat | Each tool adds tokens |
+| Token cost | No upfront catalog schemas; command/result tokens still apply | Depends on client context handling and routing schemas |
+| Scalability | On-demand discovery, no catalog preloading | Routing schemas stay separate from catalog size |
 | Output | Deterministic `--json` | Varies by client |
 | Debugging | Visible, `--dry-run` | Opaque in MCP logs |
 

@@ -1,10 +1,10 @@
 # QVeris CLI
 
-QVeris 能力路由网络的官方命令行工具。直接在终端或 Agent 框架中发现、检查和调用 10,000+ 真实已验证的 API 能力。
+QVeris 能力路由网络的官方命令行工具。直接在终端或 Agent 框架中发现、检查和调用丰富的可用 API 能力。
 
 `@qverisai/cli` v0.11.0 是最新测试版本，包含 OAuth Device Flow 会话、零成本参数校验与报价、可选的发现和调用投影及 Call 模型归因，同时保持 API Key 兼容。
 
-**为什么用 CLI？** MCP 会将工具结构注入每轮 LLM 提示词（每个工具消耗数百 token），而 CLI 作为子进程执行 — 零提示词 token、确定性输出、即时启动。
+**为什么用 CLI？** CLI 通过子进程提供结构化输出和按需发现，无需预加载整个能力目录。使用说明、命令和结果仍会消耗上下文 token；QVeris MCP 同样使用少量路由工具。
 
 ## 安装
 
@@ -31,7 +31,7 @@ npx @qverisai/cli discover "天气 API"
 ### 环境要求
 
 - Node.js 18+
-- 零运行时依赖（仅使用 Node.js 内置 API）
+- 无必需的运行时依赖；系统凭据存储可选用 `@napi-rs/keyring`
 
 ---
 
@@ -119,7 +119,7 @@ qveris discover "天气预报" --view routing --lang zh
 - 描述
 - 相关性得分、成功率、延迟、计费规则摘要
 - 分类和区域（如适用）
-- 已验证标记（如工具有执行历史）
+- 执行历史标记（不代表正确性或可靠性认证）
 
 ---
 
@@ -520,8 +520,8 @@ qveris call 2 --params '{...}'   # 使用索引 2 + 发现 ID
 
 | | CLI | MCP |
 |---|---|---|
-| **Token 消耗** | 零 — 子进程执行 | 高 — 工具结构注入每轮提示词 |
-| **可扩展性** | 10,000+ 真实已验证的工具，不会撑大提示词 | 每个工具增加 ~200-500 token |
+| **Token 消耗** | 无需预加载目录 schema；命令和结果仍消耗 token | 取决于客户端上下文处理及路由 schema |
+| **可扩展性** | 按需发现，无需预加载整个目录 | 路由 schema 数量不随目录大小增长 |
 | **输出** | 确定性，`--json` 可直接解析 | 因客户端而异 |
 | **调试** | 终端可见，`--dry-run` | 不透明，埋在 MCP 日志里 |
 
@@ -595,7 +595,7 @@ qveris call "$TOOL" --discovery-id "$SEARCH_ID" --params '{"city":"London"}' --j
 └── scripts/install.sh         # 一键安装脚本
 ```
 
-**零运行时依赖。**仅使用 Node.js 18+ 内置 API。没有 chalk、commander、yargs。
+**无必需的运行时依赖。** 核心命令使用 Node.js 内置 API；需要 Node.js 18.2.0 或更高版本。OAuth 凭据存储可选用 `@napi-rs/keyring`。
 
 ---
 

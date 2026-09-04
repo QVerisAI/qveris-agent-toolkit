@@ -10,7 +10,7 @@
 
 QVeris works well in agent loops (Discover → Inspect → Call → feed results back to the model) and supports multiple integration styles.
 
-**Cost:** Discover is free. Call is priced by each capability's billing rule, with final settlement visible in usage history and the credits ledger. Free tier includes 1,000 credits. See [Pricing](/pricing) for details.
+**Cost:** Discover is free. Call is priced by each capability's billing rule, with final settlement visible in usage history and the credits ledger. Free tier includes 1,000 one-time trial credits after signup verification. See [Pricing](/pricing) for details.
 
 ---
 
@@ -394,7 +394,7 @@ Supported MCP desktop clients include ChatGPT (Codex), Claude Desktop, Cursor, G
 ### How to get an API key
 
 1. Open [Dashboard / API Keys](/account?page=api-keys)
-2. Sign in / create an account (free, 1,000 credits on signup)
+2. Sign in / create an account (free, 1,000 one-time trial credits after signup verification)
 3. Create an API key
 4. Use it as:
    - `QVERIS_API_KEY` env var (MCP / Python SDK), or

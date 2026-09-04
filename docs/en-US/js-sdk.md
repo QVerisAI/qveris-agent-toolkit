@@ -1,6 +1,6 @@
 # QVeris TypeScript SDK
 
-Typed TypeScript/JavaScript SDK to discover, inspect, probe, call, and audit 10,000+ real-world API capabilities from your own agents and applications.
+Typed TypeScript/JavaScript SDK to discover, inspect, probe, call, and audit real-world API capabilities from your own agents and applications.
 
 `@qverisai/sdk` v0.8.0 is the latest tested release. It is a thin, typed wrapper over the QVeris REST API (`discover`, `inspect`, `probe`, `call`, `credits`, `usage`, `ledger`). It has **zero runtime dependencies** — it uses the platform `fetch` (Node.js 18+) — and mirrors the wire semantics of the [Python SDK](python-sdk.md) and the [MCP server](mcp-server.md).
 

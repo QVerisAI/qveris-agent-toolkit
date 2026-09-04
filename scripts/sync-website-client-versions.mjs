@@ -3,9 +3,8 @@
 import fs from "node:fs/promises"
 import path from "node:path"
 import process from "node:process"
-import { spawnSync } from "node:child_process"
 
-import { latestReleaseTag } from "./release-tag-version.mjs"
+import { websiteReleaseTag } from "./website-release-tags.mjs"
 
 const VERSION_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/
 const VERSION_REFERENCE_RE = /\bv?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)\b/g
@@ -70,27 +69,10 @@ function parseArgs(argv) {
   return args
 }
 
-function runGit(toolkitDir, args) {
-  const result = spawnSync("git", args, {
-    cwd: toolkitDir,
-    encoding: "utf8",
-    maxBuffer: 20 * 1024 * 1024,
-  })
-  if (result.error) throw result.error
-  if (result.status !== 0) {
-    throw new Error(`git ${args.join(" ")} failed: ${(result.stderr ?? "").trim()}`)
-  }
-  return result.stdout ?? ""
-}
-
-function latestVersion(toolkitDir, client) {
-  const tag = latestReleaseTag(
-    runGit(toolkitDir, ["tag", "--list", client.tagPattern])
-      .split("\n")
-      .map((value) => value.trim()),
-    client.tagPrefix,
+async function websiteVersion(toolkitDir, websiteDir, client) {
+  const tag = await websiteReleaseTag(
+    toolkitDir, websiteDir, client.tagPattern, client.tagPrefix,
   )
-  if (!tag) throw new Error(`No release tag matches ${client.tagPattern}`)
 
   const version = tag.startsWith(client.tagPrefix) ? tag.slice(client.tagPrefix.length) : ""
   if (!VERSION_RE.test(version)) {
@@ -138,9 +120,10 @@ async function main() {
   const websiteDir = path.resolve(args.websiteDir)
   await fs.access(path.join(toolkitDir, ".git"))
 
-  const versions = Object.fromEntries(
-    CLIENTS.map((client) => [client.key, latestVersion(toolkitDir, client)]),
-  )
+  const versions = {}
+  for (const client of CLIENTS) {
+    versions[client.key] = await websiteVersion(toolkitDir, websiteDir, client)
+  }
 
   const updates = new Map()
   const registryPath = path.join(websiteDir, "content/tool-versions.json")

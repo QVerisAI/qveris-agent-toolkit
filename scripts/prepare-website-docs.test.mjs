@@ -56,6 +56,29 @@ function redactUnavailableHostedMcp(content) {
   return output.join("\n")
 }
 
+test("CLI sources do not reintroduce unsupported catalog-wide claims", async () => {
+  for (const locale of ["en-US", "zh-CN", "cn/zh-CN"]) {
+    const relPath = `docs/${locale}/cli.md`
+    const source = await fs.readFile(path.join(REPOSITORY_ROOT, relPath), "utf8")
+    assert.doesNotMatch(source, /10,000\+|real-world, verified|真实已验证|\d+\+ built-in APIs/, relPath)
+  }
+})
+
+test("China getting-started preserves the approved trial grant and dynamic top-up minimum", async () => {
+  const source = await fs.readFile(path.join(REPOSITORY_ROOT, "docs/cn/zh-CN/getting-started.md"), "utf8")
+  assert.match(source, /\| 免费版 \| ¥0 \| 注册验证后一次性获得 1,000 体验积分 \|/)
+  assert.match(source, /最低充值金额以结算页实时显示为准/)
+  assert.doesNotMatch(source, /最低充值金额[:：]\s*¥\d/)
+})
+
+test("website sync checks public claims after mirroring and before opening a PR", async () => {
+  const workflow = await fs.readFile(path.join(REPOSITORY_ROOT, ".github/workflows/sync-docs-to-website.yml"), "utf8")
+  const sync = workflow.indexOf("- name: Synchronize published client versions")
+  const gate = workflow.indexOf("run: node scripts/check-public-claims.mjs")
+  const publish = workflow.indexOf("- name: Open website PR if docs changed")
+  assert.ok(sync >= 0 && sync < gate && gate < publish)
+})
+
 test("hosted-MCP source sections remain removable when the website feature is disabled", async () => {
   const sources = [
     "agent/llms.txt",
@@ -99,6 +122,7 @@ test("website staging holds published docs between releases and advances on new 
     git(toolkit, "commit", "-m", "release docs")
     git(toolkit, "tag", "cli-v0.8.0")
     git(toolkit, "tag", "mcp-v0.10.0")
+    git(toolkit, "tag", "mcp-v0.10.1") // A newer tag is not public release approval.
     git(toolkit, "tag", "python-sdk-v0.3.2")
     git(toolkit, "tag", "js-sdk-v0.4.0-rc.1")
     git(toolkit, "tag", "js-sdk-v0.4.0")
@@ -125,6 +149,17 @@ test("website staging holds published docs between releases and advances on new 
     git(toolkit, "add", ".")
     git(toolkit, "commit", "-m", "unreleased sdk docs")
 
+    await write(
+      website,
+      "content/public-claims-registry.json",
+      JSON.stringify({
+        schema_version: "qveris.public-claims.v1",
+        claims: [{
+          id: "local-mcp-tested-version", status: "approved", public_allowed: true,
+          version: "0.10.0", evidence_url: "/docs/mcp-server", expires_at: null,
+        }],
+      }),
+    )
     await write(
       website,
       "docs/.source-manifest.json",
@@ -202,6 +237,13 @@ test("website staging holds published docs between releases and advances on new 
     git(toolkit, "commit", "-m", "next sdk release")
     git(toolkit, "tag", "python-sdk-v0.3.3")
     git(toolkit, "tag", "js-sdk-v0.4.1")
+    await write(website, "content/public-claims-registry.json", JSON.stringify({
+      schema_version: "qveris.public-claims.v1",
+      claims: [{
+        id: "local-mcp-tested-version", status: "approved", public_allowed: true,
+        version: "0.10.1", evidence_url: "/docs/mcp-server", expires_at: null,
+      }],
+    }))
     await fs.rm(path.join(website, "docs/en-US/python-sdk.md"))
 
     const nextResult = spawnSync(
@@ -210,6 +252,10 @@ test("website staging holds published docs between releases and advances on new 
       { encoding: "utf8" },
     )
     assert.equal(nextResult.status, 0, nextResult.stderr)
+    assert.match(
+      await fs.readFile(path.join(output, "docs/en-US/mcp-server.md"), "utf8"),
+      /v0\.10\.1 is the latest tested release/,
+    )
     assert.equal(
       await fs.readFile(path.join(output, "docs/en-US/python-sdk.md"), "utf8"),
       "<!-- qveris-sdk-release: python-sdk-v0.3.3 -->\nQVeris Python SDK v0.3.3 is the latest tested release.\n",

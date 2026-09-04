@@ -3,6 +3,14 @@ import test from "node:test";
 
 import { formatDiscoverResult, formatInspectResult } from "../src/output/formatter.mjs";
 
+test("execution history is not presented as verification", () => {
+  const output = formatInspectResult([{ tool_id: "sample", has_last_execution: true }]);
+  assert.match(output, /History:/);
+  assert.match(output, /has execution history/);
+  assert.doesNotMatch(output, /Verified/);
+  assert.doesNotMatch(formatInspectResult([{ tool_id: "sample", has_last_execution: false }]), /History:/);
+});
+
 function discoverResultWith(categories) {
   return {
     search_id: "s-1",
