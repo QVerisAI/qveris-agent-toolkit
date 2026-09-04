@@ -1,0 +1,10 @@
+id = "mcp-server-qveris"
+name = "QVeris MCP Server"
+description = "Discover, inspect, and call real-world tools through QVeris"
+version = "0.1.0"
+schema_version = 1
+authors = ["QVerisAI"]
+repository = "https://github.com/QVerisAI/qveris-agent-toolkit"
+
+[context_servers.mcp-server-qveris]
+name = "QVeris MCP Server"
