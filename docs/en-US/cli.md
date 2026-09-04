@@ -1,10 +1,10 @@
 # QVeris CLI
 
-The official command-line tool for the QVeris capability routing network. Discover, inspect, and call 10,000+ real-world, verified API capabilities directly from your terminal or agent framework.
+The official command-line tool for the QVeris capability routing network. Discover, inspect, and call a broad catalog of real-world API capabilities directly from your terminal or agent framework.
 
 `@qverisai/cli` v0.11.0 is the latest tested release. It includes OAuth Device Flow sessions, zero-cost parameter/quote probes, opt-in discovery and call projections, and Call model attribution while preserving API key compatibility.
 
-**Why CLI?** Unlike MCP which injects tool schemas into every LLM prompt (consuming hundreds of tokens per tool), CLI runs as a subprocess — zero prompt tokens, deterministic output, instant startup.
+**Why CLI?** CLI runs as a subprocess with structured output and on-demand discovery. It does not preload the full capability catalog. Instructions, commands, and results still consume context tokens; QVeris MCP also uses a small set of routing tools.
 
 ## Installation
 
@@ -31,7 +31,7 @@ npx @qverisai/cli discover "weather API"
 ### Requirements
 
 - Node.js 18+
-- Zero runtime dependencies (uses only Node.js built-in APIs)
+- No mandatory runtime dependencies; optional OS credential storage uses `@napi-rs/keyring`
 
 ---
 
@@ -117,7 +117,7 @@ qveris discover "weather forecast" --view routing --lang en
 - Description
 - Relevance score, success rate, latency, billing rule summary
 - Categories and region (if applicable)
-- Verified badge (if tool has execution history)
+- Execution-history badge (not a certification of correctness or reliability)
 
 ---
 
@@ -573,8 +573,8 @@ Sessions expire after 30 minutes. Use `qveris history` to view and `qveris histo
 
 | | CLI | MCP |
 |---|---|---|
-| **Token cost** | Zero — runs as subprocess | High — tool schemas in every prompt turn |
-| **Scalability** | 10,000+ real-world, verified tools, no prompt bloat | Each tool adds ~200-500 tokens |
+| **Token cost** | No upfront catalog schemas; command/result tokens still apply | Depends on client context handling and routing schemas |
+| **Scalability** | On-demand discovery, no catalog preloading | Routing schemas stay separate from catalog size |
 | **Output** | Deterministic, `--json` for parsing | Varies by client implementation |
 | **Debugging** | Visible in terminal, `--dry-run` | Opaque, buried in MCP logs |
 
@@ -648,7 +648,7 @@ For backward compatibility, the following aliases are supported with deprecation
 └── scripts/install.sh         # One-liner installer
 ```
 
-**Zero runtime dependencies.** Node.js 18+ built-in APIs only. No chalk, no commander, no yargs.
+**No mandatory runtime dependencies.** Core commands use Node.js built-in APIs; requires Node.js 18.2.0 or newer. OAuth credential storage optionally uses `@napi-rs/keyring`.
 
 ---
 

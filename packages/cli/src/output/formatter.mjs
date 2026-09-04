@@ -38,12 +38,12 @@ export function formatDiscoverResult(result) {
     avgTime = typeof avgTime === "number" ? `~${Math.round(avgTime)}ms` : "N/A";
     const billingText = formatBillingRuleBrief(t.billing_rule, stats.cost);
 
-    // Verified indicator
-    const verified = t.has_last_execution ? green(" \u2713") : "";
+    // Execution-history indicator
+    const executionHistory = t.has_last_execution ? green(" \u2713") : "";
 
     // Line 1: index + name + provider
     const providerPart = provider ? `  ${dim("by")} ${provider}` : "";
-    lines.push(`${bold(String(i + 1) + ".")} ${cyan(name)}${providerPart}${verified}`);
+    lines.push(`${bold(String(i + 1) + ".")} ${cyan(name)}${providerPart}${executionHistory}`);
 
     // Line 2: tool_id
     lines.push(`   ${dim(toolId)}`);
@@ -131,7 +131,7 @@ export function formatInspectResult(tools) {
     const expectedCost =
       typeof t.expected_cost === "string" || typeof t.expected_cost === "number" ? String(t.expected_cost).trim() : "";
     if (expectedCost) lines.push(`  Est. cost:  ${yellow(`${expectedCost} credits`)}`);
-    if (t.has_last_execution) lines.push(`  Verified:   ${green("\u2713 has execution history")}`);
+    if (t.has_last_execution) lines.push(`  History:    ${green("\u2713 has execution history")}`);
     if (docsUrl) lines.push(`  Docs:       ${cyan(docsUrl)}`);
 
     // Parameters

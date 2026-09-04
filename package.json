@@ -13,6 +13,8 @@
     "node": ">=22.22.3"
   },
   "scripts": {
+    "check:public-copy": "node scripts/check-public-copy.mjs",
+    "test:public-copy": "node --test scripts/check-public-copy.test.mjs",
     "install:all": "npm --prefix packages/cli ci && npm --prefix packages/mcp ci && npm --prefix packages/js-sdk ci && npm --prefix packages/openclaw-qveris-plugin ci && npm run install:py",
     "install:py": "cd packages/python-sdk && uv sync --frozen --extra dev",
     "build": "npm --prefix packages/mcp run build && npm --prefix packages/js-sdk run build && npm --prefix packages/openclaw-qveris-plugin run build",

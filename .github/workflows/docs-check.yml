@@ -6,6 +6,17 @@ name: Docs checks
 on:
   pull_request:
     paths:
+      - "README*.md"
+      - "agent/**"
+      - "skills/**"
+      - "ecosystem/**"
+      - "recipes/**"
+      - "packages/**/README*.md"
+      - "packages/cli/**"
+      - "packages/mcp/src/types.ts"
+      - "docs/openapi/**"
+      - "scripts/check-public-copy*"
+      - "package.json"
       - "docs/en-US/**"
       - "docs/zh-CN/**"
       - "docs/cn/**"
@@ -22,6 +33,8 @@ on:
       - "scripts/prepare-website-docs.mjs"
       - "scripts/prepare-website-docs.test.mjs"
       - "scripts/release-tag-version.mjs"
+      - "scripts/website-release-tags.mjs"
+      - "scripts/website-release-tags.test.mjs"
       - "scripts/sync-website-client-versions.mjs"
       - "scripts/sync-website-client-versions.test.mjs"
       - ".github/workflows/docs-check.yml"
@@ -30,6 +43,17 @@ on:
     branches:
       - main
     paths:
+      - "README*.md"
+      - "agent/**"
+      - "skills/**"
+      - "ecosystem/**"
+      - "recipes/**"
+      - "packages/**/README*.md"
+      - "packages/cli/**"
+      - "packages/mcp/src/types.ts"
+      - "docs/openapi/**"
+      - "scripts/check-public-copy*"
+      - "package.json"
       - "docs/en-US/**"
       - "docs/zh-CN/**"
       - "docs/cn/**"
@@ -46,6 +70,8 @@ on:
       - "scripts/prepare-website-docs.mjs"
       - "scripts/prepare-website-docs.test.mjs"
       - "scripts/release-tag-version.mjs"
+      - "scripts/website-release-tags.mjs"
+      - "scripts/website-release-tags.test.mjs"
       - "scripts/sync-website-client-versions.mjs"
       - "scripts/sync-website-client-versions.test.mjs"
       - ".github/workflows/docs-check.yml"
@@ -84,9 +110,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true
       - uses: actions/setup-node@v7
         with:
           node-version: 20
+      - name: Check toolkit public copy
+        run: npm run check:public-copy && npm run test:public-copy
+      - name: Check pinned OpenClaw public copy
+        run: node --test skills/openclaw/tests/public-copy.test.mjs
       - name: Check doc locale consistency
         run: node scripts/check-doc-locales.mjs
       - name: Test release-aware website docs staging
@@ -94,3 +126,4 @@ jobs:
           node --test
           scripts/prepare-website-docs.test.mjs
           scripts/sync-website-client-versions.test.mjs
+          scripts/website-release-tags.test.mjs

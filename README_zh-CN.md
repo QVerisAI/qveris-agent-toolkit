@@ -41,9 +41,9 @@
 
 ---
 
-- `10,000+` 能力 · `15+` 类目
+- 丰富的能力，覆盖多种类目
 - `Discover / Inspect / Call / Audit` — 一个协议完成发现、评估、调用和追踪
-- **NEW** `QVeris CLI` — Agent 调用工具最省 token 的方式。[了解更多](#qveris-cli)
+- **NEW** `QVeris CLI` — 通过命令行按需发现和调用工具。[了解更多](#qveris-cli)
 - 支持 `CLI` / `MCP` / `Python SDK` / `REST API`
 
 ---
@@ -61,7 +61,7 @@
 
 > 复制下面这句话发给你的 Agent，30 秒完成接入：
 > `Install QVeris skill following https://qveris.ai/skill/instruct.md and use QVERIS_API_KEY=你的key`
-> → [获取 API Key](https://qveris.ai/account?page=api-keys)（免费注册即得 1,000 credits）
+> → [获取 API Key](https://qveris.ai/account?page=api-keys)（注册验证后一次性获得 1,000 体验积分）
 
 ### ⚙️ 我是开发者，要通过 CLI / MCP / API / SDK 集成
 
@@ -78,13 +78,13 @@
 
 **QVeris 能给你什么：**
 
-- 通过 `Discover`（自然语言），即时发现 10,000+ 能力
+- 通过 `Discover`（自然语言），按需发现可用能力
 - 通过 `Inspect` 查看候选能力的参数、成功率、延迟和计费规则
 - 通过 `Call` 调用任意能力，获得结构化返回和本次调用的预结算账单
 - 通过 `Usage audit` / `Credits ledger` 查询调用是否收费、余额为何变化，默认聚合输出，不把全量流水塞进 Agent 上下文
-- **QVeris CLI** — 通过 `qveris discover/inspect/call` 子进程调用工具，零 prompt token 消耗
-- 覆盖金融、搜索、天气、地图、文档、社交、区块链、医疗等 15+ 类目
-- 99.99% 调用可达率，平均延迟 <500ms
+- **QVeris CLI** — 通过 `qveris discover/inspect/call` 子进程调用工具，无需预加载目录 schema
+- 覆盖金融、搜索、天气、地图、文档、社交、区块链、医疗等多种类目
+- 提供工具级执行历史、成功率和延迟信号（以实际返回为准）
 
 **安装方式：**
 
@@ -103,7 +103,7 @@
 - Call（调用能力）：按结构化 `billing_rule` 定价；调用响应可能包含 compact `billing` 作为预结算账单
 - 最终是否扣费：通过 `qveris usage` / `usage_history` 查看
 - 最终余额变动：通过 `qveris ledger` / `credits_ledger` 查看
-- 免费额度：1,000 credits
+- 免费额度：注册验证后一次性获得 1,000 体验积分
 - 按量购买：$19 = 10,000 credits（不是订阅，credits 不过期）
 - 详见 [定价](https://qveris.ai/pricing)
 
@@ -111,7 +111,7 @@
 
 ## 30 秒接入
 
-1. [获取 API Key](https://qveris.ai/account?page=api-keys)（免费注册即得 1,000 credits）
+1. [获取 API Key](https://qveris.ai/account?page=api-keys)（注册验证后一次性获得 1,000 体验积分）
 
 ### OpenClaw 用户
 
@@ -153,9 +153,9 @@ gemini extensions install https://github.com/QVerisAI/qveris-agent-toolkit
 
 ## QVeris CLI
 
-**Agent 调用工具最省 token 的方式。**
+**通过命令行按需发现和调用工具。**
 
-MCP 会将工具 schema 注入每一轮 LLM prompt（每轮消耗数千 token），而 CLI 作为子进程执行 — **零 prompt token、确定性输出、即时启动**。
+CLI 通过子进程按需发现能力，无需预加载整个能力目录。使用说明、命令和结果仍会消耗上下文 token。QVeris MCP 同样使用少量路由工具，而不是暴露目录中的每个能力。
 
 ```bash
 # 一键安装
@@ -190,12 +190,12 @@ $ qveris usage --mode search --execution-id <execution_id>
 
 | | CLI | MCP |
 |---|---|---|
-| **Token 消耗** | 零 — 子进程执行，不占用 prompt | 高 — 工具 schema 注入每轮 LLM 调用 |
+| **Token 消耗** | 无需预加载目录 schema；命令和结果仍消耗 token | 取决于客户端上下文处理及暴露的路由 schema |
 | **启动速度** | 即时（`npx` 或全局安装） | 需要启动 server + 传输协商 |
 | **输出格式** | 确定性 schema，`--json` 可直接解析 | JSON over stdio，因客户端而异 |
-| **可扩展性** | 10,000 工具，不会撑大 prompt | 每个工具增加 ~200-500 token |
+| **可扩展性** | 按需发现，无需预加载全部工具 | 路由 schema 数量不随目录大小增长 |
 | **调试** | 终端可见，`--dry-run` 预览 | 不透明，埋在 MCP 日志里 |
-| **认证** | 从 key 前缀自动检测 region | 相同 |
+| **认证** | 使用内置 endpoint；可通过 `QVERIS_BASE_URL` 显式覆盖 | 相同 |
 
 `usage` 和 `ledger` 默认返回聚合摘要。大批量审计导出会写入 `.qveris/exports/*.jsonl`，不会直接打印全量流水占用 Agent 上下文。
 
@@ -235,7 +235,7 @@ Agent 通过三个动作与 QVeris 交互：
 
 ### 能力概览
 
-- 10,000+ 能力，15+ 类目
+- 丰富的能力，覆盖多种类目
 - 每个能力附带参数 schema、示例、成功率、平均耗时
 - 支持 `private` / `org` / `public` 三级可见性
 - 详细分类与浏览：[qveris.ai/providers](https://qveris.ai/providers)
@@ -248,9 +248,9 @@ QVeris 采用按量计费，不是订阅制。
 
 | 方案 | 价格 | Credits | 说明 |
 |------|------|---------|------|
-| Free | $0 | 1,000 credits | 注册即得，体验完整功能 |
+| Free | $0 | 1,000 体验积分 | 注册验证后一次性获得 |
 | Standard | $19 | 10,000 credits | 按需购买，credits 不过期 |
-| Scale | $50 起 | 26,250+ credits | 批量购买享 5%-20% bonus |
+| Scale | 见定价页面 | 依所选套餐而定 | 当前套餐及赠送比例以结算页为准 |
 
 - Discover（发现能力）：**免费** — Agent 可以零成本探索全部能力
 - Call（调用能力）：按结构化计费规则定价，最终扣费可通过 Usage audit 和 Credits ledger 审计

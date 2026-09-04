@@ -2196,7 +2196,7 @@ Relevance score for the search query (0.0 - 1.0, higher = better match)
 
 > `optional` **has\_last\_execution?**: `boolean`
 
-Whether this tool has been executed before (verified in production)
+Whether this tool has execution history; not a guarantee of correctness or reliability
 
 ##### last\_execution\_record?
 

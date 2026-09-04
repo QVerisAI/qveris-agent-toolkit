@@ -2,7 +2,7 @@
 
 You are an AI agent. A user has given you this document and a **QVeris API key**. Follow the instructions below to configure QVeris skills and MCP for the platform you are running on.
 
-**Cost:** Discover (finding capabilities) is free. Call (invoking capabilities) is priced by the capability billing rule, and final settlement is visible in usage history and the credits ledger. Free tier includes 1,000 credits. More at https://qveris.ai/pricing
+**Cost:** Discover (finding capabilities) is free. Call (invoking capabilities) is priced by the capability billing rule, and final settlement is visible in usage history and the credits ledger. Free tier includes 1,000 one-time trial credits after signup verification. More at https://qveris.ai/pricing
 
 **API endpoint:** Client tools use a built-in endpoint by default. When the active deployment requires an explicit override, set `QVERIS_BASE_URL` to the complete API root supplied by the deployment administrator. API keys never select or replace the endpoint.
 
@@ -34,7 +34,7 @@ QVeris supports three integration methods. Prefer Hosted MCP whenever your clien
 | Method | Best For | How It Works |
 |--------|----------|--------------|
 | **Hosted MCP Server** (recommended) | Remote-MCP clients and browser-based agents | One HTTPS endpoint — no local process, Node.js, or package install |
-| **CLI** (recommended) | Agents with shell access (Claude Code, OpenClaw, terminals) | Subprocess calls — zero prompt tokens, 10,000+ real-world, verified tools without bloat |
+| **CLI** (recommended) | Agents with shell access (Claude Code, OpenClaw, terminals) | Subprocess calls — no upfront catalog schemas, a broad catalog of real-world tools without bloat |
 | **Local MCP Server** (fallback) | Clients that require stdio | Local MCP process — tools injected into agent context |
 
 ### Node.js prerequisite (CLI and Local MCP only)

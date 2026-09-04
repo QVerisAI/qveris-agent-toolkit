@@ -225,7 +225,7 @@ export interface ToolInfo {
   /** Human-readable explanation of why this tool was recommended (Discover results only) */
   why_recommended?: string;
 
-  /** Whether this tool has been executed before (verified in production) */
+  /** Whether this tool has execution history; not a guarantee of correctness or reliability */
   has_last_execution?: boolean;
 
   /** Most recent execution record, if available */

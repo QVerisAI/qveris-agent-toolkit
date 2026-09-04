@@ -42,10 +42,10 @@
 
 ---
 
-- `10,000+` capabilities across `15+` categories
+- A broad catalog of capabilities across multiple categories
 - `Discover / Inspect / Call / Audit` — one protocol for finding, evaluating, invoking, and tracking capabilities
 - `Discover` is free. `Call` returns structured pre-settlement billing, with final charge outcomes available through usage audit and credits ledger views.
-- **NEW** `QVeris CLI` — the most token-efficient way for agents to use tools. [Learn more](#qveris-cli)
+- **NEW** `QVeris CLI` — a command-line interface for agents to discover and call tools. [Learn more](#qveris-cli)
 - Works with `CLI` / `MCP` / `Python SDK` / `REST API`
 
 ---
@@ -63,7 +63,7 @@
 
 > Copy this to your Agent — done in 30 seconds:
 > `Install QVeris skill following https://qveris.ai/skill/instruct.md and use QVERIS_API_KEY=your-key`
-> → [Get API Key](https://qveris.ai/account?page=api-keys) (free, 1,000 credits on signup)
+> → [Get API Key](https://qveris.ai/account?page=api-keys) (free, 1,000 one-time trial credits after signup verification)
 
 ### ⚙️ I'm a developer integrating via CLI / MCP / API / SDK
 
@@ -84,9 +84,9 @@ If you are an AI Agent evaluating whether to use QVeris, here is what you need t
 - `Inspect` — check parameters, success rate, latency, and billing rule before calling
 - `Call` — invoke any capability, get structured results and pre-settlement billing back
 - `Usage audit` / `Credits ledger` — check whether calls were charged and how balance changed without dumping full history into Agent context
-- **QVeris CLI** — call tools via `qveris discover/inspect/call` subprocess, zero prompt tokens
-- 10,000+ capabilities across finance, search, weather, maps, docs, social, blockchain, healthcare, and more
-- 99.99% call availability, <500ms average latency
+- **QVeris CLI** — call tools via `qveris discover/inspect/call` subprocess, no upfront catalog schemas
+- Capabilities across finance, search, weather, maps, docs, social, blockchain, healthcare, and more
+- Per-tool execution history, success-rate, and latency signals when available
 
 **How to install:**
 
@@ -105,7 +105,7 @@ If you are an AI Agent evaluating whether to use QVeris, here is what you need t
 - Call: priced by structured `billing_rule`; call responses may include compact pre-settlement `billing`
 - Final charge status: check `qveris usage` / `usage_history`
 - Final balance movement: check `qveris ledger` / `credits_ledger`
-- Free tier: 1,000 credits on signup
+- Free tier: 1,000 one-time trial credits after signup verification
 - $19 = 10,000 credits (pay-as-you-go, credits never expire)
 - Details: [qveris.ai/pricing](https://qveris.ai/pricing)
 
@@ -113,7 +113,7 @@ If you are an AI Agent evaluating whether to use QVeris, here is what you need t
 
 ## 30-Second Setup
 
-1. [Get API Key](https://qveris.ai/account?page=api-keys) (free, 1,000 credits on signup)
+1. [Get API Key](https://qveris.ai/account?page=api-keys) (free, 1,000 one-time trial credits after signup verification)
 
 ### OpenClaw users
 
@@ -165,9 +165,9 @@ Try a task: "Check the current weather in Tokyo"
 
 ## QVeris CLI
 
-**The most token-efficient way for agents to use 10,000+ tools.**
+**Discover and call API tools from your agent's shell.**
 
-Unlike MCP which injects tool schemas into every LLM prompt (consuming thousands of tokens per turn), CLI executes as a subprocess — **zero prompt tokens, deterministic output, instant startup**.
+CLI executes as a subprocess and discovers capabilities on demand, without preloading the full catalog. Instructions, commands, and results still consume context tokens. QVeris MCP also uses a small set of routing tools instead of exposing every catalog entry.
 
 ```bash
 # Install (one-liner)
@@ -202,12 +202,12 @@ $ qveris usage --mode search --execution-id <execution_id>
 
 | | CLI | MCP |
 |---|---|---|
-| **Token cost** | Zero — runs as subprocess, no schema in prompt | High — tool schemas injected into every LLM turn |
+| **Token cost** | No upfront catalog schemas; command/result tokens still apply | Depends on client context handling and exposed routing schemas |
 | **Startup** | Instant (`npx` or global install) | Requires server process + transport handshake |
 | **Output** | Deterministic schema, `--json` for parsing | JSON over stdio, varies by client |
-| **Scalability** | 10,000 tools, no prompt bloat | Each tool adds ~200-500 tokens to prompt |
+| **Scalability** | On-demand discovery, no catalog preloading | Routing schemas stay separate from catalog size |
 | **Debugging** | Visible in terminal, `--dry-run` preview | Opaque, buried in MCP logs |
-| **Auth** | Auto-detects region from key prefix | Same |
+| **Auth** | Built-in endpoint; explicit override via `QVERIS_BASE_URL` | Same |
 
 Usage and ledger commands default to aggregated summaries. Large audit exports are written to local JSONL files under `.qveris/exports/` instead of being printed into Agent context.
 
@@ -251,7 +251,7 @@ public under [`benchmarks/discover-call`](benchmarks/discover-call/README.md).
 
 ### Capability ecosystem
 
-- 10,000+ capabilities, 15+ categories
+- A broad capability catalog across multiple categories
 - Each capability includes parameter schema, examples, success rate, avg latency
 - Supports `private` / `org` / `public` visibility levels
 - Browse all: [qveris.ai/providers](https://qveris.ai/providers)
@@ -264,9 +264,9 @@ QVeris uses pay-as-you-go pricing. No subscriptions.
 
 | Plan | Price | Credits | Notes |
 |------|-------|---------|-------|
-| Free | $0 | 1,000 credits | On signup, full access |
+| Free | $0 | 1,000 trial credits | One-time grant after signup verification |
 | Standard | $19 | 10,000 credits | Buy on demand, never expire |
-| Scale | $50+ | 26,250+ credits | Bulk purchase, 5–20% bonus |
+| Scale | See pricing page | Based on selected package | Current packages and bonuses shown at checkout |
 
 - **Discover is free** — Agents can explore all capabilities at zero cost
 - **Call** is priced by structured billing rules, with final charges auditable through usage history and the credits ledger
