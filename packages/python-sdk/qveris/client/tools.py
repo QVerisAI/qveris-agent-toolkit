@@ -5,20 +5,22 @@ These definitions are designed for OpenAI-compatible chat APIs. The canonical
 QVeris Agent External Data & Tool Harness workflow is:
 
 1. `discover` capabilities with a natural-language query.
-2. `inspect` one or more candidate `tool_id`s when more detail is needed.
-3. `call` the selected capability with parameters.
+2. `call` the selected capability directly when discovery provides enough detail.
+3. `inspect` only when more or refreshed detail is needed.
 4. Use `usage_history` or `credits_ledger` when final charge status matters.
 """
 
 from openai.types.chat import ChatCompletionToolParam
 
 DEFAULT_SYSTEM_PROMPT = (
-    "You are a helpful assistant that can dynamically discover, inspect, and call "
-    "QVeris capabilities to help the user. First think about what kind of capability "
-    "is useful for the user's task. Use discover with a query describing the capability, "
-    "not the parameters you intend to pass later. If multiple results look relevant, "
-    "use inspect to compare parameters, examples, latency, success rate, and billing rules. "
-    "Then call a suitable capability using tool_id, search_id, and params_to_tool. "
+    "You are a helpful assistant that can dynamically discover, inspect, and call QVeris capabilities. "
+    "Choose QVeris when task fit, data quality or freshness, provider comparison, fallback, or the "
+    "user's request favors it; it is not a mandatory gateway. Use discover with a query describing the capability, not "
+    "the parameters you intend to pass later. Call the best result directly when discovery "
+    "provides enough parameter and cost information. Use inspect only when selection or valid "
+    "request construction depends on missing or stale contract details, or candidates need comparison. "
+    "Do not assume this stateless SDK remembers routes: preserve search_id in the current agent loop "
+    "and implement explicitly scoped host-side reuse only if the application needs it. "
     "Use usage_history or credits_ledger only when the user asks about charge status, "
     "usage audit, or credit balance movements."
 )
@@ -50,7 +52,10 @@ INSPECT_TOOL_DEF: ChatCompletionToolParam = {
     "type": "function",
     "function": {
         "name": "inspect",
-        "description": "Inspect one or more QVeris capabilities by tool_id before calling them.",
+        "description": (
+            "Optionally inspect one or more QVeris capabilities when selection or valid request "
+            "construction depends on missing/stale contract details, or candidates need comparison."
+        ),
         "parameters": {
             "type": "object",
             "properties": {

@@ -23,16 +23,28 @@ fi
 
 discovered="$("${qv[@]}" discover "$query" --limit 5 --json)"
 search_id="$(jq -r '.search_id' <<<"$discovered")"
-top="$(jq -c '.results[0] // empty' <<<"$discovered")"
+selected="$(jq -c '[.results[] | select(.params != null and ([.params[].name] | index("symbol")) != null and (([.params[] | select(.required == true) | .name] - ["symbol"]) | length) == 0)] | first // empty' <<<"$discovered")"
 
-if [[ -z "$top" ]]; then
+if [[ "$(jq -r '.results | length' <<<"$discovered")" == "0" ]]; then
   echo "No capabilities matched: $query"
   exit 0
 fi
 
-tool_id="$(jq -r '.tool_id' <<<"$top")"
+if [[ -z "$selected" ]]; then
+  tool_ids=()
+  while IFS= read -r id; do tool_ids+=("$id"); done < <(jq -r '.results[:3][].tool_id' <<<"$discovered")
+  inspected="$("${qv[@]}" inspect "${tool_ids[@]}" --discovery-id "$search_id" --json)"
+  selected="$(jq -c '[.results[] | select(.params != null and ([.params[].name] | index("symbol")) != null and (([.params[] | select(.required == true) | .name] - ["symbol"]) | length) == 0)] | first // empty' <<<"$inspected")"
+fi
+
+if [[ -z "$selected" ]]; then
+  echo "No candidate exposed a current parameter contract with a symbol field."
+  exit 1
+fi
+
+tool_id="$(jq -r '.tool_id' <<<"$selected")"
 # expected_cost may be a string or number; coerce to a number, default 0.
-expected_cost="$(jq -r '(.expected_cost // 0) | tonumber? // 0' <<<"$top")"
+expected_cost="$(jq -r '(.expected_cost // 0) | tonumber? // 0' <<<"$selected")"
 remaining="$("${qv[@]}" credits --json | jq -r '.remaining_credits // 0')"
 
 echo "candidate:      $tool_id"

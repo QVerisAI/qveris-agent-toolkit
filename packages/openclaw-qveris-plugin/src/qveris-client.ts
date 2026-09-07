@@ -16,6 +16,9 @@ export interface QverisDiscoverResultParam {
   name: string;
   type: string;
   required: boolean;
+  enum?: unknown[];
+  oneOf?: unknown;
+  one_of?: unknown;
   description?: {
     en?: string;
     [key: string]: string | undefined;

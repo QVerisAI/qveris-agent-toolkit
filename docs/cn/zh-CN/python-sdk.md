@@ -41,7 +41,7 @@ client = QverisClient(QverisConfig(
 
 ## 快速开始
 
-核心流程是 **discover（发现）→ inspect（检查）→ call（调用）**，之后可选 **audit（审计）**。所有方法都是 `async`。
+默认流程是 **discover（发现）→ call（调用）**，之后可选 **audit（审计）**。`inspect` 和 `probe` 是按需检查，不是必经步骤。所有方法都是 `async`。
 
 ```python
 import asyncio
@@ -52,30 +52,41 @@ async def main():
     try:
         # 1. 用自然语言发现能力（免费）
         discovered = await client.discover("天气预报 API", limit=5)
-        tool = discovered.results[0]
-
-        # 2. 检查所选能力，获取完整参数
-        inspected = await client.inspect([tool.tool_id], search_id=discovered.search_id)
-        selected = inspected.results[0]
-
-        # 3. 在不执行或扣费的情况下校验参数并获取报价
-        params = (
-            selected.examples.sample_parameters
-            if selected.examples and selected.examples.sample_parameters
-            else {"city": "北京"}
+        params = {"city": "北京"}
+        tool = next(
+            (candidate for candidate in discovered.results
+             if candidate.params is not None
+             and {p.name for p in candidate.params if p.required}.issubset(params)
+             and set(params).issubset({p.name for p in candidate.params})),
+            None,
         )
-        probe = await client.probe(selected.tool_id, params, checks=["schema", "quote"])
 
-        # 4. 调用（可能消耗积分）
+        # 2. 仅在 Discover 未提供选择所需契约时 Inspect
+        if tool is None:
+            details = await client.inspect(
+                [candidate.tool_id for candidate in discovered.results[:3]],
+                search_id=discovered.search_id,
+            )
+            tool = next(
+                (candidate for candidate in details.results
+                 if candidate.params is not None
+                 and {p.name for p in candidate.params if p.required}.issubset(params)
+                 and set(params).issubset({p.name for p in candidate.params})),
+                None,
+            )
+        if tool is None:
+            raise RuntimeError("没有候选能力提供兼容的当前参数契约")
+
+        # 3. 样例只作模板；覆盖为本次请求的真实业务值
         result = await client.call(
-            selected.tool_id,
+            tool.tool_id,
             params,
             search_id=discovered.search_id,
             max_response_size=20480,
         )
         print(result.success, result.result)
 
-        # 5. 审计最终扣费结果
+        # 4. 审计最终扣费结果
         usage = await client.usage(execution_id=result.execution_id, summary=True)
         ledger = await client.ledger(summary=True, limit=5)
         print(usage.total, ledger.total)
@@ -86,12 +97,16 @@ asyncio.run(main())
 ```
 
 > `QverisClient` 持有一个 HTTP 连接池。用完务必 `await client.close()`（建议放在 `finally` 中）。
+
+客户端在路由层面是无状态的，没有隐式语义路由、schema、费用或结果缓存。应在当前应用流程中保留真实 `search_id`。Host 如自行实现复用，必须按账户/API 地址/授权/会话隔离，根据当前请求重建业务值，并显式管理元数据失效。
+
+显式空参数列表表示工具确实无参数；缺少参数列表表示当前投影没有提供契约。仅在选择或构造合法请求所需详情缺失/过期，或需要比较候选时使用 `inspect`。仅在参数需要校验、预算决策需要当前报价、或明确要求预检时使用 `probe`。报价不等于锁价，也不能代替用户授权。
 >
 > 若已设置 `QVERIS_BASE_URL=https://qveris.cn/api/v1` 环境变量，可直接 `QverisClient()`，无需再传 `base_url`。
 
 ## Agent（智能体）
 
-`Agent` 把同一套流程封装成一个 LLM 工具循环。模型会拿到 `discover`、`inspect`、`call` 三个工具并自行决定何时调用。
+`Agent` 把同一套流程封装成一个 LLM 工具循环。模型会拿到 `discover`、`inspect`、`call` 三个工具；默认指引要求 Discover 后直接 Call，只在契约详情缺失/过期或需要比较候选时使用 Inspect。
 
 每次内置 `call` 都会自动将 `AgentConfig.model` 记录为 Call 的 `model` 归因。该值属于 Agent 自身的元数据，因此模型生成的工具参数不能省略或覆盖它。
 

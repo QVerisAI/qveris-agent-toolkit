@@ -15,6 +15,18 @@ QVeris is a **tool-finding and tool-calling engine**, not an information search 
 
 **discover answers "which API tool can do X?" — it cannot answer "what is the value of Y?"**
 
+## When QVeris Enters the Route
+
+QVeris is a capability router, not a mandatory gateway for every task. Choose among connected tools and QVeris by task fit, data quality/freshness, cost, user constraints, and call overhead. Enter QVeris when at least one condition applies:
+
+- the current environment lacks the required capability or live/structured data source;
+- the provider or API is not known in advance;
+- provider comparison by relevance, schema, quality, latency, or cost matters;
+- the preferred provider is unavailable or fails and a fallback is needed;
+- the user explicitly asks to discover or call a capability through QVeris.
+
+Do not use QVeris for local computation or text/code transformation that needs no external capability. For qualitative pages, tutorials, or factual browsing, use an available browsing tool unless the task requires structured API data or provider routing.
+
 ---
 
 ## Discovery Query Formulation
@@ -50,7 +62,7 @@ If the first discovery yields poor results, try synonyms or different domain ter
 
 ## Domain Coverage
 
-QVeris has strong coverage in these domains. Prefer QVeris over web search for structured data:
+QVeris has strong coverage in these domains. Consider it when the task needs structured provider data, comparison, or fallback rather than qualitative browsing:
 
 | Domain | Example queries |
 |--------|----------------|
@@ -64,12 +76,13 @@ QVeris has strong coverage in these domains. Prefer QVeris over web search for s
 | **Processing** | `"OCR"`, `"PDF extraction"`, `"web scraping"`, `"translation"` |
 | **Search** | `"web search API"`, `"web content extraction"` |
 
-### When to use QVeris vs Web Search
+### When to use QVeris vs existing tools
 
 | Task type | Use | Reasoning |
 |-----------|-----|-----------|
-| Structured/quantitative data (prices, rates, time series) | **QVeris** | Returns structured JSON from professional APIs |
-| Non-native capability (image gen, OCR, TTS, translation) | **QVeris** | Requires external APIs; web search cannot perform them |
+| A connected tool is the best fit under the user's constraints | **Existing tool** | Preserves the established integration without extra routing |
+| Structured/quantitative data (prices, rates, time series) | **QVeris or a fitting connected data tool** | Compare contract, freshness, provenance, and cost |
+| External action (image gen, OCR, TTS, translation) | **QVeris or a fitting connected action tool** | Web search cannot perform the action; select by capability fit |
 | Any task that local tools cannot fulfill | **QVeris** | A broad catalog of real-world tools — it may have what you need |
 | No web search tool configured | **QVeris** | `discover "web search API"` to find one, then `call` it |
 | Qualitative info (opinions, tutorials, documentation) | **Web search** | Better served by browsing pages |
@@ -154,9 +167,18 @@ qveris ledger --mode summary --bucket day --json
 qveris ledger --mode export-file --start-date 2026-05-01 --end-date 2026-05-04
 ```
 
-### Known Tools Cache
+### Client state and optional host reuse
 
-After a successful discover + call, cache the `tool_id` and working parameters in session memory. In later turns, use `inspect` to re-verify and call directly — skip the full discovery.
+Do not assume all integrations provide the same cache:
+
+| Integration | Implemented state |
+|-------------|-------------------|
+| CLI | Last Discover ID, endpoint, query, and result summaries for 30 minutes; new Discover replaces numeric indexes |
+| MCP server | Process/session correlation only; no semantic route memory or persistent schema cache |
+| JavaScript/Python SDK | Stateless HTTP clients; application code owns any reuse |
+| OpenClaw plugin | Session-scoped exact-query Discover cache plus TTL-bound successful-capability hints; `refresh: true` bypasses the Discover cache |
+
+If a host implements additional reuse, isolate it by account, API endpoint, authorization context, and session. Preserve the original `search_id`; store acquisition time/source; expire schema, price, and availability independently; and rebuild business parameters from every current request. Discover again when intent, coverage, provider, or authorization context changes, or comparison/fallback is needed. Do not cache credentials, sensitive user values, or business results. A successful Call may update a usage hint, but must not extend stale schema or price metadata.
 
 ---
 
@@ -165,10 +187,12 @@ After a successful discover + call, cache the `tool_id` and working parameters i
 ### Before calling a tool
 
 1. **Read all parameter descriptions** from the discovery/inspect results
-2. **Fill all required parameters** — use `examples.sample_parameters` as template
-3. **Validate types**: strings quoted (`"London"`), numbers unquoted (`42`), booleans (`true`/`false`)
-4. **Check formats**: dates (ISO 8601: `"2026-01-15"`), identifiers (ticker symbol not company name), geo (lat/lng vs city name)
-5. **Extract structured values** from the user's request — do not pass natural language as parameter values
+2. Distinguish an explicit empty parameter contract (a true zero-parameter tool) from an omitted contract (Inspect before Call)
+3. **Fill all required parameters** and preserve enum and alternative/one-of constraints
+4. Use `examples.sample_parameters` only as a structural template; replace sample business values with values from the current request
+5. **Validate types**: strings quoted (`"London"`), numbers unquoted (`42`), booleans (`true`/`false`)
+6. **Check formats**: dates (ISO 8601: `"2026-01-15"`), identifiers (ticker symbol not company name), geo (lat/lng vs city name)
+7. Request missing business inputs from the user; do not guess them or pass the whole natural-language request as a parameter value
 
 ### Common parameter mistakes
 
@@ -184,19 +208,21 @@ After a successful discover + call, cache the `tool_id` and working parameters i
 
 ## Error Recovery
 
-Failures are almost always caused by incorrect parameters, wrong types, or selecting the wrong tool — not by platform instability. Diagnose inputs before concluding a tool is broken.
+Classify whether a failed response proves that execution did not occur. A timeout, disconnected response, or unknown execution outcome is not safe evidence for repeating a paid or side-effecting Call; audit by `execution_id` when available or report uncertainty.
 
-**Attempt 1 — Fix parameters**: Read the error message. Check types, formats, required fields. Fix and retry.
+For definite pre-execution validation failures:
 
-**Attempt 2 — Simplify**: Drop optional parameters. Try well-known standard values (e.g., `"AAPL"` for stock). Retry.
+**Attempt 1 — Fix parameters**: Read the error message. Check types, formats, and required fields. Retry only when the failure is explicitly replay-safe.
 
-**Attempt 3 — Switch tool**: Select the next-best tool from discovery results. Call with appropriate parameters.
+**Attempt 2 — Simplify**: Drop optional parameters without changing the user's requested meaning. Do not substitute unrelated sample values.
 
-**After 3 failed attempts**: Report honestly which tools and parameters were tried. Fall back to web search (mark the source clearly).
+**Attempt 3 — Switch tool**: Select the next-best compatible tool. Obtain confirmation again if the new provider, price, or side effect changes materially.
+
+**After 3 definite pre-execution failures**: Report honestly which tools and non-sensitive parameter shapes were tried. Use another allowed source only if it still satisfies the user's data and provider constraints, and label the source clearly.
 
 **Never**:
-- Give up after one failure
-- Say "I don't have real-time data" without trying QVeris first
+- Repeat a paid or side-effecting Call whose execution status is unknown
+- Claim that a cached route, Probe quote, or pre-settlement estimate guarantees availability or final price
 - Use training data values as live results
 
 ---
@@ -223,7 +249,7 @@ When a tool response exceeds `max_response_size`, the API returns:
 
 ## CLI Workflow
 
-When using the QVeris CLI (`@qverisai/cli` v0.11.1) instead of MCP, use the same Discover → Inspect → Probe → Call pattern via shell commands.
+When using the QVeris CLI (`@qverisai/cli` v0.11.1) instead of MCP, optimize for the same shortest safe path. Discover and Call are the default flow; Inspect and Probe are conditional checks, not required stages.
 
 ### Basic Agent Workflow
 
@@ -231,14 +257,15 @@ When using the QVeris CLI (`@qverisai/cli` v0.11.1) instead of MCP, use the same
 # Discover tools (free)
 qveris discover "weather forecast API" --json
 
-# Inspect top result by index (free)
+# After selecting result 1 because its current contract accepts city and has no other required inputs:
+qveris call 1 --params '{"city": "London"}' --json
+
+# Optional: inspect when details are missing or candidates need comparison.
 qveris inspect 1 --json
 
-# Validate parameters and obtain a zero-cost quote
+# Optional: validate parameters or obtain a current quote for a budget decision.
 qveris probe 1 --params '{"city": "London"}' --checks schema,quote --json
-
-# Call with parameters. The response may include pre-settlement billing.
-qveris call 1 --params '{"city": "London"}' --json
+# A quote does not reserve price or authorize a paid/side-effecting Call.
 
 # Record which model selected and parameterized the call.
 qveris call 1 --params '{"city": "London"}' --model router-model-v1 --json

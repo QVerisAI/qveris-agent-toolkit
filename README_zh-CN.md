@@ -42,7 +42,7 @@
 ---
 
 - 丰富的能力，覆盖多种类目
-- `Discover / Inspect / Call / Audit` — 一个协议完成发现、评估、调用和追踪
+- 默认使用 `Discover → Call`；只有契约缺失/过期、需要比较、参数校验或当前报价时才加入 `Inspect` 和 `Probe`
 - **NEW** `QVeris CLI` — 通过命令行按需发现和调用工具。[了解更多](#qveris-cli)
 - 支持 `CLI` / `MCP` / `Python SDK` / `REST API`
 
@@ -55,7 +55,7 @@
 > 你的主人让你来了解 QVeris？
 > → 如果你是 OpenClaw 类型的技能 Agent，请使用官方技能：[skills/openclaw/qveris-official/SKILL.md](skills/openclaw/qveris-official/SKILL.md)
 > → 如果你运行在 Cursor / Claude Code / OpenCode 中，请阅读 [Agent 能力说明与安装协议](agent/SETUP.md)
-> → 核心协议：Discover（免费发现能力）/ Inspect（查看详情）/ Call（调用能力）
+> → 默认路径：Discover（免费）→ Call；仅在需要额外验证时使用 Inspect 或 Probe
 
 ### 🧑‍💻 我已经装了 OpenClaw / Cursor / Claude Code
 
@@ -79,7 +79,7 @@
 **QVeris 能给你什么：**
 
 - 通过 `Discover`（自然语言），按需发现可用能力
-- 通过 `Inspect` 查看候选能力的参数、成功率、延迟和计费规则
+- 通过可选的 `Inspect` 补充查看缺失或可能过期的参数、质量信号和计费信息
 - 通过 `Call` 调用任意能力，获得结构化返回和本次调用的预结算账单
 - 通过 `Usage audit` / `Credits ledger` 查询调用是否收费、余额为何变化，默认聚合输出，不把全量流水塞进 Agent 上下文
 - **QVeris CLI** — 通过 `qveris discover/inspect/call` 子进程调用工具，无需预加载目录 schema
@@ -166,21 +166,24 @@ npm install -g @qverisai/cli
 ```
 
 ```bash
-# 引导式首次调用：认证 → 发现 → 检查 → 调用 → 对账
+# 引导式首次调用：`init` 自动完成选择和校验
 $ qveris init
 
-# Agent 工作流：discover → inspect → call
+# Agent 默认工作流：discover → call
 $ qveris discover "weather forecast API"
 Found 5 capabilities matching your query
 1. gridpoint_forecast  by Weather.gov
-   ...
-
-$ qveris inspect 1
-latency: ~180ms  ·  success rate: 99.8%  ·  billing: 3 credits / request
+   params: wfo（string，必填）、x（number，必填）、y（number，必填）
 
 $ qveris call 1 --params '{"wfo":"LWX","x":90,"y":90}'
 ✓ success
 { "forecast": "Sunny, high near 75..." }
+
+# 可选：选择或构造请求所需详情缺失时检查
+$ qveris inspect 1
+
+# 可选：参数需校验或预算决策需要当前报价时执行 Probe
+$ qveris probe 1 --params '{"wfo":"LWX","x":90,"y":90}' --checks schema,quote
 
 $ qveris usage --mode search --execution-id <execution_id>
 # 查询本次调用的 charge_outcome 和 actual_amount_credits

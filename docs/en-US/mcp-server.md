@@ -470,17 +470,19 @@ For very large call outputs, QVeris may return:
 
 ## Recommended Usage Pattern
 
-For most agent tasks, use this flow:
+Choose between connected tools and QVeris by task fit, data quality/freshness, cost, user constraints, and call overhead. QVeris is especially useful when a capability is missing, the provider is unknown, cross-provider comparison matters, fallback is needed, or the user requests it; it is not a mandatory gateway.
+
+For most QVeris tasks, use this flow:
 
 1. `discover` to find relevant capabilities
-2. `inspect` to review the best candidate(s) when needed
-3. `call` to execute the selected capability
+2. `call` the best candidate directly when discovery provides enough schema and cost information
 
 In practice:
 
-- If the task is simple and the best candidate is obvious, you may go directly from Discover to Call
-- If the task is higher risk or parameters are unclear, insert Inspect before Call
-- If you already know a good `tool_id` from a previous turn, re-inspect it before reuse
+- Use `inspect` only when selection or valid request construction depends on missing/stale contract details, or candidates need comparison
+- Use `probe` only when parameters need validation, a current quote is needed for a budget decision, or preflight is explicitly requested; a quote is not a price reservation or authorization
+- Preserve the current Discover result's `search_id` for Call and rebuild parameters from the user's current request
+- The MCP server does not provide semantic route memory. If the host implements it, isolate it by account/API endpoint/authorization/session, expire schema/pricing/availability independently, and never cache credentials, sensitive values, or business results
 
 ---
 

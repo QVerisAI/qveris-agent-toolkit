@@ -50,11 +50,12 @@ qveris login
 # 2. 发现工具
 qveris discover "天气预报 API"
 
-# 3. 检查工具（使用 discover 结果的索引）
-qveris inspect 1
-
-# 4. 调用
+# 3. 按当前契约确认结果 1 接受这些字段后调用
 qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
+
+# 可选：契约详情或当前报价有必要时再检查
+qveris inspect 1
+qveris probe 1 --params '{"wfo": "LWX", "x": 90, "y": 90}' --checks schema,quote
 ```
 
 ---
@@ -63,7 +64,7 @@ qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
 
 ### `qveris init`
 
-引导式首次调用向导：解析认证、发现能力、检查能力、执行调用，并在最后给出 usage/ledger 对账命令。
+客户端首次调用向导：解析认证、发现并检查能力、执行调用，并在最后给出 usage/ledger 对账命令。这是 CLI onboarding 流程，不是服务端聚合接口。
 
 ```bash
 qveris init [query] [flags]
@@ -512,9 +513,13 @@ qveris call 2 --params '{...}'   # 使用索引 2 + 发现 ID
 
 会话 30 分钟后过期。用 `qveris history` 查看，`qveris history --clear` 清除。
 
+这里保存的是最近一次 Discover 的索引和来源信息，不是语义意图路由或完整 schema 缓存。新的 Discover 会覆盖旧索引。每次 Call 都要根据当前请求重新构造业务值；如果会话摘要不含安全构造请求所需契约，应先 Inspect。
+
 ---
 
 ## Agent / LLM 集成
+
+应根据任务适配度、数据质量/时效、费用、用户约束和调用开销，在已连接工具与 QVeris 之间选择。能力缺失、Provider 未知、需要跨 Provider 比较或 fallback，或用户明确指定 QVeris 时，QVeris 尤其适合。QVeris 内部默认使用 `discover` → `call`；只有选择或合法构造请求所需契约缺失/过期时才 `inspect`，只有参数校验或预算决策需要当前报价时才 `probe`。报价不等于锁价或授权。
 
 ### CLI vs MCP
 
@@ -539,9 +544,11 @@ CLI 自动检测 Agent 与人类使用场景：
 ### 脚本示例
 
 ```bash
-# 发现 → 提取工具 ID → 调用 → 解析结果
-TOOL=$(qveris discover "weather" --json | jq -r '.results[0].tool_id')
-SEARCH_ID=$(qveris discover "weather" --json | jq -r '.search_id')
+# Discover 一次，再按返回契约选择，不能只取首个结果
+DISCOVERY=$(qveris discover "weather forecast API" --json)
+TOOL=$(printf '%s' "$DISCOVERY" | jq -r '.results[] | select(.params != null and ([.params[].name] | index("city")) != null and ([.params[] | select(.required == true) | .name] - ["city"] | length == 0)) | .tool_id' | head -1)
+SEARCH_ID=$(printf '%s' "$DISCOVERY" | jq -r '.search_id')
+test -n "$TOOL" || { echo "需要 Inspect：Discover 未返回 city 参数契约" >&2; exit 1; }
 qveris call "$TOOL" --discovery-id "$SEARCH_ID" --params '{"city":"London"}' --json | jq '.result.data'
 ```
 

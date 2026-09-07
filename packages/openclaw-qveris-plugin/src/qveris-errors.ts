@@ -16,6 +16,8 @@ export interface QverisErrorResult {
   detail: string;
   retry_hint?: string;
   retry_after_seconds?: number;
+  execution_outcome?: "unknown";
+  retry_safe?: boolean;
   recovery_step?: "fix_params" | "simplify" | "switch_tool";
   attempt_number?: number;
   note?: string;
@@ -25,15 +27,19 @@ export interface QverisErrorResult {
  * Classifies a caught error from a QVeris API call into a structured result
  * so the model receives a consistent error format rather than an exception trace.
  */
-export function classifyQverisError(err: unknown, opts?: { note?: string }): QverisErrorResult {
+export function classifyQverisError(err: unknown, opts?: { note?: string; replaySafe?: boolean }): QverisErrorResult {
   const note = opts?.note ?? QVERIS_WORKFLOW_NOTE;
+  const unknownPaidOutcome = opts?.replaySafe === false;
 
   if (err instanceof DOMException && err.name === "AbortError") {
     return {
       success: false,
       error_type: "timeout",
       detail: "Request timed out",
-      retry_hint: "Increase timeout_seconds or retry with a simpler query.",
+      retry_hint: unknownPaidOutcome
+        ? "Do not repeat this paid Call automatically; the execution outcome is unknown. Report the uncertainty."
+        : "Increase timeout_seconds or retry with a simpler query.",
+      ...(unknownPaidOutcome ? { execution_outcome: "unknown" as const, retry_safe: false } : {}),
       note,
     };
   }
@@ -43,7 +49,10 @@ export function classifyQverisError(err: unknown, opts?: { note?: string }): Qve
       success: false,
       error_type: "timeout",
       detail: "Request timed out",
-      retry_hint: "Increase timeout_seconds or retry with a simpler query.",
+      retry_hint: unknownPaidOutcome
+        ? "Do not repeat this paid Call automatically; the execution outcome is unknown. Report the uncertainty."
+        : "Increase timeout_seconds or retry with a simpler query.",
+      ...(unknownPaidOutcome ? { execution_outcome: "unknown" as const, retry_safe: false } : {}),
       note,
     };
   }
@@ -63,20 +72,27 @@ export function classifyQverisError(err: unknown, opts?: { note?: string }): Qve
           status: 429,
           detail: err.message.replace(/\s*\[retry-after:\d+]/, ""),
           retry_after_seconds: waitSeconds,
-          retry_hint: `Rate limited. Wait ${waitSeconds}s before retrying.`,
+          retry_hint: unknownPaidOutcome
+            ? "Do not repeat this paid Call automatically; preserve single-submit semantics."
+            : `Rate limited. Wait ${waitSeconds}s before retrying.`,
+          ...(unknownPaidOutcome ? { retry_safe: false } : {}),
           note,
         };
       }
 
       const isClientError = status >= 400 && status < 500;
+      const retryIsUnsafe = unknownPaidOutcome && (status === 408 || status >= 500);
       return {
         success: false,
         error_type: "http_error",
         status,
         detail: err.message,
-        retry_hint: isClientError
-          ? "Check tool_id and params_to_tool structure. Make sure tool_id came from qveris_discover."
-          : "QVeris service error — retry in a moment.",
+        retry_hint: retryIsUnsafe
+          ? "Do not repeat this paid Call automatically; the execution outcome is unknown. Report the uncertainty."
+          : isClientError
+            ? "Check tool_id and params_to_tool structure. Make sure tool_id came from qveris_discover."
+            : "QVeris service error — retry in a moment.",
+        ...(retryIsUnsafe ? { execution_outcome: "unknown" as const, retry_safe: false } : {}),
         note,
       };
     }
@@ -85,7 +101,10 @@ export function classifyQverisError(err: unknown, opts?: { note?: string }): Qve
       success: false,
       error_type: "network_error",
       detail: err.message,
-      retry_hint: "Check network connectivity and retry.",
+      retry_hint: unknownPaidOutcome
+        ? "Do not repeat this paid Call automatically; the execution outcome is unknown. Report the uncertainty."
+        : "Check network connectivity and retry.",
+      ...(unknownPaidOutcome ? { execution_outcome: "unknown" as const, retry_safe: false } : {}),
       note,
     };
   }
@@ -94,7 +113,10 @@ export function classifyQverisError(err: unknown, opts?: { note?: string }): Qve
     success: false,
     error_type: "network_error",
     detail: String(err),
-    retry_hint: "Check network connectivity and retry.",
+    retry_hint: unknownPaidOutcome
+      ? "Do not repeat this paid Call automatically; the execution outcome is unknown. Report the uncertainty."
+      : "Check network connectivity and retry.",
+    ...(unknownPaidOutcome ? { execution_outcome: "unknown" as const, retry_safe: false } : {}),
     note,
   };
 }

@@ -6,7 +6,10 @@ import {
   resolveQverisBaseUrl,
   resolveDiscoverTimeoutSeconds,
   resolveCallTimeoutSeconds,
+  resolveCapabilityMemoryTtlSeconds,
+  resolveDiscoverCacheTtlSeconds,
   resolveFullContentAllowedDomains,
+  resolveRememberSuccessfulCapabilities,
 } from "./config.js";
 import { createQverisTools } from "./qveris-tools.js";
 
@@ -126,6 +129,15 @@ describe("config resolution", () => {
 
   it("resolveCallTimeoutSeconds uses executeTimeoutSeconds", () => {
     expect(resolveCallTimeoutSeconds({ executeTimeoutSeconds: 120 })).toBe(120);
+  });
+
+  it("resolves bounded session reuse defaults and explicit disable values", () => {
+    expect(resolveDiscoverCacheTtlSeconds(undefined)).toBe(90);
+    expect(resolveCapabilityMemoryTtlSeconds(undefined)).toBe(1800);
+    expect(resolveRememberSuccessfulCapabilities(undefined)).toBe(true);
+    expect(resolveDiscoverCacheTtlSeconds({ discoverCacheTtlSeconds: 0 })).toBe(0);
+    expect(resolveCapabilityMemoryTtlSeconds({ capabilityMemoryTtlSeconds: 0 })).toBe(0);
+    expect(resolveRememberSuccessfulCapabilities({ rememberSuccessfulCapabilities: false })).toBe(false);
   });
 
   it("allows the public domain matching the default endpoint", () => {

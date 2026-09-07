@@ -3,8 +3,8 @@
  *
  * Spawns `@qverisai/mcp` as a subprocess and speaks MCP to it over stdio —
  * exactly how an agent runtime (Claude Desktop, Codex, a custom host) drives
- * the server. It lists the tools, then runs the discover -> inspect -> call
- * loop the same way a model would by calling the exposed tools.
+ * the server. It lists the tools, then runs the default discover -> call path
+ * the same way a model would by calling the exposed tools.
  *
  * The server starts even without QVERIS_API_KEY (tool listing works; calls
  * return an actionable error), so this is safe to run unconfigured. The `call`
@@ -19,8 +19,13 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 
-type DiscoverResult = { search_id?: string; results?: Array<{ tool_id: string; name?: string }> };
-type InspectResult = { results?: Array<{ params?: Array<{ name?: string }> }> };
+type ToolResult = {
+  tool_id: string;
+  name?: string;
+  params?: Array<{ name: string; required?: boolean }>;
+};
+type DiscoverResult = { search_id?: string; results?: ToolResult[] };
+type InspectResult = { results?: ToolResult[] };
 type ToolCallResult = Awaited<ReturnType<Client['callTool']>>;
 
 /** Forward only defined environment variables (the transport wants string values). */
@@ -46,6 +51,15 @@ function readResult<T>(result: ToolCallResult): T | undefined {
   return undefined;
 }
 
+function supportsParameters(tool: ToolResult, requested: Record<string, unknown>): boolean {
+  if (!Array.isArray(tool.params)) return false;
+  const names = new Set(tool.params.map((param) => param.name));
+  return (
+    Object.keys(requested).every((name) => names.has(name)) &&
+    tool.params.every((param) => !param.required || Object.prototype.hasOwnProperty.call(requested, param.name))
+  );
+}
+
 async function main(): Promise<void> {
   const hasKey = Boolean(process.env.QVERIS_API_KEY);
 
@@ -65,7 +79,7 @@ async function main(): Promise<void> {
     console.log(`tools: ${tools.map((tool) => tool.name).join(', ')}`);
 
     if (!hasKey) {
-      console.log('Set QVERIS_API_KEY to run the discover -> inspect -> call loop.');
+      console.log('Set QVERIS_API_KEY to run the discover -> call path.');
       return;
     }
 
@@ -75,32 +89,42 @@ async function main(): Promise<void> {
       arguments: { query: 'public company stock quote and market data API', limit: 5 },
     });
     const found = readResult<DiscoverResult>(discovered);
-    const top = found?.results?.[0];
     console.log(`search_id: ${found?.search_id ?? 'n/a'}; matches: ${found?.results?.length ?? 0}`);
-    if (!top) return;
+    if (!found?.results?.length) return;
 
-    // 2. inspect — read the current parameter schema before calling.
-    const inspected = await client.callTool({
-      name: 'inspect',
-      arguments: { tool_ids: [top.tool_id], search_id: found?.search_id },
-    });
-    const detail = readResult<InspectResult>(inspected)?.results?.[0];
-    const paramNames =
-      (detail?.params ?? [])
-        .map((param) => param.name)
-        .filter(Boolean)
-        .join(', ') || 'none';
-    console.log(`selected: ${top.tool_id} - ${top.name ?? 'unnamed'} (params: ${paramNames})`);
+    // 2. Select from the returned contract. If compact discovery omitted it,
+    // inspect a few candidates rather than guessing parameters from rank/name.
+    const callParams: Record<string, unknown> = { symbol: 'AAPL' };
+    let selected = found.results.find((tool) => supportsParameters(tool, callParams));
+    if (!selected) {
+      const inspected = await client.callTool({
+        name: 'inspect',
+        arguments: {
+          tool_ids: found.results.slice(0, 3).map((tool) => tool.tool_id),
+          search_id: found.search_id,
+        },
+      });
+      selected = readResult<InspectResult>(inspected)?.results?.find((tool) => supportsParameters(tool, callParams));
+    }
+    if (!selected || !Array.isArray(selected.params)) {
+      throw new Error('No candidate exposed a current parameter contract with a symbol field.');
+    }
+    console.log(`selected: ${selected.tool_id} - ${selected.name ?? 'unnamed'}`);
+
+    const missing = selected.params.filter((param) => param.required && callParams[param.name] === undefined);
+    if (missing.length > 0) {
+      throw new Error(`Missing required business inputs: ${missing.map((param) => param.name).join(', ')}`);
+    }
 
     if (process.env.RUN_QVERIS_CALLS !== '1') {
       console.log('Set RUN_QVERIS_CALLS=1 to execute the selected capability.');
       return;
     }
 
-    // 3. call — execute the capability. May consume credits.
+    // 3. call — execute directly from discovery. May consume credits.
     const executed = await client.callTool({
       name: 'call',
-      arguments: { tool_id: top.tool_id, search_id: found?.search_id, params_to_tool: { symbol: 'AAPL' } },
+      arguments: { tool_id: selected.tool_id, search_id: found.search_id, params_to_tool: callParams },
     });
     console.log(`result: ${JSON.stringify(executed.structuredContent ?? executed.content)}`);
   } finally {
