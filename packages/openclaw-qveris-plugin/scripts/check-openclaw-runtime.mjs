@@ -38,7 +38,14 @@ try {
   const spec = pack ? createPackageTarball(stateDir) : undefined;
 
   if (spec) {
-    runOpenClaw(["plugins", "install", spec, "--pin"], { timeoutMs: 300_000 });
+    // Current OpenClaw releases reserve --pin for npm Registry specs and
+    // require explicit trust and capability consent for local archives. This
+    // tarball was built from the current checkout into the isolated state
+    // directory; its exact metadata, capabilities, and runtime registration
+    // are validated below.
+    runOpenClaw(["plugins", "install", spec, "--force", "--accept-capabilities"], {
+      timeoutMs: 300_000,
+    });
   } else {
     writeFileSync(
       configPath,

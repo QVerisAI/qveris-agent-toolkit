@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import {
   ReleaseInvariantError,
   ReleaseTransientError,
+  buildRegistryInstallArgs,
   validateRegistryMetadata,
   validateRuntimeResult,
   verifyRegistryRelease,
@@ -116,6 +117,16 @@ function fixtureOperations({ metadataSequence = [metadata()], installSequence = 
     },
   };
 }
+
+test("pins the Registry package and accepts declared plugin capabilities", () => {
+  assert.deepEqual(buildRegistryInstallArgs("@qverisai/qveris@2026.7.30"), [
+    "plugins",
+    "install",
+    "@qverisai/qveris@2026.7.30",
+    "--pin",
+    "--accept-capabilities",
+  ]);
+});
 
 test("accepts exact Registry metadata", () => {
   assert.doesNotThrow(() => validateRegistryMetadata(metadata(), expected));
