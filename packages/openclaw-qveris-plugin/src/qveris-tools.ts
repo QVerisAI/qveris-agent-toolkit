@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { Type } from "@sinclair/typebox";
-import { jsonResult, readNumberParam, readStringParam } from "openclaw/plugin-sdk/agent-runtime";
-import type { AnyAgentTool } from "openclaw/plugin-sdk/plugin-entry";
-import type { OpenClawPluginApi, OpenClawPluginToolContext } from "openclaw/plugin-sdk/plugin-runtime";
+import { jsonResult, readPositiveIntegerParam, readStringParam } from "openclaw/plugin-sdk/agent-runtime";
+import type { AnyAgentTool, OpenClawPluginToolContext } from "openclaw/plugin-sdk/plugin-entry";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-runtime";
 import { makeDiscoverCache, makeDiscoverResultTracker, makeToolRolodex } from "./qveris-cache.js";
 import {
   resolveAutoMaterialize,
@@ -39,7 +39,7 @@ const QverisDiscoverSchema = Type.Object(
         "Chinese input should also produce English capability: '腾讯最新股价' -> 'stock quote real-time API'.",
     }),
     limit: Type.Optional(
-      Type.Number({
+      Type.Integer({
         description: "Maximum number of results to return (1-100). Default: 10.",
         minimum: 1,
         maximum: 100,
@@ -78,13 +78,14 @@ const QverisCallSchema = Type.Object(
         'Example: \'{"city": "London", "units": "metric"}\'.',
     }),
     max_response_size: Type.Optional(
-      Type.Number({
+      Type.Integer({
         description:
           "Maximum size of response data in bytes. If tool generates data longer than this, it will be truncated. Default: 20480 (20KB).",
+        minimum: 1,
       }),
     ),
     timeout_seconds: Type.Optional(
-      Type.Number({
+      Type.Integer({
         description:
           "Override timeout in seconds for this invocation. Default: 60s. For long-running tasks (image/video generation, multimodal processing) set 60-120s; only lower if you are certain the tool is fast.",
         minimum: 1,
@@ -196,7 +197,7 @@ export function createQverisTools(options: {
     execute: async (_toolCallId, args) => {
       const params = args as Record<string, unknown>;
       const query = readStringParam(params, "query", { required: true });
-      const limit = readNumberParam(params, "limit", { integer: true }) ?? discoverLimit;
+      const limit = readPositiveIntegerParam(params, "limit") ?? discoverLimit;
       const normalizedLimit = Math.min(Math.max(1, limit), 100);
       const refresh = params.refresh === true;
       const clearCapabilityMemory = params.clear_capability_memory === true;
@@ -287,8 +288,8 @@ export function createQverisTools(options: {
       const toolId = readStringParam(params, "tool_id", { required: true });
       const searchId = resolveKnownSearchId(toolId);
       const paramsToToolRaw = readStringParam(params, "params_to_tool", { required: true });
-      const maxSize = readNumberParam(params, "max_response_size", { integer: true }) ?? maxResponseSize;
-      const timeoutOverride = readNumberParam(params, "timeout_seconds");
+      const maxSize = readPositiveIntegerParam(params, "max_response_size") ?? maxResponseSize;
+      const timeoutOverride = readPositiveIntegerParam(params, "timeout_seconds", { max: 300 });
 
       let toolParams: Record<string, unknown>;
       try {
