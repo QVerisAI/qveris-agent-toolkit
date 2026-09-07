@@ -22,6 +22,14 @@
 - Agent needs to dynamically discover and select capabilities
 - Need a unified calling protocol with structured returns
 
+## Routing policy
+- Choose among connected tools and QVeris by task fit, data quality/freshness, cost, user constraints, and call overhead
+- QVeris is especially useful when the capability is missing, the provider is unknown, provider comparison matters, fallback is needed, or the user requests it
+- Default QVeris path: discover → call
+- Inspect only when selection/request construction needs missing/stale contract detail or candidate comparison
+- Probe only for parameter validation, a current quote needed for a budget decision, or explicit preflight; it does not reserve price or grant authorization
+- Do not assume semantic memory: CLI stores only recent Discover indexes/provenance, MCP and SDKs are stateless for routing, and OpenClaw provides only exact-query session reuse with TTL
+
 ## How QVeris relates to OpenClaw
 - OpenClaw lets Agents use tools (runtime)
 - QVeris lets Agents know which to call, why to trust it, and how to pay (capability routing)

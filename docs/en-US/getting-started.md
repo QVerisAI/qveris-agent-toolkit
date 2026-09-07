@@ -123,9 +123,31 @@ async def main():
     client = QverisClient()
     try:
         discovered = await client.discover("weather forecast API", limit=5)
-        tool = discovered.results[0]
-        inspected = await client.inspect([tool.tool_id], search_id=discovered.search_id)
-        selected = inspected.results[0]
+        selected = next(
+            (
+                candidate
+                for candidate in discovered.results
+                if candidate.params is not None
+                and any(parameter.name == "city" for parameter in candidate.params)
+            ),
+            None,
+        )
+        if selected is None:
+            inspected = await client.inspect(
+                [candidate.tool_id for candidate in discovered.results[:3]],
+                search_id=discovered.search_id,
+            )
+            selected = next(
+                (
+                    candidate
+                    for candidate in inspected.results
+                    if candidate.params is not None
+                    and any(parameter.name == "city" for parameter in candidate.params)
+                ),
+                None,
+            )
+        if selected is None:
+            raise RuntimeError("No candidate exposed a current contract with a city field")
         result = await client.call(
             selected.tool_id,
             {"city": "London"},
@@ -173,7 +195,19 @@ import { Qveris } from '@qverisai/sdk';
 const qveris = Qveris.fromEnv(); // reads QVERIS_API_KEY
 
 const discovered = await qveris.discover('weather forecast API', { limit: 5 });
-const tool = discovered.results[0];
+let tool = discovered.results.find((candidate) =>
+  candidate.params?.some((parameter) => parameter.name === 'city'),
+);
+if (!tool) {
+  const inspected = await qveris.inspect(
+    discovered.results.slice(0, 3).map((candidate) => candidate.tool_id),
+    { searchId: discovered.search_id },
+  );
+  tool = inspected.results.find((candidate) =>
+    candidate.params?.some((parameter) => parameter.name === 'city'),
+  );
+}
+if (!tool) throw new Error('No candidate exposed a current contract with a city field.');
 const result = await qveris.call(tool.tool_id, {
   parameters: { city: 'London' },
   searchId: discovered.search_id,

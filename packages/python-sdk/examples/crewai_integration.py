@@ -31,7 +31,10 @@ def main() -> None:
         researcher = Agent(
             role="Market Researcher",
             goal="Find and call the right external capability to answer the task.",
-            backstory="You use QVeris to discover, inspect, and call capabilities.",
+            backstory=(
+                "You use QVeris when capability discovery, comparison, or fallback is needed, "
+                "and inspect only when the current contract lacks required details."
+            ),
             tools=tools,
         )
         task = Task(

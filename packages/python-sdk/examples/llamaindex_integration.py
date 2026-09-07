@@ -34,7 +34,10 @@ async def main() -> None:
         agent = FunctionAgent(
             tools=tools,
             llm=OpenAI(model="gpt-4o-mini"),
-            system_prompt="Use QVeris to discover, inspect, and call external capabilities.",
+            system_prompt=(
+                "Use QVeris when capability discovery, comparison, or fallback is needed. "
+                "Discover then call when the contract is sufficient; inspect only for missing or stale contract details."
+            ),
         )
         result = await agent.run(user_msg="Find a stock quote capability and quote AAPL.")
         print(result)

@@ -143,9 +143,9 @@ export function listQverisMcpTools() {
     {
       name: 'discover',
       description:
-        'Discover available tools based on natural language queries. ' +
+        'Discover available tools when task fit, data quality/freshness, provider comparison, fallback, or the user request favors QVeris. QVeris is not a mandatory gateway. ' +
         'Returns relevant tools that can help accomplish tasks. ' +
-        'Use this to find tools before inspecting or calling them. ' +
+        'Call a sufficiently detailed result directly; inspection is optional. ' +
         'Results may include billing_rule metadata for rule-level pricing.',
       inputSchema: searchToolsSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.discover,
@@ -154,7 +154,7 @@ export function listQverisMcpTools() {
     {
       name: 'inspect',
       description:
-        'Inspect tools by their IDs to get detailed information. ' +
+        'Optionally inspect tools by ID when selection or valid request construction depends on missing/stale contract details, or candidates need comparison. ' +
         'Returns parameters, success rate, latency, examples, and billing_rule when available. ' +
         'Use tool_ids from a previous discover call.',
       inputSchema: getToolsByIdsSchema,
@@ -164,7 +164,8 @@ export function listQverisMcpTools() {
     {
       name: 'probe',
       description:
-        'Validate candidate parameters and obtain a zero-cost quote without executing the capability. ' +
+        'Optionally validate parameters or obtain a zero-cost quote when inputs are uncertain, a current quote is needed for a budget decision, or preflight is explicitly requested. ' +
+        'Probe is not required before Call, never executes the capability, and does not reserve a price or grant authorization. ' +
         'Schema and quote are implemented; coverage and sample may return an explicit unknown verdict.',
       inputSchema: probeToolSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.probe,
@@ -175,6 +176,7 @@ export function listQverisMcpTools() {
       description:
         'Call a specific remote tool with provided parameters. ' +
         'The tool_id and search_id must come from a previous discover call. ' +
+        'Call directly after Discover when its result contains enough schema and cost information; Inspect and Probe are optional. ' +
         'Pass parameters to the tool through params_to_tool. ' +
         'The response may include pre-settlement billing; use usage_history or credits_ledger for final charge status.',
       inputSchema: executeToolSchema,

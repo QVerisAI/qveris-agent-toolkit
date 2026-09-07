@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Discover -> inspect -> call -> audit, scripted with the QVeris CLI and jq.
+# Conditional Discover -> Call (with Inspect fallback) -> audit, using the CLI and jq.
 #
 # Discovery and inspection are free. The call step is gated behind
 # RUN_QVERIS_CALLS=1 because it may consume credits.
@@ -22,28 +22,38 @@ fi
 # 1. Discover — capture the whole response so we can reuse its search_id.
 discovered="$("${qv[@]}" discover "$query" --limit 5 --json)"
 search_id="$(jq -r '.search_id' <<<"$discovered")"
-tool_id="$(jq -r '.results[0].tool_id // empty' <<<"$discovered")"
+selected="$(jq -c '[.results[] | select(.params != null and ([.params[].name] | index("symbol")) != null)] | first // empty' <<<"$discovered")"
 
-if [[ -z "$tool_id" ]]; then
+if [[ "$(jq -r '.results | length' <<<"$discovered")" == "0" ]]; then
   echo "No capabilities matched: $query"
   exit 0
 fi
 
 echo "search_id: $search_id"
-echo "selected:  $tool_id"
 
-# 2. Inspect — read the current parameter schema before spending anything.
-#    Pass --discovery-id so the inspection is attributed to this discovery.
-#    inspect returns a search-shaped envelope; the tool is under .results[0].
-"${qv[@]}" inspect "$tool_id" --discovery-id "$search_id" --json \
-  | jq '.results[0] | {tool_id, name, expected_cost, success_rate: .stats.success_rate}'
+# 2. Inspect only when compact discovery omitted a compatible contract.
+if [[ -z "$selected" ]]; then
+  tool_ids=()
+  while IFS= read -r id; do tool_ids+=("$id"); done < <(jq -r '.results[:3][].tool_id' <<<"$discovered")
+  inspected="$("${qv[@]}" inspect "${tool_ids[@]}" --discovery-id "$search_id" --json)"
+  selected="$(jq -c '[.results[] | select(.params != null and ([.params[].name] | index("symbol")) != null)] | first // empty' <<<"$inspected")"
+fi
+
+if [[ -z "$selected" ]]; then
+  echo "No candidate exposed a current parameter contract with a symbol field."
+  exit 1
+fi
+
+tool_id="$(jq -r '.tool_id' <<<"$selected")"
+echo "selected:  $tool_id"
+jq '{tool_id, name, expected_cost, success_rate: .stats.success_rate}' <<<"$selected"
 
 if [[ "${RUN_QVERIS_CALLS:-}" != "1" ]]; then
   echo "Set RUN_QVERIS_CALLS=1 to execute the selected capability."
   exit 0
 fi
 
-# 3. Call — execute the capability, then audit the settled charge.
+# 3. Call — build current values from this request, then audit the settled charge.
 result="$("${qv[@]}" call "$tool_id" --discovery-id "$search_id" --params '{"symbol":"AAPL"}' --json)"
 execution_id="$(jq -r '.execution_id' <<<"$result")"
 echo "execution_id: $execution_id"

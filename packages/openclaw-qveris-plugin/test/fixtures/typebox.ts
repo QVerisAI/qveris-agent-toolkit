@@ -24,6 +24,10 @@ export const Type = {
     return makeSchema("number", options);
   },
 
+  Boolean(options?: Schema): Schema {
+    return makeSchema("boolean", options);
+  },
+
   Optional(schema: Schema): Schema {
     return {
       ...schema,

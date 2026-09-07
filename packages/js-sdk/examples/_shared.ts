@@ -7,7 +7,7 @@
  * `RUN_QVERIS_CALLS=1` so running an example never spends credits by accident.
  */
 
-import { Qveris, type ToolInfo } from '@qverisai/sdk';
+import { Qveris } from '@qverisai/sdk';
 
 /**
  * Build a client from `QVERIS_API_KEY`, or explain how to set one and return
@@ -27,9 +27,4 @@ export function getClientOrExplain(): Qveris | null {
 /** A `call` spends credits, so only execute one when explicitly opted in. */
 export function shouldCall(): boolean {
   return process.env.RUN_QVERIS_CALLS === '1';
-}
-
-/** Prefer the capability's own sample parameters; fall back to a sensible default. */
-export function sampleParameters(tool: ToolInfo, fallback: Record<string, unknown>): Record<string, unknown> {
-  return tool.examples?.sample_parameters ?? fallback;
 }

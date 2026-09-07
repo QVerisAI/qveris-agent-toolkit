@@ -1,6 +1,6 @@
 # QVeris Python SDK
 
-Async Python SDK for the QVeris Agent External Data & Tool Harness workflow: discover, inspect, call, and audit real-world capabilities from your own agents or applications.
+Async Python SDK for discovering and calling real-world capabilities, with conditional inspection/preflight and task-driven audit from your own agents or applications.
 
 ## Install
 
@@ -107,13 +107,29 @@ async def main():
     client = QverisClient()
     try:
         discovered = await client.discover("weather forecast API", limit=5)
-        tool = discovered.results[0]
+        params = {"city": "London"}
+        selected = next(
+            (tool for tool in discovered.results
+             if tool.params is not None
+             and {p.name for p in tool.params if p.required}.issubset(params)
+             and set(params).issubset({p.name for p in tool.params})),
+            None,
+        )
+        if selected is None:
+            inspected = await client.inspect(
+                [tool.tool_id for tool in discovered.results[:3]],
+                search_id=discovered.search_id,
+            )
+            selected = next(
+                (tool for tool in inspected.results
+                 if tool.params is not None
+                 and {p.name for p in tool.params if p.required}.issubset(params)
+                 and set(params).issubset({p.name for p in tool.params})),
+                None,
+            )
+        if selected is None:
+            raise RuntimeError("No candidate exposed a compatible current contract")
 
-        inspected = await client.inspect([tool.tool_id], search_id=discovered.search_id)
-        selected = inspected.results[0]
-
-        params = selected.examples.sample_parameters if selected.examples else {"city": "London"}
-        probe = await client.probe(selected.tool_id, params, checks=["schema", "quote"])
         result = await client.call(
             selected.tool_id,
             params,
@@ -124,12 +140,16 @@ async def main():
         usage = await client.usage(execution_id=result.execution_id, summary=True)
         ledger = await client.ledger(summary=True, limit=5)
 
-        print(probe.schema_, probe.quote, result.success, result.billing, usage.total, ledger.total)
+        print(result.success, result.billing, usage.total, ledger.total)
     finally:
         await client.close()
 
 asyncio.run(main())
 ```
+
+Use Inspect only when selection or valid request construction needs missing/stale contract detail, and Probe only for parameter validation or a current quote required by a budget decision. A Probe quote is not a price reservation or user authorization.
+
+The SDK is stateless for routing: it does not persist semantic intent, schema, price, or business results. Preserve a Discover result's real `search_id` in the active application flow. If your host adds reuse, isolate it by account/API endpoint/authorization/session, rebuild business values from the current request, and expire schema, price, and availability metadata; never invent attribution or cache credentials/sensitive values.
 
 First-class typed APIs:
 
@@ -312,7 +332,7 @@ Sixteen runnable examples are included under [`examples/`](examples):
 | `pydantic_ai_integration.py` | QVeris capabilities as Pydantic AI tools (`qveris[pydantic-ai]`) |
 | `otel_tracing.py` | OpenTelemetry spans for discover/call (`qveris[otel]`) |
 
-The capability examples run `discover` and `inspect` when `QVERIS_API_KEY` is set. They only execute `call` when `RUN_QVERIS_CALLS=1` is set.
+The capability examples run `discover` and inspect only when discovery omitted a compatible contract. They only execute `call` when `RUN_QVERIS_CALLS=1` is set.
 
 ## Tests
 

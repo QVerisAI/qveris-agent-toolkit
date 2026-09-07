@@ -26,24 +26,24 @@ for (const tool of found.results) {
   console.log(tool.tool_id, '—', tool.why_recommended);
 }
 
-// 2. Inspect — free, current parameter schemas
-const detail = await qveris.inspect(found.results[0].tool_id, {
-  searchId: found.search_id,
-});
+// 2. Select from the returned contract; inspect candidates if it was omitted
+const selected = found.results.find((tool) => tool.params?.some((param) => param.name === 'symbol'));
+if (!selected) throw new Error('Inspect candidates before calling: no symbol contract was returned');
 
-// 3. Probe — zero-cost validation and quote; no capability execution
-const probe = await qveris.probe(found.results[0].tool_id, {
-  parameters: { symbol: 'AAPL' },
-  checks: ['schema', 'quote'],
-});
-
-// 4. Call — billed in credits; response includes pre-settlement billing
-const outcome = await qveris.call(found.results[0].tool_id, {
+// 3. Apply the current request's value instead of copying sample values
+const parameters: Record<string, unknown> = { symbol: 'AAPL' };
+const missing = selected.params!.filter((param) => param.required && parameters[param.name] === undefined);
+if (missing.length) throw new Error(`Missing inputs: ${missing.map((param) => param.name)}`);
+const outcome = await qveris.call(selected.tool_id, {
   searchId: found.search_id,
-  parameters: { symbol: 'AAPL' },
+  parameters,
 });
 console.log(outcome.success, outcome.result);
 ```
+
+`inspect` and `probe` are optional checks, not mandatory stages. Inspect when selection or valid request construction depends on missing/stale contract details, or candidates need comparison. Probe when parameters need validation, a current quote is needed for a budget decision, or preflight is explicitly requested. A quote is not a price reservation or user authorization.
+
+The SDK is stateless for routing: it does not persist semantic intent, schema, price, or business results. Preserve a Discover result's real `search_id` in the active application flow. If your host adds reuse, isolate it by account/API endpoint/authorization/session, rebuild business values from the current request, and expire schema, price, and availability metadata; never invent attribution or cache credentials/sensitive values.
 
 ## Audit
 
@@ -210,8 +210,8 @@ const { text } = await generateText({
 
 ## Examples
 
-Runnable scripts in [`examples/`](examples): the discover → inspect → call
-quickstart, a Vercel AI SDK agent, and rate-limit/observability. Each is safe to
+Runnable scripts in [`examples/`](examples): the discover → call
+quickstart, optional inspection, a Vercel AI SDK agent, and rate-limit/observability. Each is safe to
 run without an API key (it explains how to set one), and any credit-spending
 call is gated behind `RUN_QVERIS_CALLS=1`.
 

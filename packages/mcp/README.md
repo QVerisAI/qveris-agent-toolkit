@@ -78,7 +78,7 @@ Add the QVeris server to your MCP client configuration:
 
 Once configured, You could add this to system prompt:
 
-> "You can use qveris MCP Server to dynamically discover and call tools to help the user. First think about what kind of tools might be useful to accomplish the user's task. Then use the discover tool with a query describing the capability of the tool, not what params you want to pass to the tool later. Then call a suitable tool using the call tool, passing parameters through params_to_tool. You could reference the examples given if any for each tool. You may make multiple tool calls in a single response."
+> "Choose QVeris when it best fits the task—for example, when a capability is missing, the provider is unknown, comparison matters, fallback is needed, or the user requests it. Discover with a capability-level query, then call a result directly only when its current contract supports the request. Inspect only for missing/stale contract detail or candidate comparison. Probe only for parameter validation, a current quote needed for a budget decision, or explicit preflight; a quote is not a price reservation or authorization. Preserve the selected result's search_id for Call."
 
 Then your AI assistant can discover and call tools:
 
@@ -86,9 +86,9 @@ Then your AI assistant can discover and call tools:
 
 The assistant will:
 1. Call `discover` with query "weather"
-2. Optionally call `inspect` to review tool details
-3. Optionally call `probe` to validate parameters and quote without execution
-4. Call `call` with the tool_id and parameters
+2. Call `call` with the best result's tool_id and parameters
+3. Use `inspect` only if required details are missing or need refreshing
+4. Use `probe` only if parameters or cost need a preflight
 5. Use `usage_history` or `credits_ledger` only when the user asks about charge status or balance changes
 
 ## Available Tools
@@ -118,7 +118,7 @@ Discover available tools based on natural language queries.
 
 ### `inspect`
 
-Inspect tools by their IDs to get detailed information (parameters, success rate, latency, examples, and billing_rule when available).
+Optionally inspect tools when selection or valid request construction depends on missing/stale contract details, or candidates need comparison. Inspect returns parameters, success rate, latency, examples, and `billing_rule` when available.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -137,7 +137,7 @@ Inspect tools by their IDs to get detailed information (parameters, success rate
 
 ### `probe`
 
-Validate candidate parameters and obtain a zero-cost quote without executing the capability.
+Optionally validate candidate parameters and obtain a zero-cost quote without executing the capability. Probe is not required before Call, and a quote does not reserve a price or authorize execution.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -264,6 +264,8 @@ Providing a consistent `session_id` in a same user session in any tool call enab
 
 If not provided, the SDK automatically generates and maintains a session ID for the lifetime of the server process. However, this result in a much larger granularity of user sessions.
 
+The MCP server keeps one generated `session_id` for its process when callers omit one, but it does **not** implement semantic route memory or persistent schema caching. A host may add explicit per-user/session reuse, but must isolate it by account, API endpoint, authorization context, and session; preserve the original `search_id`; rebuild business parameters from the current request; and expire schema, pricing, and availability independently. Never store credentials, sensitive parameter values, or business results in capability memory. Without such a host implementation, Discover again rather than assuming remembered state exists.
+
 ## Response Handling
 
 ### Successful Execution
@@ -381,8 +383,8 @@ The override must be an HTTP(S) URL without credentials, a query string, or a fr
 ## Examples
 
 [`examples/agent-loop.ts`](examples/agent-loop.ts) drives this server over stdio
-the way an agent runtime does: spawn it, list the tools, then run
-discover → inspect → call by calling those tools. It is safe to run without an
+the way an agent runtime does: spawn it, list the tools, then run the default
+discover → call path. It is safe to run without an
 API key (tool listing works unconfigured), and the call step is gated behind
 `RUN_QVERIS_CALLS=1`.
 

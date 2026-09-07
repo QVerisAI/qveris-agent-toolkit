@@ -41,10 +41,26 @@ async def main() -> None:
         if not discovered.results:
             print("No capabilities found.")
             return
-        tool = discovered.results[0]
-        inspected = await client.inspect(tool.tool_id, search_id=discovered.search_id)
-        selected = inspected.results[0] if inspected.results else tool
-        result = await client.call(selected.tool_id, {"symbol": "AAPL"}, search_id=discovered.search_id)
+        parameters = {"symbol": "AAPL"}
+        selected = next(
+            (tool for tool in discovered.results if tool.params is not None
+             and set(parameters) <= {parameter.name for parameter in tool.params}
+             and {parameter.name for parameter in tool.params if parameter.required} <= set(parameters)),
+            None,
+        )
+        if selected is None:
+            inspected = await client.inspect(
+                [tool.tool_id for tool in discovered.results[:3]], search_id=discovered.search_id
+            )
+            selected = next(
+                (tool for tool in inspected.results if tool.params is not None
+                 and set(parameters) <= {parameter.name for parameter in tool.params}
+                 and {parameter.name for parameter in tool.params if parameter.required} <= set(parameters)),
+                None,
+            )
+        if selected is None:
+            raise RuntimeError("No candidate exposed a compatible current contract")
+        result = await client.call(selected.tool_id, parameters, search_id=discovered.search_id)
         print(result.model_dump())
         print((await client.usage(execution_id=result.execution_id, summary=True)).model_dump())
     finally:

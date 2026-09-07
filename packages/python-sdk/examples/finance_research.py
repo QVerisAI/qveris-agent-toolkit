@@ -1,4 +1,4 @@
-"""Finance research workflow using discover, inspect, call, usage, and ledger."""
+"""Finance research workflow using conditional inspect, call, usage, and ledger."""
 
 import asyncio
 

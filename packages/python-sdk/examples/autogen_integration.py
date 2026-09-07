@@ -37,7 +37,10 @@ async def main() -> None:
             "qveris_assistant",
             model_client=model_client,
             tools=tools,
-            system_message="Use QVeris to discover, inspect, and call external capabilities.",
+            system_message=(
+                "Use QVeris when capability discovery, comparison, or fallback is needed. "
+                "Discover then call when the contract is sufficient; inspect only for missing or stale contract details."
+            ),
             reflect_on_tool_use=True,
         )
         result = await agent.run(task="Find a stock quote capability and quote AAPL.")

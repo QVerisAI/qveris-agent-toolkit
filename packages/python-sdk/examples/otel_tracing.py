@@ -48,7 +48,17 @@ async def main() -> None:
             print("No capabilities found.")
             return
 
-        tool = found.results[0]
+        tool = next(
+            (
+                candidate
+                for candidate in found.results
+                if candidate.params is not None and any(parameter.name == "symbol" for parameter in candidate.params)
+            ),
+            None,
+        )
+        if tool is None:
+            print("Inspect promising candidates to obtain a compatible contract.")
+            return
         result = await client.call(
             tool.tool_id,
             {"symbol": "AAPL"},

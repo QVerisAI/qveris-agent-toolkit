@@ -61,6 +61,18 @@
     "baseUrl": {
       "label": "QVeris API Base URL",
       "help": "Optional explicit API endpoint (fallback: QVERIS_BASE_URL, then the public default)."
+    },
+    "discoverCacheTtlSeconds": {
+      "label": "Discover cache TTL",
+      "help": "Session-scoped exact-query cache lifetime in seconds. Set to 0 to disable."
+    },
+    "capabilityMemoryTtlSeconds": {
+      "label": "Capability memory TTL",
+      "help": "Lifetime in seconds for exact-query successful-capability hints. Set to 0 to disable."
+    },
+    "rememberSuccessfulCapabilities": {
+      "label": "Remember successful capabilities",
+      "help": "Show successful tools as session hints for the same exact normalized capability query."
     }
   },
   "configSchema": {
@@ -74,6 +86,9 @@
         "description": "Deprecated and rejected at runtime. Remove this field and set baseUrl or QVERIS_BASE_URL explicitly."
       },
       "baseUrl": { "type": "string" },
+      "discoverCacheTtlSeconds": { "type": "number", "minimum": 0 },
+      "capabilityMemoryTtlSeconds": { "type": "number", "minimum": 0 },
+      "rememberSuccessfulCapabilities": { "type": "boolean" },
       "autoMaterializeFullContent": { "type": "boolean" },
       "fullContentMaxBytes": { "type": "number" },
       "fullContentTimeoutSeconds": { "type": "number" },

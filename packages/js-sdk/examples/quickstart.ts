@@ -1,14 +1,14 @@
 /**
- * Quickstart: the full discover -> inspect -> call -> audit loop.
+ * Quickstart: the default discover -> call -> audit path.
  *
- * Discovery and inspection are free. The `call` step is gated behind
+ * Discovery is free. The `call` step is gated behind
  * `RUN_QVERIS_CALLS=1` because it may consume credits.
  *
  *   QVERIS_API_KEY=sk-... npx tsx examples/quickstart.ts
  *   QVERIS_API_KEY=sk-... RUN_QVERIS_CALLS=1 npx tsx examples/quickstart.ts
  */
 
-import { getClientOrExplain, sampleParameters, shouldCall } from './_shared.js';
+import { getClientOrExplain, shouldCall } from './_shared.js';
 
 async function main(): Promise<void> {
   const qveris = getClientOrExplain();
@@ -20,11 +20,20 @@ async function main(): Promise<void> {
   console.log(`matches: ${discovered.results.length} / total=${discovered.total}`);
   if (discovered.results.length === 0) return;
 
-  // 2. Inspect — read the current parameter schema and routing signals, free.
-  //    Pass the search_id so the inspection is attributed to this discovery.
-  const first = discovered.results[0];
-  const inspected = await qveris.inspect([first.tool_id], { searchId: discovered.search_id });
-  const tool = inspected.results[0] ?? first;
+  // 2. Select a capability from its actual contract, not its rank or name alone.
+  //    An explicit [] means zero parameters; undefined means the compact result
+  //    omitted the contract, so inspect promising candidates before calling.
+  let tool = discovered.results.find((candidate) => candidate.params?.some((param) => param.name === 'symbol'));
+  if (!tool) {
+    const details = await qveris.inspect(
+      discovered.results.slice(0, 3).map((candidate) => candidate.tool_id),
+      { searchId: discovered.search_id },
+    );
+    tool = details.results.find((candidate) => candidate.params?.some((param) => param.name === 'symbol'));
+  }
+  if (!tool || !Array.isArray(tool.params)) {
+    throw new Error('No candidate exposed a current parameter contract with a symbol field.');
+  }
   console.log(`selected: ${tool.tool_id} - ${tool.name || tool.description || 'unnamed'}`);
   if (tool.stats) {
     console.log(`quality: success_rate=${tool.stats.success_rate} latency_ms=${tool.stats.avg_execution_time_ms}`);
@@ -33,7 +42,12 @@ async function main(): Promise<void> {
     console.log(`expected_cost: ${tool.expected_cost}`);
   }
 
-  const parameters = sampleParameters(tool, { symbol: 'AAPL' });
+  // Sample values describe shape only; build values from this request.
+  const parameters: Record<string, unknown> = { symbol: 'AAPL' };
+  const missing = tool.params.filter((param) => param.required && parameters[param.name] === undefined);
+  if (missing.length > 0) {
+    throw new Error(`Missing required business inputs: ${missing.map((param) => param.name).join(', ')}`);
+  }
   console.log(`params: ${JSON.stringify(parameters)}`);
 
   if (!shouldCall()) {

@@ -72,4 +72,32 @@ describe("classifyQverisError", () => {
     const result = classifyQverisError(new Error("fail"), { note: "custom note" });
     expect(result.note).toBe("custom note");
   });
+
+  it.each([
+    Object.assign(new Error("aborted"), { name: "AbortError" }),
+    new Error("ECONNRESET"),
+    new Error("QVeris call failed (503): unavailable"),
+  ])("marks ambiguous paid-call failures as unsafe to retry", (error) => {
+    const result = classifyQverisError(error, { replaySafe: false });
+    expect(result.retry_safe).toBe(false);
+    expect(result.execution_outcome).toBe("unknown");
+    expect(result.retry_hint).toContain("Do not repeat");
+  });
+
+  it("preserves paid-call single-submit semantics on a definite rate limit", () => {
+    const result = classifyQverisError(new Error("QVeris call failed (429): too many requests"), {
+      replaySafe: false,
+    });
+    expect(result.retry_safe).toBe(false);
+    expect(result.execution_outcome).toBeUndefined();
+    expect(result.retry_hint).toContain("Do not repeat");
+  });
+
+  it("keeps definite validation failures eligible for parameter repair", () => {
+    const result = classifyQverisError(new Error("QVeris call failed (422): invalid parameters"), {
+      replaySafe: false,
+    });
+    expect(result.retry_safe).toBeUndefined();
+    expect(result.execution_outcome).toBeUndefined();
+  });
 });
