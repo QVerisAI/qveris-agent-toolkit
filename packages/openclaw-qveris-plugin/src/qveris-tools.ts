@@ -229,6 +229,7 @@ export function createQverisTools(options: {
       // A cache hit must not extend schema/provenance freshness. Only a fresh
       // network response advances the acquisition timestamp.
       if (!cached) {
+        for (const tool of result.results) rolodex.supersedeStale(tool.tool_id);
         discoverTracker.trackResults(
           query,
           result.results.map((t) => ({

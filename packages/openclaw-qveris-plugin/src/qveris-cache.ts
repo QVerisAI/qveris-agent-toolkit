@@ -132,6 +132,10 @@ export function makeToolRolodex(options: { ttlMs?: number; enabled?: boolean } =
     return !enabled || ttlMs <= 0 || Date.now() > entry.expiresAt;
   }
 
+  function supersedeStale(toolId: string): void {
+    if (isStale(toolId)) store.delete(toolId);
+  }
+
   function getSummary(discoveryQuery?: string): Array<{
     tool_id: string;
     name: string;
@@ -162,7 +166,7 @@ export function makeToolRolodex(options: { ttlMs?: number; enabled?: boolean } =
     }
   }
 
-  return { record, lookup, isStale, getSummary, clear };
+  return { record, lookup, isStale, supersedeStale, getSummary, clear };
 }
 
 // ============================================================================

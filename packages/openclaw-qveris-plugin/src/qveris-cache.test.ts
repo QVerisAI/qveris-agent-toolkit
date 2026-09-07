@@ -76,6 +76,24 @@ describe("successful capability memory", () => {
     expect(rolodex.lookup("weather.v1")).toBeUndefined();
     expect(rolodex.getSummary()).toEqual([]);
   });
+
+  it("keeps an expired entry as a guard until fresh discovery supersedes it", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
+    const rolodex = makeToolRolodex({ ttlMs: 1_000 });
+
+    rolodex.record("weather.v1", {
+      name: "Weather",
+      description: "Current weather",
+      discoveryQuery: "weather forecast API",
+    });
+    vi.advanceTimersByTime(1_001);
+
+    expect(rolodex.isStale("weather.v1")).toBe(true);
+    rolodex.supersedeStale("weather.v1");
+    expect(rolodex.isStale("weather.v1")).toBe(false);
+    expect(rolodex.lookup("weather.v1")).toBeUndefined();
+  });
 });
 
 describe("discover correlation tracker", () => {

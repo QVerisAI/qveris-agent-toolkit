@@ -23,7 +23,7 @@ fi
 
 discovered="$("${qv[@]}" discover "$query" --limit 5 --json)"
 search_id="$(jq -r '.search_id' <<<"$discovered")"
-selected="$(jq -c '[.results[] | select(.params != null and ([.params[].name] | index("symbol")) != null)] | first // empty' <<<"$discovered")"
+selected="$(jq -c '[.results[] | select(.params != null and ([.params[].name] | index("symbol")) != null and (([.params[] | select(.required == true) | .name] - ["symbol"]) | length) == 0)] | first // empty' <<<"$discovered")"
 
 if [[ "$(jq -r '.results | length' <<<"$discovered")" == "0" ]]; then
   echo "No capabilities matched: $query"
@@ -34,7 +34,7 @@ if [[ -z "$selected" ]]; then
   tool_ids=()
   while IFS= read -r id; do tool_ids+=("$id"); done < <(jq -r '.results[:3][].tool_id' <<<"$discovered")
   inspected="$("${qv[@]}" inspect "${tool_ids[@]}" --discovery-id "$search_id" --json)"
-  selected="$(jq -c '[.results[] | select(.params != null and ([.params[].name] | index("symbol")) != null)] | first // empty' <<<"$inspected")"
+  selected="$(jq -c '[.results[] | select(.params != null and ([.params[].name] | index("symbol")) != null and (([.params[] | select(.required == true) | .name] - ["symbol"]) | length) == 0)] | first // empty' <<<"$inspected")"
 fi
 
 if [[ -z "$selected" ]]; then

@@ -233,6 +233,7 @@ describe("createQverisTools", () => {
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
+    vi.useRealTimers();
   });
 
   it("creates three tools when API key is configured", () => {
@@ -499,6 +500,55 @@ describe("createQverisTools", () => {
     expect(executeBodies[0]).toMatchObject({ parameters: { city: "London" }, search_id: "search-abc" });
     expect(executeBodies[1]).toMatchObject({ parameters: { city: "Paris" }, search_id: "search-abc" });
     expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/search"))).toHaveLength(1);
+  });
+
+  it("lets a fresh discovery supersede an expired successful-capability guard", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/search")) return Promise.resolve(fakeJsonResponse(SAMPLE_DISCOVER_RESPONSE));
+      if (url.includes("/tools/execute")) return Promise.resolve(fakeJsonResponse(SAMPLE_INVOKE_RESPONSE));
+      return Promise.resolve(fakeJsonResponse({}, 404));
+    });
+    globalThis.fetch = fetchMock;
+    const tools = createQverisTools({
+      api: fakeApi(
+        makePluginConfig({
+          discoverCacheTtlSeconds: 0,
+          capabilityMemoryTtlSeconds: 1,
+        }),
+      ),
+      ctx: fakeCtx(),
+    })!;
+    const discover = tools.find((tool) => tool.name === "qveris_discover")!;
+    const callTool = tools.find((tool) => tool.name === "qveris_call")!;
+
+    await discover.execute("d1", { query: "weather forecast API" });
+    await callTool.execute("c1", {
+      tool_id: "openweathermap.weather.execute.v1",
+      params_to_tool: '{"city":"London"}',
+    });
+    vi.advanceTimersByTime(1_001);
+
+    const stale = parseToolResult(
+      await callTool.execute("c2", {
+        tool_id: "openweathermap.weather.execute.v1",
+        params_to_tool: '{"city":"Paris"}',
+      }),
+    );
+    expect(stale.error_type).toBe("tool_not_discovered");
+
+    await discover.execute("d2", { query: "weather forecast API" });
+    const afterRefresh = parseToolResult(
+      await callTool.execute("c3", {
+        tool_id: "openweathermap.weather.execute.v1",
+        params_to_tool: '{"city":"Paris"}',
+      }),
+    );
+
+    expect(afterRefresh.success).toBe(true);
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/search"))).toHaveLength(2);
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/tools/execute"))).toHaveLength(2);
   });
 
   it("requires metadata refresh before reusing a successful route whose contract was omitted", async () => {
