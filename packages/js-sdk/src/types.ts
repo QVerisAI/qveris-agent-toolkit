@@ -510,7 +510,7 @@ export interface ApiEnvelope<T> {
 }
 
 export interface CreditsResponse {
-  remaining_credits: number;
+  remaining_credits: number | null;
   daily_free?: Record<string, unknown>;
   invite_reward?: Record<string, unknown>;
   welcome_bonus?: Record<string, unknown>;

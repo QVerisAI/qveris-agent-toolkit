@@ -10,7 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
-- Normalize finite numeric-string credit balances at the response boundary, preserve `null` as unavailable, and align the public search and execution response types with the OpenAPI `number | null` contract without replaying paid calls. ([#341])
+- Normalize finite numeric-string credit balances at the response boundary, preserve `null` as unavailable, and align all credit-bearing response types with the OpenAPI `number | null` contract without replaying paid calls. ([#341])
 
 ## [0.8.0] - 2026-08-10
 
