@@ -115,10 +115,10 @@ jobs:
 
             ## Highlights
 
-            - Declares `qveris_discover`, `qveris_call`, and `qveris_inspect` in `contracts.tools`.
-            - Adds explicit startup activation and API-key availability metadata for current OpenClaw hosts.
-            - Marks read-only Discover/Inspect replay-safe while keeping paid Call replay-unsafe.
-            - Verifies source and packed-package registration against supported OpenClaw runtimes.
+            - Uses the shortest safe Discover → Call path while keeping Inspect conditional.
+            - Adds session-scoped exact-query discovery caching and TTL-bound successful-Capability memory with explicit refresh and clear controls.
+            - Preserves current parameter contracts and provenance, including safe refresh after Discover or Inspect, without reusing prior business values.
+            - Verifies the exact published Registry artifact against supported OpenClaw runtimes before creating this release.
 
             See [README](packages/openclaw-qveris-plugin/README.md) for usage.
           generate_release_notes: true

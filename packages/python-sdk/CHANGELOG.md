@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-09-07
+
+### Changed
+
+- Updated the built-in Agent prompt, tool descriptions, and runnable examples to prefer Discover → Call when the current contract is sufficient, keep Inspect conditional, and reject candidates with unsupported or unmet required inputs. ([#347])
+- Refreshed the bundled generated models and API reference from the current public OpenAPI source without adding a new high-level client workflow. ([#301], [#315], [#319])
+
 ## [0.7.0] - 2026-08-10
 
 ### Added
@@ -96,7 +103,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Generated OpenAPI contract models with drift CI. ([#48])
 - `Agent` runtime: LLM tool loop over the QVeris workflow with streaming events.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.1...HEAD
+[0.7.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.0...python-sdk-v0.7.1
 [0.7.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.6.0...python-sdk-v0.7.0
 [0.6.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.5.0...python-sdk-v0.6.0
 [0.5.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.4.0...python-sdk-v0.5.0
@@ -128,3 +136,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#259]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/259
 [#256]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/256
 [#273]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/273
+[#301]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/301
+[#315]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/315
+[#319]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/319
+[#347]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/347
