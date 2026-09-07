@@ -29,7 +29,10 @@ async def main() -> None:
 
         agent = Agent(
             name="QVeris Assistant",
-            instructions="Use the QVeris tools to discover, inspect, and call external capabilities.",
+            instructions=(
+                "Use QVeris when capability discovery, comparison, or fallback is needed. "
+                "Discover then call when the contract is sufficient; inspect only for missing or stale contract details."
+            ),
             tools=tools,
         )
         result = await Runner.run(agent, "Find a stock quote capability and quote AAPL.")

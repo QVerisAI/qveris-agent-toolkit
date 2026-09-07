@@ -109,7 +109,7 @@ Requires Node.js 18+.
 ## Quick Start
 
 ```bash
-# Guided path: auth → discover → inspect → call → usage/ledger guidance
+# Guided first call: client-side discover, inspect, call, and audit guidance
 qveris init
 
 # Manual path
@@ -119,11 +119,12 @@ qveris login
 # 2. Discover capabilities
 qveris discover "weather forecast"
 
-# 3. Inspect a tool (by index from discover results)
-qveris inspect 1
-
-# 4. Call it
+# 3. After selecting result 1 because its contract matches these exact fields
 qveris call 1 --params '{"set":"land","first":"sct","timeOfDay":"day"}'
+
+# Optional checks when contract details or a current quote are needed
+qveris inspect 1
+qveris probe 1 --params '{"set":"land","first":"sct","timeOfDay":"day"}' --checks schema,quote
 ```
 
 ## Commands
@@ -177,7 +178,7 @@ qveris init --resume --params '{"city": "London"}'
 qveris init --json
 ```
 
-`init` discovers a capability, inspects the selected result, calls it with sample parameters when available, and ends with exact `usage` / `ledger` commands so you can reconcile final billing. Use `--resume` after recoverable parameter or provider failures to reuse the last discovery session.
+`init` is a client-side first-call wizard: it handles discovery, selection, inspection, parameter preparation, calling, and exact `usage` / `ledger` reconciliation guidance inside one command. It is not a server-side aggregate API. Manual Agent workflows should use Discover → Call when discovery contains the current contract, and add Inspect or Probe only when needed. Use `--resume` after recoverable parameter or provider failures to reuse the last discovery session.
 
 ### Discover
 
@@ -193,7 +194,7 @@ qveris discover "weather forecast" --view routing --lang en
 
 ### Inspect
 
-View full details of a tool before calling it. Shows parameters with types, required/optional, descriptions, allowed values (enum), and example parameters.
+Optionally view full details when selection or valid request construction depends on missing/stale contract information, or candidates need comparison. Shows parameters with types, required/optional, descriptions, allowed values (enum), and example parameters.
 
 ```bash
 # By index (from last discover)
@@ -472,6 +473,8 @@ qveris completions fish | source
 
 ## Agent / LLM Integration
 
+Choose between connected tools and QVeris by task fit, data quality/freshness, cost, user constraints, and call overhead. QVeris is especially useful when a capability is missing, the provider is unknown, cross-provider comparison matters, fallback is needed, or the user requests it. The default QVeris path is `discover` → `call`; `inspect` and `probe` are conditional.
+
 When used by agents or in scripts, the CLI auto-detects non-TTY environments:
 
 | Context | `max_response_size` | Rationale |
@@ -482,22 +485,31 @@ When used by agents or in scripts, the CLI auto-detects non-TTY environments:
 | `--max-size N` | N | User override |
 
 ```bash
-# Agent workflow: discover → select → call → parse
+# Agent workflow: discover once → select by contract → call → parse
 
 # Linux / macOS
-TOOL=$(qveris discover "weather" --json | jq -r '.results[0].tool_id')
-qveris call "$TOOL" --params '{"city":"London"}' --json | jq '.result.data'
+DISCOVERY=$(qveris discover "weather forecast API" --json)
+TOOL=$(printf '%s' "$DISCOVERY" | jq -r '.results[] | select(.params != null and ([.params[].name] | index("city")) != null and ([.params[] | select(.required == true) | .name] - ["city"] | length == 0)) | .tool_id' | head -1)
+SEARCH_ID=$(printf '%s' "$DISCOVERY" | jq -r '.search_id')
+test -n "$TOOL" || { echo "Inspect candidates: no city contract returned" >&2; exit 1; }
+qveris call "$TOOL" --discovery-id "$SEARCH_ID" --params '{"city":"London"}' --json | jq '.result.data'
 
 # Windows (PowerShell)
-$TOOL = qveris discover "weather" --json | ConvertFrom-Json | Select-Object -ExpandProperty results | Select-Object -First 1 | Select-Object -ExpandProperty tool_id
-qveris call $TOOL --params '{"city":"London"}' --json | ConvertFrom-Json | Select-Object -ExpandProperty result | Select-Object -ExpandProperty data
+$DISCOVERY = qveris discover "weather forecast API" --json | ConvertFrom-Json
+$TOOL = $DISCOVERY.results | Where-Object {
+  $names = @($_.params.name)
+  $extraRequired = @($_.params | Where-Object { $_.required -eq $true -and $_.name -ne "city" })
+  $null -ne $_.params -and $names -contains "city" -and $extraRequired.Count -eq 0
+} | Select-Object -First 1
+if ($null -eq $TOOL) { throw "Inspect candidates: no city contract returned" }
+qveris call $TOOL.tool_id --discovery-id $DISCOVERY.search_id --params '{"city":"London"}' --json | ConvertFrom-Json | Select-Object -ExpandProperty result | Select-Object -ExpandProperty data
 
  # Windows (CMD, interactive) - requires jq for Windows
-for /f "tokens=*" %i in ('qveris discover "weather" --json ^| jq -r ".results[0].tool_id"') do set TOOL=%i
+for /f "tokens=*" %i in ('qveris discover "weather forecast API" --json ^| jq -r ".results[] ^| select(.params != null and ([.params[].name] ^| index(\"city\")) != null and ([.params[] ^| select(.required == true) ^| .name] - [\"city\"] ^| length == 0)) ^| .tool_id"') do set TOOL=%i
 qveris call %TOOL% --params "{\"city\":\"London\"}" --json | jq ".result.data"
 
 # Windows (.bat/.cmd script) - use %%i instead of %i
-for /f "tokens=*" %%i in ('qveris discover "weather" --json ^| jq -r ".results[0].tool_id"') do set TOOL=%%i
+for /f "tokens=*" %%i in ('qveris discover "weather forecast API" --json ^| jq -r ".results[] ^| select(.params != null and ([.params[].name] ^| index(\"city\")) != null and ([.params[] ^| select(.required == true) ^| .name] - [\"city\"] ^| length == 0)) ^| .tool_id"') do set TOOL=%%i
 qveris call %TOOL% --params "{\"city\":\"London\"}" --json | jq ".result.data"
 ```
 

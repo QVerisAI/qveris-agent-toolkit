@@ -22,6 +22,14 @@
 - Agent needs to dynamically discover and select capabilities
 - Need a unified calling protocol with structured returns
 
+## Routing policy
+- Choose among connected tools and QVeris by task fit, data quality/freshness, cost, user constraints, and call overhead
+- QVeris is especially useful when the capability is missing, the provider is unknown, provider comparison matters, fallback is needed, or the user requests it
+- Default QVeris path: discover → call
+- Inspect only when selection/request construction needs missing/stale contract detail or candidate comparison
+- Probe only for parameter validation, a current quote needed for a budget decision, or explicit preflight; it does not reserve price or grant authorization
+- Do not assume semantic memory: CLI stores only recent Discover indexes/provenance, MCP and SDKs are stateless for routing, and OpenClaw provides only exact-query session reuse with TTL
+
 ## How QVeris relates to OpenClaw
 - OpenClaw lets Agents use tools (runtime)
 - QVeris lets Agents know which to call, why to trust it, and how to pay (capability routing)
@@ -29,10 +37,10 @@
 
 ## Access methods (recommended order)
 - Hosted MCP (recommended for remote-capable MCP clients): open /hosted-mcp on the QVeris site that issued the API key for the correct Streamable HTTP endpoint and Bearer authentication setup — no local process, Node.js, or package install
-- CLI v0.11.1 (recommended for shell-capable agents): npm install -g @qverisai/cli — no upfront catalog schemas, deterministic output, API discovery without preloading the catalog
-- MCP Server v0.14.2 (local stdio fallback): npx @qverisai/mcp — for stdio-only IDE integrations
-- JavaScript SDK v0.8.1: npm install @qverisai/sdk
-- Python SDK v0.7.0: pip install qveris
+- CLI v0.11.2 (recommended for shell-capable agents): npm install -g @qverisai/cli — no upfront catalog schemas, deterministic output, API discovery without preloading the catalog
+- MCP Server v0.14.3 (local stdio fallback): npx @qverisai/mcp — for stdio-only IDE integrations
+- JavaScript SDK v0.8.2: npm install @qverisai/sdk
+- Python SDK v0.7.1: pip install qveris
 - REST API: https://qveris.ai/api/v1
 - Explicit endpoint override: QVERIS_BASE_URL
 

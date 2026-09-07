@@ -8,7 +8,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
-- Added a logo to the MCP Registry listing and switched the hosted endpoint from a manual API-key prompt to OAuth discovery. Updated VS Code setup instructions in all three locales, including the separate China endpoint configuration.
+- Added a logo to the MCP Registry listing and switched the hosted endpoint from a manual API-key prompt to OAuth discovery. Updated requirements, quick starts, and VS Code setup instructions in all three locales, including the API-key fallback and separate China endpoint configuration.
+
+## [0.14.3] - 2026-09-07
+
+### Changed
+
+- Updated MCP tool descriptions and the runnable Agent loop to use Discover → Call when the returned contract is sufficient, reserve Inspect and Probe for explicit validation needs, and avoid implying semantic route memory in the stateless server. Candidate selection now rejects contracts with unsupported or unmet required inputs. ([#347])
 
 ## [0.14.2] - 2026-09-07
 
@@ -165,7 +171,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Handle empty/non-JSON success responses gracefully; `params_to_tool` documented as an object.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.2...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.3...HEAD
+[0.14.3]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.2...mcp-v0.14.3
 [0.14.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.1...mcp-v0.14.2
 [0.14.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.0...mcp-v0.14.1
 [0.14.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.13.0...mcp-v0.14.0
@@ -215,3 +222,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#259]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/259
 [#256]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/256
 [#341]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/341
+[#347]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/347

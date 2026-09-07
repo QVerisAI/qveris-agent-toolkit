@@ -5,12 +5,12 @@ Runnable examples for driving `@qverisai/mcp` the way an agent runtime does.
 ## Agent loop
 
 [`agent-loop.ts`](agent-loop.ts) spawns the MCP server as a subprocess, speaks
-MCP over stdio, lists the tools, and runs the discover → inspect → call loop by
+MCP over stdio, lists the tools, and runs the default discover → call path by
 calling those tools — the same shape a model follows.
 
 ```bash
 npx tsx examples/agent-loop.ts                                   # lists tools (no key needed)
-QVERIS_API_KEY=sk-... npx tsx examples/agent-loop.ts             # discover -> inspect (no charge)
+QVERIS_API_KEY=sk-... npx tsx examples/agent-loop.ts             # discover only (no charge)
 QVERIS_API_KEY=sk-... RUN_QVERIS_CALLS=1 npx tsx examples/agent-loop.ts   # also executes a capability
 ```
 

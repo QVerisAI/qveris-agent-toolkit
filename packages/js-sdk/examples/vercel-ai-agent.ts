@@ -1,8 +1,8 @@
 /**
  * Vercel AI SDK agent: let a model discover and call QVeris capabilities.
  *
- * `getQverisTools` exposes the discover / inspect / call workflow as Vercel AI
- * SDK tools, so one QVeris API key gives an agent access to thousands of
+ * `getQverisTools` exposes Discover and Call, with Inspect available when
+ * contract details are missing or stale, so one QVeris API key gives an agent access to
  * external capabilities. Bring your own model provider (any `ai` provider):
  *
  *   npm i @ai-sdk/openai

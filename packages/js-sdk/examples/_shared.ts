@@ -29,7 +29,12 @@ export function shouldCall(): boolean {
   return process.env.RUN_QVERIS_CALLS === '1';
 }
 
-/** Prefer the capability's own sample parameters; fall back to a sensible default. */
-export function sampleParameters(tool: ToolInfo, fallback: Record<string, unknown>): Record<string, unknown> {
-  return tool.examples?.sample_parameters ?? fallback;
+/** Select only a current contract that accepts every supplied field and has no unmet required inputs. */
+export function supportsParameters(tool: ToolInfo, requested: Record<string, unknown>): boolean {
+  if (!Array.isArray(tool.params)) return false;
+  const names = new Set(tool.params.map((param) => param.name));
+  return (
+    Object.keys(requested).every((name) => names.has(name)) &&
+    tool.params.every((param) => !param.required || Object.prototype.hasOwnProperty.call(requested, param.name))
+  );
 }

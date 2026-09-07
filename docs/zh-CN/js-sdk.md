@@ -2,7 +2,7 @@
 
 类型化的 TypeScript/JavaScript SDK，让你在自己的智能体和应用中发现、检查、探测、调用并审计 丰富的 API 能力。
 
-`@qverisai/sdk` v0.8.1 是最新测试版本。它是对 QVeris REST API（`discover`、`inspect`、`probe`、`call`、`credits`、`usage`、`ledger`）的轻量类型化封装，**零运行时依赖**——使用平台原生 `fetch`（Node.js 18+）——并与 [Python SDK](python-sdk.md) 和 [MCP 服务器](mcp-server.md) 保持一致的通信语义。
+`@qverisai/sdk` v0.8.2 是最新测试版本。它是对 QVeris REST API（`discover`、`inspect`、`probe`、`call`、`credits`、`usage`、`ledger`）的轻量类型化封装，**零运行时依赖**——使用平台原生 `fetch`（Node.js 18+）——并与 [Python SDK](python-sdk.md) 和 [MCP 服务器](mcp-server.md) 保持一致的通信语义。
 
 ## 安装
 
@@ -38,7 +38,7 @@ const client = new Qveris({ apiKey: 'sk-...', baseUrl: 'https://qveris.ai/api/v1
 
 ## 快速开始
 
-核心工作流是 **discover → inspect → call**，然后可选地**审计**发生了什么。所有方法都返回 Promise。
+默认工作流是 **discover → call**，然后可选地**审计**发生了什么。`inspect` 和 `probe` 是按需检查，不是必经步骤。所有方法都返回 Promise。
 
 ```typescript
 import { Qveris } from '@qverisai/sdk';
@@ -47,34 +47,48 @@ const qveris = Qveris.fromEnv();
 
 // 1. 用自然语言发现能力（免费）
 const discovered = await qveris.discover('weather forecast API', { limit: 5 });
-const tool = discovered.results[0];
+const params: Record<string, unknown> = { city: 'London' };
+const supportsRequest = (candidate: (typeof discovered.results)[number]) => {
+  if (!candidate.params) return false;
+  const names = new Set(candidate.params.map((parameter) => parameter.name));
+  return Object.keys(params).every((name) => names.has(name)) &&
+    candidate.params.every((parameter) =>
+      !parameter.required || Object.prototype.hasOwnProperty.call(params, parameter.name),
+    );
+};
+let tool = discovered.results.find(supportsRequest);
 
-// 2. 检查所选能力的完整参数
-const inspected = await qveris.inspect(tool.tool_id, { searchId: discovered.search_id });
-const selected = inspected.results[0];
+// 2. 仅在 Discover 未提供选择所需契约时 Inspect
+if (!tool) {
+  const details = await qveris.inspect(
+    discovered.results.slice(0, 3).map((candidate) => candidate.tool_id),
+    { searchId: discovered.search_id },
+  );
+  tool = details.results.find(supportsRequest);
+}
+if (!tool?.params) throw new Error('没有候选能力提供当前有效的 city 参数契约');
 
-// 3. 在不执行或扣费的情况下校验参数并获取报价
-const params = selected.examples?.sample_parameters ?? { city: 'London' };
-const probe = await qveris.probe(selected.tool_id, {
-  parameters: params,
-  checks: ['schema', 'quote'],
-});
-
-// 4. 调用（可能消耗积分）
-const result = await qveris.call(selected.tool_id, {
+// 3. 样例只作模板；覆盖为本次请求的真实业务值
+const missing = tool.params.filter((parameter) => parameter.required && params[parameter.name] === undefined);
+if (missing.length) throw new Error(`缺少业务输入：${missing.map((parameter) => parameter.name)}`);
+const result = await qveris.call(tool.tool_id, {
   parameters: params,
   searchId: discovered.search_id,
   maxResponseSize: 20480,
 });
 console.log(result.success, result.result);
 
-// 5. 审计最终扣费结果
+// 4. 审计最终扣费结果
 const usage = await qveris.usage({ execution_id: result.execution_id, summary: true });
 const ledger = await qveris.ledger({ summary: true, limit: 5 });
 console.log(usage.total, ledger.total);
 ```
 
 客户端基于 `fetch`、无状态，无需手动关闭连接。
+
+无状态也意味着没有隐式语义路由、schema、费用或结果缓存。应在当前应用流程中保留真实 `search_id`。Host 如自行实现复用，必须按账户/API 地址/授权/会话隔离，根据当前请求重建业务值，并显式管理元数据失效。
+
+显式空参数列表表示工具确实无参数；缺少参数列表表示当前投影没有提供契约。仅在选择或构造合法请求所需详情缺失/过期，或需要比较候选时使用 `inspect`。仅在参数需要校验、预算决策需要当前报价、或明确要求预检时使用 `probe`。报价不等于锁价，也不能代替用户授权。
 
 ## 配置参考
 
@@ -146,7 +160,7 @@ function explain(result: ExecuteResponse): string {
 
 ## 接入你自己的智能体循环
 
-类型化客户端天然可作为任何 LLM 智能体框架的工具后端：把 `discover` / `inspect` / `call` 作为工具暴露给模型，再把工具调用路由回客户端。由于 `discover` 返回 `why_recommended` 和 `expected_cost`，你的智能体可以在调用前对能力进行排序和预算控制。
+类型化客户端天然可作为任何 LLM 智能体框架的工具后端。应指导模型默认使用 `discover` → `call`，只有缺少或需要刷新详情时才调用 `inspect`。由于 `discover` 会尽可能返回 `why_recommended`、参数指引和 `expected_cost`，模型不应习惯性检查每个候选。
 
 ## 框架集成
 

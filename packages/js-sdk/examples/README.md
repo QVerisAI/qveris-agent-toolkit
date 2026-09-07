@@ -18,7 +18,7 @@ RUN_QVERIS_CALLS=1 npx tsx examples/quickstart.ts   # also executes a capability
 
 | File                                                       | Shows                                                                            |
 | ---------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| [`quickstart.ts`](quickstart.ts)                           | The full discover → inspect → call → audit loop with routing signals             |
+| [`quickstart.ts`](quickstart.ts)                           | The default discover → call → audit path with routing signals                    |
 | [`vercel-ai-agent.ts`](vercel-ai-agent.ts)                 | Exposing QVeris as Vercel AI SDK tools so a model can find and call capabilities |
 | [`retry-and-observability.ts`](retry-and-observability.ts) | Configuring rate-limit backoff and reading `rateLimitRetryCount`                 |
 

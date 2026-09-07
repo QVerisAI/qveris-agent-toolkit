@@ -1,6 +1,6 @@
 # QVeris Python SDK
 
-QVeris Python SDK v0.7.0 is the latest tested release. Use its async client to discover, inspect, probe, call, and audit real-world API capabilities from your own agents and applications.
+QVeris Python SDK v0.7.1 is the latest tested release. Use its async client to discover, inspect, probe, call, and audit real-world API capabilities from your own agents and applications.
 
 The SDK gives you two levels of control:
 
@@ -37,7 +37,7 @@ Endpoint priority is `QverisConfig(base_url=...)` > `QVERIS_BASE_URL` > `https:/
 
 ## Quickstart
 
-The core workflow is **discover → inspect → call**, then optionally **audit** what happened. All methods are `async`.
+The default workflow is **discover → call**, then optionally **audit** what happened. `inspect` and `probe` are conditional checks, not mandatory stages. All methods are `async`.
 
 ```python
 import asyncio
@@ -48,30 +48,41 @@ async def main():
     try:
         # 1. Discover capabilities with natural language (free)
         discovered = await client.discover("weather forecast API", limit=5)
-        tool = discovered.results[0]
-
-        # 2. Inspect the selected capability for full parameters
-        inspected = await client.inspect([tool.tool_id], search_id=discovered.search_id)
-        selected = inspected.results[0]
-
-        # 3. Probe candidate parameters and quote without execution or credits
-        params = (
-            selected.examples.sample_parameters
-            if selected.examples and selected.examples.sample_parameters
-            else {"city": "London"}
+        params = {"city": "London"}
+        tool = next(
+            (candidate for candidate in discovered.results
+             if candidate.params is not None
+             and {p.name for p in candidate.params if p.required}.issubset(params)
+             and set(params).issubset({p.name for p in candidate.params})),
+            None,
         )
-        probe = await client.probe(selected.tool_id, params, checks=["schema", "quote"])
 
-        # 4. Call it (may consume credits)
+        # 2. Inspect only if discovery omitted the contract needed for selection
+        if tool is None:
+            details = await client.inspect(
+                [candidate.tool_id for candidate in discovered.results[:3]],
+                search_id=discovered.search_id,
+            )
+            tool = next(
+                (candidate for candidate in details.results
+                 if candidate.params is not None
+                 and {p.name for p in candidate.params if p.required}.issubset(params)
+                 and set(params).issubset({p.name for p in candidate.params})),
+                None,
+            )
+        if tool is None:
+            raise RuntimeError("No candidate exposed a compatible current parameter contract")
+
+        # 3. Samples are templates; apply this request's actual business value
         result = await client.call(
-            selected.tool_id,
+            tool.tool_id,
             params,
             search_id=discovered.search_id,
             max_response_size=20480,
         )
         print(result.success, result.result)
 
-        # 5. Audit the final charge outcome
+        # 4. Audit the final charge outcome
         usage = await client.usage(execution_id=result.execution_id, summary=True)
         ledger = await client.ledger(summary=True, limit=5)
         print(usage.total, ledger.total)
@@ -83,9 +94,18 @@ asyncio.run(main())
 
 > `QverisClient` owns an HTTP connection pool. Always `await client.close()` when you are done (e.g. in a `finally` block).
 
+The client is stateless for routing: it has no hidden semantic route, schema, price, or result cache. Preserve the real `search_id` in the active application flow. Any host-managed reuse must isolate account/API endpoint/authorization/session, rebuild business values from the current request, and expire metadata explicitly.
+
+An explicit empty parameter list means the tool takes no parameters; an omitted parameter list means the projection did not provide the contract. Use `inspect` when details needed for selection or a valid request are missing/stale, or when candidates require comparison. Use `probe` only when parameters need validation, a current quote is needed for a budget decision, or a preflight was explicitly requested. A quote is not a reserved price or a substitute for user authorization:
+
+```python
+inspected = await client.inspect([tool.tool_id], search_id=discovered.search_id)
+quote = await client.probe(tool.tool_id, params, checks=["schema", "quote"])
+```
+
 ## The Agent
 
-`Agent` wraps the same workflow into an LLM tool loop. The model is given the `discover`, `inspect`, and `call` tools and decides when to use them.
+`Agent` wraps the same workflow into an LLM tool loop. The model is given the `discover`, `inspect`, and `call` tools. Its default guidance uses Discover then Call and reserves Inspect for missing or stale contract details and candidate comparison.
 
 For every built-in `call`, `Agent` automatically records `AgentConfig.model` as
 the Call `model` attribution. This value is agent-owned metadata, so generated

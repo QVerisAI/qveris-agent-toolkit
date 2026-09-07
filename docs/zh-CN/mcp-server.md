@@ -4,7 +4,7 @@
 
 `@qverisai/mcp` 是面向 ChatGPT（Codex）、Cursor、Claude Desktop、Cherry Studio、GitHub Copilot、Cline、Roo Code、Kiro、Qoder、CodeBuddy、WorkBuddy 及其他编程智能体等 MCP 兼容客户端的官方 QVeris MCP 服务器。
 
-`@qverisai/mcp` v0.14.2 是最新测试版本，通过六个规范 MCP 工具为智能体提供 QVeris 访问能力：
+`@qverisai/mcp` v0.14.3 是最新测试版本，通过六个规范 MCP 工具为智能体提供 QVeris 访问能力：
 
 - `discover` — 用自然语言发现能力
 - `inspect` — 获取工具详情（参数、成功率、示例）
@@ -48,8 +48,9 @@
 
 ## 环境要求
 
-- 有效的 `QVERIS_API_KEY`
 - MCP 兼容客户端
+- 使用支持 OAuth 自动发现的托管 MCP 时，需要 QVeris 账户以完成浏览器登录
+- 仅本地 stdio 配置或托管 MCP 的 API 密钥备用方案需要有效的 `QVERIS_API_KEY`
 - 仅在使用本地 stdio 备用方案时需要 Node.js `18+`
 
 ---
@@ -58,23 +59,22 @@
 
 ### 托管 MCP（推荐）
 
-只要客户端支持远程 Streamable HTTP，就应优先使用托管 MCP。它使用一个受管端点和 Bearer 认证，无需维护本地软件包、Node.js 进程或服务器生命周期。
+只要客户端支持远程 Streamable HTTP，就应优先使用托管 MCP。它使用一个受管端点，无需维护本地软件包、Node.js 进程或服务器生命周期。
+
+支持 MCP OAuth 自动发现的客户端可添加以下端点，按提示在浏览器中完成登录，无需创建或粘贴 API 密钥。示例使用 `mcpServers` 外层键；VS Code 应改用 `servers`。
 
 ```json
 {
   "mcpServers": {
     "qveris": {
       "type": "http",
-      "url": "https://mcp.qveris.ai/mcp",
-      "headers": {
-        "Authorization": "Bearer YOUR_QVERIS_API_KEY"
-      }
+      "url": "https://mcp.qveris.ai/mcp"
     }
   }
 }
 ```
 
-可前往[托管 MCP 页面](https://qveris.ai/hosted-mcp)复制端点并查看各客户端的配置说明。只有当客户端不支持远程 Streamable HTTP 时，才使用下方本地 stdio 备用方案。
+如果远程客户端不支持 OAuth 自动发现，请使用[托管 MCP 详细说明](#托管-mcp-详细说明)中的 API 密钥备用方案。可前往[托管 MCP 页面](https://qveris.ai/hosted-mcp)复制端点并查看各客户端的配置说明。只有当客户端不支持远程 Streamable HTTP 时，才使用下方本地 stdio 备用方案。
 
 ### 本地 stdio 备用方案
 
@@ -257,7 +257,11 @@ QVeris 提供远程 Streamable HTTP MCP 托管服务。对于支持它的客户�
 https://mcp.qveris.ai/mcp
 ```
 
-支持 MCP OAuth 自动发现的客户端可直接添加服务地址并在浏览器中完成登录。对于不支持 OAuth 自动发现的远程 MCP 客户端，可使用以下配置，在每次请求中发送 QVeris API 密钥：
+支持 MCP OAuth 自动发现的客户端可按快速开始中的说明添加服务地址，并在浏览器中完成登录，无需创建 API 密钥。
+
+### API 密钥备用方案
+
+对于不支持 OAuth 自动发现的远程 MCP 客户端，可使用以下配置，在每次请求中发送 QVeris API 密钥：
 
 ```json
 {
@@ -273,13 +277,13 @@ https://mcp.qveris.ai/mcp
 }
 ```
 
-Claude Code 可直接通过命令行添加：
+如需在 Claude Code 中使用此 API 密钥备用方案，可通过命令行添加：
 
 ```bash
 claude mcp add --transport http qveris https://mcp.qveris.ai/mcp --scope user --header "Authorization: Bearer YOUR_QVERIS_API_KEY"
 ```
 
-接入步骤：
+API 密钥接入步骤：
 
 1. 在[控制台/API 密钥](/account?page=api-keys)创建密钥。
 2. 将服务地址和 Bearer 请求头添加到客户端。客户端支持时，请用密钥管理或环境变量保存 API 密钥，切勿提交到源代码仓库。
@@ -461,17 +465,18 @@ claude mcp add --transport http qveris https://mcp.qveris.ai/mcp --scope user --
 
 ## 推荐使用模式
 
-对于大多数智能体任务，建议使用以下流程：
+应根据任务适配度、数据质量/时效、费用、用户约束和调用开销，在已连接工具与 QVeris 之间选择。能力缺失、Provider 未知、需要跨 Provider 比较或 fallback，或用户明确指定 QVeris 时，QVeris 尤其适合；它不是所有任务的必经入口。
+
+对于大多数 QVeris 任务，默认使用：
 
 1. `discover` — 发现相关能力
-2. `inspect` — 在需要时检查最佳候选
-3. `call` — 调用所选能力
+2. Discover 已提供当前且完整的参数契约，并满足费用和用户约束时，直接 `call`
 
 实践中：
 
-- 任务简单且最佳候选明确时，可直接从发现跳到调用
-- 任务风险较高或参数不清晰时，在调用前插入检查步骤
-- 复用上一轮找到的 `tool_id` 时，建议先重新检查再复用
+- 仅在选择或构造合法请求依赖缺失/过期的契约详情，或需要比较候选时使用 `inspect`
+- 仅在参数需要校验、预算决策需要当前报价、或明确要求预检时使用 `probe`；报价不等于锁价或授权
+- Call 使用当前 Discover 结果的 `search_id`，并根据用户本次请求重新构造业务参数
 
 ---
 
@@ -483,7 +488,7 @@ claude mcp add --transport http qveris https://mcp.qveris.ai/mcp --scope user --
 - 随时间推移优化工具选择
 - 更连贯的分析和追踪
 
-若省略 `session_id`，MCP 服务器可能会在进程存活期间自动生成一个。
+若省略 `session_id`，MCP 服务器会在进程存活期间自动生成一个。该行为不等于语义路由记忆或持久化 schema 缓存。如果 Host 自行实现复用，必须按账户、API 地址、授权上下文和会话隔离；保留原始 `search_id`；分别管理 schema、费用和可用性的失效；不得缓存凭据、敏感业务值或业务结果。Host 未实现这些能力时，应重新 Discover，不能假设存在记忆。
 
 ---
 

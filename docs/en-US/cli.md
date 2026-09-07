@@ -2,7 +2,7 @@
 
 The official command-line tool for the QVeris capability routing network. Discover, inspect, and call a broad catalog of real-world API capabilities directly from your terminal or agent framework.
 
-`@qverisai/cli` v0.11.1 is the latest tested release. It includes OAuth Device Flow sessions, zero-cost parameter/quote probes, opt-in discovery and call projections, and Call model attribution while preserving API key compatibility.
+`@qverisai/cli` v0.11.2 is the latest tested release. It includes OAuth Device Flow sessions, zero-cost parameter/quote probes, opt-in discovery and call projections, and Call model attribution while preserving API key compatibility.
 
 **Why CLI?** CLI runs as a subprocess with structured output and on-demand discovery. It does not preload the full capability catalog. Instructions, commands, and results still consume context tokens; QVeris MCP also uses a small set of routing tools.
 
@@ -48,11 +48,12 @@ qveris login
 # 2. Discover tools
 qveris discover "weather forecast API"
 
-# 3. Inspect a tool (use index from discover results)
-qveris inspect 1
-
-# 4. Call it
+# 3. After selecting result 1 because its contract matches these exact fields
 qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
+
+# Optional checks when contract details or a current quote are needed
+qveris inspect 1
+qveris probe 1 --params '{"wfo": "LWX", "x": 90, "y": 90}' --checks schema,quote
 ```
 
 ---
@@ -61,7 +62,7 @@ qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
 
 ### `qveris init`
 
-Guided first-call wizard: resolve auth, discover a capability, inspect it, call it, and finish with usage/ledger reconciliation guidance.
+Client-side first-call wizard: resolve auth, discover and inspect a capability, call it, and finish with usage/ledger reconciliation guidance. This is a CLI onboarding workflow, not a server-side aggregate API.
 
 ```bash
 qveris init [query] [flags]
@@ -123,7 +124,7 @@ qveris discover "weather forecast" --view routing --lang en
 
 ### `qveris inspect`
 
-View full details of a tool before calling it. Shows parameters with types, descriptions, enum values, provider info, and example parameters.
+Optionally view full details when selection or valid request construction depends on missing/stale contract information, or candidates need comparison. Shows parameters with types, descriptions, enum values, provider info, and example parameters.
 
 ```bash
 qveris inspect <tool_id|index> [flags]
@@ -565,9 +566,13 @@ qveris call 2 --params '{...}'   # uses index 2 + discovery ID
 
 Sessions expire after 30 minutes. Use `qveris history` to view and `qveris history --clear` to reset.
 
+This is last-discovery index/provenance state, not semantic intent routing or a complete schema cache. A new Discover replaces the indexes. Build each Call's business values from the current request, and Inspect if the saved summary does not contain the contract needed to do so safely.
+
 ---
 
 ## Agent / LLM Integration
+
+Choose between connected tools and QVeris by task fit, data quality/freshness, cost, user constraints, and call overhead. QVeris is especially useful when a capability is missing, the provider is unknown, cross-provider comparison matters, fallback is needed, or the user requests it. The default QVeris path is `discover` → `call`; `inspect` and `probe` are conditional checks.
 
 ### Why CLI over MCP for agents?
 
@@ -592,9 +597,11 @@ The CLI auto-detects agent vs human context:
 ### Scripting example
 
 ```bash
-# Discover, extract tool ID, call, parse result
-TOOL=$(qveris discover "weather" --json | jq -r '.results[0].tool_id')
-SEARCH_ID=$(qveris discover "weather" --json | jq -r '.search_id')
+# Discover once, then select from the returned contract instead of rank alone
+DISCOVERY=$(qveris discover "weather forecast API" --json)
+TOOL=$(printf '%s' "$DISCOVERY" | jq -r '.results[] | select(.params != null and ([.params[].name] | index("city")) != null and ([.params[] | select(.required == true) | .name] - ["city"] | length == 0)) | .tool_id' | head -1)
+SEARCH_ID=$(printf '%s' "$DISCOVERY" | jq -r '.search_id')
+test -n "$TOOL" || { echo "Inspect candidates: no city contract returned" >&2; exit 1; }
 qveris call "$TOOL" --discovery-id "$SEARCH_ID" --params '{"city":"London"}' --json | jq '.result.data'
 ```
 

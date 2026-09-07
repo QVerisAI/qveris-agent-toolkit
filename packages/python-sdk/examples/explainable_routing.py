@@ -16,7 +16,7 @@ from __future__ import annotations
 import asyncio
 from typing import Optional
 
-from _shared import require_api_key, sample_parameters, should_call
+from _shared import require_api_key, should_call, supports_parameters
 
 from qveris import QverisClient, ToolInfo
 
@@ -109,10 +109,21 @@ async def main() -> None:
             print("No capabilities found.")
             return
 
-        print(f'Query: "{query}"')
-        print(f"Candidates: {len(discovered.results)} (search_id={discovered.search_id})\n")
+        parameters = {"symbol": "AAPL"}
+        compatible = [tool for tool in discovered.results if supports_parameters(tool, parameters)]
+        if not compatible:
+            inspected = await client.inspect(
+                [tool.tool_id for tool in discovered.results[:3]],
+                search_id=discovered.search_id,
+            )
+            compatible = [tool for tool in inspected.results if supports_parameters(tool, parameters)]
+        if not compatible:
+            raise RuntimeError("No candidate exposed a current contract compatible with the requested parameters")
 
-        for i, tool in enumerate(discovered.results, start=1):
+        print(f'Query: "{query}"')
+        print(f"Compatible candidates: {len(compatible)} (search_id={discovered.search_id})\n")
+
+        for i, tool in enumerate(compatible, start=1):
             print(f"{i}. {tool.name or tool.tool_id}")
             print(f"   id:        {tool.tool_id}")
             print(f"   cost:      {_cost(tool.expected_cost)}")
@@ -121,7 +132,7 @@ async def main() -> None:
                 print(f"   why:       {tool.why_recommended}")
             print()
 
-        selected, reason = choose(discovered.results)
+        selected, reason = choose(compatible)
         print(f"Selected: {selected.name or selected.tool_id}")
         print(f"Reason:   {reason}\n")
 
@@ -129,10 +140,9 @@ async def main() -> None:
             print("Set RUN_QVERIS_CALLS=1 to execute the selected capability.")
             return
 
-        params = sample_parameters(selected, {"symbol": "AAPL"})
         result = await client.call(
             selected.tool_id,
-            params,
+            parameters,
             search_id=discovered.search_id,
             max_response_size=4096,
         )

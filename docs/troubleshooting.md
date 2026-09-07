@@ -31,11 +31,11 @@ settled charge is in `qveris usage --mode search --execution-id <id>` (CLI) or
 ## Rate limits
 
 **429 / "rate limited".**
-The CLI, SDKs, and MCP server retry automatically: they honor `Retry-After`,
-otherwise back off exponentially with jitter, bounded by `maxRetries`
-(constructor option in the SDKs) / `QVERIS_MAX_RETRIES` (CLI, default 3; `0`
-disables). Backoff is *pressure*, not failure — the JS SDK exposes
-`rateLimitRetryCount`. If you still hit limits, lower concurrency.
+Read-only operations may retry automatically: clients honor `Retry-After`, then
+use bounded exponential backoff according to their retry configuration. A paid
+`call` is strict single-submit and is not replayed automatically. If its HTTP
+outcome is unknown, reconcile usage before deciding whether the user wants a
+new attempt. If rate limits persist, lower concurrency.
 
 ## Discovery & calls
 
@@ -44,9 +44,10 @@ Describe the *capability* you need ("public company stock quote API"), not the
 parameters you plan to pass. Broaden the query and raise `--limit` / `limit`.
 
 **`call` returns `success: false` or invalid-parameter errors.**
-`inspect` the tool first and pass exactly the parameters its schema declares;
-`examples.sample_parameters` shows a working shape. `error_message` explains the
-failure.
+Use the current parameter contract returned by `discover`; if the compact result
+omitted it or it is stale, `inspect` promising candidates. Preserve required,
+enum, and one-of constraints. `examples.sample_parameters` shows shape only —
+derive business values from the current request. `error_message` explains the failure.
 
 **Large responses look truncated.**
 Responses are capped by `max_response_size` (`--max-size` in the CLI). The

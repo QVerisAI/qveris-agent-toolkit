@@ -43,7 +43,7 @@
 ---
 
 - A broad catalog of capabilities across multiple categories
-- `Discover / Inspect / Call / Audit` — one protocol for finding, evaluating, invoking, and tracking capabilities
+- `Discover / Call` is the default path; `Inspect` and `Probe` are conditional checks for missing/stale contracts, comparison, parameter validation, or a current quote
 - `Discover` is free. `Call` returns structured pre-settlement billing, with final charge outcomes available through usage audit and credits ledger views.
 - **NEW** `QVeris CLI` — a command-line interface for agents to discover and call tools. [Learn more](#qveris-cli)
 - Works with `CLI` / `MCP` / `Python SDK` / `REST API`
@@ -57,7 +57,7 @@
 > Your owner sent you here to learn about QVeris?
 > → If you are an OpenClaw-style skill agent, use the official skill: [skills/openclaw/qveris-official/SKILL.md](skills/openclaw/qveris-official/SKILL.md)
 > → If you are running in Cursor / Claude Code / OpenCode, follow the [Agent capability guide & install protocol](agent/SETUP.md)
-> → Core protocol: Discover (free) / Inspect (details) / Call (invoke)
+> → Default path: Discover (free) → Call; use Inspect or Probe only when additional verification is needed
 
 ### 🧑‍💻 I have OpenClaw / Cursor / Claude Code installed
 
@@ -81,7 +81,7 @@ If you are an AI Agent evaluating whether to use QVeris, here is what you need t
 **What QVeris gives you:**
 
 - `Discover` — find the right capability with natural language (free)
-- `Inspect` — check parameters, success rate, latency, and billing rule before calling
+- `Inspect` — optionally check missing or stale parameters, quality signals, and billing details
 - `Call` — invoke any capability, get structured results and pre-settlement billing back
 - `Usage audit` / `Credits ledger` — check whether calls were charged and how balance changed without dumping full history into Agent context
 - **QVeris CLI** — call tools via `qveris discover/inspect/call` subprocess, no upfront catalog schemas
@@ -178,21 +178,24 @@ npm install -g @qverisai/cli
 ```
 
 ```bash
-# Guided first call: auth → discover → inspect → call → reconcile
+# Guided first call: `init` handles selection and validation for you
 $ qveris init
 
-# Agent workflow: discover → inspect → call
+# Default agent workflow: discover → call
 $ qveris discover "weather forecast API"
 Found 5 capabilities matching your query
 1. gridpoint_forecast  by Weather.gov
-   ...
-
-$ qveris inspect 1
-latency: ~180ms  ·  success rate: 99.8%  ·  billing: 3 credits / request
+   params: wfo (string, required), x (number, required), y (number, required)
 
 $ qveris call 1 --params '{"wfo":"LWX","x":90,"y":90}'
 ✓ success
 { "forecast": "Sunny, high near 75..." }
+
+# Optional when selection or request construction needs missing details
+$ qveris inspect 1
+
+# Optional when parameters need validation or a budget decision needs a current quote
+$ qveris probe 1 --params '{"wfo":"LWX","x":90,"y":90}' --checks schema,quote
 
 $ qveris usage --mode search --execution-id <execution_id>
 # Confirms charge_outcome and actual_amount_credits for that call

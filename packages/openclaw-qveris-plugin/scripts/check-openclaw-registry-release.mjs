@@ -24,6 +24,10 @@ export class ReleaseTransientError extends Error {
   }
 }
 
+export function buildRegistryInstallArgs(spec) {
+  return ["plugins", "install", spec, "--pin", "--accept-capabilities"];
+}
+
 export function validateRegistryMetadata(metadata, expected) {
   if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
     throw new ReleaseTransientError("npm Registry metadata must be a JSON object");
@@ -222,7 +226,7 @@ export function createDefaultOperations({ packageJson, manifest }) {
       };
       delete env.QVERIS_BASE_URL;
 
-      runOpenClaw(openclawBin, ["plugins", "install", spec, "--pin"], {
+      runOpenClaw(openclawBin, buildRegistryInstallArgs(spec), {
         cwd: stateDir,
         env,
         timeoutMs: 300_000,

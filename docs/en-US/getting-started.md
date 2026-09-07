@@ -123,12 +123,37 @@ async def main():
     client = QverisClient()
     try:
         discovered = await client.discover("weather forecast API", limit=5)
-        tool = discovered.results[0]
-        inspected = await client.inspect([tool.tool_id], search_id=discovered.search_id)
-        selected = inspected.results[0]
+        params = {"city": "London"}
+        selected = next(
+            (
+                candidate
+                for candidate in discovered.results
+                if candidate.params is not None
+                and {parameter.name for parameter in candidate.params if parameter.required}.issubset(params)
+                and set(params).issubset({parameter.name for parameter in candidate.params})
+            ),
+            None,
+        )
+        if selected is None:
+            inspected = await client.inspect(
+                [candidate.tool_id for candidate in discovered.results[:3]],
+                search_id=discovered.search_id,
+            )
+            selected = next(
+                (
+                    candidate
+                    for candidate in inspected.results
+                    if candidate.params is not None
+                    and {parameter.name for parameter in candidate.params if parameter.required}.issubset(params)
+                    and set(params).issubset({parameter.name for parameter in candidate.params})
+                ),
+                None,
+            )
+        if selected is None:
+            raise RuntimeError("No candidate exposed a compatible current parameter contract")
         result = await client.call(
             selected.tool_id,
-            {"city": "London"},
+            params,
             search_id=discovered.search_id,
         )
         print(result.execution_id, result.success, result.billing)
@@ -173,9 +198,26 @@ import { Qveris } from '@qverisai/sdk';
 const qveris = Qveris.fromEnv(); // reads QVERIS_API_KEY
 
 const discovered = await qveris.discover('weather forecast API', { limit: 5 });
-const tool = discovered.results[0];
+const parameters: Record<string, unknown> = { city: 'London' };
+const supportsRequest = (candidate: (typeof discovered.results)[number]) => {
+  if (!candidate.params) return false;
+  const names = new Set(candidate.params.map((parameter) => parameter.name));
+  return Object.keys(parameters).every((name) => names.has(name)) &&
+    candidate.params.every((parameter) =>
+      !parameter.required || Object.prototype.hasOwnProperty.call(parameters, parameter.name),
+    );
+};
+let tool = discovered.results.find(supportsRequest);
+if (!tool) {
+  const inspected = await qveris.inspect(
+    discovered.results.slice(0, 3).map((candidate) => candidate.tool_id),
+    { searchId: discovered.search_id },
+  );
+  tool = inspected.results.find(supportsRequest);
+}
+if (!tool) throw new Error('No candidate exposed a current contract with a city field.');
 const result = await qveris.call(tool.tool_id, {
-  parameters: { city: 'London' },
+  parameters,
   searchId: discovered.search_id,
 });
 console.log(result.execution_id, result.success, result.billing);

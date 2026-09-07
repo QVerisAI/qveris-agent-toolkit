@@ -1,19 +1,47 @@
 ---
 name: qveris
-description: "Discover, inspect, and call third-party API capabilities via the QVeris MCP server, then generate production code that calls the QVeris REST API for tasks like fetching weather data, stock prices, or public datasets. Use when the user needs to find an external API, integrate a web service, connect to a third-party REST endpoint, or retrieve data from an external source."
+description: "Discover and call third-party API capabilities through QVeris, using inspect or probe only when their checks are needed, then generate production REST code. Use when task fit, data quality/freshness, provider comparison, fallback, or the user request favors QVeris."
 ---
 
 For more detailed discovery query formulation, tool selection criteria, parameter handling, and error recovery, see the [Agent Guidelines](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/GUIDELINES.md).
 
-When external functionality is needed, follow this two-phase workflow:
+## When to use QVeris
+
+Choose among connected tools and QVeris using task fit, data quality/freshness, cost, user constraints, and call overhead. Use QVeris when at least one of these is true:
+
+- the current environment lacks the required capability or live/structured data source;
+- the correct provider or API is not known in advance;
+- the task benefits from comparing providers on relevance, schema, quality, latency, or cost;
+- the preferred provider is unavailable or fails and a fallback is needed;
+- the user explicitly asks to discover or call a capability through QVeris.
+
+Local computation and transformations do not need QVeris. For qualitative pages, tutorials, or factual browsing, use an available browsing tool unless structured API data or provider routing is required.
+
+When external functionality is needed, follow this two-phase workflow. Discover, Inspect, Probe, and Call are independent protocol actions, not four mandatory steps.
 
 ## Phase 1: Discover and Call Capabilities via MCP
 
-1. Identify what tool capability the user needs
-2. Call `discover` with a **functionality description** (not parameter names) — limit results to 10
-3. Call `inspect` when you need full parameter details, examples, success rate, latency, or billing metadata
-4. Call `call` to test a candidate, passing parameters via `params_to_tool`
-5. Repeat or broaden the discovery query if no suitable capability is found
+1. Identify what capability the user needs.
+2. Call `discover` with a **functionality description** (not parameter names). Request only a few results unless comparison is necessary.
+3. If the best discovery result already includes enough parameter guidance and cost information, call it directly with `call`, passing parameters via `params_to_tool`.
+4. Use `inspect` only when selection or valid request construction depends on contract details omitted by Discover, multiple candidates need comparison, or a host-managed metadata entry needs refreshing.
+5. Use `probe` only when parameters need validation, a current quote is needed for a budget decision, or the user explicitly wants a preflight. Probe is not a prerequisite for Call; its quote is not a price reservation or user authorization.
+6. Repeat or broaden the discovery query only if no suitable capability is found or a safe fallback is needed.
+
+Optimize for the shortest safe path:
+
+- Default: `discover` → `call`.
+- Known current capability with valid discovery provenance and a current contract: `call` directly if the active integration supports that reuse.
+- Add `inspect` and/or `probe` only when their information changes the selection or prevents a material error.
+- Do not call a read-only step merely to complete a ritual sequence.
+
+### Context reuse
+
+Do not assume generic MCP or stateless SDK clients provide semantic route memory. Preserve the selected result's real `search_id` within the active flow. If the host explicitly exposes a current known-capability entry, reuse it only for an exact capability intent and unchanged provider/coverage constraints; rebuild all business parameters from the current request.
+
+Inspect when that host entry's contract is missing or stale. Discover again when intent, coverage, provider, authorization, or endpoint context changes; the entry expires; the capability is unavailable; or comparison/fallback is needed. Never invent `search_id`, reuse another discovery's attribution, or cache credentials, sensitive user values, or business results.
+
+An explicit empty parameter contract means the tool takes no parameters. A missing contract is not equivalent: Inspect it or request the missing business input before Call. Preserve required, enum, and alternative/one-of constraints. Never copy sample values as if they were the user's request.
 
 Compatibility note: legacy MCP names `search_tools`, `get_tools_by_ids`, and `execute_tool` remain deprecated aliases only. Prefer `discover`, `inspect`, and `call` in all new workflows.
 
@@ -37,8 +65,8 @@ Use context-safe audit patterns:
 
 Once a suitable tool is identified, generate code that calls the QVeris REST API directly. Do **not** reuse the MCP tool-call result — produce standalone code the user can run.
 
-- Read the API key from the MCP server config (`QVERIS_API_KEY`)
-- Set a 5-second request timeout
+- Read the API key from the caller's `QVERIS_API_KEY` environment variable; do not retrieve or expose MCP configuration secrets
+- Use a timeout appropriate to the selected capability (60 seconds by default); never automatically repeat a paid Call after a timeout or unknown execution outcome
 - Handle errors by checking the `success` field and `error_message`
 - **Verify** the response structure matches expectations before delivering to the user; if the call fails (invalid key, rate limit, tool not found), report the error and suggest corrective action
 
@@ -49,8 +77,11 @@ import requests
 
 import os
 
-API_KEY = os.environ.get("QVERIS_API_KEY", "<QVERIS_API_KEY from MCP config>")
+API_KEY = os.environ.get("QVERIS_API_KEY")
 BASE_URL = os.environ.get("QVERIS_BASE_URL", "https://qveris.ai/api/v1").rstrip("/")
+
+if not API_KEY:
+    raise RuntimeError("Set QVERIS_API_KEY before running this code")
 
 def call_tool(tool_id: str, search_id: str, params: dict) -> dict:
     """Call a QVeris capability and return the result."""
@@ -64,7 +95,7 @@ def call_tool(tool_id: str, search_id: str, params: dict) -> dict:
             "parameters": params,
             "max_response_size": 20480,
         },
-        timeout=5,
+        timeout=60,
     )
     resp.raise_for_status()
     try:
@@ -82,7 +113,7 @@ def call_tool(tool_id: str, search_id: str, params: dict) -> dict:
 
 # Usage
 result = call_tool(
-    tool_id="openweathermap_current_weather",
+    tool_id="<tool_id selected in Phase 1>",
     search_id="<search_id from Phase 1>",
     params={"city": "London", "units": "metric"},
 )

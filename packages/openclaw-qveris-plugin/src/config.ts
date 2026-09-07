@@ -9,6 +9,8 @@ const DEFAULT_DISCOVER_TIMEOUT_SECONDS = 5;
 const DEFAULT_CALL_TIMEOUT_SECONDS = 60;
 const DEFAULT_MAX_RESPONSE_SIZE = 20480;
 const DEFAULT_DISCOVER_LIMIT = 10;
+const DEFAULT_DISCOVER_CACHE_TTL_SECONDS = 90;
+const DEFAULT_CAPABILITY_MEMORY_TTL_SECONDS = 30 * 60;
 const DEFAULT_FULL_CONTENT_MAX_BYTES = 10 * 1024 * 1024; // 10MB
 const DEFAULT_FULL_CONTENT_TIMEOUT_SECONDS = 30;
 
@@ -106,6 +108,22 @@ export function resolveDiscoverLimit(pluginConfig: Record<string, unknown> | und
   const v = pluginConfig?.searchLimit;
   if (typeof v === "number" && Number.isFinite(v) && v > 0) return Math.floor(v);
   return DEFAULT_DISCOVER_LIMIT;
+}
+
+export function resolveDiscoverCacheTtlSeconds(pluginConfig: Record<string, unknown> | undefined): number {
+  const v = pluginConfig?.discoverCacheTtlSeconds;
+  if (typeof v === "number" && Number.isFinite(v) && v >= 0) return Math.floor(v);
+  return DEFAULT_DISCOVER_CACHE_TTL_SECONDS;
+}
+
+export function resolveCapabilityMemoryTtlSeconds(pluginConfig: Record<string, unknown> | undefined): number {
+  const v = pluginConfig?.capabilityMemoryTtlSeconds;
+  if (typeof v === "number" && Number.isFinite(v) && v >= 0) return Math.floor(v);
+  return DEFAULT_CAPABILITY_MEMORY_TTL_SECONDS;
+}
+
+export function resolveRememberSuccessfulCapabilities(pluginConfig: Record<string, unknown> | undefined): boolean {
+  return pluginConfig?.rememberSuccessfulCapabilities !== false;
 }
 
 export function resolveAutoMaterialize(pluginConfig: Record<string, unknown> | undefined): boolean {

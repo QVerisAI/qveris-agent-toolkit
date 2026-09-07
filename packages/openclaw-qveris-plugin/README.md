@@ -17,7 +17,19 @@ Three tools are registered into the agent's context once the plugin is loaded:
 | `qveris_call` | Execute a discovered tool with parameters |
 | `qveris_inspect` | Look up detailed schema and examples for known tool IDs |
 
-The typical agent workflow is: `qveris_discover` → `qveris_inspect` (optional) → `qveris_call`.
+Choose QVeris when task fit, data quality/freshness, provider comparison, fallback, or the user's request favors it; it is not a mandatory gateway when another connected tool is a better fit. Within QVeris, the default path is `qveris_discover` → `qveris_call`. Use `qveris_inspect` only when selection or valid request construction needs contract details that discovery omitted or may have made stale.
+
+### Session reuse contract
+
+- Discover responses are cached in memory for the same normalized exact query **and limit** (90 seconds by default). `refresh: true` bypasses and replaces that entry.
+- A successful Call records a capability hint (`tool_id`, discovery query/provenance, parameter contract, metadata source/expiry, usage count, and timestamps). It never stores Call parameter values, credentials, business results, or sensitive user values.
+- Hints appear only on a later exact normalized capability query and expire after 30 minutes by default. Different coverage or freshness requirements should be expressed in the capability query and therefore do not match.
+- `clear_capability_memory: true` on Discover removes hints for that exact normalized query. `rememberSuccessfulCapabilities: false` or a zero memory TTL disables them.
+- Cached discovery metadata and success hints have separate TTLs. A successful Call does not extend the cached schema or price metadata; reuse is rejected when a remembered contract is missing or expired. The plugin rebuilds business parameters from each model tool call.
+- All state lives in the tool factory for the active OpenClaw context and is tied to its configured API key/base URL. Restart or recreate the context after credentials, endpoint, or authorization changes.
+- A Call timeout, network failure, or server error is returned as an unknown execution outcome with `retry_safe: false`. A rate limit is also non-automatic-retry for paid single-submit semantics, without being mislabeled as executed. The agent must not repeat either automatically.
+
+The output includes low-sensitivity `discovery_cache` hit/scope/match metadata so hosts can measure HTTP request reduction separately from model-visible tool-call reduction. This is exact-query session reuse, not fuzzy semantic routing or cross-session memory.
 
 The native plugin manifest declares the same three names in `contracts.tools`, so current OpenClaw hosts can
 attribute and load the owning plugin before importing its runtime. Discover and Inspect are declared replay-safe;
@@ -133,6 +145,9 @@ All fields under `plugins.entries.qveris.config`:
 | `searchTimeoutSeconds` | `number` | `5` | Timeout for `qveris_discover` calls. |
 | `executeTimeoutSeconds` | `number` | `60` | Default timeout for `qveris_call`. Can be overridden per-call via the `timeout_seconds` parameter. |
 | `searchLimit` | `number` | `10` | Max number of tools returned by `qveris_discover`. |
+| `discoverCacheTtlSeconds` | `number` | `90` | Session-local cache TTL for the same normalized capability query and limit. Set to `0` to disable network-response reuse. |
+| `capabilityMemoryTtlSeconds` | `number` | `1800` | TTL for session-local successful-capability hints. Set to `0` to disable the hints. |
+| `rememberSuccessfulCapabilities` | `boolean` | `true` | Annotate exact matching future discoveries with capabilities successfully called in this session. Parameter contracts may be retained; Call values and results are not. |
 | `maxResponseSize` | `number` | `20480` | Max response body size in bytes before truncation. |
 | `autoMaterializeFullContent` | `boolean` | `false` | When `true`, automatically download full-content files referenced in tool results to the agent workspace. |
 | `fullContentMaxBytes` | `number` | `10485760` (10 MB) | Max size for full-content downloads. |

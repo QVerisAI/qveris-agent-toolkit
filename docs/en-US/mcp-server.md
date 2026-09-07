@@ -4,7 +4,7 @@
 
 `@qverisai/mcp` is the official QVeris MCP server for MCP-compatible clients such as ChatGPT (Codex), Cursor, Claude Desktop, Cherry Studio, GitHub Copilot, Cline, Roo Code, Kiro, Qoder, CodeBuddy, WorkBuddy, and other coding agents.
 
-`@qverisai/mcp` v0.14.2 is the latest tested release. It gives agents access to QVeris through six canonical MCP tools:
+`@qverisai/mcp` v0.14.3 is the latest tested release. It gives agents access to QVeris through six canonical MCP tools:
 
 - `discover` — Find capabilities by natural language
 - `inspect` — Get detailed tool info (params, success rate, examples)
@@ -48,8 +48,9 @@ Both surfaces map to the same QVeris protocol:
 
 ## Requirements
 
-- A valid `QVERIS_API_KEY`
 - An MCP-compatible client
+- A QVeris account for browser sign-in when using Hosted MCP with OAuth discovery
+- A valid `QVERIS_API_KEY` only for the local stdio setup or the Hosted MCP API-key fallback
 - Node.js `18+` only when using the local stdio fallback
 
 ---
@@ -58,23 +59,22 @@ Both surfaces map to the same QVeris protocol:
 
 ### Hosted MCP (recommended)
 
-Prefer Hosted MCP whenever the client supports remote Streamable HTTP. It uses one managed endpoint and Bearer authentication, with no local package, Node.js process, or server lifecycle to maintain.
+Prefer Hosted MCP whenever the client supports remote Streamable HTTP. It uses one managed endpoint, with no local package, Node.js process, or server lifecycle to maintain.
+
+For clients with MCP OAuth discovery, add the endpoint below and complete browser sign-in when prompted. You do not need to create or paste an API key. The example uses the `mcpServers` wrapper; VS Code uses `servers` instead.
 
 ```json
 {
   "mcpServers": {
     "qveris": {
       "type": "http",
-      "url": "https://mcp.qveris.ai/mcp",
-      "headers": {
-        "Authorization": "Bearer YOUR_QVERIS_API_KEY"
-      }
+      "url": "https://mcp.qveris.ai/mcp"
     }
   }
 }
 ```
 
-See the [Hosted MCP page](https://qveris.ai/hosted-mcp) for a copy-ready endpoint and client-specific guidance. Use the local stdio setup below only when your client does not support remote Streamable HTTP.
+If your remote client does not support OAuth discovery, use the [Hosted MCP API-key fallback](#hosted-mcp-details). See the [Hosted MCP page](https://qveris.ai/hosted-mcp) for a copy-ready endpoint and client-specific guidance. Use the local stdio setup below only when your client does not support remote Streamable HTTP.
 
 ### Local stdio fallback
 
@@ -262,7 +262,11 @@ QVeris provides a remote Streamable HTTP MCP service. It is the preferred MCP co
 https://mcp.qveris.ai/mcp
 ```
 
-Clients with MCP OAuth discovery can add the endpoint and complete browser sign-in. For remote MCP clients without OAuth discovery, use the following configuration to send your QVeris API key on every request:
+Clients with MCP OAuth discovery can add the endpoint and complete browser sign-in as shown in the quick start, without creating an API key.
+
+### API-key fallback
+
+For remote MCP clients without OAuth discovery, use the following configuration to send your QVeris API key on every request:
 
 ```json
 {
@@ -278,13 +282,13 @@ Clients with MCP OAuth discovery can add the endpoint and complete browser sign-
 }
 ```
 
-Claude Code can add it from the command line:
+To use this API-key fallback in Claude Code, add it from the command line:
 
 ```bash
 claude mcp add --transport http qveris https://mcp.qveris.ai/mcp --scope user --header "Authorization: Bearer YOUR_QVERIS_API_KEY"
 ```
 
-Setup flow:
+API-key setup flow:
 
 1. Create a key on [Dashboard / API Keys](/account?page=api-keys).
 2. Add the endpoint and Bearer header to your client. Store the key in a secret or environment variable when supported; never commit it.
@@ -476,17 +480,19 @@ For very large call outputs, QVeris may return:
 
 ## Recommended Usage Pattern
 
-For most agent tasks, use this flow:
+Choose between connected tools and QVeris by task fit, data quality/freshness, cost, user constraints, and call overhead. QVeris is especially useful when a capability is missing, the provider is unknown, cross-provider comparison matters, fallback is needed, or the user requests it; it is not a mandatory gateway.
+
+For most QVeris tasks, use this flow:
 
 1. `discover` to find relevant capabilities
-2. `inspect` to review the best candidate(s) when needed
-3. `call` to execute the selected capability
+2. `call` the best candidate directly when discovery provides enough schema and cost information
 
 In practice:
 
-- If the task is simple and the best candidate is obvious, you may go directly from Discover to Call
-- If the task is higher risk or parameters are unclear, insert Inspect before Call
-- If you already know a good `tool_id` from a previous turn, re-inspect it before reuse
+- Use `inspect` only when selection or valid request construction depends on missing/stale contract details, or candidates need comparison
+- Use `probe` only when parameters need validation, a current quote is needed for a budget decision, or preflight is explicitly requested; a quote is not a price reservation or authorization
+- Preserve the current Discover result's `search_id` for Call and rebuild parameters from the user's current request
+- The MCP server does not provide semantic route memory. If the host implements it, isolate it by account/API endpoint/authorization/session, expire schema/pricing/availability independently, and never cache credentials, sensitive values, or business results
 
 ---
 

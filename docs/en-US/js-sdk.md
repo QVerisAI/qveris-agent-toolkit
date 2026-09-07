@@ -2,7 +2,7 @@
 
 Typed TypeScript/JavaScript SDK to discover, inspect, probe, call, and audit real-world API capabilities from your own agents and applications.
 
-`@qverisai/sdk` v0.8.1 is the latest tested release. It is a thin, typed wrapper over the QVeris REST API (`discover`, `inspect`, `probe`, `call`, `credits`, `usage`, `ledger`). It has **zero runtime dependencies** — it uses the platform `fetch` (Node.js 18+) — and mirrors the wire semantics of the [Python SDK](python-sdk.md) and the [MCP server](mcp-server.md).
+`@qverisai/sdk` v0.8.2 is the latest tested release. It is a thin, typed wrapper over the QVeris REST API (`discover`, `inspect`, `probe`, `call`, `credits`, `usage`, `ledger`). It has **zero runtime dependencies** — it uses the platform `fetch` (Node.js 18+) — and mirrors the wire semantics of the [Python SDK](python-sdk.md) and the [MCP server](mcp-server.md).
 
 ## Installation
 
@@ -38,7 +38,7 @@ const client = new Qveris({ apiKey: 'sk-...', baseUrl: 'https://qveris.ai/api/v1
 
 ## Quickstart
 
-The core workflow is **discover → inspect → call**, then optionally **audit** what happened. All methods return promises.
+The default workflow is **discover → call**, then optionally **audit** what happened. `inspect` and `probe` are conditional checks, not mandatory stages. All methods return promises.
 
 ```typescript
 import { Qveris } from '@qverisai/sdk';
@@ -47,34 +47,56 @@ const qveris = Qveris.fromEnv();
 
 // 1. Discover capabilities with natural language (free)
 const discovered = await qveris.discover('weather forecast API', { limit: 5 });
-const tool = discovered.results[0];
+const params: Record<string, unknown> = { city: 'London' };
+const supportsRequest = (candidate: (typeof discovered.results)[number]) => {
+  if (!candidate.params) return false;
+  const names = new Set(candidate.params.map((parameter) => parameter.name));
+  return Object.keys(params).every((name) => names.has(name)) &&
+    candidate.params.every((parameter) =>
+      !parameter.required || Object.prototype.hasOwnProperty.call(params, parameter.name),
+    );
+};
+let tool = discovered.results.find(supportsRequest);
 
-// 2. Inspect the selected capability for full parameters
-const inspected = await qveris.inspect(tool.tool_id, { searchId: discovered.search_id });
-const selected = inspected.results[0];
+// 2. Inspect only if discovery omitted the contract needed for selection
+if (!tool) {
+  const details = await qveris.inspect(
+    discovered.results.slice(0, 3).map((candidate) => candidate.tool_id),
+    { searchId: discovered.search_id },
+  );
+  tool = details.results.find(supportsRequest);
+}
+if (!tool?.params) throw new Error('No candidate exposed a current city parameter contract');
 
-// 3. Probe candidate parameters and quote without execution or credits
-const params = selected.examples?.sample_parameters ?? { city: 'London' };
-const probe = await qveris.probe(selected.tool_id, {
-  parameters: params,
-  checks: ['schema', 'quote'],
-});
-
-// 4. Call it (may consume credits)
-const result = await qveris.call(selected.tool_id, {
+// 3. Use samples only as a template; apply this request's actual value
+const missing = tool.params.filter((parameter) => parameter.required && params[parameter.name] === undefined);
+if (missing.length) throw new Error(`Missing inputs: ${missing.map((parameter) => parameter.name)}`);
+const result = await qveris.call(tool.tool_id, {
   parameters: params,
   searchId: discovered.search_id,
   maxResponseSize: 20480,
 });
 console.log(result.success, result.result);
 
-// 5. Audit the final charge outcome
+// 4. Audit the final charge outcome
 const usage = await qveris.usage({ execution_id: result.execution_id, summary: true });
 const ledger = await qveris.ledger({ summary: true, limit: 5 });
 console.log(usage.total, ledger.total);
 ```
 
 There is no connection to close — the client is stateless over `fetch`.
+
+Stateless also means no hidden semantic route, schema, price, or result cache. Preserve the real `search_id` in the active application flow. Any host-managed reuse must isolate account/API endpoint/authorization/session, rebuild business values from the current request, and expire metadata explicitly.
+
+An explicit empty parameter list means the tool takes no parameters; an omitted parameter list means the projection did not provide the contract. Use `inspect` when details needed for selection or a valid request are missing/stale, or when candidates require comparison. Use `probe` only when parameters need validation, a current quote is needed for a budget decision, or a preflight was explicitly requested. A quote is not a reserved price or a substitute for user authorization:
+
+```typescript
+const inspected = await qveris.inspect(tool.tool_id, { searchId: discovered.search_id });
+const quote = await qveris.probe(tool.tool_id, {
+  parameters: params,
+  checks: ['schema', 'quote'],
+});
+```
 
 ## Configuration reference
 
@@ -149,7 +171,7 @@ function explain(result: ExecuteResponse): string {
 
 ## Bring your own agent loop
 
-The typed client is a natural tool backend for any LLM agent framework: expose `discover` / `inspect` / `call` as tools to your model, then route the tool calls back through the client. Because `discover` returns `why_recommended` and `expected_cost`, your agent can rank and budget capabilities before calling them.
+The typed client is a natural tool backend for any LLM agent framework. Tell the model to use `discover` then `call` by default and to invoke `inspect` only when it needs missing or refreshed detail. Because `discover` returns `why_recommended`, parameter guidance, and `expected_cost` when available, the model should not inspect every candidate by habit.
 
 ## Framework integrations
 
@@ -175,6 +197,8 @@ const { text } = await generateText({
   prompt: 'Find a stock quote capability and quote AAPL.',
 });
 ```
+
+The adapter descriptions encode the same shortest-safe-path policy: `qveris_inspect` is optional, and a model may call directly from a sufficiently detailed discovery result.
 
 The [Python SDK](python-sdk.md) ships adapters for LangChain/LangGraph, OpenAI Agents SDK, CrewAI, AutoGen, LlamaIndex, and Pydantic AI as well.
 

@@ -1,8 +1,8 @@
 /**
  * Vercel AI SDK adapter for QVeris.
  *
- * Exposes the QVeris discover / inspect / call workflow as Vercel AI SDK tools,
- * so an agent built with the `ai` package can find and invoke thousands of
+ * Exposes QVeris discovery and calling as Vercel AI SDK tools, with inspection
+ * available only when extra or refreshed detail is needed, so an agent can invoke
  * external capabilities through one QVeris API key.
  *
  * `ai` and `zod` are peer dependencies — install them alongside `@qverisai/sdk`.
@@ -32,7 +32,7 @@ import { z } from 'zod';
 import type { Qveris } from '../client.js';
 
 /**
- * Build Vercel AI SDK tools for the QVeris discover/inspect/call workflow.
+ * Build Vercel AI SDK tools for the shortest-safe QVeris workflow.
  *
  * @param qveris - The Qveris client to route calls through.
  * @param options - Optional session and model metadata for correlation and quality analysis.
@@ -53,7 +53,7 @@ export function getQverisTools(qveris: Qveris, options: { sessionId?: string; mo
   return {
     qveris_discover: tool({
       description:
-        'Discover QVeris capabilities from a natural-language query. Free; returns candidates and a search_id.',
+        'Discover QVeris capabilities when task fit, data quality/freshness, provider comparison, fallback, or the user request favors QVeris. It is not a mandatory gateway. Free; returns candidates and a search_id.',
       inputSchema: z.object({
         query: z.string().describe("Capability query, e.g. 'weather forecast API'."),
         limit: z.number().int().min(1).max(100).optional().describe('Number of results (1-100).'),
@@ -63,7 +63,8 @@ export function getQverisTools(qveris: Qveris, options: { sessionId?: string; mo
     }),
 
     qveris_inspect: tool({
-      description: 'Inspect one or more QVeris capabilities by tool_id before calling them. Free.',
+      description:
+        'Optional: inspect capabilities only when selection or valid request construction depends on missing/stale contract details, or candidates need comparison. Free.',
       inputSchema: z.object({
         tool_ids: z.array(z.string()).describe('Tool IDs returned by discover.'),
         search_id: z.string().optional().describe('The search_id from the discover response, if available.'),
@@ -73,7 +74,8 @@ export function getQverisTools(qveris: Qveris, options: { sessionId?: string; mo
     }),
 
     qveris_call: tool({
-      description: 'Call a selected QVeris capability with parameters. May consume credits.',
+      description:
+        'Call a selected QVeris capability with parameters. Call directly from discovery when it provides enough schema and cost information. May consume credits.',
       inputSchema: z.object({
         tool_id: z.string().describe('The capability tool_id, from discover or inspect.'),
         params_to_tool: z.record(z.string(), z.unknown()).optional().describe('Parameters to pass to the capability.'),

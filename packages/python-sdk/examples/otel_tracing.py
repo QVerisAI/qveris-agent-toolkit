@@ -25,6 +25,7 @@ from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
 
+from _shared import supports_parameters
 from qveris import QverisClient
 
 
@@ -48,10 +49,14 @@ async def main() -> None:
             print("No capabilities found.")
             return
 
-        tool = found.results[0]
+        parameters = {"symbol": "AAPL"}
+        tool = next((candidate for candidate in found.results if supports_parameters(candidate, parameters)), None)
+        if tool is None:
+            print("Inspect promising candidates to obtain a compatible contract.")
+            return
         result = await client.call(
             tool.tool_id,
-            {"symbol": "AAPL"},
+            parameters,
             search_id=found.search_id,
         )
         print(f"execution_id={result.execution_id} success={result.success}")

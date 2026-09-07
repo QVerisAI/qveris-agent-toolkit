@@ -74,13 +74,25 @@ Agents interact with QVeris through four capability actions plus two audit read 
 
 **Use this terminology consistently across all contexts.**
 
+### When QVeris Enters the Route
+
+QVeris is not a mandatory gateway for every task. Choose among connected tools and QVeris by task fit, data quality/freshness, cost, user constraints, and call overhead. QVeris is especially useful when the capability or structured data source is missing, the provider is unknown, cross-provider comparison matters, the preferred provider needs a fallback, or the user explicitly requests QVeris. Local computation and ordinary text/code transformation do not require QVeris.
+
 ### Recommended Agent Usage Pattern
 
-1. **Discover** relevant capabilities using natural language query
-2. **Inspect** top candidates (1-3) to check parameters, success rate, latency, examples
-3. **Probe** the selected candidate to validate parameters and obtain a quote
-4. **Call** the best match with required parameters
-5. If call fails, inspect next candidate and retry
+Discover, Inspect, Probe, and Call are independent actions, not a mandatory four-step chain.
+
+1. **Discover** relevant capabilities using a natural-language capability query
+2. **Call** the best match directly when its discovery result provides enough schema and cost information
+3. **Inspect** only when selection or valid request construction depends on missing/stale contract details, or candidates need comparison
+4. **Probe** only when parameters need validation, a current quote is needed for a budget decision, or preflight is explicitly requested; it does not reserve a price or grant authorization
+5. If a call definitely failed before execution, fix parameters or select the next suitable candidate; do not repeat a paid single-submit call when execution status is unknown
+
+### Client State and Optional Host Reuse
+
+State differs by integration. The CLI stores only the latest Discover ID, endpoint, query, and result summaries for 30 minutes. The MCP server preserves process/session correlation but does not provide semantic route memory. JavaScript and Python SDK clients are stateless for routing. The OpenClaw plugin provides a session-scoped exact-query Discover cache and TTL-bound successful-capability hints, with an explicit refresh option.
+
+If another host implements reuse, isolate entries by account, API endpoint, authorization context, and session. Preserve the original `search_id`, source, and acquisition time; expire schema, price, and availability independently; and rebuild business parameters from the current request. Discover again when intent, coverage, provider, or authorization context changes, or comparison/fallback is needed. Never cache API keys, credentials, business results, or sensitive user values. A successful Call must not extend stale schema or pricing metadata.
 
 ---
 
@@ -127,7 +139,7 @@ QVeris supports six integration methods:
 
 ### QVeris CLI — Token-Efficient Agent Tool Use (Recommended)
 
-The CLI (`@qverisai/cli` v0.11.1) lets shell-capable agents access QVeris capabilities. CLI runs as a subprocess without preloading the catalog. Instructions, commands, and results still consume context tokens; QVeris MCP also uses a small set of routing tools. No mandatory runtime dependencies; optional OS credential storage uses `@napi-rs/keyring`.
+The CLI (`@qverisai/cli` v0.11.2) lets shell-capable agents access QVeris capabilities. CLI runs as a subprocess without preloading the catalog. Instructions, commands, and results still consume context tokens; QVeris MCP also uses a small set of routing tools. No mandatory runtime dependencies; optional OS credential storage uses `@napi-rs/keyring`.
 
 ```bash
 # Install
@@ -212,7 +224,7 @@ Full CLI docs: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/packag
 
 ### MCP Server Quick Start
 
-The MCP server (`@qverisai/mcp` v0.14.2) exposes six canonical agent-facing tools via the Model Context Protocol:
+The MCP server (`@qverisai/mcp` v0.14.3) exposes six canonical agent-facing tools via the Model Context Protocol:
 
 | MCP Tool | Description | Cost |
 |----------|-------------|------|
@@ -450,7 +462,17 @@ async def main():
     try:
         # Discover
         results = await client.discover("weather data", limit=5)
-        tool = results.results[0]
+        tool = next(
+            (
+                candidate
+                for candidate in results.results
+                if candidate.params is not None
+                and any(parameter.name == "city" for parameter in candidate.params)
+            ),
+            None,
+        )
+        if tool is None:
+            raise RuntimeError("Inspect promising candidates to obtain a compatible contract")
 
         # Call
         response = await client.call(
@@ -559,10 +581,10 @@ Model improvement is a tailwind for QVeris, not a headwind.
 
 ### SDK & Tools
 
-- **CLI (npm):** https://www.npmjs.com/package/@qverisai/cli — `npm install -g @qverisai/cli` (v0.11.1)
-- **MCP Server (npm):** https://www.npmjs.com/package/@qverisai/mcp — `npx @qverisai/mcp` (v0.14.2)
-- **JavaScript SDK:** https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/js-sdk (v0.8.1)
-- **Python SDK:** https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/python-sdk (v0.7.0)
+- **CLI (npm):** https://www.npmjs.com/package/@qverisai/cli — `npm install -g @qverisai/cli` (v0.11.2)
+- **MCP Server (npm):** https://www.npmjs.com/package/@qverisai/mcp — `npx @qverisai/mcp` (v0.14.3)
+- **JavaScript SDK:** https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/js-sdk (v0.8.2)
+- **Python SDK:** https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/python-sdk (v0.7.1)
 - **Online Docs:** https://qveris.ai/docs
 
 ### Open Ecosystem
@@ -618,7 +640,9 @@ First, think about what kind of capabilities might be useful to accomplish the u
 
 Then use the discover tool with a query describing the capability type, not the specific parameters you will pass later.
 
-Optionally, use inspect to check top candidates (success_rate, avg_execution_time, parameters, examples).
+Use inspect only when selection or valid request construction depends on contract information that discovery omitted or may have made stale, or candidates need comparison.
+
+Use probe only when parameters need validation, a current quote is needed for a budget decision, or a preflight was explicitly requested. Probe is not required before call, and its quote does not reserve a price or grant authorization.
 
 Then call suitable capabilities using the call tool, passing parameters through params_to_tool.
 
@@ -629,14 +653,14 @@ You can reference the examples given for each capability.
 You can make multiple tool calls in a single response.
 ```
 
-> **Note:** If your agent uses CLI instead of MCP, replace the tool calls above with subprocess calls: `qveris discover`, `qveris inspect`, `qveris probe`, `qveris call`. Use `--json` flag for structured output.
+> **Note:** If your agent uses CLI instead of MCP, use `qveris discover` then `qveris call` by default. Add `qveris inspect` or `qveris probe` only under the conditions above. Use `--json` for structured output.
 
 ### Error Handling Best Practices
 
 1. If `/search` returns no results, try broader or alternative query terms
 2. If `/tools/execute` fails (success: false), check error_message for details
 3. Consider fallback capabilities if primary choice fails
-4. Track search_id across Discover → Inspect → Probe → Call for better routing signals
+4. Preserve `search_id` from Discover in whichever later actions you actually use, especially Call, for better routing signals
 
 ### Session Management
 
@@ -653,11 +677,11 @@ Generate a new UUID for each user session, and reuse it throughout that session.
 ## Version Information
 
 - **llms-full.txt Version:** 1.2.0
-- **CLI Version:** 0.11.1
-- **MCP Server Version:** 0.14.2
-- **JavaScript SDK Version:** 0.8.1
-- **Python SDK Version:** 0.7.0
-- **Last Updated:** 2026-09-04
+- **CLI Version:** 0.11.2
+- **MCP Server Version:** 0.14.3
+- **JavaScript SDK Version:** 0.8.2
+- **Python SDK Version:** 0.7.1
+- **Last Updated:** 2026-09-07
 
 For the latest updates, always refer to:
 
