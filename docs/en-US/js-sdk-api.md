@@ -1387,7 +1387,7 @@ Supplies a bearer credential for an API request.
 
 ##### remaining\_credits
 
-> **remaining\_credits**: `number`
+> **remaining\_credits**: `number` \| `null`
 
 ##### welcome\_bonus?
 
