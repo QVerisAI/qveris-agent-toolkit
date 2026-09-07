@@ -513,6 +513,26 @@ describe('QverisClient', () => {
       );
     });
 
+    it('normalizes a numeric-string balance without resubmitting the paid call', async () => {
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          execution_id: 'exec-balance',
+          success: true,
+          result: { data: { ok: true } },
+          remaining_credits: '992.5',
+        }),
+      });
+
+      const result = await client.executeTool('weather-tool', {
+        search_id: 'search-123',
+        parameters: {},
+      });
+
+      expect(result.remaining_credits).toBe(992.5);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
     it('should not resubmit a paid call for a legacy extra-field rejection', async () => {
       const previous = PAID_CALL_POLICY.contract_fixtures.n_minus_1;
       fetchMock.mockResolvedValueOnce({
@@ -578,6 +598,21 @@ describe('QverisClient', () => {
         expect(fetchMock).toHaveBeenCalledTimes(PAID_CALL_POLICY.paid_call.expected_http_attempts);
       },
     );
+
+    it('should single-submit a paid call when the request times out', async () => {
+      const abortError = new Error('aborted');
+      abortError.name = 'AbortError';
+      fetchMock.mockRejectedValue(abortError);
+
+      await expect(
+        client.executeTool('weather-tool', {
+          search_id: 'search-123',
+          parameters: {},
+        }),
+      ).rejects.toMatchObject({ status: 408 });
+
+      expect(fetchMock).toHaveBeenCalledTimes(PAID_CALL_POLICY.paid_call.expected_http_attempts);
+    });
 
     it('should URL-encode tool_id', async () => {
       fetchMock.mockResolvedValueOnce({

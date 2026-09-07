@@ -2,7 +2,7 @@
 
 QVeris 能力路由网络的官方命令行工具。直接在终端或智能体框架中发现、检查和调用丰富的可用 API 能力。
 
-`@qverisai/cli` v0.11.0 是最新测试版本，包含 OAuth Device Flow 会话、零成本参数校验与报价、可选的发现和调用投影及 Call 模型归因，同时保持 API Key 兼容。
+`@qverisai/cli` v0.11.1 是最新测试版本，包含 OAuth Device Flow 会话、零成本参数校验与报价、可选的发现和调用投影及 Call 模型归因，同时保持 API Key 兼容。
 
 **为什么用 CLI？** CLI 通过子进程提供结构化输出和按需发现，无需预加载整个能力目录。使用说明、命令和结果仍会消耗上下文 token；QVeris MCP 同样使用少量路由工具。
 

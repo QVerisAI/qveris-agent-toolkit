@@ -396,6 +396,24 @@ describe('Qveris client', () => {
     expect(response.billing?.charge_lines?.[0].component_key).toBe('request');
   });
 
+  it('normalizes a numeric-string balance without resubmitting the paid call', async () => {
+    const fetchMock = mockFetch({
+      execution_id: 'exec-balance',
+      success: true,
+      result: { data: { ok: true } },
+      remaining_credits: '992.5',
+    });
+    globalThis.fetch = fetchMock;
+
+    const response = await new Qveris({ apiKey: API_KEY }).call('weather.forecast.v1', {
+      parameters: {},
+      searchId: 'search-123',
+    });
+
+    expect(response.remaining_credits).toBe(992.5);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('call passes summary projection and accepts its compact response shape', async () => {
     const fetchMock = mockFetch({
       execution_id: 'exec-summary',

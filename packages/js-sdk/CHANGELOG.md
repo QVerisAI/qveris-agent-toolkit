@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-09-07
+
+### Fixed
+
+- Normalize finite numeric-string credit balances at the response boundary, preserve `null` as unavailable, and align the public search and execution response types with the OpenAPI `number | null` contract without replaying paid calls. ([#341])
+
 ## [0.8.0] - 2026-08-10
 
 ### Added
@@ -63,7 +69,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - `0.1.x` under this npm name was an early MCP-focused SDK, superseded by `@qverisai/mcp`.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.1...HEAD
+[0.8.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.0...js-sdk-v0.8.1
 [0.8.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.7.0...js-sdk-v0.8.0
 [0.7.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.6.0...js-sdk-v0.7.0
 [0.6.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.5.0...js-sdk-v0.6.0
@@ -82,3 +89,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#259]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/259
 [#256]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/256
 [#273]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/273
+[#341]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/341

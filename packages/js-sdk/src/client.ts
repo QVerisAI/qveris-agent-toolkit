@@ -22,6 +22,7 @@ import {
   resolveMaxRetries,
   RETRYABLE_STATUS,
 } from './retry.js';
+import { normalizeCreditBalanceResponse } from './credit-balance.js';
 import type {
   ApiEnvelope,
   ApiError,
@@ -509,7 +510,7 @@ export class Qveris {
             });
           }
 
-          return this.unwrapEnvelope<T>(payload, requestContext);
+          return normalizeCreditBalanceResponse(this.unwrapEnvelope<T>(payload, requestContext));
         }
       } catch (err: unknown) {
         if (err instanceof QverisApiError) {

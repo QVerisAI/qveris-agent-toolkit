@@ -1,4 +1,5 @@
 import { bold, cyan, dim, green, yellow, red } from "./colors.mjs";
+import { normalizeCreditBalance } from "../client/credit-balance.mjs";
 
 // ── discover ──────────────────────────────────────────────────────────
 
@@ -6,7 +7,7 @@ export function formatDiscoverResult(result) {
   const tools = result.results ?? [];
   const total = result.total ?? tools.length;
   const searchTime = result.elapsed_time_ms;
-  const remaining = result.remaining_credits;
+  const remaining = normalizeCreditBalance(result.remaining_credits).value;
   const lines = [];
 
   if (tools.length === 0) {
@@ -89,7 +90,7 @@ export function formatDiscoverResult(result) {
 
 export function formatInspectResult(tools) {
   const list = Array.isArray(tools) ? tools : (tools?.results ?? tools?.tools ?? [tools]);
-  const remaining = tools?.remaining_credits;
+  const remaining = normalizeCreditBalance(tools?.remaining_credits).value;
   const lines = [];
 
   for (const t of list) {
@@ -185,7 +186,7 @@ export function formatCallResult(result) {
   const success = result.success ?? false;
   const billing = getCompactBilling(result);
   const cost = getPreSettlementAmount(result);
-  const remaining = result.remaining_credits;
+  const remaining = normalizeCreditBalance(result.remaining_credits).value;
   const executionId = result.execution_id;
   const toolId = result.tool_id;
   const lines = [];

@@ -1,7 +1,26 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { formatDiscoverResult, formatInspectResult } from "../src/output/formatter.mjs";
+import { formatCallResult, formatDiscoverResult, formatInspectResult } from "../src/output/formatter.mjs";
+
+test("formatters display normalized numeric-string balances", () => {
+  const discover = formatDiscoverResult({
+    search_id: "s-1",
+    total: 1,
+    results: [{ tool_id: "t-1", name: "Tool" }],
+    remaining_credits: "42.5",
+  });
+  assert.match(discover, /42\.5 credits remaining/);
+
+  const inspect = formatInspectResult({
+    results: [{ tool_id: "t-1", name: "Tool" }],
+    remaining_credits: "42.5",
+  });
+  assert.match(inspect, /42\.5 credits remaining/);
+
+  const call = formatCallResult({ execution_id: "e-1", success: true, remaining_credits: "42.5" });
+  assert.match(call, /42\.5 remaining/);
+});
 
 test("execution history is not presented as verification", () => {
   const output = formatInspectResult([{ tool_id: "sample", has_last_execution: true }]);

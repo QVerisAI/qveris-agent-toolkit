@@ -275,7 +275,7 @@ export interface SearchResponse {
   stats?: SearchStats;
 
   /** User's remaining credits after this operation */
-  remaining_credits?: number;
+  remaining_credits?: number | null;
 
   /** Total elapsed time in milliseconds */
   elapsed_time_ms?: number;
@@ -451,7 +451,7 @@ export interface ExecuteResponse {
   pre_settlement_bill?: Record<string, unknown>;
 
   /** User's remaining credits after this execution */
-  remaining_credits?: number;
+  remaining_credits?: number | null;
 
   /** Timestamp of execution (ISO 8601 format) */
   created_at?: string;
