@@ -77,7 +77,7 @@ describe("successful capability memory", () => {
     expect(rolodex.getSummary()).toEqual([]);
   });
 
-  it("keeps an expired entry as a guard until fresh discovery supersedes it", () => {
+  it("refreshes matching successful memory and drops success from another exact intent", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
     const rolodex = makeToolRolodex({ ttlMs: 1_000 });
@@ -87,11 +87,26 @@ describe("successful capability memory", () => {
       description: "Current weather",
       discoveryQuery: "weather forecast API",
     });
-    vi.advanceTimersByTime(1_001);
-
-    expect(rolodex.isStale("weather.v1")).toBe(true);
-    rolodex.supersedeStale("weather.v1");
+    vi.advanceTimersByTime(500);
+    rolodex.reconcileFreshDiscovery("weather.v1", {
+      name: "Fresh Weather",
+      description: "Fresh current weather",
+      discoveryQuery: "weather forecast API",
+      discoveryId: "search-2",
+      parameterContract: [{ name: "city", required: true }],
+      contractExpiresAt: Date.now() + 5_000,
+      metadataSource: "discover",
+    });
+    vi.advanceTimersByTime(501);
     expect(rolodex.isStale("weather.v1")).toBe(false);
+    expect(rolodex.lookup("weather.v1")?.discoveryId).toBe("search-2");
+
+    rolodex.reconcileFreshDiscovery("weather.v1", {
+      name: "Historical Weather",
+      description: "Historical weather",
+      discoveryQuery: "historical weather API",
+      discoveryId: "search-3",
+    });
     expect(rolodex.lookup("weather.v1")).toBeUndefined();
   });
 });

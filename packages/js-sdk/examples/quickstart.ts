@@ -8,7 +8,7 @@
  *   QVERIS_API_KEY=sk-... RUN_QVERIS_CALLS=1 npx tsx examples/quickstart.ts
  */
 
-import { getClientOrExplain, shouldCall } from './_shared.js';
+import { getClientOrExplain, shouldCall, supportsParameters } from './_shared.js';
 
 async function main(): Promise<void> {
   const qveris = getClientOrExplain();
@@ -23,13 +23,14 @@ async function main(): Promise<void> {
   // 2. Select a capability from its actual contract, not its rank or name alone.
   //    An explicit [] means zero parameters; undefined means the compact result
   //    omitted the contract, so inspect promising candidates before calling.
-  let tool = discovered.results.find((candidate) => candidate.params?.some((param) => param.name === 'symbol'));
+  const parameters: Record<string, unknown> = { symbol: 'AAPL' };
+  let tool = discovered.results.find((candidate) => supportsParameters(candidate, parameters));
   if (!tool) {
     const details = await qveris.inspect(
       discovered.results.slice(0, 3).map((candidate) => candidate.tool_id),
       { searchId: discovered.search_id },
     );
-    tool = details.results.find((candidate) => candidate.params?.some((param) => param.name === 'symbol'));
+    tool = details.results.find((candidate) => supportsParameters(candidate, parameters));
   }
   if (!tool || !Array.isArray(tool.params)) {
     throw new Error('No candidate exposed a current parameter contract with a symbol field.');
@@ -43,7 +44,6 @@ async function main(): Promise<void> {
   }
 
   // Sample values describe shape only; build values from this request.
-  const parameters: Record<string, unknown> = { symbol: 'AAPL' };
   const missing = tool.params.filter((param) => param.required && parameters[param.name] === undefined);
   if (missing.length > 0) {
     throw new Error(`Missing required business inputs: ${missing.map((param) => param.name).join(', ')}`);

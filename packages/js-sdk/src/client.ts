@@ -191,14 +191,19 @@ export interface ProbeOptions {
  * const qveris = new Qveris({ apiKey: process.env.QVERIS_API_KEY! });
  *
  * const found = await qveris.discover('stock price market data API', { limit: 5 });
- * const tool = found.results.find((candidate) =>
- *   candidate.params?.some((parameter) => parameter.name === 'symbol'),
- * );
+ * const parameters = { symbol: 'AAPL' };
+ * const tool = found.results.find((candidate) => {
+ *   if (!candidate.params) return false;
+ *   const names = new Set(candidate.params.map((parameter) => parameter.name));
+ *   return names.has('symbol') && candidate.params.every((parameter) =>
+ *     !parameter.required || Object.prototype.hasOwnProperty.call(parameters, parameter.name),
+ *   );
+ * });
  * if (!tool) throw new Error('Inspect promising candidates to obtain a compatible contract.');
  *
  * const outcome = await qveris.call(tool.tool_id, {
  *   searchId: found.search_id,
- *   parameters: { symbol: 'AAPL' },
+ *   parameters,
  * });
  * ```
  */

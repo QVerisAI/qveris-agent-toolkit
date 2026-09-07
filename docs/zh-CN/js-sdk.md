@@ -47,9 +47,16 @@ const qveris = Qveris.fromEnv();
 
 // 1. 用自然语言发现能力（免费）
 const discovered = await qveris.discover('weather forecast API', { limit: 5 });
-let tool = discovered.results.find((candidate) =>
-  candidate.params?.some((parameter) => parameter.name === 'city'),
-);
+const params: Record<string, unknown> = { city: 'London' };
+const supportsRequest = (candidate: (typeof discovered.results)[number]) => {
+  if (!candidate.params) return false;
+  const names = new Set(candidate.params.map((parameter) => parameter.name));
+  return Object.keys(params).every((name) => names.has(name)) &&
+    candidate.params.every((parameter) =>
+      !parameter.required || Object.prototype.hasOwnProperty.call(params, parameter.name),
+    );
+};
+let tool = discovered.results.find(supportsRequest);
 
 // 2. 仅在 Discover 未提供选择所需契约时 Inspect
 if (!tool) {
@@ -57,14 +64,11 @@ if (!tool) {
     discovered.results.slice(0, 3).map((candidate) => candidate.tool_id),
     { searchId: discovered.search_id },
   );
-  tool = details.results.find((candidate) =>
-    candidate.params?.some((parameter) => parameter.name === 'city'),
-  );
+  tool = details.results.find(supportsRequest);
 }
 if (!tool?.params) throw new Error('没有候选能力提供当前有效的 city 参数契约');
 
 // 3. 样例只作模板；覆盖为本次请求的真实业务值
-const params: Record<string, unknown> = { city: 'London' };
 const missing = tool.params.filter((parameter) => parameter.required && params[parameter.name] === undefined);
 if (missing.length) throw new Error(`缺少业务输入：${missing.map((parameter) => parameter.name)}`);
 const result = await qveris.call(tool.tool_id, {

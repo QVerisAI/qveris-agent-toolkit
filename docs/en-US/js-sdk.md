@@ -47,9 +47,16 @@ const qveris = Qveris.fromEnv();
 
 // 1. Discover capabilities with natural language (free)
 const discovered = await qveris.discover('weather forecast API', { limit: 5 });
-let tool = discovered.results.find((candidate) =>
-  candidate.params?.some((parameter) => parameter.name === 'city'),
-);
+const params: Record<string, unknown> = { city: 'London' };
+const supportsRequest = (candidate: (typeof discovered.results)[number]) => {
+  if (!candidate.params) return false;
+  const names = new Set(candidate.params.map((parameter) => parameter.name));
+  return Object.keys(params).every((name) => names.has(name)) &&
+    candidate.params.every((parameter) =>
+      !parameter.required || Object.prototype.hasOwnProperty.call(params, parameter.name),
+    );
+};
+let tool = discovered.results.find(supportsRequest);
 
 // 2. Inspect only if discovery omitted the contract needed for selection
 if (!tool) {
@@ -57,14 +64,11 @@ if (!tool) {
     discovered.results.slice(0, 3).map((candidate) => candidate.tool_id),
     { searchId: discovered.search_id },
   );
-  tool = details.results.find((candidate) =>
-    candidate.params?.some((parameter) => parameter.name === 'city'),
-  );
+  tool = details.results.find(supportsRequest);
 }
 if (!tool?.params) throw new Error('No candidate exposed a current city parameter contract');
 
 // 3. Use samples only as a template; apply this request's actual value
-const params: Record<string, unknown> = { city: 'London' };
 const missing = tool.params.filter((parameter) => parameter.required && params[parameter.name] === undefined);
 if (missing.length) throw new Error(`Missing inputs: ${missing.map((parameter) => parameter.name)}`);
 const result = await qveris.call(tool.tool_id, {

@@ -26,12 +26,17 @@ for (const tool of found.results) {
   console.log(tool.tool_id, '—', tool.why_recommended);
 }
 
-// 2. Select from the returned contract; inspect candidates if it was omitted
-const selected = found.results.find((tool) => tool.params?.some((param) => param.name === 'symbol'));
-if (!selected) throw new Error('Inspect candidates before calling: no symbol contract was returned');
+const parameters: Record<string, unknown> = { symbol: 'AAPL' };
+// 2. Select only a contract with no required inputs missing from this request
+const selected = found.results.find((tool) => {
+  if (!tool.params) return false;
+  const names = new Set(tool.params.map((param) => param.name));
+  return Object.keys(parameters).every((name) => names.has(name)) &&
+    tool.params.every((param) => !param.required || Object.prototype.hasOwnProperty.call(parameters, param.name));
+});
+if (!selected) throw new Error('Inspect candidates before calling: no compatible contract was returned');
 
 // 3. Apply the current request's value instead of copying sample values
-const parameters: Record<string, unknown> = { symbol: 'AAPL' };
 const missing = selected.params!.filter((param) => param.required && parameters[param.name] === undefined);
 if (missing.length) throw new Error(`Missing inputs: ${missing.map((param) => param.name)}`);
 const outcome = await qveris.call(selected.tool_id, {

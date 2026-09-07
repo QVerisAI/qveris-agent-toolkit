@@ -155,7 +155,7 @@ export function createQverisTools(options: {
 
   // Auto-resolve the backend search_id so the model never has to manage it
   function resolveKnownSearchId(toolId: string): string | undefined {
-    return rolodex.lookup(toolId)?.discoveryId ?? discoverTracker.getMeta(toolId)?.searchId;
+    return discoverTracker.getMeta(toolId)?.searchId ?? rolodex.lookup(toolId)?.discoveryId;
   }
 
   function formatToolForModel(tool: QverisDiscoverResultTool, discoveryQuery?: string) {
@@ -229,7 +229,6 @@ export function createQverisTools(options: {
       // A cache hit must not extend schema/provenance freshness. Only a fresh
       // network response advances the acquisition timestamp.
       if (!cached) {
-        for (const tool of result.results) rolodex.supersedeStale(tool.tool_id);
         discoverTracker.trackResults(
           query,
           result.results.map((t) => ({
@@ -240,6 +239,19 @@ export function createQverisTools(options: {
           })),
           result.search_id,
         );
+        for (const tool of result.results) {
+          const meta = discoverTracker.getMeta(tool.tool_id);
+          if (!meta) continue;
+          rolodex.reconcileFreshDiscovery(tool.tool_id, {
+            name: meta.name,
+            description: meta.description,
+            discoveryQuery: meta.query,
+            discoveryId: meta.searchId,
+            parameterContract: meta.parameterContract,
+            contractExpiresAt: meta.expiresAt,
+            metadataSource: meta.metadataSource,
+          });
+        }
       }
 
       const knownTools = rolodex.getSummary(query);

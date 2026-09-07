@@ -132,8 +132,35 @@ export function makeToolRolodex(options: { ttlMs?: number; enabled?: boolean } =
     return !enabled || ttlMs <= 0 || Date.now() > entry.expiresAt;
   }
 
-  function supersedeStale(toolId: string): void {
-    if (isStale(toolId)) store.delete(toolId);
+  function reconcileFreshDiscovery(
+    toolId: string,
+    meta: {
+      name: string;
+      description: string;
+      discoveryQuery: string;
+      discoveryId?: string;
+      parameterContract?: unknown[];
+      contractExpiresAt?: number;
+      metadataSource?: "discover" | "inspect";
+    },
+  ): void {
+    const entry = store.get(toolId);
+    if (!entry) return;
+
+    if (normalizedCapabilityQuery(entry.discoveryQuery) !== normalizedCapabilityQuery(meta.discoveryQuery)) {
+      // The success belongs to another exact intent. Fresh discovery is valid
+      // provenance for Call, but it must earn a new success hint separately.
+      store.delete(toolId);
+      return;
+    }
+
+    entry.name = meta.name;
+    entry.description = meta.description;
+    entry.discoveryId = meta.discoveryId;
+    entry.parameterContract = meta.parameterContract;
+    entry.contractExpiresAt = meta.contractExpiresAt;
+    entry.metadataSource = meta.metadataSource;
+    entry.expiresAt = Date.now() + ttlMs;
   }
 
   function getSummary(discoveryQuery?: string): Array<{
@@ -166,7 +193,7 @@ export function makeToolRolodex(options: { ttlMs?: number; enabled?: boolean } =
     }
   }
 
-  return { record, lookup, isStale, supersedeStale, getSummary, clear };
+  return { record, lookup, isStale, reconcileFreshDiscovery, getSummary, clear };
 }
 
 // ============================================================================

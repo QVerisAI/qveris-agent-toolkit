@@ -51,6 +51,15 @@ function readResult<T>(result: ToolCallResult): T | undefined {
   return undefined;
 }
 
+function supportsParameters(tool: ToolResult, requested: Record<string, unknown>): boolean {
+  if (!Array.isArray(tool.params)) return false;
+  const names = new Set(tool.params.map((param) => param.name));
+  return (
+    Object.keys(requested).every((name) => names.has(name)) &&
+    tool.params.every((param) => !param.required || Object.prototype.hasOwnProperty.call(requested, param.name))
+  );
+}
+
 async function main(): Promise<void> {
   const hasKey = Boolean(process.env.QVERIS_API_KEY);
 
@@ -85,7 +94,8 @@ async function main(): Promise<void> {
 
     // 2. Select from the returned contract. If compact discovery omitted it,
     // inspect a few candidates rather than guessing parameters from rank/name.
-    let selected = found.results.find((tool) => tool.params?.some((param) => param.name === 'symbol'));
+    const callParams: Record<string, unknown> = { symbol: 'AAPL' };
+    let selected = found.results.find((tool) => supportsParameters(tool, callParams));
     if (!selected) {
       const inspected = await client.callTool({
         name: 'inspect',
@@ -94,16 +104,13 @@ async function main(): Promise<void> {
           search_id: found.search_id,
         },
       });
-      selected = readResult<InspectResult>(inspected)?.results?.find((tool) =>
-        tool.params?.some((param) => param.name === 'symbol'),
-      );
+      selected = readResult<InspectResult>(inspected)?.results?.find((tool) => supportsParameters(tool, callParams));
     }
     if (!selected || !Array.isArray(selected.params)) {
       throw new Error('No candidate exposed a current parameter contract with a symbol field.');
     }
     console.log(`selected: ${selected.tool_id} - ${selected.name ?? 'unnamed'}`);
 
-    const callParams: Record<string, unknown> = { symbol: 'AAPL' };
     const missing = selected.params.filter((param) => param.required && callParams[param.name] === undefined);
     if (missing.length > 0) {
       throw new Error(`Missing required business inputs: ${missing.map((param) => param.name).join(', ')}`);

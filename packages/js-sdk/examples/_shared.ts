@@ -7,7 +7,7 @@
  * `RUN_QVERIS_CALLS=1` so running an example never spends credits by accident.
  */
 
-import { Qveris } from '@qverisai/sdk';
+import { Qveris, type ToolInfo } from '@qverisai/sdk';
 
 /**
  * Build a client from `QVERIS_API_KEY`, or explain how to set one and return
@@ -27,4 +27,14 @@ export function getClientOrExplain(): Qveris | null {
 /** A `call` spends credits, so only execute one when explicitly opted in. */
 export function shouldCall(): boolean {
   return process.env.RUN_QVERIS_CALLS === '1';
+}
+
+/** Select only a current contract that accepts every supplied field and has no unmet required inputs. */
+export function supportsParameters(tool: ToolInfo, requested: Record<string, unknown>): boolean {
+  if (!Array.isArray(tool.params)) return false;
+  const names = new Set(tool.params.map((param) => param.name));
+  return (
+    Object.keys(requested).every((name) => names.has(name)) &&
+    tool.params.every((param) => !param.required || Object.prototype.hasOwnProperty.call(requested, param.name))
+  );
 }
