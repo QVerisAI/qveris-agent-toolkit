@@ -10,7 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
-- Updated the packaged agent guidance and runnable examples to use Discover → Call when the current result is sufficient, with Inspect and Probe reserved for missing details, comparison, validation, or current-quote needs. ([#347])
+- Updated the packaged Agent and scripting guidance to use the shortest safe Discover → Call path, selecting only capabilities whose current contract accepts every supplied field and has no unmet required inputs; Inspect and Probe remain conditional checks. ([#347])
 
 ## [0.11.1] - 2026-09-07
 

@@ -10,7 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
-- Updated client and agent-integration guidance to call directly after a complete current Discover result, inspect only missing or stale contract details, rebuild business parameters from the current request, and avoid replaying ambiguous paid outcomes. ([#347])
+- Updated the Vercel AI adapter descriptions, typed-client examples, and packaged guidance to prefer Discover → Call when the current contract is sufficient, keep Inspect conditional, and select only capabilities that accept all supplied fields without missing required inputs. ([#347])
 
 ## [0.8.1] - 2026-09-07
 

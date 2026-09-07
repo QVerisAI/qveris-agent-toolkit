@@ -10,7 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
-- Made Discover → Call the default tool guidance when discovery returns a complete current contract. Inspect and Probe descriptions now state their conditional use, while Call requires parameters from the selected contract and current request. ([#347])
+- Updated MCP tool descriptions and the runnable Agent loop to use Discover → Call when the returned contract is sufficient, reserve Inspect and Probe for explicit validation needs, and avoid implying semantic route memory in the stateless server. Candidate selection now rejects contracts with unsupported or unmet required inputs. ([#347])
 
 ## [0.14.2] - 2026-09-07
 
