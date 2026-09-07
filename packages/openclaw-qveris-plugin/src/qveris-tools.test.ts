@@ -251,6 +251,35 @@ describe("createQverisTools", () => {
     expect(schema?.properties?.discovery_id).toBeUndefined();
   });
 
+  it("declares positive integer bounds for numeric tool parameters", () => {
+    const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() });
+    const discover = tools!.find((t) => t.name === "qveris_discover");
+    const callTool = tools!.find((t) => t.name === "qveris_call");
+    const discoverSchema = discover?.parameters as { properties?: Record<string, Record<string, unknown>> };
+    const callSchema = callTool?.parameters as { properties?: Record<string, Record<string, unknown>> };
+
+    expect(discoverSchema.properties?.limit).toMatchObject({ type: "integer", minimum: 1, maximum: 100 });
+    expect(callSchema.properties?.max_response_size).toMatchObject({ type: "integer", minimum: 1 });
+    expect(callSchema.properties?.timeout_seconds).toMatchObject({ type: "integer", minimum: 1, maximum: 300 });
+  });
+
+  it.each([
+    ["limit", "discover", 1.5],
+    ["max_response_size", "call", 0],
+    ["timeout_seconds", "call", 301],
+  ])("rejects invalid positive integer parameter %s", async (parameter, toolKind, value) => {
+    const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() });
+    const tool = tools!.find(
+      (candidate) => candidate.name === (toolKind === "discover" ? "qveris_discover" : "qveris_call"),
+    )!;
+    const args =
+      toolKind === "discover"
+        ? { query: "weather forecast API", [parameter]: value }
+        : { tool_id: "weather.tool", params_to_tool: "{}", [parameter]: value };
+
+    await expect(tool.execute("invalid-number", args)).rejects.toThrow(`${parameter} must be a positive integer`);
+  });
+
   it("qveris_discover query schema includes bilingual guidance", () => {
     const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() });
     const discover = tools!.find((t) => t.name === "qveris_discover");

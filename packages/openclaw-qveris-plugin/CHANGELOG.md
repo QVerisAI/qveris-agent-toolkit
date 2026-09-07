@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ### Changed
 
+- Upgraded the development and compatibility-test host to OpenClaw `2026.9.2`, migrated numeric tool parameter parsing and tool-context types to the current public plugin SDK surface, aligned the affected schemas with their positive-integer runtime contract, and updated packed and Registry release verification for the host's local-archive trust and capability-consent requirements.
 - The release workflow now waits for the exact public npm Registry artifact after publishing, verifies its version, downloaded integrity, source commit, runtime metadata, and concrete compiled tools, then installs it through the official OpenClaw plugin manager in isolated state before creating the GitHub Release. Publishing and verification run as separate jobs so a failed post-publish check can be retried without attempting to republish an immutable npm version.
 
 ## [2026.7.30] - 2026-07-30

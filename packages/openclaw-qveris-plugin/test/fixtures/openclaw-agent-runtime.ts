@@ -18,22 +18,17 @@ export function readStringParam(
   return typeof value === "string" ? value : String(value);
 }
 
-export function readNumberParam(
+export function readPositiveIntegerParam(
   params: Record<string, unknown>,
   name: string,
-  options: { required?: boolean; integer?: boolean } = {},
+  options: { message?: string; max?: number } = {},
 ): number | undefined {
   const value = params[name];
-  if ((value === undefined || value === null || value === "") && options.required) {
-    throw new Error(`Missing required number parameter: ${name}`);
-  }
   if (value === undefined || value === null || value === "") return undefined;
 
   const parsed = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(parsed)) {
-    if (options.required) throw new Error(`Invalid number parameter: ${name}`);
-    return undefined;
+  if (!Number.isSafeInteger(parsed) || parsed <= 0 || (options.max !== undefined && parsed > options.max)) {
+    throw new Error(options.message ?? `${name} must be a positive integer`);
   }
-
-  return options.integer ? Math.trunc(parsed) : parsed;
+  return parsed;
 }

@@ -24,6 +24,10 @@ export const Type = {
     return makeSchema("number", options);
   },
 
+  Integer(options?: Schema): Schema {
+    return makeSchema("integer", options);
+  },
+
   Optional(schema: Schema): Schema {
     return {
       ...schema,
