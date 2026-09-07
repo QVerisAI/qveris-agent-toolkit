@@ -1,0 +1,110 @@
+name: Publish QVeris OpenClaw plugin to ClawHub
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing qveris-plugin-v* tag to publish
+        required: true
+        type: string
+        default: qveris-plugin-v2026.9.7
+      dry_run:
+        description: Validate and preview without publishing
+        required: true
+        type: boolean
+        default: true
+
+permissions: {}
+
+jobs:
+  prepare:
+    name: Build immutable tagged artifact
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      commit: ${{ steps.release.outputs.commit }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - name: Validate requested tag
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^qveris-plugin-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::tag must match qveris-plugin-v<version>"
+            exit 1
+          fi
+
+      - name: Checkout tagged source
+        uses: actions/checkout@v7
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.22.3
+          registry-url: https://registry.npmjs.org
+
+      - name: Verify tag and package identity
+        id: release
+        working-directory: packages/openclaw-qveris-plugin
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          TAG_VERSION="${RELEASE_TAG#qveris-plugin-v}"
+          PKG_NAME=$(node -p "require('./package.json').name")
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$PKG_NAME" != "@qverisai/qveris" ]; then
+            echo "::error::Unexpected package name: $PKG_NAME"
+            exit 1
+          fi
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        working-directory: packages/openclaw-qveris-plugin
+        run: npm ci
+
+      - name: Build ClawPack artifact
+        working-directory: packages/openclaw-qveris-plugin
+        run: |
+          mkdir -p "$RUNNER_TEMP/qveris-openclaw-clawpack"
+          npm pack --pack-destination "$RUNNER_TEMP/qveris-openclaw-clawpack"
+
+      - name: Upload ClawPack artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: qveris-openclaw-plugin-clawpack
+          path: ${{ runner.temp }}/qveris-openclaw-clawpack/*.tgz
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Validate and publish through ClawHub
+    needs: prepare
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    uses: openclaw/clawhub/.github/workflows/package-publish.yml@d3bde70e3c9373720d4d3e335f9935399ea2c008
+    with:
+      package_artifact_name: qveris-openclaw-plugin-clawpack
+      owner: qverisai
+      family: code-plugin
+      version: ${{ needs.prepare.outputs.version }}
+      tags: latest
+      categories: models,context,web
+      source_repo: QVerisAI/qveris-agent-toolkit
+      source_commit: ${{ needs.prepare.outputs.commit }}
+      source_ref: refs/tags/${{ inputs.tag }}
+      source_path: packages/openclaw-qveris-plugin
+      dry_run: ${{ inputs.dry_run }}
+      wait_for_publication: true
+      publication_timeout_minutes: 40
+      inspector_artifact_name: qveris-openclaw-plugin-inspector-report
+      publish_json_artifact_name: qveris-openclaw-plugin-clawhub-publish-json
