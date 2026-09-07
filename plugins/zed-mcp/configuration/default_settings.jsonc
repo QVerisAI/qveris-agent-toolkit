@@ -1,0 +1,6 @@
+{
+  /// Required: create a key at https://qveris.ai/account?page=api-keys
+  "qveris_api_key": "",
+  /// Optional: complete HTTP(S) API root for a self-hosted or regional deployment.
+  "qveris_base_url": null,
+}
