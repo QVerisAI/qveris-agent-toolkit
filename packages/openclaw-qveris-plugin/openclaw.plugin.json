@@ -2,7 +2,7 @@
   "id": "qveris",
   "name": "QVeris Plugin",
   "description": "QVeris capability discovery, tool inspection, and tool calling",
-  "version": "2026.7.30",
+  "version": "2026.9.7",
   "setup": {
     "providers": [
       {

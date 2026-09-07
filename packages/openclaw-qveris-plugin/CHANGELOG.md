@@ -6,10 +6,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+## [2026.9.7] - 2026-09-07
+
+### Added
+
+- Added an exact normalized-query and limit Discover cache scoped to one tool-factory session, plus TTL-bound successful-capability hints with refresh, clear, and disable controls. Cached entries remain isolated by endpoint and credentials, and stale routes are refreshed before use. ([#347])
+
 ### Changed
 
+- Made Discover → Call the default route when the selected capability has a complete current contract, with Inspect reserved for missing/stale detail or comparison. Business parameters are rebuilt from the current request. ([#347])
 - Upgraded the development and compatibility-test host to OpenClaw `2026.9.2`, migrated numeric tool parameter parsing and tool-context types to the current public plugin SDK surface, aligned the affected schemas with their positive-integer runtime contract, and updated packed and Registry release verification for the host's local-archive trust and capability-consent requirements.
 - The release workflow now waits for the exact public npm Registry artifact after publishing, verifies its version, downloaded integrity, source commit, runtime metadata, and concrete compiled tools, then installs it through the official OpenClaw plugin manager in isolated state before creating the GitHub Release. Publishing and verification run as separate jobs so a failed post-publish check can be retried without attempting to republish an immutable npm version.
+
+### Fixed
+
+- Ambiguous paid Call outcomes are non-replayable, and cached successful-capability hints cannot silently reuse stale business values. ([#347])
 
 ## [2026.7.30] - 2026-07-30
 
@@ -48,7 +59,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 - First published build with compiled `dist/` output. ([#90])
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.7.30...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.9.7...HEAD
+[2026.9.7]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.7.30...qveris-plugin-v2026.9.7
 [2026.7.30]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.7.15...qveris-plugin-v2026.7.30
 [2026.7.15]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.6.4...qveris-plugin-v2026.7.15
 [2026.6.4]: https://github.com/QVerisAI/qveris-agent-toolkit/releases/tag/qveris-plugin-v2026.6.4
@@ -59,3 +71,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 [#104]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/104
 [#90]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/90
 [#272]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/272
+[#347]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/347

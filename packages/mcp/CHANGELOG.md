@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.14.3] - 2026-09-07
+
+### Changed
+
+- Made Discover → Call the default tool guidance when discovery returns a complete current contract. Inspect and Probe descriptions now state their conditional use, while Call requires parameters from the selected contract and current request. ([#347])
+
 ## [0.14.2] - 2026-09-07
 
 ### Fixed
@@ -161,7 +167,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Handle empty/non-JSON success responses gracefully; `params_to_tool` documented as an object.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.2...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.3...HEAD
+[0.14.3]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.2...mcp-v0.14.3
 [0.14.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.1...mcp-v0.14.2
 [0.14.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.0...mcp-v0.14.1
 [0.14.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.13.0...mcp-v0.14.0
@@ -211,3 +218,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#259]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/259
 [#256]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/256
 [#341]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/341
+[#347]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/347
