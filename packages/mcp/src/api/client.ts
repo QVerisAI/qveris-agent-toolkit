@@ -34,6 +34,7 @@ import {
   resolveMaxRetries,
   RETRYABLE_STATUS,
 } from '../retry.js';
+import { normalizeCreditBalanceResponse } from './credit-balance.js';
 
 const DEFAULT_BASE_URL = 'https://qveris.ai/api/v1';
 
@@ -231,7 +232,7 @@ export class QverisClient {
           throw error;
         } else {
           try {
-            return (await response.json()) as T;
+            return normalizeCreditBalanceResponse(await response.json()) as T;
           } catch {
             const error: ApiError = {
               status: response.status,

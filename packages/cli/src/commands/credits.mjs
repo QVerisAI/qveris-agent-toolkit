@@ -4,6 +4,7 @@ import { getSiteUrl } from "../config/endpoint.mjs";
 import { bold, dim, cyan, yellow, green } from "../output/colors.mjs";
 import { outputJson } from "../output/json.mjs";
 import { createSpinner } from "../output/spinner.mjs";
+import { normalizeCreditBalance } from "../client/credit-balance.mjs";
 
 export async function runCredits(flags) {
   const apiKey = resolveApiKey(flags.apiKey);
@@ -16,7 +17,7 @@ export async function runCredits(flags) {
     const result = unwrapApiResponse(await getCredits({ apiKey, baseUrl, timeoutMs: 10000 }));
     spinner.stop();
 
-    const credits = result.remaining_credits;
+    const credits = normalizeCreditBalance(result.remaining_credits).value;
 
     if (flags.json) {
       outputJson(result);

@@ -1,0 +1,76 @@
+{
+  "cases": [
+    {
+      "name": "number",
+      "input": 992.5,
+      "expected": 992.5,
+      "invalid": false
+    },
+    {
+      "name": "numeric string",
+      "input": "992.5",
+      "expected": 992.5,
+      "invalid": false
+    },
+    {
+      "name": "zero string",
+      "input": "0",
+      "expected": 0,
+      "invalid": false
+    },
+    {
+      "name": "trimmed numeric string",
+      "input": " 42.25 ",
+      "expected": 42.25,
+      "invalid": false
+    },
+    {
+      "name": "exponent numeric string",
+      "input": "1e3",
+      "expected": 1000,
+      "invalid": false
+    },
+    {
+      "name": "null",
+      "input": null,
+      "expected": null,
+      "invalid": false
+    },
+    {
+      "name": "empty string",
+      "input": "",
+      "expected": null,
+      "invalid": true
+    },
+    {
+      "name": "whitespace string",
+      "input": "   ",
+      "expected": null,
+      "invalid": true
+    },
+    {
+      "name": "non-numeric string",
+      "input": "unavailable",
+      "expected": null,
+      "invalid": true
+    },
+    {
+      "name": "hex string",
+      "input": "0x10",
+      "expected": null,
+      "invalid": true
+    },
+    {
+      "name": "numeric separator string",
+      "input": "1_000",
+      "expected": null,
+      "invalid": true
+    },
+    {
+      "name": "object",
+      "input": { "value": 12 },
+      "expected": null,
+      "invalid": true
+    }
+  ]
+}

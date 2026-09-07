@@ -183,7 +183,12 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
       },
       async executeTool(toolId: string, request: ExecuteRequest) {
         executeRequests.push({ toolId, request });
-        return { execution_id: 'e1', success: true, result: { ok: true } };
+        return {
+          execution_id: 'e1',
+          success: true,
+          result: { ok: true },
+          remaining_credits: '992.5',
+        } as unknown as Awaited<ReturnType<QverisClient['executeTool']>>;
       },
     } as unknown as QverisClient;
     await startServer({}, undefined, (sessionId) => createQverisServer(qveris, sessionId));
@@ -197,7 +202,7 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
     expect((call?.inputSchema as { properties?: Record<string, unknown> }).properties).toHaveProperty('respond_with');
 
     await client.callTool({ name: 'discover', arguments: { query: 'weather', view: 'routing', lang: 'en' } });
-    await client.callTool({
+    const projected = await client.callTool({
       name: 'call',
       arguments: { tool_id: 'weather.v1', search_id: 's1', params_to_tool: {}, respond_with: 'summary' },
     });
@@ -211,6 +216,7 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
       request: { search_id: 's1', parameters: {}, respond_with: 'summary' },
     });
     expect(executeRequests[1]?.request).not.toHaveProperty('respond_with');
+    expect(projected.structuredContent).toMatchObject({ remaining_credits: 992.5, result: { ok: true } });
     await client.close();
   });
 

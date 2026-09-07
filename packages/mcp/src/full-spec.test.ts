@@ -1,11 +1,11 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { ElicitRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createQverisServer, QVERIS_MCP_TOOL_ANNOTATIONS } from './index.js';
 import type { QverisClient } from './api/client.js';
-import type { ExecuteRequest, SearchRequest } from './types.js';
+import type { ExecuteRequest, ExecuteResponse, SearchRequest } from './types.js';
 
 type FakeQverisClient = QverisClient & {
   calls: string[];
@@ -90,6 +90,9 @@ describe('output schemas + structured content', () => {
     expect((discover?.inputSchema as { properties?: Record<string, unknown> }).properties).toHaveProperty('view');
     expect((discover?.inputSchema as { properties?: Record<string, unknown> }).properties).toHaveProperty('lang');
     expect((call?.inputSchema as { properties?: Record<string, unknown> }).properties).toHaveProperty('respond_with');
+    expect((call?.outputSchema as { properties?: Record<string, unknown> }).properties?.remaining_credits).toEqual({
+      anyOf: [{ type: 'number' }, { type: 'null' }],
+    });
 
     await c.callTool({ name: 'discover', arguments: { query: 'weather', view: 'routing', lang: 'en' } });
     expect(qveris.searchRequests).toEqual([
@@ -138,6 +141,51 @@ describe('output schemas + structured content', () => {
     const c = await connect({ client: fakeQverisClient() });
     const result = await c.callTool({ name: 'search_tools', arguments: { query: 'weather' } });
     expect(result.structuredContent).toMatchObject({ search_id: 's1' });
+    await c.close();
+  });
+
+  it('normalizes number, numeric-string, null, and invalid balances before MCP output validation', async () => {
+    const qveris = fakeQverisClient();
+    const balances: unknown[] = [42, '992.5', null, 'unavailable'];
+    let submissions = 0;
+    const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    qveris.executeTool = async () => {
+      submissions += 1;
+      return {
+        execution_id: 'e1',
+        success: true,
+        result: { rows: [1] },
+        remaining_credits: balances.shift(),
+      } as unknown as ExecuteResponse;
+    };
+    const c = await connect({ client: qveris });
+
+    const canonical = await c.callTool({
+      name: 'call',
+      arguments: { tool_id: 't1', search_id: 's1', params_to_tool: {} },
+    });
+    expect(canonical.structuredContent).toMatchObject({ remaining_credits: 42, result: { rows: [1] } });
+
+    const numericString = await c.callTool({
+      name: 'call',
+      arguments: { tool_id: 't1', search_id: 's1', params_to_tool: {} },
+    });
+    expect(numericString.structuredContent).toMatchObject({ remaining_credits: 992.5, result: { rows: [1] } });
+
+    const alias = await c.callTool({
+      name: 'execute_tool',
+      arguments: { tool_id: 't1', search_id: 's1', params_to_tool: {} },
+    });
+    expect(alias.structuredContent).toMatchObject({ remaining_credits: null, result: { rows: [1] } });
+
+    const invalid = await c.callTool({
+      name: 'call',
+      arguments: { tool_id: 't1', search_id: 's1', params_to_tool: {} },
+    });
+    expect(invalid.structuredContent).toMatchObject({ remaining_credits: null, result: { rows: [1] } });
+    expect(submissions).toBe(4);
+    expect(stderr).toHaveBeenCalledWith(expect.stringContaining('treating the balance as unavailable'));
+    stderr.mockRestore();
     await c.close();
   });
 });
