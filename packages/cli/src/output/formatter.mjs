@@ -1,4 +1,5 @@
 import { bold, cyan, dim, green, yellow, red } from "./colors.mjs";
+import { normalizeCreditBalance } from "../client/credit-balance.mjs";
 
 // ── discover ──────────────────────────────────────────────────────────
 
@@ -6,7 +7,7 @@ export function formatDiscoverResult(result) {
   const tools = result.results ?? [];
   const total = result.total ?? tools.length;
   const searchTime = result.elapsed_time_ms;
-  const remaining = result.remaining_credits;
+  const remaining = normalizeCreditBalance(result.remaining_credits).value;
   const lines = [];
 
   if (tools.length === 0) {
@@ -38,12 +39,12 @@ export function formatDiscoverResult(result) {
     avgTime = typeof avgTime === "number" ? `~${Math.round(avgTime)}ms` : "N/A";
     const billingText = formatBillingRuleBrief(t.billing_rule, stats.cost);
 
-    // Verified indicator
-    const verified = t.has_last_execution ? green(" \u2713") : "";
+    // Execution-history indicator
+    const executionHistory = t.has_last_execution ? green(" \u2713") : "";
 
     // Line 1: index + name + provider
     const providerPart = provider ? `  ${dim("by")} ${provider}` : "";
-    lines.push(`${bold(String(i + 1) + ".")} ${cyan(name)}${providerPart}${verified}`);
+    lines.push(`${bold(String(i + 1) + ".")} ${cyan(name)}${providerPart}${executionHistory}`);
 
     // Line 2: tool_id
     lines.push(`   ${dim(toolId)}`);
@@ -89,7 +90,7 @@ export function formatDiscoverResult(result) {
 
 export function formatInspectResult(tools) {
   const list = Array.isArray(tools) ? tools : (tools?.results ?? tools?.tools ?? [tools]);
-  const remaining = tools?.remaining_credits;
+  const remaining = normalizeCreditBalance(tools?.remaining_credits).value;
   const lines = [];
 
   for (const t of list) {
@@ -131,7 +132,7 @@ export function formatInspectResult(tools) {
     const expectedCost =
       typeof t.expected_cost === "string" || typeof t.expected_cost === "number" ? String(t.expected_cost).trim() : "";
     if (expectedCost) lines.push(`  Est. cost:  ${yellow(`${expectedCost} credits`)}`);
-    if (t.has_last_execution) lines.push(`  Verified:   ${green("\u2713 has execution history")}`);
+    if (t.has_last_execution) lines.push(`  History:    ${green("\u2713 has execution history")}`);
     if (docsUrl) lines.push(`  Docs:       ${cyan(docsUrl)}`);
 
     // Parameters
@@ -185,7 +186,7 @@ export function formatCallResult(result) {
   const success = result.success ?? false;
   const billing = getCompactBilling(result);
   const cost = getPreSettlementAmount(result);
-  const remaining = result.remaining_credits;
+  const remaining = normalizeCreditBalance(result.remaining_credits).value;
   const executionId = result.execution_id;
   const toolId = result.tool_id;
   const lines = [];

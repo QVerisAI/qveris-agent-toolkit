@@ -1,6 +1,6 @@
 # QVeris CLI
 
-Discover, inspect, and call 10,000+ API capabilities from your terminal.
+Discover, inspect, and call API capabilities from your terminal.
 
 New users can run the guided first-call wizard:
 
@@ -512,9 +512,9 @@ qveris call %TOOL% --params "{\"city\":\"London\"}" --json | jq ".result.data"
 | 77 | Auth error (invalid key, insufficient credits) |
 | 78 | Config error (missing key) |
 
-## Zero Dependencies
+## Runtime Dependencies
 
-QVeris CLI uses only Node.js built-in APIs. No `chalk`, no `commander`, no `yargs`. Installs instantly via `npx`.
+Core commands use Node.js built-in APIs with no mandatory runtime dependencies. OAuth credential storage optionally uses `@napi-rs/keyring` to access the operating-system credential store.
 
 ## Links
 

@@ -435,7 +435,7 @@ function printUsage(flags = {}) {
   }
 
   console.log(`
-  ${bold("QVeris CLI")} — ${dim("discover, inspect, and call 10,000+ capabilities")}
+  ${bold("QVeris CLI")} — ${dim("discover, inspect, and call API capabilities")}
 
   ${bold("Usage:")}
     qveris <command> [args] [flags]

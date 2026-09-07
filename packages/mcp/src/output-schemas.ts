@@ -38,7 +38,7 @@ const executeResponseSchema = {
     success: { type: 'boolean' },
     result: {},
     billing: { type: 'object', additionalProperties: true },
-    remaining_credits: { type: 'number' },
+    remaining_credits: { anyOf: [{ type: 'number' }, { type: 'null' }] },
   },
   additionalProperties: true,
 } as const;

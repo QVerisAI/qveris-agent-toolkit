@@ -1,32 +1,46 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { ElicitRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createQverisServer, QVERIS_MCP_TOOL_ANNOTATIONS } from './index.js';
 import type { QverisClient } from './api/client.js';
+import type { ExecuteRequest, ExecuteResponse, SearchRequest } from './types.js';
+
+type FakeQverisClient = QverisClient & {
+  calls: string[];
+  searchRequests: SearchRequest[];
+  executeRequests: Array<{ toolId: string; request: ExecuteRequest }>;
+};
 
 /** Client-shaped fake covering the methods the tool executors use. */
-function fakeQverisClient() {
+function fakeQverisClient(): FakeQverisClient {
+  const calls: string[] = [];
+  const searchRequests: SearchRequest[] = [];
+  const executeRequests: Array<{ toolId: string; request: ExecuteRequest }> = [];
   return {
-    calls: [] as string[],
-    async searchTools() {
-      this.calls.push('search');
+    calls,
+    searchRequests,
+    executeRequests,
+    async searchTools(request: SearchRequest) {
+      calls.push('search');
+      searchRequests.push(request);
       return { search_id: 's1', total: 1, results: [{ tool_id: 't1', name: 'T', description: 'd' }] };
     },
     async getToolsByIds() {
-      this.calls.push('inspect');
+      calls.push('inspect');
       return { search_id: 's1', results: [{ tool_id: 't1', name: 'T', description: 'd' }] };
     },
     async probeTool() {
-      this.calls.push('probe');
+      calls.push('probe');
       return { schema: { valid: true } };
     },
-    async executeTool() {
-      this.calls.push('execute');
+    async executeTool(toolId: string, request: ExecuteRequest) {
+      calls.push('execute');
+      executeRequests.push({ toolId, request });
       return { execution_id: 'e1', success: true, result: { ok: 1 } };
     },
-  } as unknown as QverisClient & { calls: string[] };
+  } as unknown as FakeQverisClient;
 }
 
 async function connect(opts: { client?: QverisClient; elicitHandler?: (msg: string) => Promise<boolean> } = {}) {
@@ -46,7 +60,7 @@ async function connect(opts: { client?: QverisClient; elicitHandler?: (msg: stri
 }
 
 describe('output schemas + structured content', () => {
-  it('declares outputSchema on all six canonical tools', async () => {
+  it('declares outputSchema on canonical tools and reuses it for deprecated aliases', async () => {
     const c = await connect();
     const { tools } = await c.listTools();
     for (const name of ['discover', 'inspect', 'probe', 'call', 'usage_history', 'credits_ledger']) {
@@ -54,6 +68,48 @@ describe('output schemas + structured content', () => {
       expect(tool?.outputSchema, `${name} outputSchema`).toBeDefined();
       expect((tool?.outputSchema as { additionalProperties?: boolean }).additionalProperties).toBe(true);
     }
+    for (const [alias, canonical] of Object.entries({
+      search_tools: 'discover',
+      get_tools_by_ids: 'inspect',
+      execute_tool: 'call',
+    })) {
+      const aliasSchema = tools.find((tool) => tool.name === alias)?.outputSchema;
+      const canonicalSchema = tools.find((tool) => tool.name === canonical)?.outputSchema;
+      expect(aliasSchema, `${alias} outputSchema`).toEqual(canonicalSchema);
+    }
+    await c.close();
+  });
+
+  it('initializes MCP and forwards projection inputs while omitted projections retain full behavior', async () => {
+    const qveris = fakeQverisClient();
+    const c = await connect({ client: qveris });
+    const { tools } = await c.listTools();
+    const discover = tools.find((tool) => tool.name === 'discover');
+    const call = tools.find((tool) => tool.name === 'call');
+
+    expect((discover?.inputSchema as { properties?: Record<string, unknown> }).properties).toHaveProperty('view');
+    expect((discover?.inputSchema as { properties?: Record<string, unknown> }).properties).toHaveProperty('lang');
+    expect((call?.inputSchema as { properties?: Record<string, unknown> }).properties).toHaveProperty('respond_with');
+    expect((call?.outputSchema as { properties?: Record<string, unknown> }).properties?.remaining_credits).toEqual({
+      anyOf: [{ type: 'number' }, { type: 'null' }],
+    });
+
+    await c.callTool({ name: 'discover', arguments: { query: 'weather', view: 'routing', lang: 'en' } });
+    expect(qveris.searchRequests).toEqual([
+      { query: 'weather', limit: 20, session_id: 'session-1', view: 'routing', lang: 'en' },
+    ]);
+
+    await c.callTool({
+      name: 'call',
+      arguments: { tool_id: 't1', search_id: 's1', params_to_tool: {}, respond_with: 'summary' },
+    });
+    expect(qveris.executeRequests[0]).toMatchObject({
+      toolId: 't1',
+      request: { search_id: 's1', session_id: 'session-1', parameters: {}, respond_with: 'summary' },
+    });
+
+    await c.callTool({ name: 'call', arguments: { tool_id: 't1', search_id: 's1', params_to_tool: {} } });
+    expect(qveris.executeRequests[1]?.request).not.toHaveProperty('respond_with');
     await c.close();
   });
 
@@ -85,6 +141,51 @@ describe('output schemas + structured content', () => {
     const c = await connect({ client: fakeQverisClient() });
     const result = await c.callTool({ name: 'search_tools', arguments: { query: 'weather' } });
     expect(result.structuredContent).toMatchObject({ search_id: 's1' });
+    await c.close();
+  });
+
+  it('normalizes number, numeric-string, null, and invalid balances before MCP output validation', async () => {
+    const qveris = fakeQverisClient();
+    const balances: unknown[] = [42, '992.5', null, 'unavailable'];
+    let submissions = 0;
+    const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    qveris.executeTool = async () => {
+      submissions += 1;
+      return {
+        execution_id: 'e1',
+        success: true,
+        result: { rows: [1] },
+        remaining_credits: balances.shift(),
+      } as unknown as ExecuteResponse;
+    };
+    const c = await connect({ client: qveris });
+
+    const canonical = await c.callTool({
+      name: 'call',
+      arguments: { tool_id: 't1', search_id: 's1', params_to_tool: {} },
+    });
+    expect(canonical.structuredContent).toMatchObject({ remaining_credits: 42, result: { rows: [1] } });
+
+    const numericString = await c.callTool({
+      name: 'call',
+      arguments: { tool_id: 't1', search_id: 's1', params_to_tool: {} },
+    });
+    expect(numericString.structuredContent).toMatchObject({ remaining_credits: 992.5, result: { rows: [1] } });
+
+    const alias = await c.callTool({
+      name: 'execute_tool',
+      arguments: { tool_id: 't1', search_id: 's1', params_to_tool: {} },
+    });
+    expect(alias.structuredContent).toMatchObject({ remaining_credits: null, result: { rows: [1] } });
+
+    const invalid = await c.callTool({
+      name: 'call',
+      arguments: { tool_id: 't1', search_id: 's1', params_to_tool: {} },
+    });
+    expect(invalid.structuredContent).toMatchObject({ remaining_credits: null, result: { rows: [1] } });
+    expect(submissions).toBe(4);
+    expect(stderr).toHaveBeenCalledWith(expect.stringContaining('treating the balance as unavailable'));
+    stderr.mockRestore();
     await c.close();
   });
 });

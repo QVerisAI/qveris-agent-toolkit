@@ -6,10 +6,25 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- Added a logo to the MCP Registry listing and switched the hosted endpoint from a manual API-key prompt to OAuth discovery. Updated VS Code setup instructions in all three locales, including the separate China endpoint configuration.
+
+## [0.14.2] - 2026-09-07
+
+### Fixed
+
+- Normalize finite numeric-string credit balances before MCP output validation, preserve documented `null` balances across credit-bearing response types, and degrade invalid balances to unavailable without discarding completed capability results. The canonical `call` tool and deprecated `execute_tool` alias now publish the same `number | null` contract while paid calls remain single-submit. ([#341])
+
+## [0.14.1] - 2026-09-04
+
 ### Added
 
 - Added complete MCP tool annotations (`title`, read-only, destructive, idempotent, and open-world hints) for every canonical tool and deprecated alias. The `call` family is conservatively marked as non-idempotent, destructive, and open-world. ([#316])
-- Added the hosted Streamable HTTP endpoint, display title, and logo to the official MCP Registry manifest so galleries can offer a branded installation with automatic OAuth discovery and no local runtime, alongside the npm fallback.
+
+### Fixed
+
+- Deprecated aliases now reuse their canonical tool's `outputSchema` as well as its input schema and safety annotations, preventing protocol metadata drift.
 
 ## [0.14.0] - 2026-08-10
 
@@ -150,7 +165,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Handle empty/non-JSON success responses gracefully; `params_to_tool` documented as an object.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.2...HEAD
+[0.14.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.1...mcp-v0.14.2
+[0.14.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.0...mcp-v0.14.1
 [0.14.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.13.0...mcp-v0.14.0
 [0.13.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.12.0...mcp-v0.13.0
 [0.12.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.11.0...mcp-v0.12.0
@@ -197,3 +214,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#8]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/8
 [#259]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/259
 [#256]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/256
+[#341]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/341

@@ -4,7 +4,7 @@ on:
   workflow_dispatch: # run the test matrix on demand (publish still requires a tag)
   push:
     tags:
-      - "mcp-v*" # Trigger on tags like mcp-v0.1.3, mcp-v1.0.0
+      - 'mcp-v*' # Trigger on tags like mcp-v0.1.3, mcp-v1.0.0
 
 permissions:
   contents: write # For creating GitHub Releases
@@ -35,7 +35,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
+          cache: 'npm'
           cache-dependency-path: packages/mcp/package-lock.json
 
       - name: Install dependencies
@@ -142,7 +142,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          name: "QVeris MCP Server v${{ env.VERSION }}"
+          name: 'QVeris MCP Server v${{ env.VERSION }}'
           body_path: ${{ runner.temp }}/release-notes.md
           generate_release_notes: true
 

@@ -4,7 +4,7 @@
 
 `@qverisai/mcp` 是面向 ChatGPT（Codex）、Cursor、Claude Desktop、Cherry Studio、GitHub Copilot、Cline、Roo Code、Kiro、Qoder、CodeBuddy、WorkBuddy 及其他编程智能体等 MCP 兼容客户端的官方 QVeris MCP 服务器。
 
-`@qverisai/mcp` v0.14.0 是最新测试版本，通过六个规范 MCP 工具为智能体提供 QVeris 访问能力：
+`@qverisai/mcp` v0.14.2 是最新测试版本，通过六个规范 MCP 工具为智能体提供 QVeris 访问能力：
 
 - `discover` — 用自然语言发现能力
 - `inspect` — 获取工具详情（参数、成功率、示例）
@@ -205,19 +205,20 @@ GitHub Copilot 的 `mcp.json` 使用顶层 `servers` 对象，而不是 `mcpServ
 
 ##### 托管 MCP 配置
 
+MCP Registry 清单登记的是全球服务端点。该清单发布并被 VS Code MCP Gallery 收录后，从 Gallery 安装 QVeris 会使用该端点并自动发现 OAuth。按提示在浏览器中完成登录即可。Gallery 收录由 GitHub 决定；也可以直接在 `.vscode/mcp.json` 中配置同一端点：
+
 ```json
 {
   "servers": {
     "qveris": {
       "type": "http",
-      "url": "https://mcp.qveris.ai/mcp",
-      "headers": {
-        "Authorization": "Bearer your-api-key-here"
-      }
+      "url": "https://mcp.qveris.ai/mcp"
     }
   }
 }
 ```
+
+不支持 MCP OAuth 自动发现的客户端可使用[托管 MCP 详细说明](#托管-mcp-详细说明)中的 API 密钥请求头配置。
 
 ##### 本地 stdio 备用方案
 
@@ -256,7 +257,7 @@ QVeris 提供远程 Streamable HTTP MCP 托管服务。对于支持它的客户�
 https://mcp.qveris.ai/mcp
 ```
 
-在支持远程 MCP 的客户端中添加服务地址，并在每次请求中发送 QVeris API 密钥：
+支持 MCP OAuth 自动发现的客户端可直接添加服务地址并在浏览器中完成登录。对于不支持 OAuth 自动发现的远程 MCP 客户端，可使用以下配置，在每次请求中发送 QVeris API 密钥：
 
 ```json
 {

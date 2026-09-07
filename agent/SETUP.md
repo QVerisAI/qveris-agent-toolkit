@@ -2,7 +2,7 @@
 
 You are an AI agent. A user has given you this document and a **QVeris API key**. Follow the instructions below to configure QVeris skills and MCP for the platform you are running on.
 
-**Cost:** Discover (finding capabilities) is free. Call (invoking capabilities) is priced by the capability billing rule, and final settlement is visible in usage history and the credits ledger. Free tier includes 1,000 credits. More at https://qveris.ai/pricing
+**Cost:** Discover (finding capabilities) is free. Call (invoking capabilities) is priced by the capability billing rule, and final settlement is visible in usage history and the credits ledger. Free tier includes 1,000 one-time trial credits after signup verification. More at https://qveris.ai/pricing
 
 **API endpoint:** Client tools use a built-in endpoint by default. When the active deployment requires an explicit override, set `QVERIS_BASE_URL` to the complete API root supplied by the deployment administrator. API keys never select or replace the endpoint.
 
@@ -34,7 +34,7 @@ QVeris supports three integration methods. Prefer Hosted MCP whenever your clien
 | Method | Best For | How It Works |
 |--------|----------|--------------|
 | **Hosted MCP Server** (recommended) | Remote-MCP clients and browser-based agents | One HTTPS endpoint — no local process, Node.js, or package install |
-| **CLI** (recommended) | Agents with shell access (Claude Code, OpenClaw, terminals) | Subprocess calls — zero prompt tokens, 10,000+ real-world, verified tools without bloat |
+| **CLI** (recommended) | Agents with shell access (Claude Code, OpenClaw, terminals) | Subprocess calls — no upfront catalog schemas, a broad catalog of real-world tools without bloat |
 | **Local MCP Server** (fallback) | Clients that require stdio | Local MCP process — tools injected into agent context |
 
 ### Node.js prerequisite (CLI and Local MCP only)
@@ -97,7 +97,7 @@ Reconnect the client and confirm `discover`, `inspect`, `probe`, and `call` are 
 Detect which MCP-capable desktop client you are currently running in. QVeris supports Claude Code, ChatGPT (Codex), OpenCode, Cursor, Cherry Studio, TRAE, GitHub Copilot, Cline, Roo Code, Continue, Kiro, Junie, Augment, Zed, Google Antigravity, Qoder, CodeBuddy, and WorkBuddy.
 
 **Configuration involves two steps for all environments:**
-1. **MCP Server Setup:** Connects the QVeris tool server (`@qverisai/mcp` v0.14.0) to your environment.
+1. **MCP Server Setup:** Connects the QVeris tool server (`@qverisai/mcp` v0.14.2) to your environment.
 2. **Skill Configuration:** Teaches the agent how to use the tools using the MCP/client skill definition file.
    - **Skill URL:** `https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/skills/qveris/SKILL.md`
 

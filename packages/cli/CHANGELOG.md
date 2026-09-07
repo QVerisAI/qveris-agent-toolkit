@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-09-07
+
+### Fixed
+
+- Normalize finite numeric-string credit balances at the API boundary so preflight and human-readable output consistently display them; invalid balances become unavailable with a diagnostic and paid calls remain single-submit. ([#341])
+
 ## [0.11.0] - 2026-08-10
 
 ### Added
@@ -102,7 +108,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial release: `discover` / `inspect` / `call` from the terminal against the QVeris API.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.1...HEAD
+[0.11.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.0...cli-v0.11.1
 [0.11.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.10.0...cli-v0.11.0
 [0.10.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.9.0...cli-v0.10.0
 [0.9.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.8.2...cli-v0.9.0
@@ -139,3 +146,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#10]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/10
 [#9]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/9
 [#273]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/273
+[#341]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/341

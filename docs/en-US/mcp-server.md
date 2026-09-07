@@ -4,7 +4,7 @@
 
 `@qverisai/mcp` is the official QVeris MCP server for MCP-compatible clients such as ChatGPT (Codex), Cursor, Claude Desktop, Cherry Studio, GitHub Copilot, Cline, Roo Code, Kiro, Qoder, CodeBuddy, WorkBuddy, and other coding agents.
 
-`@qverisai/mcp` v0.14.0 is the latest tested release. It gives agents access to QVeris through six canonical MCP tools:
+`@qverisai/mcp` v0.14.2 is the latest tested release. It gives agents access to QVeris through six canonical MCP tools:
 
 - `discover` — Find capabilities by natural language
 - `inspect` — Get detailed tool info (params, success rate, examples)
@@ -205,9 +205,11 @@ GitHub Copilot's `mcp.json` uses a top-level `servers` object, not `mcpServers`.
 
 ##### Hosted MCP configuration
 
-When QVeris is installed from the VS Code MCP Gallery, VS Code uses the
-registered hosted endpoint and discovers OAuth automatically. Complete the
-browser sign-in when prompted. The equivalent workspace configuration is:
+The MCP Registry manifest registers the global hosted endpoint. After this
+manifest is released and included in the VS Code MCP Gallery, installing QVeris
+from the Gallery will use that endpoint and discover OAuth automatically.
+Complete the browser sign-in when prompted. Gallery inclusion is controlled by
+GitHub; you can also configure the same endpoint directly in `.vscode/mcp.json`:
 
 ```json
 {
@@ -220,8 +222,8 @@ browser sign-in when prompted. The equivalent workspace configuration is:
 }
 ```
 
-Use the API-key header configuration in [Hosted MCP details](#hosted-mcp-details)
-only when the client does not support MCP OAuth discovery.
+Clients without MCP OAuth discovery can use the API-key header configuration in
+[Hosted MCP details](#hosted-mcp-details).
 
 ##### Local stdio fallback
 
@@ -260,7 +262,7 @@ QVeris provides a remote Streamable HTTP MCP service. It is the preferred MCP co
 https://mcp.qveris.ai/mcp
 ```
 
-Add the endpoint to a remote-MCP-compatible client and send your QVeris API key on every request:
+Clients with MCP OAuth discovery can add the endpoint and complete browser sign-in. For remote MCP clients without OAuth discovery, use the following configuration to send your QVeris API key on every request:
 
 ```json
 {

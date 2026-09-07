@@ -191,7 +191,7 @@ export function printWelcomeBanner(opts) {
   const nl = compact ? "\n" : "\n\n";
   console.log(nl + centered.join("\n"));
 
-  const tag = "✦ Discover · Inspect · Call · 10,000+ capabilities · intelligent orchestration ✦";
+  const tag = "✦ Discover · Inspect · Call · API capabilities · intelligent orchestration ✦";
   const meta = dim(`v${version} · ${shortenPath(processCwd())}`);
   const tagLine = centerLine(dim(cyan(tag)), termCols);
   const metaLine = centerLine(meta, termCols);
@@ -211,7 +211,7 @@ function printPlainBanner({ version, compact }) {
   const centered = centerBlock(rawLines, termCols);
   const nl = compact ? "\n" : "\n\n";
   console.log(nl + centered.join("\n"));
-  const tag = "✦ Discover · Inspect · Call · 10,000+ capabilities · intelligent orchestration ✦";
+  const tag = "✦ Discover · Inspect · Call · API capabilities · intelligent orchestration ✦";
   const meta = `v${version} · ${shortenPath(processCwd())}`;
   const tagLine = centerLine(dim(tag), termCols);
   const metaLine = centerLine(dim(meta), termCols);

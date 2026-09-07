@@ -225,7 +225,7 @@ export interface ToolInfo {
   /** Human-readable explanation of why this tool was recommended (Discover results only) */
   why_recommended?: string;
 
-  /** Whether this tool has been executed before (verified in production) */
+  /** Whether this tool has execution history; not a guarantee of correctness or reliability */
   has_last_execution?: boolean;
 
   /** Most recent execution record, if available */
@@ -275,7 +275,7 @@ export interface SearchResponse {
   stats?: SearchStats;
 
   /** User's remaining credits after this operation */
-  remaining_credits?: number;
+  remaining_credits?: number | null;
 
   /** Total elapsed time in milliseconds */
   elapsed_time_ms?: number;
@@ -451,7 +451,7 @@ export interface ExecuteResponse {
   pre_settlement_bill?: Record<string, unknown>;
 
   /** User's remaining credits after this execution */
-  remaining_credits?: number;
+  remaining_credits?: number | null;
 
   /** Timestamp of execution (ISO 8601 format) */
   created_at?: string;
@@ -510,7 +510,7 @@ export interface ApiEnvelope<T> {
 }
 
 export interface CreditsResponse {
-  remaining_credits: number;
+  remaining_credits: number | null;
   daily_free?: Record<string, unknown>;
   invite_reward?: Record<string, unknown>;
   welcome_bonus?: Record<string, unknown>;

@@ -65,9 +65,13 @@ jobs:
   approve-after-nonblocking-codex-review:
     # Filter before runner allocation. The approval created below emits another
     # pull_request_review event, and unrelated human/bot reviews must stay no-op.
+    # Fork pull_request_review events cannot access REPO_ACCESS_TOKEN and have a
+    # read-only GITHUB_TOKEN. Leave approval to a maintainer or the trusted
+    # issue_comment clean-summary path for those PRs.
     if: >-
       github.event_name == 'pull_request_review' &&
       github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.review.user.type == 'Bot' &&
       (contains(github.event.review.user.login, 'codex') ||
        vars.CODEX_REVIEW_AUTHOR_PATTERN != '')

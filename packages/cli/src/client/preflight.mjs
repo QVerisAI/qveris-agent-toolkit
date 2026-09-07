@@ -1,6 +1,7 @@
 import { resolve } from "../config/resolve.mjs";
 import { getSiteUrl } from "../config/endpoint.mjs";
 import { getOAuthSessionMetadata } from "../auth/storage.mjs";
+import { normalizeCreditBalance } from "./credit-balance.mjs";
 import { discoverTools, resolveApiBaseUrl } from "./api.mjs";
 import { ERROR_CODES } from "../errors/codes.mjs";
 
@@ -129,13 +130,14 @@ export async function runPreflight({
 
   checks.push(check("connectivity", "ok", "API reachable — free discover probe, no credits used"));
 
-  if (typeof response?.remaining_credits === "number") {
-    const positive = response.remaining_credits > 0;
+  const remainingCredits = normalizeCreditBalance(response?.remaining_credits).value;
+  if (typeof remainingCredits === "number") {
+    const positive = remainingCredits > 0;
     checks.push(
       check(
         "credits",
         positive ? "ok" : "warn",
-        `${response.remaining_credits} credits remaining`,
+        `${remainingCredits} credits remaining`,
         positive ? null : `Purchase credits at ${getSiteUrl(local.baseUrl)}/pricing`,
       ),
     );

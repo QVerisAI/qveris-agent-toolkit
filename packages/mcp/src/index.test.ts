@@ -14,6 +14,7 @@ import {
 import type { QverisClient } from './api/client.js';
 import { creditsLedgerSchema } from './tools/credits-ledger.js';
 import { executeToolSchema } from './tools/execute.js';
+import { TOOL_OUTPUT_SCHEMAS } from './output-schemas.js';
 import { probeToolSchema } from './tools/probe.js';
 import { getToolsByIdsSchema } from './tools/get-by-ids.js';
 import { searchToolsSchema } from './tools/search.js';
@@ -111,6 +112,9 @@ describe('MCP public tool interface', () => {
     expect(byName.get('search_tools')?.inputSchema).toBe(searchToolsSchema);
     expect(byName.get('get_tools_by_ids')?.inputSchema).toBe(getToolsByIdsSchema);
     expect(byName.get('execute_tool')?.inputSchema).toBe(executeToolSchema);
+    expect(byName.get('search_tools')?.outputSchema).toBe(TOOL_OUTPUT_SCHEMAS.discover);
+    expect(byName.get('get_tools_by_ids')?.outputSchema).toBe(TOOL_OUTPUT_SCHEMAS.inspect);
+    expect(byName.get('execute_tool')?.outputSchema).toBe(TOOL_OUTPUT_SCHEMAS.call);
 
     expect(byName.get('search_tools')?.description).toContain('Deprecated');
     expect(byName.get('get_tools_by_ids')?.description).toContain('Deprecated');

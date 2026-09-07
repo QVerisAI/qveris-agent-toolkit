@@ -1385,7 +1385,7 @@ Supplies a bearer credential for an API request.
 
 ##### remaining\_credits
 
-> **remaining\_credits**: `number`
+> **remaining\_credits**: `number` \| `null`
 
 ##### welcome\_bonus?
 
@@ -1549,7 +1549,7 @@ Legacy/full pre-settlement bill snapshot when returned directly
 
 ##### remaining\_credits?
 
-> `optional` **remaining\_credits?**: `number`
+> `optional` **remaining\_credits?**: `number` \| `null`
 
 User's remaining credits after this execution
 
@@ -1983,7 +1983,7 @@ The original search query
 
 ##### remaining\_credits?
 
-> `optional` **remaining\_credits?**: `number`
+> `optional` **remaining\_credits?**: `number` \| `null`
 
 User's remaining credits after this operation
 
@@ -2194,7 +2194,7 @@ Relevance score for the search query (0.0 - 1.0, higher = better match)
 
 > `optional` **has\_last\_execution?**: `boolean`
 
-Whether this tool has been executed before (verified in production)
+Whether this tool has execution history; not a guarantee of correctness or reliability
 
 ##### last\_execution\_record?
 

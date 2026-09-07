@@ -223,6 +223,32 @@ test("API client preserves read projection fallback but never resubmits a paid c
   assert.deepEqual(callRedirectModes, ["error"]);
 });
 
+test("API client normalizes numeric-string balances without resubmitting a paid call", async () => {
+  let requests = 0;
+  const result = await withMockFetch(
+    () => {
+      requests += 1;
+      return jsonResponse({
+        execution_id: "exec-balance",
+        success: true,
+        result: { data: { ok: true } },
+        remaining_credits: "992.5",
+      });
+    },
+    () =>
+      callTool({
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        toolId: "weather-tool",
+        discoveryId: "search-1",
+        parameters: {},
+      }),
+  );
+
+  assert.equal(result.remaining_credits, 992.5);
+  assert.equal(requests, 1);
+});
+
 test("API client does not downgrade invalid projections", async () => {
   let requests = 0;
   await assert.rejects(

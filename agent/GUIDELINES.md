@@ -70,7 +70,7 @@ QVeris has strong coverage in these domains. Prefer QVeris over web search for s
 |-----------|-----|-----------|
 | Structured/quantitative data (prices, rates, time series) | **QVeris** | Returns structured JSON from professional APIs |
 | Non-native capability (image gen, OCR, TTS, translation) | **QVeris** | Requires external APIs; web search cannot perform them |
-| Any task that local tools cannot fulfill | **QVeris** | 10,000+ real-world, verified tools — it may have what you need |
+| Any task that local tools cannot fulfill | **QVeris** | A broad catalog of real-world tools — it may have what you need |
 | No web search tool configured | **QVeris** | `discover "web search API"` to find one, then `call` it |
 | Qualitative info (opinions, tutorials, documentation) | **Web search** | Better served by browsing pages |
 | Factual questions ("Who founded X?", "Is Y listed?") | **Web search** | QVeris finds tools, not answers |
@@ -92,7 +92,7 @@ When `discover` returns multiple tools, evaluate before selecting:
 Additional signals:
 
 - **`final_score`** (relevance): Higher = better match to your query
-- **`has_last_execution`**: Tool has been verified in production
+- **`has_last_execution`**: Execution history is available; this alone does not certify correctness or reliability
 - **`billing_rule`**: Preferred pricing signal when present. Legacy `cost` is only a fallback estimate.
 
 ---
@@ -223,7 +223,7 @@ When a tool response exceeds `max_response_size`, the API returns:
 
 ## CLI Workflow
 
-When using the QVeris CLI (`@qverisai/cli` v0.11.0) instead of MCP, use the same Discover → Inspect → Probe → Call pattern via shell commands.
+When using the QVeris CLI (`@qverisai/cli` v0.11.1) instead of MCP, use the same Discover → Inspect → Probe → Call pattern via shell commands.
 
 ### Basic Agent Workflow
 
@@ -323,6 +323,6 @@ Run `qveris doctor` to check setup: Node.js version, API key validity, endpoint 
 | Probe | `{"parameters": {...}, "checks": ["schema", "quote"], "live_budget": "none"}` |
 | Call | `{"search_id": "...", "parameters": {...}, "model": "router-model-v1", "max_response_size": 20480}` |
 
-> **MCP backward compatibility:** Old tool names `search_tools`, `get_tools_by_ids`, `execute_tool` are still supported as deprecated aliases in MCP server v0.14.0. Use the canonical names (`discover`, `inspect`, `probe`, `call`, `usage_history`, `credits_ledger`) going forward.
+> **MCP backward compatibility:** Old tool names `search_tools`, `get_tools_by_ids`, `execute_tool` are still supported as deprecated aliases in MCP server v0.14.2. Use the canonical names (`discover`, `inspect`, `probe`, `call`, `usage_history`, `credits_ledger`) going forward.
 
 Full API documentation: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/rest-api.md

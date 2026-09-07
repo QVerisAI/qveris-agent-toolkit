@@ -5,7 +5,7 @@ import path from "node:path"
 import process from "node:process"
 import { spawnSync } from "node:child_process"
 
-import { latestReleaseTag } from "./release-tag-version.mjs"
+import { websiteReleaseTag } from "./website-release-tags.mjs"
 
 const SDK_RELEASES = [
   {
@@ -78,17 +78,6 @@ function runGit(toolkitDir, args) {
     throw new Error(`git ${args.join(" ")} failed: ${(result.stderr ?? "").trim()}`)
   }
   return result.stdout ?? ""
-}
-
-function latestTag(toolkitDir, pattern, prefix) {
-  const tag = latestReleaseTag(
-    runGit(toolkitDir, ["tag", "--list", pattern])
-    .split("\n")
-      .map((value) => value.trim()),
-    prefix,
-  )
-  if (!tag) throw new Error(`No release tag matches ${pattern}`)
-  return tag
 }
 
 function readTagFile(toolkitDir, tag, relPath) {
@@ -215,6 +204,12 @@ async function main() {
 
   await fs.access(path.join(toolkitDir, ".git"))
   const toolkitOwnedPaths = await loadToolkitOwnedPaths(websiteDir)
+  const releaseTags = {}
+  for (const release of [...MAIN_GUIDE_RELEASES, ...SDK_RELEASES]) {
+    releaseTags[release.outputName] = await websiteReleaseTag(
+      toolkitDir, websiteDir, release.tagPattern, release.tagPrefix,
+    )
+  }
 
   await fs.rm(outputDir, { recursive: true, force: true })
   await fs.mkdir(outputDir, { recursive: true })
@@ -222,16 +217,14 @@ async function main() {
   await copyRequiredFile(toolkitDir, outputDir, "README.md")
   await copyRequiredFile(toolkitDir, outputDir, "packages/cli/package.json")
 
-  const releaseTags = {}
   for (const release of MAIN_GUIDE_RELEASES) {
-    const tag = latestTag(toolkitDir, release.tagPattern, release.tagPrefix)
+    const tag = releaseTags[release.outputName]
     const releasePaths = toolkitOwnedPaths.filter(
       (relPath) => path.basename(relPath) === `${release.pathPrefix}.md`,
     )
     if (releasePaths.length === 0) {
       throw new Error(`website source manifest contains no ${release.pathPrefix} Markdown paths`)
     }
-    releaseTags[release.outputName] = tag
     for (const relPath of releasePaths) {
       const content = await fs.readFile(path.join(outputDir, relPath), "utf8")
       await writeFile(outputDir, relPath, withPinnedGuideVersion(content, release, tag, relPath))
@@ -239,12 +232,11 @@ async function main() {
   }
 
   for (const release of SDK_RELEASES) {
-    const tag = latestTag(toolkitDir, release.tagPattern, release.tagPrefix)
+    const tag = releaseTags[release.outputName]
     const releasePaths = sdkPaths(toolkitOwnedPaths, release.pathPrefix)
     if (releasePaths.length === 0) {
       throw new Error(`website source manifest contains no ${release.pathPrefix} Markdown paths`)
     }
-    releaseTags[release.outputName] = tag
 
     for (const relPath of releasePaths) {
       const publishedContent = await readOptionalFile(websiteDir, relPath)
