@@ -25,7 +25,7 @@ export class ReleaseTransientError extends Error {
 }
 
 export function buildRegistryInstallArgs(spec) {
-  return ["plugins", "install", spec, "--pin", "--accept-capabilities"];
+  return ["plugins", "install", spec, "--pin", "--force", "--accept-capabilities"];
 }
 
 export function validateRegistryMetadata(metadata, expected) {
