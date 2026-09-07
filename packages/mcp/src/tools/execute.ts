@@ -8,6 +8,7 @@
  */
 
 import type { QverisClient } from '../api/client.js';
+import { normalizeCreditBalanceResponse } from '../api/credit-balance.js';
 import type { ExecuteResponse } from '../types.js';
 
 /**
@@ -137,7 +138,7 @@ export async function executeExecuteTool(
     ...(input.respond_with !== undefined && { respond_with: input.respond_with }),
   });
 
-  return response;
+  return normalizeCreditBalanceResponse(response);
 }
 
 function isParamsObject(value: unknown): value is Record<string, unknown> {

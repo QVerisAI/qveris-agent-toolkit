@@ -35,6 +35,16 @@ test("runPreflight: healthy probe reports connectivity, credits, and contract co
   assert.equal(c.contract.status, "ok");
 });
 
+test("runPreflight: numeric-string credits are reported consistently", async () => {
+  const probe = async () => ({ search_id: "s1", results: [], remaining_credits: "42.5" });
+  const { checks, ok } = await runPreflight({ apiKeyFlag: "sk-test", probe });
+
+  assert.equal(ok, true);
+  const credits = byName(checks).credits;
+  assert.equal(credits.status, "ok");
+  assert.match(credits.detail, /42\.5 credits/);
+});
+
 test("runPreflight: stored OAuth session restores its endpoint without environment configuration", async () => {
   const previous = {
     key: process.env.QVERIS_API_KEY,

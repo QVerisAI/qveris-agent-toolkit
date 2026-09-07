@@ -12,6 +12,7 @@ import {
 } from "./retry.mjs";
 
 import { getOAuthSessionMetadata } from "../auth/storage.mjs";
+import { normalizeCreditBalanceResponse } from "./credit-balance.mjs";
 
 export function resolveApiBaseUrl({ baseUrlFlag, preferOAuth = false } = {}) {
   if (preferOAuth && baseUrlFlag === undefined && typeof process.env.QVERIS_BASE_URL !== "string") {
@@ -131,7 +132,7 @@ async function requestJson(
         throw err;
       } else {
         try {
-          return await response.json();
+          return normalizeCreditBalanceResponse(await response.json());
         } catch {
           throw new CliError("API_ERROR", "Invalid JSON response from API");
         }
