@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.11.2] - 2026-09-07
+
+### Changed
+
+- Updated the packaged Agent and scripting guidance to use the shortest safe Discover → Call path, selecting only capabilities whose current contract accepts every supplied field and has no unmet required inputs; Inspect and Probe remain conditional checks. ([#347])
+
 ## [0.11.1] - 2026-09-07
 
 ### Fixed
@@ -108,7 +114,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial release: `discover` / `inspect` / `call` from the terminal against the QVeris API.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.1...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.2...HEAD
+[0.11.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.1...cli-v0.11.2
 [0.11.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.0...cli-v0.11.1
 [0.11.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.10.0...cli-v0.11.0
 [0.10.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.9.0...cli-v0.10.0
@@ -147,3 +154,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#9]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/9
 [#273]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/273
 [#341]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/341
+[#347]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/347

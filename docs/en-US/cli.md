@@ -2,7 +2,7 @@
 
 The official command-line tool for the QVeris capability routing network. Discover, inspect, and call a broad catalog of real-world API capabilities directly from your terminal or agent framework.
 
-`@qverisai/cli` v0.11.1 is the latest tested release. It includes OAuth Device Flow sessions, zero-cost parameter/quote probes, opt-in discovery and call projections, and Call model attribution while preserving API key compatibility.
+`@qverisai/cli` v0.11.2 is the latest tested release. It includes OAuth Device Flow sessions, zero-cost parameter/quote probes, opt-in discovery and call projections, and Call model attribution while preserving API key compatibility.
 
 **Why CLI?** CLI runs as a subprocess with structured output and on-demand discovery. It does not preload the full capability catalog. Instructions, commands, and results still consume context tokens; QVeris MCP also uses a small set of routing tools.
 
