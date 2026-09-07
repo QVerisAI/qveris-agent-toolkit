@@ -2,7 +2,7 @@
 
 类型化的 TypeScript/JavaScript SDK，让你在自己的 Agent 和应用中发现、检查、探测、调用并审计 丰富的 API 能力。
 
-`@qverisai/sdk` v0.8.2 是最新测试版本。它是对 QVeris REST API（`discover`、`inspect`、`probe`、`call`、`credits`、`usage`、`ledger`）的轻量类型化封装，**零运行时依赖**——使用平台原生 `fetch`（Node.js 18+）——并与 [Python SDK](python-sdk.md) 和 [MCP 服务器](mcp-server.md) 保持一致的通信语义。
+`@qverisai/sdk` v0.8.3 是最新测试版本。它是对 QVeris REST API（`discover`、`inspect`、`probe`、`call`、`credits`、`usage`、`ledger`）的轻量类型化封装，**零运行时依赖**——使用平台原生 `fetch`（Node.js 18+）——并与 [Python SDK](python-sdk.md) 和 [MCP 服务器](mcp-server.md) 保持一致的通信语义。
 
 ## 安装
 
@@ -48,10 +48,24 @@ const qveris = Qveris.fromEnv();
 // 1. 用自然语言发现能力（免费）
 const discovered = await qveris.discover('weather forecast API', { limit: 5 });
 const params: Record<string, unknown> = { city: 'London' };
+const matchesType = (type: string, value: unknown) => {
+  if (type === 'string') return typeof value === 'string';
+  if (type === 'integer') return typeof value === 'number' && Number.isFinite(value) && Number.isInteger(value);
+  if (type === 'number') return typeof value === 'number' && Number.isFinite(value);
+  if (type === 'boolean') return typeof value === 'boolean';
+  if (type === 'array') return Array.isArray(value);
+  if (type === 'object') return value !== null && typeof value === 'object' && !Array.isArray(value);
+  return false;
+};
 const supportsRequest = (candidate: (typeof discovered.results)[number]) => {
   if (!candidate.params) return false;
-  const names = new Set(candidate.params.map((parameter) => parameter.name));
-  return Object.keys(params).every((name) => names.has(name)) &&
+  const definitions = new Map(candidate.params.map((parameter) => [parameter.name, parameter]));
+  if (definitions.size !== candidate.params.length) return false;
+  return Object.entries(params).every(([name, value]) => {
+    const parameter = definitions.get(name);
+    return Boolean(parameter && matchesType(parameter.type, value) &&
+      (!parameter.enum || parameter.enum.some((allowed) => Object.is(allowed, value))));
+  }) &&
     candidate.params.every((parameter) =>
       !parameter.required || Object.prototype.hasOwnProperty.call(params, parameter.name),
     );

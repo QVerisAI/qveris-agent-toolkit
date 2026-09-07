@@ -1,5 +1,6 @@
+import math
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from qveris import QverisClient, ToolInfo
 
@@ -15,13 +16,44 @@ def should_call() -> bool:
     return os.getenv("RUN_QVERIS_CALLS") == "1"
 
 
+def _matches_parameter_type(parameter_type: Any, value: Any) -> bool:
+    if parameter_type == "string":
+        return isinstance(value, str)
+    if parameter_type == "integer":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if parameter_type == "number":
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+    if parameter_type == "boolean":
+        return isinstance(value, bool)
+    if parameter_type == "array":
+        return isinstance(value, list)
+    if parameter_type == "object":
+        return isinstance(value, dict)
+    return False
+
+
+def _matches_enum(allowed_values: Optional[List[Any]], value: Any) -> bool:
+    if allowed_values is None:
+        return True
+    return any(
+        allowed == value and not (isinstance(allowed, bool) != isinstance(value, bool)) for allowed in allowed_values
+    )
+
+
 def supports_parameters(tool: ToolInfo, requested: Dict[str, Any]) -> bool:
-    """Require an explicit compatible contract; None means metadata was omitted."""
+    """Require an explicit contract compatible with every supplied value."""
     if tool.params is None:
         return False
-    names = {param.name for param in tool.params}
+    definitions = {param.name: param for param in tool.params}
+    if len(definitions) != len(tool.params):
+        return False
     required = {param.name for param in tool.params if param.required}
-    return set(requested).issubset(names) and required.issubset(requested)
+    return required.issubset(requested) and all(
+        (parameter := definitions.get(name)) is not None
+        and _matches_parameter_type(parameter.type, value)
+        and _matches_enum(parameter.enum, value)
+        for name, value in requested.items()
+    )
 
 
 async def preview_capability(

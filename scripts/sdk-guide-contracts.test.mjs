@@ -22,6 +22,12 @@ const JS_GUIDES = [
   "docs/cn/zh-CN/js-sdk.md",
 ];
 
+const GETTING_STARTED_GUIDES = [
+  "docs/en-US/getting-started.md",
+  "docs/zh-CN/getting-started.md",
+  "docs/cn/zh-CN/getting-started.md",
+];
+
 const PYTHON_API_REFERENCES = [
   "docs/en-US/python-sdk-api.md",
   "docs/zh-CN/python-sdk-api.md",
@@ -53,6 +59,21 @@ test("all TypeScript SDK guides document Probe and strict paid calls", () => {
       "compatibilityMode: 'legacyOptionalFields'",
       "single-submit",
     ]) {
+      assert.ok(guide.includes(marker), `${path} is missing ${marker}`);
+    }
+  }
+});
+
+test("SDK quickstarts validate parameter types and enums before selecting a candidate", () => {
+  for (const path of [...JS_GUIDES, ...GETTING_STARTED_GUIDES]) {
+    const guide = read(path);
+    for (const marker of ["matchesType", "Number.isFinite", "parameter.enum", "Object.is"]) {
+      assert.ok(guide.includes(marker), `${path} is missing ${marker}`);
+    }
+  }
+  for (const path of [...PYTHON_GUIDES, ...GETTING_STARTED_GUIDES]) {
+    const guide = read(path);
+    for (const marker of ["matches_type", "math.isfinite", "p.enum", "isinstance(allowed, bool)"]) {
       assert.ok(guide.includes(marker), `${path} is missing ${marker}`);
     }
   }

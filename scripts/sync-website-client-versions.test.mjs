@@ -7,6 +7,7 @@ import test from "node:test"
 import { fileURLToPath } from "node:url"
 
 const SCRIPT = fileURLToPath(new URL("./sync-website-client-versions.mjs", import.meta.url))
+const SOURCE_COMMIT = "0123456789abcdef0123456789abcdef01234567"
 
 async function write(root, relPath, content) {
   const target = path.join(root, relPath)
@@ -27,6 +28,30 @@ async function approveMcp(website, version) {
     }],
   }))
 }
+
+async function writeSourceManifest(website) {
+  await write(website, "docs/.source-manifest.json", `${JSON.stringify({
+    sources: {
+      toolkit_owned: {
+        source_commit: "fedcba9876543210fedcba9876543210fedcba98",
+        published_versions: {
+          cli: "1.0.0", mcp: "2.0.0", typescriptSdk: "3.0.0", pythonSdk: "4.0.0",
+        },
+        paths: ["docs/en-US/cli.md"],
+      },
+    },
+  })}\n`)
+}
+
+test("website version sync requires an exact source commit", () => {
+  const result = spawnSync(
+    process.execPath,
+    [SCRIPT, "--toolkit-dir", ".", "--website-dir", ".", "--source-commit", "HEAD"],
+    { encoding: "utf8" },
+  )
+  assert.equal(result.status, 1)
+  assert.match(result.stderr, /full lowercase 40-character Git SHA/)
+})
 
 test("website client versions respect MCP approval instead of advancing on a tag alone", async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "qveris-website-versions-"))
@@ -52,6 +77,7 @@ test("website client versions respect MCP approval instead of advancing on a tag
       git(toolkit, "tag", tag)
     }
     await approveMcp(website, "2.3.4")
+    await writeSourceManifest(website)
     const approval = await fs.readFile(path.join(website, "content/public-claims-registry.json"), "utf8")
 
     await write(
@@ -95,7 +121,7 @@ test("website client versions respect MCP approval instead of advancing on a tag
 
     const result = spawnSync(
       process.execPath,
-      [SCRIPT, "--toolkit-dir", toolkit, "--website-dir", website],
+      [SCRIPT, "--toolkit-dir", toolkit, "--website-dir", website, "--source-commit", SOURCE_COMMIT],
       { encoding: "utf8" },
     )
     assert.equal(result.status, 0, result.stderr)
@@ -110,6 +136,14 @@ test("website client versions respect MCP approval instead of advancing on a tag
         pythonSdk: "4.5.6-rc.1",
       },
     )
+    const manifest = JSON.parse(await fs.readFile(path.join(website, "docs/.source-manifest.json"), "utf8"))
+    assert.equal(manifest.sources.toolkit_owned.source_commit, SOURCE_COMMIT)
+    assert.deepEqual(manifest.sources.toolkit_owned.published_versions, {
+      cli: "1.2.3",
+      mcp: "2.3.4",
+      typescriptSdk: "3.4.5",
+      pythonSdk: "4.5.6-rc.1",
+    })
     assert.match(await fs.readFile(path.join(website, "content/llms.txt"), "utf8"), /CLI v1\.2\.3/)
     assert.match(
       await fs.readFile(path.join(website, "content/llms.txt"), "utf8"),
@@ -125,7 +159,7 @@ test("website client versions respect MCP approval instead of advancing on a tag
     await approveMcp(website, "2.3.5")
     const advanced = spawnSync(
       process.execPath,
-      [SCRIPT, "--toolkit-dir", toolkit, "--website-dir", website],
+      [SCRIPT, "--toolkit-dir", toolkit, "--website-dir", website, "--source-commit", SOURCE_COMMIT],
       { encoding: "utf8" },
     )
     assert.equal(advanced.status, 0, advanced.stderr)
@@ -134,18 +168,21 @@ test("website client versions respect MCP approval instead of advancing on a tag
     for (const surface of ["llms.txt", "llms-full.txt", "setup.md", "guidelines.md"]) {
       assert.match(await fs.readFile(path.join(website, "content", surface), "utf8"), /v2\.3\.5/)
     }
-    const publicPaths = ["tool-versions.json", "llms.txt", "llms-full.txt", "setup.md", "guidelines.md"]
-    const before = await Promise.all(publicPaths.map((file) => fs.readFile(path.join(website, "content", file), "utf8")))
+    const publicPaths = [
+      "content/tool-versions.json", "content/llms.txt", "content/llms-full.txt",
+      "content/setup.md", "content/guidelines.md", "docs/.source-manifest.json",
+    ]
+    const before = await Promise.all(publicPaths.map((file) => fs.readFile(path.join(website, file), "utf8")))
     await approveMcp(website, "2.3.6") // An approved version still needs a real tag.
     const unavailable = spawnSync(
       process.execPath,
-      [SCRIPT, "--toolkit-dir", toolkit, "--website-dir", website],
+      [SCRIPT, "--toolkit-dir", toolkit, "--website-dir", website, "--source-commit", SOURCE_COMMIT],
       { encoding: "utf8" },
     )
     assert.equal(unavailable.status, 1)
     assert.match(unavailable.stderr, /mcp-v2.3.6.*unavailable/)
     assert.deepEqual(
-      await Promise.all(publicPaths.map((file) => fs.readFile(path.join(website, "content", file), "utf8"))),
+      await Promise.all(publicPaths.map((file) => fs.readFile(path.join(website, file), "utf8"))),
       before,
     )
   } finally {
@@ -170,6 +207,7 @@ test("website version sync fails closed when a required public reference is miss
       git(toolkit, "tag", tag)
     }
     await approveMcp(website, "2.3.4")
+    await writeSourceManifest(website)
 
     await write(
       website,
@@ -185,7 +223,7 @@ test("website version sync fails closed when a required public reference is miss
 
     const result = spawnSync(
       process.execPath,
-      [SCRIPT, "--toolkit-dir", toolkit, "--website-dir", website],
+      [SCRIPT, "--toolkit-dir", toolkit, "--website-dir", website, "--source-commit", SOURCE_COMMIT],
       { encoding: "utf8" },
     )
     assert.equal(result.status, 1)

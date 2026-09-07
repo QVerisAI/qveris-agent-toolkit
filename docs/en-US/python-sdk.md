@@ -1,6 +1,6 @@
 # QVeris Python SDK
 
-QVeris Python SDK v0.7.1 is the latest tested release. Use its async client to discover, inspect, probe, call, and audit real-world API capabilities from your own agents and applications.
+QVeris Python SDK v0.7.2 is the latest tested release. Use its async client to discover, inspect, probe, call, and audit real-world API capabilities from your own agents and applications.
 
 The SDK gives you two levels of control:
 
@@ -41,7 +41,32 @@ The default workflow is **discover → call**, then optionally **audit** what ha
 
 ```python
 import asyncio
+import math
 from qveris import QverisClient
+
+def matches_type(kind, value):
+    return {
+        "string": lambda: isinstance(value, str),
+        "integer": lambda: isinstance(value, int) and not isinstance(value, bool),
+        "number": lambda: isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value),
+        "boolean": lambda: isinstance(value, bool),
+        "array": lambda: isinstance(value, list),
+        "object": lambda: isinstance(value, dict),
+    }.get(kind, lambda: False)()
+
+def supports_request(candidate, params):
+    if candidate.params is None:
+        return False
+    definitions = {p.name: p for p in candidate.params}
+    if len(definitions) != len(candidate.params):
+        return False
+    return all(not p.required or p.name in params for p in candidate.params) and all(
+        (p := definitions.get(name)) is not None
+        and matches_type(p.type, value)
+        and (p.enum is None or any(allowed == value and
+             isinstance(allowed, bool) == isinstance(value, bool) for allowed in p.enum))
+        for name, value in params.items()
+    )
 
 async def main():
     client = QverisClient()
@@ -51,9 +76,7 @@ async def main():
         params = {"city": "London"}
         tool = next(
             (candidate for candidate in discovered.results
-             if candidate.params is not None
-             and {p.name for p in candidate.params if p.required}.issubset(params)
-             and set(params).issubset({p.name for p in candidate.params})),
+             if supports_request(candidate, params)),
             None,
         )
 
@@ -65,9 +88,7 @@ async def main():
             )
             tool = next(
                 (candidate for candidate in details.results
-                 if candidate.params is not None
-                 and {p.name for p in candidate.params if p.required}.issubset(params)
-                 and set(params).issubset({p.name for p in candidate.params})),
+                 if supports_request(candidate, params)),
                 None,
             )
         if tool is None:
