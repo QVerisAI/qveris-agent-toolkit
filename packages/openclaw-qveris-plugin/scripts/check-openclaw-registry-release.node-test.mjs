@@ -118,12 +118,13 @@ function fixtureOperations({ metadataSequence = [metadata()], installSequence = 
   };
 }
 
-test("pins the Registry package and accepts declared plugin capabilities", () => {
+test("pins the trusted Registry package and explicitly accepts its source and capabilities", () => {
   assert.deepEqual(buildRegistryInstallArgs("@qverisai/qveris@2026.7.30"), [
     "plugins",
     "install",
     "@qverisai/qveris@2026.7.30",
     "--pin",
+    "--force",
     "--accept-capabilities",
   ]);
 });

@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Fixed
+
+- Updated post-publish Registry verification to explicitly confirm the trusted package source required by current OpenClaw hosts.
+
 ## [2026.9.7] - 2026-09-07
 
 ### Added
