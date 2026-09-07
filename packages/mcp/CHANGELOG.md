@@ -10,7 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
-- Normalize finite numeric-string credit balances before MCP output validation, preserve documented `null` balances, and degrade invalid balances to unavailable without discarding completed capability results. The canonical `call` tool and deprecated `execute_tool` alias now publish the same `number | null` contract while paid calls remain single-submit. ([#341])
+- Normalize finite numeric-string credit balances before MCP output validation, preserve documented `null` balances across credit-bearing response types, and degrade invalid balances to unavailable without discarding completed capability results. The canonical `call` tool and deprecated `execute_tool` alias now publish the same `number | null` contract while paid calls remain single-submit. ([#341])
 
 ## [0.14.1] - 2026-09-04
 
