@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- Reject incompatible Discover candidates in the runnable Agent loop when supplied values violate the current parameter type or enum contract.
+
 ## [0.14.3] - 2026-09-07
 
 ### Changed

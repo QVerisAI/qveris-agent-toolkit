@@ -18,12 +18,9 @@
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { supportsParameters, type ContractTool } from './_shared.js';
 
-type ToolResult = {
-  tool_id: string;
-  name?: string;
-  params?: Array<{ name: string; required?: boolean }>;
-};
+type ToolResult = ContractTool;
 type DiscoverResult = { search_id?: string; results?: ToolResult[] };
 type InspectResult = { results?: ToolResult[] };
 type ToolCallResult = Awaited<ReturnType<Client['callTool']>>;
@@ -49,15 +46,6 @@ function readResult<T>(result: ToolCallResult): T | undefined {
     return JSON.parse(first.text) as T;
   }
   return undefined;
-}
-
-function supportsParameters(tool: ToolResult, requested: Record<string, unknown>): boolean {
-  if (!Array.isArray(tool.params)) return false;
-  const names = new Set(tool.params.map((param) => param.name));
-  return (
-    Object.keys(requested).every((name) => names.has(name)) &&
-    tool.params.every((param) => !param.required || Object.prototype.hasOwnProperty.call(requested, param.name))
-  );
 }
 
 async function main(): Promise<void> {

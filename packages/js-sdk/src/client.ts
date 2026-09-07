@@ -192,12 +192,25 @@ export interface ProbeOptions {
  *
  * const found = await qveris.discover('stock price market data API', { limit: 5 });
  * const parameters = { symbol: 'AAPL' };
+ * const matchesType = (type: string, value: unknown) => {
+ *   if (type === 'string') return typeof value === 'string';
+ *   if (type === 'integer') return typeof value === 'number' && Number.isFinite(value) && Number.isInteger(value);
+ *   if (type === 'number') return typeof value === 'number' && Number.isFinite(value);
+ *   if (type === 'boolean') return typeof value === 'boolean';
+ *   if (type === 'array') return Array.isArray(value);
+ *   if (type === 'object') return value !== null && typeof value === 'object' && !Array.isArray(value);
+ *   return false;
+ * };
  * const tool = found.results.find((candidate) => {
  *   if (!candidate.params) return false;
- *   const names = new Set(candidate.params.map((parameter) => parameter.name));
- *   return names.has('symbol') && candidate.params.every((parameter) =>
- *     !parameter.required || Object.prototype.hasOwnProperty.call(parameters, parameter.name),
- *   );
+ *   const definitions = new Map(candidate.params.map((parameter) => [parameter.name, parameter]));
+ *   if (definitions.size !== candidate.params.length) return false;
+ *   return Object.entries(parameters).every(([name, value]) => {
+ *     const parameter = definitions.get(name);
+ *     return Boolean(parameter && matchesType(parameter.type, value) &&
+ *       (!parameter.enum || parameter.enum.some((allowed) => Object.is(allowed, value))));
+ *   }) && candidate.params.every((parameter) =>
+ *       !parameter.required || Object.prototype.hasOwnProperty.call(parameters, parameter.name));
  * });
  * if (!tool) throw new Error('Inspect promising candidates to obtain a compatible contract.');
  *

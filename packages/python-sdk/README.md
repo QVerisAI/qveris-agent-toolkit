@@ -101,7 +101,32 @@ never pass through the SDK.
 
 ```python
 import asyncio
+import math
 from qveris import QverisClient
+
+def matches_type(kind, value):
+    return {
+        "string": lambda: isinstance(value, str),
+        "integer": lambda: isinstance(value, int) and not isinstance(value, bool),
+        "number": lambda: isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value),
+        "boolean": lambda: isinstance(value, bool),
+        "array": lambda: isinstance(value, list),
+        "object": lambda: isinstance(value, dict),
+    }.get(kind, lambda: False)()
+
+def supports_request(tool, params):
+    if tool.params is None:
+        return False
+    definitions = {p.name: p for p in tool.params}
+    if len(definitions) != len(tool.params):
+        return False
+    return all(not p.required or p.name in params for p in tool.params) and all(
+        (p := definitions.get(name)) is not None
+        and matches_type(p.type, value)
+        and (p.enum is None or any(allowed == value and
+             isinstance(allowed, bool) == isinstance(value, bool) for allowed in p.enum))
+        for name, value in params.items()
+    )
 
 async def main():
     client = QverisClient()
@@ -110,9 +135,7 @@ async def main():
         params = {"city": "London"}
         selected = next(
             (tool for tool in discovered.results
-             if tool.params is not None
-             and {p.name for p in tool.params if p.required}.issubset(params)
-             and set(params).issubset({p.name for p in tool.params})),
+             if supports_request(tool, params)),
             None,
         )
         if selected is None:
@@ -122,9 +145,7 @@ async def main():
             )
             selected = next(
                 (tool for tool in inspected.results
-                 if tool.params is not None
-                 and {p.name for p in tool.params if p.required}.issubset(params)
-                 and set(params).issubset({p.name for p in tool.params})),
+                 if supports_request(tool, params)),
                 None,
             )
         if selected is None:

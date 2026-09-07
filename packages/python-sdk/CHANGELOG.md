@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-09-07
+
+### Fixed
+
+- Reject incompatible Discover candidates in runnable and documented examples when supplied values violate the current parameter type or enum contract.
+
 ## [0.7.1] - 2026-09-07
 
 ### Changed
@@ -103,7 +109,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Generated OpenAPI contract models with drift CI. ([#48])
 - `Agent` runtime: LLM tool loop over the QVeris workflow with streaming events.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.1...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.2...HEAD
+[0.7.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.1...python-sdk-v0.7.2
 [0.7.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.0...python-sdk-v0.7.1
 [0.7.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.6.0...python-sdk-v0.7.0
 [0.6.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.5.0...python-sdk-v0.6.0

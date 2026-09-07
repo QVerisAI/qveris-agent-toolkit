@@ -27,11 +27,25 @@ for (const tool of found.results) {
 }
 
 const parameters: Record<string, unknown> = { symbol: 'AAPL' };
-// 2. Select only a contract with no required inputs missing from this request
+const matchesType = (type: string, value: unknown) => {
+  if (type === 'string') return typeof value === 'string';
+  if (type === 'integer') return typeof value === 'number' && Number.isFinite(value) && Number.isInteger(value);
+  if (type === 'number') return typeof value === 'number' && Number.isFinite(value);
+  if (type === 'boolean') return typeof value === 'boolean';
+  if (type === 'array') return Array.isArray(value);
+  if (type === 'object') return value !== null && typeof value === 'object' && !Array.isArray(value);
+  return false;
+};
+// 2. Select only a contract compatible with every supplied value
 const selected = found.results.find((tool) => {
   if (!tool.params) return false;
-  const names = new Set(tool.params.map((param) => param.name));
-  return Object.keys(parameters).every((name) => names.has(name)) &&
+  const definitions = new Map(tool.params.map((param) => [param.name, param]));
+  if (definitions.size !== tool.params.length) return false;
+  return Object.entries(parameters).every(([name, value]) => {
+    const param = definitions.get(name);
+    return Boolean(param && matchesType(param.type, value) &&
+      (!param.enum || param.enum.some((allowed) => Object.is(allowed, value))));
+  }) &&
     tool.params.every((param) => !param.required || Object.prototype.hasOwnProperty.call(parameters, param.name));
 });
 if (!selected) throw new Error('Inspect candidates before calling: no compatible contract was returned');
