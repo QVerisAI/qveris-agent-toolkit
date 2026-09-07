@@ -494,17 +494,30 @@ export function createQverisTools(options: {
         return jsonResult(classifyQverisError(err));
       }
 
-      discoverTracker.trackResults(
-        "(inspect)",
-        result.tools.map((t) => ({
-          tool_id: t.tool_id,
-          name: t.name,
-          description: t.description,
-          params: t.params,
-        })),
-        undefined,
-        "inspect",
-      );
+      for (const tool of result.tools) {
+        const rememberedContext = rolodex.getStoredContext(tool.tool_id);
+        discoverTracker.trackResults(
+          rememberedContext?.discoveryQuery ?? "(inspect)",
+          [
+            {
+              tool_id: tool.tool_id,
+              name: tool.name,
+              description: tool.description,
+              params: tool.params,
+            },
+          ],
+          rememberedContext?.discoveryId,
+          "inspect",
+        );
+        const meta = discoverTracker.getMeta(tool.tool_id);
+        if (!meta) continue;
+        rolodex.reconcileFreshInspection(tool.tool_id, {
+          name: meta.name,
+          description: meta.description,
+          parameterContract: meta.parameterContract,
+          contractExpiresAt: meta.expiresAt,
+        });
+      }
 
       const tools = result.tools.map((tool) => formatToolForModel(tool));
       const hasSessionContext = tools.some(

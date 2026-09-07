@@ -48,9 +48,12 @@ async def main():
     try:
         # 1. Discover capabilities with natural language (free)
         discovered = await client.discover("weather forecast API", limit=5)
+        params = {"city": "London"}
         tool = next(
             (candidate for candidate in discovered.results
-             if candidate.params is not None and any(p.name == "city" for p in candidate.params)),
+             if candidate.params is not None
+             and {p.name for p in candidate.params if p.required}.issubset(params)
+             and set(params).issubset({p.name for p in candidate.params})),
             None,
         )
 
@@ -62,17 +65,15 @@ async def main():
             )
             tool = next(
                 (candidate for candidate in details.results
-                 if candidate.params is not None and any(p.name == "city" for p in candidate.params)),
+                 if candidate.params is not None
+                 and {p.name for p in candidate.params if p.required}.issubset(params)
+                 and set(params).issubset({p.name for p in candidate.params})),
                 None,
             )
-        if tool is None or tool.params is None:
-            raise RuntimeError("No candidate exposed a current city parameter contract")
+        if tool is None:
+            raise RuntimeError("No candidate exposed a compatible current parameter contract")
 
         # 3. Samples are templates; apply this request's actual business value
-        params = {"city": "London"}
-        missing = [p.name for p in tool.params if p.required and p.name not in params]
-        if missing:
-            raise ValueError(f"Missing business inputs: {missing}")
         result = await client.call(
             tool.tool_id,
             params,

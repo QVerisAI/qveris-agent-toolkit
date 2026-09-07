@@ -599,7 +599,7 @@ The CLI auto-detects agent vs human context:
 ```bash
 # Discover once, then select from the returned contract instead of rank alone
 DISCOVERY=$(qveris discover "weather forecast API" --json)
-TOOL=$(printf '%s' "$DISCOVERY" | jq -r '.results[] | select(any(.params[]?; .name == "city")) | .tool_id' | head -1)
+TOOL=$(printf '%s' "$DISCOVERY" | jq -r '.results[] | select(.params != null and ([.params[].name] | index("city")) != null and ([.params[] | select(.required == true) | .name] - ["city"] | length == 0)) | .tool_id' | head -1)
 SEARCH_ID=$(printf '%s' "$DISCOVERY" | jq -r '.search_id')
 test -n "$TOOL" || { echo "Inspect candidates: no city contract returned" >&2; exit 1; }
 qveris call "$TOOL" --discovery-id "$SEARCH_ID" --params '{"city":"London"}' --json | jq '.result.data'

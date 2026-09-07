@@ -622,6 +622,52 @@ describe("createQverisTools", () => {
     expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/tools/execute"))).toHaveLength(2);
   });
 
+  it("lets fresh inspection renew an expired remembered route and contract", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/search")) return Promise.resolve(fakeJsonResponse(SAMPLE_DISCOVER_RESPONSE));
+      if (url.includes("/tools/by-ids")) return Promise.resolve(fakeJsonResponse(SAMPLE_INSPECT_RESPONSE));
+      if (url.includes("/tools/execute")) return Promise.resolve(fakeJsonResponse(SAMPLE_INVOKE_RESPONSE));
+      return Promise.resolve(fakeJsonResponse({}, 404));
+    });
+    globalThis.fetch = fetchMock;
+    const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() })!;
+    const discover = tools.find((tool) => tool.name === "qveris_discover")!;
+    const inspect = tools.find((tool) => tool.name === "qveris_inspect")!;
+    const callTool = tools.find((tool) => tool.name === "qveris_call")!;
+
+    await discover.execute("d1", { query: "weather forecast API" });
+    await callTool.execute("c1", {
+      tool_id: "openweathermap.weather.execute.v1",
+      params_to_tool: '{"city":"London"}',
+    });
+    vi.advanceTimersByTime(30 * 60 * 1_000 + 1);
+
+    const stale = parseToolResult(
+      await callTool.execute("c2", {
+        tool_id: "openweathermap.weather.execute.v1",
+        params_to_tool: '{"city":"Paris"}',
+      }),
+    );
+    expect(stale.error_type).toBe("tool_not_discovered");
+
+    await inspect.execute("i1", { tool_ids: "openweathermap.weather.execute.v1" });
+    const afterInspect = parseToolResult(
+      await callTool.execute("c3", {
+        tool_id: "openweathermap.weather.execute.v1",
+        params_to_tool: '{"city":"Paris"}',
+      }),
+    );
+
+    expect(afterInspect.success).toBe(true);
+    const executeBodies = fetchMock.mock.calls
+      .filter(([url]) => String(url).includes("/tools/execute"))
+      .map(([, init]) => parseRequestBody((init as RequestInit).body));
+    expect(executeBodies).toHaveLength(2);
+    expect(executeBodies[1]).toMatchObject({ search_id: "search-abc", parameters: { city: "Paris" } });
+  });
+
   it("requires metadata refresh before reusing a successful route whose contract was omitted", async () => {
     const withoutContract = {
       ...SAMPLE_DISCOVER_RESPONSE,

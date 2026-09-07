@@ -123,12 +123,14 @@ async def main():
     client = QverisClient()
     try:
         discovered = await client.discover("weather forecast API", limit=5)
+        params = {"city": "北京"}
         selected = next(
             (
                 candidate
                 for candidate in discovered.results
                 if candidate.params is not None
-                and any(parameter.name == "city" for parameter in candidate.params)
+                and {parameter.name for parameter in candidate.params if parameter.required}.issubset(params)
+                and set(params).issubset({parameter.name for parameter in candidate.params})
             ),
             None,
         )
@@ -142,15 +144,16 @@ async def main():
                     candidate
                     for candidate in inspected.results
                     if candidate.params is not None
-                    and any(parameter.name == "city" for parameter in candidate.params)
+                    and {parameter.name for parameter in candidate.params if parameter.required}.issubset(params)
+                    and set(params).issubset({parameter.name for parameter in candidate.params})
                 ),
                 None,
             )
         if selected is None:
-            raise RuntimeError("没有候选能力提供包含 city 字段的当前契约")
+            raise RuntimeError("没有候选能力提供兼容的当前参数契约")
         result = await client.call(
             selected.tool_id,
-            {"city": "北京"},
+            params,
             search_id=discovered.search_id,
         )
         print(result.execution_id, result.success, result.billing)

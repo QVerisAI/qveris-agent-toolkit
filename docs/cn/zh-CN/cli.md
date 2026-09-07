@@ -546,7 +546,7 @@ CLI 自动检测 Agent 与人类使用场景：
 ```bash
 # Discover 一次，再按返回契约选择，不能只取首个结果
 DISCOVERY=$(qveris discover "weather forecast API" --json)
-TOOL=$(printf '%s' "$DISCOVERY" | jq -r '.results[] | select(any(.params[]?; .name == "city")) | .tool_id' | head -1)
+TOOL=$(printf '%s' "$DISCOVERY" | jq -r '.results[] | select(.params != null and ([.params[].name] | index("city")) != null and ([.params[] | select(.required == true) | .name] - ["city"] | length == 0)) | .tool_id' | head -1)
 SEARCH_ID=$(printf '%s' "$DISCOVERY" | jq -r '.search_id')
 test -n "$TOOL" || { echo "需要 Inspect：Discover 未返回 city 参数契约" >&2; exit 1; }
 qveris call "$TOOL" --discovery-id "$SEARCH_ID" --params '{"city":"London"}' --json | jq '.result.data'

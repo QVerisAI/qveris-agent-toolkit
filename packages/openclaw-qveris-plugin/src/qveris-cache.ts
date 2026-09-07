@@ -163,6 +163,34 @@ export function makeToolRolodex(options: { ttlMs?: number; enabled?: boolean } =
     entry.expiresAt = Date.now() + ttlMs;
   }
 
+  function getStoredContext(toolId: string): { discoveryQuery: string; discoveryId?: string } | undefined {
+    const entry = store.get(toolId);
+    if (!entry || !enabled || ttlMs <= 0) return undefined;
+    return { discoveryQuery: entry.discoveryQuery, discoveryId: entry.discoveryId };
+  }
+
+  function reconcileFreshInspection(
+    toolId: string,
+    meta: {
+      name: string;
+      description: string;
+      parameterContract?: unknown[];
+      contractExpiresAt?: number;
+    },
+  ): void {
+    const entry = store.get(toolId);
+    if (!entry || !enabled || ttlMs <= 0) return;
+
+    // Inspect verifies the same remembered tool directly, so it may refresh an
+    // expired route/contract without changing the intent or success history.
+    entry.name = meta.name;
+    entry.description = meta.description;
+    entry.parameterContract = meta.parameterContract;
+    entry.contractExpiresAt = meta.contractExpiresAt;
+    entry.metadataSource = "inspect";
+    entry.expiresAt = Date.now() + ttlMs;
+  }
+
   function getSummary(discoveryQuery?: string): Array<{
     tool_id: string;
     name: string;
@@ -193,7 +221,16 @@ export function makeToolRolodex(options: { ttlMs?: number; enabled?: boolean } =
     }
   }
 
-  return { record, lookup, isStale, reconcileFreshDiscovery, getSummary, clear };
+  return {
+    record,
+    lookup,
+    isStale,
+    getStoredContext,
+    reconcileFreshDiscovery,
+    reconcileFreshInspection,
+    getSummary,
+    clear,
+  };
 }
 
 // ============================================================================

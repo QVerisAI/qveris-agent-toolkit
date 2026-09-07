@@ -109,6 +109,43 @@ describe("successful capability memory", () => {
     });
     expect(rolodex.lookup("weather.v1")).toBeUndefined();
   });
+
+  it("lets fresh inspection renew an expired route without changing its discovery context", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
+    const rolodex = makeToolRolodex({ ttlMs: 1_000 });
+
+    rolodex.record("weather.v1", {
+      name: "Weather",
+      description: "Current weather",
+      discoveryQuery: "weather forecast API",
+      discoveryId: "search-1",
+      parameterContract: [{ name: "city", required: true }],
+      contractExpiresAt: Date.now() + 1_000,
+      metadataSource: "discover",
+    });
+    vi.advanceTimersByTime(1_001);
+    expect(rolodex.isStale("weather.v1")).toBe(true);
+    expect(rolodex.getStoredContext("weather.v1")).toEqual({
+      discoveryQuery: "weather forecast API",
+      discoveryId: "search-1",
+    });
+
+    rolodex.reconcileFreshInspection("weather.v1", {
+      name: "Fresh Weather",
+      description: "Fresh current weather",
+      parameterContract: [{ name: "city", required: true }],
+      contractExpiresAt: Date.now() + 5_000,
+    });
+
+    expect(rolodex.isStale("weather.v1")).toBe(false);
+    expect(rolodex.lookup("weather.v1")).toMatchObject({
+      discoveryQuery: "weather forecast API",
+      discoveryId: "search-1",
+      metadataSource: "inspect",
+      successCount: 1,
+    });
+  });
 });
 
 describe("discover correlation tracker", () => {

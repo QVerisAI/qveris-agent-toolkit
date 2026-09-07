@@ -489,23 +489,27 @@ When used by agents or in scripts, the CLI auto-detects non-TTY environments:
 
 # Linux / macOS
 DISCOVERY=$(qveris discover "weather forecast API" --json)
-TOOL=$(printf '%s' "$DISCOVERY" | jq -r '.results[] | select(any(.params[]?; .name == "city")) | .tool_id' | head -1)
+TOOL=$(printf '%s' "$DISCOVERY" | jq -r '.results[] | select(.params != null and ([.params[].name] | index("city")) != null and ([.params[] | select(.required == true) | .name] - ["city"] | length == 0)) | .tool_id' | head -1)
 SEARCH_ID=$(printf '%s' "$DISCOVERY" | jq -r '.search_id')
 test -n "$TOOL" || { echo "Inspect candidates: no city contract returned" >&2; exit 1; }
 qveris call "$TOOL" --discovery-id "$SEARCH_ID" --params '{"city":"London"}' --json | jq '.result.data'
 
 # Windows (PowerShell)
 $DISCOVERY = qveris discover "weather forecast API" --json | ConvertFrom-Json
-$TOOL = $DISCOVERY.results | Where-Object { $_.params.name -contains "city" } | Select-Object -First 1
+$TOOL = $DISCOVERY.results | Where-Object {
+  $names = @($_.params.name)
+  $extraRequired = @($_.params | Where-Object { $_.required -eq $true -and $_.name -ne "city" })
+  $null -ne $_.params -and $names -contains "city" -and $extraRequired.Count -eq 0
+} | Select-Object -First 1
 if ($null -eq $TOOL) { throw "Inspect candidates: no city contract returned" }
 qveris call $TOOL.tool_id --discovery-id $DISCOVERY.search_id --params '{"city":"London"}' --json | ConvertFrom-Json | Select-Object -ExpandProperty result | Select-Object -ExpandProperty data
 
  # Windows (CMD, interactive) - requires jq for Windows
-for /f "tokens=*" %i in ('qveris discover "weather forecast API" --json ^| jq -r ".results[] ^| select(any(.params[]?; .name == \"city\")) ^| .tool_id"') do set TOOL=%i
+for /f "tokens=*" %i in ('qveris discover "weather forecast API" --json ^| jq -r ".results[] ^| select(.params != null and ([.params[].name] ^| index(\"city\")) != null and ([.params[] ^| select(.required == true) ^| .name] - [\"city\"] ^| length == 0)) ^| .tool_id"') do set TOOL=%i
 qveris call %TOOL% --params "{\"city\":\"London\"}" --json | jq ".result.data"
 
 # Windows (.bat/.cmd script) - use %%i instead of %i
-for /f "tokens=*" %%i in ('qveris discover "weather forecast API" --json ^| jq -r ".results[] ^| select(any(.params[]?; .name == \"city\")) ^| .tool_id"') do set TOOL=%%i
+for /f "tokens=*" %%i in ('qveris discover "weather forecast API" --json ^| jq -r ".results[] ^| select(.params != null and ([.params[].name] ^| index(\"city\")) != null and ([.params[] ^| select(.required == true) ^| .name] - [\"city\"] ^| length == 0)) ^| .tool_id"') do set TOOL=%%i
 qveris call %TOOL% --params "{\"city\":\"London\"}" --json | jq ".result.data"
 ```
 
