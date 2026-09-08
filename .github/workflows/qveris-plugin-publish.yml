@@ -115,10 +115,10 @@ jobs:
 
             ## Highlights
 
-            - Uses the shortest safe Discover → Call path while keeping Inspect conditional.
-            - Adds session-scoped exact-query discovery caching and TTL-bound successful-Capability memory with explicit refresh and clear controls.
-            - Preserves current parameter contracts and provenance, including safe refresh after Discover or Inspect, without reusing prior business values.
-            - Verifies the exact published Registry artifact against supported OpenClaw runtimes before creating this release.
+            - Confirms the trusted Registry package source during post-publish OpenClaw installation checks.
+            - Adds an immutable tagged-artifact path for publishing the plugin to ClawHub through Trusted Publishing.
+            - Lets ClawHub resolve the package owner from its trusted publisher binding without an unsupported override.
+            - Preserves exact Registry metadata, source-commit, integrity, runtime-manifest, and concrete-tool verification before creating this release.
 
             See [README](packages/openclaw-qveris-plugin/README.md) for usage.
           generate_release_notes: true
