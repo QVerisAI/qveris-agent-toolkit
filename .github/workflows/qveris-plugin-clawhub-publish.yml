@@ -7,7 +7,7 @@ on:
         description: Existing qveris-plugin-v* tag to publish
         required: true
         type: string
-        default: qveris-plugin-v2026.9.8
+        default: qveris-plugin-v2026.9.9
       dry_run:
         description: Validate and preview without publishing
         required: true
