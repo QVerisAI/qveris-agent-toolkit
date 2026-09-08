@@ -45,6 +45,9 @@ test("rejects deployment labels in public copy", () => {
   for (const source of [
     "Use the global hosted endpoint.",
     "Choose the China region.",
+    "Use the China endpoint.",
+    "Connect to the China hosted endpoint.",
+    "Use the China deployment.",
     "MCP Registry 清单登记的是全球服务端点。",
     "中国服务用户请配置以下端点。",
   ]) {
