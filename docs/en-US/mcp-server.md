@@ -48,8 +48,9 @@ Both surfaces map to the same QVeris protocol:
 
 ## Requirements
 
-- A valid `QVERIS_API_KEY`
 - An MCP-compatible client
+- A QVeris account for browser sign-in when using Hosted MCP with OAuth discovery
+- A valid `QVERIS_API_KEY` only for the local stdio setup or the Hosted MCP API-key fallback
 - Node.js `18+` only when using the local stdio fallback
 
 ---
@@ -58,23 +59,22 @@ Both surfaces map to the same QVeris protocol:
 
 ### Hosted MCP (recommended)
 
-Prefer Hosted MCP whenever the client supports remote Streamable HTTP. It uses one managed endpoint and Bearer authentication, with no local package, Node.js process, or server lifecycle to maintain.
+Prefer Hosted MCP whenever the client supports remote Streamable HTTP. It uses one managed endpoint, with no local package, Node.js process, or server lifecycle to maintain.
+
+For clients with MCP OAuth discovery, add the endpoint below and complete browser sign-in when prompted. You do not need to create or paste an API key. The example uses the `mcpServers` wrapper; VS Code uses `servers` instead.
 
 ```json
 {
   "mcpServers": {
     "qveris": {
       "type": "http",
-      "url": "https://mcp.qveris.ai/mcp",
-      "headers": {
-        "Authorization": "Bearer YOUR_QVERIS_API_KEY"
-      }
+      "url": "https://mcp.qveris.ai/mcp"
     }
   }
 }
 ```
 
-See the [Hosted MCP page](https://qveris.ai/hosted-mcp) for a copy-ready endpoint and client-specific guidance. Use the local stdio setup below only when your client does not support remote Streamable HTTP.
+If your remote client does not support OAuth discovery, use the [Hosted MCP API-key fallback](#hosted-mcp-details). See the [Hosted MCP page](https://qveris.ai/hosted-mcp) for a copy-ready endpoint and client-specific guidance. Use the local stdio setup below only when your client does not support remote Streamable HTTP.
 
 ### Local stdio fallback
 
@@ -205,14 +205,43 @@ GitHub Copilot's `mcp.json` uses a top-level `servers` object, not `mcpServers`.
 
 ##### Hosted MCP configuration
 
+The MCP Registry manifest registers the global hosted endpoint. After this
+manifest is released and included in the VS Code MCP Gallery, installing QVeris
+from the Gallery will use that endpoint and discover OAuth automatically.
+Complete the browser sign-in when prompted. Gallery inclusion is controlled by
+GitHub; you can also configure the same endpoint directly in `.vscode/mcp.json`:
+
 ```json
 {
   "servers": {
     "qveris": {
       "type": "http",
+      "url": "https://mcp.qveris.ai/mcp"
+    }
+  }
+}
+```
+
+For the API-key fallback in VS Code, keep the `servers` wrapper and use a
+password input so the key is stored by VS Code instead of committed to the
+workspace:
+
+```json
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "qveris-api-key",
+      "description": "QVeris API key",
+      "password": true
+    }
+  ],
+  "servers": {
+    "qveris": {
+      "type": "http",
       "url": "https://mcp.qveris.ai/mcp",
       "headers": {
-        "Authorization": "Bearer your-api-key-here"
+        "Authorization": "Bearer ${input:qveris-api-key}"
       }
     }
   }
@@ -256,7 +285,11 @@ QVeris provides a remote Streamable HTTP MCP service. It is the preferred MCP co
 https://mcp.qveris.ai/mcp
 ```
 
-Add the endpoint to a remote-MCP-compatible client and send your QVeris API key on every request:
+Clients with MCP OAuth discovery can add the endpoint and complete browser sign-in as shown in the quick start, without creating an API key.
+
+### API-key fallback
+
+For remote MCP clients without OAuth discovery, use the following configuration to send your QVeris API key on every request:
 
 ```json
 {
@@ -272,13 +305,13 @@ Add the endpoint to a remote-MCP-compatible client and send your QVeris API key 
 }
 ```
 
-Claude Code can add it from the command line:
+To use this API-key fallback in Claude Code, add it from the command line:
 
 ```bash
 claude mcp add --transport http qveris https://mcp.qveris.ai/mcp --scope user --header "Authorization: Bearer YOUR_QVERIS_API_KEY"
 ```
 
-Setup flow:
+API-key setup flow:
 
 1. Create a key on [Dashboard / API Keys](/account?page=api-keys).
 2. Add the endpoint and Bearer header to your client. Store the key in a secret or environment variable when supported; never commit it.

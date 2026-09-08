@@ -19,6 +19,13 @@ interface RegistryPackage {
   identifier?: string;
   version?: string;
   transport?: { type?: string };
+  environmentVariables?: RegistryInput[];
+}
+
+interface RegistryIcon {
+  src?: string;
+  mimeType?: string;
+  sizes?: string[];
 }
 
 interface RegistryManifest {
@@ -26,6 +33,7 @@ interface RegistryManifest {
   name?: string;
   title?: string;
   description?: string;
+  icons?: RegistryIcon[];
   version?: string;
   remotes?: RegistryRemote[];
   packages?: RegistryPackage[];
@@ -55,18 +63,26 @@ describe('MCP Registry manifest', () => {
 
     expect(manifest.title).toBe('QVeris');
     expect(manifest.description).toContain('Discover, inspect, quote, and call');
+    expect(manifest.icons).toContainEqual({
+      src: 'https://raw.githubusercontent.com/QVerisAI/qveris-agent-toolkit/main/assets/logo-color.png',
+      mimeType: 'image/png',
+      sizes: ['512x512'],
+    });
     expect(hosted?.url).toBe('https://mcp.qveris.ai/mcp');
     expect(local?.transport?.type).toBe('stdio');
     expect(local?.version).toBe(manifest.version);
   });
 
-  it('declares the Hosted API key as a required secret Authorization header', () => {
+  it('uses OAuth discovery for Hosted MCP and keeps the local API key secret', () => {
     const manifest = loadRegistryManifest();
-    const authorization = manifest.remotes?.[0]?.headers?.find((header) => header.name === 'Authorization');
+    const hosted = manifest.remotes?.find((remote) => remote.url === 'https://mcp.qveris.ai/mcp');
+    const local = manifest.packages?.find((entry) => entry.identifier === '@qverisai/mcp');
+    const apiKey = local?.environmentVariables?.find((variable) => variable.name === 'QVERIS_API_KEY');
 
-    expect(authorization).toEqual({
-      name: 'Authorization',
-      description: 'Bearer QVeris API key (format: Bearer YOUR_QVERIS_API_KEY)',
+    expect(hosted).toBeDefined();
+    expect(hosted?.headers ?? []).toEqual([]);
+    expect(apiKey).toMatchObject({
+      name: 'QVERIS_API_KEY',
       isRequired: true,
       isSecret: true,
     });

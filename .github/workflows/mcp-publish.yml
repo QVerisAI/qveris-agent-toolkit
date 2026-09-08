@@ -4,7 +4,7 @@ on:
   workflow_dispatch: # run the test matrix on demand (publish still requires a tag)
   push:
     tags:
-      - "mcp-v*" # Trigger on tags like mcp-v0.1.3, mcp-v1.0.0
+      - 'mcp-v*' # Trigger on tags like mcp-v0.1.3, mcp-v1.0.0
 
 permissions:
   contents: write # For creating GitHub Releases
@@ -35,7 +35,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
+          cache: 'npm'
           cache-dependency-path: packages/mcp/package-lock.json
 
       - name: Install dependencies
@@ -142,7 +142,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          name: "QVeris MCP Server v${{ env.VERSION }}"
+          name: 'QVeris MCP Server v${{ env.VERSION }}'
           body_path: ${{ runner.temp }}/release-notes.md
           generate_release_notes: true
 
@@ -176,6 +176,20 @@ jobs:
             const packageEntry = manifest.packages?.find((entry) => entry.identifier === "@qverisai/mcp");
             if (manifest.version !== tagVersion || packageEntry?.version !== tagVersion) {
               throw new Error(`server.json versions must match tag ${tagVersion}`);
+            }
+            if (manifest.title !== "QVeris") {
+              throw new Error("server.json must declare the QVeris display title");
+            }
+            const remoteEntry = manifest.remotes?.find(
+              (entry) => entry.url === "https://mcp.qveris.ai/mcp",
+            );
+            if (remoteEntry?.type !== "streamable-http") {
+              throw new Error("server.json must declare the hosted Streamable HTTP endpoint");
+            }
+            if (remoteEntry.headers?.length) {
+              throw new Error(
+                "hosted MCP must rely on OAuth discovery instead of prompting for manual headers",
+              );
             }
             const names = packageEntry.environmentVariables?.map(({ name }) => name) ?? [];
             if (!names.includes("QVERIS_API_KEY") || !names.includes("QVERIS_BASE_URL")) {

@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- Added a logo to the MCP Registry listing and switched the hosted endpoint from a manual API-key prompt to OAuth discovery. Updated requirements, quick starts, and VS Code setup instructions in all three locales, including the API-key fallback and separate China endpoint configuration.
+
 ### Fixed
 
 - Reject incompatible Discover candidates in the runnable Agent loop when supplied values violate the current parameter type or enum contract.

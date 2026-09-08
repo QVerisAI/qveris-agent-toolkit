@@ -9,19 +9,20 @@
     "subfolder": "packages/mcp"
   },
   "websiteUrl": "https://qveris.ai",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/QVerisAI/qveris-agent-toolkit/main/assets/logo-color.png",
+      "mimeType": "image/png",
+      "sizes": [
+        "512x512"
+      ]
+    }
+  ],
   "version": "0.14.3",
   "remotes": [
     {
       "type": "streamable-http",
-      "url": "https://mcp.qveris.ai/mcp",
-      "headers": [
-        {
-          "name": "Authorization",
-          "description": "Bearer QVeris API key (format: Bearer YOUR_QVERIS_API_KEY)",
-          "isRequired": true,
-          "isSecret": true
-        }
-      ]
+      "url": "https://mcp.qveris.ai/mcp"
     }
   ],
   "packages": [

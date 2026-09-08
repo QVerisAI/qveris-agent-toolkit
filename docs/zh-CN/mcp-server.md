@@ -48,8 +48,9 @@
 
 ## 环境要求
 
-- 有效的 `QVERIS_API_KEY`
 - MCP 兼容客户端
+- 使用支持 OAuth 自动发现的托管 MCP 时，需要 QVeris 账户以完成浏览器登录
+- 仅本地 stdio 配置或托管 MCP 的 API 密钥备用方案需要有效的 `QVERIS_API_KEY`
 - 仅在使用本地 stdio 备用方案时需要 Node.js `18+`
 
 ---
@@ -58,23 +59,22 @@
 
 ### 托管 MCP（推荐）
 
-只要客户端支持远程 Streamable HTTP，就应优先使用托管 MCP。它使用一个受管端点和 Bearer 认证，无需维护本地软件包、Node.js 进程或服务器生命周期。
+只要客户端支持远程 Streamable HTTP，就应优先使用托管 MCP。它使用一个受管端点，无需维护本地软件包、Node.js 进程或服务器生命周期。
+
+支持 MCP OAuth 自动发现的客户端可添加以下端点，按提示在浏览器中完成登录，无需创建或粘贴 API 密钥。示例使用 `mcpServers` 外层键；VS Code 应改用 `servers`。
 
 ```json
 {
   "mcpServers": {
     "qveris": {
       "type": "http",
-      "url": "https://mcp.qveris.ai/mcp",
-      "headers": {
-        "Authorization": "Bearer YOUR_QVERIS_API_KEY"
-      }
+      "url": "https://mcp.qveris.ai/mcp"
     }
   }
 }
 ```
 
-可前往[托管 MCP 页面](https://qveris.ai/hosted-mcp)复制端点并查看各客户端的配置说明。只有当客户端不支持远程 Streamable HTTP 时，才使用下方本地 stdio 备用方案。
+如果远程客户端不支持 OAuth 自动发现，请使用[托管 MCP 详细说明](#托管-mcp-详细说明)中的 API 密钥备用方案。可前往[托管 MCP 页面](https://qveris.ai/hosted-mcp)复制端点并查看各客户端的配置说明。只有当客户端不支持远程 Streamable HTTP 时，才使用下方本地 stdio 备用方案。
 
 ### 本地 stdio 备用方案
 
@@ -205,14 +205,37 @@ GitHub Copilot 的 `mcp.json` 使用顶层 `servers` 对象，而不是 `mcpServ
 
 ##### 托管 MCP 配置
 
+MCP Registry 清单登记的是全球服务端点。该清单发布并被 VS Code MCP Gallery 收录后，从 Gallery 安装 QVeris 会使用该端点并自动发现 OAuth。按提示在浏览器中完成登录即可。Gallery 收录由 GitHub 决定；也可以直接在 `.vscode/mcp.json` 中配置同一端点：
+
 ```json
 {
   "servers": {
     "qveris": {
       "type": "http",
+      "url": "https://mcp.qveris.ai/mcp"
+    }
+  }
+}
+```
+
+如需在 VS Code 中使用 API 密钥备用方案，请保留 `servers` 外层键，并通过密码输入保存密钥，避免将密钥提交到工作区：
+
+```json
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "qveris-api-key",
+      "description": "QVeris API 密钥",
+      "password": true
+    }
+  ],
+  "servers": {
+    "qveris": {
+      "type": "http",
       "url": "https://mcp.qveris.ai/mcp",
       "headers": {
-        "Authorization": "Bearer your-api-key-here"
+        "Authorization": "Bearer ${input:qveris-api-key}"
       }
     }
   }
@@ -256,7 +279,11 @@ QVeris 提供远程 Streamable HTTP MCP 托管服务。对于支持它的客户�
 https://mcp.qveris.ai/mcp
 ```
 
-在支持远程 MCP 的客户端中添加服务地址，并在每次请求中发送 QVeris API 密钥：
+支持 MCP OAuth 自动发现的客户端可按快速开始中的说明添加服务地址，并在浏览器中完成登录，无需创建 API 密钥。
+
+### API 密钥备用方案
+
+对于不支持 OAuth 自动发现的远程 MCP 客户端，可使用以下配置，在每次请求中发送 QVeris API 密钥：
 
 ```json
 {
@@ -272,13 +299,13 @@ https://mcp.qveris.ai/mcp
 }
 ```
 
-Claude Code 可直接通过命令行添加：
+如需在 Claude Code 中使用此 API 密钥备用方案，可通过命令行添加：
 
 ```bash
 claude mcp add --transport http qveris https://mcp.qveris.ai/mcp --scope user --header "Authorization: Bearer YOUR_QVERIS_API_KEY"
 ```
 
-接入步骤：
+API 密钥接入步骤：
 
 1. 在[控制台/API 密钥](/account?page=api-keys)创建密钥。
 2. 将服务地址和 Bearer 请求头添加到客户端。客户端支持时，请用密钥管理或环境变量保存 API 密钥，切勿提交到源代码仓库。
