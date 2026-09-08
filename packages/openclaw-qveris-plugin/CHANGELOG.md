@@ -6,9 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+## [2026.9.9] - 2026-09-08
+
 ### Fixed
 
-- Aligned ClawHub Trusted Publishing source attribution with the authorized candidate commit SHA while retaining the immutable release tag for artifact checkout.
+- Aligned ClawHub Trusted Publishing source attribution with the authorized candidate commit SHA while retaining the immutable release tag for artifact checkout. ([#356])
 
 ## [2026.9.8] - 2026-09-08
 
@@ -74,7 +76,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 - First published build with compiled `dist/` output. ([#90])
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.9.8...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.9.9...HEAD
+[2026.9.9]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.9.8...qveris-plugin-v2026.9.9
 [2026.9.8]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.9.7...qveris-plugin-v2026.9.8
 [2026.9.7]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.7.30...qveris-plugin-v2026.9.7
 [2026.7.30]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.7.15...qveris-plugin-v2026.7.30
@@ -93,3 +96,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 [#351]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/351
 [#352]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/352
 [#354]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/354
+[#356]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/356
