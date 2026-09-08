@@ -94,7 +94,8 @@ jobs:
     uses: openclaw/clawhub/.github/workflows/package-publish.yml@d3bde70e3c9373720d4d3e335f9935399ea2c008
     with:
       package_artifact_name: qveris-openclaw-plugin-clawpack
-      owner: qverisai
+      # Trusted Publishing derives the owner from the bound package record;
+      # passing an owner override is intentionally rejected by ClawHub.
       family: code-plugin
       version: ${{ needs.prepare.outputs.version }}
       tags: latest
