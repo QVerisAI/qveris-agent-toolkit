@@ -1,12 +1,12 @@
 # QVeris Cookbook
 
-These recipes show common Discover -> Inspect -> Call patterns. Replace sample ids such as `srch_...`, `exec_...`, and `led_...` with ids returned by your own API responses.
+These recipes use the shortest safe path: Discover -> Call when the current result already contains a complete contract, with Inspect or Probe added only when the task needs them. Replace sample ids such as `srch_...`, `exec_...`, and `led_...` with ids returned by your own API responses.
 
 ## Recipe 1: Add weather context to an agent answer
 
 Use this when a user asks for current weather and your agent needs a reliable external capability.
 
-This fixed recipe queries the exact tool ID so the Inspect and Call steps remain reproducible. Use a natural-language capability query when you want QVeris to rank alternative tools dynamically.
+This fixed recipe queries the exact tool ID. Its Discover response contains the required `q` contract, so it can proceed directly to Call. Use a natural-language capability query when you want QVeris to rank alternative tools dynamically.
 
 ```bash
 export QVERIS_BASE_URL="https://qveris.ai/api/v1"
@@ -16,19 +16,6 @@ curl -sS "$QVERIS_BASE_URL/search" \
   -H "Authorization: Bearer $QVERIS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"query":"openweathermap.weather.execute.v1","limit":3,"session_id":"'"$QVERIS_SESSION_ID"'"}'
-```
-
-Inspect the selected tool before calling:
-
-```bash
-curl -sS "$QVERIS_BASE_URL/tools/by-ids" \
-  -H "Authorization: Bearer $QVERIS_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tool_ids":["openweathermap.weather.execute.v1"],
-    "search_id":"srch_01HZX9QK7J3M9T",
-    "session_id":"'"$QVERIS_SESSION_ID"'"
-  }'
 ```
 
 Call:
@@ -47,6 +34,7 @@ curl -sS "$QVERIS_BASE_URL/tools/execute?tool_id=openweathermap.weather.execute.
 Agent handling notes:
 
 - Keep `search_id`, `execution_id`, and `session_id` in your trace.
+- Inspect before Call if Discover omits the parameter contract or the contract may be stale. Ask for missing business inputs instead of copying sample values.
 - Show a short answer from `result.data`; keep raw JSON in logs or a debug panel.
 - Use usage audit if the user asks whether the call was charged.
 

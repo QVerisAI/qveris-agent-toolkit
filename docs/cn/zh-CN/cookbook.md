@@ -1,12 +1,12 @@
 # QVeris Cookbook
 
-这些示例流程展示常见的发现 -> 检查 -> 调用模式。请将示例中的 `srch_...`、`exec_...`、`led_...` 替换为你自己 API 响应中返回的 ID。
+这些示例采用最短安全路径：当前 Discover 结果已经包含完整契约时直接 Call，仅在任务需要时加入 Inspect 或 Probe。请将示例中的 `srch_...`、`exec_...`、`led_...` 替换为你自己 API 响应中返回的 ID。
 
 ## 示例 1：给智能体回答补充天气上下文
 
 当用户询问实时天气，而智能体需要可靠外部能力时使用。
 
-本固定示例直接查询完整工具 ID，以保证检查和调用步骤可以稳定复现。需要动态比较候选工具时，请改用自然语言能力描述。
+本固定示例直接查询完整工具 ID。Discover 响应已包含必填的 `q` 契约，因此可以直接 Call。需要动态比较候选工具时，请改用自然语言能力描述。
 
 ```bash
 export QVERIS_BASE_URL="https://qveris.cn/api/v1"
@@ -16,19 +16,6 @@ curl -sS "$QVERIS_BASE_URL/search" \
   -H "Authorization: Bearer $QVERIS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"query":"openweathermap.weather.execute.v1","limit":3,"session_id":"'"$QVERIS_SESSION_ID"'"}'
-```
-
-调用前检查选中的工具：
-
-```bash
-curl -sS "$QVERIS_BASE_URL/tools/by-ids" \
-  -H "Authorization: Bearer $QVERIS_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tool_ids":["openweathermap.weather.execute.v1"],
-    "search_id":"srch_01HZX9QK7J3M9T",
-    "session_id":"'"$QVERIS_SESSION_ID"'"
-  }'
 ```
 
 调用：
@@ -47,6 +34,7 @@ curl -sS "$QVERIS_BASE_URL/tools/execute?tool_id=openweathermap.weather.execute.
 智能体处理建议：
 
 - 保留 `search_id`、`execution_id` 和 `session_id` 作为 trace。
+- Discover 未返回参数契约或契约可能过期时，先 Inspect；业务输入缺失时向用户询问，不要照搬样例值。
 - 用 `result.data` 生成简短回答；原始 JSON 放日志或调试面板。
 - 用户询问是否扣费时，用调用历史确认。
 

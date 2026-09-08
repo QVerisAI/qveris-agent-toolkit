@@ -252,7 +252,7 @@ class PublicApiMetadata(BaseModel):
     contract_version: str = Field(
         ...,
         description='Version of the published QVeris REST API contract.',
-        examples=['2026-08-26.1'],
+        examples=['2026-09-07.1'],
         title='Contract Version',
     )
 
@@ -842,8 +842,16 @@ class PublicCapabilityResult(BaseModel):
         description='Human-readable explanation of why this capability was recommended for the query. Returned by Discover.',
     )
     params: Optional[List[PublicToolParameter]] = None
+    output_schema: Optional[Union[Dict[str, Any], List[Any], str, float, bool]] = Field(
+        None,
+        description='Public output schema advertised by the capability when available.',
+    )
     examples: Optional[Dict[str, Any]] = None
     stats: Optional[PublicToolStats] = None
+    has_last_execution: Optional[bool] = Field(
+        None,
+        description='Whether the capability has a recorded execution used as a bounded verification signal.',
+    )
     expected_cost: Optional[str] = Field(
         None,
         description='Pre-call cost estimate returned by Discover/Inspect when available.',
