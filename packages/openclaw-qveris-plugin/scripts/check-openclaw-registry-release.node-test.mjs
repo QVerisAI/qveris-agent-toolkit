@@ -118,12 +118,13 @@ function fixtureOperations({ metadataSequence = [metadata()], installSequence = 
   };
 }
 
-test("pins the Registry package and accepts declared plugin capabilities", () => {
+test("pins the trusted Registry package and explicitly accepts its source and capabilities", () => {
   assert.deepEqual(buildRegistryInstallArgs("@qverisai/qveris@2026.7.30"), [
     "plugins",
     "install",
     "@qverisai/qveris@2026.7.30",
     "--pin",
+    "--force",
     "--accept-capabilities",
   ]);
 });
@@ -423,4 +424,15 @@ test("keeps Registry verification between npm publish and GitHub Release creatio
     workflow.slice(registryIndex, releaseIndex),
     /check:runtime:registry -- --expected-git-head "\$GITHUB_SHA"/,
   );
+});
+
+test("attributes ClawHub trusted publishing to the authorized candidate commit", () => {
+  const workflow = readFileSync(
+    path.join(repositoryRoot, ".github/workflows/qveris-plugin-clawhub-publish.yml"),
+    "utf8",
+  );
+
+  assert.match(workflow, /source_commit: \$\{\{ needs\.prepare\.outputs\.commit \}\}/);
+  assert.match(workflow, /source_ref: \$\{\{ needs\.prepare\.outputs\.commit \}\}/);
+  assert.doesNotMatch(workflow, /source_ref: refs\/tags\/\$\{\{ inputs\.tag \}\}/);
 });

@@ -22,11 +22,18 @@ interface RegistryPackage {
   environmentVariables?: RegistryInput[];
 }
 
+interface RegistryIcon {
+  src?: string;
+  mimeType?: string;
+  sizes?: string[];
+}
+
 interface RegistryManifest {
   $schema?: string;
   name?: string;
   title?: string;
   description?: string;
+  icons?: RegistryIcon[];
   version?: string;
   remotes?: RegistryRemote[];
   packages?: RegistryPackage[];
@@ -56,6 +63,11 @@ describe('MCP Registry manifest', () => {
 
     expect(manifest.title).toBe('QVeris');
     expect(manifest.description).toContain('Discover, inspect, quote, and call');
+    expect(manifest.icons).toContainEqual({
+      src: 'https://raw.githubusercontent.com/QVerisAI/qveris-agent-toolkit/main/assets/logo-color.png',
+      mimeType: 'image/png',
+      sizes: ['512x512'],
+    });
     expect(hosted?.url).toBe('https://mcp.qveris.ai/mcp');
     expect(local?.transport?.type).toBe('stdio');
     expect(local?.version).toBe(manifest.version);

@@ -6,6 +6,23 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+## [2026.9.9] - 2026-09-08
+
+### Fixed
+
+- Aligned ClawHub Trusted Publishing source attribution with the authorized candidate commit SHA while retaining the immutable release tag for artifact checkout. ([#356])
+
+## [2026.9.8] - 2026-09-08
+
+### Added
+
+- Added a manually dispatched ClawHub release workflow that builds an immutable tagged artifact and publishes it through Trusted Publishing with source provenance and Inspector reports. ([#352], [#354])
+
+### Fixed
+
+- Updated post-publish Registry verification to explicitly confirm the trusted package source required by current OpenClaw hosts. ([#351])
+- Let ClawHub resolve the package owner from its trusted publisher binding instead of passing an unsupported owner override. ([#354])
+
 ## [2026.9.7] - 2026-09-07
 
 ### Added
@@ -59,7 +76,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 - First published build with compiled `dist/` output. ([#90])
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.9.7...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.9.9...HEAD
+[2026.9.9]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.9.8...qveris-plugin-v2026.9.9
+[2026.9.8]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.9.7...qveris-plugin-v2026.9.8
 [2026.9.7]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.7.30...qveris-plugin-v2026.9.7
 [2026.7.30]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.7.15...qveris-plugin-v2026.7.30
 [2026.7.15]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.6.4...qveris-plugin-v2026.7.15
@@ -74,3 +93,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 [#283]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/283
 [#347]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/347
 [#348]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/348
+[#351]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/351
+[#352]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/352
+[#354]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/354
+[#356]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/356

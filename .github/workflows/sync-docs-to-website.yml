@@ -149,6 +149,7 @@ jobs:
           node qveris-agent-toolkit/scripts/sync-website-client-versions.mjs
           --toolkit-dir qveris-agent-toolkit
           --website-dir website
+          --source-commit ${{ steps.toolkit.outputs.sha }}
 
       - name: Validate public claims before opening the sync PR
         if: steps.guard.outputs.skip != 'true'

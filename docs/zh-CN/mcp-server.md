@@ -218,7 +218,29 @@ MCP Registry 清单登记的是全球服务端点。该清单发布并被 VS Cod
 }
 ```
 
-不支持 MCP OAuth 自动发现的客户端可使用[托管 MCP 详细说明](#托管-mcp-详细说明)中的 API 密钥请求头配置。
+如需在 VS Code 中使用 API 密钥备用方案，请保留 `servers` 外层键，并通过密码输入保存密钥，避免将密钥提交到工作区：
+
+```json
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "qveris-api-key",
+      "description": "QVeris API 密钥",
+      "password": true
+    }
+  ],
+  "servers": {
+    "qveris": {
+      "type": "http",
+      "url": "https://mcp.qveris.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer ${input:qveris-api-key}"
+      }
+    }
+  }
+}
+```
 
 ##### 本地 stdio 备用方案
 

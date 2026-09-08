@@ -12,7 +12,10 @@
   "icons": [
     {
       "src": "https://raw.githubusercontent.com/QVerisAI/qveris-agent-toolkit/main/assets/logo-color.png",
-      "mimeType": "image/png"
+      "mimeType": "image/png",
+      "sizes": [
+        "512x512"
+      ]
     }
   ],
   "version": "0.14.3",

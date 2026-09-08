@@ -7,6 +7,7 @@ import process from "node:process"
 import { websiteReleaseTag } from "./website-release-tags.mjs"
 
 const VERSION_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/
+const COMMIT_RE = /^[0-9a-f]{40}$/
 const VERSION_REFERENCE_RE = /\bv?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)\b/g
 
 const CLIENTS = [
@@ -50,14 +51,15 @@ const VERSION_SURFACES = [
 ]
 
 function parseArgs(argv) {
-  const args = { toolkitDir: "", websiteDir: "" }
+  const args = { toolkitDir: "", websiteDir: "", sourceCommit: "" }
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]
     if (arg === "--toolkit-dir") args.toolkitDir = argv[++index] ?? ""
     else if (arg === "--website-dir") args.websiteDir = argv[++index] ?? ""
+    else if (arg === "--source-commit") args.sourceCommit = argv[++index] ?? ""
     else if (arg === "--help" || arg === "-h") {
       console.log(
-        "Usage: node scripts/sync-website-client-versions.mjs --toolkit-dir <dir> --website-dir <dir>",
+        "Usage: node scripts/sync-website-client-versions.mjs --toolkit-dir <dir> --website-dir <dir> --source-commit <sha>",
       )
       process.exit(0)
     } else {
@@ -66,6 +68,10 @@ function parseArgs(argv) {
   }
   if (!args.toolkitDir) throw new Error("Missing required --toolkit-dir")
   if (!args.websiteDir) throw new Error("Missing required --website-dir")
+  if (!args.sourceCommit) throw new Error("Missing required --source-commit")
+  if (!COMMIT_RE.test(args.sourceCommit)) {
+    throw new Error("--source-commit must be a full lowercase 40-character Git SHA")
+  }
   return args
 }
 
@@ -138,6 +144,18 @@ async function main() {
     entry.testedVersion = versions[client.key]
   }
   updates.set(registryPath, `${JSON.stringify(registry, null, 2)}\n`)
+
+  const manifestPath = path.join(websiteDir, "docs/.source-manifest.json")
+  const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"))
+  const toolkitSource = manifest?.sources?.toolkit_owned
+  if (!toolkitSource || !Array.isArray(toolkitSource.paths)) {
+    throw new Error("docs/.source-manifest.json must define sources.toolkit_owned.paths")
+  }
+  toolkitSource.source_commit = args.sourceCommit
+  toolkitSource.published_versions = Object.fromEntries(
+    CLIENTS.map(({ key }) => [key, versions[key]]),
+  )
+  updates.set(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
 
   for (const surface of VERSION_SURFACES) {
     const target = path.join(websiteDir, surface.path)

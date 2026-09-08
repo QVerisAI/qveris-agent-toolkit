@@ -2,7 +2,7 @@
 
 Typed TypeScript/JavaScript SDK to discover, inspect, probe, call, and audit real-world API capabilities from your own agents and applications.
 
-`@qverisai/sdk` v0.8.2 is the latest tested release. It is a thin, typed wrapper over the QVeris REST API (`discover`, `inspect`, `probe`, `call`, `credits`, `usage`, `ledger`). It has **zero runtime dependencies** — it uses the platform `fetch` (Node.js 18+) — and mirrors the wire semantics of the [Python SDK](python-sdk.md) and the [MCP server](mcp-server.md).
+`@qverisai/sdk` v0.8.3 is the latest tested release. It is a thin, typed wrapper over the QVeris REST API (`discover`, `inspect`, `probe`, `call`, `credits`, `usage`, `ledger`). It has **zero runtime dependencies** — it uses the platform `fetch` (Node.js 18+) — and mirrors the wire semantics of the [Python SDK](python-sdk.md) and the [MCP server](mcp-server.md).
 
 ## Installation
 
@@ -48,10 +48,24 @@ const qveris = Qveris.fromEnv();
 // 1. Discover capabilities with natural language (free)
 const discovered = await qveris.discover('weather forecast API', { limit: 5 });
 const params: Record<string, unknown> = { city: 'London' };
+const matchesType = (type: string, value: unknown) => {
+  if (type === 'string') return typeof value === 'string';
+  if (type === 'integer') return typeof value === 'number' && Number.isFinite(value) && Number.isInteger(value);
+  if (type === 'number') return typeof value === 'number' && Number.isFinite(value);
+  if (type === 'boolean') return typeof value === 'boolean';
+  if (type === 'array') return Array.isArray(value);
+  if (type === 'object') return value !== null && typeof value === 'object' && !Array.isArray(value);
+  return false;
+};
 const supportsRequest = (candidate: (typeof discovered.results)[number]) => {
   if (!candidate.params) return false;
-  const names = new Set(candidate.params.map((parameter) => parameter.name));
-  return Object.keys(params).every((name) => names.has(name)) &&
+  const definitions = new Map(candidate.params.map((parameter) => [parameter.name, parameter]));
+  if (definitions.size !== candidate.params.length) return false;
+  return Object.entries(params).every(([name, value]) => {
+    const parameter = definitions.get(name);
+    return Boolean(parameter && matchesType(parameter.type, value) &&
+      (!parameter.enum || parameter.enum.some((allowed) => Object.is(allowed, value))));
+  }) &&
     candidate.params.every((parameter) =>
       !parameter.required || Object.prototype.hasOwnProperty.call(params, parameter.name),
     );

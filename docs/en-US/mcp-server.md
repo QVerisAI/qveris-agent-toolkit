@@ -222,8 +222,31 @@ GitHub; you can also configure the same endpoint directly in `.vscode/mcp.json`:
 }
 ```
 
-Clients without MCP OAuth discovery can use the API-key header configuration in
-[Hosted MCP details](#hosted-mcp-details).
+For the API-key fallback in VS Code, keep the `servers` wrapper and use a
+password input so the key is stored by VS Code instead of committed to the
+workspace:
+
+```json
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "qveris-api-key",
+      "description": "QVeris API key",
+      "password": true
+    }
+  ],
+  "servers": {
+    "qveris": {
+      "type": "http",
+      "url": "https://mcp.qveris.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer ${input:qveris-api-key}"
+      }
+    }
+  }
+}
+```
 
 ##### Local stdio fallback
 

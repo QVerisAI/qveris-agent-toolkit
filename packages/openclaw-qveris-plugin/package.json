@@ -1,6 +1,6 @@
 {
   "name": "@qverisai/qveris",
-  "version": "2026.9.7",
+  "version": "2026.9.9",
   "description": "OpenClaw QVeris plugin — capability discovery, tool inspection, and tool calling",
   "repository": {
     "type": "git",

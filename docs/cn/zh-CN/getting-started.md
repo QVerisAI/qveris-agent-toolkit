@@ -120,7 +120,31 @@ Typed client 工作流：
 
 ```python
 import asyncio
+import math
 from qveris import QverisClient
+
+def matches_type(kind, value):
+    return {
+        "string": lambda: isinstance(value, str),
+        "integer": lambda: isinstance(value, int) and not isinstance(value, bool),
+        "number": lambda: isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value),
+        "boolean": lambda: isinstance(value, bool),
+        "array": lambda: isinstance(value, list),
+        "object": lambda: isinstance(value, dict),
+    }.get(kind, lambda: False)()
+
+def supports_request(candidate, params):
+    if candidate.params is None:
+        return False
+    definitions = {p.name: p for p in candidate.params}
+    if len(definitions) != len(candidate.params):
+        return False
+    return all(not p.required or p.name in params for p in candidate.params) and all(
+        (p := definitions.get(name)) is not None and matches_type(p.type, value)
+        and (p.enum is None or any(allowed == value and
+             isinstance(allowed, bool) == isinstance(value, bool) for allowed in p.enum))
+        for name, value in params.items()
+    )
 
 async def main():
     client = QverisClient()
@@ -131,9 +155,7 @@ async def main():
             (
                 candidate
                 for candidate in discovered.results
-                if candidate.params is not None
-                and {parameter.name for parameter in candidate.params if parameter.required}.issubset(params)
-                and set(params).issubset({parameter.name for parameter in candidate.params})
+                if supports_request(candidate, params)
             ),
             None,
         )
@@ -146,9 +168,7 @@ async def main():
                 (
                     candidate
                     for candidate in inspected.results
-                    if candidate.params is not None
-                    and {parameter.name for parameter in candidate.params if parameter.required}.issubset(params)
-                    and set(params).issubset({parameter.name for parameter in candidate.params})
+                    if supports_request(candidate, params)
                 ),
                 None,
             )
@@ -207,10 +227,24 @@ const qveris = Qveris.fromEnv(); // 读取 QVERIS_API_KEY、QVERIS_BASE_URL
 
 const discovered = await qveris.discover('weather forecast API', { limit: 5 });
 const parameters: Record<string, unknown> = { city: 'London' };
+const matchesType = (type: string, value: unknown) => {
+  if (type === 'string') return typeof value === 'string';
+  if (type === 'integer') return typeof value === 'number' && Number.isFinite(value) && Number.isInteger(value);
+  if (type === 'number') return typeof value === 'number' && Number.isFinite(value);
+  if (type === 'boolean') return typeof value === 'boolean';
+  if (type === 'array') return Array.isArray(value);
+  if (type === 'object') return value !== null && typeof value === 'object' && !Array.isArray(value);
+  return false;
+};
 const supportsRequest = (candidate: (typeof discovered.results)[number]) => {
   if (!candidate.params) return false;
-  const names = new Set(candidate.params.map((parameter) => parameter.name));
-  return Object.keys(parameters).every((name) => names.has(name)) &&
+  const definitions = new Map(candidate.params.map((parameter) => [parameter.name, parameter]));
+  if (definitions.size !== candidate.params.length) return false;
+  return Object.entries(parameters).every(([name, value]) => {
+    const parameter = definitions.get(name);
+    return Boolean(parameter && matchesType(parameter.type, value) &&
+      (!parameter.enum || parameter.enum.some((allowed) => Object.is(allowed, value))));
+  }) &&
     candidate.params.every((parameter) =>
       !parameter.required || Object.prototype.hasOwnProperty.call(parameters, parameter.name),
     );
