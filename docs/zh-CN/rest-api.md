@@ -1,6 +1,6 @@
 # QVeris REST API 文档
 
-版本：2026-08-26.1
+版本：2026-09-07.1
 
 公开 REST API 暴露核心 Agent 路径：
 
@@ -39,24 +39,24 @@ Discover、Inspect 和 Probe 免费。Discover 与 Inspect 可能返回 `expecte
 
 `session_id` 可选。建议每个用户任务或会话使用一个稳定值，用于追踪、分析和计费上下文。它不是缓存合同，也不承诺缓存复用或 `session_cache_hit`。
 
-## Discover -> Inspect -> Probe -> Call 集成契约
+## 条件化 Discover -> Call 集成契约
 
-请把 Discover、Inspect 和 Probe 视为 Call 的可信来源。Call 请求应从用户或智能体选中的那条能力结果构造。
+请把所选能力的当前契约作为 Call 的可信来源。完整的 Discover 结果足以支持直接调用时，无需额外步骤；只有结果缺少必要契约、元数据可能过期或需要比较候选时才 Inspect，只有参数需要预检或预算决策需要当前报价时才 Probe。
 
 推荐契约：
 
 1. 为一次用户任务或会话生成稳定的 `session_id`。
 2. 用能力级查询调用 `POST /search`。
 3. 保存返回的 `search_id`。
-4. 从 `results` 中选择一个 `tool_id`。
-5. 使用同一条结果里的 `params`、`one_of_required` 和 `examples.sample_parameters` 构造 `parameters`。
-6. 当 schema 较复杂、成本敏感或参数由 Agent 生成时，用这些参数调用 `POST /tools/probe?tool_id=...`。
+4. 按能力、Provider、时效和费用约束选择结果。不要直接取第一条结果再填入无关样例参数。
+5. 若结果包含完整且当前有效的 `params` 契约，直接据此构造 `parameters`。明确的空契约表示真正的零参数能力；契约缺失或不完整则需要 Inspect。业务输入不足时应向用户询问，不要猜测。
+6. 仅在需要 schema 校验或当前报价时调用 `POST /tools/probe?tool_id=...`。Probe 报价不是硬性费用上限、价格预留或执行授权。
 7. 调用 `POST /tools/execute`，传入 `tool_id`、`parameters`、`search_id`、`session_id`；如果是智能体客户端，也传入 `model`。
-8. 保存 `execution_id`，用于审计和客服排查。
+8. 保存 `execution_id`，用于审计和客服排查。付费 Call 的执行结果未知时不要自动重放。
 
 不要只根据工具名称猜参数。不要复用其他工具、其他 provider 或旧缓存 schema 的参数。如果客户端缓存工具元数据，请使用较短 TTL，或在新搜索返回该工具时刷新 schema。
 
-`examples.sample_parameters` 只是起步示例，不是完整合同。执行前应使用当前 `params` schema 校验最终 `parameters`。
+`examples.sample_parameters` 只是起步示例，不是完整合同或用户意图。保留 required、enum 和 alternative/one-of 约束，但应使用当前请求中的业务值替换样例值。
 
 对于 LLM/智能体集成，建议在 Call 元数据中传入 `model`，例如 `"model": "gpt-4.1"` 或 `"model": "deepseek-v4-pro"`。这有助于把工具选择、参数生成质量和具体模型关联起来。
 
@@ -335,7 +335,7 @@ Inspect 返回与 Discover 相同的能力结果结构，通常包含更完整�
 POST /tools/probe?tool_id={tool_id}
 ```
 
-Probe 会校验候选参数并返回报价，但不会执行能力或消耗积分。`schema` 和 `quote` 检查会返回已实现的判定；`coverage` 与 `sample` 当前会明确返回 unknown 判定。
+Probe 是可选预检：它会在不执行能力、不消耗积分的前提下校验候选参数或返回当前报价。仅在任务需要校验或报价时使用，无需把它作为 Call 的固定前置步骤。`schema` 和 `quote` 检查会返回已实现的判定；`coverage` 与 `sample` 当前会明确返回 unknown 判定。
 
 ### 请求
 
@@ -397,7 +397,7 @@ POST /tools/execute?tool_id={tool_id}
 | `search_id` | string | 推荐 | 返回所选工具的 search id |
 | `session_id` | string | 否 | 追踪和计费上下文 ID；省略时服务可能使用 execution id |
 | `model` | string | 智能体推荐 | 选择工具或生成参数的不含空白或控制字符的非空模型标识，最长 128 个字符，例如 `gpt-4.1`、`deepseek-v4-pro` 或 `claude-sonnet-4` |
-| `parameters` | object | 是 | Inspect 返回的能力专属参数 |
+| `parameters` | object | 是 | 根据 Discover 或 Inspect 返回的所选能力当前契约构造的能力专属参数 |
 | `max_response_size` | integer | 否 | 长响应截断阈值；默认 `20480`，`-1` 表示不截断 |
 | `respond_with` | string | 否 | 服务端结果投影：`full`（默认，与既有版本一致）、`fields:<JSONPath,...>`（以 `result.data` 为根的逗号分隔 JSONPath 表达式，至少一个非空表达式）或 `summary`（返回 schema、大小/行数统计与完整内容的 `full_content_file_url`）|
 

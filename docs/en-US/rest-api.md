@@ -1,6 +1,6 @@
 # QVeris REST API Documentation
 
-Version: 2026-08-26.1
+Version: 2026-09-07.1
 
 The public REST API exposes the core agent path:
 
@@ -39,24 +39,24 @@ The default/full Call response can return compact pre-settlement fields such as 
 
 `session_id` is optional. Use one stable value per user task or conversation for tracing, analytics, and pricing context. It is not a cache contract and does not promise cache reuse or `session_cache_hit`.
 
-## Discover -> Inspect -> Probe -> Call integration contract
+## Conditional Discover -> Call integration contract
 
-Treat Discover, Inspect, and Probe as the source of truth for Call. A Call request should be built from the exact capability result that the user or agent selected.
+Use the selected capability's current contract as the source of truth for Call. A full Discover result can be enough to call directly. Inspect only when the selected result omits required contract detail, its metadata may be stale, or you need to compare candidates. Probe only when the parameters need preflight validation or a budget decision needs a current quote.
 
 Recommended contract:
 
 1. Generate one stable `session_id` for a user task or conversation.
 2. Call `POST /search` with a capability-level query.
 3. Save the returned `search_id`.
-4. Pick a `tool_id` from `results`.
-5. Build `parameters` from that same result's `params`, `one_of_required`, and `examples.sample_parameters`.
-6. Call `POST /tools/probe?tool_id=...` with those parameters when the schema is complex, the cost matters, or an agent generated the values.
+4. Select a result that fits the requested capability, provider, freshness, and cost constraints. Do not take the first result and attach unrelated sample parameters.
+5. If the result has a complete current `params` contract, build `parameters` from it. An explicit empty contract describes a true zero-parameter capability; an omitted or incomplete contract requires Inspect. Ask the user for missing business inputs instead of guessing them.
+6. Call `POST /tools/probe?tool_id=...` only when you need schema validation or a current quote. A Probe quote is not a hard spending cap, price reservation, or authorization to execute.
 7. Call `POST /tools/execute`, passing `tool_id`, `parameters`, `search_id`, `session_id`, and, for agent clients, `model`.
-8. Save `execution_id` for audit and support.
+8. Save `execution_id` for audit and support. Do not automatically replay a paid Call when its execution outcome is unknown.
 
 Do not infer parameters from the tool name alone. Do not reuse parameters from another tool, another provider, or an old cached schema. If you cache tool metadata, use a short TTL or refresh it whenever the selected tool is returned by a new search.
 
-`examples.sample_parameters` is a starter example, not a contract. Validate the final `parameters` against the current `params` schema before executing.
+`examples.sample_parameters` is a starter example, not a contract or user intent. Preserve required, enum, and alternative/one-of constraints, but replace sample business values with values from the current request.
 
 For LLM/agent integrations, include `model` in Call metadata whenever possible, for example `"model": "gpt-4.1"` or `"model": "deepseek-v4-pro"`. This helps correlate tool selection and parameter-generation quality with the model that produced the call.
 
@@ -335,7 +335,7 @@ Unexpected proxy failure:
 POST /tools/probe?tool_id={tool_id}
 ```
 
-Probe validates candidate parameters and returns a quote without executing the capability or consuming credits. The `schema` and `quote` checks return implemented verdicts; `coverage` and `sample` currently return an explicit unknown verdict.
+Probe is an optional preflight that validates candidate parameters or returns a current quote without executing the capability or consuming credits. Use it when validation or a quote is needed for the task; it is not required before Call. The `schema` and `quote` checks return implemented verdicts; `coverage` and `sample` currently return an explicit unknown verdict.
 
 ### Request
 
@@ -397,7 +397,7 @@ You may pass `tool_id` as a query parameter or in the JSON body. Use the query p
 | `search_id` | string | Recommended | Search id that returned the selected tool |
 | `session_id` | string | No | Tracking and pricing-context id; if omitted, the service may use the execution id |
 | `model` | string | Recommended for agents | Non-blank model identifier without whitespace or control characters, at most 128 characters, that selected the tool or generated the parameters, such as `gpt-4.1`, `deepseek-v4-pro`, or `claude-sonnet-4` |
-| `parameters` | object | Yes | Capability-specific parameters from Inspect |
+| `parameters` | object | Yes | Capability-specific parameters built from the selected current contract returned by Discover or Inspect |
 | `max_response_size` | integer | No | Truncate long responses; default `20480`, `-1` disables truncation |
 | `respond_with` | string | No | Server-side result projection: `full` (default, identical to previous releases), `fields:<JSONPath,...>` (comma-separated JSONPath expressions rooted at `result.data`; at least one non-empty expression), or `summary` (schema + size/row statistics + `full_content_file_url` for the complete payload) |
 
