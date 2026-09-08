@@ -41,6 +41,22 @@ test("keeps public endpoints audience-specific and internal markers private", ()
   assert.ok(checkPublicCopy('{"x-qveris-regions": []}', "docs/openapi/example.json").length)
 })
 
+test("rejects deployment labels in public copy", () => {
+  for (const source of [
+    "Use the global hosted endpoint.",
+    "Choose the China region.",
+    "Use the China endpoint.",
+    "Connect to the China hosted endpoint.",
+    "Use the China deployment.",
+    "MCP Registry 清单登记的是全球服务端点。",
+    "中国服务用户请配置以下端点。",
+  ]) {
+    assert.ok(checkPublicCopy(source, "docs/en-US/mcp-server.md").some(f => f.rule === "deployment-label"), source)
+  }
+  assert.deepEqual(checkPublicCopy("Configure the hosted endpoint.", "docs/en-US/mcp-server.md"), [])
+  assert.deepEqual(checkPublicCopy("请配置以下托管端点。", "docs/cn/zh-CN/mcp-server.md"), [])
+})
+
 test("rejects obsolete CLI guarantees while permitting optional dependencies", () => {
   for (const source of ["Zero prompt tokens", "| **Token cost** | Zero — subprocess |", "零 prompt token", "Zero runtime dependencies", "Auto-detects region from key prefix"]) {
     assert.ok(checkPublicCopy(source, "docs/en-US/cli.md").length, source)

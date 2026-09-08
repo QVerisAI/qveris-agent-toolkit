@@ -182,9 +182,7 @@ GitHub Copilot 的 `mcp.json` 使用顶层 `servers` 对象，而不是 `mcpServ
 
 ##### 托管 MCP 配置
 
-MCP Registry 清单登记的是全球服务端点。该清单发布并被 VS Code MCP Gallery 收录后，从 Gallery 安装会连接全球服务，不会自动切换到本页的中国服务端点。Gallery 收录由 GitHub 决定。
-
-中国服务用户请在 `.vscode/mcp.json` 中手动配置以下端点；这与 Gallery 的全球端点配置不同。VS Code 会自动发现 OAuth，按提示在浏览器中完成登录即可：
+请在 `.vscode/mcp.json` 中手动配置以下托管端点。VS Code 会自动发现 OAuth，按提示在浏览器中完成登录即可：
 
 ```json
 {

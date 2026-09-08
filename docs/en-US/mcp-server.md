@@ -205,11 +205,11 @@ GitHub Copilot's `mcp.json` uses a top-level `servers` object, not `mcpServers`.
 
 ##### Hosted MCP configuration
 
-The MCP Registry manifest registers the global hosted endpoint. After this
-manifest is released and included in the VS Code MCP Gallery, installing QVeris
-from the Gallery will use that endpoint and discover OAuth automatically.
-Complete the browser sign-in when prompted. Gallery inclusion is controlled by
-GitHub; you can also configure the same endpoint directly in `.vscode/mcp.json`:
+After the QVeris MCP Registry manifest is released and included in the VS Code
+MCP Gallery, installing QVeris from the Gallery will use the hosted endpoint and
+discover OAuth automatically. Complete the browser sign-in when prompted.
+Gallery inclusion is controlled by GitHub; you can also configure the endpoint
+directly in `.vscode/mcp.json`:
 
 ```json
 {
