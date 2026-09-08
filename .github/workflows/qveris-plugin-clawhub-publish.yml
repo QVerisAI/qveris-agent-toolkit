@@ -102,7 +102,9 @@ jobs:
       categories: models,context,web
       source_repo: QVerisAI/qveris-agent-toolkit
       source_commit: ${{ needs.prepare.outputs.commit }}
-      source_ref: refs/tags/${{ inputs.tag }}
+      # ClawHub's OIDC token authorizes the resolved candidate commit, so both
+      # source fields must use that SHA rather than the human-readable tag ref.
+      source_ref: ${{ needs.prepare.outputs.commit }}
       source_path: packages/openclaw-qveris-plugin
       dry_run: ${{ inputs.dry_run }}
       wait_for_publication: true

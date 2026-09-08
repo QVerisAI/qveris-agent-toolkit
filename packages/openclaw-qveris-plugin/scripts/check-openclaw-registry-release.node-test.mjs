@@ -425,3 +425,14 @@ test("keeps Registry verification between npm publish and GitHub Release creatio
     /check:runtime:registry -- --expected-git-head "\$GITHUB_SHA"/,
   );
 });
+
+test("attributes ClawHub trusted publishing to the authorized candidate commit", () => {
+  const workflow = readFileSync(
+    path.join(repositoryRoot, ".github/workflows/qveris-plugin-clawhub-publish.yml"),
+    "utf8",
+  );
+
+  assert.match(workflow, /source_commit: \$\{\{ needs\.prepare\.outputs\.commit \}\}/);
+  assert.match(workflow, /source_ref: \$\{\{ needs\.prepare\.outputs\.commit \}\}/);
+  assert.doesNotMatch(workflow, /source_ref: refs\/tags\/\$\{\{ inputs\.tag \}\}/);
+});

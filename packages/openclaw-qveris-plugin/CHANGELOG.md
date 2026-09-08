@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Fixed
+
+- Aligned ClawHub Trusted Publishing source attribution with the authorized candidate commit SHA while retaining the immutable release tag for artifact checkout.
+
 ## [2026.9.8] - 2026-09-08
 
 ### Added
