@@ -21,7 +21,8 @@ export async function runHistory(flags) {
   }
 
   if (flags.json) {
-    outputJson(session);
+    const { authorizationContext: _authorizationContext, ...publicSession } = session;
+    outputJson(publicSession);
     return;
   }
 

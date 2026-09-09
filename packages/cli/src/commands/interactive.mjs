@@ -1,5 +1,9 @@
 import { createInterface } from "node:readline";
-import { resolveApiKey } from "../client/auth.mjs";
+import {
+  createAuthorizationContextCredentialProvider,
+  resolveApiKey,
+  resolveAuthorizationContextId,
+} from "../client/auth.mjs";
 import { discoverTools, inspectToolsByIds, callTool, resolveApiBaseUrl } from "../client/api.mjs";
 import { resolveParams } from "../utils/params.mjs";
 import { formatDiscoverResult, formatInspectResult, formatCallResult } from "../output/formatter.mjs";
@@ -17,6 +21,8 @@ export async function runInteractive(flags) {
     baseUrlFlag: flags.baseUrl,
     preferOAuth: apiKey === undefined,
   });
+  const authorizationContext = await resolveAuthorizationContextId({ apiKey });
+  const credentialProvider = createAuthorizationContextCredentialProvider({ apiKey, authorizationContext });
   const limit = parseInt(flags.limit, 10) || 5;
   const discoverTimeout = (parseInt(flags.timeout, 10) || 30) * 1000;
   const callTimeout = (parseInt(flags.timeout, 10) || 60) * 1000;
@@ -67,6 +73,7 @@ export async function runInteractive(flags) {
           const sp = createSpinner("Discovering...");
           const result = await discoverTools({
             apiKey,
+            credentialProvider,
             baseUrl: resolvedBaseUrl,
             query,
             limit,
@@ -85,6 +92,7 @@ export async function runInteractive(flags) {
             discoveryId: result.search_id,
             query,
             baseUrl: resolvedBaseUrl,
+            authorizationContext,
             results: state.results,
           });
           console.log(formatDiscoverResult(result));
@@ -99,6 +107,7 @@ export async function runInteractive(flags) {
           const sp2 = createSpinner("Inspecting...");
           const result = await inspectToolsByIds({
             apiKey,
+            credentialProvider,
             baseUrl: resolvedBaseUrl,
             toolIds: [toolId],
             discoveryId: state.discoveryId,
@@ -123,6 +132,7 @@ export async function runInteractive(flags) {
           const sp3 = createSpinner("Calling...");
           const result = await callTool({
             apiKey,
+            credentialProvider,
             baseUrl: resolvedBaseUrl,
             toolId,
             discoveryId: state.discoveryId,

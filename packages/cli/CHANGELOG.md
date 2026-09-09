@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- Bind persisted Discover indexes and implicit discovery IDs to the exact API endpoint and authorization context that created them, preventing CLI session provenance from crossing accounts or deployments. ([#364])
+
 ## [0.11.2] - 2026-09-07
 
 ### Changed

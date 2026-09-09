@@ -14,6 +14,7 @@ import { runHistory } from "../src/commands/history.mjs";
 import { runInspect } from "../src/commands/inspect.mjs";
 import { runLedger } from "../src/commands/ledger.mjs";
 import { runLogin, runLogout, runWhoami } from "../src/commands/login.mjs";
+import { runProbe } from "../src/commands/probe.mjs";
 import { runUsage } from "../src/commands/usage.mjs";
 import { getConfigPath, setConfigValue } from "../src/config/store.mjs";
 import { main } from "../src/main.mjs";
@@ -146,8 +147,11 @@ test("discover, inspect, call, and history commands cover session-based workflow
 
         const discover = await captureOutput(() => runDiscover("weather forecast", { ...flags, limit: "2" }));
         assert.equal(jsonFromStdout(discover.stdout).search_id, "search-1");
-        const session = JSON.parse(readFileSync(join(configDir, "qveris", ".session.json"), "utf-8"));
+        const serializedSession = readFileSync(join(configDir, "qveris", ".session.json"), "utf-8");
+        const session = JSON.parse(serializedSession);
         assert.equal(session.results[0].tool_id, "weather.tool.v1");
+        assert.match(session.authorizationContext, /^v1:api-key:[a-f0-9]{64}$/);
+        assert.equal(serializedSession.includes("sk-test"), false);
 
         const inspect = await captureOutput(() => runInspect(["1"], flags));
         assert.equal(jsonFromStdout(inspect.stdout).results[0].tool_id, "weather.tool.v1");
@@ -164,6 +168,7 @@ test("discover, inspect, call, and history commands cover session-based workflow
 
         const history = await captureOutput(() => runHistory({ json: true }));
         assert.equal(jsonFromStdout(history.stdout).discoveryId, "search-1");
+        assert.equal(jsonFromStdout(history.stdout).authorizationContext, undefined);
       },
     );
   });
@@ -195,6 +200,88 @@ test("call dry-run validates resolved tool, params, and max size without network
           parameters: { symbol: "AAPL" },
           max_response_size: 2048,
         });
+      },
+    );
+  });
+});
+
+test("session shortcuts fail closed across endpoints and authorization contexts", async () => {
+  await withTempConfig(async () => {
+    let networkCalls = 0;
+    await withMockFetch(
+      (request) => {
+        networkCalls += 1;
+        if (request.url.pathname.endsWith("/search")) {
+          return response({
+            search_id: "search-a",
+            results: [{ tool_id: "weather.tool.v1", name: "Weather" }],
+          });
+        }
+        throw new Error(`unexpected network call ${request.url}`);
+      },
+      async () => {
+        await captureOutput(() =>
+          runDiscover("weather", {
+            apiKey: "sk-account-a",
+            baseUrl: "https://a.test/api/v1",
+            json: true,
+          }),
+        );
+        assert.equal(networkCalls, 1);
+
+        const mismatchedCommands = [
+          () =>
+            runCall("1", {
+              apiKey: "sk-account-a",
+              baseUrl: "https://b.test/api/v1",
+              discoveryId: "explicit-search",
+              params: "{}",
+              dryRun: true,
+              json: true,
+            }),
+          () =>
+            runCall("weather.tool.v1", {
+              apiKey: "sk-account-b",
+              baseUrl: "https://a.test/api/v1",
+              params: "{}",
+              dryRun: true,
+              json: true,
+            }),
+          () =>
+            runInspect(["1"], {
+              apiKey: "sk-account-b",
+              baseUrl: "https://a.test/api/v1",
+              discoveryId: "explicit-search",
+              json: true,
+            }),
+          () =>
+            runProbe("1", {
+              apiKey: "sk-account-a",
+              baseUrl: "https://b.test/api/v1",
+              json: true,
+            }),
+        ];
+        for (const command of mismatchedCommands) {
+          await assert.rejects(
+            command,
+            (error) =>
+              error?.code === "SESSION_EXPIRED" && /another API endpoint or authorization context/.test(error.message),
+          );
+        }
+        assert.equal(networkCalls, 1);
+
+        const explicit = await captureOutput(() =>
+          runCall("weather.tool.v1", {
+            apiKey: "sk-account-b",
+            baseUrl: "https://b.test/api/v1",
+            discoveryId: "search-b",
+            params: "{}",
+            dryRun: true,
+            json: true,
+          }),
+        );
+        assert.equal(jsonFromStdout(explicit.stdout).discovery_id, "search-b");
+        assert.equal(networkCalls, 1);
       },
     );
   });

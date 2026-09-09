@@ -11,7 +11,9 @@ import {
   runInit,
   shellSingleQuote,
 } from "../src/commands/init.mjs";
+import { authorizationContextForApiKey } from "../src/auth/context.mjs";
 import { CliError } from "../src/errors/handler.mjs";
+import { writeSession } from "../src/session/session.mjs";
 
 function withTempConfig(fn) {
   const dir = mkdtempSync(join(tmpdir(), "qveris-cli-init-"));
@@ -111,6 +113,29 @@ test("init helpers respect max size and escape single quotes in shell hints", ()
     ).tool_id,
     "weather",
   );
+});
+
+test("init resume rejects a session from another endpoint or authorization context", async () => {
+  await withTempConfig(async () => {
+    writeSession({
+      discoveryId: "search-a",
+      query: "weather",
+      baseUrl: "https://a.test/api/v1",
+      authorizationContext: authorizationContextForApiKey("sk-account-a"),
+      results: [{ tool_id: "weather.tool.v1", name: "Weather" }],
+    });
+
+    for (const flags of [
+      { apiKey: "sk-account-a", baseUrl: "https://b.test/api/v1" },
+      { apiKey: "sk-account-b", baseUrl: "https://a.test/api/v1" },
+    ]) {
+      await assert.rejects(
+        () => runInit(null, { ...flags, resume: true, json: true, dryRun: true }),
+        (error) =>
+          error?.code === "SESSION_EXPIRED" && /another API endpoint or authorization context/.test(error.message),
+      );
+    }
+  });
 });
 
 test("init dry run records the provided max response size", async () => {

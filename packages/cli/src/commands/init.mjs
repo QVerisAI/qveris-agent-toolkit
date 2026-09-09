@@ -1,11 +1,15 @@
-import { resolveApiKey } from "../client/auth.mjs";
+import {
+  createAuthorizationContextCredentialProvider,
+  resolveApiKey,
+  resolveAuthorizationContextId,
+} from "../client/auth.mjs";
 import { callTool, discoverTools, inspectToolsByIds, resolveApiBaseUrl } from "../client/api.mjs";
 import { nodeCheck } from "../client/preflight.mjs";
 import { resolve } from "../config/resolve.mjs";
 import { CliError } from "../errors/handler.mjs";
 import { bold, cyan, dim, green, red, yellow } from "../output/colors.mjs";
 import { outputJson } from "../output/json.mjs";
-import { readSession, writeSession } from "../session/session.mjs";
+import { readSessionForContext, writeSession } from "../session/session.mjs";
 import { resolveParams } from "../utils/params.mjs";
 
 const DEFAULT_QUERY = "weather forecast API";
@@ -34,6 +38,8 @@ export async function runInit(queryArg, flags) {
     baseUrlFlag: flags.baseUrl,
     preferOAuth: apiKey === undefined,
   });
+  const authorizationContext = await resolveAuthorizationContextId({ apiKey });
+  const credentialProvider = createAuthorizationContextCredentialProvider({ apiKey, authorizationContext });
   record(steps, "auth", "ok", apiKey === undefined ? "OAuth session resolved" : "API key resolved", {
     source: apiKey === undefined ? "oauth session" : resolve("api_key", flags.apiKey || flags.token).source,
     ...(apiKey === undefined ? { type: "oauth" } : { type: "api_key", key: maskKey(apiKey) }),
@@ -51,7 +57,14 @@ export async function runInit(queryArg, flags) {
   const flagParameters = flags.params ? resolveParams(flags.params) : null;
 
   if (flags.resume) {
-    const session = readSession();
+    const resolvedSession = readSessionForContext({ baseUrl, authorizationContext });
+    if (resolvedSession.status === "context_mismatch") {
+      throw new CliError(
+        "SESSION_EXPIRED",
+        "Stored init discovery belongs to another API endpoint or authorization context. Run 'qveris init' without --resume.",
+      );
+    }
+    const session = resolvedSession.session;
     if (!session?.discoveryId || !Array.isArray(session.results) || session.results.length === 0) {
       throw new CliError(
         "SESSION_EXPIRED",
@@ -72,7 +85,7 @@ export async function runInit(queryArg, flags) {
     });
   } else {
     record(steps, "discover", "running", `Discovering capabilities for "${query}"`, { query, limit });
-    discovery = await discoverTools({ apiKey, baseUrl, query, limit, timeoutMs });
+    discovery = await discoverTools({ apiKey, credentialProvider, baseUrl, query, limit, timeoutMs });
     const results = discovery.results ?? [];
     if (results.length === 0) {
       throw new CliError(
@@ -86,6 +99,7 @@ export async function runInit(queryArg, flags) {
       discoveryId,
       query,
       baseUrl,
+      authorizationContext,
       results: results.map((t, i) => ({
         index: i + 1,
         tool_id: t.tool_id,
@@ -114,6 +128,7 @@ export async function runInit(queryArg, flags) {
   );
   const inspected = await inspectToolsByIds({
     apiKey,
+    credentialProvider,
     baseUrl,
     toolIds: candidateToolIds,
     discoveryId,
@@ -163,6 +178,7 @@ export async function runInit(queryArg, flags) {
 
   const callResult = await callTool({
     apiKey,
+    credentialProvider,
     baseUrl,
     toolId: selected.tool_id,
     discoveryId,

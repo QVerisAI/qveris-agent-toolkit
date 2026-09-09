@@ -554,6 +554,7 @@ After each `discover`, the CLI saves session state to `~/.config/qveris/.session
 - Discovery ID
 - Query
 - Base URL
+- Non-secret authorization-context binding
 - Result list (tool_id, name, provider)
 
 Subsequent `inspect` and `call` commands auto-read this session, enabling numeric index shortcuts:
@@ -564,7 +565,7 @@ qveris inspect 1                  # uses index 1 from session
 qveris call 2 --params '{...}'   # uses index 2 + discovery ID
 ```
 
-Sessions expire after 30 minutes. Use `qveris history` to view and `qveris history --clear` to reset.
+Sessions expire after 30 minutes. Numeric indexes, implicit discovery IDs, and `init --resume` are accepted only when the current API endpoint and authorization context exactly match the session that created them. After switching endpoint or account, run Discover again. Use `qveris history` to view and `qveris history --clear` to reset.
 
 This is last-discovery index/provenance state, not semantic intent routing or a complete schema cache. A new Discover replaces the indexes. Build each Call's business values from the current request, and Inspect if the saved summary does not contain the contract needed to do so safely.
 
