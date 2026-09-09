@@ -139,6 +139,9 @@ export async function qverisCall(params: {
   try {
     const res = await fetch(`${params.baseUrl}/tools/execute?tool_id=${encodeURIComponent(params.toolId)}`, {
       method: "POST",
+      // A 307/308 would otherwise replay the paid POST at another location.
+      // Reject every redirect and surface the outcome as unknown instead.
+      redirect: "error",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${params.apiKey}`,
