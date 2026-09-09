@@ -245,6 +245,25 @@ test('does not infer non-empty results when a successful legacy call lacks evide
   assert.equal(summary.models[0].workflow_success_task_cluster_bootstrap_95, null);
 });
 
+test('reports result non-emptiness among successful calls only', () => {
+  const successful = {
+    ...resultRecord({ taskId: task.id }),
+    run_id: 'run-successful-result',
+    trial: 1,
+    call: { attempted: true, success: true, result_nonempty: true },
+  };
+  const failed = {
+    ...resultRecord({ taskId: task.id }),
+    run_id: 'run-failed-call',
+    trial: 2,
+    call: { attempted: true, success: false, result_nonempty: false },
+  };
+
+  const summary = scoreRecords([task], [successful, failed]);
+  assert.equal(summary.models[0].call_success_rate, 0.5);
+  assert.equal(summary.models[0].result_nonempty_rate, 1);
+});
+
 test('scores aliases with task-versioned accepted values', () => {
   const btcTask = {
     id: 'crypto-price',

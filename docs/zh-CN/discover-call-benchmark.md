@@ -50,32 +50,35 @@ tool 只保留摘要。参数质量仅以必填参数完整率和任务约束准
 
 ### 当前正式 configured-model 基线
 
-2026-07-24 的运行是首个使用修正后 `discover-call-v2`、不可变 `tasks/v4.jsonl`、每个任务三个
-trial、真实调用并完整保留失败 trial 的正式 configured-model 基线。
+2026-09-09 的发布评测使用修正后的 `discover-call-v2`、不可变 `tasks/v4.jsonl`、每个任务三个
+trial、真实调用，并完整保留失败 trial。两条 lane 均包含全部 54 条计划记录，没有选择性重跑。
 
-| 2026-07-24 基线 | Curated reference route | `gpt-5.6-sol` configured model |
+| 2026-09-09 基线 | Curated reference route | `gpt-5.6-sol` configured model |
 | --- | ---: | ---: |
-| 完成参数化并执行 | 51 / 54 | 52 / 54 |
-| Selection grounded | 94.44% | 100% |
-| Inspection grounded | 94.44% | 100% |
+| 完成参数化并执行 | 48 / 54 | 54 / 54 |
+| Selection grounded | 88.89% | 100% |
+| Inspection grounded | 88.89% | 100% |
 | 必填参数准确率 | 100% | 100% |
-| 任务约束准确率 | 94.44% | 88.89% |
-| call 成功率 | 100%（51 / 51） | 100%（52 / 52） |
-| 结果非空率 | 100%（51 / 51） | 100%（52 / 52） |
-| 严格工作流成功率 | 94.44%（51 / 54） | 88.89%（48 / 54） |
-| 工作流区间 | 83.33%–100% | 72.22%–100% |
+| 任务约束准确率 | 88.89% | 90.74% |
+| call 成功率 | 97.92%（47 / 48） | 100%（54 / 54） |
+| 成功调用中的结果非空率 | 100%（47 / 47） | 100%（54 / 54） |
+| 严格工作流成功率 | 87.04%（47 / 54） | 90.74%（49 / 54） |
+| 工作流区间 | 70.37%–100% | 77.78%–100% |
 
-strict benchmark gap 为 **3 / 54 = 5.56 个百分点**。它不是纯 routing 差值：两条 lane 都观察到
-API revision `2026-07-23.2`，但 API 未报告 catalog revision，且 catalog-observation 摘要不同。
-两个区间也存在重叠，因此这组 18 任务基线不能证明差异具有统计显著性。
+strict benchmark gap 为 **-2 / 54 = -3.70 个百分点**。负号表示 configured model 在本次样本中
+取得了更高的严格成功率。它不是纯 routing 差值：两条 lane 都观察到 API revision
+`2026-09-07.1`，API 未报告 catalog revision，而且顺序执行得到的 catalog-observation 摘要不同。
+task-cluster 区间存在重叠，因此这组 18 任务基线不能证明差异具有统计显著性。
 
-reference 的三次失败均为东京时区目录覆盖缺口。configured model 有六次严格失败：三次东京约束
-不匹配、两次 domain-intelligence `tool_use_rejected` adapter 失败，以及一次 domain-intelligence
-约束不匹配。两条 lane 的所有实际调用都返回 success 且结果非空。
+reference 在三次东京时区 trial 和三次市场假日 trial 中均未在 Top 10 找到预设候选；另有一次
+地理编码 Call 返回失败 envelope。configured model 完成了 54 次成功且结果非空的 Call；其五次
+严格失败均为约束不匹配：三次东京时区、一次伦敦天气和一次域名情报。调用成功不能覆盖这些参数
+构造错误。
 
 configured lane 使用 `gpt-5.6-sol`、medium reasoning、Codex CLI 0.144.1，以及 toolkit revision
-`a7f2aa60ef143dbbb35eaf9006ed8123d778fb13`。provider model revision 为 `unreported`，因此这是
-正式 configured-model 基线，而不是 pinned-model snapshot。
+`0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778`。provider model revision 为 `unreported`，因此这是
+正式 configured-model 基线，而不是 pinned-model snapshot。2026-07-24 基线仍保留在结果索引中，
+作为已被取代的上一版正式样本。
 
 ### 历史诊断结果
 

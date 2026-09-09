@@ -351,24 +351,31 @@ be presented as product performance.
 `cadence.json` is the reviewed, immutable input for coordinated client-release
 sampling. It fixes the task version, three-trial denominator, Top-K limit,
 reference route, configured model, reasoning effort, adapter paths, and exact
-CLI version. With the current 18-task, two-lane configuration, the protected
-workflow permits at most 108 tool calls.
+CLI version. The current 18-task, two-lane configuration permits at most 108
+tool calls.
 
-After all four coordinated publish workflows succeed,
-`release-client-packages.mjs` dispatches
-`.github/workflows/discover-call-cadence.yml` for their shared commit. The job
-waits for explicit approval in the `benchmark-production` environment before
-it can access credentials or make paid calls. Raw records remain in the
-ephemeral runner. Successful runs are sanitized and validated, then uploaded
-as a named Actions artifact; it contains the public records and a standalone
-result section, not a complete result index. The workflow never commits
-directly to `main` or creates a result branch. A rerun requires a fresh
-protected-environment approval and is a deliberate new sample, not an
-automatic retry.
+After all four coordinated publish workflows succeed, a maintainer runs both
+lanes locally from a clean checkout of their shared commit. The model adapter
+uses the model CLI's local login; QVeris and model credentials are never copied
+to GitHub Actions. Raw checkpoint records stay outside the repository.
 
-Before a maintainer promotes an artifact into a normal reviewable PR, they must
-insert its result section into the latest result index and confirm failure
-classification, catalog/API comparability, model-revision wording, and the
-matching English/Chinese headline documentation. A provider revision of
-`unreported` must remain a configured-model result rather than a pinned-model
-claim.
+Before making calls, print the validated local plan from the repository root:
+
+```bash
+RELEASE_SHA="$(git rev-parse HEAD)"
+node scripts/benchmark-release-cadence.mjs plan --release-sha "$RELEASE_SHA"
+```
+
+Use `release_sha` for each runner's `--toolkit-revision`. For
+`--adapter-revision`, use the distinct decorated values emitted as
+`reference_adapter_revision` and `configured_adapter_revision`; never pass the
+bare SHA. The current cadence derives `<release_sha>/reference-v1` and
+`<release_sha>/codex-cli-0.144.1/medium`, respectively.
+
+The maintainer generates `public-artifact-v1` run/summary pairs, validates the
+complete denominator and protected-field policy, and proposes only the
+sanitized artifacts and standalone result section in a normal reviewable PR.
+No failed trial may be selectively retried. Reviewers must confirm failure
+classification, catalog/API comparability, model-revision wording, and matching
+English/Chinese headline documentation. A provider revision of `unreported`
+must remain a configured-model result rather than a pinned-model claim.

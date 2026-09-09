@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "methodology": "discover-call-v1",
-  "generated_at": "2026-07-23T15:53:48.739Z",
+  "methodology": "discover-call-v2",
+  "generated_at": "2026-09-09T12:25:17.772Z",
   "models": [
     {
       "model": "gpt-5.6-sol",
@@ -9,32 +9,31 @@
       "tasks": 18,
       "trials_per_task": 3,
       "runs": 54,
-      "completed": 51,
-      "executed": 51,
+      "completed": 54,
+      "executed": 54,
       "selection_grounded_rate": 1,
       "inspection_grounded_rate": 1,
       "required_parameter_accuracy": 1,
-      "constraint_accuracy": 0.8889,
-      "call_success_rate": 0.8824,
+      "constraint_accuracy": 0.9074,
+      "call_success_rate": 1,
       "result_nonempty_rate": 1,
-      "pre_result_gate_workflow_success_rate": 0.7778,
-      "workflow_success_rate": 0.7778,
-      "workflow_success_task_cluster_bootstrap_95": [0.5556, 0.9444],
+      "pre_result_gate_workflow_success_rate": 0.9074,
+      "workflow_success_rate": 0.9074,
+      "workflow_success_task_cluster_bootstrap_95": [
+        0.7778,
+        1
+      ],
       "failures_by_stage": {
-        "parameterize": 3,
-        "call": 6,
-        "adapter": 3
+        "parameterize": 5
       },
       "failures_by_reason": {
-        "constraint_mismatch": 3,
-        "tool_returned_failure": 6,
-        "tool_use_rejected": 3
+        "constraint_mismatch": 5
       }
     }
   ],
   "records": [
     {
-      "run_id": "371aaf4e-0615-4710-88dc-5c67e8f30685",
+      "run_id": "ae02aefa-7a2e-4d9e-a3e1-f5dd643ca6c7",
       "task_id": "weather-london",
       "model": "gpt-5.6-sol",
       "trial": 1,
@@ -53,13 +52,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -71,7 +70,7 @@
       }
     },
     {
-      "run_id": "6c8d58e4-e962-49b6-8f06-1fb22482cf5f",
+      "run_id": "6c305d23-076e-42da-be7f-d3cf510e2d36",
       "task_id": "weather-london",
       "model": "gpt-5.6-sol",
       "trial": 2,
@@ -80,23 +79,23 @@
       "selection_grounded": true,
       "inspection_grounded": true,
       "required_parameter_accuracy": 1,
-      "constraint_accuracy": 1,
+      "constraint_accuracy": 0,
       "call_success": true,
       "result_nonempty": true,
-      "pre_result_gate_workflow_success": true,
-      "workflow_success": true,
+      "pre_result_gate_workflow_success": false,
+      "workflow_success": false,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -108,7 +107,7 @@
       }
     },
     {
-      "run_id": "0e761080-a3c5-4e82-82e2-cb93f97e962f",
+      "run_id": "9e47651a-aed0-4afe-bf56-a2f032b70efe",
       "task_id": "weather-london",
       "model": "gpt-5.6-sol",
       "trial": 3,
@@ -127,13 +126,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -145,7 +144,7 @@
       }
     },
     {
-      "run_id": "f36b9c33-7310-420d-bc8f-26963eb5b722",
+      "run_id": "54335352-81c2-4f08-9166-a1602def0ea3",
       "task_id": "stock-aapl",
       "model": "gpt-5.6-sol",
       "trial": 1,
@@ -164,13 +163,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -182,7 +181,7 @@
       }
     },
     {
-      "run_id": "478620bd-257e-4f3f-9faf-e5695f06fe8d",
+      "run_id": "93c1f577-9994-423c-b9bf-a616fd442613",
       "task_id": "stock-aapl",
       "model": "gpt-5.6-sol",
       "trial": 2,
@@ -201,13 +200,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -219,7 +218,7 @@
       }
     },
     {
-      "run_id": "0a54cf62-5bd6-4137-bc8b-0a1e687b5b1b",
+      "run_id": "99f2a24f-e8dd-47ee-b8bf-da36e3064762",
       "task_id": "stock-aapl",
       "model": "gpt-5.6-sol",
       "trial": 3,
@@ -238,13 +237,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -256,7 +255,7 @@
       }
     },
     {
-      "run_id": "b93e6ec7-aa16-4fa5-b3f9-00e9d729a2f3",
+      "run_id": "461839a3-4cd4-4523-9f58-c581464277b5",
       "task_id": "exchange-usd-eur",
       "model": "gpt-5.6-sol",
       "trial": 1,
@@ -275,13 +274,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -293,7 +292,7 @@
       }
     },
     {
-      "run_id": "db14c6bf-4780-47db-9af9-e7d8aa2988ff",
+      "run_id": "dc8b0273-2063-4d4d-b021-6f40e22ed18e",
       "task_id": "exchange-usd-eur",
       "model": "gpt-5.6-sol",
       "trial": 2,
@@ -312,13 +311,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -330,7 +329,7 @@
       }
     },
     {
-      "run_id": "886e6db9-fa73-4f8e-9bee-1df89f6cd2ca",
+      "run_id": "9785122e-4b7b-46af-9a58-012c784f6e80",
       "task_id": "exchange-usd-eur",
       "model": "gpt-5.6-sol",
       "trial": 3,
@@ -349,13 +348,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -367,7 +366,7 @@
       }
     },
     {
-      "run_id": "58e58f43-855f-4ebf-a00e-451235a45f93",
+      "run_id": "b0fc23df-8754-41dc-9436-42c6ef08f837",
       "task_id": "news-ai",
       "model": "gpt-5.6-sol",
       "trial": 1,
@@ -386,13 +385,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -404,7 +403,7 @@
       }
     },
     {
-      "run_id": "512dc6cf-6366-4973-b4aa-fea5ddad95ff",
+      "run_id": "14d7d3f7-dfd5-44bb-a3f7-e7f1dbbb3975",
       "task_id": "news-ai",
       "model": "gpt-5.6-sol",
       "trial": 2,
@@ -423,13 +422,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -441,7 +440,7 @@
       }
     },
     {
-      "run_id": "42fd8322-85bc-4cd3-bff3-99382b9ee47d",
+      "run_id": "df07b6cd-30c7-405e-a2d6-23c4a41ccac2",
       "task_id": "news-ai",
       "model": "gpt-5.6-sol",
       "trial": 3,
@@ -460,13 +459,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -478,7 +477,7 @@
       }
     },
     {
-      "run_id": "45e748b3-bd65-4f13-a226-9305abcb16ac",
+      "run_id": "ac1aec36-7c79-41a4-bae7-fa6141e76f77",
       "task_id": "papers-climate",
       "model": "gpt-5.6-sol",
       "trial": 1,
@@ -497,13 +496,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -515,7 +514,7 @@
       }
     },
     {
-      "run_id": "44d32825-78ff-4068-a63c-42c43b528904",
+      "run_id": "62da862e-4134-4d8b-8549-90c1ae84b5d2",
       "task_id": "papers-climate",
       "model": "gpt-5.6-sol",
       "trial": 2,
@@ -534,13 +533,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -552,7 +551,7 @@
       }
     },
     {
-      "run_id": "2a9c4066-3f0f-4bc9-ace4-c89d9914f323",
+      "run_id": "2c53d108-0b2e-45d7-a6c8-a905e0439885",
       "task_id": "papers-climate",
       "model": "gpt-5.6-sol",
       "trial": 3,
@@ -571,13 +570,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -589,7 +588,7 @@
       }
     },
     {
-      "run_id": "973bb4c3-fd62-4528-910b-d4e9d9f13335",
+      "run_id": "b51275cd-96e2-4847-a94f-b24151388e31",
       "task_id": "timezone-tokyo",
       "model": "gpt-5.6-sol",
       "trial": 1,
@@ -608,13 +607,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -626,7 +625,7 @@
       }
     },
     {
-      "run_id": "c4cdd1fd-1b64-4aab-b0f1-bf410779e959",
+      "run_id": "6868e82a-9b93-4853-9ca6-bfca63aec065",
       "task_id": "timezone-tokyo",
       "model": "gpt-5.6-sol",
       "trial": 2,
@@ -645,13 +644,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -663,7 +662,7 @@
       }
     },
     {
-      "run_id": "3df5595f-fcd1-4403-ac3b-27d50069f69b",
+      "run_id": "b89cdb3f-013b-4fd9-9f13-2d4baf759541",
       "task_id": "timezone-tokyo",
       "model": "gpt-5.6-sol",
       "trial": 3,
@@ -682,13 +681,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -700,7 +699,7 @@
       }
     },
     {
-      "run_id": "62beba38-b80d-42a2-8bfa-d628349af67e",
+      "run_id": "37973cb8-5c2e-482c-a079-18a5e7568387",
       "task_id": "geocode-address",
       "model": "gpt-5.6-sol",
       "trial": 1,
@@ -719,13 +718,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -737,7 +736,7 @@
       }
     },
     {
-      "run_id": "78e43571-51cc-40a9-8b57-8f9c6b890794",
+      "run_id": "b6d71f64-c854-4448-a4f9-628f0cc945dc",
       "task_id": "geocode-address",
       "model": "gpt-5.6-sol",
       "trial": 2,
@@ -756,13 +755,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -774,7 +773,7 @@
       }
     },
     {
-      "run_id": "67272715-b8f0-4ad6-8671-39c16bfe9f04",
+      "run_id": "8db742eb-043d-456d-b830-fb6d0aa5338c",
       "task_id": "geocode-address",
       "model": "gpt-5.6-sol",
       "trial": 3,
@@ -793,13 +792,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -811,7 +810,7 @@
       }
     },
     {
-      "run_id": "d4ddae0d-2f59-4ecc-ab94-06727ec58cca",
+      "run_id": "2db0274b-f130-4a40-9262-66760f89af7e",
       "task_id": "ip-geolocation",
       "model": "gpt-5.6-sol",
       "trial": 1,
@@ -821,22 +820,22 @@
       "inspection_grounded": true,
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
-      "call_success": false,
-      "result_nonempty": false,
-      "pre_result_gate_workflow_success": false,
-      "workflow_success": false,
+      "call_success": true,
+      "result_nonempty": true,
+      "pre_result_gate_workflow_success": true,
+      "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -848,7 +847,7 @@
       }
     },
     {
-      "run_id": "d18e99eb-cc46-4095-a8c5-8372f149e061",
+      "run_id": "59f764bd-3153-476e-9f92-d72b89764c13",
       "task_id": "ip-geolocation",
       "model": "gpt-5.6-sol",
       "trial": 2,
@@ -858,22 +857,22 @@
       "inspection_grounded": true,
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
-      "call_success": false,
-      "result_nonempty": false,
-      "pre_result_gate_workflow_success": false,
-      "workflow_success": false,
+      "call_success": true,
+      "result_nonempty": true,
+      "pre_result_gate_workflow_success": true,
+      "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -885,7 +884,7 @@
       }
     },
     {
-      "run_id": "5568fd3b-32a1-4c2a-8d22-b4c22d69dd9d",
+      "run_id": "f6bd1c5a-ebc5-4a81-bd26-6a10e1e2b257",
       "task_id": "ip-geolocation",
       "model": "gpt-5.6-sol",
       "trial": 3,
@@ -895,22 +894,22 @@
       "inspection_grounded": true,
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 1,
-      "call_success": false,
-      "result_nonempty": false,
-      "pre_result_gate_workflow_success": false,
-      "workflow_success": false,
+      "call_success": true,
+      "result_nonempty": true,
+      "pre_result_gate_workflow_success": true,
+      "workflow_success": true,
       "error_stage": null,
       "error_reason": null,
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -922,7 +921,7 @@
       }
     },
     {
-      "run_id": "80454152-d4cc-484e-8492-33d5fb8f06b9",
+      "run_id": "d32a9f60-362c-4f4b-8b4c-a7aeecc2b03c",
       "task_id": "crypto-price",
       "model": "gpt-5.6-sol",
       "trial": 1,
@@ -941,13 +940,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -959,7 +958,7 @@
       }
     },
     {
-      "run_id": "a703667c-b85b-4479-81f4-ea1af3f68891",
+      "run_id": "d8a7d9e8-e90f-462c-91e4-430d53f5787c",
       "task_id": "crypto-price",
       "model": "gpt-5.6-sol",
       "trial": 2,
@@ -978,13 +977,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -996,7 +995,7 @@
       }
     },
     {
-      "run_id": "49211d01-07a0-43e3-82c3-b7fe5a567e04",
+      "run_id": "2d94aede-832e-4185-ba2b-82c7fbe9dfa2",
       "task_id": "crypto-price",
       "model": "gpt-5.6-sol",
       "trial": 3,
@@ -1015,13 +1014,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1033,7 +1032,7 @@
       }
     },
     {
-      "run_id": "8dd15e90-d3e9-4ca3-8a64-dd163696948e",
+      "run_id": "fdbec8d8-d5e8-45d8-8e7b-7a777452e72d",
       "task_id": "web-search",
       "model": "gpt-5.6-sol",
       "trial": 1,
@@ -1052,13 +1051,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1070,7 +1069,7 @@
       }
     },
     {
-      "run_id": "9e62f261-75fb-4f20-9413-d7d048b239a5",
+      "run_id": "cafcdfbb-ad6a-4ba0-91b8-62dff7e6f33a",
       "task_id": "web-search",
       "model": "gpt-5.6-sol",
       "trial": 2,
@@ -1089,13 +1088,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1107,7 +1106,7 @@
       }
     },
     {
-      "run_id": "618d54d7-28e3-41ea-8012-b8c054079799",
+      "run_id": "65470cc4-4aeb-4437-a870-125dea7ef8cf",
       "task_id": "web-search",
       "model": "gpt-5.6-sol",
       "trial": 3,
@@ -1126,13 +1125,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1144,7 +1143,7 @@
       }
     },
     {
-      "run_id": "d3692a53-51a6-4970-ace5-06f8517985ae",
+      "run_id": "db22237f-547c-4fdd-88d2-959f624fa036",
       "task_id": "air-quality",
       "model": "gpt-5.6-sol",
       "trial": 1,
@@ -1163,13 +1162,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1181,7 +1180,7 @@
       }
     },
     {
-      "run_id": "26276fa6-e245-49b3-855b-60a4ea25b85b",
+      "run_id": "b5c1f946-c8f6-4337-906c-62c22eaa466a",
       "task_id": "air-quality",
       "model": "gpt-5.6-sol",
       "trial": 2,
@@ -1200,13 +1199,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1218,7 +1217,7 @@
       }
     },
     {
-      "run_id": "98acd9e1-dda2-4d51-84ad-6019ffcb21b3",
+      "run_id": "9a2ea3af-c8fc-43f9-90c3-7b1db7ca440a",
       "task_id": "air-quality",
       "model": "gpt-5.6-sol",
       "trial": 3,
@@ -1237,13 +1236,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1255,7 +1254,7 @@
       }
     },
     {
-      "run_id": "58c60360-c513-442d-b08e-f3c729fc5542",
+      "run_id": "42935fc8-675e-4b85-8e51-ddbf06ff56ce",
       "task_id": "market-news",
       "model": "gpt-5.6-sol",
       "trial": 1,
@@ -1274,13 +1273,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1292,7 +1291,7 @@
       }
     },
     {
-      "run_id": "a23aaa73-481a-4b61-b883-c8280ddcc8e0",
+      "run_id": "44348a28-18a0-4d0f-968e-c3293c7a8a56",
       "task_id": "market-news",
       "model": "gpt-5.6-sol",
       "trial": 2,
@@ -1311,13 +1310,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1329,7 +1328,7 @@
       }
     },
     {
-      "run_id": "57461645-9d30-4864-8a68-952d6d99a112",
+      "run_id": "8ec3563c-bde9-4f8c-bba8-d2f598d2bc07",
       "task_id": "market-news",
       "model": "gpt-5.6-sol",
       "trial": 3,
@@ -1348,13 +1347,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1366,32 +1365,32 @@
       }
     },
     {
-      "run_id": "062ac004-ca1d-4938-a2ee-f56389cc5d8e",
+      "run_id": "9813ebc7-936e-4717-aa5c-3d7977fe82e5",
       "task_id": "domain-intel",
       "model": "gpt-5.6-sol",
       "trial": 1,
-      "completed": false,
-      "executed": false,
+      "completed": true,
+      "executed": true,
       "selection_grounded": true,
       "inspection_grounded": true,
       "required_parameter_accuracy": 1,
-      "constraint_accuracy": 0,
-      "call_success": null,
-      "result_nonempty": null,
-      "pre_result_gate_workflow_success": false,
-      "workflow_success": false,
-      "error_stage": "adapter",
-      "error_reason": "tool_use_rejected",
+      "constraint_accuracy": 1,
+      "call_success": true,
+      "result_nonempty": true,
+      "pre_result_gate_workflow_success": true,
+      "workflow_success": true,
+      "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1403,32 +1402,32 @@
       }
     },
     {
-      "run_id": "ea6ee15f-1a67-457d-bf48-e7045eaff0f6",
+      "run_id": "eecbce13-0bbc-4158-b266-d7ff969ca771",
       "task_id": "domain-intel",
       "model": "gpt-5.6-sol",
       "trial": 2,
-      "completed": false,
-      "executed": false,
+      "completed": true,
+      "executed": true,
       "selection_grounded": true,
       "inspection_grounded": true,
       "required_parameter_accuracy": 1,
-      "constraint_accuracy": 0,
-      "call_success": null,
-      "result_nonempty": null,
-      "pre_result_gate_workflow_success": false,
-      "workflow_success": false,
-      "error_stage": "adapter",
-      "error_reason": "tool_use_rejected",
+      "constraint_accuracy": 1,
+      "call_success": true,
+      "result_nonempty": true,
+      "pre_result_gate_workflow_success": true,
+      "workflow_success": true,
+      "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1440,32 +1439,32 @@
       }
     },
     {
-      "run_id": "13e9d4a9-c237-4cfe-8b66-2b4bc6727157",
+      "run_id": "20adc139-decf-416a-850a-e55532c6f713",
       "task_id": "domain-intel",
       "model": "gpt-5.6-sol",
       "trial": 3,
-      "completed": false,
-      "executed": false,
+      "completed": true,
+      "executed": true,
       "selection_grounded": true,
       "inspection_grounded": true,
       "required_parameter_accuracy": 1,
       "constraint_accuracy": 0,
-      "call_success": null,
-      "result_nonempty": null,
+      "call_success": true,
+      "result_nonempty": true,
       "pre_result_gate_workflow_success": false,
       "workflow_success": false,
-      "error_stage": "adapter",
-      "error_reason": "tool_use_rejected",
+      "error_stage": null,
+      "error_reason": null,
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1477,7 +1476,7 @@
       }
     },
     {
-      "run_id": "46fa3b68-38ad-4728-9252-32e08dd52ee7",
+      "run_id": "0be24fae-517b-42a5-85bf-d1704b2807a5",
       "task_id": "image-search",
       "model": "gpt-5.6-sol",
       "trial": 1,
@@ -1496,13 +1495,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1514,7 +1513,7 @@
       }
     },
     {
-      "run_id": "19c84ab6-eab7-4ed1-b536-20d6db38801c",
+      "run_id": "ba788ccc-bd03-43e9-a3ca-289063a099d8",
       "task_id": "image-search",
       "model": "gpt-5.6-sol",
       "trial": 2,
@@ -1533,13 +1532,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1551,7 +1550,7 @@
       }
     },
     {
-      "run_id": "d2438aee-241f-4be1-8c92-0a21375a39cd",
+      "run_id": "5f92af87-5f66-4e43-be7c-79bb5ea81967",
       "task_id": "image-search",
       "model": "gpt-5.6-sol",
       "trial": 3,
@@ -1570,13 +1569,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1588,7 +1587,7 @@
       }
     },
     {
-      "run_id": "e8832d33-357f-4f68-925a-d4381142678b",
+      "run_id": "ce02e279-90ec-4a72-842c-6394afacc627",
       "task_id": "market-holidays",
       "model": "gpt-5.6-sol",
       "trial": 1,
@@ -1607,13 +1606,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1625,7 +1624,7 @@
       }
     },
     {
-      "run_id": "e87ea408-9168-46df-acbd-a61a85f7ca9e",
+      "run_id": "c9aeaf20-75a4-4cb5-aca3-1ceacaaa5bd8",
       "task_id": "market-holidays",
       "model": "gpt-5.6-sol",
       "trial": 2,
@@ -1644,13 +1643,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1662,7 +1661,7 @@
       }
     },
     {
-      "run_id": "e0ac9896-d511-4ba3-90e8-21f01cfde6bc",
+      "run_id": "1ac53540-4f1c-4e7a-b01e-58e49f4015bd",
       "task_id": "market-holidays",
       "model": "gpt-5.6-sol",
       "trial": 3,
@@ -1681,13 +1680,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1699,7 +1698,7 @@
       }
     },
     {
-      "run_id": "5b03766d-4b69-4b3a-acb7-ad89437a239a",
+      "run_id": "9ccc4e2f-c704-4737-9708-fdf5bcd03805",
       "task_id": "earthquake-catalog",
       "model": "gpt-5.6-sol",
       "trial": 1,
@@ -1718,13 +1717,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1736,7 +1735,7 @@
       }
     },
     {
-      "run_id": "62fa2743-433e-4a20-887c-74feafdda446",
+      "run_id": "63db1b30-730e-42dd-9cec-85f03c8bff62",
       "task_id": "earthquake-catalog",
       "model": "gpt-5.6-sol",
       "trial": 2,
@@ -1755,13 +1754,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1773,7 +1772,7 @@
       }
     },
     {
-      "run_id": "90981cc4-2bb6-457f-b8eb-950da1d98923",
+      "run_id": "511c6aa5-4f03-4ae9-9977-71fed5fcd17f",
       "task_id": "earthquake-catalog",
       "model": "gpt-5.6-sol",
       "trial": 3,
@@ -1792,13 +1791,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1810,119 +1809,8 @@
       }
     },
     {
-      "run_id": "e63213b2-c4c0-4f6c-9d7a-a761069870e2",
+      "run_id": "712138aa-e036-4a5c-be63-f5a3d22b1286",
       "task_id": "company-profile",
-      "model": "gpt-5.6-sol",
-      "trial": 1,
-      "completed": true,
-      "executed": true,
-      "selection_grounded": true,
-      "inspection_grounded": true,
-      "required_parameter_accuracy": 1,
-      "constraint_accuracy": 1,
-      "call_success": false,
-      "result_nonempty": false,
-      "pre_result_gate_workflow_success": false,
-      "workflow_success": false,
-      "error_stage": null,
-      "error_reason": null,
-      "metadata": {
-        "lane": "configured-model",
-        "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
-        "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
-        "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
-        "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
-        "runtime": {
-          "node": "v24.2.0",
-          "platform": "darwin",
-          "arch": "arm64"
-        },
-        "discovery_limit": 10,
-        "execute": true,
-        "publication_policy": "public-artifact-v1"
-      }
-    },
-    {
-      "run_id": "1054878a-b27b-46e5-b9a6-8d6bc3ebec8a",
-      "task_id": "company-profile",
-      "model": "gpt-5.6-sol",
-      "trial": 2,
-      "completed": true,
-      "executed": true,
-      "selection_grounded": true,
-      "inspection_grounded": true,
-      "required_parameter_accuracy": 1,
-      "constraint_accuracy": 1,
-      "call_success": false,
-      "result_nonempty": false,
-      "pre_result_gate_workflow_success": false,
-      "workflow_success": false,
-      "error_stage": null,
-      "error_reason": null,
-      "metadata": {
-        "lane": "configured-model",
-        "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
-        "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
-        "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
-        "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
-        "runtime": {
-          "node": "v24.2.0",
-          "platform": "darwin",
-          "arch": "arm64"
-        },
-        "discovery_limit": 10,
-        "execute": true,
-        "publication_policy": "public-artifact-v1"
-      }
-    },
-    {
-      "run_id": "dc98fe27-231c-4a95-af86-12400d405e65",
-      "task_id": "company-profile",
-      "model": "gpt-5.6-sol",
-      "trial": 3,
-      "completed": true,
-      "executed": true,
-      "selection_grounded": true,
-      "inspection_grounded": true,
-      "required_parameter_accuracy": 1,
-      "constraint_accuracy": 1,
-      "call_success": false,
-      "result_nonempty": false,
-      "pre_result_gate_workflow_success": false,
-      "workflow_success": false,
-      "error_stage": null,
-      "error_reason": null,
-      "metadata": {
-        "lane": "configured-model",
-        "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
-        "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
-        "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
-        "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
-        "runtime": {
-          "node": "v24.2.0",
-          "platform": "darwin",
-          "arch": "arm64"
-        },
-        "discovery_limit": 10,
-        "execute": true,
-        "publication_policy": "public-artifact-v1"
-      }
-    },
-    {
-      "run_id": "940ed547-9ddc-419c-b0a1-1064f987be0e",
-      "task_id": "sports-standings",
       "model": "gpt-5.6-sol",
       "trial": 1,
       "completed": true,
@@ -1940,13 +1828,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1958,8 +1846,8 @@
       }
     },
     {
-      "run_id": "8ec93298-1f2c-42ef-ac71-af37df93b741",
-      "task_id": "sports-standings",
+      "run_id": "2806f6a7-72a3-4be9-8828-d13c4a683229",
+      "task_id": "company-profile",
       "model": "gpt-5.6-sol",
       "trial": 2,
       "completed": true,
@@ -1977,13 +1865,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",
@@ -1995,7 +1883,118 @@
       }
     },
     {
-      "run_id": "5f9a762b-7f86-4f7a-a89b-b0abd1e889fc",
+      "run_id": "ede7218c-2bbe-44fe-a1cd-495fd0b81cec",
+      "task_id": "company-profile",
+      "model": "gpt-5.6-sol",
+      "trial": 3,
+      "completed": true,
+      "executed": true,
+      "selection_grounded": true,
+      "inspection_grounded": true,
+      "required_parameter_accuracy": 1,
+      "constraint_accuracy": 1,
+      "call_success": true,
+      "result_nonempty": true,
+      "pre_result_gate_workflow_success": true,
+      "workflow_success": true,
+      "error_stage": null,
+      "error_reason": null,
+      "metadata": {
+        "lane": "configured-model",
+        "model_revision": "unreported",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
+        "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
+        "api_base_url": "https://qveris.ai/api/v1",
+        "api_revision": "2026-09-07.1",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
+        "runtime": {
+          "node": "v24.2.0",
+          "platform": "darwin",
+          "arch": "arm64"
+        },
+        "discovery_limit": 10,
+        "execute": true,
+        "publication_policy": "public-artifact-v1"
+      }
+    },
+    {
+      "run_id": "ccdc4279-e09f-43a3-a0f5-69dc04211400",
+      "task_id": "sports-standings",
+      "model": "gpt-5.6-sol",
+      "trial": 1,
+      "completed": true,
+      "executed": true,
+      "selection_grounded": true,
+      "inspection_grounded": true,
+      "required_parameter_accuracy": 1,
+      "constraint_accuracy": 1,
+      "call_success": true,
+      "result_nonempty": true,
+      "pre_result_gate_workflow_success": true,
+      "workflow_success": true,
+      "error_stage": null,
+      "error_reason": null,
+      "metadata": {
+        "lane": "configured-model",
+        "model_revision": "unreported",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
+        "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
+        "api_base_url": "https://qveris.ai/api/v1",
+        "api_revision": "2026-09-07.1",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
+        "runtime": {
+          "node": "v24.2.0",
+          "platform": "darwin",
+          "arch": "arm64"
+        },
+        "discovery_limit": 10,
+        "execute": true,
+        "publication_policy": "public-artifact-v1"
+      }
+    },
+    {
+      "run_id": "e71c23da-f985-4ec0-b623-3dc1d01ccf39",
+      "task_id": "sports-standings",
+      "model": "gpt-5.6-sol",
+      "trial": 2,
+      "completed": true,
+      "executed": true,
+      "selection_grounded": true,
+      "inspection_grounded": true,
+      "required_parameter_accuracy": 1,
+      "constraint_accuracy": 1,
+      "call_success": true,
+      "result_nonempty": true,
+      "pre_result_gate_workflow_success": true,
+      "workflow_success": true,
+      "error_stage": null,
+      "error_reason": null,
+      "metadata": {
+        "lane": "configured-model",
+        "model_revision": "unreported",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
+        "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
+        "api_base_url": "https://qveris.ai/api/v1",
+        "api_revision": "2026-09-07.1",
+        "catalog_revision": "unreported",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
+        "runtime": {
+          "node": "v24.2.0",
+          "platform": "darwin",
+          "arch": "arm64"
+        },
+        "discovery_limit": 10,
+        "execute": true,
+        "publication_policy": "public-artifact-v1"
+      }
+    },
+    {
+      "run_id": "8a6f8872-ad66-4277-94b0-071fb97ab385",
       "task_id": "sports-standings",
       "model": "gpt-5.6-sol",
       "trial": 3,
@@ -2014,13 +2013,13 @@
       "metadata": {
         "lane": "configured-model",
         "model_revision": "unreported",
-        "adapter_revision": "deeda797e50a0dae649bf91d7503d09ec497b324/codex-cli-0.144.1/medium",
-        "toolkit_revision": "deeda797e50a0dae649bf91d7503d09ec497b324",
+        "adapter_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778/codex-cli-0.144.1/medium",
+        "toolkit_revision": "0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778",
         "task_set_sha256": "afe9a0d083765011817be01d688ef4f1bb04282604c3a0cfdc84f700951eb3ed",
         "api_base_url": "https://qveris.ai/api/v1",
-        "api_revision": "2026-07-22.1",
+        "api_revision": "2026-09-07.1",
         "catalog_revision": "unreported",
-        "catalog_observation_sha256": "e8a6ca09bbf6f24f2b0c3e6a4fffcf33d541f802cecb9ea37c543ba8ed04d054",
+        "catalog_observation_sha256": "e534593cc6b33b46e707efa23c9f43a78fc50044795f0be2c491681afc2f8e21",
         "runtime": {
           "node": "v24.2.0",
           "platform": "darwin",

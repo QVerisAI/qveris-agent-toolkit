@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 import {
   assertPublicArtifactSafe,
@@ -9,6 +12,8 @@ import {
   parseTaskSet,
   validateCadenceConfig,
 } from './benchmark-release-cadence.mjs';
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 const releaseSha = 'a'.repeat(40);
 const releases = [{ tag: 'cli-v1.0.0' }, { tag: 'mcp-v2.0.0' }, { tag: 'js-sdk-v3.0.0' }, { tag: 'python-sdk-v4.0.0' }];
@@ -193,6 +198,11 @@ test('cadence plan derives deterministic artifacts and budget', () => {
   assert.equal(value.configuredStem, '2026-07-25-gpt-5.6-sol-configured-release-aaaaaaaaaaaa-v4');
   assert.equal(value.recordsPerLane, 54);
   assert.equal(value.maximumBilledCalls, 108);
+  assert.equal(value.referenceAdapterRevision, `${releaseSha}/reference-v1`);
+  assert.equal(
+    value.configuredAdapterRevision,
+    `${releaseSha}/codex-cli-${config.configured_model.cli_version}/${config.configured_model.reasoning_effort}`,
+  );
 });
 
 test('generated result copy preserves denominators and comparison caveats', () => {
@@ -218,6 +228,99 @@ test('generated result copy preserves denominators and comparison caveats', () =
   assert.match(section, /5\.56 percentage points/);
   assert.match(section, /not automatically a pure routing effect/);
   assert.match(section, /must not\s+be described as a pinned-model snapshot/);
+});
+
+test('generated result copy explains a negative strict benchmark gap', () => {
+  const section = buildResultSection({
+    referenceSummary: summary({
+      model: 'reference-v1',
+      lane: 'reference',
+      workflowSuccess: 47 / 54,
+      catalogDigest: '1'.repeat(64),
+    }),
+    configuredSummary: summary({
+      model: 'gpt-5.6-sol',
+      lane: 'configured-model',
+      workflowSuccess: 49 / 54,
+      catalogDigest: '2'.repeat(64),
+    }),
+    plan: plan(),
+    generatedAt: '2026-07-25T12:00:00.000Z',
+  });
+  assert.match(section, /-2\/54/);
+  assert.match(section, /-3\.70 percentage points/);
+  assert.match(section, /negative sign means the configured model recorded the higher strict success rate/);
+});
+
+test('generated result copy marks result non-emptiness unavailable when no calls succeed', () => {
+  const reference = summary({
+    model: 'reference-v1',
+    lane: 'reference',
+    workflowSuccess: 0,
+    catalogDigest: '1'.repeat(64),
+  });
+  reference.models[0].call_success_rate = 0;
+  reference.models[0].result_nonempty_rate = null;
+  const section = buildResultSection({
+    referenceSummary: reference,
+    configuredSummary: summary({
+      model: 'gpt-5.6-sol',
+      lane: 'configured-model',
+      workflowSuccess: 48 / 54,
+      catalogDigest: '2'.repeat(64),
+    }),
+    plan: plan(),
+    generatedAt: '2026-07-25T12:00:00.000Z',
+  });
+  assert.match(section, /N\/A \(no successful calls\)/);
+  assert.doesNotMatch(section, /0\.00% \(0\/0\)/);
+});
+
+test('generated result copy rejects missing non-empty evidence after a successful call', () => {
+  const reference = summary({
+    model: 'reference-v1',
+    lane: 'reference',
+    workflowSuccess: 1,
+    catalogDigest: '1'.repeat(64),
+  });
+  reference.models[0].result_nonempty_rate = null;
+  assert.throws(
+    () =>
+      buildResultSection({
+        referenceSummary: reference,
+        configuredSummary: summary({
+          model: 'gpt-5.6-sol',
+          lane: 'configured-model',
+          workflowSuccess: 48 / 54,
+          catalogDigest: '2'.repeat(64),
+        }),
+        plan: plan(),
+        generatedAt: '2026-07-25T12:00:00.000Z',
+      }),
+    /missing result non-emptiness evidence/,
+  );
+});
+
+test('English and Chinese headline docs track the latest published release baseline', () => {
+  const index = readFileSync(resolve(root, 'benchmarks/discover-call/results/README.md'), 'utf8');
+  const latest = index.match(
+    /<!-- benchmark-cadence:([0-9a-f]{40}) -->\n## (\d{4}-\d{2}-\d{2})[\s\S]*?\| Strict workflow success \| ([0-9.]+%) \([^)]*\) \| ([0-9.]+%) \([^)]*\) \|/,
+  );
+  assert.ok(latest, 'latest published release baseline must be parseable');
+  const [, revision, date, referenceRate, configuredRate] = latest;
+
+  for (const path of [
+    'docs/en-US/discover-call-benchmark.md',
+    'docs/zh-CN/discover-call-benchmark.md',
+  ]) {
+    const content = readFileSync(resolve(root, path), 'utf8');
+    const headline = content.match(/### (?:Current official configured-model baseline|当前正式 configured-model 基线)([\s\S]*?)(?=\n### )/);
+    assert.ok(headline, `${path} must contain a current configured-model baseline section`);
+    assert.match(headline[1], new RegExp(date));
+    assert.match(headline[1], new RegExp(revision));
+    assert.match(headline[1], new RegExp(referenceRate.replace('.', '\\.')));
+    assert.match(headline[1], new RegExp(configuredRate.replace('.', '\\.')));
+  }
 });
 
 test('generated result copy rejects a summary from another release commit', () => {

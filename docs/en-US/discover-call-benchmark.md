@@ -67,39 +67,43 @@ parameter names are omitted so hashed tools do not leak schema details. See the
 
 ### Current official configured-model baseline
 
-The 2026-07-24 run is the first official configured-model baseline collected
-with corrected `discover-call-v2`, immutable `tasks/v4.jsonl`, three trials per
-task, real calls, and complete failed-trial retention.
+The 2026-09-09 release run uses corrected `discover-call-v2`, immutable
+`tasks/v4.jsonl`, three trials per task, real calls, and complete failed-trial
+retention. Both lanes contain all 54 scheduled records with no selective
+reruns.
 
-| 2026-07-24 baseline | Curated reference route | `gpt-5.6-sol` configured model |
+| 2026-09-09 baseline | Curated reference route | `gpt-5.6-sol` configured model |
 | --- | ---: | ---: |
-| Completed and executed | 51 / 54 | 52 / 54 |
-| Selection grounded | 94.44% | 100% |
-| Inspection grounded | 94.44% | 100% |
+| Completed and executed | 48 / 54 | 54 / 54 |
+| Selection grounded | 88.89% | 100% |
+| Inspection grounded | 88.89% | 100% |
 | Required-parameter accuracy | 100% | 100% |
-| Constraint accuracy | 94.44% | 88.89% |
-| Call success | 100% (51 / 51) | 100% (52 / 52) |
-| Result non-empty | 100% (51 / 51) | 100% (52 / 52) |
-| Strict workflow success | 94.44% (51 / 54) | 88.89% (48 / 54) |
-| Workflow interval | 83.33%–100% | 72.22%–100% |
+| Constraint accuracy | 88.89% | 90.74% |
+| Call success | 97.92% (47 / 48) | 100% (54 / 54) |
+| Result non-empty among successful calls | 100% (47 / 47) | 100% (54 / 54) |
+| Strict workflow success | 87.04% (47 / 54) | 90.74% (49 / 54) |
+| Workflow interval | 70.37%–100% | 77.78%–100% |
 
-The strict benchmark gap is **3 / 54 = 5.56 percentage points**. This is not a
-pure routing delta: both lanes observed API revision `2026-07-23.2`, but the
-API did not report a catalog revision and their catalog-observation digests
-differ. The intervals overlap, so this 18-task baseline is not evidence of a
-statistically significant difference.
+The strict benchmark gap is **-2 / 54 = -3.70 percentage points**. The negative
+sign means the configured model recorded the higher strict success rate in
+this sample. It is not a pure routing delta: both lanes observed API revision
+`2026-09-07.1`, the API did not report a catalog revision, and their sequential
+catalog-observation digests differ. The task-cluster intervals overlap, so this
+18-task baseline is not evidence of a statistically significant difference.
 
-The reference route's three failures are Tokyo-timezone coverage misses. The
-configured model has six strict failures: three Tokyo constraint mismatches,
-two domain-intelligence `tool_use_rejected` adapter failures, and one
-domain-intelligence constraint mismatch. Every attempted call in both lanes
-reported success and a non-empty result.
+The reference route missed its fixed Top-10 candidate in all three
+Tokyo-timezone trials and all three market-holiday trials; one geocoding Call
+returned a failure envelope. The configured model completed 54 successful,
+non-empty Calls. Its five strict failures were constraint mismatches: three
+Tokyo-timezone trials, one London-weather trial, and one domain-intelligence
+trial. Successful execution does not override those parameterization failures.
 
 The configured lane used `gpt-5.6-sol`, medium reasoning, Codex CLI 0.144.1,
 and toolkit revision
-`a7f2aa60ef143dbbb35eaf9006ed8123d778fb13`. Its provider model revision is
+`0bd5c3d4d716b6d6abfd6bd8b91cd5846b115778`. Its provider model revision is
 `unreported`, so this is an official configured-model baseline rather than a
-pinned-model snapshot.
+pinned-model snapshot. The 2026-07-24 baseline remains in the result index as
+the superseded previous official sample.
 
 ### Historical diagnostic
 
