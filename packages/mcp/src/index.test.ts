@@ -133,6 +133,15 @@ describe('MCP public tool interface', () => {
     expect(byName.get('call')?.description).toContain(
       'Reuse only exact routes; rebuild current parameters and Call again for current/latest/today/time-sensitive data.',
     );
+
+    const aliases = {
+      search_tools: 'discover',
+      get_tools_by_ids: 'inspect',
+      execute_tool: 'call',
+    } as const;
+    for (const [alias, canonical] of Object.entries(aliases)) {
+      expect(byName.get(alias)?.description).toContain(byName.get(canonical)!.description);
+    }
   });
 
   it('declares complete, conservative annotations for every tool', () => {
