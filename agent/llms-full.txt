@@ -141,7 +141,7 @@ QVeris supports six integration methods:
 
 ### QVeris CLI — Token-Efficient Agent Tool Use (Recommended)
 
-The CLI (`@qverisai/cli` v0.11.2) lets shell-capable agents access QVeris capabilities. CLI runs as a subprocess without preloading the catalog. Instructions, commands, and results still consume context tokens; QVeris MCP also uses a small set of routing tools. No mandatory runtime dependencies; optional OS credential storage uses `@napi-rs/keyring`.
+The CLI (`@qverisai/cli` v0.11.3) lets shell-capable agents access QVeris capabilities. CLI runs as a subprocess without preloading the catalog. Instructions, commands, and results still consume context tokens; QVeris MCP also uses a small set of routing tools. No mandatory runtime dependencies; optional OS credential storage uses `@napi-rs/keyring`.
 
 ```bash
 # Install
@@ -226,7 +226,7 @@ Full CLI docs: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/packag
 
 ### MCP Server Quick Start
 
-The MCP server (`@qverisai/mcp` v0.14.3) exposes six canonical agent-facing tools via the Model Context Protocol:
+The MCP server (`@qverisai/mcp` v0.14.4) exposes six canonical agent-facing tools via the Model Context Protocol:
 
 | MCP Tool | Description | Cost |
 |----------|-------------|------|
@@ -583,10 +583,10 @@ Model improvement is a tailwind for QVeris, not a headwind.
 
 ### SDK & Tools
 
-- **CLI (npm):** https://www.npmjs.com/package/@qverisai/cli — `npm install -g @qverisai/cli` (v0.11.2)
-- **MCP Server (npm):** https://www.npmjs.com/package/@qverisai/mcp — `npx @qverisai/mcp` (v0.14.3)
-- **JavaScript SDK:** https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/js-sdk (v0.8.3)
-- **Python SDK:** https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/python-sdk (v0.7.2)
+- **CLI (npm):** https://www.npmjs.com/package/@qverisai/cli — `npm install -g @qverisai/cli` (v0.11.3)
+- **MCP Server (npm):** https://www.npmjs.com/package/@qverisai/mcp — `npx @qverisai/mcp` (v0.14.4)
+- **JavaScript SDK:** https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/js-sdk (v0.8.4)
+- **Python SDK:** https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/python-sdk (v0.7.3)
 - **Online Docs:** https://qveris.ai/docs
 
 ### Open Ecosystem
@@ -679,11 +679,11 @@ Generate a new UUID for each user session, and reuse it throughout that session.
 ## Version Information
 
 - **llms-full.txt Version:** 1.2.0
-- **CLI Version:** 0.11.2
-- **MCP Server Version:** 0.14.3
-- **JavaScript SDK Version:** 0.8.3
-- **Python SDK Version:** 0.7.2
-- **Last Updated:** 2026-09-07
+- **CLI Version:** 0.11.3
+- **MCP Server Version:** 0.14.4
+- **JavaScript SDK Version:** 0.8.4
+- **Python SDK Version:** 0.7.3
+- **Last Updated:** 2026-09-09
 
 For the latest updates, always refer to:
 

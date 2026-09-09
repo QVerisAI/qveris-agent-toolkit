@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-09-09
+
+### Changed
+
+- Preserve Provider-comparison prerequisites and require fresh Calls for current, latest, or date-sensitive data in the built-in Agent workflow, tool descriptions, examples, and packaged guidance. ([#362])
+
 ## [0.7.2] - 2026-09-07
 
 ### Fixed
@@ -109,7 +115,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Generated OpenAPI contract models with drift CI. ([#48])
 - `Agent` runtime: LLM tool loop over the QVeris workflow with streaming events.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.2...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.3...HEAD
+[0.7.3]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.2...python-sdk-v0.7.3
 [0.7.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.1...python-sdk-v0.7.2
 [0.7.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.0...python-sdk-v0.7.1
 [0.7.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.6.0...python-sdk-v0.7.0
@@ -147,3 +154,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#315]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/315
 [#319]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/319
 [#347]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/347
+[#362]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/362

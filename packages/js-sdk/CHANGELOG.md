@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.8.4] - 2026-09-09
+
+### Changed
+
+- Preserve Provider-comparison prerequisites and require fresh Calls for current, latest, or date-sensitive data in adapter descriptions, examples, and packaged guidance. ([#362])
+
 ## [0.8.3] - 2026-09-07
 
 ### Fixed
@@ -81,7 +87,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - `0.1.x` under this npm name was an early MCP-focused SDK, superseded by `@qverisai/mcp`.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.3...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.4...HEAD
+[0.8.4]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.3...js-sdk-v0.8.4
 [0.8.3]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.2...js-sdk-v0.8.3
 [0.8.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.1...js-sdk-v0.8.2
 [0.8.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.0...js-sdk-v0.8.1
@@ -105,3 +112,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#273]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/273
 [#341]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/341
 [#347]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/347
+[#362]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/362
