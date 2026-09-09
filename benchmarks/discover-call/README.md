@@ -359,6 +359,19 @@ lanes locally from a clean checkout of their shared commit. The model adapter
 uses the model CLI's local login; QVeris and model credentials are never copied
 to GitHub Actions. Raw checkpoint records stay outside the repository.
 
+Before making calls, print the validated local plan from the repository root:
+
+```bash
+RELEASE_SHA="$(git rev-parse HEAD)"
+node scripts/benchmark-release-cadence.mjs plan --release-sha "$RELEASE_SHA"
+```
+
+Use `release_sha` for each runner's `--toolkit-revision`. For
+`--adapter-revision`, use the distinct decorated values emitted as
+`reference_adapter_revision` and `configured_adapter_revision`; never pass the
+bare SHA. The current cadence derives `<release_sha>/reference-v1` and
+`<release_sha>/codex-cli-0.144.1/medium`, respectively.
+
 The maintainer generates `public-artifact-v1` run/summary pairs, validates the
 complete denominator and protected-field policy, and proposes only the
 sanitized artifacts and standalone result section in a normal reviewable PR.

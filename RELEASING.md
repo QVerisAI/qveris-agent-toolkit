@@ -71,10 +71,22 @@ Do not upload either credential or raw records to GitHub.
    review before sampling.
 2. Verify every coordinated tag points to the checkout commit and install the
    exact configured model CLI in an isolated temporary prefix. Confirm its
-   version and local authentication before any QVeris calls.
+   version and local authentication before any QVeris calls. From the repository
+   root, print the validated plan and its exact provenance values:
+
+   ```bash
+   RELEASE_SHA="$(git rev-parse HEAD)"
+   node scripts/benchmark-release-cadence.mjs plan --release-sha "$RELEASE_SHA"
+   ```
+
 3. Run the reference lane and configured-model lane sequentially from
-   `benchmarks/discover-call`, passing the checkout commit as both the toolkit
-   and adapter revision. Write raw checkpoint files outside the repository.
+   `benchmarks/discover-call`. Pass `release_sha` as `--toolkit-revision`, but
+   use the plan's decorated `reference_adapter_revision` and
+   `configured_adapter_revision` values for `--adapter-revision`; a bare commit
+   SHA is invalid. With the current cadence these are
+   `<release_sha>/reference-v1` and
+   `<release_sha>/codex-cli-0.144.1/medium`. Write raw checkpoint files outside
+   the repository.
 4. Do not selectively retry failed trials. An interrupted or incomplete batch
    is diagnostic only and cannot be published as the release baseline.
 5. Generate paired public artifacts with `src/publish.mjs`, then run `npm test`
