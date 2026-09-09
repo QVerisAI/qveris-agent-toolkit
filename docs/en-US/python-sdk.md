@@ -39,6 +39,8 @@ Endpoint priority is `QverisConfig(base_url=...)` > `QVERIS_BASE_URL` > `https:/
 
 The default workflow is **discover → call**, then optionally **audit** what happened. `inspect` and `probe` are conditional checks, not mandatory stages. All methods are `async`.
 
+For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
+
 ```python
 import asyncio
 import math

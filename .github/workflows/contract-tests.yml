@@ -7,6 +7,12 @@ name: Contract tests
 on:
   pull_request:
     paths:
+      - "README.md"
+      - "README_zh-CN.md"
+      - "agent/**"
+      - "docs/**/*.md"
+      - "skills/qveris/**"
+      - "skills/qveris-cli/**"
       - "package.json"
       - "package-lock.json"
       - "docs/openapi/**"
@@ -46,6 +52,7 @@ on:
       - "packages/*/eslint.config.mjs"
       - "scripts/plan-contract-tests.mjs"
       - "scripts/plan-contract-tests.test.mjs"
+      - "scripts/conditional-routing-contracts.test.mjs"
       - ".github/workflows/contract-tests.yml"
   schedule:
     - cron: "23 3 * * 0"
@@ -83,6 +90,8 @@ jobs:
           fetch-depth: 0
       - name: Test the affected-target planner
         run: node --test scripts/plan-contract-tests.test.mjs
+      - name: Test conditional-routing guidance contracts
+        run: node --test scripts/conditional-routing-contracts.test.mjs
       - name: Classify changed targets
         id: plan
         env:

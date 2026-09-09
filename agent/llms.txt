@@ -29,6 +29,7 @@
 - Inspect only when selection/request construction needs missing/stale contract detail or candidate comparison
 - Probe only for parameter validation, a current quote needed for a budget decision, or explicit preflight; it does not reserve price or grant authorization
 - Do not assume semantic memory: CLI stores only recent Discover indexes/provenance, MCP and SDKs are stateless for routing, and OpenClaw provides only exact-query session reuse with TTL
+- For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
 
 ## How QVeris relates to OpenClaw
 - OpenClaw lets Agents use tools (runtime)

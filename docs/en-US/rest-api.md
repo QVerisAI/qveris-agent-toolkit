@@ -43,6 +43,8 @@ The default/full Call response can return compact pre-settlement fields such as 
 
 Use the selected capability's current contract as the source of truth for Call. A full Discover result can be enough to call directly. Inspect only when the selected result omits required contract detail, its metadata may be stale, or you need to compare candidates. Probe only when the parameters need preflight validation or a budget decision needs a current quote.
 
+For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
+
 Recommended contract:
 
 1. Generate one stable `session_id` for a user task or conversation.

@@ -170,6 +170,8 @@ asyncio.run(main())
 
 Use Inspect only when selection or valid request construction needs missing/stale contract detail, and Probe only for parameter validation or a current quote required by a budget decision. A Probe quote is not a price reservation or user authorization.
 
+For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
+
 The SDK is stateless for routing: it does not persist semantic intent, schema, price, or business results. Preserve a Discover result's real `search_id` in the active application flow. If your host adds reuse, isolate it by account/API endpoint/authorization/session, rebuild business values from the current request, and expire schema, price, and availability metadata; never invent attribution or cache credentials/sensitive values.
 
 First-class typed APIs:

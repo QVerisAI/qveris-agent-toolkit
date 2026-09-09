@@ -3,6 +3,8 @@
  *
  * Discovery is free. The `call` step is gated behind
  * `RUN_QVERIS_CALLS=1` because it may consume credits.
+ * For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote.
+ * Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
  *
  *   QVERIS_API_KEY=sk-... npx tsx examples/quickstart.ts
  *   QVERIS_API_KEY=sk-... RUN_QVERIS_CALLS=1 npx tsx examples/quickstart.ts

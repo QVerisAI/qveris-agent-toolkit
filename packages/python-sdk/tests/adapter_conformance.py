@@ -97,6 +97,25 @@ class AdapterConformance:
         for t in tools:
             assert self.tool_description(t), f"{self.tool_name(t)} must have a description"
 
+    def test_keeps_routing_safety_boundaries_model_visible(self) -> None:
+        tools = self.make_tools(FakeClient())
+        discover = " ".join(self.tool_description(self.tool(tools, "qveris_discover")).split())
+        inspect = " ".join(self.tool_description(self.tool(tools, "qveris_inspect")).split())
+        call = " ".join(self.tool_description(self.tool(tools, "qveris_call")).split())
+
+        comparison_rule = (
+            "Provider comparison: Inspect each candidate to confirm current scope/contracts. If a budget decision "
+            "requires a current Probe cost quote, do not Call until the host obtains it; this three-tool adapter does "
+            "not expose Probe. This does not apply to fresh business data such as a stock quote; obtain that with Call."
+        )
+        fresh_call_rule = (
+            "Reuse only exact routes; rebuild current parameters and Call again for "
+            "current/latest/today/time-sensitive data."
+        )
+        assert comparison_rule in discover
+        assert comparison_rule in inspect
+        assert fresh_call_rule in call
+
     def test_client_is_required(self) -> None:
         with pytest.raises(TypeError):
             self.make_tools_no_client()

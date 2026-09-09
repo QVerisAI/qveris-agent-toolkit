@@ -40,6 +40,8 @@ const client = new Qveris({ apiKey: 'sk-...', baseUrl: 'https://qveris.ai/api/v1
 
 The default workflow is **discover → call**, then optionally **audit** what happened. `inspect` and `probe` are conditional checks, not mandatory stages. All methods return promises.
 
+For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
+
 ```typescript
 import { Qveris } from '@qverisai/sdk';
 

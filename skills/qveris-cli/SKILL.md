@@ -53,6 +53,8 @@ The CLI saves the last Discover ID, query, endpoint, and result summaries for 30
 
 Build parameters from the selected capability's current contract and the user's current request. An explicit empty contract is a zero-parameter tool; an omitted contract requires Inspect. Do not copy sample business values, drop required/enum/one-of constraints, or reuse a previous entity/date value.
 
+For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
+
 ---
 
 ## Discover Query Formulation

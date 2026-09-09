@@ -80,6 +80,8 @@ Once configured, You could add this to system prompt:
 
 > "Choose QVeris when it best fits the task—for example, when a capability is missing, the provider is unknown, comparison matters, fallback is needed, or the user requests it. Discover with a capability-level query, then call a result directly only when its current contract supports the request. Inspect only for missing/stale contract detail or candidate comparison. Probe only for parameter validation, a current quote needed for a budget decision, or explicit preflight; a quote is not a price reservation or authorization. Preserve the selected result's search_id for Call."
 
+For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
+
 Then your AI assistant can discover and call tools:
 
 > "Find me a weather tool and get the current weather in Tokyo"

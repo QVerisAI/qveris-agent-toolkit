@@ -2,6 +2,8 @@
 
 These recipes use the shortest safe path: Discover -> Call when the current result already contains a complete contract, with Inspect or Probe added only when the task needs them. Replace sample ids such as `srch_...`, `exec_...`, and `led_...` with ids returned by your own API responses.
 
+For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
+
 ## Recipe 1: Add weather context to an agent answer
 
 Use this when a user asks for current weather and your agent needs a reliable external capability.

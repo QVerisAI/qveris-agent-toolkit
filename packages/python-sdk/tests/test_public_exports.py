@@ -76,6 +76,8 @@ def test_tool_models_accept_additive_and_multilingual_api_fields() -> None:
 
 def test_tool_definitions_expose_canonical_names_and_legacy_aliases() -> None:
     assert "discover, inspect, and call" in DEFAULT_SYSTEM_PROMPT
+    assert "this three-tool integration does not expose Probe" in DEFAULT_SYSTEM_PROMPT
+    assert "Reuse only exact routes; rebuild current parameters" in DEFAULT_SYSTEM_PROMPT
 
     assert DISCOVER_TOOL_DEF["function"]["name"] == "discover"
     assert DISCOVER_TOOL_DEF["function"]["parameters"]["required"] == ["query"]
@@ -89,6 +91,9 @@ def test_tool_definitions_expose_canonical_names_and_legacy_aliases() -> None:
         "search_id",
         "params_to_tool",
     ]
+    assert "current Probe cost quote" in INSPECT_TOOL_DEF["function"]["description"]
+    assert "fresh business data such as a stock quote" in INSPECT_TOOL_DEF["function"]["description"]
+    assert "Call again for current/latest/today/time-sensitive data" in CALL_TOOL_DEF["function"]["description"]
 
     assert SEARCH_TOOL_DEF is DISCOVER_TOOL_DEF
     assert GET_TOOLS_BY_IDS_TOOL_DEF is INSPECT_TOOL_DEF

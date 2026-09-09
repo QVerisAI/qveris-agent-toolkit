@@ -41,6 +41,8 @@ Do not assume generic MCP or stateless SDK clients provide semantic route memory
 
 Inspect when that host entry's contract is missing or stale. Discover again when intent, coverage, provider, authorization, or endpoint context changes; the entry expires; the capability is unavailable; or comparison/fallback is needed. Never invent `search_id`, reuse another discovery's attribution, or cache credentials, sensitive user values, or business results.
 
+For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
+
 An explicit empty parameter contract means the tool takes no parameters. A missing contract is not equivalent: Inspect it or request the missing business input before Call. Preserve required, enum, and alternative/one-of constraints. Never copy sample values as if they were the user's request.
 
 Compatibility note: legacy MCP names `search_tools`, `get_tools_by_ids`, and `execute_tool` remain deprecated aliases only. Prefer `discover`, `inspect`, and `call` in all new workflows.

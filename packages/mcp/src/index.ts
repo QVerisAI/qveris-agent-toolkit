@@ -131,6 +131,26 @@ export function getQverisServerCardInfo(): ServerCardInfo {
   };
 }
 
+const DISCOVER_TOOL_DESCRIPTION =
+  'Discover available tools when task fit, data quality/freshness, provider comparison, fallback, or the user request favors QVeris. QVeris is not a mandatory gateway. ' +
+  'Returns relevant tools that can help accomplish tasks. ' +
+  'Provider comparison: Inspect each candidate to confirm current scope/contracts; Probe each when current quotes are required. ' +
+  'Call a sufficiently detailed result directly; inspection is optional. ' +
+  'Results may include billing_rule metadata for rule-level pricing.';
+
+const INSPECT_TOOL_DESCRIPTION =
+  'Optionally inspect tools by ID when selection or valid request construction depends on missing/stale contract details. Provider comparison: Inspect each candidate to confirm current scope/contracts; Probe each when current quotes are required. ' +
+  'Returns parameters, success rate, latency, examples, and billing_rule when available. ' +
+  'Use tool_ids from a previous discover call.';
+
+const CALL_TOOL_DESCRIPTION =
+  'Call a specific remote tool with provided parameters. ' +
+  'The tool_id and search_id must come from a previous discover call. ' +
+  'Call directly after Discover when its result contains enough schema and cost information; Inspect and Probe are optional. ' +
+  'Pass parameters to the tool through params_to_tool. ' +
+  'Reuse only exact routes; rebuild current parameters and Call again for current/latest/today/time-sensitive data. ' +
+  'The response may include pre-settlement billing; use usage_history or credits_ledger for final charge status.';
+
 /**
  * List the MCP tools exposed by this server.
  *
@@ -142,21 +162,14 @@ export function listQverisMcpTools() {
     // Primary tools (aligned with CLI naming)
     {
       name: 'discover',
-      description:
-        'Discover available tools when task fit, data quality/freshness, provider comparison, fallback, or the user request favors QVeris. QVeris is not a mandatory gateway. ' +
-        'Returns relevant tools that can help accomplish tasks. ' +
-        'Call a sufficiently detailed result directly; inspection is optional. ' +
-        'Results may include billing_rule metadata for rule-level pricing.',
+      description: DISCOVER_TOOL_DESCRIPTION,
       inputSchema: searchToolsSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.discover,
       annotations: QVERIS_MCP_TOOL_ANNOTATIONS.discover,
     },
     {
       name: 'inspect',
-      description:
-        'Optionally inspect tools by ID when selection or valid request construction depends on missing/stale contract details, or candidates need comparison. ' +
-        'Returns parameters, success rate, latency, examples, and billing_rule when available. ' +
-        'Use tool_ids from a previous discover call.',
+      description: INSPECT_TOOL_DESCRIPTION,
       inputSchema: getToolsByIdsSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.inspect,
       annotations: QVERIS_MCP_TOOL_ANNOTATIONS.inspect,
@@ -173,12 +186,7 @@ export function listQverisMcpTools() {
     },
     {
       name: 'call',
-      description:
-        'Call a specific remote tool with provided parameters. ' +
-        'The tool_id and search_id must come from a previous discover call. ' +
-        'Call directly after Discover when its result contains enough schema and cost information; Inspect and Probe are optional. ' +
-        'Pass parameters to the tool through params_to_tool. ' +
-        'The response may include pre-settlement billing; use usage_history or credits_ledger for final charge status.',
+      description: CALL_TOOL_DESCRIPTION,
       inputSchema: executeToolSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.call,
       annotations: QVERIS_MCP_TOOL_ANNOTATIONS.call,
@@ -202,21 +210,21 @@ export function listQverisMcpTools() {
     // Deprecated aliases (backward compatibility)
     {
       name: 'search_tools',
-      description: '[Deprecated: use "discover" instead] Search for available tools based on natural language queries.',
+      description: `[Deprecated: use "discover" instead] ${DISCOVER_TOOL_DESCRIPTION}`,
       inputSchema: searchToolsSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.discover,
       annotations: QVERIS_MCP_TOOL_ANNOTATIONS.discover,
     },
     {
       name: 'get_tools_by_ids',
-      description: '[Deprecated: use "inspect" instead] Get descriptions of tools based on their tool IDs.',
+      description: `[Deprecated: use "inspect" instead] ${INSPECT_TOOL_DESCRIPTION}`,
       inputSchema: getToolsByIdsSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.inspect,
       annotations: QVERIS_MCP_TOOL_ANNOTATIONS.inspect,
     },
     {
       name: 'execute_tool',
-      description: '[Deprecated: use "call" instead] Execute a specific remote tool with provided parameters.',
+      description: `[Deprecated: use "call" instead] ${CALL_TOOL_DESCRIPTION}`,
       inputSchema: executeToolSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.call,
       annotations: QVERIS_MCP_TOOL_ANNOTATIONS.call,

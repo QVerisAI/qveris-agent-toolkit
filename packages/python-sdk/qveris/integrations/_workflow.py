@@ -9,10 +9,21 @@ from pydantic import BaseModel, Field
 from ..client.api import QverisClient
 
 DISCOVER_DESCRIPTION = (
-    "Discover QVeris capabilities from a natural-language query. Free; returns candidates and a search_id."
+    "Discover QVeris capabilities from a natural-language query. Free; returns candidates and a search_id. "
+    "Provider comparison: Inspect each candidate to confirm current scope/contracts. If a budget decision requires a "
+    "current Probe cost quote, do not Call until the host obtains it; this three-tool adapter does not expose Probe. "
+    "This does not apply to fresh business data such as a stock quote; obtain that with Call."
 )
-INSPECT_DESCRIPTION = "Inspect one or more QVeris capabilities by tool_id before calling them. Free."
-CALL_DESCRIPTION = "Call a selected QVeris capability with parameters. May consume credits."
+INSPECT_DESCRIPTION = (
+    "Inspect one or more QVeris capabilities by tool_id before calling them. Provider comparison: Inspect each candidate "
+    "to confirm current scope/contracts. If a budget decision requires a current Probe cost quote, do not Call until the "
+    "host obtains it; this three-tool adapter does not expose Probe. This does not apply to fresh business data such as "
+    "a stock quote; obtain that with Call. Free."
+)
+CALL_DESCRIPTION = (
+    "Call a selected QVeris capability with parameters. Reuse only exact routes; rebuild current parameters and Call "
+    "again for current/latest/today/time-sensitive data. May consume credits."
+)
 
 AsyncToolFunction = Callable[..., Coroutine[Any, Any, str]]
 
@@ -85,6 +96,10 @@ def build_qveris_workflow(
     async def qveris_discover(query: str, limit: int = 20) -> str:
         """Discover QVeris capabilities from a natural-language query.
 
+        Provider comparison: Inspect each candidate to confirm current scope/contracts. If a budget decision requires a
+        current Probe cost quote, do not Call until the host obtains it; this three-tool adapter does not expose Probe.
+        This does not apply to fresh business data such as a stock quote; obtain that with Call.
+
         :param query: Capability query in natural language, for example ``weather forecast API``.
         :param limit: Number of results to return (1-100).
         """
@@ -92,6 +107,10 @@ def build_qveris_workflow(
 
     async def qveris_inspect(tool_ids: List[str], search_id: Optional[str] = None) -> str:
         """Inspect one or more QVeris capabilities before calling them.
+
+        Provider comparison: Inspect each candidate to confirm current scope/contracts. If a budget decision requires a
+        current Probe cost quote, do not Call until the host obtains it; this three-tool adapter does not expose Probe.
+        This does not apply to fresh business data such as a stock quote; obtain that with Call.
 
         :param tool_ids: Tool IDs returned by discover.
         :param search_id: The search_id from the discover response, if available.
@@ -105,6 +124,8 @@ def build_qveris_workflow(
         max_response_size: Optional[int] = None,
     ) -> str:
         """Call a selected QVeris capability with parameters.
+
+        Reuse only exact routes; rebuild current parameters and Call again for current/latest/today/time-sensitive data.
 
         :param tool_id: The capability tool_id, from discover or inspect.
         :param params_to_tool: Parameters to pass to the capability.

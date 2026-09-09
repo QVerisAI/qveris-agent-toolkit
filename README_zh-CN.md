@@ -43,6 +43,7 @@
 
 - 丰富的能力，覆盖多种类目
 - 默认使用 `Discover → Call`；只有契约缺失/过期、需要比较、参数校验或当前报价时才加入 `Inspect` 和 `Probe`
+- 进行 Provider 比较时，如果需要确认当前范围或完整契约，必须逐一 Inspect；Discover 摘要不等于确认。比较需要当前报价时，必须逐一 Probe。复用只能保留精确路由，不能保留业务参数或结果：参数必须来自当前请求；当前、最新、今天或其他时效性数据必须执行新的 Call。
 - **NEW** `QVeris CLI` — 通过命令行按需发现和调用工具。[了解更多](#qveris-cli)
 - 支持 `CLI` / `MCP` / `Python SDK` / `REST API`
 

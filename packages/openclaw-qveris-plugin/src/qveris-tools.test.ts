@@ -253,6 +253,26 @@ describe("createQverisTools", () => {
     expect(discover?.description).toContain("documentation");
   });
 
+  it("keeps provider comparison and fresh-call boundaries model-visible", () => {
+    const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() })!;
+    const discover = tools.find((tool) => tool.name === "qveris_discover");
+    const inspect = tools.find((tool) => tool.name === "qveris_inspect");
+    const call = tools.find((tool) => tool.name === "qveris_call");
+
+    expect(discover?.description).toContain(
+      "Provider comparison: Inspect each candidate to confirm current scope/contracts.",
+    );
+    expect(inspect?.description).toContain(
+      "If a budget decision requires a current Probe cost quote, do not Call until the host obtains it; this three-tool plugin does not expose Probe.",
+    );
+    expect(inspect?.description).toContain(
+      "This does not apply to fresh business data such as a stock quote; obtain that with Call.",
+    );
+    expect(call?.description).toContain(
+      "Reuse only exact routes; rebuild current parameters and Call again for current/latest/today/time-sensitive data.",
+    );
+  });
+
   it("qveris_call schema has tool_id and params_to_tool but not search_id", () => {
     const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() });
     const callTool = tools!.find((t) => t.name === "qveris_call");

@@ -19,6 +19,10 @@ DEFAULT_SYSTEM_PROMPT = (
     "the parameters you intend to pass later. Call the best result directly when discovery "
     "provides enough parameter and cost information. Use inspect only when selection or valid "
     "request construction depends on missing or stale contract details, or candidates need comparison. "
+    "Provider comparison: Inspect each candidate to confirm current scope/contracts. If a budget decision requires a "
+    "current Probe cost quote, do not Call until the host obtains it; this three-tool integration does not expose Probe. "
+    "This does not apply to fresh business data such as a stock quote; obtain that with Call. Reuse only exact routes; "
+    "rebuild current parameters and Call again for current/latest/today/time-sensitive data. "
     "Do not assume this stateless SDK remembers routes: preserve search_id in the current agent loop "
     "and implement explicitly scoped host-side reuse only if the application needs it. "
     "Use usage_history or credits_ledger only when the user asks about charge status, "
@@ -54,7 +58,10 @@ INSPECT_TOOL_DEF: ChatCompletionToolParam = {
         "name": "inspect",
         "description": (
             "Optionally inspect one or more QVeris capabilities when selection or valid request "
-            "construction depends on missing/stale contract details, or candidates need comparison."
+            "construction depends on missing/stale contract details. Provider comparison: Inspect each candidate to "
+            "confirm current scope/contracts. If a budget decision requires a current Probe cost quote, do not Call "
+            "until the host obtains it; this three-tool integration does not expose Probe. This does not apply to fresh "
+            "business data such as a stock quote; obtain that with Call."
         ),
         "parameters": {
             "type": "object",
@@ -78,7 +85,10 @@ CALL_TOOL_DEF: ChatCompletionToolParam = {
     "type": "function",
     "function": {
         "name": "call",
-        "description": "Call a selected QVeris capability with JSON parameters.",
+        "description": (
+            "Call a selected QVeris capability with JSON parameters. Reuse only exact routes; rebuild current parameters "
+            "and Call again for current/latest/today/time-sensitive data."
+        ),
         "parameters": {
             "type": "object",
             "properties": {
