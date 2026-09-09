@@ -13,6 +13,8 @@
 - `usage_history` — Context-safe usage audit summary/search/export
 - `credits_ledger` — Context-safe final credit ledger summary/search/export
 
+Authentication determines tool availability: browser sign-in through Hosted MCP OAuth exposes `discover`, `inspect`, `probe`, and `call`. The `usage_history` and `credits_ledger` audit tools require an API-key-backed connection.
+
 In other words, the MCP server is the agent-facing transport for the same core QVeris protocol described elsewhere in this repository.
 
 ---
@@ -50,7 +52,7 @@ Both surfaces map to the same QVeris protocol:
 
 - An MCP-compatible client
 - A QVeris account for browser sign-in when using Hosted MCP with OAuth discovery
-- A valid `QVERIS_API_KEY` only for the local stdio setup or the Hosted MCP API-key fallback
+- A valid `QVERIS_API_KEY` for the local stdio setup, the Hosted MCP API-key fallback, or access to `usage_history` and `credits_ledger`
 - Node.js `18+` only when using the local stdio fallback
 
 ---
@@ -61,7 +63,7 @@ Both surfaces map to the same QVeris protocol:
 
 Prefer Hosted MCP whenever the client supports remote Streamable HTTP. It uses one managed endpoint, with no local package, Node.js process, or server lifecycle to maintain.
 
-For clients with MCP OAuth discovery, add the endpoint below and complete browser sign-in when prompted. You do not need to create or paste an API key. The example uses the `mcpServers` wrapper; VS Code uses `servers` instead.
+For clients with MCP OAuth discovery, add the endpoint below and complete browser sign-in when prompted. You do not need to create or paste an API key to use `discover`, `inspect`, `probe`, and `call`. The example uses the `mcpServers` wrapper; VS Code uses `servers` instead.
 
 ```json
 {
@@ -406,7 +408,7 @@ Inputs are `tool_id`, optional `parameters`, optional `checks` (`schema`, `quote
 
 Use this tool to call a discovered QVeris capability.
 
-The call response may include compact pre-settlement `billing`. Final charge status should be checked with `usage_history` or `credits_ledger`.
+The call response may include compact pre-settlement `billing`. Final charge status should be checked with `usage_history` or `credits_ledger`. Both audit tools require an API-key-backed connection and return `403` in a browser-sign-in OAuth session.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|

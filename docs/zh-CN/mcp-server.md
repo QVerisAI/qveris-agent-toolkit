@@ -13,6 +13,8 @@
 - `usage_history` — 上下文安全的调用审计摘要 / 精确查询 / 文件导出
 - `credits_ledger` — 上下文安全的最终积分账本摘要 / 精确查询 / 文件导出
 
+认证方式会影响工具可用性：通过托管 MCP OAuth 完成浏览器登录后可使用 `discover`、`inspect`、`probe` 和 `call`；`usage_history` 与 `credits_ledger` 两个审计工具仍需要 API 密钥认证的连接。
+
 换言之，MCP 服务器是本仓库其他文档所描述的 QVeris 核心协议的智能体侧传输层。
 
 ---
@@ -50,7 +52,7 @@
 
 - MCP 兼容客户端
 - 使用支持 OAuth 自动发现的托管 MCP 时，需要 QVeris 账户以完成浏览器登录
-- 仅本地 stdio 配置或托管 MCP 的 API 密钥备用方案需要有效的 `QVERIS_API_KEY`
+- 本地 stdio 配置、托管 MCP 的 API 密钥备用方案，或使用 `usage_history` 与 `credits_ledger` 时，需要有效的 `QVERIS_API_KEY`
 - 仅在使用本地 stdio 备用方案时需要 Node.js `18+`
 
 ---
@@ -61,7 +63,7 @@
 
 只要客户端支持远程 Streamable HTTP，就应优先使用托管 MCP。它使用一个受管端点，无需维护本地软件包、Node.js 进程或服务器生命周期。
 
-支持 MCP OAuth 自动发现的客户端可添加以下端点，按提示在浏览器中完成登录，无需创建或粘贴 API 密钥。示例使用 `mcpServers` 外层键；VS Code 应改用 `servers`。
+支持 MCP OAuth 自动发现的客户端可添加以下端点，按提示在浏览器中完成登录；使用 `discover`、`inspect`、`probe` 和 `call` 无需创建或粘贴 API 密钥。示例使用 `mcpServers` 外层键；VS Code 应改用 `servers`。
 
 ```json
 {
@@ -398,7 +400,7 @@ API 密钥接入步骤：
 
 调用已发现的 QVeris 能力。
 
-调用响应可能包含紧凑的 `billing` 预结算账单。最终是否扣费请通过 `usage_history` 或 `credits_ledger` 查询。
+调用响应可能包含紧凑的 `billing` 预结算账单。最终是否扣费请通过 `usage_history` 或 `credits_ledger` 查询。这两个审计工具需要 API 密钥认证的连接，在浏览器登录的 OAuth 会话中会返回 `403`。
 
 | 参数 | 类型 | 必填 | 说明 |
 |-----|------|------|------|
