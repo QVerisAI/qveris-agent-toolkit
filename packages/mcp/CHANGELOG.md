@@ -6,9 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.14.4] - 2026-09-09
+
 ### Changed
 
 - Added a logo to the MCP Registry listing and switched the hosted endpoint from a manual API-key prompt to OAuth discovery. Updated requirements, quick starts, and VS Code setup instructions in all three locales, including the API-key fallback and separate China endpoint configuration.
+- Preserve Provider-comparison prerequisites and require fresh Calls for current, latest, or date-sensitive data in MCP tool descriptions and runnable guidance. ([#362])
 
 ### Fixed
 
@@ -175,7 +178,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Handle empty/non-JSON success responses gracefully; `params_to_tool` documented as an object.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.3...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.4...HEAD
+[0.14.4]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.3...mcp-v0.14.4
 [0.14.3]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.2...mcp-v0.14.3
 [0.14.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.1...mcp-v0.14.2
 [0.14.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.0...mcp-v0.14.1
@@ -227,3 +231,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#256]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/256
 [#341]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/341
 [#347]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/347
+[#362]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/362

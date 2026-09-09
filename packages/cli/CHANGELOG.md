@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.11.3] - 2026-09-09
+
+### Changed
+
+- Preserve Provider-comparison prerequisites and require a fresh Call for current, latest, or date-sensitive requests while retaining the shortest safe direct path when Discover returns a sufficient contract. ([#362])
+
 ### Fixed
 
 - Bind persisted Discover indexes and implicit discovery IDs to the exact API endpoint and authorization context that created them, preventing CLI session provenance from crossing accounts or deployments. ([#364])
@@ -118,7 +124,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial release: `discover` / `inspect` / `call` from the terminal against the QVeris API.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.2...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.3...HEAD
+[0.11.3]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.2...cli-v0.11.3
 [0.11.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.1...cli-v0.11.2
 [0.11.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.0...cli-v0.11.1
 [0.11.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.10.0...cli-v0.11.0
@@ -159,3 +166,5 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#273]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/273
 [#341]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/341
 [#347]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/347
+[#362]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/362
+[#364]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/364

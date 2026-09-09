@@ -4,7 +4,7 @@ The official command-line tool for the QVeris capability routing network. Discov
 
 For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
 
-`@qverisai/cli` v0.11.2 is the latest tested release. It includes OAuth Device Flow sessions, zero-cost parameter/quote probes, opt-in discovery and call projections, and Call model attribution while preserving API key compatibility.
+`@qverisai/cli` v0.11.3 is the latest tested release. It includes OAuth Device Flow sessions, zero-cost parameter/quote probes, opt-in discovery and call projections, and Call model attribution while preserving API key compatibility.
 
 **Why CLI?** CLI runs as a subprocess with structured output and on-demand discovery. It does not preload the full capability catalog. Instructions, commands, and results still consume context tokens; QVeris MCP also uses a small set of routing tools.
 

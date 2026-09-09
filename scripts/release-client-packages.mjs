@@ -26,6 +26,7 @@ export const CLIENTS = [
     workflow: "mcp-publish.yml",
     manifest: "npm",
     serverManifest: true,
+    rootManifests: ["gemini-extension.json"],
   },
   {
     key: "js-sdk",
@@ -280,6 +281,15 @@ function validateNpmMetadata(root, client, errors) {
     const packageVersions = (server.packages || []).map((entry) => entry.version);
     if (packageVersions.length === 0 || packageVersions.some((candidate) => candidate !== version)) {
       errors.push(`${client.label}: every server.json package version must equal ${version}`);
+    }
+  }
+
+  for (const manifestPath of client.rootManifests || []) {
+    const manifest = readJson(root, manifestPath);
+    if (manifest.version !== version) {
+      errors.push(
+        `${client.label}: ${manifestPath} version (${manifest.version ?? "missing"}) must equal ${version}`,
+      );
     }
   }
 
