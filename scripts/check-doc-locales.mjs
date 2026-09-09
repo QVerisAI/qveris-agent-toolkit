@@ -29,6 +29,8 @@ const CN = 'docs/cn/zh-CN';
 const CN_INTENTIONAL_OMISSIONS = new Set([
   'claude-code-setup.md',
   'codex-setup.md',
+  // Engineering policy is deployment-neutral and is not an end-user setup page.
+  'conditional-routing-implementation-plan.md',
   'discover-call-benchmark.md',
   // Source-generated references are global-locale pages. China-facing SDK
   // guides remain the public setup entry points for that deployment.
