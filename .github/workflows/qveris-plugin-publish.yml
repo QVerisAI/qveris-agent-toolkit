@@ -115,9 +115,9 @@ jobs:
 
             ## Highlights
 
-            - Aligns ClawHub Trusted Publishing source attribution with the authorized candidate commit SHA.
-            - Keeps the immutable release tag for artifact checkout while binding both trusted source fields to the verified commit.
-            - Adds regression coverage that prevents tag refs from being submitted as the authorized source ref.
+            - Preserves Provider-comparison prerequisites and requires fresh Calls for current, latest, or date-sensitive requests.
+            - Hardens exact-query capability reuse with endpoint and credential-context isolation, explicit live-discovery provenance, and bounded refresh and expiry behavior.
+            - Prevents stale or ambiguous paid Call outcomes from being replayed while retaining the shortest safe direct route from a sufficient Discover contract.
             - Preserves exact Registry metadata, source-commit, integrity, runtime-manifest, and concrete-tool verification before creating this release.
 
             See [README](packages/openclaw-qveris-plugin/README.md) for usage.

@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+## [2026.9.10] - 2026-09-09
+
+### Changed
+
+- Preserve Provider-comparison prerequisites and require a fresh Call for current, latest, or date-sensitive requests while retaining the shortest safe direct path when Discover returns a sufficient contract. ([#362])
+
+### Fixed
+
+- Harden exact-query capability reuse so cache hits preserve live discovery provenance separately from reusable contracts, isolate endpoint and credential-context variants, honor refresh and expiry semantics, and never replay stale or ambiguous paid Calls. ([#363])
+
 ## [2026.9.9] - 2026-09-08
 
 ### Fixed
@@ -76,7 +86,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 - First published build with compiled `dist/` output. ([#90])
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.9.9...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.9.10...HEAD
+[2026.9.10]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.9.9...qveris-plugin-v2026.9.10
 [2026.9.9]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.9.8...qveris-plugin-v2026.9.9
 [2026.9.8]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.9.7...qveris-plugin-v2026.9.8
 [2026.9.7]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/qveris-plugin-v2026.7.30...qveris-plugin-v2026.9.7
@@ -97,3 +108,5 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 [#352]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/352
 [#354]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/354
 [#356]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/356
+[#362]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/362
+[#363]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/363
