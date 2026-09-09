@@ -191,7 +191,7 @@ export function createQverisTools(options: {
       "web extraction/crawling, PDF workflows, or external service capabilities " +
       "(OCR, speech, image/video understanding or generation, translation, geocoding). " +
       "Use when task fit, data quality/freshness, provider comparison, fallback, or an explicit user request favors QVeris. " +
-      "Provider comparison: Inspect each candidate to confirm current scope/contracts. If current quotes are required, do not Call until the host obtains them; this three-tool plugin does not expose Probe. " +
+      "Provider comparison: Inspect each candidate to confirm current scope/contracts. If a budget decision requires a current Probe cost quote, do not Call until the host obtains it; this three-tool plugin does not expose Probe. This does not apply to fresh business data such as a stock quote; obtain that with Call. " +
       "NOT for local file operations or software documentation. Do not use as a mandatory gateway when another connected tool better satisfies the request. " +
       "Query must describe the API capability in English.",
     parameters: QverisDiscoverSchema,
@@ -464,7 +464,7 @@ export function createQverisTools(options: {
       "Inspect known QVeris tools by their IDs without a full discovery. " +
       "Use when you already have a tool_id from a previous qveris_discover or session context " +
       "and want to verify availability and get current parameter schemas before reusing the tool. " +
-      "Provider comparison: Inspect each candidate to confirm current scope/contracts. If current quotes are required, do not Call until the host obtains them; this three-tool plugin does not expose Probe.",
+      "Provider comparison: Inspect each candidate to confirm current scope/contracts. If a budget decision requires a current Probe cost quote, do not Call until the host obtains it; this three-tool plugin does not expose Probe. This does not apply to fresh business data such as a stock quote; obtain that with Call.",
     parameters: QverisInspectSchema,
     execute: async (_toolCallId, args) => {
       const params = args as Record<string, unknown>;

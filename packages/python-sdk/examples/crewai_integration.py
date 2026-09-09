@@ -34,8 +34,10 @@ def main() -> None:
             backstory=(
                 "You use QVeris when capability discovery, comparison, or fallback is needed, "
                 "and inspect only when the current contract lacks required details. "
-                "Provider comparison: Inspect each candidate to confirm current scope/contracts. If current quotes are "
-                "required, do not Call until the host obtains them; this three-tool adapter does not expose Probe. "
+                "Provider comparison: Inspect each candidate to confirm current scope/contracts. If a budget decision "
+                "requires a current Probe cost quote, do not Call until the host obtains it; this three-tool adapter "
+                "does not expose Probe. This does not apply to fresh business data such as a stock quote; obtain that "
+                "with Call. "
                 "Reuse only exact routes; rebuild current parameters and Call again for current/latest/today/time-sensitive data."
             ),
             tools=tools,

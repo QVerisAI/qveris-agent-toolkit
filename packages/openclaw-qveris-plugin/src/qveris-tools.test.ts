@@ -263,7 +263,10 @@ describe("createQverisTools", () => {
       "Provider comparison: Inspect each candidate to confirm current scope/contracts.",
     );
     expect(inspect?.description).toContain(
-      "If current quotes are required, do not Call until the host obtains them; this three-tool plugin does not expose Probe.",
+      "If a budget decision requires a current Probe cost quote, do not Call until the host obtains it; this three-tool plugin does not expose Probe.",
+    );
+    expect(inspect?.description).toContain(
+      "This does not apply to fresh business data such as a stock quote; obtain that with Call.",
     );
     expect(call?.description).toContain(
       "Reuse only exact routes; rebuild current parameters and Call again for current/latest/today/time-sensitive data.",

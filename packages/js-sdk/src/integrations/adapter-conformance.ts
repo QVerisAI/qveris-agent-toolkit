@@ -64,7 +64,10 @@ export function describeQverisAdapterConformance(opts: AdapterConformanceOptions
         'Provider comparison: Inspect each candidate to confirm current scope/contracts.',
       );
       expect(tools.qveris_inspect.description).toContain(
-        'If current quotes are required, do not Call until the host obtains them; this three-tool adapter does not expose Probe.',
+        'If a budget decision requires a current Probe cost quote, do not Call until the host obtains it; this three-tool adapter does not expose Probe.',
+      );
+      expect(tools.qveris_inspect.description).toContain(
+        'This does not apply to fresh business data such as a stock quote; obtain that with Call.',
       );
       expect(tools.qveris_call.description).toContain(
         'Reuse only exact routes; rebuild current parameters and Call again for current/latest/today/time-sensitive data.',

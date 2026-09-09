@@ -91,7 +91,8 @@ def test_tool_definitions_expose_canonical_names_and_legacy_aliases() -> None:
         "search_id",
         "params_to_tool",
     ]
-    assert "do not Call until the host obtains them" in INSPECT_TOOL_DEF["function"]["description"]
+    assert "current Probe cost quote" in INSPECT_TOOL_DEF["function"]["description"]
+    assert "fresh business data such as a stock quote" in INSPECT_TOOL_DEF["function"]["description"]
     assert "Call again for current/latest/today/time-sensitive data" in CALL_TOOL_DEF["function"]["description"]
 
     assert SEARCH_TOOL_DEF is DISCOVER_TOOL_DEF

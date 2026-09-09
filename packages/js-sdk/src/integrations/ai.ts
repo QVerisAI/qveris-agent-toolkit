@@ -53,7 +53,7 @@ export function getQverisTools(qveris: Qveris, options: { sessionId?: string; mo
   return {
     qveris_discover: tool({
       description:
-        'Discover QVeris capabilities when task fit, data quality/freshness, provider comparison, fallback, or the user request favors QVeris. It is not a mandatory gateway. Free; returns candidates and a search_id. Provider comparison: Inspect each candidate to confirm current scope/contracts. If current quotes are required, do not Call until the host obtains them; this three-tool adapter does not expose Probe.',
+        'Discover QVeris capabilities when task fit, data quality/freshness, provider comparison, fallback, or the user request favors QVeris. It is not a mandatory gateway. Free; returns candidates and a search_id. Provider comparison: Inspect each candidate to confirm current scope/contracts. If a budget decision requires a current Probe cost quote, do not Call until the host obtains it; this three-tool adapter does not expose Probe. This does not apply to fresh business data such as a stock quote; obtain that with Call.',
       inputSchema: z.object({
         query: z.string().describe("Capability query, e.g. 'weather forecast API'."),
         limit: z.number().int().min(1).max(100).optional().describe('Number of results (1-100).'),
@@ -64,7 +64,7 @@ export function getQverisTools(qveris: Qveris, options: { sessionId?: string; mo
 
     qveris_inspect: tool({
       description:
-        'Optional: inspect capabilities only when selection or valid request construction depends on missing/stale contract details. Provider comparison: Inspect each candidate to confirm current scope/contracts. If current quotes are required, do not Call until the host obtains them; this three-tool adapter does not expose Probe. Free.',
+        'Optional: inspect capabilities only when selection or valid request construction depends on missing/stale contract details. Provider comparison: Inspect each candidate to confirm current scope/contracts. If a budget decision requires a current Probe cost quote, do not Call until the host obtains it; this three-tool adapter does not expose Probe. This does not apply to fresh business data such as a stock quote; obtain that with Call. Free.',
       inputSchema: z.object({
         tool_ids: z.array(z.string()).describe('Tool IDs returned by discover.'),
         search_id: z.string().optional().describe('The search_id from the discover response, if available.'),

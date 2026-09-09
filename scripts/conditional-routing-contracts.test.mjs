@@ -156,8 +156,13 @@ function assertLimitedToolPolicy(path) {
   );
   assert.match(
     source,
-    /If current quotes are required, do not Call until the host obtains them; this three-tool (?:adapter|integration|plugin) does not expose Probe\./i,
-    `${path} must stop instead of invoking an unavailable Probe tool`,
+    /If a budget decision requires a current Probe cost quote, do not Call until the host obtains it; this three-tool (?:adapter|integration|plugin) does not expose Probe\./i,
+    `${path} must stop when a required Probe cost quote is unavailable`,
+  );
+  assert.match(
+    source,
+    /(?:This|This restriction) does not apply to fresh business data such as a stock quote; obtain that with Call\./i,
+    `${path} must distinguish Probe cost quotes from fresh business data`,
   );
   assert.match(
     source,
