@@ -271,6 +271,7 @@ describe("createQverisTools", () => {
     expect(call?.description).toContain(
       "Reuse only exact routes; rebuild current parameters and Call again for current/latest/today/time-sensitive data.",
     );
+    expect(call?.description).toContain("explicit allow_uncorrelated compatibility opt-in");
   });
 
   it("qveris_call schema has tool_id and params_to_tool but not search_id", () => {
@@ -279,6 +280,7 @@ describe("createQverisTools", () => {
     const schema = callTool?.parameters as { properties?: Record<string, unknown> } | undefined;
     expect(schema?.properties?.tool_id).toBeDefined();
     expect(schema?.properties?.params_to_tool).toBeDefined();
+    expect(schema?.properties?.allow_uncorrelated).toMatchObject({ type: "boolean" });
     expect(schema?.properties?.search_id).toBeUndefined();
     expect(schema?.properties?.discovery_id).toBeUndefined();
   });
@@ -333,6 +335,41 @@ describe("createQverisTools", () => {
     expect(toolsList[0].tool_id).toBe("openweathermap.weather.execute.v1");
   });
 
+  it("does not treat inspection-only metadata as discovery provenance", async () => {
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/tools/by-ids")) return Promise.resolve(fakeJsonResponse(SAMPLE_INSPECT_RESPONSE));
+      if (url.includes("/tools/execute")) return Promise.resolve(fakeJsonResponse(SAMPLE_INVOKE_RESPONSE));
+      return Promise.resolve(fakeJsonResponse({}, 404));
+    });
+    globalThis.fetch = fetchMock;
+    const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() })!;
+    const inspect = tools.find((tool) => tool.name === "qveris_inspect")!;
+    const callTool = tools.find((tool) => tool.name === "qveris_call")!;
+
+    const inspected = parseToolResult(await inspect.execute("i1", { tool_ids: "openweathermap.weather.execute.v1" }));
+    expect(inspected.call_hint).toContain("qveris_discover");
+
+    const blocked = parseToolResult(
+      await callTool.execute("c1", {
+        tool_id: "openweathermap.weather.execute.v1",
+        params_to_tool: '{"city":"London"}',
+      }),
+    );
+    expect(blocked.error_type).toBe("tool_not_discovered");
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/tools/execute"))).toHaveLength(0);
+
+    const compatible = parseToolResult(
+      await callTool.execute("c2", {
+        tool_id: "openweathermap.weather.execute.v1",
+        params_to_tool: '{"city":"London"}',
+        allow_uncorrelated: true,
+      }),
+    );
+    expect(compatible.success).toBe(true);
+    const executeCall = fetchMock.mock.calls.find(([url]) => String(url).includes("/tools/execute"));
+    expect(parseRequestBody((executeCall?.[1] as RequestInit).body).search_id).toBeNull();
+  });
+
   it("qveris_inspect returns error for empty tool_ids", async () => {
     const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() });
     const inspect = tools!.find((t) => t.name === "qveris_inspect")!;
@@ -344,7 +381,7 @@ describe("createQverisTools", () => {
     expect(String(parsed.note)).toContain("Stay inside the QVeris tool workflow");
   });
 
-  it("qveris_call proceeds with null search_id when tool not discovered", async () => {
+  it("requires explicit opt-in before an uncorrelated Call", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -356,9 +393,20 @@ describe("createQverisTools", () => {
     const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() });
     const callTool = tools!.find((t) => t.name === "qveris_call")!;
 
-    await callTool.execute("call-1", {
+    const blocked = parseToolResult(
+      await callTool.execute("call-1", {
+        tool_id: "unknown-tool-xyz",
+        params_to_tool: '{"city": "London"}',
+      }),
+    );
+    expect(blocked.error_type).toBe("tool_not_discovered");
+    expect(blocked.retry_hint).toContain("allow_uncorrelated");
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    await callTool.execute("call-2", {
       tool_id: "unknown-tool-xyz",
       params_to_tool: '{"city": "London"}',
+      allow_uncorrelated: true,
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0];
@@ -381,6 +429,7 @@ describe("createQverisTools", () => {
       if (typeof url === "string" && url.includes("/tools/execute")) {
         const body = parseRequestBody(init?.body);
         expect(body.search_id).toBe("search-abc");
+        expect(init?.redirect).toBe("error");
         return Promise.resolve({
           ok: true,
           status: 200,
@@ -425,7 +474,14 @@ describe("createQverisTools", () => {
       query: "tool x API",
       total: 1,
       search_id: "s1",
-      results: [{ tool_id: "tool-x", name: "ToolX", description: "test" }],
+      results: [
+        {
+          tool_id: "tool-x",
+          name: "ToolX",
+          description: "test",
+          params: [{ name: "q", type: "string", required: true }],
+        },
+      ],
     };
     globalThis.fetch = vi.fn().mockImplementation((url: string) => {
       if (typeof url === "string" && url.includes("/search")) {
@@ -461,6 +517,62 @@ describe("createQverisTools", () => {
     const parsed2 = parseToolResult(result2);
     expect(parsed2.recovery_step).toBe("simplify");
     expect(parsed2.attempt_number).toBe(2);
+  });
+
+  it.each([
+    [422, "http_error", undefined],
+    [429, "rate_limited", false],
+    [503, "http_error", false],
+  ] as const)("submits a paid Call only once on HTTP %i", async (status, errorType, retrySafe) => {
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/search")) return Promise.resolve(fakeJsonResponse(SAMPLE_DISCOVER_RESPONSE));
+      if (url.includes("/tools/execute")) return Promise.resolve(fakeJsonResponse({ detail: "failure" }, status));
+      return Promise.resolve(fakeJsonResponse({}, 404));
+    });
+    globalThis.fetch = fetchMock;
+    const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() })!;
+    const discover = tools.find((tool) => tool.name === "qveris_discover")!;
+    const callTool = tools.find((tool) => tool.name === "qveris_call")!;
+
+    await discover.execute("d1", { query: "weather forecast API" });
+    const result = parseToolResult(
+      await callTool.execute("c1", {
+        tool_id: "openweathermap.weather.execute.v1",
+        params_to_tool: '{"city":"London"}',
+      }),
+    );
+
+    expect(result.error_type).toBe(errorType);
+    expect(result.retry_safe).toBe(retrySafe);
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/tools/execute"))).toHaveLength(1);
+  });
+
+  it.each([
+    ["transport loss", new Error("ECONNRESET"), "network_error"],
+    ["timeout", Object.assign(new Error("aborted"), { name: "AbortError" }), "timeout"],
+  ])("does not replay a paid Call after %s", async (_case, failure, errorType) => {
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/search")) return Promise.resolve(fakeJsonResponse(SAMPLE_DISCOVER_RESPONSE));
+      if (url.includes("/tools/execute")) return Promise.reject(failure);
+      return Promise.resolve(fakeJsonResponse({}, 404));
+    });
+    globalThis.fetch = fetchMock;
+    const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() })!;
+    const discover = tools.find((tool) => tool.name === "qveris_discover")!;
+    const callTool = tools.find((tool) => tool.name === "qveris_call")!;
+
+    await discover.execute("d1", { query: "weather forecast API" });
+    const result = parseToolResult(
+      await callTool.execute("c1", {
+        tool_id: "openweathermap.weather.execute.v1",
+        params_to_tool: '{"city":"London"}',
+      }),
+    );
+
+    expect(result.error_type).toBe(errorType);
+    expect(result.execution_outcome).toBe("unknown");
+    expect(result.retry_safe).toBe(false);
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/tools/execute"))).toHaveLength(1);
   });
 
   it("rolodex records successful invocations and annotates discover results", async () => {
@@ -600,6 +712,69 @@ describe("createQverisTools", () => {
     expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/tools/execute"))).toHaveLength(2);
   });
 
+  it("requires refresh when capability memory expires before the Discover cache", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/search")) return Promise.resolve(fakeJsonResponse(SAMPLE_DISCOVER_RESPONSE));
+      if (url.includes("/tools/execute")) return Promise.resolve(fakeJsonResponse(SAMPLE_INVOKE_RESPONSE));
+      return Promise.resolve(fakeJsonResponse({}, 404));
+    });
+    globalThis.fetch = fetchMock;
+    const tools = createQverisTools({
+      api: fakeApi(
+        makePluginConfig({
+          discoverCacheTtlSeconds: 60,
+          capabilityMemoryTtlSeconds: 1,
+        }),
+      ),
+      ctx: fakeCtx(),
+    })!;
+    const discover = tools.find((tool) => tool.name === "qveris_discover")!;
+    const callTool = tools.find((tool) => tool.name === "qveris_call")!;
+
+    await discover.execute("d1", { query: "weather forecast API" });
+    await callTool.execute("c1", {
+      tool_id: "openweathermap.weather.execute.v1",
+      params_to_tool: '{"city":"London"}',
+    });
+    vi.advanceTimersByTime(1_000);
+
+    const stale = parseToolResult(
+      await callTool.execute("c2", {
+        tool_id: "openweathermap.weather.execute.v1",
+        params_to_tool: '{"city":"Paris"}',
+      }),
+    );
+    expect(stale.retry_hint).toContain("refresh: true");
+    expect(
+      parseToolResult(await discover.execute("d2", { query: "weather forecast API" })).discovery_cache,
+    ).toMatchObject({
+      hit: true,
+    });
+    expect(
+      parseToolResult(
+        await callTool.execute("c3", {
+          tool_id: "openweathermap.weather.execute.v1",
+          params_to_tool: '{"city":"Paris"}',
+        }),
+      ).success,
+    ).toBe(false);
+
+    expect(
+      parseToolResult(await discover.execute("d3", { query: "weather forecast API", refresh: true })).discovery_cache,
+    ).toMatchObject({ hit: false });
+    expect(
+      parseToolResult(
+        await callTool.execute("c4", {
+          tool_id: "openweathermap.weather.execute.v1",
+          params_to_tool: '{"city":"Paris"}',
+        }),
+      ).success,
+    ).toBe(true);
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/search"))).toHaveLength(2);
+  });
+
   it("extends matching successful memory when discovery refreshes before expiry", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
@@ -642,7 +817,7 @@ describe("createQverisTools", () => {
     expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/tools/execute"))).toHaveLength(2);
   });
 
-  it("lets fresh inspection renew an expired remembered route and contract", async () => {
+  it("requires fresh discovery after route expiry even when inspection refreshes the contract", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
     const fetchMock = vi.fn().mockImplementation((url: string) => {
@@ -677,18 +852,20 @@ describe("createQverisTools", () => {
       await callTool.execute("c3", {
         tool_id: "openweathermap.weather.execute.v1",
         params_to_tool: '{"city":"Paris"}',
+        allow_uncorrelated: true,
       }),
     );
 
-    expect(afterInspect.success).toBe(true);
+    expect(afterInspect.success).toBe(false);
+    expect(afterInspect.error_type).toBe("tool_not_discovered");
+    expect(afterInspect.retry_hint).toContain("qveris_discover");
     const executeBodies = fetchMock.mock.calls
       .filter(([url]) => String(url).includes("/tools/execute"))
       .map(([, init]) => parseRequestBody((init as RequestInit).body));
-    expect(executeBodies).toHaveLength(2);
-    expect(executeBodies[1]).toMatchObject({ search_id: "search-abc", parameters: { city: "Paris" } });
+    expect(executeBodies).toHaveLength(1);
   });
 
-  it("requires metadata refresh before reusing a successful route whose contract was omitted", async () => {
+  it("requires inspection before the first Call when discovery omitted the contract", async () => {
     const withoutContract = {
       ...SAMPLE_DISCOVER_RESPONSE,
       results: [
@@ -710,23 +887,16 @@ describe("createQverisTools", () => {
     const callTool = tools.find((tool) => tool.name === "qveris_call")!;
 
     await discover.execute("d1", { query: "weather forecast API" });
-    expect(
-      parseToolResult(
-        await callTool.execute("c1", {
-          tool_id: "openweathermap.weather.execute.v1",
-          params_to_tool: '{"city":"London"}',
-        }),
-      ).success,
-    ).toBe(true);
-    const repeated = parseToolResult(
-      await callTool.execute("c2", {
+    const blocked = parseToolResult(
+      await callTool.execute("c1", {
         tool_id: "openweathermap.weather.execute.v1",
-        params_to_tool: '{"city":"Paris"}',
+        params_to_tool: '{"city":"London"}',
+        allow_uncorrelated: true,
       }),
     );
-    expect(repeated.error_type).toBe("tool_not_discovered");
-    expect(repeated.retry_hint).toContain("qveris_inspect");
-    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/tools/execute"))).toHaveLength(1);
+    expect(blocked.error_type).toBe("tool_not_discovered");
+    expect(blocked.retry_hint).toContain("qveris_inspect");
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/tools/execute"))).toHaveLength(0);
   });
 
   it("reuses only an exact normalized discovery within the session and supports refresh", async () => {
@@ -760,6 +930,112 @@ describe("createQverisTools", () => {
     });
     expect(refreshed.discovery_cache).toMatchObject({ hit: false });
     expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/search"))).toHaveLength(2);
+  });
+
+  it("does not shorten discovery provenance to the shorter response-cache TTL", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/search")) return Promise.resolve(fakeJsonResponse(SAMPLE_DISCOVER_RESPONSE));
+      if (url.includes("/tools/execute")) return Promise.resolve(fakeJsonResponse(SAMPLE_INVOKE_RESPONSE));
+      return Promise.resolve(fakeJsonResponse({}, 404));
+    });
+    globalThis.fetch = fetchMock;
+    const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() })!;
+    const discover = tools.find((tool) => tool.name === "qveris_discover")!;
+    const callTool = tools.find((tool) => tool.name === "qveris_call")!;
+
+    await discover.execute("d1", { query: "weather forecast API" });
+    vi.advanceTimersByTime(60_000);
+    expect(
+      parseToolResult(await discover.execute("d2", { query: "weather forecast API" })).discovery_cache,
+    ).toMatchObject({
+      hit: true,
+    });
+    vi.advanceTimersByTime(31_000);
+
+    const result = parseToolResult(
+      await callTool.execute("c1", {
+        tool_id: "openweathermap.weather.execute.v1",
+        params_to_tool: '{"city":"London"}',
+      }),
+    );
+    expect(result.success).toBe(true);
+  });
+
+  it("requires explicit opt-in instead of attaching one query's search_id under another query", async () => {
+    const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (url.includes("/search")) {
+        const query = String(parseRequestBody(init?.body).query);
+        return Promise.resolve(
+          fakeJsonResponse({
+            query,
+            total: 1,
+            search_id: query.startsWith("historical") ? "search-history" : "search-current",
+            results: [
+              {
+                tool_id: "shared.weather.v1",
+                name: "Shared Weather",
+                description: "Weather data",
+                params: [],
+              },
+            ],
+          }),
+        );
+      }
+      if (url.includes("/tools/execute")) return Promise.resolve(fakeJsonResponse(SAMPLE_INVOKE_RESPONSE));
+      return Promise.resolve(fakeJsonResponse({}, 404));
+    });
+    globalThis.fetch = fetchMock;
+    const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() })!;
+    const discover = tools.find((tool) => tool.name === "qveris_discover")!;
+    const callTool = tools.find((tool) => tool.name === "qveris_call")!;
+
+    await discover.execute("d1", { query: "current weather API", limit: 5 });
+    await discover.execute("d2", { query: "historical weather API", limit: 5 });
+    const cached = parseToolResult(await discover.execute("d3", { query: "current weather API", limit: 5 }));
+    expect(cached.discovery_cache).toMatchObject({ hit: true });
+
+    const blocked = parseToolResult(
+      await callTool.execute("c1", { tool_id: "shared.weather.v1", params_to_tool: "{}" }),
+    );
+    expect(blocked.error_type).toBe("tool_not_discovered");
+    expect(blocked.detail).toContain("ambiguous");
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/tools/execute"))).toHaveLength(0);
+
+    await callTool.execute("c2", {
+      tool_id: "shared.weather.v1",
+      params_to_tool: "{}",
+      allow_uncorrelated: true,
+    });
+    const executeCall = fetchMock.mock.calls.find(([url]) => String(url).includes("/tools/execute"));
+    expect(parseRequestBody((executeCall?.[1] as RequestInit).body).search_id).toBeNull();
+  });
+
+  it("does not downgrade an expired discovery context to an uncorrelated Call", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/search")) return Promise.resolve(fakeJsonResponse(SAMPLE_DISCOVER_RESPONSE));
+      if (url.includes("/tools/execute")) return Promise.resolve(fakeJsonResponse(SAMPLE_INVOKE_RESPONSE));
+      return Promise.resolve(fakeJsonResponse({}, 404));
+    });
+    globalThis.fetch = fetchMock;
+    const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() })!;
+    const discover = tools.find((tool) => tool.name === "qveris_discover")!;
+    const callTool = tools.find((tool) => tool.name === "qveris_call")!;
+
+    await discover.execute("d1", { query: "weather forecast API" });
+    vi.advanceTimersByTime(30 * 60 * 1_000);
+    const blocked = parseToolResult(
+      await callTool.execute("c1", {
+        tool_id: "openweathermap.weather.execute.v1",
+        params_to_tool: '{"city":"London"}',
+      }),
+    );
+
+    expect(blocked.error_type).toBe("tool_not_discovered");
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/tools/execute"))).toHaveLength(0);
   });
 
   it("rebuilds cached discovery output so successful exact-query memory is current", async () => {
@@ -878,46 +1154,67 @@ describe("createQverisTools", () => {
     },
   );
 
-  it("session state is isolated per factory call — undiscovered call uses null search_id", async () => {
-    const fetchMock = vi.fn().mockImplementation((url: string) => {
-      if (typeof url === "string" && url.includes("/search")) {
-        return Promise.resolve({
-          ok: true,
-          status: 200,
-          json: () => Promise.resolve(SAMPLE_DISCOVER_RESPONSE),
-          text: () => Promise.resolve(""),
-          headers: new Headers(),
-        });
+  it("isolates concurrent discovery provenance by session, endpoint, and authorization context", async () => {
+    const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      const body = parseRequestBody(init?.body);
+      if (url.includes("/search")) {
+        return Promise.resolve(
+          fakeJsonResponse({
+            ...SAMPLE_DISCOVER_RESPONSE,
+            search_id: `search-${body.session_id}`,
+          }),
+        );
       }
-      if (typeof url === "string" && url.includes("/tools/execute")) {
-        return Promise.resolve({
-          ok: true,
-          status: 200,
-          json: () => Promise.resolve(SAMPLE_INVOKE_RESPONSE),
-          text: () => Promise.resolve(""),
-          headers: new Headers(),
-        });
-      }
-      return Promise.resolve({ ok: false, status: 404, text: () => Promise.resolve(""), headers: new Headers() });
+      if (url.includes("/tools/execute")) return Promise.resolve(fakeJsonResponse(SAMPLE_INVOKE_RESPONSE));
+      return Promise.resolve(fakeJsonResponse({}, 404));
     });
     globalThis.fetch = fetchMock;
-    const tools1 = createQverisTools({ api: fakeApi(), ctx: fakeCtx({ sessionKey: "s1" }) });
-    const tools2 = createQverisTools({ api: fakeApi(), ctx: fakeCtx({ sessionKey: "s2" }) });
+    const tools1 = createQverisTools({
+      api: fakeApi({ apiKey: "key-one", baseUrl: "https://qveris.ai/api/v1" }),
+      ctx: fakeCtx({ sessionKey: "s1" }),
+    })!;
+    const tools2 = createQverisTools({
+      api: fakeApi({ apiKey: "key-two", baseUrl: "https://qveris.cn/api/v1" }),
+      ctx: fakeCtx({ sessionKey: "s2" }),
+    })!;
+    const discover1 = tools1.find((tool) => tool.name === "qveris_discover")!;
+    const discover2 = tools2.find((tool) => tool.name === "qveris_discover")!;
+    const call1 = tools1.find((tool) => tool.name === "qveris_call")!;
+    const call2 = tools2.find((tool) => tool.name === "qveris_call")!;
 
-    const discover1 = tools1!.find((t) => t.name === "qveris_discover")!;
-    const callTool2 = tools2!.find((t) => t.name === "qveris_call")!;
+    await Promise.all([
+      discover1.execute("d1", { query: "weather forecast API" }),
+      discover2.execute("d2", { query: "weather forecast API" }),
+    ]);
+    await Promise.all([
+      call1.execute("c1", {
+        tool_id: "openweathermap.weather.execute.v1",
+        params_to_tool: '{"city":"London"}',
+      }),
+      call2.execute("c2", {
+        tool_id: "openweathermap.weather.execute.v1",
+        params_to_tool: '{"city":"Paris"}',
+      }),
+    ]);
 
-    await discover1.execute("d1", { query: "weather forecast API" });
-
-    // tools2 should not see tools1's discovery — call proceeds with null search_id
-    await callTool2.execute("c1", {
-      tool_id: "openweathermap.weather.execute.v1",
-      params_to_tool: '{"city": "London"}',
+    const executeCalls = fetchMock.mock.calls.filter(([url]) => String(url).includes("/tools/execute"));
+    expect(executeCalls).toHaveLength(2);
+    const bySession = new Map(
+      executeCalls.map(([url, init]) => {
+        const body = parseRequestBody((init as RequestInit).body);
+        return [body.session_id, { url: String(url), body, headers: new Headers((init as RequestInit).headers) }];
+      }),
+    );
+    expect(bySession.get("s1")).toMatchObject({
+      url: expect.stringContaining("qveris.ai"),
+      body: { search_id: "search-s1", parameters: { city: "London" } },
     });
-    const executeCall = fetchMock.mock.calls.find(([u]) => String(u).includes("/tools/execute"));
-    expect(executeCall).toBeDefined();
-    const body = JSON.parse(executeCall![1].body);
-    expect(body.search_id).toBeNull();
+    expect(bySession.get("s1")?.headers.get("authorization")).toBe("Bearer key-one");
+    expect(bySession.get("s2")).toMatchObject({
+      url: expect.stringContaining("qveris.cn"),
+      body: { search_id: "search-s2", parameters: { city: "Paris" } },
+    });
+    expect(bySession.get("s2")?.headers.get("authorization")).toBe("Bearer key-two");
   });
 });
 
@@ -1025,7 +1322,7 @@ describe("qveris_call materialization", () => {
       query: "materialize test",
       total: 1,
       search_id: searchId,
-      results: [{ tool_id: toolId, name: toolId, description: "test tool" }],
+      results: [{ tool_id: toolId, name: toolId, description: "test tool", params: [] }],
     };
   }
 
@@ -1542,7 +1839,14 @@ describe("qveris_call materialization", () => {
       query: "cn tool API",
       total: 1,
       search_id: "cn-search-1",
-      results: [{ tool_id: "cn-tool-x", name: "CnToolX", description: "CN tool" }],
+      results: [
+        {
+          tool_id: "cn-tool-x",
+          name: "CnToolX",
+          description: "CN tool",
+          params: [{ name: "q", type: "string", required: true }],
+        },
+      ],
     };
     const cnFullContent = JSON.stringify([{ id: 1, name: "cn result" }]);
 

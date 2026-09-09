@@ -92,6 +92,12 @@ const QverisCallSchema = Type.Object(
         maximum: 300,
       }),
     ),
+    allow_uncorrelated: Type.Optional(
+      Type.Boolean({
+        description:
+          "Explicit compatibility opt-in for a known tool_id that has no unique live Discover provenance. Default: false. Prefer Discover; this never bypasses an expired known route or a missing known parameter contract.",
+      }),
+    ),
   },
   { additionalProperties: false },
 );
@@ -135,6 +141,7 @@ export function createQverisTools(options: {
   const discoverLimit = resolveDiscoverLimit(pluginConfig);
   const discoverCacheTtlMs = resolveDiscoverCacheTtlSeconds(pluginConfig) * 1000;
   const capabilityMemoryTtlMs = resolveCapabilityMemoryTtlSeconds(pluginConfig) * 1000;
+  const discoveryCorrelationTtlMs = 30 * 60 * 1000;
   const rememberSuccessfulCapabilities = resolveRememberSuccessfulCapabilities(pluginConfig);
   const autoMaterialize = resolveAutoMaterialize(pluginConfig);
   const fullContentMaxBytes = resolveFullContentMaxBytes(pluginConfig);
@@ -149,14 +156,16 @@ export function createQverisTools(options: {
   });
   // Correlation state is separate from optional success-memory hints. It keeps
   // the backend search_id available for the normal discover -> call handoff.
-  const discoverTracker = makeDiscoverResultTracker({ ttlMs: 30 * 60 * 1000 });
+  const discoverTracker = makeDiscoverResultTracker({ ttlMs: discoveryCorrelationTtlMs });
   const callFailureCount = new Map<string, number>();
 
   const sessionId = ctx.sessionKey ?? `qveris-${Date.now()}-${randomUUID()}`;
 
   // Auto-resolve the backend search_id so the model never has to manage it
   function resolveKnownSearchId(toolId: string): string | undefined {
-    return discoverTracker.getMeta(toolId)?.searchId ?? rolodex.lookup(toolId)?.discoveryId;
+    const current = discoverTracker.getMeta(toolId);
+    if (current) return discoverTracker.resolveSearchId(toolId);
+    return rolodex.lookup(toolId)?.discoveryId;
   }
 
   function formatToolForModel(tool: QverisDiscoverResultTool, discoveryQuery?: string) {
@@ -207,7 +216,8 @@ export function createQverisTools(options: {
 
       const normalizedQuery = query.trim().replace(/\s+/g, " ").toLowerCase();
       const cacheKey = `${normalizedQuery}:${normalizedLimit}`;
-      const cached = refresh ? undefined : discoverCache.read(cacheKey);
+      const cachedEntry = refresh ? undefined : discoverCache.readEntry(cacheKey);
+      const cached = cachedEntry?.value;
 
       let result: Awaited<ReturnType<typeof qverisDiscover>>;
       if (cached) {
@@ -228,19 +238,21 @@ export function createQverisTools(options: {
         discoverCache.write(cacheKey, result, discoverCacheTtlMs);
       }
 
-      // A cache hit must not extend schema/provenance freshness. Only a fresh
-      // network response advances the acquisition timestamp.
+      // Re-activate the context represented by the result shown to the model.
+      // Cached acquisition keeps its original expiry and never renews metadata.
+      discoverTracker.trackResults(
+        query,
+        result.results.map((t) => ({
+          tool_id: t.tool_id,
+          name: t.name,
+          description: t.description,
+          params: t.params,
+        })),
+        result.search_id,
+        "discover",
+        cachedEntry ? cachedEntry.acquiredAt + discoveryCorrelationTtlMs : undefined,
+      );
       if (!cached) {
-        discoverTracker.trackResults(
-          query,
-          result.results.map((t) => ({
-            tool_id: t.tool_id,
-            name: t.name,
-            description: t.description,
-            params: t.params,
-          })),
-          result.search_id,
-        );
         for (const tool of result.results) {
           const meta = discoverTracker.getMeta(tool.tool_id);
           if (!meta) continue;
@@ -250,7 +262,7 @@ export function createQverisTools(options: {
             discoveryQuery: meta.query,
             discoveryId: meta.searchId,
             parameterContract: meta.parameterContract,
-            contractExpiresAt: meta.expiresAt,
+            contractExpiresAt: meta.contractExpiresAt,
             metadataSource: meta.metadataSource,
           });
         }
@@ -283,6 +295,7 @@ export function createQverisTools(options: {
     description:
       "Call a discovered third-party API/service. " +
       "Provide the tool_id from qveris_discover results and parameters as a JSON string in params_to_tool. " +
+      "Calls without unique live Discover provenance require the explicit allow_uncorrelated compatibility opt-in. " +
       "Reuse only exact routes; rebuild current parameters and Call again for current/latest/today/time-sensitive data.",
     parameters: QverisCallSchema,
     execute: async (_toolCallId, args) => {
@@ -292,6 +305,7 @@ export function createQverisTools(options: {
       const paramsToToolRaw = readStringParam(params, "params_to_tool", { required: true });
       const maxSize = readPositiveIntegerParam(params, "max_response_size") ?? maxResponseSize;
       const timeoutOverride = readPositiveIntegerParam(params, "timeout_seconds", { max: 300 });
+      const allowUncorrelated = params.allow_uncorrelated === true;
 
       let toolParams: Record<string, unknown>;
       try {
@@ -320,22 +334,59 @@ export function createQverisTools(options: {
       const remembered = rolodex.lookup(toolId);
       const currentMeta = discoverTracker.getMeta(toolId);
       const rememberedContractStale =
-        remembered?.contractExpiresAt !== undefined && Date.now() > remembered.contractExpiresAt;
-      if (rolodex.isStale(toolId) || rememberedContractStale || (remembered && !currentMeta)) {
+        remembered?.contractExpiresAt !== undefined && Date.now() >= remembered.contractExpiresAt;
+      const currentContractStale =
+        currentMeta?.contractExpiresAt !== undefined && Date.now() >= currentMeta.contractExpiresAt;
+      if (
+        rolodex.isStale(toolId) ||
+        discoverTracker.isStale(toolId) ||
+        rememberedContractStale ||
+        currentContractStale ||
+        (remembered && !currentMeta)
+      ) {
         return jsonResult({
           success: false,
           error_type: "tool_not_discovered",
           detail: "The remembered capability route or its parameter contract has expired.",
-          retry_hint: "Run qveris_discover again before another paid Call.",
+          retry_hint: "Run qveris_discover with refresh: true before another paid Call.",
           note: QVERIS_WORKFLOW_NOTE,
         } satisfies QverisErrorResult);
       }
-      if (remembered && currentMeta?.parameterContract === undefined) {
+      if (currentMeta?.query === "(inspect)" && !allowUncorrelated) {
+        return jsonResult({
+          success: false,
+          error_type: "tool_not_discovered",
+          detail: "Inspection alone does not provide discovery provenance for this Call.",
+          retry_hint: "Run qveris_discover before another paid Call.",
+          note: QVERIS_WORKFLOW_NOTE,
+        } satisfies QverisErrorResult);
+      }
+      if (currentMeta && currentMeta.parameterContract === undefined) {
         return jsonResult({
           success: false,
           error_type: "tool_not_discovered",
           detail: "The current discovery/inspection projection omitted the parameter contract.",
           retry_hint: "Run qveris_inspect for this tool before Call; an omitted contract is not a zero-parameter tool.",
+          note: QVERIS_WORKFLOW_NOTE,
+        } satisfies QverisErrorResult);
+      }
+      if (currentMeta?.ambiguousProvenance && !allowUncorrelated) {
+        return jsonResult({
+          success: false,
+          error_type: "tool_not_discovered",
+          detail: "This tool has multiple live discovery contexts, so its search_id is ambiguous.",
+          retry_hint:
+            "Use a more specific Discover query, or explicitly set allow_uncorrelated: true only when a Call without search attribution is intended.",
+          note: QVERIS_WORKFLOW_NOTE,
+        } satisfies QverisErrorResult);
+      }
+      if (!currentMeta && !remembered && !allowUncorrelated) {
+        return jsonResult({
+          success: false,
+          error_type: "tool_not_discovered",
+          detail: "The tool has no live discovery provenance in this session.",
+          retry_hint:
+            "Run qveris_discover first, or explicitly set allow_uncorrelated: true only for a known tool_id when a Call without search attribution is intended.",
           note: QVERIS_WORKFLOW_NOTE,
         } satisfies QverisErrorResult);
       }
@@ -371,7 +422,7 @@ export function createQverisTools(options: {
             discoveryQuery: meta.query,
             discoveryId: searchId,
             parameterContract: meta.parameterContract,
-            contractExpiresAt: meta.expiresAt,
+            contractExpiresAt: meta.contractExpiresAt,
             metadataSource: meta.metadataSource,
           });
         }
@@ -518,7 +569,7 @@ export function createQverisTools(options: {
           name: meta.name,
           description: meta.description,
           parameterContract: meta.parameterContract,
-          contractExpiresAt: meta.expiresAt,
+          contractExpiresAt: meta.contractExpiresAt,
         });
       }
 

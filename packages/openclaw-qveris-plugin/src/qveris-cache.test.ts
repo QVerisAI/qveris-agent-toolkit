@@ -14,7 +14,7 @@ describe("discover cache", () => {
     cache.write("weather:5", "first", 1_000);
     expect(cache.read("weather:5")).toBe("first");
 
-    vi.advanceTimersByTime(1_001);
+    vi.advanceTimersByTime(1_000);
     expect(cache.read("weather:5")).toBeUndefined();
 
     cache.write("weather:5", "second", 1_000);
@@ -26,6 +26,20 @@ describe("discover cache", () => {
     const cache = makeDiscoverCache<string>();
     cache.write("weather:5", "value", 0);
     expect(cache.read("weather:5")).toBeUndefined();
+  });
+
+  it("retains the original acquisition time on cache reads", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
+    const cache = makeDiscoverCache<string>();
+    cache.write("weather:5", "value", 1_000);
+
+    vi.advanceTimersByTime(500);
+    expect(cache.readEntry("weather:5")).toMatchObject({
+      value: "value",
+      acquiredAt: Date.parse("2026-09-07T00:00:00Z"),
+      expiresAt: Date.parse("2026-09-07T00:00:01Z"),
+    });
   });
 });
 
@@ -59,7 +73,7 @@ describe("successful capability memory", () => {
       discoveryId: "search-2",
     });
 
-    vi.advanceTimersByTime(1_001);
+    vi.advanceTimersByTime(1_000);
     expect(rolodex.lookup("weather.v1")).toBeUndefined();
     expect(rolodex.isStale("weather.v1")).toBe(true);
     expect(rolodex.getSummary()).toEqual([]);
@@ -110,7 +124,7 @@ describe("successful capability memory", () => {
     expect(rolodex.lookup("weather.v1")).toBeUndefined();
   });
 
-  it("lets fresh inspection renew an expired route without changing its discovery context", () => {
+  it("does not let inspection revive an expired route", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
     const rolodex = makeToolRolodex({ ttlMs: 1_000 });
@@ -124,12 +138,9 @@ describe("successful capability memory", () => {
       contractExpiresAt: Date.now() + 1_000,
       metadataSource: "discover",
     });
-    vi.advanceTimersByTime(1_001);
+    vi.advanceTimersByTime(1_000);
     expect(rolodex.isStale("weather.v1")).toBe(true);
-    expect(rolodex.getStoredContext("weather.v1")).toEqual({
-      discoveryQuery: "weather forecast API",
-      discoveryId: "search-1",
-    });
+    expect(rolodex.getStoredContext("weather.v1")).toBeUndefined();
 
     rolodex.reconcileFreshInspection("weather.v1", {
       name: "Fresh Weather",
@@ -138,13 +149,8 @@ describe("successful capability memory", () => {
       contractExpiresAt: Date.now() + 5_000,
     });
 
-    expect(rolodex.isStale("weather.v1")).toBe(false);
-    expect(rolodex.lookup("weather.v1")).toMatchObject({
-      discoveryQuery: "weather forecast API",
-      discoveryId: "search-1",
-      metadataSource: "inspect",
-      successCount: 1,
-    });
+    expect(rolodex.isStale("weather.v1")).toBe(true);
+    expect(rolodex.lookup("weather.v1")).toBeUndefined();
   });
 });
 
@@ -159,7 +165,39 @@ describe("discover correlation tracker", () => {
       "search-1",
     );
     expect(tracker.getMeta("weather.v1")?.searchId).toBe("search-1");
-    vi.advanceTimersByTime(1_001);
+    vi.advanceTimersByTime(1_000);
     expect(tracker.getMeta("weather.v1")).toBeUndefined();
+    expect(tracker.isStale("weather.v1")).toBe(true);
+  });
+
+  it("does not guess provenance when one tool appears under different exact queries", () => {
+    const tracker = makeDiscoverResultTracker();
+    const tool = { tool_id: "weather.v1", name: "Weather", description: "Current weather", params: [] };
+
+    tracker.trackResults("weather forecast API", [tool], "search-weather");
+    expect(tracker.resolveSearchId("weather.v1")).toBe("search-weather");
+
+    tracker.trackResults("historical weather API", [tool], "search-history");
+    expect(tracker.getMeta("weather.v1")?.ambiguousProvenance).toBe(true);
+    expect(tracker.resolveSearchId("weather.v1")).toBeUndefined();
+  });
+
+  it("lets inspection refresh a contract without extending discovery provenance", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
+    const tracker = makeDiscoverResultTracker({ ttlMs: 1_000 });
+    const tool = { tool_id: "weather.v1", name: "Weather", description: "Weather", params: [] };
+    tracker.trackResults("weather API", [tool], "search-1");
+
+    vi.advanceTimersByTime(500);
+    tracker.trackResults("(inspect)", [tool], "search-1", "inspect");
+    expect(tracker.getMeta("weather.v1")).toMatchObject({
+      expiresAt: Date.parse("2026-09-07T00:00:01Z"),
+      contractExpiresAt: Date.parse("2026-09-07T00:00:01.500Z"),
+    });
+
+    vi.advanceTimersByTime(500);
+    expect(tracker.getMeta("weather.v1")).toBeUndefined();
+    expect(tracker.isStale("weather.v1")).toBe(true);
   });
 });
