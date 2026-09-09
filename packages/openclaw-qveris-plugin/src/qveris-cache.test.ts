@@ -161,7 +161,7 @@ describe("discover correlation tracker", () => {
     tracker.trackResults(
       "weather forecast API",
       [{ tool_id: "weather.v1", name: "Weather", description: "Current weather" }],
-      "search-1",
+      { searchId: "search-1" },
     );
     expect(tracker.getMeta("weather.v1")?.searchId).toBe("search-1");
     vi.advanceTimersByTime(1_000);
@@ -173,10 +173,10 @@ describe("discover correlation tracker", () => {
     const tracker = makeDiscoverResultTracker();
     const tool = { tool_id: "weather.v1", name: "Weather", description: "Current weather", params: [] };
 
-    tracker.trackResults("weather forecast API", [tool], "search-weather");
+    tracker.trackResults("weather forecast API", [tool], { searchId: "search-weather" });
     expect(tracker.resolveSearchId("weather.v1")).toBe("search-weather");
 
-    tracker.trackResults("historical weather API", [tool], "search-history");
+    tracker.trackResults("historical weather API", [tool], { searchId: "search-history" });
     expect(tracker.getMeta("weather.v1")?.ambiguousProvenance).toBe(true);
     expect(tracker.resolveSearchId("weather.v1")).toBeUndefined();
   });
@@ -186,10 +186,10 @@ describe("discover correlation tracker", () => {
     vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
     const tracker = makeDiscoverResultTracker({ ttlMs: 1_000 });
     const tool = { tool_id: "weather.v1", name: "Weather", description: "Weather", params: [] };
-    tracker.trackResults("weather API", [tool], "search-1");
+    tracker.trackResults("weather API", [tool], { searchId: "search-1" });
 
     vi.advanceTimersByTime(500);
-    tracker.trackResults("(inspect)", [tool], "search-1", "inspect");
+    tracker.trackResults("(inspect)", [tool], { metadataSource: "inspect" });
     expect(tracker.getMeta("weather.v1")).toMatchObject({
       expiresAt: Date.parse("2026-09-07T00:00:01Z"),
       contractExpiresAt: Date.parse("2026-09-07T00:00:01.500Z"),
@@ -207,10 +207,14 @@ describe("discover correlation tracker", () => {
     const projected = { tool_id: "weather.v1", name: "Weather", description: "Weather" };
     const inspected = { ...projected, params: [{ name: "city", required: true }] };
 
-    tracker.trackResults("weather API", [projected], "search-1");
+    tracker.trackResults("weather API", [projected], { searchId: "search-1" });
     vi.advanceTimersByTime(500);
-    tracker.trackResults("(inspect)", [inspected], undefined, "inspect");
-    tracker.trackResults("weather API", [projected], "search-1", "discover", Date.now() + 500);
+    tracker.trackResults("(inspect)", [inspected], { metadataSource: "inspect" });
+    tracker.trackResults("weather API", [projected], {
+      searchId: "search-1",
+      acquiredAt: Date.now() - 500,
+      expiresAt: Date.now() + 500,
+    });
 
     expect(tracker.getMeta("weather.v1")).toMatchObject({
       parameterContract: inspected.params,
@@ -225,9 +229,9 @@ describe("discover correlation tracker", () => {
     const tracker = makeDiscoverResultTracker({ ttlMs: 1_000 });
     const tool = { tool_id: "weather.v1", name: "Weather", description: "Weather", params: [] };
 
-    tracker.trackResults("weather API", [tool], "search-1");
+    tracker.trackResults("weather API", [tool], { searchId: "search-1" });
     vi.advanceTimersByTime(1_000);
-    tracker.trackResults("weather API", [tool], "search-1", "inspect");
+    tracker.trackResults("weather API", [tool], { searchId: "search-1", metadataSource: "inspect" });
 
     expect(tracker.getMeta("weather.v1")).toBeUndefined();
     expect(tracker.resolveSearchId("weather.v1")).toBeUndefined();
@@ -240,9 +244,9 @@ describe("discover correlation tracker", () => {
     const tracker = makeDiscoverResultTracker({ ttlMs: 1_000 });
     const tool = { tool_id: "weather.v1", name: "Weather", description: "Weather", params: [] };
 
-    tracker.trackResults("current weather API", [tool], "search-current");
+    tracker.trackResults("current weather API", [tool], { searchId: "search-current" });
     vi.advanceTimersByTime(500);
-    tracker.trackResults("historical weather API", [tool], "search-history");
+    tracker.trackResults("historical weather API", [tool], { searchId: "search-history" });
     expect(tracker.resolveSearchId("weather.v1")).toBeUndefined();
 
     vi.advanceTimersByTime(500);
@@ -250,12 +254,79 @@ describe("discover correlation tracker", () => {
     expect(tracker.resolveSearchId("weather.v1")).toBe("search-history");
   });
 
+  it("keeps limit-specific variants and selects the newest route for one exact query", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
+    const tracker = makeDiscoverResultTracker({ ttlMs: 1_000 });
+    const first = { tool_id: "weather.v1", name: "Weather", description: "Weather", params: [] };
+    const second = { tool_id: "alerts.v1", name: "Alerts", description: "Alerts", params: [] };
+
+    tracker.trackResults("weather API", [first], {
+      searchId: "search-limit-5",
+      contextKey: "weather api:5",
+    });
+    vi.advanceTimersByTime(100);
+    tracker.trackResults("weather API", [first, second], {
+      searchId: "search-limit-20",
+      contextKey: "weather api:20",
+    });
+    tracker.trackResults("weather API", [first], {
+      searchId: "search-limit-5",
+      contextKey: "weather api:5",
+      acquiredAt: Date.now() - 100,
+      expiresAt: Date.now() + 900,
+    });
+
+    expect(tracker.getMeta("weather.v1")?.ambiguousProvenance).toBe(false);
+    expect(tracker.resolveSearchId("weather.v1")).toBe("search-limit-20");
+    expect(tracker.resolveSearchId("alerts.v1")).toBe("search-limit-20");
+    expect(tracker.getProvenanceStatus("weather.v1")).toBe("unique");
+  });
+
+  it("ignores an out-of-order older response for the same cache variant", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
+    const tracker = makeDiscoverResultTracker({ ttlMs: 1_000 });
+    const oldTool = { tool_id: "old.v1", name: "Old", description: "Old", params: [] };
+    const newTool = { tool_id: "new.v1", name: "New", description: "New", params: [] };
+
+    tracker.trackResults("weather API", [newTool], {
+      searchId: "search-new",
+      contextKey: "weather api:10",
+      acquiredAt: Date.now() + 100,
+      expiresAt: Date.now() + 1_100,
+    });
+    tracker.trackResults("weather API", [oldTool], {
+      searchId: "search-old",
+      contextKey: "weather api:10",
+      acquiredAt: Date.now(),
+      expiresAt: Date.now() + 1_000,
+    });
+
+    expect(tracker.resolveSearchId("new.v1")).toBe("search-new");
+    expect(tracker.getMeta("old.v1")).toBeUndefined();
+  });
+
+  it("reports provenance state independently from unique search-id resolution", () => {
+    const tracker = makeDiscoverResultTracker();
+    const tool = { tool_id: "weather.v1", name: "Weather", description: "Weather", params: [] };
+
+    expect(tracker.getProvenanceStatus("weather.v1")).toBe("unknown");
+    tracker.trackResults("(inspect)", [tool], { metadataSource: "inspect" });
+    expect(tracker.getProvenanceStatus("weather.v1")).toBe("inspection_only");
+    tracker.trackResults("current weather API", [tool], { searchId: "search-current" });
+    expect(tracker.getProvenanceStatus("weather.v1")).toBe("unique");
+    tracker.trackResults("historical weather API", [tool], { searchId: "search-history" });
+    expect(tracker.resolveSearchId("weather.v1")).toBeUndefined();
+    expect(tracker.getProvenanceStatus("weather.v1")).toBe("ambiguous");
+  });
+
   it("revokes the previous exact-query context when a later result omits the tool", () => {
     const tracker = makeDiscoverResultTracker();
     const tool = { tool_id: "weather.v1", name: "Weather", description: "Weather", params: [] };
 
-    tracker.trackResults("weather API", [tool], "search-1");
-    tracker.trackResults("weather API", [], "search-2");
+    tracker.trackResults("weather API", [tool], { searchId: "search-1" });
+    tracker.trackResults("weather API", [], { searchId: "search-2" });
 
     expect(tracker.getMeta("weather.v1")).toBeUndefined();
     expect(tracker.isStale("weather.v1")).toBe(true);

@@ -370,6 +370,35 @@ describe("createQverisTools", () => {
     expect(parseRequestBody((executeCall?.[1] as RequestInit).body).search_id).toBeNull();
   });
 
+  it("reports ambiguous Inspect provenance without calling it undiscovered", async () => {
+    const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (url.includes("/search")) {
+        const query = String(parseRequestBody(init?.body).query);
+        return Promise.resolve(
+          fakeJsonResponse({
+            ...SAMPLE_DISCOVER_RESPONSE,
+            query,
+            search_id: query.startsWith("historical") ? "search-history" : "search-current",
+          }),
+        );
+      }
+      if (url.includes("/tools/by-ids")) return Promise.resolve(fakeJsonResponse(SAMPLE_INSPECT_RESPONSE));
+      return Promise.resolve(fakeJsonResponse({}, 404));
+    });
+    globalThis.fetch = fetchMock;
+    const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() })!;
+    const discover = tools.find((tool) => tool.name === "qveris_discover")!;
+    const inspect = tools.find((tool) => tool.name === "qveris_inspect")!;
+
+    await discover.execute("d1", { query: "current weather API" });
+    await discover.execute("d2", { query: "historical weather API" });
+    const inspected = parseToolResult(await inspect.execute("i1", { tool_ids: "openweathermap.weather.execute.v1" }));
+
+    expect(inspected.call_hint).toContain("Multiple live discovery contexts");
+    expect(inspected.call_hint).toContain("allow_uncorrelated");
+    expect(inspected.call_hint).not.toContain("No discovery provenance exists");
+  });
+
   it("qveris_inspect returns error for empty tool_ids", async () => {
     const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() });
     const inspect = tools!.find((t) => t.name === "qveris_inspect")!;
@@ -967,6 +996,55 @@ describe("createQverisTools", () => {
     });
     expect(refreshed.discovery_cache).toMatchObject({ hit: false });
     expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/search"))).toHaveLength(2);
+  });
+
+  it("preserves newer provenance when replaying an older limit-specific cache entry", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
+    const extraTool = {
+      ...SAMPLE_DISCOVER_RESPONSE.results[0],
+      tool_id: "weather.alerts.v1",
+      name: "Weather Alerts",
+    };
+    const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (url.includes("/search")) {
+        const limit = Number(parseRequestBody(init?.body).limit);
+        return Promise.resolve(
+          fakeJsonResponse({
+            ...SAMPLE_DISCOVER_RESPONSE,
+            search_id: limit === 20 ? "search-limit-20" : "search-limit-5",
+            total: limit === 20 ? 2 : 1,
+            results: limit === 20 ? [...SAMPLE_DISCOVER_RESPONSE.results, extraTool] : SAMPLE_DISCOVER_RESPONSE.results,
+          }),
+        );
+      }
+      if (url.includes("/tools/execute")) return Promise.resolve(fakeJsonResponse(SAMPLE_INVOKE_RESPONSE));
+      return Promise.resolve(fakeJsonResponse({}, 404));
+    });
+    globalThis.fetch = fetchMock;
+    const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() })!;
+    const discover = tools.find((tool) => tool.name === "qveris_discover")!;
+    const callTool = tools.find((tool) => tool.name === "qveris_call")!;
+
+    await discover.execute("d1", { query: "weather forecast API", limit: 5 });
+    vi.advanceTimersByTime(1_000);
+    await discover.execute("d2", { query: "weather forecast API", limit: 20 });
+    expect(
+      parseToolResult(await discover.execute("d3", { query: "weather forecast API", limit: 5 })).discovery_cache,
+    ).toMatchObject({ hit: true });
+
+    await callTool.execute("c1", {
+      tool_id: "openweathermap.weather.execute.v1",
+      params_to_tool: '{"city":"London"}',
+    });
+    await callTool.execute("c2", { tool_id: "weather.alerts.v1", params_to_tool: '{"city":"London"}' });
+
+    const executeBodies = fetchMock.mock.calls
+      .filter(([url]) => String(url).includes("/tools/execute"))
+      .map(([, init]) => parseRequestBody((init as RequestInit).body));
+    expect(executeBodies).toHaveLength(2);
+    expect(executeBodies[0].search_id).toBe("search-limit-20");
+    expect(executeBodies[1].search_id).toBe("search-limit-20");
   });
 
   it("does not shorten discovery provenance to the shorter response-cache TTL", async () => {

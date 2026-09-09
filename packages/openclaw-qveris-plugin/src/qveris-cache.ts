@@ -248,15 +248,18 @@ interface DiscoverResultMeta {
 }
 
 interface DiscoveryContext {
+  queryKey: string;
   query: string;
   searchId?: string;
+  acquiredAt: number;
   expiresAt: number;
 }
 
 interface DiscoverResultRecord {
   name: string;
   description: string;
-  metadataExpiresAt: number;
+  metadataAcquiredAt: number;
+  contractAcquiredAt: number;
   contractExpiresAt: number;
   parameterContract?: unknown[];
   metadataSource: "discover" | "inspect";
@@ -269,6 +272,7 @@ interface DiscoverResultRecord {
 
 export function makeDiscoverResultTracker(options: { ttlMs?: number } = {}) {
   const store = new Map<string, DiscoverResultRecord>();
+  const contextAcquiredAt = new Map<string, number>();
   const ttlMs = options.ttlMs ?? DEFAULT_CAPABILITY_MEMORY_TTL_MS;
 
   function liveContexts(entry: DiscoverResultRecord): DiscoveryContext[] {
@@ -279,7 +283,20 @@ export function makeDiscoverResultTracker(options: { ttlMs?: number } = {}) {
     return Array.from(entry.discoveryContexts.values());
   }
 
-  function materializeMeta(entry: DiscoverResultRecord, context?: DiscoveryContext): DiscoverResultMeta {
+  function liveRoutes(entry: DiscoverResultRecord): DiscoveryContext[] {
+    const routes = new Map<string, DiscoveryContext>();
+    for (const context of liveContexts(entry)) {
+      const existing = routes.get(context.queryKey);
+      if (!existing || context.acquiredAt >= existing.acquiredAt) routes.set(context.queryKey, context);
+    }
+    return Array.from(routes.values());
+  }
+
+  function materializeMeta(
+    entry: DiscoverResultRecord,
+    context: DiscoveryContext | undefined,
+    ambiguousProvenance: boolean,
+  ): DiscoverResultMeta {
     return {
       name: entry.name,
       description: entry.description,
@@ -289,22 +306,33 @@ export function makeDiscoverResultTracker(options: { ttlMs?: number } = {}) {
       contractExpiresAt: entry.contractExpiresAt,
       parameterContract: entry.parameterContract,
       metadataSource: entry.metadataSource,
-      ambiguousProvenance: liveContexts(entry).length > 1,
+      ambiguousProvenance,
     };
   }
 
   function trackResults(
     query: string,
     tools: Array<{ tool_id: string; name: string; description: string; params?: unknown[] }>,
-    searchId?: string,
-    metadataSource: "discover" | "inspect" = "discover",
-    expiresAt = Date.now() + ttlMs,
+    options: {
+      searchId?: string;
+      metadataSource?: "discover" | "inspect";
+      acquiredAt?: number;
+      expiresAt?: number;
+      contextKey?: string;
+    } = {},
   ): void {
+    const metadataSource = options.metadataSource ?? "discover";
+    const acquiredAt = options.acquiredAt ?? Date.now();
+    const expiresAt = options.expiresAt ?? acquiredAt + ttlMs;
     const queryKey = normalizedCapabilityQuery(query);
+    const contextKey = options.contextKey ?? queryKey;
     if (metadataSource === "discover") {
-      // A fresh or cached response is the complete result set for this exact
-      // query. Revoke contexts for tools that disappeared from that result.
-      for (const entry of store.values()) entry.discoveryContexts.delete(queryKey);
+      const latestAcquiredAt = contextAcquiredAt.get(contextKey);
+      if (latestAcquiredAt !== undefined && acquiredAt < latestAcquiredAt) return;
+      contextAcquiredAt.set(contextKey, acquiredAt);
+      // A response is authoritative for its exact cache variant (query +
+      // projection inputs such as limit), not for newer sibling variants.
+      for (const entry of store.values()) entry.discoveryContexts.delete(contextKey);
     }
 
     for (const tool of tools) {
@@ -313,7 +341,8 @@ export function makeDiscoverResultTracker(options: { ttlMs?: number } = {}) {
         entry = {
           name: tool.name,
           description: tool.description,
-          metadataExpiresAt: 0,
+          metadataAcquiredAt: Number.NEGATIVE_INFINITY,
+          contractAcquiredAt: Number.NEGATIVE_INFINITY,
           contractExpiresAt: 0,
           metadataSource,
           discoveryContexts: new Map(),
@@ -324,22 +353,29 @@ export function makeDiscoverResultTracker(options: { ttlMs?: number } = {}) {
 
       if (metadataSource === "discover") {
         entry.hadDiscovery = true;
-        entry.discoveryContexts.set(queryKey, { query, searchId, expiresAt });
+        entry.discoveryContexts.set(contextKey, {
+          queryKey,
+          query,
+          searchId: options.searchId,
+          acquiredAt,
+          expiresAt,
+        });
       }
 
-      if (expiresAt >= entry.metadataExpiresAt) {
+      if (acquiredAt >= entry.metadataAcquiredAt) {
         entry.name = tool.name;
         entry.description = tool.description;
-        entry.metadataExpiresAt = expiresAt;
+        entry.metadataAcquiredAt = acquiredAt;
       }
 
       const contractIsLive = Date.now() < entry.contractExpiresAt;
       const shouldRefreshContract =
-        metadataSource === "inspect" ||
-        (tool.params !== undefined && expiresAt >= entry.contractExpiresAt) ||
+        (metadataSource === "inspect" && acquiredAt >= entry.contractAcquiredAt) ||
+        (tool.params !== undefined && acquiredAt >= entry.contractAcquiredAt) ||
         !contractIsLive;
       if (shouldRefreshContract) {
         entry.parameterContract = tool.params;
+        entry.contractAcquiredAt = acquiredAt;
         entry.contractExpiresAt = expiresAt;
         entry.metadataSource = metadataSource;
       }
@@ -349,25 +385,38 @@ export function makeDiscoverResultTracker(options: { ttlMs?: number } = {}) {
   function getMeta(toolId: string): DiscoverResultMeta | undefined {
     const entry = store.get(toolId);
     if (!entry) return undefined;
-    const contexts = liveContexts(entry);
-    if (contexts.length > 0) return materializeMeta(entry, contexts.at(-1));
+    const routes = liveRoutes(entry);
+    if (routes.length > 0) {
+      const newestRoute = routes.reduce((newest, route) => (route.acquiredAt >= newest.acquiredAt ? route : newest));
+      return materializeMeta(entry, newestRoute, routes.length > 1);
+    }
     if (entry.hadDiscovery || Date.now() >= entry.contractExpiresAt) return undefined;
-    return materializeMeta(entry);
+    return materializeMeta(entry, undefined, false);
   }
 
-  function getMetaForQuery(toolId: string, query: string): DiscoverResultMeta | undefined {
+  function getMetaForContext(toolId: string, contextKey: string): DiscoverResultMeta | undefined {
     const entry = store.get(toolId);
     if (!entry) return undefined;
-    liveContexts(entry);
-    const context = entry.discoveryContexts.get(normalizedCapabilityQuery(query));
-    return context ? materializeMeta(entry, context) : undefined;
+    const routes = liveRoutes(entry);
+    const context = entry.discoveryContexts.get(contextKey);
+    return context ? materializeMeta(entry, context, routes.length > 1) : undefined;
   }
 
   function isStale(toolId: string): boolean {
     const entry = store.get(toolId);
     if (!entry) return false;
-    if (entry.hadDiscovery) return liveContexts(entry).length === 0;
+    if (entry.hadDiscovery) return liveRoutes(entry).length === 0;
     return Date.now() >= entry.contractExpiresAt;
+  }
+
+  function getProvenanceStatus(toolId: string): "unique" | "ambiguous" | "inspection_only" | "expired" | "unknown" {
+    const entry = store.get(toolId);
+    if (!entry) return "unknown";
+    const routes = liveRoutes(entry);
+    if (routes.length > 1) return "ambiguous";
+    if (routes.length === 1) return "unique";
+    if (entry.hadDiscovery || Date.now() >= entry.contractExpiresAt) return "expired";
+    return "inspection_only";
   }
 
   function resolveSearchId(toolId: string): string | undefined {
@@ -376,5 +425,5 @@ export function makeDiscoverResultTracker(options: { ttlMs?: number } = {}) {
     return entry.searchId;
   }
 
-  return { trackResults, getMeta, getMetaForQuery, isStale, resolveSearchId };
+  return { trackResults, getMeta, getMetaForContext, getProvenanceStatus, isStale, resolveSearchId };
 }

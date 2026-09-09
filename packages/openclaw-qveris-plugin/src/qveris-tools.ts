@@ -252,13 +252,17 @@ export function createQverisTools(options: {
           description: t.description,
           params: t.params,
         })),
-        result.search_id,
-        "discover",
-        cachedEntry ? cachedEntry.acquiredAt + discoveryCorrelationTtlMs : undefined,
+        {
+          searchId: result.search_id,
+          metadataSource: "discover",
+          contextKey: cacheKey,
+          acquiredAt: cachedEntry?.acquiredAt,
+          expiresAt: cachedEntry ? cachedEntry.acquiredAt + discoveryCorrelationTtlMs : undefined,
+        },
       );
       if (!cached) {
         for (const tool of result.results) {
-          const meta = discoverTracker.getMetaForQuery(tool.tool_id, query);
+          const meta = discoverTracker.getMetaForContext(tool.tool_id, cacheKey);
           if (!meta) continue;
           rolodex.reconcileFreshDiscovery(tool.tool_id, {
             name: meta.name,
@@ -337,13 +341,14 @@ export function createQverisTools(options: {
 
       const remembered = rolodex.lookup(toolId);
       const currentMeta = discoverTracker.getMeta(toolId);
+      const provenanceStatus = discoverTracker.getProvenanceStatus(toolId);
       const rememberedContractStale =
         remembered?.contractExpiresAt !== undefined && Date.now() >= remembered.contractExpiresAt;
       const currentContractStale =
         currentMeta?.contractExpiresAt !== undefined && Date.now() >= currentMeta.contractExpiresAt;
       if (
         rolodex.isStale(toolId) ||
-        discoverTracker.isStale(toolId) ||
+        provenanceStatus === "expired" ||
         rememberedContractStale ||
         currentContractStale ||
         (remembered && !currentMeta)
@@ -356,7 +361,7 @@ export function createQverisTools(options: {
           note: QVERIS_WORKFLOW_NOTE,
         } satisfies QverisErrorResult);
       }
-      if (currentMeta?.query === "(inspect)" && !allowUncorrelated) {
+      if (provenanceStatus === "inspection_only" && !allowUncorrelated) {
         return jsonResult({
           success: false,
           error_type: "tool_not_discovered",
@@ -374,7 +379,7 @@ export function createQverisTools(options: {
           note: QVERIS_WORKFLOW_NOTE,
         } satisfies QverisErrorResult);
       }
-      if (currentMeta?.ambiguousProvenance && !allowUncorrelated) {
+      if (provenanceStatus === "ambiguous" && !allowUncorrelated) {
         return jsonResult({
           success: false,
           error_type: "tool_not_discovered",
@@ -419,7 +424,7 @@ export function createQverisTools(options: {
       if (result.success) {
         callFailureCount.delete(toolId);
         const meta = discoverTracker.getMeta(toolId);
-        if (meta && meta.query !== "(inspect)" && !meta.ambiguousProvenance) {
+        if (meta && discoverTracker.getProvenanceStatus(toolId) === "unique") {
           rolodex.record(toolId, {
             name: meta.name,
             description: meta.description,
@@ -563,8 +568,7 @@ export function createQverisTools(options: {
               params: tool.params,
             },
           ],
-          undefined,
-          "inspect",
+          { metadataSource: "inspect" },
         );
         const meta = discoverTracker.getMeta(tool.tool_id);
         if (!meta) continue;
@@ -577,21 +581,35 @@ export function createQverisTools(options: {
       }
 
       const tools = result.tools.map((tool) => formatToolForModel(tool));
-      const hasSessionContext = tools.some(
-        (t) => resolveKnownSearchId((t as { tool_id: string }).tool_id) !== undefined,
-      );
+      const provenance = result.tools.map((tool) => ({
+        toolId: tool.tool_id,
+        status: discoverTracker.getProvenanceStatus(tool.tool_id),
+      }));
+      const ambiguous = provenance.filter(({ status }) => status === "ambiguous").map(({ toolId }) => toolId);
+      const expired = provenance.filter(({ status }) => status === "expired").map(({ toolId }) => toolId);
+      const inspectionOnly = provenance
+        .filter(({ status }) => status === "inspection_only" || status === "unknown")
+        .map(({ toolId }) => toolId);
+      const callHints = [
+        ...(ambiguous.length > 0
+          ? [
+              `Multiple live discovery contexts exist for: ${ambiguous.join(", ")}. ` +
+                "Call requires allow_uncorrelated: true when unattributed execution is explicitly intended.",
+            ]
+          : []),
+        ...(expired.length > 0
+          ? [`Discovery provenance expired for: ${expired.join(", ")}. Run qveris_discover with refresh: true.`]
+          : []),
+        ...(inspectionOnly.length > 0
+          ? [`No discovery provenance exists for: ${inspectionOnly.join(", ")}. Run qveris_discover before Call.`]
+          : []),
+      ];
 
       return jsonResult({
         tool_ids_requested: toolIds,
         tools_found: result.tools.length,
         tools,
-        ...(!hasSessionContext
-          ? {
-              call_hint:
-                "These tools have not been discovered in this session yet. " +
-                "Run qveris_discover first before calling them with qveris_call.",
-            }
-          : {}),
+        ...(callHints.length > 0 ? { call_hint: callHints.join(" ") } : {}),
       });
     },
   };
