@@ -1,4 +1,5 @@
 import { setTimeout as delay } from "node:timers/promises";
+import { authorizationContextIdForOAuth } from "./context.mjs";
 import { CliError } from "../errors/handler.mjs";
 import { getOAuthSessionMetadata, loadOAuthSessionSecret, saveOAuthSession, withOAuthRefreshLock } from "./storage.mjs";
 
@@ -17,8 +18,17 @@ function isSameOAuthSession(left, right) {
     left?.issuer === right?.issuer &&
     left?.api_base_url === right?.api_base_url &&
     left?.token_endpoint === right?.token_endpoint &&
-    left?.revocation_endpoint === right?.revocation_endpoint
+    left?.revocation_endpoint === right?.revocation_endpoint &&
+    left?.authorization_context_id === right?.authorization_context_id
   );
+}
+
+function bindLegacyAuthorizationContext(metadata, secret) {
+  if (!metadata) return metadata;
+  const authorizationContextId = authorizationContextIdForOAuth(metadata, secret);
+  return authorizationContextId && authorizationContextId !== metadata.authorization_context_id
+    ? { ...metadata, authorization_context_id: authorizationContextId }
+    : metadata;
 }
 
 function oauthError(code) {
@@ -373,6 +383,7 @@ export async function refreshOAuthSession(metadata, secret, fetchImpl = fetch) {
   }
   const updated = {
     ...metadata,
+    authorization_context_id: authorizationContextIdForOAuth(metadata, secret),
     ...binding,
     expires_at: Date.now() + Math.max(1, Number(tokens.expires_in) || 3600) * 1000,
   };
@@ -428,20 +439,22 @@ export function createStoredOAuthCredentialProvider({ fetchImpl = fetch } = {}) 
   async function refresh() {
     if (!sharedRefreshPromise) {
       sharedRefreshPromise = (async () => {
-        const initialMetadata = getOAuthSessionMetadata();
+        let initialMetadata = getOAuthSessionMetadata();
         const initialSecret = await loadOAuthSessionSecret(initialMetadata);
         if (!initialMetadata || !initialSecret) {
           throw oauthError("invalid_grant", "OAuth session is unavailable; run qveris auth login again");
         }
+        initialMetadata = bindLegacyAuthorizationContext(initialMetadata, initialSecret);
         if (initialMetadata.storage === "session") {
           return refreshOAuthSession(initialMetadata, initialSecret, fetchImpl);
         }
         return withOAuthRefreshLock(async () => {
-          const metadata = getOAuthSessionMetadata({ fresh: true });
+          let metadata = getOAuthSessionMetadata({ fresh: true });
           const secret = await loadOAuthSessionSecret(metadata, { fresh: true });
           if (!metadata || !secret) {
             throw oauthError("invalid_grant", "OAuth session is unavailable; run qveris auth login again");
           }
+          metadata = bindLegacyAuthorizationContext(metadata, secret);
           if (!isSameOAuthSession(metadata, initialMetadata)) {
             throw new CliError(
               "API_ERROR",
@@ -465,11 +478,12 @@ export function createStoredOAuthCredentialProvider({ fetchImpl = fetch } = {}) 
   return {
     authType: "oauth",
     async getCredential(context) {
-      const metadata = getOAuthSessionMetadata();
+      let metadata = getOAuthSessionMetadata();
       let secret = await loadOAuthSessionSecret(metadata);
       if (!metadata || !secret) {
         throw oauthError("invalid_grant", "OAuth session is unavailable; run qveris auth login again");
       }
+      metadata = bindLegacyAuthorizationContext(metadata, secret);
       if (new URL(context.resource).origin !== metadata.issuer) {
         throw new CliError("API_ERROR", "OAuth session does not match the selected API endpoint");
       }

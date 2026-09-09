@@ -506,6 +506,7 @@ API 地址单独遵循 `--base-url` > `QVERIS_BASE_URL` > 已存储的 OAuth 会
 - 发现 ID
 - 查询内容
 - API 地址
+- 不包含秘密的授权上下文绑定
 - 结果列表（tool_id、名称、提供商）
 
 后续 `inspect` 和 `call` 自动读取会话，支持数字索引快捷方式：
@@ -516,7 +517,7 @@ qveris inspect 1                  # 使用会话中的索引 1
 qveris call 2 --params '{...}'   # 使用索引 2 + 发现 ID
 ```
 
-会话 30 分钟后过期。用 `qveris history` 查看，`qveris history --clear` 清除。
+会话 30 分钟后过期。只有当前 API 地址和授权上下文与创建会话时精确匹配，数字索引、隐式 Discovery ID 和 `init --resume` 才可使用。切换地址或账号后必须重新 Discover。用 `qveris history` 查看，`qveris history --clear` 清除。
 
 这里保存的是最近一次 Discover 的索引和来源信息，不是语义意图路由或完整 schema 缓存。新的 Discover 会覆盖旧索引。每次 Call 都要根据当前请求重新构造业务值；如果会话摘要不含安全构造请求所需契约，应先 Inspect。
 

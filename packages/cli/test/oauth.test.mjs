@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { chmodSync, existsSync, mkdirSync, statSync, unlinkSync, utimesSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import test from "node:test";
+import { authorizationContextForOAuth } from "../src/auth/context.mjs";
 import {
   DEVICE_CODE_GRANT,
   createStoredOAuthCredentialProvider,
@@ -23,6 +24,7 @@ import {
 } from "../src/auth/storage.mjs";
 import { runAuth } from "../src/commands/auth.mjs";
 import { runConfig } from "../src/commands/config.mjs";
+import { createAuthorizationContextCredentialProvider } from "../src/client/auth.mjs";
 import { deleteConfigValue, getConfigPath, getConfigValue, setConfigValue } from "../src/config/store.mjs";
 
 function response(payload, status = 200, headers = {}) {
@@ -490,26 +492,74 @@ test("Refresh uses the public client and rotates the refresh token", async () =>
   process.env.QVERIS_DISABLE_KEYRING = "1";
   try {
     let form;
-    const result = await refreshOAuthSession(
-      { ...discovery, api_base_url: "https://unit.test/api/v1", resource: "https://unit.test/tools" },
-      { access_token: "old-access", refresh_token: "old-refresh" },
-      async (_url, options) => {
-        form = Object.fromEntries(options.body.entries());
-        return response({
-          access_token: "new-access",
-          refresh_token: "new-refresh",
-          token_type: "Bearer",
-          expires_in: 3600,
-        });
-      },
-    );
+    const initialMetadata = {
+      ...discovery,
+      api_base_url: "https://unit.test/api/v1",
+      resource: "https://unit.test/tools",
+    };
+    const initialSecret = { access_token: "old-access", refresh_token: "old-refresh" };
+    const contextBeforeRefresh = authorizationContextForOAuth(initialMetadata, initialSecret);
+    const result = await refreshOAuthSession(initialMetadata, initialSecret, async (_url, options) => {
+      form = Object.fromEntries(options.body.entries());
+      return response({
+        access_token: "new-access",
+        refresh_token: "new-refresh",
+        token_type: "Bearer",
+        expires_in: 3600,
+      });
+    });
     assert.deepEqual(form, {
       grant_type: "refresh_token",
       client_id: "qveris-cli",
       refresh_token: "old-refresh",
     });
     assert.equal(result.secret.refresh_token, "new-refresh");
+    assert.equal(authorizationContextForOAuth(result.metadata, result.secret), contextBeforeRefresh);
+    assert.ok(result.metadata.authorization_context_id);
     assert.equal(getOAuthSessionMetadata().storage, "session");
+  } finally {
+    await deleteOAuthSession();
+    if (previous === undefined) delete process.env.XDG_CONFIG_HOME;
+    else process.env.XDG_CONFIG_HOME = previous;
+    if (previousKeyring === undefined) delete process.env.QVERIS_DISABLE_KEYRING;
+    else process.env.QVERIS_DISABLE_KEYRING = previousKeyring;
+  }
+});
+
+test("A context-bound provider rejects an OAuth account replaced before request dispatch", async () => {
+  const previous = process.env.XDG_CONFIG_HOME;
+  const previousKeyring = process.env.QVERIS_DISABLE_KEYRING;
+  process.env.XDG_CONFIG_HOME = `/tmp/qveris-oauth-context-${process.pid}-${Date.now()}`;
+  process.env.QVERIS_DISABLE_KEYRING = "1";
+  try {
+    const baseMetadata = {
+      ...discovery,
+      storage: "config",
+      api_base_url: "https://unit.test/api/v1",
+      resource: "https://unit.test/tools",
+      expires_at: Date.now() + 3600000,
+    };
+    const firstSecret = { access_token: "first-access", refresh_token: "first-refresh" };
+    await saveOAuthSession({ ...baseMetadata, authorization_context_id: "login-a" }, firstSecret, {
+      allowUnencryptedStorage: true,
+    });
+    const provider = createAuthorizationContextCredentialProvider({
+      apiKey: undefined,
+      authorizationContext: authorizationContextForOAuth(
+        { ...baseMetadata, authorization_context_id: "login-a" },
+        firstSecret,
+      ),
+    });
+
+    await saveOAuthSession(
+      { ...baseMetadata, authorization_context_id: "login-b" },
+      { access_token: "second-access", refresh_token: "second-refresh" },
+      { allowUnencryptedStorage: true },
+    );
+    await assert.rejects(
+      provider.getCredential({ resource: "https://unit.test/api/v1", scopes: [] }),
+      (error) => error?.code === "AUTH_OAUTH_FAILED" && /context changed/.test(error.message),
+    );
   } finally {
     await deleteOAuthSession();
     if (previous === undefined) delete process.env.XDG_CONFIG_HOME;
@@ -1218,6 +1268,7 @@ test("A successful login revokes the previous OAuth session before replacing it"
       access_token: "new-access",
       refresh_token: "new-refresh",
     });
+    assert.ok(getOAuthSessionMetadata().authorization_context_id);
   } finally {
     console.log = previousLog;
     console.error = previousError;

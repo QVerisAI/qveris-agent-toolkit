@@ -28,10 +28,19 @@ export function writeSession(data) {
   writeFileSync(sessionPath(), JSON.stringify({ ...data, timestamp: Date.now() }, null, 2) + "\n", { mode: 0o600 });
 }
 
-export function resolveToolId(idOrIndex) {
+export function readSessionForContext({ baseUrl, authorizationContext }) {
+  const session = readSession();
+  if (!session) return { session: null, status: "missing" };
+  if (!session.discoveryId && !Array.isArray(session.results)) return { session: null, status: "missing" };
+  if (session.baseUrl !== baseUrl || session.authorizationContext !== authorizationContext) {
+    return { session: null, status: "context_mismatch" };
+  }
+  return { session, status: "match" };
+}
+
+export function resolveToolId(idOrIndex, { session = readSession() } = {}) {
   if (!/^\d+$/.test(idOrIndex)) return { toolId: idOrIndex, fromSession: false };
 
-  const session = readSession();
   if (!session || !session.results) return { toolId: idOrIndex, fromSession: false };
 
   const index = parseInt(idOrIndex, 10) - 1;
@@ -47,7 +56,6 @@ export function resolveToolId(idOrIndex) {
   };
 }
 
-export function getSessionDiscoveryId() {
-  const session = readSession();
+export function getSessionDiscoveryId({ session = readSession() } = {}) {
   return session?.discoveryId || null;
 }

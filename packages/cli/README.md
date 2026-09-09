@@ -180,7 +180,7 @@ qveris init --resume --params '{"city": "London"}'
 qveris init --json
 ```
 
-`init` is a client-side first-call wizard: it handles discovery, selection, inspection, parameter preparation, calling, and exact `usage` / `ledger` reconciliation guidance inside one command. It is not a server-side aggregate API. Manual Agent workflows should use Discover → Call when discovery contains the current contract, and add Inspect or Probe only when needed. Use `--resume` after recoverable parameter or provider failures to reuse the last discovery session.
+`init` is a client-side first-call wizard: it handles discovery, selection, inspection, parameter preparation, calling, and exact `usage` / `ledger` reconciliation guidance inside one command. It is not a server-side aggregate API. Manual Agent workflows should use Discover → Call when discovery contains the current contract, and add Inspect or Probe only when needed. Use `--resume` after recoverable parameter or provider failures to reuse the last discovery session. Persisted indexes, implicit discovery IDs, and `--resume` are accepted only with the same API endpoint and authorization context that created them; after switching either one, run Discover again.
 
 ### Discover
 

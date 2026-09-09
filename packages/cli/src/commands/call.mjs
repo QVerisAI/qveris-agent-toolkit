@@ -1,6 +1,10 @@
-import { resolveApiKey } from "../client/auth.mjs";
+import {
+  createAuthorizationContextCredentialProvider,
+  resolveApiKey,
+  resolveAuthorizationContextId,
+} from "../client/auth.mjs";
 import { callTool, resolveApiBaseUrl } from "../client/api.mjs";
-import { resolveToolId, getSessionDiscoveryId } from "../session/session.mjs";
+import { resolveToolId, getSessionDiscoveryId, readSessionForContext } from "../session/session.mjs";
 import { resolveParams } from "../utils/params.mjs";
 import { formatCallResult } from "../output/formatter.mjs";
 import { outputJson } from "../output/json.mjs";
@@ -34,14 +38,34 @@ export async function runCall(idOrIndex, flags) {
   const maxSize = resolveMaxSize(flags);
   const { baseUrl } = resolveApiBaseUrl({ baseUrlFlag: flags.baseUrl, preferOAuth: apiKey === undefined });
 
-  const resolved = resolveToolId(idOrIndex);
+  const numericIndex = /^\d+$/.test(idOrIndex);
+  const usesSessionShortcut = numericIndex || !flags.discoveryId;
+  let session = null;
+  let credentialProvider;
+  if (usesSessionShortcut) {
+    const authorizationContext = await resolveAuthorizationContextId({ apiKey });
+    credentialProvider = createAuthorizationContextCredentialProvider({ apiKey, authorizationContext });
+    const resolvedSession = readSessionForContext({ baseUrl, authorizationContext });
+    if (resolvedSession.status === "context_mismatch") {
+      throw new CliError(
+        "SESSION_EXPIRED",
+        "Stored discovery belongs to another API endpoint or authorization context. Run 'qveris discover' again.",
+      );
+    }
+    session = resolvedSession.session;
+  }
+
+  const resolved = resolveToolId(idOrIndex, { session });
+  if (numericIndex && !resolved.fromSession) {
+    throw new CliError("SESSION_EXPIRED", "No matching discovery index. Run 'qveris discover' first.");
+  }
   const toolId = resolved.toolId;
   let discoveryId = flags.discoveryId || null;
 
   if (!discoveryId && resolved.fromSession && resolved.discoveryId) {
     discoveryId = resolved.discoveryId;
   }
-  if (!discoveryId) discoveryId = getSessionDiscoveryId();
+  if (!discoveryId) discoveryId = getSessionDiscoveryId({ session });
   if (!discoveryId && /^\d+$/.test(idOrIndex)) {
     throw new CliError("SESSION_EXPIRED", "No discovery ID. Run 'qveris discover' first or pass --discovery-id.");
   }
@@ -82,6 +106,7 @@ export async function runCall(idOrIndex, flags) {
   try {
     const result = await callTool({
       apiKey,
+      credentialProvider,
       baseUrl,
       toolId,
       discoveryId,

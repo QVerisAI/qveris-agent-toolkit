@@ -1,3 +1,4 @@
+import { createOAuthAuthorizationContextId } from "../auth/context.mjs";
 import { resolveBaseUrl } from "../config/endpoint.mjs";
 import { discoverTools } from "../client/api.mjs";
 import { CliError } from "../errors/handler.mjs";
@@ -70,6 +71,7 @@ async function authLogin(flags) {
     session = {
       issuer,
       api_base_url: baseUrl,
+      authorization_context_id: createOAuthAuthorizationContextId(),
       ...binding,
       token_endpoint: metadata.token_endpoint,
       revocation_endpoint: metadata.revocation_endpoint,
