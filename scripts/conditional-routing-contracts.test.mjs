@@ -29,6 +29,7 @@ const ENGLISH_GUIDANCE = [
   'docs/en-US/rest-api.md',
   'docs/en-US/js-sdk.md',
   'docs/en-US/python-sdk.md',
+  'recipes/explainable-routing/README.md',
   'packages/cli/README.md',
   'packages/mcp/README.md',
   'packages/js-sdk/README.md',
@@ -69,6 +70,8 @@ const RUNNABLE_EXAMPLES = [
   'packages/mcp/examples/agent-loop.ts',
   'packages/js-sdk/examples/quickstart.ts',
   'packages/python-sdk/examples/_shared.py',
+  'packages/python-sdk/examples/explainable_routing.py',
+  'recipes/explainable-routing/run.sh',
 ];
 
 const MODEL_DRIVEN_EXAMPLES = [
@@ -190,6 +193,30 @@ test('runtime tool descriptions expose the same routing boundaries to models', (
 test('runnable examples teach the same provider-comparison and fresh-call behavior', () => {
   for (const path of RUNNABLE_EXAMPLES) assertEnglishPolicy(path);
   for (const path of MODEL_DRIVEN_EXAMPLES) assertLimitedToolPolicy(path);
+});
+
+test('explainable-routing examples inspect every compared candidate before selection', () => {
+  const python = normalizeSourceText(read('packages/python-sdk/examples/explainable_routing.py'));
+  const shell = normalizeSourceText(read('recipes/explainable-routing/run.sh'));
+
+  assert.match(
+    python,
+    /client\.inspect\( \[tool\.tool_id for tool in discovered\.results\], search_id=discovered\.search_id,/,
+    'Python explainable routing must inspect every discovered candidate',
+  );
+  assert.ok(
+    python.indexOf('client.inspect(') < python.indexOf('selected, reason = choose(compatible)'),
+    'Python explainable routing must inspect before selection',
+  );
+  assert.match(
+    shell,
+    /inspect \$\{tool_ids\[@\]\} --discovery-id \$search_id --json/,
+    'CLI explainable routing must inspect every discovered candidate',
+  );
+  assert.ok(
+    shell.indexOf(' inspect ${tool_ids[@]} ') < shell.indexOf('choice=$(jq'),
+    'CLI explainable routing must inspect before selection',
+  );
 });
 
 test('limited-tool guidance stops when Probe is unavailable', () => {

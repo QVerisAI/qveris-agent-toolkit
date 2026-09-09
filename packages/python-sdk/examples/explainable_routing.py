@@ -5,6 +5,13 @@ QVeris returns (``why_recommended``, ``expected_cost``, and quality ``stats``),
 then select one and explain the choice in plain language — the kind of
 transparent, cost-aware decision an agent should make before spending credits.
 
+For provider comparison, Inspect every candidate when current scope or a complete
+contract must be confirmed; a Discover summary is not confirmation. Probe every
+candidate when the comparison requires a current quote. Reuse may preserve an
+exact route, never business parameters or results: build parameters from the
+current request, and make a fresh Call for current, latest, today, or other
+time-sensitive data.
+
 Run:
     export QVERIS_API_KEY="sk-..."
     python explainable_routing.py
@@ -109,14 +116,26 @@ async def main() -> None:
             print("No capabilities found.")
             return
 
+        # This recipe compares providers, so Discover summaries are not enough:
+        # inspect every candidate that participates in selection. Preserve only
+        # why_recommended from Discover because that explanation is Discover-only;
+        # contract, cost, and quality signals used below come from Inspect.
+        inspected = await client.inspect(
+            [tool.tool_id for tool in discovered.results],
+            search_id=discovered.search_id,
+        )
+        inspected_by_id = {tool.tool_id: tool for tool in inspected.results}
+        candidates = []
+        for discovered_tool in discovered.results:
+            tool = inspected_by_id.get(discovered_tool.tool_id)
+            if tool is None:
+                continue
+            if discovered_tool.why_recommended:
+                tool = tool.model_copy(update={"why_recommended": discovered_tool.why_recommended})
+            candidates.append(tool)
+
         parameters = {"symbol": "AAPL"}
-        compatible = [tool for tool in discovered.results if supports_parameters(tool, parameters)]
-        if not compatible:
-            inspected = await client.inspect(
-                [tool.tool_id for tool in discovered.results[:3]],
-                search_id=discovered.search_id,
-            )
-            compatible = [tool for tool in inspected.results if supports_parameters(tool, parameters)]
+        compatible = [tool for tool in candidates if supports_parameters(tool, parameters)]
         if not compatible:
             raise RuntimeError("No candidate exposed a current contract compatible with the requested parameters")
 
