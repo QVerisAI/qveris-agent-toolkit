@@ -53,7 +53,7 @@ export function getQverisTools(qveris: Qveris, options: { sessionId?: string; mo
   return {
     qveris_discover: tool({
       description:
-        'Discover QVeris capabilities when task fit, data quality/freshness, provider comparison, fallback, or the user request favors QVeris. It is not a mandatory gateway. Free; returns candidates and a search_id.',
+        'Discover QVeris capabilities when task fit, data quality/freshness, provider comparison, fallback, or the user request favors QVeris. It is not a mandatory gateway. Free; returns candidates and a search_id. Provider comparison: Inspect each candidate to confirm current scope/contracts. If current quotes are required, do not Call until the host obtains them; this three-tool adapter does not expose Probe.',
       inputSchema: z.object({
         query: z.string().describe("Capability query, e.g. 'weather forecast API'."),
         limit: z.number().int().min(1).max(100).optional().describe('Number of results (1-100).'),
@@ -64,7 +64,7 @@ export function getQverisTools(qveris: Qveris, options: { sessionId?: string; mo
 
     qveris_inspect: tool({
       description:
-        'Optional: inspect capabilities only when selection or valid request construction depends on missing/stale contract details, or candidates need comparison. Free.',
+        'Optional: inspect capabilities only when selection or valid request construction depends on missing/stale contract details. Provider comparison: Inspect each candidate to confirm current scope/contracts. If current quotes are required, do not Call until the host obtains them; this three-tool adapter does not expose Probe. Free.',
       inputSchema: z.object({
         tool_ids: z.array(z.string()).describe('Tool IDs returned by discover.'),
         search_id: z.string().optional().describe('The search_id from the discover response, if available.'),
@@ -75,7 +75,7 @@ export function getQverisTools(qveris: Qveris, options: { sessionId?: string; mo
 
     qveris_call: tool({
       description:
-        'Call a selected QVeris capability with parameters. Call directly from discovery when it provides enough schema and cost information. May consume credits.',
+        'Call a selected QVeris capability with parameters. Call directly from discovery when it provides enough schema and cost information. Reuse only exact routes; rebuild current parameters and Call again for current/latest/today/time-sensitive data. May consume credits.',
       inputSchema: z.object({
         tool_id: z.string().describe('The capability tool_id, from discover or inspect.'),
         params_to_tool: z.record(z.string(), z.unknown()).optional().describe('Parameters to pass to the capability.'),

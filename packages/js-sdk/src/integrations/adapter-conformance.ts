@@ -58,6 +58,19 @@ export function describeQverisAdapterConformance(opts: AdapterConformanceOptions
       }
     });
 
+    it('keeps provider comparison and fresh-call boundaries model-visible', () => {
+      const tools = getTools(new FakeQveris());
+      expect(tools.qveris_discover.description).toContain(
+        'Provider comparison: Inspect each candidate to confirm current scope/contracts.',
+      );
+      expect(tools.qveris_inspect.description).toContain(
+        'If current quotes are required, do not Call until the host obtains them; this three-tool adapter does not expose Probe.',
+      );
+      expect(tools.qveris_call.description).toContain(
+        'Reuse only exact routes; rebuild current parameters and Call again for current/latest/today/time-sensitive data.',
+      );
+    });
+
     it('requires a valid client', () => {
       expect(() => getTools(undefined as never)).toThrow();
       expect(() => getTools({} as never)).toThrow();

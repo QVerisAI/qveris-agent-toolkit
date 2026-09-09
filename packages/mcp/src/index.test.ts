@@ -121,6 +121,20 @@ describe('MCP public tool interface', () => {
     expect(byName.get('execute_tool')?.description).toContain('Deprecated');
   });
 
+  it('keeps provider comparison and fresh-call boundaries model-visible', () => {
+    const byName = new Map(listQverisMcpTools().map((tool) => [tool.name, tool]));
+
+    expect(byName.get('discover')?.description).toContain(
+      'Provider comparison: Inspect each candidate to confirm current scope/contracts; Probe each when current quotes are required.',
+    );
+    expect(byName.get('inspect')?.description).toContain(
+      'Provider comparison: Inspect each candidate to confirm current scope/contracts; Probe each when current quotes are required.',
+    );
+    expect(byName.get('call')?.description).toContain(
+      'Reuse only exact routes; rebuild current parameters and Call again for current/latest/today/time-sensitive data.',
+    );
+  });
+
   it('declares complete, conservative annotations for every tool', () => {
     const byName = new Map(listQverisMcpTools().map((tool) => [tool.name, tool]));
     const canonicalTools = ['discover', 'inspect', 'probe', 'call', 'usage_history', 'credits_ledger'] as const;

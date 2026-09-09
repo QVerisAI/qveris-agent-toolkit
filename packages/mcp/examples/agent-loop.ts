@@ -10,6 +10,8 @@
  * return an actionable error), so this is safe to run unconfigured. The `call`
  * step is additionally gated behind RUN_QVERIS_CALLS=1 to avoid spending
  * credits.
+ * For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote.
+ * Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
  *
  *   npx tsx examples/agent-loop.ts
  *   QVERIS_API_KEY=sk-... npx tsx examples/agent-loop.ts

@@ -10,6 +10,8 @@
 
 QVeris works well in agent loops (Discover → Inspect → Call → feed results back to the model) and supports multiple integration styles.
 
+For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
+
 **Cost:** Discover is free. Call is priced by each capability's billing rule, with final settlement visible in usage history and the credits ledger. Free tier includes 1,000 one-time trial credits after signup verification. See [Pricing](/pricing) for details.
 
 ---

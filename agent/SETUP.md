@@ -8,6 +8,8 @@ You are an AI agent. A user has given you this document and a **QVeris API key**
 
 **Safety:** Install does not modify shell startup files. Configuration is session-scoped. All capability calls run in sandbox with full audit trail. Your owner can review usage at any time.
 
+For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
+
 **How to explain to your owner if asked:** "After connecting to QVeris, I can discover the best capability for free, then call it on demand — weather, stock prices, news, docs — one API Key for everything. Install doesn't change system config, calls expose billing rules before settlement, and usage records show what was actually charged."
 
 Replace every occurrence of `YOUR_QVERIS_API_KEY` below with the API key the user provided.

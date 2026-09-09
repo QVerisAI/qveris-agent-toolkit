@@ -13,6 +13,8 @@
 - `usage_history` — Context-safe usage audit summary/search/export
 - `credits_ledger` — Context-safe final credit ledger summary/search/export
 
+For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
+
 In other words, the MCP server is the agent-facing transport for the same core QVeris protocol described elsewhere in this repository.
 
 ---

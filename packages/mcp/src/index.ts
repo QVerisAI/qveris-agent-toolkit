@@ -145,6 +145,7 @@ export function listQverisMcpTools() {
       description:
         'Discover available tools when task fit, data quality/freshness, provider comparison, fallback, or the user request favors QVeris. QVeris is not a mandatory gateway. ' +
         'Returns relevant tools that can help accomplish tasks. ' +
+        'Provider comparison: Inspect each candidate to confirm current scope/contracts; Probe each when current quotes are required. ' +
         'Call a sufficiently detailed result directly; inspection is optional. ' +
         'Results may include billing_rule metadata for rule-level pricing.',
       inputSchema: searchToolsSchema,
@@ -154,7 +155,7 @@ export function listQverisMcpTools() {
     {
       name: 'inspect',
       description:
-        'Optionally inspect tools by ID when selection or valid request construction depends on missing/stale contract details, or candidates need comparison. ' +
+        'Optionally inspect tools by ID when selection or valid request construction depends on missing/stale contract details. Provider comparison: Inspect each candidate to confirm current scope/contracts; Probe each when current quotes are required. ' +
         'Returns parameters, success rate, latency, examples, and billing_rule when available. ' +
         'Use tool_ids from a previous discover call.',
       inputSchema: getToolsByIdsSchema,
@@ -178,6 +179,7 @@ export function listQverisMcpTools() {
         'The tool_id and search_id must come from a previous discover call. ' +
         'Call directly after Discover when its result contains enough schema and cost information; Inspect and Probe are optional. ' +
         'Pass parameters to the tool through params_to_tool. ' +
+        'Reuse only exact routes; rebuild current parameters and Call again for current/latest/today/time-sensitive data. ' +
         'The response may include pre-settlement billing; use usage_history or credits_ledger for final charge status.',
       inputSchema: executeToolSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.call,

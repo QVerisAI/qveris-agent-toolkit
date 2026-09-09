@@ -44,6 +44,7 @@
 
 - A broad catalog of capabilities across multiple categories
 - `Discover / Call` is the default path; `Inspect` and `Probe` are conditional checks for missing/stale contracts, comparison, parameter validation, or a current quote
+- For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
 - `Discover` is free. `Call` returns structured pre-settlement billing, with final charge outcomes available through usage audit and credits ledger views.
 - **NEW** `QVeris CLI` — a command-line interface for agents to discover and call tools. [Learn more](#qveris-cli)
 - Works with `CLI` / `MCP` / `Python SDK` / `REST API`

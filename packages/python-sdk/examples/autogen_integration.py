@@ -39,7 +39,10 @@ async def main() -> None:
             tools=tools,
             system_message=(
                 "Use QVeris when capability discovery, comparison, or fallback is needed. "
-                "Discover then call when the contract is sufficient; inspect only for missing or stale contract details."
+                "Discover then call when the contract is sufficient; inspect only for missing or stale contract details. "
+                "Provider comparison: Inspect each candidate to confirm current scope/contracts. If current quotes are "
+                "required, do not Call until the host obtains them; this three-tool adapter does not expose Probe. "
+                "Reuse only exact routes; rebuild current parameters and Call again for current/latest/today/time-sensitive data."
             ),
             reflect_on_tool_use=True,
         )

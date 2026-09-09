@@ -19,6 +19,8 @@ Three tools are registered into the agent's context once the plugin is loaded:
 
 Choose QVeris when task fit, data quality/freshness, provider comparison, fallback, or the user's request favors it; it is not a mandatory gateway when another connected tool is a better fit. Within QVeris, the default path is `qveris_discover` → `qveris_call`. Use `qveris_inspect` only when selection or valid request construction needs contract details that discovery omitted or may have made stale.
 
+For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. If current quotes are required, do not Call until the host obtains them; this three-tool plugin does not expose Probe. Reuse only exact routes; rebuild current parameters and Call again for current/latest/today/time-sensitive data.
+
 ### Session reuse contract
 
 - Discover responses are cached in memory for the same normalized exact query **and limit** (90 seconds by default). `refresh: true` bypasses and replaces that entry.

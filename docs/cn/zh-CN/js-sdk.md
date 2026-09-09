@@ -40,6 +40,8 @@ API 地址优先级为：显式 `baseUrl` > `QVERIS_BASE_URL`。API key 不参�
 
 默认工作流是 **discover → call**，然后可选地**审计**发生了什么。`inspect` 和 `probe` 是按需检查，不是必经步骤。所有方法都返回 Promise。
 
+进行 Provider 比较时，如果需要确认当前范围或完整契约，必须逐一 Inspect；Discover 摘要不等于确认。比较需要当前报价时，必须逐一 Probe。复用只能保留精确路由，不能保留业务参数或结果：参数必须来自当前请求；当前、最新、今天或其他时效性数据必须执行新的 Call。
+
 ```typescript
 import { Qveris } from '@qverisai/sdk';
 

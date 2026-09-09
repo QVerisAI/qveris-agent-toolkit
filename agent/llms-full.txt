@@ -94,6 +94,8 @@ State differs by integration. The CLI stores only the latest Discover ID, endpoi
 
 If another host implements reuse, isolate entries by account, API endpoint, authorization context, and session. Preserve the original `search_id`, source, and acquisition time; expire schema, price, and availability independently; and rebuild business parameters from the current request. Discover again when intent, coverage, provider, or authorization context changes, or comparison/fallback is needed. Never cache API keys, credentials, business results, or sensitive user values. A successful Call must not extend stale schema or pricing metadata.
 
+For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
+
 ---
 
 ## Capability Ecosystem

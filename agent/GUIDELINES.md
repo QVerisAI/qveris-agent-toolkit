@@ -180,6 +180,8 @@ Do not assume all integrations provide the same cache:
 
 If a host implements additional reuse, isolate it by account, API endpoint, authorization context, and session. Preserve the original `search_id`; store acquisition time/source; expire schema, price, and availability independently; and rebuild business parameters from every current request. Discover again when intent, coverage, provider, or authorization context changes, or comparison/fallback is needed. Do not cache credentials, sensitive user values, or business results. A successful Call may update a usage hint, but must not extend stale schema or price metadata.
 
+For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
+
 ---
 
 ## Parameter Handling
