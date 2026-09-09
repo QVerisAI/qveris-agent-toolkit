@@ -140,7 +140,6 @@ describe("successful capability memory", () => {
     });
     vi.advanceTimersByTime(1_000);
     expect(rolodex.isStale("weather.v1")).toBe(true);
-    expect(rolodex.getStoredContext("weather.v1")).toBeUndefined();
 
     rolodex.reconcileFreshInspection("weather.v1", {
       name: "Fresh Weather",
@@ -197,6 +196,67 @@ describe("discover correlation tracker", () => {
     });
 
     vi.advanceTimersByTime(500);
+    expect(tracker.getMeta("weather.v1")).toBeUndefined();
+    expect(tracker.isStale("weather.v1")).toBe(true);
+  });
+
+  it("preserves a newer inspected contract when an older cached discovery is replayed", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
+    const tracker = makeDiscoverResultTracker({ ttlMs: 1_000 });
+    const projected = { tool_id: "weather.v1", name: "Weather", description: "Weather" };
+    const inspected = { ...projected, params: [{ name: "city", required: true }] };
+
+    tracker.trackResults("weather API", [projected], "search-1");
+    vi.advanceTimersByTime(500);
+    tracker.trackResults("(inspect)", [inspected], undefined, "inspect");
+    tracker.trackResults("weather API", [projected], "search-1", "discover", Date.now() + 500);
+
+    expect(tracker.getMeta("weather.v1")).toMatchObject({
+      parameterContract: inspected.params,
+      metadataSource: "inspect",
+      contractExpiresAt: Date.parse("2026-09-07T00:00:01.500Z"),
+    });
+  });
+
+  it("does not let inspection revive an expired discovery route", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
+    const tracker = makeDiscoverResultTracker({ ttlMs: 1_000 });
+    const tool = { tool_id: "weather.v1", name: "Weather", description: "Weather", params: [] };
+
+    tracker.trackResults("weather API", [tool], "search-1");
+    vi.advanceTimersByTime(1_000);
+    tracker.trackResults("weather API", [tool], "search-1", "inspect");
+
+    expect(tracker.getMeta("weather.v1")).toBeUndefined();
+    expect(tracker.resolveSearchId("weather.v1")).toBeUndefined();
+    expect(tracker.isStale("weather.v1")).toBe(true);
+  });
+
+  it("recomputes ambiguity from only the live discovery contexts", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
+    const tracker = makeDiscoverResultTracker({ ttlMs: 1_000 });
+    const tool = { tool_id: "weather.v1", name: "Weather", description: "Weather", params: [] };
+
+    tracker.trackResults("current weather API", [tool], "search-current");
+    vi.advanceTimersByTime(500);
+    tracker.trackResults("historical weather API", [tool], "search-history");
+    expect(tracker.resolveSearchId("weather.v1")).toBeUndefined();
+
+    vi.advanceTimersByTime(500);
+    expect(tracker.getMeta("weather.v1")?.ambiguousProvenance).toBe(false);
+    expect(tracker.resolveSearchId("weather.v1")).toBe("search-history");
+  });
+
+  it("revokes the previous exact-query context when a later result omits the tool", () => {
+    const tracker = makeDiscoverResultTracker();
+    const tool = { tool_id: "weather.v1", name: "Weather", description: "Weather", params: [] };
+
+    tracker.trackResults("weather API", [tool], "search-1");
+    tracker.trackResults("weather API", [], "search-2");
+
     expect(tracker.getMeta("weather.v1")).toBeUndefined();
     expect(tracker.isStale("weather.v1")).toBe(true);
   });

@@ -169,12 +169,6 @@ export function makeToolRolodex(options: { ttlMs?: number; enabled?: boolean } =
     entry.expiresAt = Date.now() + ttlMs;
   }
 
-  function getStoredContext(toolId: string): { discoveryQuery: string; discoveryId?: string } | undefined {
-    const entry = currentEntry(toolId);
-    if (!entry) return undefined;
-    return { discoveryQuery: entry.discoveryQuery, discoveryId: entry.discoveryId };
-  }
-
   function reconcileFreshInspection(
     toolId: string,
     meta: {
@@ -230,7 +224,6 @@ export function makeToolRolodex(options: { ttlMs?: number; enabled?: boolean } =
     record,
     lookup,
     isStale,
-    getStoredContext,
     reconcileFreshDiscovery,
     reconcileFreshInspection,
     getSummary,
@@ -254,9 +247,51 @@ interface DiscoverResultMeta {
   ambiguousProvenance: boolean;
 }
 
+interface DiscoveryContext {
+  query: string;
+  searchId?: string;
+  expiresAt: number;
+}
+
+interface DiscoverResultRecord {
+  name: string;
+  description: string;
+  metadataExpiresAt: number;
+  contractExpiresAt: number;
+  parameterContract?: unknown[];
+  metadataSource: "discover" | "inspect";
+  discoveryContexts: Map<string, DiscoveryContext>;
+  // Keep a tombstone after all routes expire. Inspect may create metadata for a
+  // never-discovered tool, but it must never turn an expired route into that
+  // more permissive inspection-only state.
+  hadDiscovery: boolean;
+}
+
 export function makeDiscoverResultTracker(options: { ttlMs?: number } = {}) {
-  const store = new Map<string, DiscoverResultMeta>();
+  const store = new Map<string, DiscoverResultRecord>();
   const ttlMs = options.ttlMs ?? DEFAULT_CAPABILITY_MEMORY_TTL_MS;
+
+  function liveContexts(entry: DiscoverResultRecord): DiscoveryContext[] {
+    const now = Date.now();
+    for (const [key, context] of entry.discoveryContexts) {
+      if (now >= context.expiresAt) entry.discoveryContexts.delete(key);
+    }
+    return Array.from(entry.discoveryContexts.values());
+  }
+
+  function materializeMeta(entry: DiscoverResultRecord, context?: DiscoveryContext): DiscoverResultMeta {
+    return {
+      name: entry.name,
+      description: entry.description,
+      query: context?.query ?? "(inspect)",
+      searchId: context?.searchId,
+      expiresAt: context?.expiresAt ?? entry.contractExpiresAt,
+      contractExpiresAt: entry.contractExpiresAt,
+      parameterContract: entry.parameterContract,
+      metadataSource: entry.metadataSource,
+      ambiguousProvenance: liveContexts(entry).length > 1,
+    };
+  }
 
   function trackResults(
     query: string,
@@ -265,43 +300,74 @@ export function makeDiscoverResultTracker(options: { ttlMs?: number } = {}) {
     metadataSource: "discover" | "inspect" = "discover",
     expiresAt = Date.now() + ttlMs,
   ): void {
+    const queryKey = normalizedCapabilityQuery(query);
+    if (metadataSource === "discover") {
+      // A fresh or cached response is the complete result set for this exact
+      // query. Revoke contexts for tools that disappeared from that result.
+      for (const entry of store.values()) entry.discoveryContexts.delete(queryKey);
+    }
+
     for (const tool of tools) {
-      const existing = getMeta(tool.tool_id);
-      const inspectOnly = query === "(inspect)";
-      const effectiveQuery = inspectOnly ? (existing?.query ?? query) : query;
-      const differentDiscoveryQuery =
-        existing !== undefined &&
-        !inspectOnly &&
-        normalizedCapabilityQuery(existing.query) !== normalizedCapabilityQuery(query);
-      store.set(tool.tool_id, {
-        name: tool.name,
-        description: tool.description,
-        // Preserve original discovery query; "(inspect)" does not overwrite it.
-        query: effectiveQuery,
-        searchId: searchId ?? existing?.searchId,
-        // Inspect may refresh the contract of a still-valid route, but it must
-        // not renew that route's discovery provenance.
-        expiresAt: inspectOnly && existing ? existing.expiresAt : expiresAt,
-        contractExpiresAt: expiresAt,
-        parameterContract: tool.params,
-        metadataSource,
-        // A tool can be returned by multiple exact queries. Since Call accepts
-        // only tool_id, never guess which discovery id the model intended.
-        ambiguousProvenance: Boolean(existing?.ambiguousProvenance || differentDiscoveryQuery),
-      });
+      let entry = store.get(tool.tool_id);
+      if (!entry) {
+        entry = {
+          name: tool.name,
+          description: tool.description,
+          metadataExpiresAt: 0,
+          contractExpiresAt: 0,
+          metadataSource,
+          discoveryContexts: new Map(),
+          hadDiscovery: false,
+        };
+        store.set(tool.tool_id, entry);
+      }
+
+      if (metadataSource === "discover") {
+        entry.hadDiscovery = true;
+        entry.discoveryContexts.set(queryKey, { query, searchId, expiresAt });
+      }
+
+      if (expiresAt >= entry.metadataExpiresAt) {
+        entry.name = tool.name;
+        entry.description = tool.description;
+        entry.metadataExpiresAt = expiresAt;
+      }
+
+      const contractIsLive = Date.now() < entry.contractExpiresAt;
+      const shouldRefreshContract =
+        metadataSource === "inspect" ||
+        (tool.params !== undefined && expiresAt >= entry.contractExpiresAt) ||
+        !contractIsLive;
+      if (shouldRefreshContract) {
+        entry.parameterContract = tool.params;
+        entry.contractExpiresAt = expiresAt;
+        entry.metadataSource = metadataSource;
+      }
     }
   }
 
   function getMeta(toolId: string): DiscoverResultMeta | undefined {
     const entry = store.get(toolId);
     if (!entry) return undefined;
-    if (Date.now() >= entry.expiresAt) return undefined;
-    return entry;
+    const contexts = liveContexts(entry);
+    if (contexts.length > 0) return materializeMeta(entry, contexts.at(-1));
+    if (entry.hadDiscovery || Date.now() >= entry.contractExpiresAt) return undefined;
+    return materializeMeta(entry);
+  }
+
+  function getMetaForQuery(toolId: string, query: string): DiscoverResultMeta | undefined {
+    const entry = store.get(toolId);
+    if (!entry) return undefined;
+    liveContexts(entry);
+    const context = entry.discoveryContexts.get(normalizedCapabilityQuery(query));
+    return context ? materializeMeta(entry, context) : undefined;
   }
 
   function isStale(toolId: string): boolean {
     const entry = store.get(toolId);
-    return Boolean(entry && Date.now() >= entry.expiresAt);
+    if (!entry) return false;
+    if (entry.hadDiscovery) return liveContexts(entry).length === 0;
+    return Date.now() >= entry.contractExpiresAt;
   }
 
   function resolveSearchId(toolId: string): string | undefined {
@@ -310,5 +376,5 @@ export function makeDiscoverResultTracker(options: { ttlMs?: number } = {}) {
     return entry.searchId;
   }
 
-  return { trackResults, getMeta, isStale, resolveSearchId };
+  return { trackResults, getMeta, getMetaForQuery, isStale, resolveSearchId };
 }

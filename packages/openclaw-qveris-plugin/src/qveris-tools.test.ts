@@ -827,7 +827,10 @@ describe("createQverisTools", () => {
       return Promise.resolve(fakeJsonResponse({}, 404));
     });
     globalThis.fetch = fetchMock;
-    const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() })!;
+    const tools = createQverisTools({
+      api: fakeApi(makePluginConfig({ capabilityMemoryTtlSeconds: 3_601 })),
+      ctx: fakeCtx(),
+    })!;
     const discover = tools.find((tool) => tool.name === "qveris_discover")!;
     const inspect = tools.find((tool) => tool.name === "qveris_inspect")!;
     const callTool = tools.find((tool) => tool.name === "qveris_call")!;
@@ -863,6 +866,40 @@ describe("createQverisTools", () => {
       .filter(([url]) => String(url).includes("/tools/execute"))
       .map(([, init]) => parseRequestBody((init as RequestInit).body));
     expect(executeBodies).toHaveLength(1);
+  });
+
+  it("keeps an inspected contract when the projected Discover response is replayed from cache", async () => {
+    const projected = {
+      ...SAMPLE_DISCOVER_RESPONSE,
+      results: SAMPLE_DISCOVER_RESPONSE.results.map(({ params: _params, ...tool }) => tool),
+    };
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/search")) return Promise.resolve(fakeJsonResponse(projected));
+      if (url.includes("/tools/by-ids")) return Promise.resolve(fakeJsonResponse(SAMPLE_INSPECT_RESPONSE));
+      if (url.includes("/tools/execute")) return Promise.resolve(fakeJsonResponse(SAMPLE_INVOKE_RESPONSE));
+      return Promise.resolve(fakeJsonResponse({}, 404));
+    });
+    globalThis.fetch = fetchMock;
+    const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() })!;
+    const discover = tools.find((tool) => tool.name === "qveris_discover")!;
+    const inspect = tools.find((tool) => tool.name === "qveris_inspect")!;
+    const callTool = tools.find((tool) => tool.name === "qveris_call")!;
+
+    await discover.execute("d1", { query: "weather forecast API" });
+    await inspect.execute("i1", { tool_ids: "openweathermap.weather.execute.v1" });
+    expect(
+      parseToolResult(await discover.execute("d2", { query: "weather forecast API" })).discovery_cache,
+    ).toMatchObject({ hit: true });
+
+    const called = parseToolResult(
+      await callTool.execute("c1", {
+        tool_id: "openweathermap.weather.execute.v1",
+        params_to_tool: '{"city":"London"}',
+      }),
+    );
+    expect(called.success).toBe(true);
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/tools/by-ids"))).toHaveLength(1);
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/tools/execute"))).toHaveLength(1);
   });
 
   it("requires inspection before the first Call when discovery omitted the contract", async () => {
@@ -1010,6 +1047,111 @@ describe("createQverisTools", () => {
     });
     const executeCall = fetchMock.mock.calls.find(([url]) => String(url).includes("/tools/execute"));
     expect(parseRequestBody((executeCall?.[1] as RequestInit).body).search_id).toBeNull();
+  });
+
+  it("uses the remaining discovery context after a competing context expires", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
+    const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (url.includes("/search")) {
+        const query = String(parseRequestBody(init?.body).query);
+        return Promise.resolve(
+          fakeJsonResponse({
+            ...SAMPLE_DISCOVER_RESPONSE,
+            query,
+            search_id: query.startsWith("historical") ? "search-history" : "search-current",
+            results: SAMPLE_DISCOVER_RESPONSE.results.map((tool) => ({ ...tool, tool_id: "shared.weather.v1" })),
+          }),
+        );
+      }
+      if (url.includes("/tools/execute")) return Promise.resolve(fakeJsonResponse(SAMPLE_INVOKE_RESPONSE));
+      return Promise.resolve(fakeJsonResponse({}, 404));
+    });
+    globalThis.fetch = fetchMock;
+    const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() })!;
+    const discover = tools.find((tool) => tool.name === "qveris_discover")!;
+    const callTool = tools.find((tool) => tool.name === "qveris_call")!;
+
+    await discover.execute("d1", { query: "current weather API" });
+    vi.advanceTimersByTime(10 * 60 * 1_000);
+    await discover.execute("d2", { query: "historical weather API" });
+    vi.advanceTimersByTime(20 * 60 * 1_000);
+
+    const called = parseToolResult(
+      await callTool.execute("c1", { tool_id: "shared.weather.v1", params_to_tool: '{"city":"London"}' }),
+    );
+    expect(called.success).toBe(true);
+    const executeCall = fetchMock.mock.calls.find(([url]) => String(url).includes("/tools/execute"));
+    expect(parseRequestBody((executeCall?.[1] as RequestInit).body).search_id).toBe("search-history");
+  });
+
+  it("fetches again instead of replaying a cache entry past its correlation lifetime", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-07T00:00:00Z"));
+    let searchCount = 0;
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/search")) {
+        searchCount += 1;
+        return Promise.resolve(fakeJsonResponse({ ...SAMPLE_DISCOVER_RESPONSE, search_id: `search-${searchCount}` }));
+      }
+      if (url.includes("/tools/execute")) return Promise.resolve(fakeJsonResponse(SAMPLE_INVOKE_RESPONSE));
+      return Promise.resolve(fakeJsonResponse({}, 404));
+    });
+    globalThis.fetch = fetchMock;
+    const tools = createQverisTools({
+      api: fakeApi(makePluginConfig({ discoverCacheTtlSeconds: 3_601 })),
+      ctx: fakeCtx(),
+    })!;
+    const discover = tools.find((tool) => tool.name === "qveris_discover")!;
+    const callTool = tools.find((tool) => tool.name === "qveris_call")!;
+
+    await discover.execute("d1", { query: "weather forecast API" });
+    vi.advanceTimersByTime(30 * 60 * 1_000);
+    expect(
+      parseToolResult(await discover.execute("d2", { query: "weather forecast API" })).discovery_cache,
+    ).toMatchObject({ hit: false });
+    await callTool.execute("c1", {
+      tool_id: "openweathermap.weather.execute.v1",
+      params_to_tool: '{"city":"London"}',
+    });
+
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/search"))).toHaveLength(2);
+    const executeCall = fetchMock.mock.calls.find(([url]) => String(url).includes("/tools/execute"));
+    expect(parseRequestBody((executeCall?.[1] as RequestInit).body).search_id).toBe("search-2");
+  });
+
+  it("revokes a route when a refreshed exact query no longer returns the tool", async () => {
+    let searchCount = 0;
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/search")) {
+        searchCount += 1;
+        return Promise.resolve(
+          fakeJsonResponse(
+            searchCount === 1
+              ? SAMPLE_DISCOVER_RESPONSE
+              : { ...SAMPLE_DISCOVER_RESPONSE, total: 0, search_id: "search-new", results: [] },
+          ),
+        );
+      }
+      if (url.includes("/tools/execute")) return Promise.resolve(fakeJsonResponse(SAMPLE_INVOKE_RESPONSE));
+      return Promise.resolve(fakeJsonResponse({}, 404));
+    });
+    globalThis.fetch = fetchMock;
+    const tools = createQverisTools({ api: fakeApi(), ctx: fakeCtx() })!;
+    const discover = tools.find((tool) => tool.name === "qveris_discover")!;
+    const callTool = tools.find((tool) => tool.name === "qveris_call")!;
+
+    await discover.execute("d1", { query: "weather forecast API" });
+    await discover.execute("d2", { query: "weather forecast API", refresh: true });
+    const blocked = parseToolResult(
+      await callTool.execute("c1", {
+        tool_id: "openweathermap.weather.execute.v1",
+        params_to_tool: '{"city":"London"}',
+      }),
+    );
+
+    expect(blocked.error_type).toBe("tool_not_discovered");
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("/tools/execute"))).toHaveLength(0);
   });
 
   it("does not downgrade an expired discovery context to an uncorrelated Call", async () => {

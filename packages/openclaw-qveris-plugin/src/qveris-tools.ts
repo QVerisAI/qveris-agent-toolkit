@@ -163,9 +163,7 @@ export function createQverisTools(options: {
 
   // Auto-resolve the backend search_id so the model never has to manage it
   function resolveKnownSearchId(toolId: string): string | undefined {
-    const current = discoverTracker.getMeta(toolId);
-    if (current) return discoverTracker.resolveSearchId(toolId);
-    return rolodex.lookup(toolId)?.discoveryId;
+    return discoverTracker.resolveSearchId(toolId);
   }
 
   function formatToolForModel(tool: QverisDiscoverResultTool, discoveryQuery?: string) {
@@ -216,7 +214,13 @@ export function createQverisTools(options: {
 
       const normalizedQuery = query.trim().replace(/\s+/g, " ").toLowerCase();
       const cacheKey = `${normalizedQuery}:${normalizedLimit}`;
-      const cachedEntry = refresh ? undefined : discoverCache.readEntry(cacheKey);
+      const cacheCandidate = refresh ? undefined : discoverCache.readEntry(cacheKey);
+      // Never show a cached result after its discovery attribution has expired,
+      // even when an operator configures a longer response-cache TTL.
+      const cachedEntry =
+        cacheCandidate && Date.now() < cacheCandidate.acquiredAt + discoveryCorrelationTtlMs
+          ? cacheCandidate
+          : undefined;
       const cached = cachedEntry?.value;
 
       let result: Awaited<ReturnType<typeof qverisDiscover>>;
@@ -254,7 +258,7 @@ export function createQverisTools(options: {
       );
       if (!cached) {
         for (const tool of result.results) {
-          const meta = discoverTracker.getMeta(tool.tool_id);
+          const meta = discoverTracker.getMetaForQuery(tool.tool_id, query);
           if (!meta) continue;
           rolodex.reconcileFreshDiscovery(tool.tool_id, {
             name: meta.name,
@@ -415,7 +419,7 @@ export function createQverisTools(options: {
       if (result.success) {
         callFailureCount.delete(toolId);
         const meta = discoverTracker.getMeta(toolId);
-        if (meta) {
+        if (meta && meta.query !== "(inspect)" && !meta.ambiguousProvenance) {
           rolodex.record(toolId, {
             name: meta.name,
             description: meta.description,
@@ -549,9 +553,8 @@ export function createQverisTools(options: {
       }
 
       for (const tool of result.tools) {
-        const rememberedContext = rolodex.getStoredContext(tool.tool_id);
         discoverTracker.trackResults(
-          rememberedContext?.discoveryQuery ?? "(inspect)",
+          "(inspect)",
           [
             {
               tool_id: tool.tool_id,
@@ -560,7 +563,7 @@ export function createQverisTools(options: {
               params: tool.params,
             },
           ],
-          rememberedContext?.discoveryId,
+          undefined,
           "inspect",
         );
         const meta = discoverTracker.getMeta(tool.tool_id);
