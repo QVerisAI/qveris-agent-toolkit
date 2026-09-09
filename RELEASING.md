@@ -32,15 +32,10 @@ Each package releases independently via an annotated git tag; the matching GitHu
    and resumed instead of recreated. Use `-- --no-watch` only when another
    operator will monitor the registered runs.
 
-   After all four workflows finish successfully, the coordinator dispatches
-   `discover-call-cadence.yml` for the shared release commit. The
-   workflow validates that all four annotated tags point to that commit, then
-   waits for approval in the protected `benchmark-production` environment.
-   Approval authorizes the fixed call budget recorded in
-   `benchmarks/discover-call/cadence.json`; a rejected or timed-out approval
-   performs no model or QVeris calls. `--no-watch` deliberately does not
-   dispatch the cadence because the coordinator has not verified publication
-   success; it prints the exact manual dispatch command instead.
+   The coordinator stops after all four publish workflows complete. Benchmark
+   acceptance is a separate maintainer-run operation and is never dispatched
+   from GitHub Actions. `--no-watch` registers the publish workflows and leaves
+   monitoring to the operator.
 
    For an individual package release, **tag the release commit with an
    annotated tag**, using the new Changelog section as the tag message — this
@@ -65,48 +60,35 @@ Each package releases independently via an annotated git tag; the matching GitHu
 
 ## Discover-call release cadence
 
-The coordinated release cadence runs the immutable reference and configured
-model lanes from the exact release commit. Raw operational records stay only in
-the ephemeral Actions runner. If both complete, the workflow applies
-`public-artifact-v1`, validates the paired public artifacts, updates the result
-index, and uploads a named Actions artifact. It never writes benchmark artifacts
-directly to `main` or creates a result branch.
+Run release benchmark acceptance on a maintainer-controlled machine, never in
+GitHub Actions. Use a clean checkout of the exact commit shared by the four
+release tags, a bounded QVeris credential, and the model CLI's local login.
+Do not upload either credential or raw records to GitHub.
 
-One-time repository setup:
-
-1. Create a protected environment named `benchmark-production`.
-2. Require an explicit reviewer before deployments to that environment.
-3. Configure environment secrets:
-   - `QVERIS_API_KEY`: benchmark-only QVeris key with an intentionally bounded
-     credit balance.
-   - `OPENAI_API_KEY`: least-privilege credential used only by the pinned Codex
-     CLI adapter runtime.
-3. Review `benchmarks/discover-call/cadence.json` before a release. It pins the
-   immutable task version, trials, discovery limit, model identifiers, adapter
-   paths, reasoning effort, and exact CLI version. Config changes require the
-   same review as benchmark methodology changes.
+1. Review `benchmarks/discover-call/cadence.json`. It pins the immutable task
+   version, trials, discovery limit, model identity, adapter paths, reasoning
+   effort, and exact CLI version. Configuration changes require methodology
+   review before sampling.
+2. Verify every coordinated tag points to the checkout commit and install the
+   exact configured model CLI in an isolated temporary prefix. Confirm its
+   version and local authentication before any QVeris calls.
+3. Run the reference lane and configured-model lane sequentially from
+   `benchmarks/discover-call`, passing the checkout commit as both the toolkit
+   and adapter revision. Write raw checkpoint files outside the repository.
+4. Do not selectively retry failed trials. An interrupted or incomplete batch
+   is diagnostic only and cannot be published as the release baseline.
+5. Generate paired public artifacts with `src/publish.mjs`, then run `npm test`
+   and `npm run validate`. Confirm 54 records per lane under the current config
+   and scan every public artifact for protected identifiers and raw values.
+6. Generate the result section with
+   `scripts/benchmark-release-cadence.mjs document`, insert it into the latest
+   result index, and publish only through a normal reviewed PR. Review failure
+   classes, API/catalog comparability, and model-revision wording before merge.
 
 The current 18-task, three-trial, two-lane configuration permits at most 108
-tool calls. Discover/Inspect traffic and model requests are additional, but no
-failed trial is selectively retried by the cadence. Failed jobs do not upload
-raw records or a partial artifact. A rerun requires a fresh protected-environment
-approval; use it only for a deliberate new sample, not as an automatic retry.
-
-Successful artifacts are retained for 90 days. They contain the paired public
-records and a standalone result section, rather than a complete result index.
-Review that section, all public records, failure classes, catalog/API
-comparability, and model-revision wording before inserting it into the latest
-result index in a normal reviewable PR.
-
-For a material individual-package release that also needs a new quality
-baseline, dispatch the same protected workflow after its publish job succeeds,
-using the commit shared by the current coordinated tags:
-
-```bash
-gh workflow run discover-call-cadence.yml \
-  --ref main \
-  --field release_sha="$(git rev-parse HEAD)"
-```
+QVeris Call attempts. Discover/Inspect traffic and model requests are
+additional. A provider revision of `unreported` remains a configured-model
+sample rather than a pinned-model claim.
 
 ## Python: PyPI Trusted Publisher
 

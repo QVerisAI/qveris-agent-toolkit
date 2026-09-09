@@ -188,7 +188,8 @@ export function scoreRecord(task, record) {
 
 function aggregateModel(model, records) {
   const executed = records.filter((record) => record.executed);
-  const resultEvidenceComplete = executed.every((record) => record.result_nonempty !== null);
+  const successfulCalls = executed.filter((record) => record.call_success === true);
+  const resultEvidenceComplete = successfulCalls.every((record) => record.result_nonempty !== null);
   const workflowEvidenceComplete = records.every((record) => record.workflow_success !== null);
   const workflowWins = records.filter((record) => record.workflow_success === true).length;
   const interval = workflowEvidenceComplete ? taskClusterBootstrapInterval(records) : null;
@@ -214,7 +215,9 @@ function aggregateModel(model, records) {
     constraint_accuracy: round(mean(records.map((record) => record.constraint_accuracy))),
     call_success_rate: executed.length ? round(mean(executed.map((record) => record.call_success))) : null,
     result_nonempty_rate:
-      executed.length && resultEvidenceComplete ? round(mean(executed.map((record) => record.result_nonempty))) : null,
+      successfulCalls.length && resultEvidenceComplete
+        ? round(mean(successfulCalls.map((record) => record.result_nonempty)))
+        : null,
     pre_result_gate_workflow_success_rate: round(
       mean(records.map((record) => record.pre_result_gate_workflow_success)),
     ),

@@ -6,10 +6,8 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import {
-  BENCHMARK_CADENCE_WORKFLOW,
   CLIENTS,
   PUBLIC_VERSION_REFERENCES,
-  benchmarkCadenceDispatchArgs,
   extractChangelogRelease,
   githubRepositoryFromRemoteUrl,
   publishReleasePlan,
@@ -58,10 +56,6 @@ function fixtureRoot(overrides = {}) {
       `name: Publish ${client.label}\n\non:\n  workflow_dispatch:\n  push:\n    tags:\n      - "${client.tagPrefix}*"\n\njobs: {}\n`,
     );
   }
-  writeFileSync(
-    join(root, ".github/workflows", BENCHMARK_CADENCE_WORKFLOW),
-    "name: Benchmark cadence\n\non:\n  workflow_dispatch:\n    inputs:\n      release_sha:\n        required: true\n\njobs: {}\n",
-  );
   writeFileSync(join(root, "gemini-extension.json"), JSON.stringify({ version: versions.mcp }));
   const publicReferences = new Map();
   for (const reference of PUBLIC_VERSION_REFERENCES) {
@@ -162,51 +156,6 @@ test("MCP publishing validates and passes through its package-configured npm dis
   assert.match(workflow, /npm publish --provenance --access public --tag "\$NPM_DIST_TAG"/);
 });
 
-test("repository cadence workflow passes the task set to the reference adapter, verifies the exact CLI version, and uploads sanitized artifacts", () => {
-  const workflow = readFileSync(
-    join(REPOSITORY_ROOT, ".github/workflows", BENCHMARK_CADENCE_WORKFLOW),
-    "utf8",
-  );
-  assert.match(
-    workflow,
-    /--adapter-arg "\$\{REFERENCE_ADAPTER\}"\s+--adapter-arg "\$\{TASK_SET\}"/,
-  );
-  assert.match(workflow, /\[\[ "\$\{ACTUAL_VERSION\}" != "codex-cli \$\{CLI_VERSION\}" \]\]/);
-  assert.match(workflow, /uses: actions\/upload-artifact@v7/);
-  assert.match(workflow, /retention-days: 90/);
-  assert.match(workflow, /persist-credentials: false/);
-  assert.match(workflow, /--pr-body "\$\{RUNNER_TEMP\}\/pr-body\.md"/);
-  assert.match(workflow, /results\/\$\{\{ env\.REFERENCE_STEM \}\}\.runs\.jsonl/);
-  assert.match(workflow, /results\/\$\{\{ env\.REFERENCE_STEM \}\}\.summary\.json/);
-  assert.match(workflow, /results\/\$\{\{ env\.CONFIGURED_STEM \}\}\.runs\.jsonl/);
-  assert.match(workflow, /results\/\$\{\{ env\.CONFIGURED_STEM \}\}\.summary\.json/);
-  assert.match(workflow, /Prepare standalone result section/);
-  assert.match(workflow, /\$\{\{ runner\.temp \}\}\/result-section\.md/);
-  assert.match(workflow, /grep -F "<!-- benchmark-cadence:\$\{RELEASE_SHA\} -->"/);
-  assert.doesNotMatch(workflow, /BENCHMARK_PR_TOKEN/);
-  assert.doesNotMatch(workflow, /contents: write|pull-requests: write|git push|gh pr create/);
-});
-
-test("release preflight requires the protected benchmark cadence dispatch input", () => {
-  const missingRoot = fixtureRoot();
-  rmSync(join(missingRoot, ".github/workflows", BENCHMARK_CADENCE_WORKFLOW));
-  assert.throws(() => readReleasePlan(missingRoot), /Benchmark cadence workflow is missing/);
-
-  const mismatchedRoot = fixtureRoot();
-  writeFileSync(
-    join(mismatchedRoot, ".github/workflows", BENCHMARK_CADENCE_WORKFLOW),
-    "name: Benchmark cadence\n\non:\n  workflow_dispatch:\n\njobs: {}\n",
-  );
-  assert.throws(() => readReleasePlan(mismatchedRoot), /must expose a workflow_dispatch release_sha input/);
-
-  const deceptiveRoot = fixtureRoot();
-  writeFileSync(
-    join(deceptiveRoot, ".github/workflows", BENCHMARK_CADENCE_WORKFLOW),
-    "name: Benchmark cadence\n\non:\n  workflow_dispatch:\n    inputs:\n      other:\n        description: release_sha\n\njobs:\n  release_sha:\n    runs-on: ubuntu-latest\n",
-  );
-  assert.throws(() => readReleasePlan(deceptiveRoot), /must expose a workflow_dispatch release_sha input/);
-});
-
 test("readReleasePlan rejects drift between package and release metadata", () => {
   const root = fixtureRoot();
   writeFileSync(
@@ -292,7 +241,6 @@ test("publishReleasePlan waits for each workflow to succeed before pushing the n
       return { databaseId: release.tag };
     },
     watchRun: async (run) => events.push(`watch:${run.databaseId}`),
-    dispatchCadence: async (head) => events.push(`cadence:${head}`),
   });
 
   assert.equal(runs.length, 4);
@@ -316,16 +264,16 @@ test("publishReleasePlan waits for each workflow to succeed before pushing the n
     events.filter((event) => event.startsWith("push:")),
     releases.map((release) => `push:${release.tag}`),
   );
-  assert.deepEqual(events.slice(-2), [`watch:${releases.at(-1).tag}`, "cadence:release-head"]);
+  assert.equal(events.at(-1), `watch:${releases.at(-1).tag}`);
 });
 
 test("publishReleasePlan fault injection stops at each asynchronous boundary", async (t) => {
   const releases = readReleasePlan(fixtureRoot()).slice(0, 2);
-  for (const failurePoint of ["inspect", "snapshot", "create", "push", "register", "watch", "dispatch"]) {
+  for (const failurePoint of ["inspect", "snapshot", "create", "push", "register", "watch"]) {
     await t.test(failurePoint, async () => {
       const events = [];
       const operation = async (name, release) => {
-        const event = `${name}:${release?.tag ?? "cadence"}`;
+        const event = `${name}:${release.tag}`;
         events.push(event);
         if (name === failurePoint) throw new Error(`injected ${failurePoint} failure`);
       };
@@ -351,7 +299,6 @@ test("publishReleasePlan fault injection stops at each asynchronous boundary", a
               return { databaseId: release.tag };
             },
             watchRun: async (run) => operation("watch", { tag: run.databaseId }),
-            dispatchCadence: async () => operation("dispatch"),
           }),
         new RegExp(`injected ${failurePoint} failure`),
       );
@@ -369,66 +316,8 @@ test("publishReleasePlan fault injection stops at each asynchronous boundary", a
           false,
         );
       }
-      if (failurePoint === "watch") {
-        assert.equal(
-          events.some((event) => event.startsWith("dispatch:")),
-          false,
-        );
-      }
-      if (failurePoint === "dispatch") {
-        assert.equal(events.filter((event) => event.startsWith("watch:")).length, releases.length);
-      }
     });
   }
-});
-
-test("publishReleasePlan recovers a dispatch failure without recreating or repushing tags", async () => {
-  const releases = readReleasePlan(fixtureRoot());
-  const events = [];
-  let dispatchAttempts = 0;
-  const operations = {
-    head: "release-head",
-    watch: true,
-    log: () => {},
-    inspectTag: async (release) => {
-      events.push(`inspect:${release.tag}`);
-      return dispatchAttempts === 0
-        ? { local: null, remote: null }
-        : {
-            local: { commit: "release-head", annotated: true },
-            remote: { commit: "release-head", annotated: true },
-          };
-    },
-    validateTag: () => {},
-    listRuns: async (release) => {
-      events.push(`snapshot:${release.tag}`);
-      return [];
-    },
-    createTag: async (release) => events.push(`create:${release.tag}`),
-    pushTag: async (release) => events.push(`push:${release.tag}`),
-    waitForRun: async (release) => {
-      events.push(`registered:${release.tag}`);
-      return { databaseId: release.tag };
-    },
-    watchRun: async (run) => events.push(`watch:${run.databaseId}`),
-    dispatchCadence: async () => {
-      dispatchAttempts += 1;
-      events.push(`cadence:${dispatchAttempts}`);
-      if (dispatchAttempts === 1) throw new Error("injected dispatch failure");
-    },
-  };
-
-  await assert.rejects(() => publishReleasePlan(releases, operations), /injected dispatch failure/);
-  await publishReleasePlan(releases, operations);
-
-  assert.equal(events.filter((event) => event.startsWith("create:")).length, releases.length);
-  assert.equal(events.filter((event) => event.startsWith("push:")).length, releases.length);
-  assert.equal(events.filter((event) => event.startsWith("registered:")).length, releases.length * 2);
-  assert.equal(events.filter((event) => event.startsWith("watch:")).length, releases.length * 2);
-  assert.deepEqual(
-    events.filter((event) => event.startsWith("cadence:")),
-    ["cadence:1", "cadence:2"],
-  );
 });
 
 test("publishReleasePlan resumes an existing tag without pushing it again", async () => {
@@ -454,13 +343,12 @@ test("publishReleasePlan resumes an existing tag without pushing it again", asyn
       return { databaseId: 1 };
     },
     watchRun: async () => events.push("watch"),
-    dispatchCadence: async () => events.push("cadence"),
   });
 
   assert.deepEqual(events, ["registered"]);
 });
 
-test("publishReleasePlan never watches or dispatches in no-watch mode", async () => {
+test("publishReleasePlan never watches in no-watch mode", async () => {
   const releases = readReleasePlan(fixtureRoot());
   const events = [];
   await publishReleasePlan(releases, {
@@ -477,11 +365,10 @@ test("publishReleasePlan never watches or dispatches in no-watch mode", async ()
       return { databaseId: release.tag };
     },
     watchRun: async () => events.push("watch"),
-    dispatchCadence: async () => events.push("cadence"),
   });
   assert.equal(events.length, releases.length);
   assert.equal(
-    events.some((event) => event === "watch" || event === "cadence"),
+    events.some((event) => event === "watch"),
     false,
   );
 });
@@ -506,7 +393,6 @@ test("publishReleasePlan excludes historical runs when registering a newly pushe
       return { databaseId: 8 };
     },
     watchRun: async (run) => assert.equal(run.databaseId, 8),
-    dispatchCadence: async () => {},
   });
 
   assert.deepEqual([...receivedExclusions], ["7"]);
@@ -521,24 +407,4 @@ test("workflow registration selects only a fresh matching run after a new tag pu
 
   assert.equal(selectWorkflowRun([historical], release, head, new Set(["7"])), undefined);
   assert.deepEqual(selectWorkflowRun([unrelated, historical, fresh], release, head, new Set(["7"])), fresh);
-});
-
-test("benchmark cadence dispatch pins the coordinated release commit", () => {
-  const head = "a".repeat(40);
-  assert.deepEqual(benchmarkCadenceDispatchArgs(head, "QVerisAI/qveris-agent-toolkit"), [
-    "workflow",
-    "run",
-    "discover-call-cadence.yml",
-    "--repo",
-    "QVerisAI/qveris-agent-toolkit",
-    "--ref",
-    "main",
-    "--field",
-    `release_sha=${head}`,
-  ]);
-  assert.throws(
-    () => benchmarkCadenceDispatchArgs("main", "QVerisAI/qveris-agent-toolkit"),
-    /40-character commit SHA/,
-  );
-  assert.throws(() => benchmarkCadenceDispatchArgs(head), /explicit GitHub repository/);
 });

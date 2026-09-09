@@ -220,6 +220,28 @@ test('generated result copy preserves denominators and comparison caveats', () =
   assert.match(section, /must not\s+be described as a pinned-model snapshot/);
 });
 
+test('generated result copy explains a negative strict benchmark gap', () => {
+  const section = buildResultSection({
+    referenceSummary: summary({
+      model: 'reference-v1',
+      lane: 'reference',
+      workflowSuccess: 47 / 54,
+      catalogDigest: '1'.repeat(64),
+    }),
+    configuredSummary: summary({
+      model: 'gpt-5.6-sol',
+      lane: 'configured-model',
+      workflowSuccess: 49 / 54,
+      catalogDigest: '2'.repeat(64),
+    }),
+    plan: plan(),
+    generatedAt: '2026-07-25T12:00:00.000Z',
+  });
+  assert.match(section, /-2\/54/);
+  assert.match(section, /-3\.70 percentage points/);
+  assert.match(section, /negative sign means the configured model recorded the higher strict success rate/);
+});
+
 test('generated result copy rejects a summary from another release commit', () => {
   const configured = summary({
     model: 'gpt-5.6-sol',
