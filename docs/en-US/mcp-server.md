@@ -13,7 +13,7 @@
 - `usage_history` — Context-safe usage audit summary/search/export
 - `credits_ledger` — Context-safe final credit ledger summary/search/export
 
-Authentication determines tool availability: browser sign-in through Hosted MCP OAuth exposes `discover`, `inspect`, `probe`, and `call`. The `usage_history` and `credits_ledger` audit tools require an API-key-backed connection.
+Authentication determines which advertised tools can run: browser sign-in through Hosted MCP OAuth supports `discover`, `inspect`, `probe`, and `call`. The `usage_history` and `credits_ledger` audit tools require an API-key-backed connection.
 
 In other words, the MCP server is the agent-facing transport for the same core QVeris protocol described elsewhere in this repository.
 

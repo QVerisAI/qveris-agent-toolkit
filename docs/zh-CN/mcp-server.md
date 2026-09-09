@@ -13,7 +13,7 @@
 - `usage_history` — 上下文安全的调用审计摘要 / 精确查询 / 文件导出
 - `credits_ledger` — 上下文安全的最终积分账本摘要 / 精确查询 / 文件导出
 
-认证方式会影响工具可用性：通过托管 MCP OAuth 完成浏览器登录后可使用 `discover`、`inspect`、`probe` 和 `call`；`usage_history` 与 `credits_ledger` 两个审计工具仍需要 API 密钥认证的连接。
+认证方式决定已列出工具能否执行：通过托管 MCP OAuth 完成浏览器登录后可使用 `discover`、`inspect`、`probe` 和 `call`；`usage_history` 与 `credits_ledger` 两个审计工具仍需要 API 密钥认证的连接。
 
 换言之，MCP 服务器是本仓库其他文档所描述的 QVeris 核心协议的智能体侧传输层。
 
