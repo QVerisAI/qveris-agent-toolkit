@@ -84,6 +84,11 @@ jobs:
             echo "::error::server.json versions ($MANIFEST_VERSION, $MANIFEST_PACKAGE_VERSION) do not match package.json version ($PKG_VERSION)"
             exit 1
           fi
+          GEMINI_EXTENSION_VERSION=$(node -p "require('../../gemini-extension.json').version")
+          if [ "$PKG_VERSION" != "$GEMINI_EXTENSION_VERSION" ]; then
+            echo "::error::gemini-extension.json version ($GEMINI_EXTENSION_VERSION) does not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
           echo "VERSION=$PKG_VERSION" >> "$GITHUB_ENV"
 
       - name: Resolve npm dist-tag
