@@ -57,6 +57,8 @@ function fixtureRoot(overrides = {}) {
     );
   }
   writeFileSync(join(root, "gemini-extension.json"), JSON.stringify({ version: versions.mcp }));
+  mkdirSync(join(root, ".cursor-plugin"), { recursive: true });
+  writeFileSync(join(root, ".cursor-plugin/plugin.json"), JSON.stringify({ version: versions.mcp }));
   const publicReferences = new Map();
   for (const reference of PUBLIC_VERSION_REFERENCES) {
     const lines = publicReferences.get(reference.path) || [];
@@ -151,6 +153,8 @@ test("MCP publishing validates and passes through its package-configured npm dis
 
   assert.match(workflow, /require\('\.\.\/\.\.\/gemini-extension\.json'\)\.version/);
   assert.match(workflow, /gemini-extension\.json version \(\$GEMINI_EXTENSION_VERSION\) does not match/);
+  assert.match(workflow, /require\('\.\.\/\.\.\/\.cursor-plugin\/plugin\.json'\)\.version/);
+  assert.match(workflow, /\.cursor-plugin\/plugin\.json version \(\$CURSOR_PLUGIN_VERSION\) does not match/);
   assert.match(workflow, /NPM_DIST_TAG=\$\(node -p "require\('\.\/package\.json'\)\.publishConfig\?\.tag \|\| 'latest'"\)/);
   assert.match(workflow, /Invalid npm dist-tag: \$NPM_DIST_TAG/);
   assert.match(workflow, /npm publish --provenance --access public --tag "\$NPM_DIST_TAG"/);
@@ -164,12 +168,14 @@ test("readReleasePlan rejects drift between package and release metadata", () =>
   );
   writeFileSync(join(root, "packages/python-sdk/uv.lock"), 'version = 1\n\n[[package]]\nname = "qveris"\nversion = "4.5.5"\n');
   writeFileSync(join(root, "gemini-extension.json"), JSON.stringify({ version: "2.3.3" }));
+  writeFileSync(join(root, ".cursor-plugin/plugin.json"), JSON.stringify({ version: "2.3.2" }));
 
   assert.throws(
     () => readReleasePlan(root),
     (error) =>
       error.message.includes("MCP: server.json version (2.3.3) must equal 2.3.4") &&
       error.message.includes("MCP: gemini-extension.json version (2.3.3) must equal 2.3.4") &&
+      error.message.includes("MCP: .cursor-plugin/plugin.json version (2.3.2) must equal 2.3.4") &&
       error.message.includes("Python SDK: uv.lock qveris version (4.5.5) must equal 4.5.6"),
   );
 });
