@@ -148,6 +148,16 @@ test("repository publish workflows exist and listen for every coordinated tag", 
   );
 });
 
+test("Cursor manifest changes trigger coordinated release checks on PRs and main pushes", () => {
+  const workflow = readFileSync(join(REPOSITORY_ROOT, ".github/workflows", "release-tools.yml"), "utf8");
+  const pullRequest = workflow.split("  pull_request:\n")[1].split("  push:\n")[0];
+  const push = workflow.split("  push:\n")[1].split("\npermissions:")[0];
+
+  for (const section of [pullRequest, push]) {
+    assert.match(section, /^\s+- "\.cursor-plugin\/plugin\.json"$/m);
+  }
+});
+
 test("MCP publishing validates and passes through its package-configured npm dist-tag", () => {
   const workflow = readFileSync(join(REPOSITORY_ROOT, ".github/workflows", "mcp-publish.yml"), "utf8");
 
