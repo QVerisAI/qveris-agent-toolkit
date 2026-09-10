@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- Added an embedding option for hosted deployments to omit deprecated aliases from `tools/list` while retaining local compatibility and server-side resolution for stale callers. This keeps the canonical six-tool surface focused for new remote clients.
+
 ## [0.14.4] - 2026-09-09
 
 ### Changed

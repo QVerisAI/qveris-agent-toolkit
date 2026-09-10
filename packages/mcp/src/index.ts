@@ -152,13 +152,25 @@ const CALL_TOOL_DESCRIPTION =
   'The response may include pre-settlement billing; use usage_history or credits_ledger for final charge status.';
 
 /**
+ * Controls the advertised MCP surface for an embedding host.
+ *
+ * Deprecated names remain enabled by default for local/stdio compatibility.
+ * A hosted service can omit them from `tools/list` without making a stale
+ * client invocation fail: execution still resolves an alias to its canonical
+ * operation in {@link executeQverisMcpTool}.
+ */
+export interface QverisServerOptions {
+  includeDeprecatedAliases?: boolean;
+}
+
+/**
  * List the MCP tools exposed by this server.
  *
  * Kept as a pure export so the public MCP interface can be tested without
  * starting stdio transport.
  */
-export function listQverisMcpTools() {
-  return [
+export function listQverisMcpTools(options: QverisServerOptions = {}) {
+  const canonicalTools = [
     // Primary tools (aligned with CLI naming)
     {
       name: 'discover',
@@ -207,6 +219,12 @@ export function listQverisMcpTools() {
       outputSchema: TOOL_OUTPUT_SCHEMAS.credits_ledger,
       annotations: QVERIS_MCP_TOOL_ANNOTATIONS.credits_ledger,
     },
+  ];
+
+  if (options.includeDeprecatedAliases === false) return canonicalTools;
+
+  return [
+    ...canonicalTools,
     // Deprecated aliases (backward compatibility)
     {
       name: 'search_tools',
@@ -554,7 +572,11 @@ function confirmCallsEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return v !== undefined && ['1', 'true', 'yes', 'on'].includes(v);
 }
 
-export function createQverisServer(client: QverisClient | undefined, defaultSessionId: string): Server {
+export function createQverisServer(
+  client: QverisClient | undefined,
+  defaultSessionId: string,
+  options: QverisServerOptions = {},
+): Server {
   const server = new Server(
     {
       name: SERVER_NAME,
@@ -568,10 +590,11 @@ export function createQverisServer(client: QverisClient | undefined, defaultSess
     },
   );
 
-  // Lists available tools (discover/inspect/call plus deprecated aliases).
+  // Hosted embeddings may suppress deprecated names from discovery while
+  // retaining server-side alias resolution for already-configured clients.
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
-      tools: listQverisMcpTools(),
+      tools: listQverisMcpTools(options),
     };
   });
 
