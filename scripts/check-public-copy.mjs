@@ -16,6 +16,7 @@ const ROOT_MANIFESTS = new Set([
   "glama.json",
   "mcp.json",
   "package.json",
+  "smithery.yaml",
 ])
 
 export function isPublicManifest(file) {
@@ -48,6 +49,7 @@ const RULES = [
   ["obsolete-scale-package", /(?:\|\s*Scale\s*\|\s*\$50(?:\+|\s|起)|26,250\+?\s*credits)/i],
   ["hardcoded-cn-minimum", /最低充值金额\s*[:：]?\s*(?:¥|￥|CNY|RMB)\s*\d/i],
   ["key-prefix-routing", /(?:auto-detects? region from key prefix|从\s*key\s*前缀自动检测)/i],
+  ["obsolete-region-override", /\b(?:QVERIS_REGION|qverisRegion)\b/],
   ["deployment-label", /(?:\b(?:China|Global) (?:(?:hosted|service) )?(?:endpoint|deployment|region)\b|(?:中国|全球)区|(?:中国|全球)(?:服务)?(?:端点|部署)|中国服务用户)/i],
   ["zero-token-promise", /(?:zero (?:prompt )?tokens?|零\s*(?:prompt\s*|提示词\s*)?token|\|\s*Token (?:cost|消耗)\s*\|\s*(?:Zero|零)|每个工具增加 ~200-500|each tool adds ~200-500)/i],
 ]
@@ -97,7 +99,16 @@ export async function scanPublicCopy(root = ROOT) {
   const files = execFileSync("git", ["ls-files", "-z"], { cwd: root, encoding: "utf8" })
     .split("\0").filter(isPublicCopyFile)
   const findings = []
-  for (const file of files) findings.push(...checkPublicCopy(await readFile(path.join(root, file), "utf8"), file))
+  for (const file of files) {
+    try {
+      findings.push(...checkPublicCopy(await readFile(path.join(root, file), "utf8"), file))
+    } catch (error) {
+      // A removal remains in git's index until it is staged. Ignore that
+      // vanished path so local checks report the post-removal source tree,
+      // while surfacing every other read failure.
+      if (error?.code !== "ENOENT") throw error
+    }
+  }
   return { files: files.length, findings }
 }
 

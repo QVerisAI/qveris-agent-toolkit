@@ -58,7 +58,7 @@ test("rejects deployment labels in public copy", () => {
 })
 
 test("rejects obsolete CLI guarantees while permitting optional dependencies", () => {
-  for (const source of ["Zero prompt tokens", "| **Token cost** | Zero — subprocess |", "零 prompt token", "Zero runtime dependencies", "Auto-detects region from key prefix"]) {
+  for (const source of ["Zero prompt tokens", "| **Token cost** | Zero — subprocess |", "零 prompt token", "Zero runtime dependencies", "Auto-detects region from key prefix", "QVERIS_REGION=cn", "qverisRegion: global"]) {
     assert.ok(checkPublicCopy(source, "docs/en-US/cli.md").length, source)
   }
   assert.deepEqual(checkPublicCopy("No mandatory runtime dependencies; optional keyring", "docs/en-US/cli.md"), [])
@@ -72,7 +72,7 @@ test("covers public entry points and excludes historical and test data", () => {
 test("scans tracked distribution manifests, including root manifests", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "qveris-public-manifests-"))
   const files = [
-    ".cursor-plugin/plugin.json", "gemini-extension.json", "glama.json", "mcp.json", "package.json",
+    ".cursor-plugin/plugin.json", "gemini-extension.json", "glama.json", "mcp.json", "package.json", "smithery.yaml",
     "packages/cli/package.json", "packages/mcp/server.json",
     "packages/openclaw-qveris-plugin/openclaw.plugin.json",
     "recipes/finance-research/qveris.manifest.json",
@@ -101,7 +101,7 @@ test("manifest-only changes trigger public-copy CI on PRs and main pushes", asyn
   const pr = workflow.split("  pull_request:\n")[1].split("  push:\n")[0]
   const push = workflow.split("  push:\n")[1].split("\npermissions:")[0]
   for (const section of [pr, push]) {
-    for (const pattern of [".cursor-plugin/**", "gemini-extension.json", "glama.json", "mcp.json", "package.json", "packages/**/package.json", "packages/**/server.json", "packages/**/openclaw.plugin.json", "recipes/**", "ecosystem/**"]) {
+    for (const pattern of [".cursor-plugin/**", "gemini-extension.json", "glama.json", "mcp.json", "package.json", "smithery.yaml", "packages/**/package.json", "packages/**/server.json", "packages/**/openclaw.plugin.json", "recipes/**", "ecosystem/**"]) {
       assert.ok(section.includes(`- "${pattern}"`), pattern)
     }
   }
