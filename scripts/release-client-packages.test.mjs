@@ -12,6 +12,7 @@ import {
   githubRepositoryFromRemoteUrl,
   publishReleasePlan,
   readReleasePlan,
+  selectSuccessfulWorkflowRun,
   selectWorkflowRun,
   workflowDispatchInputs,
   workflowTagPatterns,
@@ -364,6 +365,92 @@ test("publishReleasePlan resumes an existing tag without pushing it again", asyn
   assert.deepEqual(events, ["registered"]);
 });
 
+test("publishReleasePlan skips already-released packages when only one client version changes", async () => {
+  const releases = readReleasePlan(fixtureRoot()).slice(0, 2);
+  const events = [];
+
+  await publishReleasePlan(releases, {
+    head: "release-head",
+    watch: true,
+    log: (message) => events.push(`log:${message.trim()}`),
+    inspectTag: async (release) =>
+      release === releases[0]
+        ? {
+            local: { commit: "previous-release", annotated: true },
+            remote: { commit: "previous-release", annotated: true },
+          }
+        : { local: null, remote: null },
+    validateTag: () => {},
+    verifyHistoricalRelease: async (release, status) => {
+      events.push(`verify:${release.tag}:${status.commit}`);
+    },
+    listRuns: async (release) => {
+      events.push(`snapshot:${release.tag}`);
+      return [];
+    },
+    createTag: async (release) => events.push(`create:${release.tag}`),
+    pushTag: async (release) => events.push(`push:${release.tag}`),
+    waitForRun: async (release) => {
+      events.push(`registered:${release.tag}`);
+      return { databaseId: release.tag };
+    },
+    watchRun: async (run) => events.push(`watch:${run.databaseId}`),
+  });
+
+  assert.ok(events.includes(`log:${releases[0].tag}: remote tag already released from previous-release; skipping`));
+  assert.equal(events.includes(`verify:${releases[0].tag}:previous-release`), true);
+  assert.equal(
+    events.some(
+      (event) =>
+        event.includes(releases[0].tag) &&
+        !event.startsWith("log:") &&
+        !event.startsWith("verify:"),
+    ),
+    false,
+  );
+  assert.deepEqual(events.filter((event) => !event.startsWith("log:") && !event.startsWith("verify:")), [
+    `snapshot:${releases[1].tag}`,
+    `create:${releases[1].tag}`,
+    `push:${releases[1].tag}`,
+    `registered:${releases[1].tag}`,
+    `watch:${releases[1].tag}`,
+  ]);
+});
+
+test("publishReleasePlan stops before a new tag when a historical publish was not successful", async () => {
+  const releases = readReleasePlan(fixtureRoot()).slice(0, 2);
+  const events = [];
+
+  await assert.rejects(
+    () =>
+      publishReleasePlan(releases, {
+        head: "release-head",
+        watch: true,
+        log: () => {},
+        inspectTag: async (release) =>
+          release === releases[0]
+            ? { local: { commit: "previous-release", annotated: true }, remote: { commit: "previous-release", annotated: true } }
+            : { local: null, remote: null },
+        validateTag: () => {},
+        verifyHistoricalRelease: async (release) => {
+          events.push(`verify:${release.tag}`);
+          throw new Error("historical publish failed");
+        },
+        listRuns: async (release) => {
+          events.push(`snapshot:${release.tag}`);
+          return [];
+        },
+        createTag: async (release) => events.push(`create:${release.tag}`),
+        pushTag: async (release) => events.push(`push:${release.tag}`),
+        waitForRun: async (release) => ({ databaseId: release.tag }),
+        watchRun: async () => {},
+      }),
+    /historical publish failed/,
+  );
+
+  assert.deepEqual(events, [`verify:${releases[0].tag}`]);
+});
+
 test("publishReleasePlan never watches in no-watch mode", async () => {
   const releases = readReleasePlan(fixtureRoot());
   const events = [];
@@ -423,4 +510,15 @@ test("workflow registration selects only a fresh matching run after a new tag pu
 
   assert.equal(selectWorkflowRun([historical], release, head, new Set(["7"])), undefined);
   assert.deepEqual(selectWorkflowRun([unrelated, historical, fresh], release, head, new Set(["7"])), fresh);
+});
+
+test("historical tag verification requires a completed successful publish workflow", () => {
+  const release = { tag: "mcp-v1.0.0" };
+  const head = "a".repeat(40);
+  const failed = { databaseId: 1, headBranch: release.tag, headSha: head, status: "completed", conclusion: "failure" };
+  const running = { databaseId: 2, headBranch: release.tag, headSha: head, status: "in_progress", conclusion: null };
+  const successful = { databaseId: 3, headBranch: release.tag, headSha: head, status: "completed", conclusion: "success" };
+
+  assert.equal(selectSuccessfulWorkflowRun([failed, running], release, head), undefined);
+  assert.deepEqual(selectSuccessfulWorkflowRun([failed, running, successful], release, head), successful);
 });
