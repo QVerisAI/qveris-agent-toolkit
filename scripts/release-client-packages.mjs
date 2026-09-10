@@ -498,6 +498,17 @@ export function selectWorkflowRun(runs, release, head, excludeRunIds = new Set()
   );
 }
 
+export function selectSuccessfulWorkflowRun(runs, release, head) {
+  if (!Array.isArray(runs)) throw new Error("Workflow run lookup must return an array");
+  return runs.find(
+    (candidate) =>
+      candidate.headSha === head &&
+      candidate.headBranch === release.tag &&
+      candidate.status === "completed" &&
+      candidate.conclusion === "success",
+  );
+}
+
 async function waitForWorkflowRun(
   release,
   head,
@@ -528,10 +539,20 @@ export async function publishReleasePlan(releases, operations) {
     operations.validateTag(release, status);
     let excludeRunIds = new Set();
 
-    if (status.remote) {
-      if (status.remote.commit !== operations.head) {
-        throw new Error(`${release.tag}: remote tag already points to ${status.remote.commit}, not ${operations.head}`);
+    if (status.remote && status.remote.commit !== operations.head) {
+      // A package whose manifest version still names an earlier immutable tag
+      // can be skipped only after its publish workflow has completed
+      // successfully. This preserves cross-package failure ordering when a
+      // prior --no-watch invocation or workflow failure left a remote tag.
+      if (typeof operations.verifyHistoricalRelease !== "function") {
+        throw new Error(`${release.tag}: verifying a historical remote tag requires a publish-workflow verifier`);
       }
+      await operations.verifyHistoricalRelease(release, status.remote);
+      log(`\n${release.tag}: remote tag already released from ${status.remote.commit}; skipping`);
+      continue;
+    }
+
+    if (status.remote) {
       log(`\n${release.tag}: remote tag already exists; resuming workflow verification`);
     } else {
       if (status.local && status.local.commit !== operations.head) {
@@ -618,6 +639,15 @@ async function main() {
     pushTag: (release) => pushSingleTag(remote, release),
     listRuns: (release) => workflowRuns(release, head, repository),
     waitForRun: (release, options) => waitForWorkflowRun(release, head, { ...options, repository }),
+    verifyHistoricalRelease: (release, status) => {
+      const run = selectSuccessfulWorkflowRun(workflowRuns(release, status.commit, repository), release, status.commit);
+      if (!run) {
+        throw new Error(
+          `${release.tag}: historical remote tag ${status.commit} has no completed successful ${release.workflow} publish run`,
+        );
+      }
+      return run;
+    },
     watchRun: (run) => watchWorkflowRun(run, repository),
   });
   console.log(
