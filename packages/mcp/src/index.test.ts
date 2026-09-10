@@ -121,6 +121,18 @@ describe('MCP public tool interface', () => {
     expect(byName.get('execute_tool')?.description).toContain('Deprecated');
   });
 
+  it('can suppress deprecated aliases from tool discovery without changing the default local surface', () => {
+    expect(listQverisMcpTools({ includeDeprecatedAliases: false }).map((tool) => tool.name)).toEqual([
+      'discover',
+      'inspect',
+      'probe',
+      'call',
+      'usage_history',
+      'credits_ledger',
+    ]);
+    expect(listQverisMcpTools().map((tool) => tool.name)).toContain('search_tools');
+  });
+
   it('keeps provider comparison and fresh-call boundaries model-visible', () => {
     const byName = new Map(listQverisMcpTools().map((tool) => [tool.name, tool]));
 

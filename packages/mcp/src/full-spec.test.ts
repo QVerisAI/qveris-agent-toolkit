@@ -43,8 +43,16 @@ function fakeQverisClient(): FakeQverisClient {
   } as unknown as FakeQverisClient;
 }
 
-async function connect(opts: { client?: QverisClient; elicitHandler?: (msg: string) => Promise<boolean> } = {}) {
-  const server = createQverisServer(opts.client, 'session-1');
+async function connect(
+  opts: {
+    client?: QverisClient;
+    elicitHandler?: (msg: string) => Promise<boolean>;
+    includeDeprecatedAliases?: boolean;
+  } = {},
+) {
+  const server = createQverisServer(opts.client, 'session-1', {
+    includeDeprecatedAliases: opts.includeDeprecatedAliases,
+  });
   const capabilities = opts.elicitHandler ? { elicitation: { form: {} } } : {};
   const mcpClient = new Client({ name: 'full-spec-test', version: '0.0.0' }, { capabilities });
   if (opts.elicitHandler) {
@@ -134,6 +142,26 @@ describe('output schemas + structured content', () => {
     for (const [alias, canonical] of Object.entries(aliases)) {
       expect(byName.get(alias)?.annotations, `${alias} annotations`).toEqual(byName.get(canonical)?.annotations);
     }
+    await c.close();
+  });
+
+  it('can hide deprecated aliases from tools/list while retaining canonical tools', async () => {
+    const c = await connect({ client: fakeQverisClient(), includeDeprecatedAliases: false });
+    const { tools } = await c.listTools();
+
+    expect(tools.map((tool) => tool.name)).toEqual([
+      'discover',
+      'inspect',
+      'probe',
+      'call',
+      'usage_history',
+      'credits_ledger',
+    ]);
+
+    // Hiding is a discovery decision, not an abrupt wire-level compatibility
+    // break for a client that cached an older tool list.
+    const legacy = await c.callTool({ name: 'search_tools', arguments: { query: 'weather' } });
+    expect(legacy.isError).toBeFalsy();
     await c.close();
   });
 
