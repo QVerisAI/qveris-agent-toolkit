@@ -25,7 +25,7 @@ export const CLIENTS = [
     workflow: "mcp-publish.yml",
     manifest: "npm",
     serverManifest: true,
-    rootManifests: ["gemini-extension.json"],
+    rootManifests: ["gemini-extension.json", ".cursor-plugin/plugin.json"],
   },
   {
     key: "js-sdk",

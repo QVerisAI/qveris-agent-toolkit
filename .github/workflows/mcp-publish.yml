@@ -89,6 +89,11 @@ jobs:
             echo "::error::gemini-extension.json version ($GEMINI_EXTENSION_VERSION) does not match package.json version ($PKG_VERSION)"
             exit 1
           fi
+          CURSOR_PLUGIN_VERSION=$(node -p "require('../../.cursor-plugin/plugin.json').version")
+          if [ "$PKG_VERSION" != "$CURSOR_PLUGIN_VERSION" ]; then
+            echo "::error::.cursor-plugin/plugin.json version ($CURSOR_PLUGIN_VERSION) does not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
           echo "VERSION=$PKG_VERSION" >> "$GITHUB_ENV"
 
       - name: Resolve npm dist-tag

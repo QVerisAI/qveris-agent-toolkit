@@ -10,7 +10,13 @@ import { fileURLToPath } from "node:url"
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const PUBLIC_ROOT = /^(?:README(?:_zh-CN)?\.md$|docs\/|agent\/|skills\/|packages\/|ecosystem\/|recipes\/)/
 const PUBLIC_TEXT = /\.(?:md|mdx|txt|html|svg)$/
-const ROOT_MANIFESTS = new Set(["gemini-extension.json", "glama.json", "mcp.json", "package.json"])
+const ROOT_MANIFESTS = new Set([
+  ".cursor-plugin/plugin.json",
+  "gemini-extension.json",
+  "glama.json",
+  "mcp.json",
+  "package.json",
+])
 
 export function isPublicManifest(file) {
   return ROOT_MANIFESTS.has(file)
