@@ -1,0 +1,100 @@
+{
+  "$schema": "../../ecosystem/manifest.schema.json",
+  "schema_version": "2026-05-13",
+  "id": "qveris.recipe.youcom-web-search",
+  "kind": "recipe",
+  "name": "You.com Web Search",
+  "summary": "Discover and execute You.com web search capabilities for real-time information retrieval.",
+  "description": "A recipe for finding You.com web search capabilities through QVeris, inspecting their parameters and quality metrics, then executing searches to get current web information with citations.",
+  "version": "0.1.0",
+  "status": "experimental",
+  "owner": {
+    "name": "You.com Community",
+    "url": "https://you.com"
+  },
+  "tags": ["web-search", "real-time-data", "research", "information-retrieval", "youcom"],
+  "categories": ["analytics", "developer-tools"],
+  "permissions": {
+    "qveris": [
+      {
+        "scope": "capability.discover",
+        "reason": "Find You.com web search capabilities by natural-language search intent.",
+        "required": true
+      },
+      {
+        "scope": "capability.inspect",
+        "reason": "Read parameter schemas, billing rules, and quality metrics before execution.",
+        "required": true
+      },
+      {
+        "scope": "capability.call",
+        "reason": "Execute You.com search capabilities with user queries.",
+        "required": true
+      },
+      {
+        "scope": "capability.audit",
+        "reason": "Review usage and billing records after search execution.",
+        "required": false
+      }
+    ],
+    "network": [
+      {
+        "host": "qveris.ai",
+        "reason": "Call QVeris API endpoints for capability discovery, routing, and execution.",
+        "required": true
+      }
+    ],
+    "secrets": [
+      {
+        "scope": "QVERIS_API_KEY",
+        "reason": "Authenticate QVeris API requests for capability discovery and execution.",
+        "required": true
+      }
+    ]
+  },
+  "compatibility": {
+    "cli": ">=0.6.0",
+    "mcp": ">=0.7.0",
+    "python_sdk": ">=0.2.0",
+    "agent_skill": ">=0.1.0"
+  },
+  "marketplace": {
+    "listing_slug": "youcom-web-search",
+    "headline": "Real-time web search with You.com through QVeris capability routing.",
+    "audience": "Agents and researchers needing current web information with reliable citations.",
+    "use_cases": [
+      "Get latest news and current events",
+      "Research recent developments in any field",
+      "Find current product information and reviews",
+      "Discover trending topics and discussions",
+      "Retrieve up-to-date technical documentation"
+    ],
+    "integration_methods": ["cli", "python-sdk", "mcp", "skill"],
+    "primary_cta": "Search the web",
+    "docs_url": "recipes/youcom-web-search/README.md"
+  },
+  "docs": {
+    "readme": "README.md",
+    "quickstart": "README.md#quickstart"
+  },
+  "examples": [
+    {
+      "name": "CLI web search",
+      "path": "README.md#cli",
+      "language": "shell",
+      "command": "qveris discover \"You.com web search API\" --json | jq '[.results[] | select((.provider_name // \"\" | ascii_downcase | gsub(\"[^a-z0-9]\"; \"\")) == \"youcom\")] | first'"
+    },
+    {
+      "name": "Python SDK workflow",
+      "path": "README.md#python-sdk",
+      "language": "python",
+      "command": "python youcom_search.py"
+    },
+    {
+      "name": "CLI runnable recipe",
+      "path": "run.sh",
+      "language": "shell",
+      "command": "./run.sh"
+    }
+  ]
+}
