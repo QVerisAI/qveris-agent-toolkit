@@ -2,11 +2,428 @@
   "openapi": "3.1.0",
   "info": {
     "title": "QVeris Public REST API",
-    "version": "2026-09-07.1",
+    "version": "2026-09-12.1",
     "summary": "External REST API for enterprise integration.",
     "description": "OpenAPI 3.1 schema for the formally released public `/api/v1` REST API surface. It covers search, provider discovery, tool metadata lookup/execution, credits, and account audit endpoints. Unreleased API families are intentionally excluded from this customer-facing schema."
   },
   "paths": {
+    "/agent/anonymous-register": {
+      "post": {
+        "tags": [
+          "Agent Lifecycle"
+        ],
+        "summary": "Agent Anonymous Register",
+        "description": "Create an anonymous trial agent without email verification.\n\nReturns a one-time API key, the configured trial credits, and a claim code\nthat the agent's operator can use to bind a formal email later.",
+        "operationId": "agent_anonymous_register_api_v1_agent_anonymous_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentAnonymousRegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_AgentAnonymousRegisterResponse_"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-12.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-12.1"
+                }
+              }
+            }
+          },
+          "429": {
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-12.1"
+                }
+              }
+            },
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "status_code": 429,
+                  "message": "Rate limit exceeded. Please try again later.",
+                  "data": null
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "security": []
+      }
+    },
+    "/agent/claim": {
+      "post": {
+        "tags": [
+          "Agent Lifecycle"
+        ],
+        "summary": "Agent Claim Start",
+        "description": "Bind a formal email to an anonymous trial and send a 6-digit code.",
+        "operationId": "agent_claim_start_api_v1_agent_claim_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentClaimStartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_Union_AgentClaimStartResponse__AgentClaimRiskBlockResponse__"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-12.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-12.1"
+                }
+              }
+            }
+          },
+          "429": {
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-12.1"
+                }
+              }
+            },
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "status_code": 429,
+                  "message": "Rate limit exceeded. Please try again later.",
+                  "data": null
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "security": []
+      }
+    },
+    "/agent/claim-verify": {
+      "post": {
+        "tags": [
+          "Agent Lifecycle"
+        ],
+        "summary": "Agent Claim Verify",
+        "description": "Verify the emailed code and convert the anonymous trial to a local account.",
+        "operationId": "agent_claim_verify_api_v1_agent_claim_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentClaimVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_AgentClaimVerifyResponse_"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-12.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-12.1"
+                }
+              }
+            }
+          },
+          "429": {
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-12.1"
+                }
+              }
+            },
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicApiError"
+                },
+                "example": {
+                  "status": "failure",
+                  "status_code": 429,
+                  "message": "Rate limit exceeded. Please try again later.",
+                  "data": null
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "security": []
+      }
+    },
     "/auth/account/settlement-history": {
       "get": {
         "tags": [
@@ -118,7 +535,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -138,7 +555,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -172,7 +589,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -185,7 +602,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -464,7 +881,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -484,7 +901,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -510,7 +927,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -587,7 +1004,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -607,7 +1024,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -704,7 +1121,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -754,7 +1171,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -774,7 +1191,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -887,7 +1304,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -907,7 +1324,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -1407,7 +1824,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -1427,7 +1844,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -1453,7 +1870,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -1786,7 +2203,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2150,7 +2567,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2170,7 +2587,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2221,7 +2638,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2241,7 +2658,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2275,7 +2692,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2332,7 +2749,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2356,7 +2773,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2380,7 +2797,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2404,7 +2821,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2428,7 +2845,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2452,7 +2869,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2476,7 +2893,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2500,7 +2917,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2524,7 +2941,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2624,7 +3041,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2644,7 +3061,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2668,7 +3085,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2692,7 +3109,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2716,7 +3133,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2740,7 +3157,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2764,7 +3181,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2788,7 +3205,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2822,7 +3239,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2861,7 +3278,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2870,6 +3287,253 @@
         "x-qveris-visibility": "public",
         "x-qveris-release-stage": "published",
         "security": []
+      }
+    },
+    "/oauth/credits_ledger": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Oauth Credits Ledger",
+        "description": "Requires an Account Resource access token with the `credits_ledger` scope.",
+        "operationId": "oauth_credits_ledger_api_v1_oauth_credits_ledger_get",
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "开始日期 (YYYY-MM-DD)",
+              "title": "Start Date"
+            },
+            "description": "开始日期 (YYYY-MM-DD)"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "结束日期 (YYYY-MM-DD)",
+              "title": "End Date"
+            },
+            "description": "结束日期 (YYYY-MM-DD)"
+          },
+          {
+            "name": "entry_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "账本事件类型",
+              "title": "Entry Type"
+            },
+            "description": "账本事件类型"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "预定义账本范围，例如 account_history",
+              "title": "Scope"
+            },
+            "description": "预定义账本范围，例如 account_history"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "页码",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "页码"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "每页数量",
+              "default": 50,
+              "title": "Page Size"
+            },
+            "description": "每页数量"
+          },
+          {
+            "name": "min_credits",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Credits"
+            }
+          },
+          {
+            "name": "max_credits",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Credits"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "any",
+              "title": "Direction"
+            }
+          },
+          {
+            "name": "bucket",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Bucket"
+            }
+          },
+          {
+            "name": "summary",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Summary"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "摘要模式最多返回条数",
+              "title": "Limit"
+            },
+            "description": "摘要模式最多返回条数"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_CreditsLedgerResponse_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-12.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-12.1"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "security": [
+          {
+            "OAuthAccountBearer": []
+          }
+        ]
       }
     },
     "/oauth/device/authorize": {
@@ -2937,7 +3601,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2957,7 +3621,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2977,7 +3641,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -2997,7 +3661,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3034,7 +3698,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             },
@@ -3061,7 +3725,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3145,7 +3809,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3165,7 +3829,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3185,7 +3849,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3205,7 +3869,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3225,7 +3889,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3325,7 +3989,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3345,7 +4009,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3365,7 +4029,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3385,7 +4049,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3405,7 +4069,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3592,7 +4256,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3612,7 +4276,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3632,7 +4296,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3652,7 +4316,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3672,7 +4336,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3684,6 +4348,474 @@
           {},
           {
             "OAuthClientBasic": []
+          }
+        ]
+      }
+    },
+    "/oauth/usage_history": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Oauth Usage History",
+        "description": "Requires an Account Resource access token with the `usage_history` scope.",
+        "operationId": "oauth_usage_history_api_v1_oauth_usage_history_get",
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "开始日期 (YYYY-MM-DD)",
+              "title": "Start Date"
+            },
+            "description": "开始日期 (YYYY-MM-DD)"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "结束日期 (YYYY-MM-DD)",
+              "title": "End Date"
+            },
+            "description": "结束日期 (YYYY-MM-DD)"
+          },
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "事件类型过滤",
+              "title": "Event Type"
+            },
+            "description": "事件类型过滤"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "事件分组过滤",
+              "title": "Kind"
+            },
+            "description": "事件分组过滤"
+          },
+          {
+            "name": "success",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "是否成功",
+              "title": "Success"
+            },
+            "description": "是否成功"
+          },
+          {
+            "name": "billable_success",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "是否可计费",
+              "title": "Billable Success"
+            },
+            "description": "是否可计费"
+          },
+          {
+            "name": "outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "执行 outcome 过滤",
+              "title": "Outcome"
+            },
+            "description": "执行 outcome 过滤"
+          },
+          {
+            "name": "reason_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "执行 reason_code 过滤",
+              "title": "Reason Code"
+            },
+            "description": "执行 reason_code 过滤"
+          },
+          {
+            "name": "has_execution_outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "是否存在 execution_outcome",
+              "title": "Has Execution Outcome"
+            },
+            "description": "是否存在 execution_outcome"
+          },
+          {
+            "name": "charge_outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "收费结果过滤",
+              "title": "Charge Outcome"
+            },
+            "description": "收费结果过滤"
+          },
+          {
+            "name": "anomaly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "异常类型过滤",
+              "title": "Anomaly"
+            },
+            "description": "异常类型过滤"
+          },
+          {
+            "name": "search_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "search_id 聚焦过滤",
+              "title": "Search Id"
+            },
+            "description": "search_id 聚焦过滤"
+          },
+          {
+            "name": "execution_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "execution_id 聚焦过滤",
+              "title": "Execution Id"
+            },
+            "description": "execution_id 聚焦过滤"
+          },
+          {
+            "name": "api_key_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "API Key 归因过滤",
+              "title": "Api Key Id"
+            },
+            "description": "API Key 归因过滤"
+          },
+          {
+            "name": "oauth_client_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 2048
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "OAuth client_id 归因过滤",
+              "title": "Oauth Client Id"
+            },
+            "description": "OAuth client_id 归因过滤"
+          },
+          {
+            "name": "credential_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 32
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "凭证类型过滤",
+              "title": "Credential Type"
+            },
+            "description": "凭证类型过滤"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "页码",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "页码"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50000,
+              "minimum": 1,
+              "description": "每页数量",
+              "default": 50,
+              "title": "Page Size"
+            },
+            "description": "每页数量"
+          },
+          {
+            "name": "include_details",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "是否返回完整审计详情字段",
+              "default": false,
+              "title": "Include Details"
+            },
+            "description": "是否返回完整审计详情字段"
+          },
+          {
+            "name": "min_credits",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Credits"
+            }
+          },
+          {
+            "name": "max_credits",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Credits"
+            }
+          },
+          {
+            "name": "bucket",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Bucket"
+            }
+          },
+          {
+            "name": "summary",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Summary"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "摘要模式最多返回条数",
+              "title": "Limit"
+            },
+            "description": "摘要模式最多返回条数"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_UsageEventsResponse_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-12.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-12.1"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published",
+        "security": [
+          {
+            "OAuthAccountBearer": []
           }
         ]
       }
@@ -3795,7 +4927,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3815,7 +4947,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3847,7 +4979,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -3903,7 +5035,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             },
@@ -3979,7 +5111,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             },
@@ -4028,7 +5160,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             },
@@ -4080,7 +5212,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             },
@@ -4163,7 +5295,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             },
@@ -4242,7 +5374,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             },
@@ -4291,7 +5423,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             },
@@ -4324,7 +5456,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -4465,7 +5597,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -4502,7 +5634,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             },
@@ -4555,7 +5687,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             },
@@ -4609,7 +5741,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             },
@@ -4661,7 +5793,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -4768,7 +5900,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -4805,7 +5937,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             },
@@ -4854,7 +5986,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             },
@@ -4887,7 +6019,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -4911,7 +6043,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -4936,7 +6068,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -4961,7 +6093,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -4981,7 +6113,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-07.1"
+                  "const": "2026-09-12.1"
                 }
               }
             }
@@ -5014,6 +6146,94 @@
   },
   "components": {
     "schemas": {
+      "APIResponse_AgentAnonymousRegisterResponse_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentAnonymousRegisterResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[AgentAnonymousRegisterResponse]"
+      },
+      "APIResponse_AgentClaimVerifyResponse_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentClaimVerifyResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[AgentClaimVerifyResponse]"
+      },
       "APIResponse_CreditsLedgerItem_": {
         "properties": {
           "status": {
@@ -5233,6 +6453,54 @@
           "message"
         ],
         "title": "APIResponse[TokenVerificationResponse]"
+      },
+      "APIResponse_Union_AgentClaimStartResponse__AgentClaimRiskBlockResponse__": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentClaimStartResponse"
+              },
+              {
+                "$ref": "#/components/schemas/AgentClaimRiskBlockResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[Union[AgentClaimStartResponse, AgentClaimRiskBlockResponse]]"
       },
       "APIResponse_UsageCreditsSpentResponse_": {
         "properties": {
@@ -5455,6 +6723,215 @@
           "message"
         ],
         "title": "APIResponse[dict]"
+      },
+      "AgentAnonymousRegisterRequest": {
+        "properties": {
+          "agent_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Name",
+            "description": "Optional agent display name"
+          }
+        },
+        "type": "object",
+        "title": "AgentAnonymousRegisterRequest"
+      },
+      "AgentAnonymousRegisterResponse": {
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "title": "Agent Id"
+          },
+          "agent_name": {
+            "type": "string",
+            "title": "Agent Name"
+          },
+          "api_key": {
+            "type": "string",
+            "title": "Api Key"
+          },
+          "trial_credits": {
+            "type": "number",
+            "title": "Trial Credits"
+          },
+          "claim_code": {
+            "type": "string",
+            "title": "Claim Code"
+          },
+          "expires_at": {
+            "type": "string",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "agent_id",
+          "agent_name",
+          "api_key",
+          "trial_credits",
+          "claim_code",
+          "expires_at"
+        ],
+        "title": "AgentAnonymousRegisterResponse"
+      },
+      "AgentClaimRiskBlockResponse": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "const": "email_risk_blocked",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "AgentClaimRiskBlockResponse"
+      },
+      "AgentClaimStartRequest": {
+        "properties": {
+          "claim_code": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Claim Code"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "claim_code",
+          "email"
+        ],
+        "title": "AgentClaimStartRequest"
+      },
+      "AgentClaimStartResponse": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "AgentClaimStartResponse"
+      },
+      "AgentClaimVerifyRequest": {
+        "properties": {
+          "claim_code": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Claim Code"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 6,
+            "minLength": 6,
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "claim_code",
+          "email",
+          "code"
+        ],
+        "title": "AgentClaimVerifyRequest"
+      },
+      "AgentClaimVerifyResponse": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "user_id"
+        ],
+        "title": "AgentClaimVerifyResponse"
+      },
+      "AnonymousTrialMetadata": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "description": "Whether anonymous agent trial registration is enabled.",
+            "default": true
+          },
+          "register_path": {
+            "type": "string",
+            "title": "Register Path",
+            "default": "/api/v1/agent/anonymous-register"
+          },
+          "claim_path": {
+            "type": "string",
+            "title": "Claim Path",
+            "default": "/api/v1/agent/claim"
+          },
+          "claim_verify_path": {
+            "type": "string",
+            "title": "Claim Verify Path",
+            "default": "/api/v1/agent/claim-verify"
+          },
+          "trial_credits": {
+            "type": "number",
+            "title": "Trial Credits",
+            "description": "Number of credits granted by the anonymous trial."
+          },
+          "expires_in_days": {
+            "type": "integer",
+            "title": "Expires In Days",
+            "description": "Number of days before the anonymous trial expires."
+          },
+          "capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Capabilities"
+          },
+          "excluded": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Excluded"
+          },
+          "instructions": {
+            "type": "string",
+            "title": "Instructions",
+            "default": "If no human-verified API key is available, POST to register_path to obtain a one-time api_key and claim_code. Save both. Claim the trial later with claim_path and claim_verify_path."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AnonymousTrialMetadata",
+        "description": "Machine-readable discovery metadata for the anonymous agent trial."
       },
       "CreditsLedgerItem": {
         "properties": {
@@ -6410,8 +7887,11 @@
             "title": "Contract Version",
             "description": "Version of the published QVeris REST API contract.",
             "examples": [
-              "2026-09-07.1"
+              "2026-09-12.1"
             ]
+          },
+          "registration": {
+            "$ref": "#/components/schemas/AnonymousTrialMetadata"
           }
         },
         "additionalProperties": false,
@@ -9378,6 +10858,12 @@
         "type": "http",
         "scheme": "basic",
         "description": "HTTP Basic client authentication. Required for Token Exchange and Introspection; supported by confidential clients on Device Authorization and Revocation."
+      },
+      "OAuthAccountBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "OAuth Account Resource Access Token. The token audience must be the configured Account Resource. Audit endpoints require their dedicated `usage_history` or `credits_ledger` scope as documented by the operation."
       }
     }
   },
@@ -9411,10 +10897,14 @@
     {
       "name": "Authentication",
       "description": "OAuth Device Flow, token issuance and exchange, introspection, and revocation."
+    },
+    {
+      "name": "Agent Lifecycle",
+      "description": "Anonymous agent trial registration and claim operations."
     }
   ],
-  "x-qveris-route-count": 26,
-  "x-qveris-public-operation-count": 26,
+  "x-qveris-route-count": 31,
+  "x-qveris-public-operation-count": 31,
   "x-qveris-private-operation-count": 0,
   "x-qveris-generation-source": "Filtered from qveris-internal-api.openapi.json"
 }

@@ -11,6 +11,7 @@ from pydantic import (
     AnyUrl,
     BaseModel,
     ConfigDict,
+    EmailStr,
     Field,
     PositiveFloat,
     PositiveInt,
@@ -26,6 +27,83 @@ class APIResponseDict(BaseModel):
     status_code: Optional[int] = Field(0, title='Status Code')
     data: Optional[Dict[str, Any]] = Field(None, title='Data')
     message_key: Optional[str] = Field(None, title='Message Key')
+
+
+class AgentAnonymousRegisterRequest(BaseModel):
+    agent_name: Optional[constr(max_length=100)] = Field(
+        None, description='Optional agent display name', title='Agent Name'
+    )
+
+
+class AgentAnonymousRegisterResponse(BaseModel):
+    agent_id: str = Field(..., title='Agent Id')
+    agent_name: str = Field(..., title='Agent Name')
+    api_key: str = Field(..., title='Api Key')
+    trial_credits: float = Field(..., title='Trial Credits')
+    claim_code: str = Field(..., title='Claim Code')
+    expires_at: str = Field(..., title='Expires At')
+
+
+class AgentClaimRiskBlockResponse(BaseModel):
+    reason: Literal['email_risk_blocked'] = Field(..., title='Reason')
+
+
+class AgentClaimStartRequest(BaseModel):
+    claim_code: constr(min_length=8, max_length=128) = Field(..., title='Claim Code')
+    email: EmailStr = Field(..., title='Email')
+
+
+class AgentClaimStartResponse(BaseModel):
+    email: str = Field(..., title='Email')
+
+
+class AgentClaimVerifyRequest(BaseModel):
+    claim_code: constr(min_length=8, max_length=128) = Field(..., title='Claim Code')
+    email: EmailStr = Field(..., title='Email')
+    code: constr(min_length=6, max_length=6) = Field(..., title='Code')
+
+
+class AgentClaimVerifyResponse(BaseModel):
+    email: str = Field(..., title='Email')
+    user_id: str = Field(..., title='User Id')
+
+
+class AnonymousTrialMetadata(BaseModel):
+    """
+    Machine-readable discovery metadata for the anonymous agent trial.
+    """
+
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    available: Optional[bool] = Field(
+        True,
+        description='Whether anonymous agent trial registration is enabled.',
+        title='Available',
+    )
+    register_path: Optional[str] = Field(
+        '/api/v1/agent/anonymous-register', title='Register Path'
+    )
+    claim_path: Optional[str] = Field('/api/v1/agent/claim', title='Claim Path')
+    claim_verify_path: Optional[str] = Field(
+        '/api/v1/agent/claim-verify', title='Claim Verify Path'
+    )
+    trial_credits: Optional[float] = Field(
+        None,
+        description='Number of credits granted by the anonymous trial.',
+        title='Trial Credits',
+    )
+    expires_in_days: Optional[int] = Field(
+        None,
+        description='Number of days before the anonymous trial expires.',
+        title='Expires In Days',
+    )
+    capabilities: Optional[List[str]] = Field(None, title='Capabilities')
+    excluded: Optional[List[str]] = Field(None, title='Excluded')
+    instructions: Optional[str] = Field(
+        'If no human-verified API key is available, POST to register_path to obtain a one-time api_key and claim_code. Save both. Claim the trial later with claim_path and claim_verify_path.',
+        title='Instructions',
+    )
 
 
 class CreditsLedgerItem(BaseModel):
@@ -252,9 +330,10 @@ class PublicApiMetadata(BaseModel):
     contract_version: str = Field(
         ...,
         description='Version of the published QVeris REST API contract.',
-        examples=['2026-09-07.1'],
+        examples=['2026-09-12.1'],
         title='Contract Version',
     )
+    registration: Optional[AnonymousTrialMetadata] = None
 
 
 class SettlementHistoryItem(BaseModel):
@@ -968,6 +1047,22 @@ class PublicExecuteToolResponse(BaseModel):
     )
 
 
+class APIResponseAgentAnonymousRegisterResponse(BaseModel):
+    status: str = Field(..., title='Status')
+    message: str = Field(..., title='Message')
+    status_code: Optional[int] = Field(0, title='Status Code')
+    data: Optional[AgentAnonymousRegisterResponse] = None
+    message_key: Optional[str] = Field(None, title='Message Key')
+
+
+class APIResponseAgentClaimVerifyResponse(BaseModel):
+    status: str = Field(..., title='Status')
+    message: str = Field(..., title='Message')
+    status_code: Optional[int] = Field(0, title='Status Code')
+    data: Optional[AgentClaimVerifyResponse] = None
+    message_key: Optional[str] = Field(None, title='Message Key')
+
+
 class APIResponseCreditsLedgerItem(BaseModel):
     status: str = Field(..., title='Status')
     message: str = Field(..., title='Message')
@@ -997,6 +1092,16 @@ class APIResponseTokenVerificationResponse(BaseModel):
     message: str = Field(..., title='Message')
     status_code: Optional[int] = Field(0, title='Status Code')
     data: Optional[TokenVerificationResponse] = None
+    message_key: Optional[str] = Field(None, title='Message Key')
+
+
+class APIResponseUnionAgentClaimStartResponseAgentClaimRiskBlockResponse(BaseModel):
+    status: str = Field(..., title='Status')
+    message: str = Field(..., title='Message')
+    status_code: Optional[int] = Field(0, title='Status Code')
+    data: Optional[Union[AgentClaimStartResponse, AgentClaimRiskBlockResponse]] = Field(
+        None, title='Data'
+    )
     message_key: Optional[str] = Field(None, title='Message Key')
 
 
