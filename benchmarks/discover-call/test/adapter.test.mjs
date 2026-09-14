@@ -39,21 +39,21 @@ test('process adapter cannot read QVeris or CI publication secrets', async () =>
   const previousActionsToken = process.env.ACTIONS_RUNTIME_TOKEN;
   const previousRunnerTemp = process.env.RUNNER_TEMP;
   const previousModelKey = process.env.OPENAI_API_KEY;
-  process.env.QVERIS_API_KEY = 'must-not-reach-adapter';
-  process.env.QVERIS_MCP_HTTP_AUTH_TOKEN = 'must-also-not-reach-adapter';
-  process.env.qveris_lowercase_probe = 'must-not-reach-adapter-either';
-  process.env.GITHUB_TOKEN = 'must-not-reach-adapter';
-  process.env.GITHUB_ENV = '/tmp/must-not-reach-adapter-env';
-  process.env.GITHUB_PATH = '/tmp/must-not-reach-adapter-path';
-  process.env.ACTIONS_RUNTIME_TOKEN = 'must-not-reach-adapter';
-  process.env.RUNNER_TEMP = '/tmp/must-not-reach-adapter-raw-records';
-  process.env.OPENAI_API_KEY = 'model-provider-key-must-remain';
+  process.env.QVERIS_API_KEY = '<adapter-env>';
+  process.env.QVERIS_MCP_HTTP_AUTH_TOKEN = '<adapter-auth>';
+  process.env.qveris_lowercase_probe = '<adapter-env-alt>';
+  process.env.GITHUB_TOKEN = '<adapter-env>';
+  process.env.GITHUB_ENV = '/tmp/<adapter-env>';
+  process.env.GITHUB_PATH = '/tmp/<adapter-path>';
+  process.env.ACTIONS_RUNTIME_TOKEN = '<adapter-env>';
+  process.env.RUNNER_TEMP = '/tmp/<adapter-records>';
+  process.env.OPENAI_API_KEY = '<model-key>';
   try {
     const invoke = createProcessAdapter({
       command: process.execPath,
       args: [
         '-e',
-        "process.stdin.resume(); process.stdin.on('end', () => process.stdout.write(JSON.stringify({visible: Object.keys(process.env).some((name) => ['QVERIS_', 'ACTIONS_', 'GITHUB_', 'RUNNER_'].some((prefix) => name.toUpperCase().startsWith(prefix))), modelKeyVisible: process.env.OPENAI_API_KEY === 'model-provider-key-must-remain'})))",
+        "process.stdin.resume(); process.stdin.on('end', () => process.stdout.write(JSON.stringify({visible: Object.keys(process.env).some((name) => ['QVERIS_', 'ACTIONS_', 'GITHUB_', 'RUNNER_'].some((prefix) => name.toUpperCase().startsWith(prefix))), modelKeyVisible: process.env.OPENAI_API_KEY === '<model-key>'})))",
       ],
       timeoutMs: 5_000,
     });
@@ -303,9 +303,9 @@ test('Claude adapter removes QVeris environment values from its model subprocess
   const previousKey = process.env.QVERIS_API_KEY;
   const previousToken = process.env.QVERIS_MCP_HTTP_AUTH_TOKEN;
   const previousLowercaseProbe = process.env.qveris_lowercase_probe;
-  process.env.QVERIS_API_KEY = 'must-not-reach-model';
-  process.env.QVERIS_MCP_HTTP_AUTH_TOKEN = 'must-also-not-reach-model';
-  process.env.qveris_lowercase_probe = 'must-not-reach-model-either';
+  process.env.QVERIS_API_KEY = '<fixture-not-forwarded-api-key>';
+  process.env.QVERIS_MCP_HTTP_AUTH_TOKEN = '<fixture-not-forwarded-auth-token>';
+  process.env.qveris_lowercase_probe = '<fixture-not-forwarded-lowercase-value>';
   try {
     const output = await runClaude({
       command: process.execPath,
@@ -443,15 +443,15 @@ test('Codex adapter removes QVeris and CI secrets but keeps its provider credent
   const previousActionsToken = process.env.ACTIONS_RUNTIME_TOKEN;
   const previousRunnerTemp = process.env.RUNNER_TEMP;
   const previousModelKey = process.env.OPENAI_API_KEY;
-  process.env.QVERIS_API_KEY = 'must-not-reach-model';
-  process.env.QVERIS_MCP_HTTP_AUTH_TOKEN = 'must-also-not-reach-model';
-  process.env.qveris_lowercase_probe = 'must-not-reach-model-either';
-  process.env.GITHUB_TOKEN = 'must-not-reach-model';
+  process.env.QVERIS_API_KEY = '<fixture-not-forwarded-api-key>';
+  process.env.QVERIS_MCP_HTTP_AUTH_TOKEN = '<fixture-not-forwarded-auth-token>';
+  process.env.qveris_lowercase_probe = '<fixture-not-forwarded-lowercase-value>';
+  process.env.GITHUB_TOKEN = '<fixture-not-forwarded-github-token>';
   process.env.GITHUB_ENV = '/tmp/must-not-reach-model-env';
   process.env.GITHUB_PATH = '/tmp/must-not-reach-model-path';
-  process.env.ACTIONS_RUNTIME_TOKEN = 'must-not-reach-model';
+  process.env.ACTIONS_RUNTIME_TOKEN = '<fixture-not-forwarded-actions-token>';
   process.env.RUNNER_TEMP = '/tmp/must-not-reach-model-raw-records';
-  process.env.OPENAI_API_KEY = 'model-provider-key-must-remain';
+  process.env.OPENAI_API_KEY = '<fixture-model-provider-key>';
   try {
     const result = parseCodexEvents(
       await runCodex({
@@ -459,7 +459,7 @@ test('Codex adapter removes QVeris and CI secrets but keeps its provider credent
         args: [
           '-e',
           `const visible = Object.keys(process.env).some((name) => ['QVERIS_', 'ACTIONS_', 'GITHUB_', 'RUNNER_'].some((prefix) => name.toUpperCase().startsWith(prefix)));
-           const modelKeyVisible = process.env.OPENAI_API_KEY === 'model-provider-key-must-remain';
+           const modelKeyVisible = process.env.OPENAI_API_KEY === '<fixture-model-provider-key>';
            process.stdout.write([
              JSON.stringify({type:'item.completed',item:{type:'agent_message',text:JSON.stringify({visible,modelKeyVisible})}}),
              JSON.stringify({type:'turn.completed'})

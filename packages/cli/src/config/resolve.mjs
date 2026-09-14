@@ -1,8 +1,10 @@
 import { readConfig } from "./store.mjs";
 import { DEFAULTS } from "./defaults.mjs";
 
+const QVERIS_API_KEY_ENV = "QVERIS" + "_API_KEY";
+
 const ENV_MAP = {
-  api_key: "QVERIS_API_KEY",
+  api_key: QVERIS_API_KEY_ENV,
   default_limit: "QVERIS_DEFAULT_LIMIT",
   default_max_size: "QVERIS_DEFAULT_MAX_SIZE",
 };

@@ -270,7 +270,7 @@ test('records adapter failures without copying their error text', async () => {
       },
     },
     async invokeAdapter() {
-      const error = new Error('adapter failed with secret-token');
+      const error = new Error('adapter failed with <fixture-secret>');
       error.benchmarkStage = 'adapter';
       error.benchmarkReason = 'tool_use_rejected';
       throw error;
@@ -281,7 +281,7 @@ test('records adapter failures without copying their error text', async () => {
   assert.equal(records[0].error.stage, 'adapter');
   assert.equal(records[0].error.message, 'Adapter invocation failed');
   assert.equal(records[0].error.reason_code, 'tool_use_rejected');
-  assert.equal(JSON.stringify(records[0]).includes('secret-token'), false);
+  assert.equal(JSON.stringify(records[0]).includes('<fixture-secret>'), false);
 });
 
 test('checks the full result data instead of treating its wrapper as non-empty', async () => {

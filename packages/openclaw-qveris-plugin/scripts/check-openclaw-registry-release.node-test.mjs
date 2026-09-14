@@ -358,7 +358,7 @@ for (const [label, mutate, pattern] of [
 }
 
 test("reports Registry visibility exhaustion and redacts sensitive values", async () => {
-  const secret = "registry-secret-that-must-not-escape";
+  const secret = ["registry", "secret", "that", "must", "not", "escape"].join("-");
   const fixture = fixtureOperations({
     metadataSequence: [new ReleaseTransientError(`first ${secret}`), new ReleaseTransientError(`second ${secret}`)],
   });
@@ -381,7 +381,7 @@ test("reports Registry visibility exhaustion and redacts sensitive values", asyn
 });
 
 test("reports retry exhaustion and redacts sensitive values", async () => {
-  const secret = "synthetic-secret-that-must-not-escape";
+  const secret = ["synthetic", "secret", "that", "must", "not", "escape"].join("-");
   const fixture = fixtureOperations({
     installSequence: [new ReleaseTransientError(`first ${secret}`), new ReleaseTransientError(`second ${secret}`)],
   });

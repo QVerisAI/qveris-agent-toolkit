@@ -14,7 +14,7 @@ import { createQverisTools } from "./qveris-tools.js";
 
 function makePluginConfig(overrides?: Record<string, unknown>): Record<string, unknown> {
   return {
-    apiKey: "qv_test_key",
+    apiKey: "<fixture-key>",
     ...overrides,
   };
 }
@@ -1610,7 +1610,7 @@ describe("qveris_call materialization", () => {
   it("materializes full content when full_content_file_url is present", async () => {
     globalThis.fetch = makeMaterializeFetchMock({ toolId: "kol-search-tool" });
     const tools = createQverisTools({
-      api: fakeApi({ apiKey: "qv_test_key", autoMaterializeFullContent: true }),
+      api: fakeApi({ apiKey: "<fixture-key>", autoMaterializeFullContent: true }),
       ctx: fakeCtx({ workspaceDir: tmpDir }),
     });
     await registerToolViaDiscover(tools!, "kol-search-tool");
@@ -1637,7 +1637,7 @@ describe("qveris_call materialization", () => {
   it("strips truncated transport fields on successful materialization", async () => {
     globalThis.fetch = makeMaterializeFetchMock({ toolId: "kol-search-tool" });
     const tools = createQverisTools({
-      api: fakeApi({ apiKey: "qv_test_key", autoMaterializeFullContent: true }),
+      api: fakeApi({ apiKey: "<fixture-key>", autoMaterializeFullContent: true }),
       ctx: fakeCtx({ workspaceDir: tmpDir }),
     });
     await registerToolViaDiscover(tools!, "kol-search-tool");
@@ -1688,7 +1688,7 @@ describe("qveris_call materialization", () => {
     });
     globalThis.fetch = fetchMock;
     const tools = createQverisTools({
-      api: fakeApi({ apiKey: "qv_test_key", autoMaterializeFullContent: true }),
+      api: fakeApi({ apiKey: "<fixture-key>", autoMaterializeFullContent: true }),
       ctx: fakeCtx({ workspaceDir: tmpDir }),
     });
     await registerToolViaDiscover(tools!, "tool-x");
@@ -1731,7 +1731,7 @@ describe("qveris_call materialization", () => {
     });
     globalThis.fetch = fetchMock;
     const tools = createQverisTools({
-      api: fakeApi({ apiKey: "qv_test_key", autoMaterializeFullContent: true }),
+      api: fakeApi({ apiKey: "<fixture-key>", autoMaterializeFullContent: true }),
       ctx: fakeCtx({ workspaceDir: tmpDir }),
     });
     await registerToolViaDiscover(tools!, "tool-x");
@@ -1770,7 +1770,7 @@ describe("qveris_call materialization", () => {
     });
     globalThis.fetch = fetchMock;
     const tools = createQverisTools({
-      api: fakeApi({ apiKey: "qv_test_key", autoMaterializeFullContent: true }),
+      api: fakeApi({ apiKey: "<fixture-key>", autoMaterializeFullContent: true }),
       ctx: fakeCtx({ workspaceDir: tmpDir }),
     });
     await registerToolViaDiscover(tools!, "tool-x");
@@ -1787,7 +1787,7 @@ describe("qveris_call materialization", () => {
   it("skips materialization when autoMaterializeFullContent is false", async () => {
     globalThis.fetch = makeMaterializeFetchMock({ toolId: "tool-x" });
     const tools = createQverisTools({
-      api: fakeApi({ apiKey: "qv_test_key", autoMaterializeFullContent: false }),
+      api: fakeApi({ apiKey: "<fixture-key>", autoMaterializeFullContent: false }),
       ctx: fakeCtx({ workspaceDir: tmpDir }),
     });
     await registerToolViaDiscover(tools!, "tool-x");
@@ -1804,7 +1804,7 @@ describe("qveris_call materialization", () => {
   it("skips materialization when no workspaceDir", async () => {
     globalThis.fetch = makeMaterializeFetchMock({ toolId: "tool-x" });
     const tools = createQverisTools({
-      api: fakeApi({ apiKey: "qv_test_key", autoMaterializeFullContent: true }),
+      api: fakeApi({ apiKey: "<fixture-key>", autoMaterializeFullContent: true }),
       ctx: fakeCtx({ workspaceDir: undefined }),
     });
     await registerToolViaDiscover(tools!, "tool-x");
@@ -1852,7 +1852,7 @@ describe("qveris_call materialization", () => {
     });
     globalThis.fetch = fetchMock;
     const tools = createQverisTools({
-      api: fakeApi({ apiKey: "qv_test_key", autoMaterializeFullContent: true }),
+      api: fakeApi({ apiKey: "<fixture-key>", autoMaterializeFullContent: true }),
       ctx: fakeCtx({ workspaceDir: tmpDir }),
     });
     await registerToolViaDiscover(tools!, "img-tool");
@@ -1911,7 +1911,7 @@ describe("qveris_call materialization", () => {
     });
     globalThis.fetch = fetchMock;
     const tools = createQverisTools({
-      api: fakeApi({ apiKey: "qv_test_key", autoMaterializeFullContent: true, fullContentMaxBytes: 50 }),
+      api: fakeApi({ apiKey: "<fixture-key>", autoMaterializeFullContent: true, fullContentMaxBytes: 50 }),
       ctx: fakeCtx({ workspaceDir: tmpDir }),
     });
     await registerToolViaDiscover(tools!, "big-tool");
@@ -1966,7 +1966,7 @@ describe("qveris_call materialization", () => {
     });
     globalThis.fetch = fetchMock;
     const tools = createQverisTools({
-      api: fakeApi({ apiKey: "qv_test_key", autoMaterializeFullContent: true }),
+      api: fakeApi({ apiKey: "<fixture-key>", autoMaterializeFullContent: true }),
       ctx: fakeCtx({ workspaceDir: tmpDir }),
     });
     await registerToolViaDiscover(tools!, "generic-tool");
@@ -2024,7 +2024,7 @@ describe("qveris_call materialization", () => {
     });
     globalThis.fetch = fetchMock;
     const tools = createQverisTools({
-      api: fakeApi({ apiKey: "qv_test_key", autoMaterializeFullContent: true }),
+      api: fakeApi({ apiKey: "<fixture-key>", autoMaterializeFullContent: true }),
       ctx: fakeCtx({ workspaceDir: tmpDir }),
     });
     await registerToolViaDiscover(tools!, "csv-tool");
@@ -2112,7 +2112,7 @@ describe("qveris_call materialization", () => {
 
     const tools = createQverisTools({
       api: fakeApi({
-        apiKey: "qv_test_key",
+        apiKey: "<fixture-key>",
         baseUrl: "https://qveris.cn/api/v1",
         autoMaterializeFullContent: true,
       }),

@@ -122,7 +122,7 @@ async def test_call_span_marked_error_on_http_failure(spans: InMemorySpanExporte
 
 @pytest.mark.asyncio
 async def test_transport_failure_span_does_not_record_credential(spans: InMemorySpanExporter) -> None:
-    synthetic_token = "sk-synthetic-observability-273"
+    synthetic_token = "<fixture-observability-token>"
 
     def handler(request: httpx.Request) -> httpx.Response:
         raise httpx.ReadTimeout("transport failed", request=request)
@@ -145,7 +145,7 @@ async def test_transport_failure_span_does_not_record_credential(spans: InMemory
 
 @pytest.mark.asyncio
 async def test_api_failure_span_does_not_record_credential_or_signed_url(spans: InMemorySpanExporter) -> None:
-    synthetic_token = "sk-synthetic-api-observability-273"
+    synthetic_token = "<fixture-observability-token>"
     signed_url = "https://files.example/result?X-Amz-Signature=otel-secret"
 
     def handler(_request: httpx.Request) -> httpx.Response:

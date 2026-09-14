@@ -19,7 +19,7 @@ from qveris.errors import (
 from qveris.types import ExecuteResultTruncated, ToolExecutionResponse
 
 
-SYNTHETIC_TOKEN = "synthetic-credential-value-273"
+SYNTHETIC_TOKEN = "<fixture-credential>"
 SYNTHETIC_SIGNED_URL = "https://files.example/result?X-Amz-Signature=contract-secret"
 SYNTHETIC_COOKIE = "synthetic-session-cookie-273"
 PAID_CALL_POLICY = json.loads(
@@ -377,7 +377,7 @@ async def test_contract_errors_drop_raw_response_exception_context_and_secret_lo
 async def test_debug_and_api_error_details_redact_credentials_and_signed_urls(status: int) -> None:
     debug: List[str] = []
     embedded_signed_url = "https://files.example/result?X-Amz-Signature=embedded-secret"
-    selection_token = "opaque-selection-secret-273"
+    selection_token = "<fixture-selection-token>"
 
     def handler(_request: httpx.Request) -> httpx.Response:
         return httpx.Response(

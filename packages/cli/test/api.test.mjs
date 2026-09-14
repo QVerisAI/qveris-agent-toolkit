@@ -319,7 +319,7 @@ test("API request timeout starts after the credential resolves", async () => {
 });
 
 test("OAuth credentials refresh once on 401 and business 403 is not retried", async () => {
-  let credential = "expired-access";
+  let credential = "<fixture-expired-access>";
   let refreshes = 0;
   const provider = {
     async getCredential() {
@@ -334,7 +334,7 @@ test("OAuth credentials refresh once on 401 and business 403 is not retried", as
   await withMockFetch(
     (_url, options) => {
       requests += 1;
-      return options.headers.Authorization === "Bearer expired-access"
+      return options.headers.Authorization === "Bearer <fixture-expired-access>"
         ? jsonResponse({ message: "expired" }, { status: 401 })
         : jsonResponse({ ok: true });
     },
@@ -411,7 +411,7 @@ test("API client rejects ambiguous or invalid provider credentials without expos
     /either apiKey or credentialProvider/,
   );
 
-  const secret = "secret-token";
+  const secret = "<fixture-secret>";
   await assert.rejects(
     discoverTools({
       credentialProvider: { getCredential: async () => `${secret}\nforged-header` },

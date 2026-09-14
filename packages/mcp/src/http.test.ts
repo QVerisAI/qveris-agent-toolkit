@@ -72,13 +72,13 @@ describe('resolveTransportConfig', () => {
     const config = resolveTransportConfig(
       {
         QVERIS_MCP_TRANSPORT: 'http',
-        QVERIS_MCP_HTTP_AUTH_TOKEN: '  secret-token  ',
+        QVERIS_MCP_HTTP_AUTH_TOKEN: '  <fixture-secret>  ',
         QVERIS_MCP_MAX_BODY_BYTES: '1024',
         QVERIS_MCP_SESSION_TIMEOUT_MS: '1000',
       },
       [],
     );
-    expect(config.authToken).toBe('secret-token');
+    expect(config.authToken).toBe('<fixture-secret>');
     expect(config.maxBodyBytes).toBe(1024);
     expect(config.sessionTimeoutMs).toBe(1000);
   });
@@ -252,7 +252,7 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
   });
 
   it('enforces the bearer token when one is configured', async () => {
-    await startServer({ QVERIS_MCP_HTTP_AUTH_TOKEN: 'secret-token' });
+    await startServer({ QVERIS_MCP_HTTP_AUTH_TOKEN: '<fixture-secret>' });
 
     // No credentials -> 401.
     const unauth = await fetch(`http://127.0.0.1:${running!.port}/mcp`, {
@@ -265,7 +265,7 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
     await unauth.text(); // drain so the socket doesn't linger
 
     // Correct token -> handshake succeeds and tools list.
-    const { client } = await connectClient('secret-token');
+    const { client } = await connectClient('<fixture-secret>');
     const { tools } = await client.listTools();
     expect(tools.length).toBeGreaterThan(0);
     await client.close();
@@ -482,7 +482,7 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
         {
           QVERIS_MCP_TRANSPORT: 'http',
           QVERIS_MCP_HTTP_PORT: '0',
-          QVERIS_MCP_HTTP_AUTH_TOKEN: 'shared-token',
+          QVERIS_MCP_HTTP_AUTH_TOKEN: '<shared-token>',
         },
         [],
       ),
@@ -531,7 +531,7 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
       ...CARD_INFO,
       remoteHeaders: [bearerAuthHeaderInput({ variableDescription: 'QVeris API key.' })],
     };
-    await startServer({ QVERIS_MCP_HTTP_AUTH_TOKEN: 'tok-secret' }, hosted);
+    await startServer({ QVERIS_MCP_HTTP_AUTH_TOKEN: '<fixture-http-auth-token>' }, hosted);
     const res = await fetch(`http://127.0.0.1:${running!.port}/mcp/server-card`);
     expect(res.status).toBe(200);
     const body = await res.text();

@@ -456,11 +456,12 @@ Usage example:
 
 ```python
 import asyncio
+import os
 
 from qveris import QverisClient, QverisConfig
 
 async def main():
-    client = QverisClient(QverisConfig(api_key="your-key"))
+    client = QverisClient(QverisConfig(api_key=os.environ["QVERIS_API_KEY"]))
     try:
         # Discover
         results = await client.discover("weather data", limit=5)

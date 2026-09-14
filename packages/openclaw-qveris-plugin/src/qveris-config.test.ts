@@ -35,7 +35,7 @@ describe("config resolution", () => {
   });
 
   it("resolves API key from plugin config", () => {
-    expect(resolveQverisApiKey({ apiKey: "from-config" })).toBe("from-config");
+    expect(resolveQverisApiKey({ apiKey: "<fixture-config>" })).toBe("<fixture-config>");
   });
 
   it("falls back to QVERIS_API_KEY env", () => {
@@ -45,7 +45,7 @@ describe("config resolution", () => {
 
   it("prefers plugin config over env var", () => {
     vi.stubEnv("QVERIS_API_KEY", "env-key");
-    expect(resolveQverisApiKey({ apiKey: "config-key" })).toBe("config-key");
+    expect(resolveQverisApiKey({ apiKey: "<fixture-config>" })).toBe("<fixture-config>");
   });
 
   it("returns undefined when no key anywhere", () => {

@@ -121,13 +121,13 @@ test("init resume rejects a session from another endpoint or authorization conte
       discoveryId: "search-a",
       query: "weather",
       baseUrl: "https://a.test/api/v1",
-      authorizationContext: authorizationContextForApiKey("sk-account-a"),
+      authorizationContext: authorizationContextForApiKey("<fixture-account-a>"),
       results: [{ tool_id: "weather.tool.v1", name: "Weather" }],
     });
 
     for (const flags of [
-      { apiKey: "sk-account-a", baseUrl: "https://b.test/api/v1" },
-      { apiKey: "sk-account-b", baseUrl: "https://a.test/api/v1" },
+      { apiKey: "<fixture-account-a>", baseUrl: "https://b.test/api/v1" },
+      { apiKey: "<fixture-account-b>", baseUrl: "https://a.test/api/v1" },
     ]) {
       await assert.rejects(
         () => runInit(null, { ...flags, resume: true, json: true, dryRun: true }),

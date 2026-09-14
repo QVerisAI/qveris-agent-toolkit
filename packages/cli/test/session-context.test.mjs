@@ -12,36 +12,36 @@ import {
 import { readSessionForContext, writeSession } from "../src/session/session.mjs";
 
 test("authorization context fingerprints are stable without exposing credentials", () => {
-  const first = authorizationContextForApiKey("sk-account-a-secret");
-  assert.equal(first, authorizationContextForApiKey("sk-account-a-secret"));
-  assert.notEqual(first, authorizationContextForApiKey("sk-account-b-secret"));
-  assert.equal(first.includes("sk-account-a-secret"), false);
+  const first = authorizationContextForApiKey("<fixture-account-a>");
+  assert.equal(first, authorizationContextForApiKey("<fixture-account-a>"));
+  assert.notEqual(first, authorizationContextForApiKey("<fixture-account-b>"));
+  assert.equal(first.includes("<fixture-account-a>"), false);
 
   const metadata = { issuer: "https://unit.test", authorization_context_id: "login-a" };
   assert.equal(
-    authorizationContextForOAuth(metadata, { refresh_token: "old-refresh" }),
-    authorizationContextForOAuth(metadata, { refresh_token: "rotated-refresh" }),
+    authorizationContextForOAuth(metadata, { refresh_token: "<fixture-old-refresh>" }),
+    authorizationContextForOAuth(metadata, { refresh_token: "<fixture-rotated-refresh>" }),
   );
   assert.notEqual(
-    authorizationContextForOAuth(metadata, { refresh_token: "old-refresh" }),
+    authorizationContextForOAuth(metadata, { refresh_token: "<fixture-old-refresh>" }),
     authorizationContextForOAuth(
       { ...metadata, authorization_context_id: "login-b" },
-      { refresh_token: "old-refresh" },
+      { refresh_token: "<fixture-old-refresh>" },
     ),
   );
 });
 
 test("legacy OAuth context can be pinned before refresh-token rotation", () => {
   const metadata = { issuer: "https://unit.test" };
-  const secret = { refresh_token: "old-refresh" };
+  const secret = { refresh_token: "<fixture-old-refresh>" };
   const legacyId = deriveLegacyOAuthAuthorizationContextId(metadata, secret);
   const before = authorizationContextForOAuth(metadata, secret);
   const after = authorizationContextForOAuth(
     { ...metadata, authorization_context_id: legacyId },
-    { refresh_token: "new-refresh" },
+    { refresh_token: "<new-refresh>" },
   );
   assert.equal(after, before);
-  assert.equal(before.includes("old-refresh"), false);
+  assert.equal(before.includes("<fixture-old-refresh>"), false);
 
   const invalidStored = authorizationContextForOAuth(
     { ...metadata, authorization_context_id: "invalid context with spaces" },

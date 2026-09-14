@@ -88,7 +88,7 @@ const EXECUTE_TIMEOUT_MS = 120_000;
  *
  * @example
  * ```typescript
- * const client = new QverisClient({ apiKey: 'your-api-key' });
+ * const client = new QverisClient({ apiKey: process.env.QVERIS_API_KEY! });
  *
  * const searchResult = await client.searchTools({
  *   query: 'weather API',

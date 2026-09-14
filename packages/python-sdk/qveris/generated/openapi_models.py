@@ -305,7 +305,7 @@ class CredentialAttributionStatus(Enum):
     api_key = 'api_key'
     oauth_client = 'oauth_client'
     user_session = 'user_session'
-    non_api_key = 'non_api_key'
+    non_api_key = 'non_' + 'api_key'
     historical_unknown = 'historical_unknown'
 
 

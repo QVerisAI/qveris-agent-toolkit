@@ -19,7 +19,7 @@ const PAID_CALL_POLICY = JSON.parse(
 describe('QverisClient', () => {
   describe('constructor', () => {
     it('should create client with valid API key', () => {
-      const client = new QverisClient({ apiKey: 'test-api-key' });
+      const client = new QverisClient({ apiKey: '<fixture-key>' });
       expect(client).toBeInstanceOf(QverisClient);
     });
 
@@ -29,7 +29,7 @@ describe('QverisClient', () => {
 
     it('should accept custom base URL', () => {
       const client = new QverisClient({
-        apiKey: 'test-key',
+        apiKey: '<fixture-api-key>',
         baseUrl: 'https://custom.api.com',
       });
       expect(client).toBeInstanceOf(QverisClient);
@@ -49,7 +49,7 @@ describe('QverisClient', () => {
       'https://example.test/api/v1#section',
       'https://example.test/api/v1#',
     ])('should reject unsafe base URL %j', (baseUrl) => {
-      expect(() => new QverisClient({ apiKey: 'test-key', baseUrl })).toThrow(/base URL/);
+      expect(() => new QverisClient({ apiKey: '<fixture-api-key>', baseUrl })).toThrow(/base URL/);
     });
   });
 
@@ -75,25 +75,25 @@ describe('QverisClient', () => {
 
     it('does not infer the endpoint from the API key or QVERIS_REGION', async () => {
       process.env.QVERIS_REGION = 'cn';
-      await new QverisClient({ apiKey: 'sk-cn-test' }).searchTools({ query: 'weather' });
+      await new QverisClient({ apiKey: '<fixture-cn-api-key>' }).searchTools({ query: 'weather' });
       expect(fetchMock.mock.calls[0][0]).toBe('https://qveris.ai/api/v1/search');
     });
 
     it('uses QVERIS_BASE_URL when no explicit base URL is provided', async () => {
       process.env.QVERIS_BASE_URL = 'https://env.example/api/v1///';
-      await new QverisClient({ apiKey: 'test-key' }).searchTools({ query: 'weather' });
+      await new QverisClient({ apiKey: '<fixture-api-key>' }).searchTools({ query: 'weather' });
       expect(fetchMock.mock.calls[0][0]).toBe('https://env.example/api/v1/search');
     });
 
     it('rejects an explicitly empty QVERIS_BASE_URL', () => {
       process.env.QVERIS_BASE_URL = '';
-      expect(() => new QverisClient({ apiKey: 'test-key' })).toThrow(/base URL must not be empty/);
+      expect(() => new QverisClient({ apiKey: '<fixture-api-key>' })).toThrow(/base URL must not be empty/);
     });
 
     it('prefers an explicit base URL over QVERIS_BASE_URL', async () => {
       process.env.QVERIS_BASE_URL = 'https://env.example/api/v1';
       await new QverisClient({
-        apiKey: 'test-key',
+        apiKey: '<fixture-api-key>',
         baseUrl: 'https://explicit.example/api/v1/',
       }).searchTools({ query: 'weather' });
       expect(fetchMock.mock.calls[0][0]).toBe('https://explicit.example/api/v1/search');
@@ -105,7 +105,7 @@ describe('QverisClient', () => {
     let fetchMock: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
-      client = new QverisClient({ apiKey: 'test-api-key' });
+      client = new QverisClient({ apiKey: '<fixture-api-key>' });
       fetchMock = vi.fn();
       global.fetch = fetchMock;
     });
@@ -136,7 +136,7 @@ describe('QverisClient', () => {
         expect.objectContaining({
           method: 'POST',
           headers: {
-            Authorization: 'Bearer test-api-key',
+            Authorization: 'Bearer <fixture-api-key>',
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -282,7 +282,7 @@ describe('QverisClient', () => {
     let fetchMock: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
-      client = new QverisClient({ apiKey: 'test-api-key' });
+      client = new QverisClient({ apiKey: '<fixture-api-key>' });
       fetchMock = vi.fn();
       global.fetch = fetchMock;
     });
@@ -318,7 +318,7 @@ describe('QverisClient', () => {
         expect.objectContaining({
           method: 'POST',
           headers: {
-            Authorization: 'Bearer test-api-key',
+            Authorization: 'Bearer <fixture-api-key>',
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -420,7 +420,7 @@ describe('QverisClient', () => {
       });
       global.fetch = fetchMock;
 
-      const result = await new QverisClient({ apiKey: 'test-api-key' }).probeTool('weather/tool', {
+      const result = await new QverisClient({ apiKey: '<fixture-api-key>' }).probeTool('weather/tool', {
         parameters: { city: 'London' },
         checks: ['schema', 'quote'],
       });
@@ -445,7 +445,7 @@ describe('QverisClient', () => {
     let fetchMock: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
-      client = new QverisClient({ apiKey: 'test-api-key' });
+      client = new QverisClient({ apiKey: '<fixture-api-key>' });
       fetchMock = vi.fn();
       global.fetch = fetchMock;
     });
@@ -673,7 +673,7 @@ describe('QverisClient', () => {
     let fetchMock: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
-      client = new QverisClient({ apiKey: 'test-api-key' });
+      client = new QverisClient({ apiKey: '<fixture-api-key>' });
       fetchMock = vi.fn();
       global.fetch = fetchMock;
     });
@@ -760,7 +760,7 @@ describe('createClientFromEnv', () => {
   });
 
   it('should create client from QVERIS_API_KEY env var', () => {
-    process.env.QVERIS_API_KEY = 'env-api-key';
+    process.env.QVERIS_API_KEY = '<fixture-env-api-key>';
     const client = createClientFromEnv();
     expect(client).toBeInstanceOf(QverisClient);
   });
@@ -807,7 +807,7 @@ describe('QverisClient rate-limit retries', () => {
       .mockResolvedValueOnce(rateLimited())
       .mockResolvedValueOnce(ok({ search_id: 's1', results: [], total: 0 }));
 
-    const client = new QverisClient({ apiKey: 'test-api-key' });
+    const client = new QverisClient({ apiKey: '<fixture-api-key>' });
     const result = await client.searchTools({ query: 'weather' });
 
     expect(result.search_id).toBe('s1');
@@ -819,7 +819,7 @@ describe('QverisClient rate-limit retries', () => {
     process.env.QVERIS_MAX_RETRIES = '2';
     fetchMock.mockResolvedValue(rateLimited());
 
-    const client = new QverisClient({ apiKey: 'test-api-key' });
+    const client = new QverisClient({ apiKey: '<fixture-api-key>' });
     const err = await client.searchTools({ query: 'weather' }).catch((e: unknown) => e);
 
     expect((err as { status: number }).status).toBe(429);
@@ -831,7 +831,7 @@ describe('QverisClient rate-limit retries', () => {
     process.env.QVERIS_MAX_RETRIES = '0';
     fetchMock.mockResolvedValue(rateLimited());
 
-    const client = new QverisClient({ apiKey: 'test-api-key' });
+    const client = new QverisClient({ apiKey: '<fixture-api-key>' });
     const err = await client.searchTools({ query: 'weather' }).catch((e: unknown) => e);
 
     expect((err as { status: number }).status).toBe(429);
@@ -843,7 +843,7 @@ describe('QverisClient rate-limit retries', () => {
     process.env.QVERIS_MAX_RETRIES = '5';
     fetchMock.mockResolvedValue(rateLimited());
 
-    const client = new QverisClient({ apiKey: 'test-api-key', maxRetries: 1 });
+    const client = new QverisClient({ apiKey: '<fixture-api-key>', maxRetries: 1 });
     const err = await client.searchTools({ query: 'weather' }).catch((e: unknown) => e);
 
     expect((err as { status: number }).status).toBe(429);

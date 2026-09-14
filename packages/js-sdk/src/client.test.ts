@@ -7,7 +7,7 @@ import { ApiKeyCredentialProvider } from './credentials.js';
 import { QverisApiError } from './errors.js';
 import type { ToolCategory, ToolCapability } from './types.js';
 
-const API_KEY = 'sk-test-key';
+const API_KEY = '<fixture-key>';
 const PAID_CALL_POLICY = JSON.parse(
   readFileSync(new URL('../../../test-fixtures/paid-call-policy.json', import.meta.url), 'utf8'),
 ) as {
@@ -124,11 +124,11 @@ describe('Qveris client', () => {
     const fetchMock = vi.fn();
     globalThis.fetch = fetchMock;
     const client = new Qveris({
-      credentialProvider: { getCredential: async () => 'secret-token\nforged-header' },
+      credentialProvider: { getCredential: async () => '<fixture-secret>\nforged-header' },
     });
 
     await expect(client.discover('weather')).rejects.toThrow('invalid credential');
-    await expect(client.discover('weather')).rejects.not.toThrow('secret-token');
+    await expect(client.discover('weather')).rejects.not.toThrow('<fixture-secret>');
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -136,7 +136,7 @@ describe('Qveris client', () => {
     const client = new Qveris({
       credentialProvider: {
         getCredential: async () => {
-          throw new Error('failed while handling secret-token');
+          throw new Error('failed while handling <fixture-secret>');
         },
       },
     });
@@ -145,7 +145,7 @@ describe('Qveris client', () => {
     expect(error).toBeInstanceOf(Error);
     expect(error).not.toBeInstanceOf(QverisApiError);
     expect((error as Error).message).toContain('failed to provide a credential');
-    expect((error as Error).message).not.toContain('secret-token');
+    expect((error as Error).message).not.toContain('<fixture-secret>');
   });
 
   it('starts the request timeout only after the credential resolves', async () => {

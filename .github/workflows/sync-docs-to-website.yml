@@ -100,7 +100,7 @@ jobs:
 
       - name: Checkout toolkit
         if: steps.guard.outputs.skip != 'true'
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # Tag-triggered runs still stage non-SDK docs from current main;
           # SDK pages are pinned to their release tags below.
@@ -116,7 +116,7 @@ jobs:
 
       - name: Checkout documentation destination
         if: steps.guard.outputs.skip != 'true'
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: ${{ env.WEBSITE_REPO }}
           ref: ${{ env.WEBSITE_BASE }}
@@ -125,7 +125,7 @@ jobs:
 
       - name: Setup Node.js
         if: steps.guard.outputs.skip != 'true'
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 20
 
