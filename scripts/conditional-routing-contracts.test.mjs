@@ -24,9 +24,7 @@ const ENGLISH_GUIDANCE = [
   'skills/qveris-cli/SKILL.md',
   'docs/en-US/getting-started.md',
   'docs/en-US/cli.md',
-  'docs/en-US/cookbook.md',
   'docs/en-US/mcp-server.md',
-  'docs/en-US/rest-api.md',
   'docs/en-US/js-sdk.md',
   'docs/en-US/python-sdk.md',
   'recipes/explainable-routing/README.md',
@@ -36,24 +34,35 @@ const ENGLISH_GUIDANCE = [
   'packages/python-sdk/README.md',
 ];
 
+// REST API and Cookbook files are website-owned mirrors. Their concise,
+// task-oriented guidance deliberately does not repeat the complete toolkit
+// guidance capsule.
+const WEBSITE_OWNED_ENGLISH_GUIDANCE = [
+  'docs/en-US/cookbook.md',
+  'docs/en-US/rest-api.md',
+];
+
 const LIMITED_TOOL_GUIDANCE = ['packages/openclaw-qveris-plugin/README.md'];
 
 const CHINESE_GUIDANCE = [
   'README_zh-CN.md',
   'docs/zh-CN/getting-started.md',
   'docs/zh-CN/cli.md',
-  'docs/zh-CN/cookbook.md',
   'docs/zh-CN/mcp-server.md',
-  'docs/zh-CN/rest-api.md',
   'docs/zh-CN/js-sdk.md',
   'docs/zh-CN/python-sdk.md',
   'docs/cn/zh-CN/getting-started.md',
   'docs/cn/zh-CN/cli.md',
-  'docs/cn/zh-CN/cookbook.md',
   'docs/cn/zh-CN/mcp-server.md',
-  'docs/cn/zh-CN/rest-api.md',
   'docs/cn/zh-CN/js-sdk.md',
   'docs/cn/zh-CN/python-sdk.md',
+];
+
+const WEBSITE_OWNED_CHINESE_GUIDANCE = [
+  'docs/zh-CN/cookbook.md',
+  'docs/zh-CN/rest-api.md',
+  'docs/cn/zh-CN/cookbook.md',
+  'docs/cn/zh-CN/rest-api.md',
 ];
 
 const PROBE_RUNTIME_DESCRIPTIONS = ['packages/mcp/src/index.ts'];
@@ -139,6 +148,44 @@ function assertChinesePolicy(path) {
   assert.match(source, /当前、最新、今天或其他时效性数据必须执行新的 Call。/, `${path} 缺少实时数据重新 Call 规则`);
 }
 
+function assertWebsiteOwnedEnglishCookbookPolicy(path) {
+  const source = normalizeSourceText(read(path));
+  assert.match(
+    source,
+    /(?:shortest safe path: Discover -> Call when the current result already contains a complete contract, with Inspect or Probe added only when the task needs them|A full Discover result can be enough to call directly\. Inspect only when the selected result omits required contract detail, its metadata may be stale, or you need to compare candidates\. Probe only when the parameters need preflight validation or a budget decision needs a current quote)/i,
+    `${path} must preserve the conditional Discover-to-Call default`,
+  );
+  assert.match(
+    source,
+    /(?:Inspect before Call if Discover omits the parameter contract or the contract may be stale|Inspect only when the selected result omits required contract detail, its metadata may be stale, or you need to compare candidates)/i,
+    `${path} must inspect missing or stale contracts before Call`,
+  );
+  assert.match(
+    source,
+    /(?:Inspect the top candidates:|you need to compare candidates)/i,
+    `${path} must inspect candidates when comparing providers`,
+  );
+}
+
+function assertWebsiteOwnedChineseCookbookPolicy(path) {
+  const source = normalizeSourceText(read(path));
+  assert.match(
+    source,
+    /(?:最短安全路径：当前 Discover 结果已经包含完整契约时直接 Call，仅在任务需要时加入 Inspect 或 Probe。|完整的 Discover 结果足以支持直接调用时，无需额外步骤；只有结果缺少必要契约、元数据可能过期或需要比较候选时才 Inspect，只有参数需要预检或预算决策需要当前报价时才 Probe。)/,
+    `${path} 必须保留按需 Discover 到 Call 的默认路径`,
+  );
+  assert.match(
+    source,
+    /(?:Discover 未返回参数契约或契约可能过期时，先 Inspect；|只有结果缺少必要契约、元数据可能过期或需要比较候选时才 Inspect)/,
+    `${path} 缺少在契约缺失或过期时 Inspect 的规则`,
+  );
+  assert.match(
+    source,
+    /(?:检查排名靠前的候选能力：|需要比较候选时才 Inspect)/,
+    `${path} 缺少 Provider 比较时检查候选项的规则`,
+  );
+}
+
 function assertRuntimePolicy(path) {
   const source = normalizeSourceText(read(path));
   assert.match(
@@ -183,6 +230,11 @@ test('all maintained English guidance preserves the conditional-routing safety c
 
 test('all maintained Chinese guidance preserves the conditional-routing safety capsule', () => {
   for (const path of CHINESE_GUIDANCE) assertChinesePolicy(path);
+});
+
+test('website-owned Cookbook mirrors preserve the conditional routing product policy', () => {
+  for (const path of WEBSITE_OWNED_ENGLISH_GUIDANCE) assertWebsiteOwnedEnglishCookbookPolicy(path);
+  for (const path of WEBSITE_OWNED_CHINESE_GUIDANCE) assertWebsiteOwnedChineseCookbookPolicy(path);
 });
 
 test('runtime tool descriptions expose the same routing boundaries to models', () => {
