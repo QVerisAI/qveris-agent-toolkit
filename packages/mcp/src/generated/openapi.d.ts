@@ -4,6 +4,69 @@
  */
 
 export interface paths {
+    "/agent/anonymous-register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Agent Anonymous Register
+         * @description Create an anonymous trial agent without email verification.
+         *
+         *     Returns a one-time API key, the configured trial credits, and a claim code
+         *     that the agent's operator can use to bind a formal email later.
+         */
+        post: operations["agent_anonymous_register_api_v1_agent_anonymous_register_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agent/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Agent Claim Start
+         * @description Bind a formal email to an anonymous trial and send a 6-digit code.
+         */
+        post: operations["agent_claim_start_api_v1_agent_claim_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agent/claim-verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Agent Claim Verify
+         * @description Verify the emailed code and convert the anonymous trial to a local account.
+         */
+        post: operations["agent_claim_verify_api_v1_agent_claim_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/account/settlement-history": {
         parameters: {
             query?: never;
@@ -336,6 +399,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/oauth/credits_ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Oauth Credits Ledger
+         * @description Requires an Account Resource access token with the `credits_ledger` scope.
+         */
+        get: operations["oauth_credits_ledger_api_v1_oauth_credits_ledger_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/oauth/device/authorize": {
         parameters: {
             query?: never;
@@ -404,6 +487,26 @@ export interface paths {
          * @description Supports Authorization Code, Refresh Token, Device Code, and RFC 8693 Token Exchange. Token Exchange requires HTTP Basic authentication for a registered confidential Agent Runtime. Its subject_token, subject_token_type, resource, and scope fields are required together. Delegation tokens have a maximum 600-second lifetime and never include a refresh_token.
          */
         post: operations["token_api_v1_oauth_token_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oauth/usage_history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Oauth Usage History
+         * @description Requires an Account Resource access token with the `usage_history` scope.
+         */
+        get: operations["oauth_usage_history_api_v1_oauth_usage_history_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -534,6 +637,36 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** APIResponse[AgentAnonymousRegisterResponse] */
+        APIResponse_AgentAnonymousRegisterResponse_: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+            /**
+             * Status Code
+             * @default 0
+             */
+            status_code: number;
+            data?: components["schemas"]["AgentAnonymousRegisterResponse"] | null;
+            /** Message Key */
+            message_key?: string | null;
+        };
+        /** APIResponse[AgentClaimVerifyResponse] */
+        APIResponse_AgentClaimVerifyResponse_: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+            /**
+             * Status Code
+             * @default 0
+             */
+            status_code: number;
+            data?: components["schemas"]["AgentClaimVerifyResponse"] | null;
+            /** Message Key */
+            message_key?: string | null;
+        };
         /** APIResponse[CreditsLedgerItem] */
         APIResponse_CreditsLedgerItem_: {
             /** Status */
@@ -606,6 +739,22 @@ export interface components {
              */
             status_code: number;
             data?: components["schemas"]["TokenVerificationResponse"] | null;
+            /** Message Key */
+            message_key?: string | null;
+        };
+        /** APIResponse[Union[AgentClaimStartResponse, AgentClaimRiskBlockResponse]] */
+        APIResponse_Union_AgentClaimStartResponse__AgentClaimRiskBlockResponse__: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+            /**
+             * Status Code
+             * @default 0
+             */
+            status_code: number;
+            /** Data */
+            data?: components["schemas"]["AgentClaimStartResponse"] | components["schemas"]["AgentClaimRiskBlockResponse"] | null;
             /** Message Key */
             message_key?: string | null;
         };
@@ -686,6 +835,117 @@ export interface components {
             } | null;
             /** Message Key */
             message_key?: string | null;
+        };
+        /** AgentAnonymousRegisterRequest */
+        AgentAnonymousRegisterRequest: {
+            /**
+             * Agent Name
+             * @description Optional agent display name
+             */
+            agent_name?: string | null;
+        };
+        /** AgentAnonymousRegisterResponse */
+        AgentAnonymousRegisterResponse: {
+            /** Agent Id */
+            agent_id: string;
+            /** Agent Name */
+            agent_name: string;
+            /** Api Key */
+            api_key: string;
+            /** Trial Credits */
+            trial_credits: number;
+            /** Claim Code */
+            claim_code: string;
+            /** Expires At */
+            expires_at: string;
+        };
+        /** AgentClaimRiskBlockResponse */
+        AgentClaimRiskBlockResponse: {
+            /**
+             * Reason
+             * @constant
+             */
+            reason: "email_risk_blocked";
+        };
+        /** AgentClaimStartRequest */
+        AgentClaimStartRequest: {
+            /** Claim Code */
+            claim_code: string;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+        };
+        /** AgentClaimStartResponse */
+        AgentClaimStartResponse: {
+            /** Email */
+            email: string;
+        };
+        /** AgentClaimVerifyRequest */
+        AgentClaimVerifyRequest: {
+            /** Claim Code */
+            claim_code: string;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Code */
+            code: string;
+        };
+        /** AgentClaimVerifyResponse */
+        AgentClaimVerifyResponse: {
+            /** Email */
+            email: string;
+            /** User Id */
+            user_id: string;
+        };
+        /**
+         * AnonymousTrialMetadata
+         * @description Machine-readable discovery metadata for the anonymous agent trial.
+         */
+        AnonymousTrialMetadata: {
+            /**
+             * Available
+             * @description Whether anonymous agent trial registration is enabled.
+             * @default true
+             */
+            available: boolean;
+            /**
+             * Register Path
+             * @default /api/v1/agent/anonymous-register
+             */
+            register_path: string;
+            /**
+             * Claim Path
+             * @default /api/v1/agent/claim
+             */
+            claim_path: string;
+            /**
+             * Claim Verify Path
+             * @default /api/v1/agent/claim-verify
+             */
+            claim_verify_path: string;
+            /**
+             * Trial Credits
+             * @description Number of credits granted by the anonymous trial.
+             */
+            trial_credits?: number;
+            /**
+             * Expires In Days
+             * @description Number of days before the anonymous trial expires.
+             */
+            expires_in_days?: number;
+            /** Capabilities */
+            capabilities?: string[];
+            /** Excluded */
+            excluded?: string[];
+            /**
+             * Instructions
+             * @default If no human-verified API key is available, POST to register_path to obtain a one-time api_key and claim_code. Save both. Claim the trial later with claim_path and claim_verify_path.
+             */
+            instructions: string;
         };
         /** CreditsLedgerItem */
         CreditsLedgerItem: {
@@ -1056,6 +1316,7 @@ export interface components {
              * @description Version of the published QVeris REST API contract.
              */
             contract_version: string;
+            registration?: components["schemas"]["AnonymousTrialMetadata"];
         };
         /** SettlementHistoryItem */
         SettlementHistoryItem: {
@@ -1895,6 +2156,198 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    agent_anonymous_register_api_v1_agent_anonymous_register_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentAnonymousRegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    /** @description Maximum requests allowed in the current rate-limit window. */
+                    "X-RateLimit-Limit"?: number;
+                    /** @description Requests remaining in the current rate-limit window. */
+                    "X-RateLimit-Remaining"?: number;
+                    /** @description Unix epoch seconds when the current rate-limit window resets. */
+                    "X-RateLimit-Reset"?: number;
+                    /** @description Seconds until the client should retry after a rate-limit response. */
+                    "Retry-After"?: number;
+                    /** @description Version of the published QVeris REST API contract. */
+                    "X-Qveris-Api-Version": "2026-09-12.1";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_AgentAnonymousRegisterResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    /** @description Version of the published QVeris REST API contract. */
+                    "X-Qveris-Api-Version": "2026-09-12.1";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    /** @description Maximum requests allowed in the current rate-limit window. */
+                    "X-RateLimit-Limit"?: number;
+                    /** @description Requests remaining in the current rate-limit window. */
+                    "X-RateLimit-Remaining"?: number;
+                    /** @description Unix epoch seconds when the current rate-limit window resets. */
+                    "X-RateLimit-Reset"?: number;
+                    /** @description Seconds until the client should retry after a rate-limit response. */
+                    "Retry-After"?: number;
+                    /** @description Version of the published QVeris REST API contract. */
+                    "X-Qveris-Api-Version": "2026-09-12.1";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+        };
+    };
+    agent_claim_start_api_v1_agent_claim_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentClaimStartRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    /** @description Maximum requests allowed in the current rate-limit window. */
+                    "X-RateLimit-Limit"?: number;
+                    /** @description Requests remaining in the current rate-limit window. */
+                    "X-RateLimit-Remaining"?: number;
+                    /** @description Unix epoch seconds when the current rate-limit window resets. */
+                    "X-RateLimit-Reset"?: number;
+                    /** @description Seconds until the client should retry after a rate-limit response. */
+                    "Retry-After"?: number;
+                    /** @description Version of the published QVeris REST API contract. */
+                    "X-Qveris-Api-Version": "2026-09-12.1";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_Union_AgentClaimStartResponse__AgentClaimRiskBlockResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    /** @description Version of the published QVeris REST API contract. */
+                    "X-Qveris-Api-Version": "2026-09-12.1";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    /** @description Maximum requests allowed in the current rate-limit window. */
+                    "X-RateLimit-Limit"?: number;
+                    /** @description Requests remaining in the current rate-limit window. */
+                    "X-RateLimit-Remaining"?: number;
+                    /** @description Unix epoch seconds when the current rate-limit window resets. */
+                    "X-RateLimit-Reset"?: number;
+                    /** @description Seconds until the client should retry after a rate-limit response. */
+                    "Retry-After"?: number;
+                    /** @description Version of the published QVeris REST API contract. */
+                    "X-Qveris-Api-Version": "2026-09-12.1";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+        };
+    };
+    agent_claim_verify_api_v1_agent_claim_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentClaimVerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    /** @description Maximum requests allowed in the current rate-limit window. */
+                    "X-RateLimit-Limit"?: number;
+                    /** @description Requests remaining in the current rate-limit window. */
+                    "X-RateLimit-Remaining"?: number;
+                    /** @description Unix epoch seconds when the current rate-limit window resets. */
+                    "X-RateLimit-Reset"?: number;
+                    /** @description Seconds until the client should retry after a rate-limit response. */
+                    "Retry-After"?: number;
+                    /** @description Version of the published QVeris REST API contract. */
+                    "X-Qveris-Api-Version": "2026-09-12.1";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_AgentClaimVerifyResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    /** @description Version of the published QVeris REST API contract. */
+                    "X-Qveris-Api-Version": "2026-09-12.1";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    /** @description Maximum requests allowed in the current rate-limit window. */
+                    "X-RateLimit-Limit"?: number;
+                    /** @description Requests remaining in the current rate-limit window. */
+                    "X-RateLimit-Remaining"?: number;
+                    /** @description Unix epoch seconds when the current rate-limit window resets. */
+                    "X-RateLimit-Reset"?: number;
+                    /** @description Seconds until the client should retry after a rate-limit response. */
+                    "Retry-After"?: number;
+                    /** @description Version of the published QVeris REST API contract. */
+                    "X-Qveris-Api-Version": "2026-09-12.1";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicApiError"];
+                };
+            };
+        };
+    };
     get_account_settlement_history_api_v1_auth_account_settlement_history_get: {
         parameters: {
             query?: {
@@ -1919,7 +2372,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -1930,7 +2383,7 @@ export interface operations {
             422: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -1952,7 +2405,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -1963,7 +2416,7 @@ export interface operations {
             401: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -2026,7 +2479,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2037,7 +2490,7 @@ export interface operations {
             400: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2048,7 +2501,7 @@ export interface operations {
             422: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2075,7 +2528,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2086,7 +2539,7 @@ export interface operations {
             422: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2115,7 +2568,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2139,7 +2592,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2150,7 +2603,7 @@ export interface operations {
             422: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2181,7 +2634,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2192,7 +2645,7 @@ export interface operations {
             422: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2308,7 +2761,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2319,7 +2772,7 @@ export interface operations {
             400: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2330,7 +2783,7 @@ export interface operations {
             422: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2385,7 +2838,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2444,7 +2897,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2455,7 +2908,7 @@ export interface operations {
             422: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2479,7 +2932,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2490,7 +2943,7 @@ export interface operations {
             422: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2512,7 +2965,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2545,7 +2998,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2556,7 +3009,7 @@ export interface operations {
             401: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2567,7 +3020,7 @@ export interface operations {
             402: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2578,7 +3031,7 @@ export interface operations {
             403: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2589,7 +3042,7 @@ export interface operations {
             404: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2600,7 +3053,7 @@ export interface operations {
             408: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2611,7 +3064,7 @@ export interface operations {
             422: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2622,7 +3075,7 @@ export interface operations {
             500: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2633,7 +3086,7 @@ export interface operations {
             503: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2662,7 +3115,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2673,7 +3126,7 @@ export interface operations {
             401: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2684,7 +3137,7 @@ export interface operations {
             402: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2695,7 +3148,7 @@ export interface operations {
             403: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2706,7 +3159,7 @@ export interface operations {
             404: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2717,7 +3170,7 @@ export interface operations {
             408: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2728,7 +3181,7 @@ export interface operations {
             422: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2739,7 +3192,7 @@ export interface operations {
             500: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2761,7 +3214,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2783,11 +3236,64 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["PublicApiMetadata"];
+                };
+            };
+        };
+    };
+    oauth_credits_ledger_api_v1_oauth_credits_ledger_get: {
+        parameters: {
+            query?: {
+                /** @description 开始日期 (YYYY-MM-DD) */
+                start_date?: string | null;
+                /** @description 结束日期 (YYYY-MM-DD) */
+                end_date?: string | null;
+                /** @description 账本事件类型 */
+                entry_type?: string | null;
+                /** @description 预定义账本范围，例如 account_history */
+                scope?: string | null;
+                /** @description 页码 */
+                page?: number;
+                /** @description 每页数量 */
+                page_size?: number;
+                min_credits?: number | null;
+                max_credits?: number | null;
+                direction?: string;
+                bucket?: string | null;
+                summary?: boolean;
+                /** @description 摘要模式最多返回条数 */
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    /** @description Version of the published QVeris REST API contract. */
+                    "X-Qveris-Api-Version": "2026-09-12.1";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_CreditsLedgerResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    /** @description Version of the published QVeris REST API contract. */
+                    "X-Qveris-Api-Version": "2026-09-12.1";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -2816,7 +3322,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2827,7 +3333,7 @@ export interface operations {
             400: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2838,7 +3344,7 @@ export interface operations {
             401: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2849,7 +3355,7 @@ export interface operations {
             403: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2860,7 +3366,7 @@ export interface operations {
             422: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2879,7 +3385,7 @@ export interface operations {
                     /** @description Seconds until the client should retry after a rate-limit response. */
                     "Retry-After"?: number;
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2912,7 +3418,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2923,7 +3429,7 @@ export interface operations {
             400: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2934,7 +3440,7 @@ export interface operations {
             401: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2945,7 +3451,7 @@ export interface operations {
             403: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2956,7 +3462,7 @@ export interface operations {
             422: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2993,7 +3499,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3004,7 +3510,7 @@ export interface operations {
             400: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3015,7 +3521,7 @@ export interface operations {
             401: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3026,7 +3532,7 @@ export interface operations {
             403: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3037,7 +3543,7 @@ export interface operations {
             422: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3097,7 +3603,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3108,7 +3614,7 @@ export interface operations {
             400: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3119,7 +3625,7 @@ export interface operations {
             401: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3130,7 +3636,7 @@ export interface operations {
             403: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3141,7 +3647,85 @@ export interface operations {
             422: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    oauth_usage_history_api_v1_oauth_usage_history_get: {
+        parameters: {
+            query?: {
+                /** @description 开始日期 (YYYY-MM-DD) */
+                start_date?: string | null;
+                /** @description 结束日期 (YYYY-MM-DD) */
+                end_date?: string | null;
+                /** @description 事件类型过滤 */
+                event_type?: string | null;
+                /** @description 事件分组过滤 */
+                kind?: string | null;
+                /** @description 是否成功 */
+                success?: boolean | null;
+                /** @description 是否可计费 */
+                billable_success?: boolean | null;
+                /** @description 执行 outcome 过滤 */
+                outcome?: string | null;
+                /** @description 执行 reason_code 过滤 */
+                reason_code?: string | null;
+                /** @description 是否存在 execution_outcome */
+                has_execution_outcome?: boolean | null;
+                /** @description 收费结果过滤 */
+                charge_outcome?: string | null;
+                /** @description 异常类型过滤 */
+                anomaly?: string | null;
+                /** @description search_id 聚焦过滤 */
+                search_id?: string | null;
+                /** @description execution_id 聚焦过滤 */
+                execution_id?: string | null;
+                /** @description API Key 归因过滤 */
+                api_key_id?: string | null;
+                /** @description OAuth client_id 归因过滤 */
+                oauth_client_id?: string | null;
+                /** @description 凭证类型过滤 */
+                credential_type?: string | null;
+                /** @description 页码 */
+                page?: number;
+                /** @description 每页数量 */
+                page_size?: number;
+                /** @description 是否返回完整审计详情字段 */
+                include_details?: boolean;
+                min_credits?: number | null;
+                max_credits?: number | null;
+                bucket?: string | null;
+                summary?: boolean;
+                /** @description 摘要模式最多返回条数 */
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    /** @description Version of the published QVeris REST API contract. */
+                    "X-Qveris-Api-Version": "2026-09-12.1";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_UsageEventsResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    /** @description Version of the published QVeris REST API contract. */
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3170,7 +3754,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3181,7 +3765,7 @@ export interface operations {
             422: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3203,7 +3787,7 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3242,7 +3826,7 @@ export interface operations {
                     /** @description Seconds until the client should retry after a rate-limit response. */
                     "Retry-After"?: number;
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3261,7 +3845,7 @@ export interface operations {
                     /** @description Seconds until the client should retry after a rate-limit response. */
                     "Retry-After"?: number;
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3280,7 +3864,7 @@ export interface operations {
                     /** @description Seconds until the client should retry after a rate-limit response. */
                     "Retry-After"?: number;
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3299,7 +3883,7 @@ export interface operations {
                     /** @description Seconds until the client should retry after a rate-limit response. */
                     "Retry-After"?: number;
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3340,7 +3924,7 @@ export interface operations {
                     /** @description Seconds until the client should retry after a rate-limit response. */
                     "Retry-After"?: number;
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3359,7 +3943,7 @@ export interface operations {
                     /** @description Seconds until the client should retry after a rate-limit response. */
                     "Retry-After"?: number;
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3378,7 +3962,7 @@ export interface operations {
                     /** @description Seconds until the client should retry after a rate-limit response. */
                     "Retry-After"?: number;
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3389,7 +3973,7 @@ export interface operations {
             504: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3438,7 +4022,7 @@ export interface operations {
                     /** @description Seconds until the client should retry after a rate-limit response. */
                     "Retry-After"?: number;
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3457,7 +4041,7 @@ export interface operations {
                     /** @description Seconds until the client should retry after a rate-limit response. */
                     "Retry-After"?: number;
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3476,7 +4060,7 @@ export interface operations {
                     /** @description Seconds until the client should retry after a rate-limit response. */
                     "Retry-After"?: number;
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3487,7 +4071,7 @@ export interface operations {
             422: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3506,7 +4090,7 @@ export interface operations {
                     /** @description Seconds until the client should retry after a rate-limit response. */
                     "Retry-After"?: number;
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3553,7 +4137,7 @@ export interface operations {
                     /** @description Seconds until the client should retry after a rate-limit response. */
                     "Retry-After"?: number;
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3564,7 +4148,7 @@ export interface operations {
             400: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3583,7 +4167,7 @@ export interface operations {
                     /** @description Seconds until the client should retry after a rate-limit response. */
                     "Retry-After"?: number;
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3594,7 +4178,7 @@ export interface operations {
             404: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3605,7 +4189,7 @@ export interface operations {
             422: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3624,7 +4208,7 @@ export interface operations {
                     /** @description Seconds until the client should retry after a rate-limit response. */
                     "Retry-After"?: number;
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3635,7 +4219,7 @@ export interface operations {
             502: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {
@@ -3646,7 +4230,7 @@ export interface operations {
             504: {
                 headers: {
                     /** @description Version of the published QVeris REST API contract. */
-                    "X-Qveris-Api-Version": "2026-09-07.1";
+                    "X-Qveris-Api-Version": "2026-09-12.1";
                     [name: string]: unknown;
                 };
                 content: {

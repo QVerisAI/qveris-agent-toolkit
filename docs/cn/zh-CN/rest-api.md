@@ -1,6 +1,6 @@
 # QVeris REST API 文档
 
-版本：2026-09-07.1
+版本：2026-09-12.1
 
 公开 REST API 暴露核心 Agent 路径：
 
@@ -15,7 +15,7 @@
 
 请将示例中的 `srch_...`、`exec_...`、`led_...` 替换为你自己 API 响应中返回的 ID。
 
-聚焦参考页：[Discover](api-reference/discover.md)、[Inspect](api-reference/inspect.md)、[Probe](api-reference/probe.md)、[Call](api-reference/call.md)。侧栏和公共 [OpenAPI JSON](/openapi.json) 覆盖全部 26 个已发布操作。
+聚焦参考页：[Discover](api-reference/discover.md)、[Inspect](api-reference/inspect.md)、[Probe](api-reference/probe.md)、[Call](api-reference/call.md)。侧栏和公共 [OpenAPI JSON](/openapi.json) 覆盖所有已发布操作。
 
 ## Base URL
 
@@ -31,6 +31,35 @@ https://qveris.cn/api/v1
 Authorization: Bearer YOUR_API_KEY
 ```
 
+## Agent 匿名试用注册（推荐 Agent 使用）
+
+需要立即获得 Key、又不想等待人工邮箱验证的 Agent，可以先走匿名试用。试用账号有效期 7
+天，赠送 50 积分，可调用 `search` / `execute`，但不能调用模型网关。
+
+```bash
+curl -X POST https://qveris.cn/api/v1/agent/anonymous-register \
+  -H "Content-Type: application/json" \
+  -d '{"agent_name":"demo-agent"}'
+```
+
+请保存返回的 `api_key` 与 `claim_code`；API Key 只会展示一次。
+
+需要把试用账号转为正式账号时，用邮箱认领：
+
+```bash
+# 第 1 步：绑定邮箱并接收 6 位验证码
+curl -X POST https://qveris.cn/api/v1/agent/claim \
+  -H "Content-Type: application/json" \
+  -d '{"claim_code":"<claim_code>","email":"operator@example.com"}'
+
+# 第 2 步：验证后原有 API Key 继续有效
+curl -X POST https://qveris.cn/api/v1/agent/claim-verify \
+  -H "Content-Type: application/json" \
+  -d '{"claim_code":"<claim_code>","email":"operator@example.com","code":"123456"}'
+```
+
+运营人员也可以直接在官网打开[认领页面](/claim)认领。认领码不能绑定到已属于正式账号的邮箱。
+
 ## 成本与 session 合同
 
 Discover、Inspect 和 Probe 免费。Discover 与 Inspect 可能返回 `expected_cost`、旧字段 `cost` 或 `billing_rule`；Probe 会在花费积分前校验所选参数并返回零成本报价。
@@ -42,8 +71,6 @@ Discover、Inspect 和 Probe 免费。Discover 与 Inspect 可能返回 `expecte
 ## 条件化 Discover -> Call 集成契约
 
 请把所选能力的当前契约作为 Call 的可信来源。完整的 Discover 结果足以支持直接调用时，无需额外步骤；只有结果缺少必要契约、元数据可能过期或需要比较候选时才 Inspect，只有参数需要预检或预算决策需要当前报价时才 Probe。
-
-进行 Provider 比较时，如果需要确认当前范围或完整契约，必须逐一 Inspect；Discover 摘要不等于确认。比较需要当前报价时，必须逐一 Probe。复用只能保留精确路由，不能保留业务参数或结果：参数必须来自当前请求；当前、最新、今天或其他时效性数据必须执行新的 Call。
 
 推荐契约：
 

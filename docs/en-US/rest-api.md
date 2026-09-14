@@ -1,6 +1,6 @@
 # QVeris REST API Documentation
 
-Version: 2026-09-07.1
+Version: 2026-09-12.1
 
 The public REST API exposes the core agent path:
 
@@ -15,7 +15,7 @@ The public REST API exposes the core agent path:
 
 Replace sample ids such as `srch_...`, `exec_...`, and `led_...` with ids returned by your own API responses.
 
-Focused references: [Discover](api-reference/discover.md), [Inspect](api-reference/inspect.md), [Probe](api-reference/probe.md), [Call](api-reference/call.md). The sidebar and public [OpenAPI JSON](/openapi.json) cover all 26 published operations.
+Focused references: [Discover](api-reference/discover.md), [Inspect](api-reference/inspect.md), [Probe](api-reference/probe.md), [Call](api-reference/call.md). The sidebar and public [OpenAPI JSON](/openapi.json) cover every published operation.
 
 ## Base URL
 
@@ -31,6 +31,37 @@ Send your API key in the `Authorization` header:
 Authorization: Bearer YOUR_API_KEY
 ```
 
+## Anonymous trial registration (recommended for agents)
+
+Agents that need a key without waiting on human email verification can start
+with an anonymous trial. The account is valid for 7 days, receives 50 trial
+credits, and can call `search`/`execute`, but cannot use the model gateway.
+
+```bash
+curl -X POST https://qveris.ai/api/v1/agent/anonymous-register \
+  -H "Content-Type: application/json" \
+  -d '{"agent_name":"demo-agent"}'
+```
+
+Save the returned `api_key` and `claim_code`. The API key is shown only once.
+
+When the trial needs to become a formal account, claim it with an email:
+
+```bash
+# Step 1: bind the email and receive a 6-digit verification code
+curl -X POST https://qveris.ai/api/v1/agent/claim \
+  -H "Content-Type: application/json" \
+  -d '{"claim_code":"<claim_code>","email":"operator@example.com"}'
+
+# Step 2: verify the code; the existing API key remains active
+curl -X POST https://qveris.ai/api/v1/agent/claim-verify \
+  -H "Content-Type: application/json" \
+  -d '{"claim_code":"<claim_code>","email":"operator@example.com","code":"123456"}'
+```
+
+Human operators can also open the [claim page](/claim) on the website. Claim
+codes cannot be bound to an email that already belongs to a formal account.
+
 ## Cost and session contract
 
 Discover, Inspect, and Probe are free. Discover and Inspect may return `expected_cost`, legacy `cost`, or `billing_rule`; Probe validates the selected parameters and returns a zero-cost quote before spending credits.
@@ -42,8 +73,6 @@ The default/full Call response can return compact pre-settlement fields such as 
 ## Conditional Discover -> Call integration contract
 
 Use the selected capability's current contract as the source of truth for Call. A full Discover result can be enough to call directly. Inspect only when the selected result omits required contract detail, its metadata may be stale, or you need to compare candidates. Probe only when the parameters need preflight validation or a budget decision needs a current quote.
-
-For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
 
 Recommended contract:
 
