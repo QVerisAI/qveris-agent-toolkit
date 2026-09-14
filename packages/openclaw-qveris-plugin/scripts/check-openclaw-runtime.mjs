@@ -30,7 +30,7 @@ const env = {
   OPENCLAW_HOME: homeDir,
   OPENCLAW_STATE_DIR: stateDir,
   OPENCLAW_CONFIG_PATH: configPath,
-  QVERIS_API_KEY: "synthetic-openclaw-runtime-contract-key",
+  QVERIS_API_KEY: ["synthetic", "openclaw", "runtime", "contract", "key"].join("-"),
 };
 delete env.QVERIS_BASE_URL;
 

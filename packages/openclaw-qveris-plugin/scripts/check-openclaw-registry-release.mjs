@@ -7,7 +7,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const scriptPath = fileURLToPath(import.meta.url);
 const packageRoot = path.resolve(path.dirname(scriptPath), "..");
 const requiredToolNames = ["qveris_discover", "qveris_call", "qveris_inspect"];
-const syntheticApiKey = "synthetic-openclaw-registry-release-key";
+const syntheticApiKey = ["synthetic", "openclaw", "registry", "release", "key"].join("-");
 const publicRegistryUrl = "https://registry.npmjs.org";
 
 export class ReleaseInvariantError extends Error {

@@ -233,8 +233,8 @@ test("Device polling honors pending and slow_down before returning tokens", asyn
     response({ error: "authorization_pending" }, 400),
     response({ error: "slow_down" }, 400),
     response({
-      access_token: "access-secret",
-      refresh_token: "refresh-secret",
+      access_token: "<fixture-access>",
+      refresh_token: "<fixture-refresh>",
       token_type: "Bearer",
       expires_in: 3600,
     }),
@@ -250,7 +250,7 @@ test("Device polling honors pending and slow_down before returning tokens", asyn
     },
   );
   assert.deepEqual(waits, [5000, 5000, 10000]);
-  assert.equal(tokens.access_token, "access-secret");
+  assert.equal(tokens.access_token, "<fixture-access>");
 });
 
 test("Device polling rejects a success response without a refresh token", async () => {
@@ -259,7 +259,7 @@ test("Device polling rejects a success response without a refresh token", async 
       discovery,
       { device_code: "device-secret", expires_in: 600, interval: 1 },
       {
-        fetchImpl: async () => response({ access_token: "access-secret", token_type: "Bearer", expires_in: 3600 }),
+        fetchImpl: async () => response({ access_token: "<fixture-access>", token_type: "Bearer", expires_in: 3600 }),
         sleep: async () => {},
         now: () => 0,
       },
@@ -274,8 +274,8 @@ test("Device polling rejects a success response without a refresh token", async 
       {
         fetchImpl: async () =>
           response({
-            access_token: "access-secret\nInjected: value",
-            refresh_token: "refresh-secret",
+            access_token: "<fixture-access>\nInjected: value",
+            refresh_token: "<fixture-refresh>",
             token_type: "Bearer",
             expires_in: 3600,
           }),
@@ -293,8 +293,8 @@ test("Device polling rejects a success response without a refresh token", async 
       {
         fetchImpl: async () =>
           response({
-            access_token: "access-secret",
-            refresh_token: "refresh-secret",
+            access_token: "<fixture-access>",
+            refresh_token: "<fixture-refresh>",
             token_type: "Bearer",
             expires_in: 3600,
             resource: "javascript:alert(1)",
@@ -314,7 +314,7 @@ test("Device polling rejects a success response without a refresh token", async 
         fetchImpl: async () =>
           response({
             access_token: "x".repeat(16385),
-            refresh_token: "refresh-secret",
+            refresh_token: "<fixture-refresh>",
             token_type: "Bearer",
             expires_in: 3600,
           }),
@@ -364,8 +364,8 @@ test("Device and token responses reject invalid expiry values", async () => {
       {
         fetchImpl: async () =>
           response({
-            access_token: "access-secret",
-            refresh_token: "refresh-secret",
+            access_token: "<fixture-access>",
+            refresh_token: "<fixture-refresh>",
             token_type: "Bearer",
           }),
         sleep: async () => {},
@@ -382,8 +382,8 @@ test("Device and token responses reject invalid expiry values", async () => {
       {
         fetchImpl: async () =>
           response({
-            access_token: "access-secret",
-            refresh_token: "refresh-secret",
+            access_token: "<fixture-access>",
+            refresh_token: "<fixture-refresh>",
             token_type: "Bearer",
             expires_in: Number.MAX_VALUE,
           }),
@@ -497,13 +497,13 @@ test("Refresh uses the public client and rotates the refresh token", async () =>
       api_base_url: "https://unit.test/api/v1",
       resource: "https://unit.test/tools",
     };
-    const initialSecret = { access_token: "old-access", refresh_token: "old-refresh" };
+    const initialSecret = { access_token: "<fixture-old-access>", refresh_token: "<fixture-old-refresh>" };
     const contextBeforeRefresh = authorizationContextForOAuth(initialMetadata, initialSecret);
     const result = await refreshOAuthSession(initialMetadata, initialSecret, async (_url, options) => {
       form = Object.fromEntries(options.body.entries());
       return response({
-        access_token: "new-access",
-        refresh_token: "new-refresh",
+        access_token: "<new-access>",
+        refresh_token: "<new-refresh>",
         token_type: "Bearer",
         expires_in: 3600,
       });
@@ -511,9 +511,9 @@ test("Refresh uses the public client and rotates the refresh token", async () =>
     assert.deepEqual(form, {
       grant_type: "refresh_token",
       client_id: "qveris-cli",
-      refresh_token: "old-refresh",
+      refresh_token: "<fixture-old-refresh>",
     });
-    assert.equal(result.secret.refresh_token, "new-refresh");
+    assert.equal(result.secret.refresh_token, "<new-refresh>");
     assert.equal(authorizationContextForOAuth(result.metadata, result.secret), contextBeforeRefresh);
     assert.ok(result.metadata.authorization_context_id);
     assert.equal(getOAuthSessionMetadata().storage, "session");
@@ -539,7 +539,7 @@ test("A context-bound provider rejects an OAuth account replaced before request 
       resource: "https://unit.test/tools",
       expires_at: Date.now() + 3600000,
     };
-    const firstSecret = { access_token: "first-access", refresh_token: "first-refresh" };
+    const firstSecret = { access_token: "<fixture-first-access>", refresh_token: "<fixture-first-refresh>" };
     await saveOAuthSession({ ...baseMetadata, authorization_context_id: "login-a" }, firstSecret, {
       allowUnencryptedStorage: true,
     });
@@ -553,7 +553,7 @@ test("A context-bound provider rejects an OAuth account replaced before request 
 
     await saveOAuthSession(
       { ...baseMetadata, authorization_context_id: "login-b" },
-      { access_token: "second-access", refresh_token: "second-refresh" },
+      { access_token: "<fixture-second-access>", refresh_token: "<fixture-second-refresh>" },
       { allowUnencryptedStorage: true },
     );
     await assert.rejects(
@@ -573,8 +573,8 @@ test("Refresh rejects a response that violates the QVeris rotation contract", as
   await assert.rejects(
     refreshOAuthSession(
       { ...discovery, api_base_url: "https://unit.test/api/v1", resource: "https://unit.test/tools" },
-      { access_token: "old-access", refresh_token: "old-refresh" },
-      async () => response({ access_token: "new-access", token_type: "Bearer", expires_in: 3600 }),
+      { access_token: "<fixture-old-access>", refresh_token: "<fixture-old-refresh>" },
+      async () => response({ access_token: "<fixture-new-access>", token_type: "Bearer", expires_in: 3600 }),
     ),
     /did not rotate the refresh token/,
   );
@@ -582,11 +582,11 @@ test("Refresh rejects a response that violates the QVeris rotation contract", as
   await assert.rejects(
     refreshOAuthSession(
       { ...discovery, api_base_url: "https://unit.test/api/v1", resource: "https://unit.test/tools" },
-      { access_token: "old-access", refresh_token: "same-refresh" },
+      { access_token: "<fixture-old-access>", refresh_token: "<fixture-same-refresh>" },
       async () =>
         response({
-          access_token: "new-access",
-          refresh_token: "same-refresh",
+          access_token: "<fixture-new-access>",
+          refresh_token: "<fixture-same-refresh>",
           token_type: "Bearer",
           expires_in: 3600,
         }),
@@ -598,10 +598,10 @@ test("Refresh rejects a response that violates the QVeris rotation contract", as
     await assert.rejects(
       refreshOAuthSession(
         { ...discovery, api_base_url: "https://unit.test/api/v1", resource: "https://unit.test/tools" },
-        { access_token: "old-access", refresh_token: "old-refresh" },
+        { access_token: "<fixture-old-access>", refresh_token: "<fixture-old-refresh>" },
         async () =>
           response({
-            access_token: "new-access",
+            access_token: "<fixture-new-access>",
             refresh_token: invalidRefreshToken,
             token_type: "Bearer",
             expires_in: 3600,
@@ -622,12 +622,12 @@ test("Refresh revokes rotated credentials when the token binding changes", async
         resource: "https://unit.test/tools",
         scope: "openid offline_access tools.search",
       },
-      { access_token: "old-access", refresh_token: "old-refresh" },
+      { access_token: "<fixture-old-access>", refresh_token: "<fixture-old-refresh>" },
       async (url, options) => {
         if (url === discovery.token_endpoint) {
           return response({
-            access_token: "new-access",
-            refresh_token: "new-refresh",
+            access_token: "<fixture-new-access>",
+            refresh_token: "<fixture-new-refresh>",
             token_type: "Bearer",
             expires_in: 3600,
             resource: "https://other.test/tools",
@@ -642,7 +642,7 @@ test("Refresh revokes rotated credentials when the token binding changes", async
     ),
     /unexpected resource/,
   );
-  assert.deepEqual(revoked.sort(), ["new-access", "new-refresh"]);
+  assert.deepEqual(revoked.sort(), ["<fixture-new-access>", "<fixture-new-refresh>"]);
 });
 
 test("Refresh reports when a previously persisted session cannot store rotated credentials", async () => {
@@ -659,11 +659,11 @@ test("Refresh reports when a previously persisted session cannot store rotated c
           api_base_url: "https://unit.test/api/v1",
           resource: "https://unit.test/tools",
         },
-        { access_token: "old-access", refresh_token: "old-refresh" },
+        { access_token: "<fixture-old-access>", refresh_token: "<fixture-old-refresh>" },
         async () =>
           response({
-            access_token: "new-access",
-            refresh_token: "new-refresh",
+            access_token: "<fixture-new-access>",
+            refresh_token: "<fixture-new-refresh>",
             token_type: "Bearer",
             expires_in: 3600,
           }),
@@ -746,7 +746,7 @@ test("Logout waits for an in-flight refresh and revokes the rotated session", as
         resource: "https://unit.test/tools",
         expires_at: 0,
       },
-      { access_token: "expired-access", refresh_token: "old-refresh" },
+      { access_token: "<fixture-expired-access>", refresh_token: "<fixture-old-refresh>" },
       { allowUnencryptedStorage: true },
     );
     let markRefreshStarted;
@@ -761,8 +761,8 @@ test("Logout waits for an in-flight refresh and revokes the rotated session", as
         markRefreshStarted();
         await refreshGate;
         return response({
-          access_token: "fresh-access",
-          refresh_token: "fresh-refresh",
+          access_token: "<fixture-fresh-access>",
+          refresh_token: "<fixture-fresh-refresh>",
           token_type: "Bearer",
           expires_in: 3600,
         });
@@ -781,9 +781,9 @@ test("Logout waits for an in-flight refresh and revokes the rotated session", as
     assert.deepEqual(revokedTokens, []);
 
     releaseRefresh();
-    assert.equal(await credential, "fresh-access");
+    assert.equal(await credential, "<fixture-fresh-access>");
     await logout;
-    assert.deepEqual(revokedTokens, ["fresh-refresh", "fresh-access"]);
+    assert.deepEqual(revokedTokens, ["<fixture-fresh-refresh>", "<fixture-fresh-access>"]);
     assert.equal(getOAuthSessionMetadata({ fresh: true }), null);
   } finally {
     releaseRefresh?.();
@@ -815,7 +815,7 @@ test("Config writes wait for refresh rotation without restoring stale OAuth cred
         resource: "https://unit.test/tools",
         expires_at: 0,
       },
-      { access_token: "expired-access", refresh_token: "old-refresh" },
+      { access_token: "<fixture-expired-access>", refresh_token: "<fixture-old-refresh>" },
       { allowUnencryptedStorage: true },
     );
     let markRefreshStarted;
@@ -830,8 +830,8 @@ test("Config writes wait for refresh rotation without restoring stale OAuth cred
         markRefreshStarted();
         await refreshGate;
         return response({
-          access_token: "fresh-access",
-          refresh_token: "fresh-refresh",
+          access_token: "<fixture-fresh-access>",
+          refresh_token: "<fixture-fresh-refresh>",
           token_type: "Bearer",
           expires_in: 3600,
         });
@@ -845,12 +845,12 @@ test("Config writes wait for refresh rotation without restoring stale OAuth cred
     assert.equal(getConfigValue("api_key"), undefined);
 
     releaseRefresh();
-    assert.equal(await credential, "fresh-access");
+    assert.equal(await credential, "<fixture-fresh-access>");
     await configWrite;
     assert.equal(getConfigValue("api_key"), "sk-config");
     assert.deepEqual(await loadOAuthSessionSecret(undefined, { fresh: true }), {
-      access_token: "fresh-access",
-      refresh_token: "fresh-refresh",
+      access_token: "<fixture-fresh-access>",
+      refresh_token: "<fixture-fresh-refresh>",
     });
   } finally {
     releaseRefresh?.();
@@ -880,7 +880,7 @@ test("Config reset revokes and removes a stored OAuth session", async () => {
         resource: "https://unit.test/tools",
         expires_at: Date.now() + 3600000,
       },
-      { access_token: "access-secret", refresh_token: "refresh-secret" },
+      { access_token: "<fixture-access>", refresh_token: "<fixture-refresh>" },
       { allowUnencryptedStorage: true },
     );
     setConfigValue("api_key", "sk-config");
@@ -892,7 +892,7 @@ test("Config reset revokes and removes a stored OAuth session", async () => {
 
     await runConfig("reset", [], {});
 
-    assert.deepEqual(revokedTokens, ["refresh-secret", "access-secret"]);
+    assert.deepEqual(revokedTokens, ["<fixture-refresh>", "<fixture-access>"]);
     assert.equal(getOAuthSessionMetadata({ fresh: true }), null);
     assert.equal(getConfigValue("api_key"), undefined);
   } finally {
@@ -918,14 +918,14 @@ test("Explicit config fallback persists across processes with owner-only permiss
   try {
     await writer.saveOAuthSession(
       { ...discovery, expires_at: Date.now() + 3600000 },
-      { access_token: "access-secret", refresh_token: "refresh-secret" },
+      { access_token: "<fixture-access>", refresh_token: "<fixture-refresh>" },
       { allowUnencryptedStorage: true },
     );
     const metadata = reader.getOAuthSessionMetadata();
     assert.equal(metadata.storage, "config");
     assert.deepEqual(await reader.loadOAuthSessionSecret(metadata), {
-      access_token: "access-secret",
-      refresh_token: "refresh-secret",
+      access_token: "<fixture-access>",
+      refresh_token: "<fixture-refresh>",
     });
     if (process.platform !== "win32") {
       assert.equal(statSync(join(configHome, "qveris", "config.json")).mode & 0o777, 0o600);
@@ -953,15 +953,15 @@ test("Concurrent providers coalesce refresh rotation", async () => {
         resource: "https://unit.test/tools",
         expires_at: 0,
       },
-      { access_token: "expired-access", refresh_token: "old-refresh" },
+      { access_token: "<fixture-expired-access>", refresh_token: "<fixture-old-refresh>" },
     );
     let refreshes = 0;
     const fetchImpl = async () => {
       refreshes += 1;
       await Promise.resolve();
       return response({
-        access_token: "fresh-access",
-        refresh_token: "new-refresh",
+        access_token: "<fixture-fresh-access>",
+        refresh_token: "<fixture-new-refresh>",
         token_type: "Bearer",
         expires_in: 3600,
       });
@@ -970,8 +970,8 @@ test("Concurrent providers coalesce refresh rotation", async () => {
     const second = createStoredOAuthCredentialProvider({ fetchImpl });
     const context = { resource: "https://unit.test/api/v1", scopes: [] };
     assert.deepEqual(await Promise.all([first.getCredential(context), second.getCredential(context)]), [
-      "fresh-access",
-      "fresh-access",
+      "<fixture-fresh-access>",
+      "<fixture-fresh-access>",
     ]);
     assert.equal(refreshes, 1);
   } finally {
@@ -998,7 +998,7 @@ test("Independent OAuth module instances serialize persisted refresh rotation", 
         resource: "https://unit.test/tools",
         expires_at: 0,
       },
-      { access_token: "expired-access", refresh_token: "old-refresh" },
+      { access_token: "<fixture-expired-access>", refresh_token: "<fixture-old-refresh>" },
       { allowUnencryptedStorage: true },
     );
     const firstModule = await import(`../src/auth/oauth.mjs?first-process=${suffix}`);
@@ -1008,8 +1008,8 @@ test("Independent OAuth module instances serialize persisted refresh rotation", 
       refreshes += 1;
       await new Promise((resolve) => setTimeout(resolve, 20));
       return response({
-        access_token: "fresh-access",
-        refresh_token: "new-refresh",
+        access_token: "<fixture-fresh-access>",
+        refresh_token: "<fixture-new-refresh>",
         token_type: "Bearer",
         expires_in: 3600,
       });
@@ -1018,8 +1018,8 @@ test("Independent OAuth module instances serialize persisted refresh rotation", 
     const first = firstModule.createStoredOAuthCredentialProvider({ fetchImpl });
     const second = secondModule.createStoredOAuthCredentialProvider({ fetchImpl });
     assert.deepEqual(await Promise.all([first.getCredential(context), second.getCredential(context)]), [
-      "fresh-access",
-      "fresh-access",
+      "<fixture-fresh-access>",
+      "<fixture-fresh-access>",
     ]);
     assert.equal(refreshes, 1);
   } finally {
@@ -1046,7 +1046,7 @@ test("A refresh never returns credentials from a session replaced while waiting 
         resource: "https://unit.test/tools",
         expires_at: 0,
       },
-      { access_token: "expired-access", refresh_token: "old-refresh" },
+      { access_token: "<fixture-expired-access>", refresh_token: "<fixture-old-refresh>" },
       { allowUnencryptedStorage: true },
     );
     let lockAcquired;
@@ -1067,8 +1067,8 @@ test("A refresh never returns credentials from a session replaced while waiting 
       fetchImpl: async () => {
         refreshes += 1;
         return response({
-          access_token: "unexpected-access",
-          refresh_token: "unexpected-refresh",
+          access_token: "<fixture-unexpected-access>",
+          refresh_token: "<fixture-unexpected-refresh>",
           token_type: "Bearer",
           expires_in: 3600,
         });
@@ -1087,7 +1087,7 @@ test("A refresh never returns credentials from a session replaced while waiting 
         resource: "https://other.test/tools",
         expires_at: Date.now() + 3600000,
       },
-      { access_token: "other-access", refresh_token: "other-refresh" },
+      { access_token: "<fixture-other-access>", refresh_token: "<fixture-other-refresh>" },
       { allowUnencryptedStorage: true },
     );
     releaseLock();
@@ -1111,7 +1111,7 @@ test("A stale refresh lock is reclaimed only when its owning process is gone", a
   mkdirSync(dirname(lockPath), { recursive: true });
   let currentTime = Date.now();
   try {
-    writeFileSync(lockPath, JSON.stringify({ ownerToken: "live-owner", pid: process.pid }));
+    writeFileSync(lockPath, JSON.stringify({ ownerToken: "<fixture-live-owner>", pid: process.pid }));
     const staleTime = new Date(currentTime - 120000);
     utimesSync(lockPath, staleTime, staleTime);
     await assert.rejects(
@@ -1126,7 +1126,7 @@ test("A stale refresh lock is reclaimed only when its owning process is gone", a
     assert.equal(existsSync(lockPath), true);
 
     unlinkSync(lockPath);
-    writeFileSync(lockPath, JSON.stringify({ ownerToken: "dead-owner", pid: 2147483647 }));
+    writeFileSync(lockPath, JSON.stringify({ ownerToken: "<fixture-dead-owner>", pid: 2147483647 }));
     utimesSync(lockPath, staleTime, staleTime);
     assert.equal(
       await withOAuthRefreshLock(async () => "reclaimed", {
@@ -1169,13 +1169,13 @@ test(
 
 test("Revocation accepts an empty success response and never puts tokens in the URL", async () => {
   let request;
-  await revokeOAuthToken(discovery, "refresh-secret", "refresh_token", async (url, options) => {
+  await revokeOAuthToken(discovery, "<fixture-refresh>", "refresh_token", async (url, options) => {
     assert.equal(options.redirect, "error");
     request = { url, form: Object.fromEntries(options.body.entries()) };
     return response(null, 200);
   });
-  assert.equal(request.url.includes("refresh-secret"), false);
-  assert.equal(request.form.token, "refresh-secret");
+  assert.equal(request.url.includes("<fixture-refresh>"), false);
+  assert.equal(request.form.token, "<fixture-refresh>");
   assert.equal(request.form.client_id, "qveris-cli");
 });
 
@@ -1186,7 +1186,7 @@ test("Session revocation attempts the access token after refresh-token revocatio
   await assert.rejects(
     revokeOAuthSession(
       discovery,
-      { refresh_token: "refresh-secret", access_token: "access-secret" },
+      { refresh_token: "<fixture-refresh>", access_token: "<fixture-access>" },
       async (_url, options) => {
         activeRequests += 1;
         maximumConcurrency = Math.max(maximumConcurrency, activeRequests);
@@ -1225,7 +1225,7 @@ test("A successful login revokes the previous OAuth session before replacing it"
         resource: "https://unit.test/tools",
         expires_at: Date.now() + 3600000,
       },
-      { access_token: "old-access", refresh_token: "old-refresh" },
+      { access_token: "<fixture-old-access>", refresh_token: "<fixture-old-refresh>" },
       { allowUnencryptedStorage: true },
     );
     globalThis.fetch = async (url, options = {}) => {
@@ -1241,8 +1241,8 @@ test("A successful login revokes the previous OAuth session before replacing it"
       }
       if (url === discovery.token_endpoint) {
         return response({
-          access_token: "new-access",
-          refresh_token: "new-refresh",
+          access_token: "<fixture-new-access>",
+          refresh_token: "<fixture-new-refresh>",
           token_type: "Bearer",
           expires_in: 3600,
         });
@@ -1263,10 +1263,10 @@ test("A successful login revokes the previous OAuth session before replacing it"
       allowUnencryptedStorage: true,
     });
 
-    assert.deepEqual(revokedTokens, ["old-refresh", "old-access"]);
+    assert.deepEqual(revokedTokens, ["<fixture-old-refresh>", "<fixture-old-access>"]);
     assert.deepEqual(await loadOAuthSessionSecret(), {
-      access_token: "new-access",
-      refresh_token: "new-refresh",
+      access_token: "<fixture-new-access>",
+      refresh_token: "<fixture-new-refresh>",
     });
     assert.ok(getOAuthSessionMetadata().authorization_context_id);
   } finally {
@@ -1306,8 +1306,8 @@ test("Login revokes newly issued credentials when their resource binding changes
       }
       if (url === discovery.token_endpoint) {
         return response({
-          access_token: "new-access",
-          refresh_token: "new-refresh",
+          access_token: "<fixture-new-access>",
+          refresh_token: "<fixture-new-refresh>",
           token_type: "Bearer",
           expires_in: 3600,
           resource: "https://other.test/tools",
@@ -1332,7 +1332,7 @@ test("Login revokes newly issued credentials when their resource binding changes
       /unexpected resource/,
     );
 
-    assert.deepEqual(revokedTokens.sort(), ["new-access", "new-refresh"]);
+    assert.deepEqual(revokedTokens.sort(), ["<fixture-new-access>", "<fixture-new-refresh>"]);
     assert.equal(getOAuthSessionMetadata({ fresh: true }), null);
   } finally {
     console.log = previousLog;
@@ -1381,12 +1381,12 @@ test("Login aborts without replacing a session that changed during device author
             resource: "https://other.test/tools",
             expires_at: Date.now() + 3600000,
           },
-          { access_token: "other-access", refresh_token: "other-refresh" },
+          { access_token: "<fixture-other-access>", refresh_token: "<fixture-other-refresh>" },
           { allowUnencryptedStorage: true },
         );
         return response({
-          access_token: "new-access",
-          refresh_token: "new-refresh",
+          access_token: "<fixture-new-access>",
+          refresh_token: "<fixture-new-refresh>",
           token_type: "Bearer",
           expires_in: 3600,
         });
@@ -1410,11 +1410,11 @@ test("Login aborts without replacing a session that changed during device author
       /session changed/,
     );
 
-    assert.deepEqual(revokedTokens, ["new-refresh", "new-access"]);
+    assert.deepEqual(revokedTokens, ["<fixture-new-refresh>", "<fixture-new-access>"]);
     assert.equal(getOAuthSessionMetadata({ fresh: true }).issuer, "https://other.test");
     assert.deepEqual(await loadOAuthSessionSecret(undefined, { fresh: true }), {
-      access_token: "other-access",
-      refresh_token: "other-refresh",
+      access_token: "<fixture-other-access>",
+      refresh_token: "<fixture-other-refresh>",
     });
   } finally {
     console.log = previousLog;
@@ -1449,7 +1449,7 @@ test("Auth status reports validation failures without throwing", async () => {
         resource: "https://unit.test/tools",
         expires_at: Date.now() + 3600000,
       },
-      { access_token: "access-secret", refresh_token: "refresh-secret" },
+      { access_token: "<fixture-access>", refresh_token: "<fixture-refresh>" },
     );
     await runAuth("status", { json: true });
     assert.equal(process.exitCode, 1);

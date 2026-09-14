@@ -14,9 +14,9 @@ import {
 const TOKEN_ENDPOINT = 'https://qveris.ai/api/v1/oauth/token';
 const RESOURCE = 'https://api.qveris.ai/tools';
 const CLIENT_ID = 'agent runtime:id';
-const CLIENT_SECRET = 'synthetic: client+secret';
-const SUBJECT_TOKEN = 'synthetic-user-access-token';
-const DELEGATION_TOKEN = 'synthetic-delegation-token';
+const CLIENT_SECRET = '<fixture-client-secret>';
+const SUBJECT_TOKEN = '<fixture-subject-token>';
+const DELEGATION_TOKEN = '<fixture-delegation-token>';
 
 const CONTEXT: CredentialContext = {
   resource: 'https://qveris.ai/api/v1',
@@ -91,7 +91,7 @@ describe('AgentDelegationCredentialProvider', () => {
       { tokenEndpoint: 'https://user:secret@qveris.ai/token' },
       { tokenEndpoint: 'https://qveris.ai/token?query=1' },
       { resource: 'ftp://api.qveris.ai/tools' },
-      { clientSecret: 'bad\nsecret' },
+      { clientSecret: '<fixture-invalid-client-secret>\nvalue' },
       { subjectCredentialProvider: null },
       { scopes: [] },
       { scopes: ['bad scope'] },
@@ -145,7 +145,7 @@ describe('AgentDelegationCredentialProvider', () => {
       expect(init?.method).toBe('POST');
       expect(init?.redirect).toBe('error');
       expect(init?.headers).toMatchObject({
-        Authorization: `Basic ${Buffer.from('agent+runtime%3Aid:synthetic%3A+client%2Bsecret').toString('base64')}`,
+        Authorization: `Basic ${Buffer.from('agent+runtime%3Aid:%3Cfixture-client-secret%3E').toString('base64')}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       });
       const form = new URLSearchParams(String(init?.body));
@@ -210,7 +210,7 @@ describe('AgentDelegationCredentialProvider', () => {
   });
 
   it('isolates cached and in-flight exchanges by subject credential', async () => {
-    let subjectToken = 'subject-a';
+    let subjectToken = '<fixture-subject-a>';
     let releaseExchange!: () => void;
     const exchangeGate = new Promise<void>((resolve) => {
       releaseExchange = resolve;
@@ -234,13 +234,13 @@ describe('AgentDelegationCredentialProvider', () => {
 
     const subjectA = delegated.getCredential(CONTEXT);
     await firstExchange;
-    subjectToken = 'subject-b';
+    subjectToken = '<fixture-subject-b>';
     const subjectB = delegated.getCredential(CONTEXT);
     await vi.waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(2));
     releaseExchange();
 
-    await expect(subjectA).resolves.toBe('delegated-subject-a');
-    await expect(subjectB).resolves.toBe('delegated-subject-b');
+    await expect(subjectA).resolves.toBe('delegated-<fixture-subject-a>');
+    await expect(subjectB).resolves.toBe('delegated-<fixture-subject-b>');
     expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 
@@ -358,7 +358,9 @@ describe('AgentDelegationCredentialProvider', () => {
   });
 
   it('rejects refresh tokens and widened response constraints', async () => {
-    const withRefresh = provider(vi.fn<typeof fetch>(async () => tokenResponse({ refresh_token: 'forbidden' })));
+    const withRefresh = provider(
+      vi.fn<typeof fetch>(async () => tokenResponse({ refresh_token: '<fixture-forbidden-refresh>' })),
+    );
     await expect(withRefresh.getCredential(CONTEXT)).rejects.toMatchObject({ code: 'invalid_token_response' });
 
     const widened = provider(

@@ -222,7 +222,7 @@ test("session shortcuts fail closed across endpoints and authorization contexts"
       async () => {
         await captureOutput(() =>
           runDiscover("weather", {
-            apiKey: "sk-account-a",
+            apiKey: "<fixture-account-a>",
             baseUrl: "https://a.test/api/v1",
             json: true,
           }),
@@ -232,7 +232,7 @@ test("session shortcuts fail closed across endpoints and authorization contexts"
         const mismatchedCommands = [
           () =>
             runCall("1", {
-              apiKey: "sk-account-a",
+              apiKey: "<fixture-account-a>",
               baseUrl: "https://b.test/api/v1",
               discoveryId: "explicit-search",
               params: "{}",
@@ -241,7 +241,7 @@ test("session shortcuts fail closed across endpoints and authorization contexts"
             }),
           () =>
             runCall("weather.tool.v1", {
-              apiKey: "sk-account-b",
+              apiKey: "<fixture-account-b>",
               baseUrl: "https://a.test/api/v1",
               params: "{}",
               dryRun: true,
@@ -249,14 +249,14 @@ test("session shortcuts fail closed across endpoints and authorization contexts"
             }),
           () =>
             runInspect(["1"], {
-              apiKey: "sk-account-b",
+              apiKey: "<fixture-account-b>",
               baseUrl: "https://a.test/api/v1",
               discoveryId: "explicit-search",
               json: true,
             }),
           () =>
             runProbe("1", {
-              apiKey: "sk-account-a",
+              apiKey: "<fixture-account-a>",
               baseUrl: "https://b.test/api/v1",
               json: true,
             }),
@@ -272,7 +272,7 @@ test("session shortcuts fail closed across endpoints and authorization contexts"
 
         const explicit = await captureOutput(() =>
           runCall("weather.tool.v1", {
-            apiKey: "sk-account-b",
+            apiKey: "<fixture-account-b>",
             baseUrl: "https://b.test/api/v1",
             discoveryId: "search-b",
             params: "{}",
@@ -380,7 +380,7 @@ test("config command covers set, get, list, path, and reset", async () => {
     assert.deepEqual(jsonFromStdout(get.stdout), { key: "api_key", value: "sk-config" });
 
     setConfigValue("oauth_session_secret", {
-      secret: { access_token: "never-print-access", refresh_token: "never-print-refresh" },
+      secret: { access_token: "<never-access>", refresh_token: "<never-refresh>" },
     });
     const previousSecretExitCode = process.exitCode;
     process.exitCode = undefined;
@@ -425,7 +425,7 @@ test("login, whoami, logout, and doctor cover auth diagnostics workflow", async 
         },
         async (requests) => {
           const flags = {
-            token: "sk-test-auth",
+            token: "<fixture-auth-token>",
             baseUrl: "https://unit.test/api/v1",
             noBrowser: true,
           };

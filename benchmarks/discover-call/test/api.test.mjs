@@ -20,22 +20,22 @@ test('normalizes safe API base URLs and rejects unsafe values', () => {
 test('sends bearer authentication without exposing it in API errors', async () => {
   const requests = [];
   const client = createApiClient({
-    apiKey: 'secret-token',
+    apiKey: '<fixture-secret>',
     fetchImpl: async (url, init) => {
       requests.push({ url, init });
-      return new Response('server echoed secret-token', { status: 500 });
+      return new Response('server echoed <fixture-secret>', { status: 500 });
     },
   });
 
   await assert.rejects(client.discover({ query: 'weather', limit: 5 }), (error) => {
-    return error.benchmarkStage === 'api' && !error.message.includes('secret-token');
+    return error.benchmarkStage === 'api' && !error.message.includes('<fixture-secret>');
   });
-  assert.equal(requests[0].init.headers.Authorization, 'Bearer secret-token');
+  assert.equal(requests[0].init.headers.Authorization, 'Bearer <fixture-secret>');
 });
 
 test('rejects numeric failure envelopes', async () => {
   const client = createApiClient({
-    apiKey: 'test-key',
+    apiKey: '<fixture-key>',
     fetchImpl: async () => new Response(JSON.stringify({ status_code: 400, data: {}, message: 'bad' })),
   });
   await assert.rejects(client.discover({ query: 'weather', limit: 5 }), /failure envelope/);
@@ -45,7 +45,7 @@ test('retries rate limits and transient unavailability before scoring a failure'
   const statuses = [429, 503, 200];
   const delays = [];
   const client = createApiClient({
-    apiKey: 'test-key',
+    apiKey: '<fixture-api-key>',
     fetchImpl: async () =>
       new Response(JSON.stringify({ results: [] }), {
         status: statuses.shift(),
@@ -63,7 +63,7 @@ test('honors HTTP-date Retry-After values and disables redirects', async () => {
   const redirects = [];
   let attempts = 0;
   const client = createApiClient({
-    apiKey: 'test-key',
+    apiKey: '<fixture-api-key>',
     fetchImpl: async (_url, init) => {
       redirects.push(init.redirect);
       attempts++;
@@ -84,7 +84,7 @@ test('retries transient network failures before succeeding', async () => {
   let attempts = 0;
   const delays = [];
   const client = createApiClient({
-    apiKey: 'test-key',
+    apiKey: '<fixture-api-key>',
     fetchImpl: async () => {
       attempts++;
       if (attempts < 3) throw new TypeError('transient network failure');
@@ -101,7 +101,7 @@ test('retries transient network failures before succeeding', async () => {
 test('request timeout covers a response body that stalls after headers', async () => {
   let signal;
   const client = createApiClient({
-    apiKey: 'test-key',
+    apiKey: '<fixture-api-key>',
     timeoutMs: 10,
     maxRetries: 0,
     fetchImpl: async (_url, init) => {
@@ -132,7 +132,7 @@ test('retries a response-body timeout before recording an API failure', async ()
   let attempts = 0;
   const delays = [];
   const client = createApiClient({
-    apiKey: 'test-key',
+    apiKey: '<fixture-api-key>',
     timeoutMs: 10,
     maxRetries: 1,
     sleep: async (ms) => delays.push(ms),
@@ -164,7 +164,7 @@ test('does not retry an ambiguous execute timeout that could duplicate a billed 
   let attempts = 0;
   const delays = [];
   const client = createApiClient({
-    apiKey: 'test-key',
+    apiKey: '<fixture-api-key>',
     timeoutMs: 10,
     maxRetries: 3,
     sleep: async (ms) => delays.push(ms),
@@ -197,7 +197,7 @@ test('does not retry an ambiguous execute timeout that could duplicate a billed 
 test('does not retry an execute 503 that could follow an upstream side effect', async () => {
   let attempts = 0;
   const client = createApiClient({
-    apiKey: 'test-key',
+    apiKey: '<fixture-api-key>',
     maxRetries: 3,
     fetchImpl: async () => {
       attempts++;
@@ -215,7 +215,7 @@ test('does not retry an execute 503 that could follow an upstream side effect', 
 test('pins full execution results for structural non-empty scoring', async () => {
   let requestBody;
   const client = createApiClient({
-    apiKey: 'test-key',
+    apiKey: '<fixture-api-key>',
     fetchImpl: async (_url, init) => {
       requestBody = JSON.parse(init.body);
       return new Response(JSON.stringify({ success: true, result: { data: { value: 1 } } }));
@@ -241,7 +241,7 @@ test('pins full execution results for structural non-empty scoring', async () =>
 test('pins compact discovery and inspection projections', async () => {
   const bodies = [];
   const client = createApiClient({
-    apiKey: 'test-key',
+    apiKey: '<fixture-api-key>',
     fetchImpl: async (_url, init) => {
       bodies.push(JSON.parse(init.body));
       return new Response(JSON.stringify({ search_id: 'search-1', results: [] }));
@@ -262,7 +262,7 @@ test('pins compact discovery and inspection projections', async () => {
 test('cancels unsuccessful response bodies before reporting API errors', async () => {
   let cancelled = false;
   const client = createApiClient({
-    apiKey: 'test-key',
+    apiKey: '<fixture-api-key>',
     fetchImpl: async () => ({
       ok: false,
       status: 400,
@@ -281,7 +281,7 @@ test('cancels unsuccessful response bodies before reporting API errors', async (
 
 test('records API revisions without inventing an absent catalog revision', async () => {
   const client = createApiClient({
-    apiKey: 'test-key',
+    apiKey: '<fixture-api-key>',
     fetchImpl: async () =>
       new Response(JSON.stringify({ results: [] }), {
         headers: { 'x-qveris-api-version': '2026-07-22.1' },

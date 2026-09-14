@@ -137,7 +137,7 @@ async def test_resolves_a_fresh_credential_for_each_retry_attempt() -> None:
 
 @pytest.mark.asyncio
 async def test_invalid_provider_credential_is_not_exposed() -> None:
-    provider = RecordingCredentialProvider("secret-token\nforged-header")
+    provider = RecordingCredentialProvider("<fixture-secret>\nforged-header")
     client = QverisClient(QverisConfig(api_key=None), credential_provider=provider)
     try:
         with pytest.raises(QverisCredentialError, match="invalid credential") as exc_info:
@@ -145,14 +145,14 @@ async def test_invalid_provider_credential_is_not_exposed() -> None:
     finally:
         await client.close()
 
-    assert "secret-token" not in str(exc_info.value)
+    assert "<fixture-secret>" not in str(exc_info.value)
 
 
 @pytest.mark.asyncio
 async def test_provider_failure_text_is_not_exposed() -> None:
     class FailingCredentialProvider:
         async def get_credential(self, context: CredentialContext) -> str:
-            raise RuntimeError("failed while handling secret-token")
+            raise RuntimeError("failed while handling <fixture-secret>")
 
     client = QverisClient(QverisConfig(api_key=None), credential_provider=FailingCredentialProvider())
     try:
@@ -161,7 +161,7 @@ async def test_provider_failure_text_is_not_exposed() -> None:
     finally:
         await client.close()
 
-    assert "secret-token" not in str(exc_info.value)
+    assert "<fixture-secret>" not in str(exc_info.value)
 
 
 def test_qveris_config_constructor_values_override_env(monkeypatch: pytest.MonkeyPatch) -> None:

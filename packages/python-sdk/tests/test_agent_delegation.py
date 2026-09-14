@@ -20,9 +20,9 @@ from qveris.errors import QverisCredentialError
 TOKEN_ENDPOINT = "https://qveris.ai/api/v1/oauth/token"
 RESOURCE = "https://api.qveris.ai/tools"
 CLIENT_ID = "agent runtime:id"
-CLIENT_SECRET = "synthetic: client+secret"
-SUBJECT_TOKEN = "synthetic-user-access-token"
-DELEGATION_TOKEN = "synthetic-delegation-token"
+CLIENT_SECRET = "<fixture-client-secret>"
+SUBJECT_TOKEN = "<fixture-subject-token>"
+DELEGATION_TOKEN = "<fixture-delegation-token>"
 CONTEXT = CredentialContext(
     resource="https://qveris.ai/api/v1",
     audience=RESOURCE,
@@ -186,7 +186,7 @@ async def test_delegation_exchanges_independent_subjects_concurrently() -> None:
 @pytest.mark.asyncio
 async def test_delegation_cache_isolated_by_subject_credential() -> None:
     subject = SubjectProvider()
-    subject.token = "subject-a"  # type: ignore[attr-defined]
+    subject.token = "<fixture-subject-a>"  # type: ignore[attr-defined]
 
     async def get_credential(context: CredentialContext) -> str:
         subject.contexts.append(context)
@@ -200,9 +200,9 @@ async def test_delegation_cache_isolated_by_subject_credential() -> None:
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         provider = build_provider(client, subject)
-        assert await provider.get_credential(CONTEXT) == "delegated-subject-a"
-        subject.token = "subject-b"  # type: ignore[attr-defined]
-        assert await provider.get_credential(CONTEXT) == "delegated-subject-b"
+        assert await provider.get_credential(CONTEXT) == "delegated-<fixture-subject-a>"
+        subject.token = "<fixture-subject-b>"  # type: ignore[attr-defined]
+        assert await provider.get_credential(CONTEXT) == "delegated-<fixture-subject-b>"
 
 
 @pytest.mark.asyncio
@@ -255,7 +255,7 @@ async def test_delegation_fails_closed_on_audience_and_scope_mismatch() -> None:
 @pytest.mark.asyncio
 async def test_delegation_rejects_refresh_tokens_and_widened_constraints() -> None:
     responses = [
-        token_payload(refresh_token="forbidden"),
+        token_payload(refresh_token="<fixture-forbidden-refresh>"),
         token_payload(
             constraints={
                 "model": "model-a",

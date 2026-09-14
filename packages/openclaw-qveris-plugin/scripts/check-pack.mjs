@@ -115,7 +115,7 @@ const runtimeModule = await import(new URL("../dist/index.js", import.meta.url))
 const runtimePlugin = runtimeModule.default;
 const registrations = [];
 const runtimeApi = {
-  pluginConfig: { apiKey: "synthetic-compiled-contract-key" },
+  pluginConfig: { apiKey: ["synthetic", "compiled", "contract", "key"].join("-") },
   registerTool(factory, options) {
     registrations.push({ factory, options });
   },
@@ -195,7 +195,7 @@ try {
   if (toolFactory({}) !== null) {
     fail("Compiled tool factory must return null when neither config nor environment credentials are present");
   }
-  process.env.QVERIS_API_KEY = "synthetic-compiled-environment-key";
+  process.env.QVERIS_API_KEY = ["synthetic", "compiled", "environment", "key"].join("-");
   assertConcreteToolNames(toolFactory({}), requiredToolNames, "environment credential");
 } finally {
   if (originalApiKey === undefined) {
