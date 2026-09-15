@@ -1,7 +1,7 @@
 {
   "id": "qveris",
   "name": "QVeris Plugin",
-  "description": "Connect OpenClaw agents to professional data and tools: find services, review supported scope, call, and audit usage",
+  "description": "Connect OpenClaw agents to professional data and tools: find services, review supported scope, and call",
   "version": "2026.9.10",
   "setup": {
     "providers": [
