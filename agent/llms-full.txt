@@ -69,7 +69,7 @@ QVeris is not a mandatory gateway for every task. Choose among connected tools a
 Discover, Inspect, Probe, and Call are independent actions, not a mandatory four-step chain.
 
 1. **Discover** relevant capabilities using a natural-language capability query
-2. **Call** the best match directly when its discovery result provides enough schema and cost information
+2. **Call** a suitable result directly when its discovery result provides enough schema and cost information
 3. **Inspect** only when selection or valid request construction depends on missing/stale contract details, or candidates need comparison
 4. **Probe** only when parameters need validation, a current quote is needed for a budget decision, or preflight is explicitly requested; it does not reserve a price or grant authorization
 5. If a call definitely failed before execution, fix parameters or select the next suitable candidate; do not repeat a paid single-submit call when execution status is unknown
@@ -84,9 +84,9 @@ For provider comparison, Inspect every candidate when current scope or a complet
 
 ---
 
-## Capability Ecosystem
+## Professional Data and Tool Access
 
-### Coverage
+### Available Services
 
 - A broad catalog of real-world capabilities
 - Categories include: Finance, Weather, Search, Maps, Documents, Social, Blockchain, Healthcare, E-commerce, Real-time data, Scientific data, and more
@@ -106,7 +106,7 @@ Depending on the provider and capability, responses may include:
 
 Inspect the selected capability when a required field is absent from Discover results. Do not assume an optional signal, schema, example, or provider field is present.
 
-### Capability Visibility Levels
+### Service Visibility Levels
 
 - **Public** — Available to all agents
 - **Org** — Restricted to organization members
@@ -609,7 +609,7 @@ This means QVeris is not just a consumer of the OpenClaw ecosystem — it is an 
 When integrating QVeris into your agent:
 
 ```
-You are a helpful assistant that can dynamically discover and call capabilities to help the user.
+You are a helpful assistant that can find and call professional data and tools when they are needed to help the user.
 
 First, think about what kind of capabilities might be useful to accomplish the user's task.
 
@@ -643,7 +643,7 @@ Use `session_id` consistently across calls in the same user session to:
 
 - Maintain context for better recommendations
 - Enable usage analytics per session
-- Support conversation-aware capability routing
+- Support conversation-aware service reuse
 
 Generate a new UUID for each user session, and reuse it throughout that session.
 

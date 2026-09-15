@@ -141,7 +141,7 @@ configured ceiling.
 
 A credential provider supplies the bearer value that authenticates requests to
 the QVeris API itself. It is unrelated to the data and tool providers in the
-capability catalog: their upstream credentials are managed by the platform and
+service catalog: their upstream credentials are managed by the platform and
 never pass through the SDK.
 
 | Method | Billed | Returns | Notes |

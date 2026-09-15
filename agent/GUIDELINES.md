@@ -8,7 +8,7 @@ This document is platform-agnostic — applicable to MCP agents (Cursor, Claude 
 
 ## Core Concept
 
-QVeris is a **tool-finding and tool-calling engine**, not an information search engine.
+QVeris is a **professional data and tool access platform**, not an information search engine.
 
 - `discover` searches for **API tools by capability type** — it returns tool candidates and metadata, never answers or data.
 - `call` runs the selected tool to get actual data.

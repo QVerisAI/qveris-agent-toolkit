@@ -364,7 +364,7 @@ qveris discover "weather forecast API"     # Test discovery (free)
 
 Once verification passes, try a real task to confirm end-to-end:
 
-1. "Discover weather capabilities, inspect the best candidate, and check the weather in Tokyo"
-2. "Discover stock price capabilities, inspect the best candidate, and get the current price of AAPL"
+1. "Discover weather services, inspect a suitable candidate, and check the weather in Tokyo"
+2. "Discover stock-price services, inspect a suitable candidate, and get the current price of AAPL"
 
 These will exercise Discover (free), Inspect, and Call flows. If both succeed, QVeris is fully operational.

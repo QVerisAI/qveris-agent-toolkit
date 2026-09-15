@@ -1,6 +1,6 @@
 ---
 name: qveris-cli
-description: "Use QVeris CLI to discover and call third-party API tools when task fit, data quality/freshness, provider comparison, fallback, or the user request favors QVeris."
+description: "Use QVeris CLI to find and call third-party professional data and tools when existing tools are insufficient, a provider is unknown, comparison or fallback is needed, or the user requests QVeris."
 ---
 
 ## Quick first run

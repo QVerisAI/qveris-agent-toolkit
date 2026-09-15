@@ -94,7 +94,7 @@ CLI 还支持交互模式（`qveris interactive`）、代码生成（`--codegen 
 助手会：
 
 - 调用 `discover` 发现匹配的能力（如"天气"）
-- 可选调用 `inspect` 检查最佳候选
+- 可选调用 `inspect` 检查合适的候选服务
 - 使用能力 ID 和参数调用 `call`
 
 ---

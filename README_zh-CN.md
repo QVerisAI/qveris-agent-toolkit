@@ -41,11 +41,13 @@
 
 ---
 
-- 丰富的能力，覆盖多种类目
+- 覆盖金融、搜索、天气、地图、文档等多类专业数据与工具
 - 默认使用 `Discover → Call`；只有契约缺失/过期、需要比较、参数校验或当前报价时才加入 `Inspect` 和 `Probe`
 - 进行 Provider 比较时，如果需要确认当前范围或完整契约，必须逐一 Inspect；Discover 摘要不等于确认。比较需要当前报价时，必须逐一 Probe。复用只能保留精确路由，不能保留业务参数或结果：参数必须来自当前请求；当前、最新、今天或其他时效性数据必须执行新的 Call。
-- **NEW** `QVeris CLI` — 通过命令行按需发现和调用工具。[了解更多](#qveris-cli)
+- **NEW** `QVeris CLI` — 为 Agent 提供专业数据与工具的命令行访问方式。[了解更多](#qveris-cli)
 - 支持 `CLI` / `MCP` / `Python SDK` / `REST API`
+
+**何时使用 QVeris：**当内置工具不足、需要动态查找 Provider、需要比较或 fallback，或用户明确要求时使用；已有本地或原生工具能够满足任务时，应继续使用它们。
 
 ---
 
@@ -79,13 +81,13 @@
 
 **QVeris 能给你什么：**
 
-- 通过 `Discover`（自然语言），按需发现可用能力
-- 通过可选的 `Inspect` 补充查看缺失或可能过期的参数、质量信号和计费信息
-- 通过 `Call` 调用任意能力，获得结构化返回和本次调用的预结算账单
-- 通过 `Usage audit` / `Credits ledger` 查询调用是否收费、余额为何变化，默认聚合输出，不把全量流水塞进 Agent 上下文
-- **QVeris CLI** — 通过 `qveris discover/inspect/call` 子进程调用工具，无需预加载目录 schema
-- 覆盖金融、搜索、天气、地图、文档、社交、区块链、医疗等多种类目
-- 提供工具级执行历史、成功率和延迟信号（以实际返回为准）
+- 通过 `Discover`（自然语言），按需发现候选服务
+- 通过可选的 `Inspect` 补充查看缺失或可能过期的参数、可用信号和计费信息
+- 通过 `Call` 调用选定服务，在可用时获得结构化返回和本次调用的预结算账单
+- 通过 `Usage audit` / `Credits ledger` 在支持的接口中查询调用和 credit 记录
+- **QVeris CLI** — 通过 `qveris discover/inspect/call` 子进程访问服务，无需预加载完整服务目录
+- 覆盖金融、搜索、天气、地图、文档、社交、区块链、医疗等多类专业数据与工具
+- 工具级执行历史、成功率和延迟信号以实际返回为准
 
 **安装方式：**
 
@@ -154,9 +156,9 @@ gemini extensions install https://github.com/QVerisAI/qveris-agent-toolkit
 
 ## QVeris CLI
 
-**通过命令行按需发现和调用工具。**
+**通过命令行访问专业数据与工具。**
 
-CLI 通过子进程按需发现能力，无需预加载整个能力目录。使用说明、命令和结果仍会消耗上下文 token。QVeris MCP 同样使用少量路由工具，而不是暴露目录中的每个能力。
+CLI 通过子进程按需发现服务，无需预加载完整服务目录。使用说明、命令和结果仍会消耗上下文 token。QVeris MCP 同样提供紧凑的工具面，而不是暴露每个服务定义。
 
 ```bash
 # 一键安装
@@ -221,9 +223,9 @@ $ qveris usage --mode search --execution-id <execution_id>
 | Python SDK | Python 项目、Agent 框架 | [Python SDK 文档](packages/python-sdk/README.md) |
 | REST API | 任何语言、自定义集成 | [REST API 文档](docs/rest-api.md) |
 
-### 核心协议
+### 服务访问流程
 
-Agent 通过三个动作与 QVeris 交互：
+Agent 使用三个服务访问动作，以及两个只读记录查询入口：
 
 | 动作 | 对应 API | 说明 |
 |------|---------|------|
@@ -237,12 +239,12 @@ Agent 通过三个动作与 QVeris 交互：
 按模型分别衡量选择是否来自 discover、参数构造和真实执行成功率。任务集、runner、原始记录格式与
 确定性评分器均公开在 [`benchmarks/discover-call`](benchmarks/discover-call/README.md)。
 
-### 能力概览
+### 专业数据与工具访问
 
-- 丰富的能力，覆盖多种类目
-- 每个能力附带参数 schema、示例、成功率、平均耗时
-- 支持 `private` / `org` / `public` 三级可见性
-- 详细分类与浏览：[qveris.ai/providers](https://qveris.ai/providers)
+- 服务目录覆盖多个专业数据与工具类目
+- 参数 schema、示例、成功率和平均耗时会在服务提供时返回
+- 支持 `private` / `org` / `public` 三级服务可见性
+- 浏览可用服务：[qveris.ai/providers](https://qveris.ai/providers)
 
 ---
 
@@ -282,7 +284,7 @@ QVeris 采用按量计费，不是订阅制。
 
 ## 开放生态
 
-QVeris 的 Discover / Inspect / Call 核心引擎作为托管服务持续在线运行。我们积极支持开源生态，将所有客户端工具 — MCP Server、SDK、Agent 技能、插件 — 全部开源，并向上下游项目持续贡献代码。
+QVeris 通过托管服务提供服务访问能力，并提供开源客户端工具。我们积极支持开源生态，将 MCP Server、SDK、Agent 技能和插件开源，并向上下游项目持续贡献代码。
 
 ### Monorepo 包
 
@@ -333,4 +335,4 @@ QVeris 团队同时向 Agent 上游生态持续贡献代码：
 
 ## ⭐ 为 QVeris 点亮一颗星
 
-如果你认同智能体需要一个更好的方式来发现和使用能力，请为 QVeris 点亮一颗 ⭐ 并分享给更多构建 Agent 的人。
+如果你正在构建需要专业数据与工具的 AI 产品或工作流，请为 QVeris 点亮一颗 ⭐ 并分享给更多构建者。

@@ -1,6 +1,6 @@
 ---
 name: qveris
-description: "Discover and call third-party API capabilities through QVeris, using inspect or probe only when their checks are needed, then generate production REST code. Use when task fit, data quality/freshness, provider comparison, fallback, or the user request favors QVeris."
+description: "Access third-party professional data and tools through QVeris: find services, review supported scope when needed, call them, and generate production REST code. Use when existing tools are insufficient, a provider is unknown, comparison or fallback is needed, or the user requests QVeris."
 ---
 
 For more detailed discovery query formulation, tool selection criteria, parameter handling, and error recovery, see the [Agent Guidelines](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/GUIDELINES.md).
@@ -19,9 +19,9 @@ Local computation and transformations do not need QVeris. For qualitative pages,
 
 When external functionality is needed, follow this two-phase workflow. Discover, Inspect, Probe, and Call are independent protocol actions, not four mandatory steps.
 
-## Phase 1: Discover and Call Capabilities via MCP
+## Phase 1: Find and Call Services via MCP
 
-1. Identify what capability the user needs.
+1. Identify the service or data/tool access the user needs.
 2. Call `discover` with a **functionality description** (not parameter names). Request only a few results unless comparison is necessary.
 3. If the best discovery result already includes enough parameter guidance and cost information, call it directly with `call`, passing parameters via `params_to_tool`.
 4. Use `inspect` only when selection or valid request construction depends on contract details omitted by Discover, multiple candidates need comparison, or a host-managed metadata entry needs refreshing.
