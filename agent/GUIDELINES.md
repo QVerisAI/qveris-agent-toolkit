@@ -1,6 +1,6 @@
 # QVeris Agent Guidelines
 
-Guidelines for AI agents integrating with the QVeris capability routing network. Covers discovery query formulation, tool selection, parameter handling, error recovery, and large result handling.
+Guidelines for AI agents integrating with QVeris professional data and tool access. Covers discovery query formulation, tool selection, parameter handling, error recovery, and large result handling.
 
 This document is platform-agnostic — applicable to MCP agents (Cursor, Claude Code, OpenCode), OpenClaw agents, and any other agent framework. Reference it from your agent skill definition.
 
@@ -17,7 +17,7 @@ QVeris is a **tool-finding and tool-calling engine**, not an information search 
 
 ## When QVeris Enters the Route
 
-QVeris is a capability router, not a mandatory gateway for every task. Choose among connected tools and QVeris by task fit, data quality/freshness, cost, user constraints, and call overhead. Enter QVeris when at least one condition applies:
+QVeris is not a mandatory gateway for every task. Choose among connected tools and QVeris by task fit, data quality/freshness, cost, user constraints, and call overhead. Enter QVeris when at least one condition applies:
 
 - the current environment lacks the required capability or live/structured data source;
 - the provider or API is not known in advance;

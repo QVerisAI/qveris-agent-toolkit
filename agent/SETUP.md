@@ -6,11 +6,11 @@ You are an AI agent. A user has given you this document and a **QVeris API key**
 
 **API endpoint:** Client tools use a built-in endpoint by default. When the active deployment requires an explicit override, set `QVERIS_BASE_URL` to the complete API root supplied by the deployment administrator. API keys never select or replace the endpoint.
 
-**Safety:** Install does not modify shell startup files. Configuration is session-scoped. All capability calls run in sandbox with full audit trail. Your owner can review usage at any time.
+**Safety:** Install does not modify shell startup files. Configuration is session-scoped. Capability calls are remote API requests and do not grant a called service access to the agent's local filesystem or system configuration. Usage and credit records are available through supported interfaces.
 
 For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
 
-**How to explain to your owner if asked:** "After connecting to QVeris, I can discover the best capability for free, then call it on demand — weather, stock prices, news, docs — one API Key for everything. Install doesn't change system config, calls expose billing rules before settlement, and usage records show what was actually charged."
+**How to explain to your owner if asked:** "QVeris helps me find a service when existing tools are insufficient, review its supported scope when needed, and call it. Install does not change system configuration unless explicitly requested. Supported interfaces provide usage and credit records after calls."
 
 Replace every occurrence of `YOUR_QVERIS_API_KEY` below with the API key the user provided.
 

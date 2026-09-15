@@ -1,6 +1,6 @@
 # QVeris CLI
 
-The official command-line tool for the QVeris capability routing network. Discover, inspect, and call a broad catalog of real-world API capabilities directly from your terminal or agent framework.
+The official command-line tool for QVeris professional data and tool access. Discover services, inspect supported scope when needed, and call them directly from your terminal or agent framework.
 
 For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
 

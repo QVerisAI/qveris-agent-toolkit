@@ -159,8 +159,8 @@ Try a task: "Check the current weather in Tokyo"
 **Safety:**
 
 - Install does not modify your shell config (unless you explicitly ask)
-- All capability calls run in sandbox
-- You can review call logs and credit usage anytime
+- Capability calls are remote API requests and do not grant a called service access to your local filesystem or system configuration
+- You can review usage and credit records through supported interfaces
 
 ---
 
@@ -281,9 +281,9 @@ QVeris uses pay-as-you-go pricing. No subscriptions.
 
 ## Security & Trust
 
-- All capability calls execute in sandbox
+- Capability calls are remote API requests and do not grant a called service access to your local filesystem or system configuration
 - Session-scoped config, no system file modifications by default
-- Full audit trail with execution IDs
+- Usage and credit records through supported interfaces
 - RBAC and per-capability access control
 - Rate limiting and quota enforcement
 - Enterprise options (VPC / private cloud) planned
