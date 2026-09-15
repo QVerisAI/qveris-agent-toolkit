@@ -54,7 +54,7 @@
   "uiHints": {
     "apiKey": {
       "label": "QVeris API Key",
-      "help": "QVeris API key for capability discovery and tool calling (fallback: QVERIS_API_KEY env var).",
+      "help": "QVeris API key for professional data and tool access (fallback: QVERIS_API_KEY env var).",
       "sensitive": true,
       "placeholder": "qv-..."
     },

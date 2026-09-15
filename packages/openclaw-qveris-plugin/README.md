@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-OpenClaw plugin that gives agents dynamic capability discovery and tool calling via the [QVeris](https://qveris.ai) API.
+OpenClaw plugin that gives agents access to professional data and tools through the [QVeris](https://qveris.ai) API. It helps an agent find services dynamically, review supported scope when needed, and call them.
 
 ## What it does
 
@@ -13,9 +13,9 @@ Three tools are registered into the agent's context once the plugin is loaded:
 
 | Tool | Description |
 |------|-------------|
-| `qveris_discover` | Search for tools by natural language query (e.g. "weather", "currency exchange") |
-| `qveris_call` | Execute a discovered tool with parameters |
-| `qveris_inspect` | Look up detailed schema and examples for known tool IDs |
+| `qveris_discover` | Find candidate services by natural-language need (e.g. "weather", "currency exchange") |
+| `qveris_call` | Call a discovered service with parameters |
+| `qveris_inspect` | Review detailed schema and examples for known service IDs |
 
 Choose QVeris when task fit, data quality/freshness, provider comparison, fallback, or the user's request favors it; it is not a mandatory gateway when another connected tool is a better fit. Within QVeris, the default path is `qveris_discover` → `qveris_call`. Use `qveris_inspect` only when selection or valid request construction needs contract details that discovery omitted or may have made stale.
 

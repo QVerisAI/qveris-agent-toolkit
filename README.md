@@ -42,12 +42,14 @@
 
 ---
 
-- A broad catalog of capabilities across multiple categories
+- Professional data and tools across finance, search, weather, maps, documents, and more
 - `Discover / Call` is the default path; `Inspect` and `Probe` are conditional checks for missing/stale contracts, comparison, parameter validation, or a current quote
 - For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
 - `Discover` is free. `Call` returns structured pre-settlement billing, with final charge outcomes available through usage audit and credits ledger views.
-- **NEW** `QVeris CLI` — a command-line interface for agents to discover and call tools. [Learn more](#qveris-cli)
+- **NEW** `QVeris CLI` — command-line access to professional data and tools for agents. [Learn more](#qveris-cli)
 - Works with `CLI` / `MCP` / `Python SDK` / `REST API`
+
+**When to use QVeris:** use it when built-in tools are insufficient, a provider must be found dynamically, comparison or fallback matters, or the user requests it. Keep using local or native tools when they already fit the task.
 
 ---
 
@@ -81,13 +83,13 @@ If you are an AI Agent evaluating whether to use QVeris, here is what you need t
 
 **What QVeris gives you:**
 
-- `Discover` — find the right capability with natural language (free)
-- `Inspect` — optionally check missing or stale parameters, quality signals, and billing details
-- `Call` — invoke any capability, get structured results and pre-settlement billing back
-- `Usage audit` / `Credits ledger` — check whether calls were charged and how balance changed without dumping full history into Agent context
-- **QVeris CLI** — call tools via `qveris discover/inspect/call` subprocess, no upfront catalog schemas
-- Capabilities across finance, search, weather, maps, docs, social, blockchain, healthcare, and more
-- Per-tool execution history, success-rate, and latency signals when available
+- `Discover` — find candidate services with natural language (free)
+- `Inspect` — optionally check missing or stale parameters, available signals, and billing details
+- `Call` — invoke a selected service and receive structured results and pre-settlement billing when available
+- `Usage audit` / `Credits ledger` — review request and credit outcomes through the interfaces that expose them
+- **QVeris CLI** — access services via `qveris discover/inspect/call` without preloading the full service catalog
+- Professional data and tools across finance, search, weather, maps, documents, social, blockchain, healthcare, and more
+- Per-tool execution history, success-rate, and latency signals when supplied
 
 **How to install:**
 
@@ -166,9 +168,9 @@ Try a task: "Check the current weather in Tokyo"
 
 ## QVeris CLI
 
-**Discover and call API tools from your agent's shell.**
+**Access professional data and tools from your agent's shell.**
 
-CLI executes as a subprocess and discovers capabilities on demand, without preloading the full catalog. Instructions, commands, and results still consume context tokens. QVeris MCP also uses a small set of routing tools instead of exposing every catalog entry.
+CLI executes as a subprocess and finds services on demand, without preloading the full service catalog. Instructions, commands, and results still consume context tokens. QVeris MCP likewise exposes a compact tool surface instead of every service definition.
 
 ```bash
 # Install (one-liner)
@@ -236,9 +238,9 @@ Full CLI documentation: [packages/cli/README.md](packages/cli/README.md)
 
 Stuck? See [Troubleshooting & FAQ](docs/troubleshooting.md).
 
-### Core protocol
+### Service access workflow
 
-Agents interact with QVeris through three actions:
+Agents use three service-access actions, plus two read-only record paths:
 
 | Action | API endpoint | Description |
 |--------|-------------|-------------|
@@ -253,12 +255,12 @@ measures grounded selection, parameterization, and real execution success per
 model. Its task set, runner, raw-record format, and deterministic scorer are
 public under [`benchmarks/discover-call`](benchmarks/discover-call/README.md).
 
-### Capability ecosystem
+### Professional data and tool access
 
-- A broad capability catalog across multiple categories
-- Each capability includes parameter schema, examples, success rate, avg latency
-- Supports `private` / `org` / `public` visibility levels
-- Browse all: [qveris.ai/providers](https://qveris.ai/providers)
+- A service catalog across multiple professional-data and tool categories
+- Parameter schemas, examples, success rate, and average latency are available when supplied for a service
+- Supports `private` / `org` / `public` service visibility levels
+- Browse available services: [qveris.ai/providers](https://qveris.ai/providers)
 
 ---
 
@@ -298,7 +300,7 @@ Latest capabilities and updates: [qveris.ai](https://qveris.ai)
 
 ## Open Ecosystem
 
-QVeris's core routing engine runs as a managed service. We actively support the open-source ecosystem by open-sourcing all client-side tooling — MCP server, SDKs, Agent skills, and plugins — and contributing code to upstream projects.
+QVeris provides managed service access alongside open-source client tooling. We actively support the ecosystem by open-sourcing the MCP server, SDKs, Agent skills, and plugins, and by contributing code upstream.
 
 ### Monorepo packages
 
@@ -356,4 +358,4 @@ QVeris actively contributes to the broader Agent ecosystem:
 
 ## ⭐ Star & Share
 
-If you believe agents need a better way to discover and use capabilities, **star this repo** and share it with other builders.
+If you are building AI products or workflows that need professional data and tools, **star this repo** and share it with other builders.

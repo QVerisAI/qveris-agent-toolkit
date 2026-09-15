@@ -6,7 +6,7 @@ For provider comparison, Inspect every candidate when current scope or a complet
 
 `@qverisai/cli` v0.11.3 is the latest tested release. It includes OAuth Device Flow sessions, zero-cost parameter/quote probes, opt-in discovery and call projections, and Call model attribution while preserving API key compatibility.
 
-**Why CLI?** CLI runs as a subprocess with structured output and on-demand discovery. It does not preload the full capability catalog. Instructions, commands, and results still consume context tokens; QVeris MCP also uses a small set of routing tools.
+**Why CLI?** CLI runs as a subprocess with structured output and on-demand discovery. It does not preload the full service catalog. Instructions, commands, and results still consume context tokens; QVeris MCP also exposes a compact tool surface.
 
 ## Installation
 

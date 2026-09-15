@@ -510,7 +510,7 @@ Choose between connected tools and QVeris by task fit, data quality/freshness, c
 For most QVeris tasks, use this flow:
 
 1. `discover` to find relevant capabilities
-2. `call` the best candidate directly when discovery provides enough schema and cost information
+2. `call` a suitable candidate directly when discovery provides enough schema and cost information
 
 In practice:
 

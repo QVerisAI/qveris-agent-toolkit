@@ -94,7 +94,7 @@ For the full MCP reference, see [MCP Server documentation](mcp-server.md) or the
 The assistant will:
 
 - call `discover` to find matching capabilities (e.g. "weather")
-- optionally call `inspect` to review the best candidate
+- optionally call `inspect` to review a suitable candidate
 - call `call` with the capability id + parameters
 
 ---
