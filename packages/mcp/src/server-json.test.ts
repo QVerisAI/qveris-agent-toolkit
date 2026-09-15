@@ -62,7 +62,7 @@ describe('MCP Registry manifest', () => {
     const local = manifest.packages?.find((entry) => entry.identifier === '@qverisai/mcp');
 
     expect(manifest.title).toBe('QVeris');
-    expect(manifest.description).toContain('Discover, inspect, quote, and call');
+    expect(manifest.description).toContain('Bring professional data and tools to the AI you already use');
     expect(manifest.icons).toContainEqual({
       src: 'https://raw.githubusercontent.com/QVerisAI/qveris-agent-toolkit/main/assets/logo-color.png',
       mimeType: 'image/png',
