@@ -1,7 +1,7 @@
 {
   "name": "qveris",
   "version": "0.14.5",
-  "description": "Discover, inspect, and call real-world API capabilities from Gemini CLI with QVeris.",
+  "description": "Bring professional data and tools to Gemini CLI: find services, review supported scope, call them, and audit usage with QVeris.",
   "mcpServers": {
     "qveris": {
       "httpUrl": "https://mcp.qveris.ai/mcp",

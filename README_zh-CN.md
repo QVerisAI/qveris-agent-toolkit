@@ -4,8 +4,8 @@
 
   <h1>QVeris Agent Toolkit</h1>
 
-  <p><strong>把世界的能力，变成智能体的能力。</strong></p>
-  <p>QVeris 是智能体能力路由网络。本仓库是开源 Agent Toolkit：通过 CLI、MCP Server、Python SDK、技能和 REST API 文档，让开发者发现、检查、调用和审计真实世界工具。</p>
+  <p><strong>让你正在用的 AI，用上业务需要的专业数据。</strong></p>
+  <p>QVeris 是面向 AI 的专业数据与工具接入平台。本仓库提供开源 Agent Toolkit：通过 CLI、MCP Server、Python SDK、技能和 REST API 文档，帮助 AI 助手、产品和工作流查找服务、查看支持范围、调用服务并核对使用记录。</p>
   <p>
   官方网站：<a href="https://qveris.ai" target="_blank"><b>https://qveris.ai</b></a>
   </p>

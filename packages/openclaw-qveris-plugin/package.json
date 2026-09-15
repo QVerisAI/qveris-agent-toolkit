@@ -1,7 +1,7 @@
 {
   "name": "@qverisai/qveris",
   "version": "2026.9.10",
-  "description": "OpenClaw QVeris plugin — capability discovery, tool inspection, and tool calling",
+  "description": "OpenClaw QVeris plugin — connect agents to professional data and tools: find services, review supported scope, call, and audit usage",
   "repository": {
     "type": "git",
     "url": "https://github.com/QVerisAI/qveris-agent-toolkit",

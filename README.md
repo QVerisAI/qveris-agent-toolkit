@@ -4,8 +4,8 @@
 
   <h1>QVeris Agent Toolkit</h1>
 
-  <p><strong>Every capability. One call away.</strong></p>
-  <p>QVeris is the capability routing network for agents. This repository is the open-source agent toolkit: CLI, MCP server, Python SDK, skills, and REST API docs for discovering, inspecting, calling, and auditing real-world tools.</p>
+  <p><strong>Bring professional data to the AI you already use.</strong></p>
+  <p>QVeris is a professional data and tool access platform for AI. This open-source toolkit provides the CLI, MCP server, Python SDK, skills, and REST API docs that help AI assistants, products, and workflows find services, review supported scope, call them, and audit usage.</p>
   <p>
   Website: <a href="https://qveris.ai" target="_blank"><b>https://qveris.ai</b></a>
   </p>
