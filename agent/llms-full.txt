@@ -1,8 +1,8 @@
 # QVeris — Complete Information for AI Agents and LLMs
 
-> Turn the world's real-world capabilities into agent capabilities.
+> Bring professional data and tools to the AI you already use.
 
-QVeris is the capability routing network for agents — discover, compare, call, and settle real-world capabilities through one unified protocol.
+QVeris is a professional data and tool access platform. It helps AI assistants, products, and workflows find services, review supported scope, call them, and audit usage where that interface supports it.
 
 ---
 
@@ -10,46 +10,32 @@ QVeris is the capability routing network for agents — discover, compare, call,
 
 ### What QVeris Does
 
-QVeris organizes tools, data sources, and agent services into a discoverable, comparable, callable, and settleable unified network. It solves three critical problems that Agent faces:
+QVeris connects AI systems to available tools, data sources, and agent services through documented interfaces. It helps with three practical questions:
 
-1. **Which capability to call?** — Agents don't need to blindly select APIs. Use natural language to Discover the best candidates.
-2. **Can I trust it?** — Each capability comes with quality signals: success rate, latency, pricing, provider reputation.
-3. **How do I pay?** — Unified settlement: one API key, one credit balance, all capabilities accessible.
+1. **What service can help?** — Use natural language to Discover candidates when the needed capability or provider is not already known.
+2. **Does it support this request?** — Inspect the current contract when selection, comparison, or valid parameter construction needs more detail than the discovery result provides.
+3. **What happened after the call?** — Use the available usage-history and ledger interfaces to review request and credit records.
 
-### The Five-Layer System (QVeris's Moat)
+### Service Access Workflow
 
-QVeris is not "just another API aggregator." Our defensibility comes from five layers:
+The default route is **Discover → Call**. Inspect and Probe are optional controls, not mandatory steps:
 
-1. **Discover** — Natural language capability discovery index. Requires semantic understanding and continuous updates. Agents find capabilities without knowing exact API names.
+1. **Discover** — Find candidate services by capability need.
 
-2. **Signals** — Success rate, average latency, pricing for every capability. This data only exists after large-scale usage. New entrants have no cold-start data.
+2. **Inspect** — Review service scope, parameters, examples, and available signals when needed.
 
-3. **Routing** — Task-specific capability selection. Routing quality improves with historical data accumulation.
+3. **Probe** — Validate parameters or obtain a current quote only when preflight information is needed.
 
-4. **Trust** — Permission controls, sandbox execution, audit logs. Enterprise customers won't route calls through platforms without security infrastructure.
+4. **Call and review records** — Execute a selected service, then use usage-history or ledger interfaces when those records are needed.
 
-5. **Settlement** — Unified billing, governance, and distribution. Once providers integrate and generate revenue, migration costs are high.
-
-**Network effect:** More usage → Better signals → Better routing → More agents → More providers → More usage.
+Use QVeris when local tools are insufficient, a capability must be found dynamically, a provider comparison matters, a fallback is needed, or the user explicitly asks for it. Do not use it for ordinary local computation or text/code transformation.
 
 ### Why QVeris vs OpenClaw
 
 - **OpenClaw** is a runtime. It lets agents use tools.
-- **QVeris** is a capability routing network. It tells agents which capability to call, why to trust it, and how to pay.
+- **QVeris** connects the runtime to professional data and tools, so the agent can find services, review their supported scope, and call them.
 
-They are **runtime + capability network**, not competitors. OpenClaw provides the execution environment; QVeris provides the capability supply layer. Agents need both.
-
-### Why QVeris When Super-Apps Monopolize Entry Points
-
-When ChatGPT, Claude, or other super-apps dominate user entry points, QVeris becomes more important, not less:
-
-1. **Super-apps own users, not neutral supply.** ChatGPT won't fairly recommend Gemini's tools. Gemini won't prioritize Claude's capabilities. They integrate high-frequency tools but won't neutrally maintain a broad catalog of real-world capabilities open to all agents.
-
-2. **Providers don't want platform lock-in.** Tool and data providers don't want to be trapped in one super-app's ecosystem.
-
-3. **Agents need cross-platform capability access.** As entry points consolidate, the neutral capability routing layer becomes essential — like how Visa doesn't belong to any single bank, but all banks need it.
-
-**QVeris's position:** Cross-platform neutral capability routing layer, relied upon by both entry-point products and supply-side providers.
+They are complementary: OpenClaw provides an execution environment, while QVeris provides access to the services that its plugin exposes.
 
 ---
 
