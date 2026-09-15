@@ -93,16 +93,18 @@ For provider comparison, Inspect every candidate when current scope or a complet
 - Execution history and success-rate signals when available
 - Per-tool latency signals when available
 
-### Quality Signals for Each Capability
+### Metadata Available Per Capability
 
-Every capability includes:
+Depending on the provider and capability, responses may include:
 
-- **Parameter schema** — Typed parameters with descriptions, required/optional flags, enums
+- **Parameter schema** — Typed parameters with descriptions, required/optional flags, and enums
 - **Usage examples** — Sample parameters and expected results
 - **Success rate** — Historical percentage of successful calls
 - **Average latency** — Typical execution time in milliseconds
 - **Pricing** — Structured `billing_rule` when available; legacy price fields are fallback estimates
-- **Provider info** — Provider name, description, region
+- **Provider info** — Provider name, description, and region
+
+Inspect the selected capability when a required field is absent from Discover results. Do not assume an optional signal, schema, example, or provider field is present.
 
 ### Capability Visibility Levels
 
