@@ -2,13 +2,13 @@
 
 ## What is QVeris
 
-**QVeris** is the **capability routing network for agents**. It lets your agent:
+**QVeris** is a **professional data and tool access platform**. It helps your agent:
 
 - **Discover** capabilities (APIs, data sources, automations) using natural language — free
 - **Inspect** candidate capabilities to compare parameters, success rate, latency, and price
 - **Call** any capability with structured parameters and get structured results back
 
-QVeris works well in agent loops (Discover → Inspect → Call → feed results back to the model) and supports multiple integration styles.
+QVeris supports multiple integration styles. The default path is Discover → Call; add Inspect only when selection or request construction needs more current contract detail, and add Probe only when preflight validation or a current quote is needed.
 
 For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
 

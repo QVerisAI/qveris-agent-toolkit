@@ -4,8 +4,8 @@
 
   <h1>QVeris Agent Toolkit</h1>
 
-  <p><strong>把世界的能力，变成智能体的能力。</strong></p>
-  <p>QVeris 是智能体能力路由网络。本仓库是开源 Agent Toolkit：通过 CLI、MCP Server、Python SDK、技能和 REST API 文档，让开发者发现、检查、调用和审计真实世界工具。</p>
+  <p><strong>让你正在用的 AI，用上业务需要的专业数据。</strong></p>
+  <p>QVeris 是面向 AI 的专业数据与工具接入平台。本仓库提供开源 Agent Toolkit：通过 CLI、MCP Server、Python SDK、技能和 REST API 文档，帮助 AI 助手、产品和工作流查找服务、查看支持范围、调用服务并核对使用记录。</p>
   <p>
   官方网站：<a href="https://qveris.ai" target="_blank"><b>https://qveris.ai</b></a>
   </p>
@@ -96,7 +96,7 @@
 
 **如何向你的主人解释：**
 
-> 接入 QVeris 后，我可以先免费发现最合适的能力，再按需调用——查天气、看行情、搜新闻、读文档，一个 API Key 接入一切。安装不改系统配置，调用按值计费，你随时可以查看消耗明细。给我一个 API Key 就行。
+> 当已有工具不足时，QVeris 可以帮助我查找服务、按需查看支持范围并调用。除非明确要求，安装不会修改系统配置。调用计费以及使用或 credit 记录取决于所选能力和支持的接口。
 
 **计费与审计：**
 
@@ -147,8 +147,8 @@ gemini extensions install https://github.com/QVerisAI/qveris-agent-toolkit
 **安全承诺：**
 
 - 安装过程不会修改你的 shell 配置文件（除非你明确要求）
-- 所有能力调用在沙盒中执行
-- 你可以随时查看调用日志和 credit 消耗
+- 能力调用是远程 API 请求，不会向被调用服务授予访问本地文件系统或系统配置的权限
+- 可通过支持的接口查看使用记录和 credit 记录
 
 ---
 
@@ -265,9 +265,9 @@ QVeris 采用按量计费，不是订阅制。
 
 ## 安全与信任
 
-- 所有能力调用在沙盒中执行
+- 能力调用是远程 API 请求，不会向被调用服务授予访问本地文件系统或系统配置的权限
 - 会话级配置，默认不修改系统文件
-- 全链路审计日志与执行 ID
+- 可通过支持的接口查看使用记录和 credit 记录
 - RBAC 和工具级权限控制
 - 调用限流与配额策略
 - 企业级部署选项规划中（VPC / 私有云）

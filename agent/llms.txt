@@ -1,12 +1,12 @@
 # QVeris
 
-> Every capability. One call away. QVeris is the capability routing network for agents — discover, compare, call, and settle real-world capabilities through one protocol.
+> Bring professional data to the AI you already use. QVeris is a professional data and tool access platform that helps AI assistants, products, and workflows find services, review supported scope, call them, and audit usage.
 
 ## What QVeris does
-- Lets Agents discover the right capability with natural language instead of blindly picking APIs
-- Provides quality signals (success rate, latency, price) so Agents can make informed choices
-- Handles permissions, sandbox execution, billing, audit, and supply-side distribution
-- Allows Agents to both consume and (in the future) provide capabilities
+- Helps Agents find services with natural language instead of blindly picking APIs
+- Makes supported scope, available parameters, and applicable cost information available when the selected service provides them
+- Provides a consistent connection and calling path, plus usage and credit-ledger records
+- Lets users keep working in the AI assistants, products, and workflows they already use
 
 ## Core protocol
 - Discover: find capabilities with natural language (free)
@@ -33,8 +33,8 @@
 
 ## How QVeris relates to OpenClaw
 - OpenClaw lets Agents use tools (runtime)
-- QVeris lets Agents know which to call, why to trust it, and how to pay (capability routing)
-- They are runtime + capability routing network, complementary not competing
+- QVeris helps agents find, connect to, and call professional data and tool services, then review usage
+- They are complementary: OpenClaw supplies a runtime, while QVeris supplies service discovery, access, calling, and usage records
 
 ## Access methods (recommended order)
 - Hosted MCP (recommended for remote-capable MCP clients): open /hosted-mcp on the QVeris site that issued the API key for the correct Streamable HTTP endpoint and Bearer authentication setup — no local process, Node.js, or package install
