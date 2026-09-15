@@ -43,6 +43,16 @@ def is_youcom_provider(provider_name: Optional[str]) -> bool:
     return _normalize_provider_name(provider_name) in _YOU_COM_PROVIDER_IDS
 
 
+class ToolExecutionError(RuntimeError):
+    """The capability was invoked but the execution reported failure.
+
+    The API returns a normal HTTP response with ``success: false`` (for
+    example invalid parameters or a provider failure) instead of raising,
+    so failed executions must be surfaced explicitly rather than packaged
+    as a successful result.
+    """
+
+
 class YouComSearchClient:
     """Wrapper for You.com web search via QVeris."""
 
@@ -133,6 +143,16 @@ class YouComSearchClient:
             search_id=self._search_id,
         )
 
+        # A normal HTTP response can still report a failed execution
+        # (success: false, e.g. invalid params or a provider failure).
+        # Surface that instead of packaging it as a successful search.
+        success = getattr(result, "success", None)
+        if success is False:
+            error_message = getattr(result, "error_message", None) or "tool execution reported failure"
+            raise ToolExecutionError(
+                f"You.com execution failed: {error_message}"
+            )
+
         return {
             "execution_id": result.execution_id,
             "tool_used": {
@@ -212,6 +232,11 @@ async def demo_searches() -> int:
 
         return 0
 
+    except ToolExecutionError as e:
+        # The call was made and failed — do not report success.
+        print(f"Execution failed: {e}")
+        return 1
+
     except RuntimeError as e:
         # Expected outcome while You.com is not onboarded with QVeris.
         print(f"Not executed: {e}")
@@ -234,6 +259,10 @@ async def single_search_example(query: str = "latest developments in quantum com
         print(f"\nResults from {result['tool_used']['provider']}:")
         print(json.dumps(result["results"], indent=2))
         return 0
+
+    except ToolExecutionError as e:
+        print(f"Execution failed: {e}")
+        return 1
 
     except RuntimeError as e:
         print(f"Not executed: {e}")

@@ -46,7 +46,9 @@ if [[ -z "$tool_id" ]]; then
 fi
 
 # 3. Inspect the capability to read its parameter schema
-inspect_result=$(qveris inspect "$tool_id" --search-id "$search_id" --json)
+#    (--discovery-id binds inspect/call to this shell's discovery session;
+#    --search-id is only a usage-history filter and is ignored)
+inspect_result=$(qveris inspect "$tool_id" --discovery-id "$search_id" --json)
 echo "$inspect_result" | jq -r '.results[0] | [(.params[]?.name)]'
 
 # 4. Execute a search — construct params from the schema the tool declares
@@ -63,12 +65,16 @@ else
   params=$(jq -nc --arg f "$query_field" '{($f): "latest developments in quantum computing"}')
 fi
 execution=$(qveris call "$tool_id" \
-  --search-id "$search_id" \
+  --discovery-id "$search_id" \
   --params "$params" \
   --json)
 
-# 5. Extract execution ID for audit
+# 5. Extract execution ID for audit, and verify the execution actually
+#    succeeded — a 200 response can still carry success: false
 execution_id=$(echo "$execution" | jq -r '.execution_id')
+if [[ $(echo "$execution" | jq -r '.success // "true"') == "false" ]]; then
+  echo "Execution failed: $(echo "$execution" | jq -r '.error_message // "no error detail"')" && exit 1
+fi
 
 # 6. Audit the call (optional)
 qveris usage --summary --execution-id "$execution_id" --json
@@ -135,6 +141,12 @@ async def search_web(query: str, count: int = 5) -> None:
             params,
             search_id=discovered.search_id
         )
+
+        # A 200 response can still report a failed execution
+        # (success: false) — surface it instead of printing it as results.
+        if getattr(result, "success", None) is False:
+            print(f"Execution failed: {getattr(result, 'error_message', None) or 'no error detail'}")
+            return
 
         print("Search Results:")
         print(result.model_dump_json(indent=2))

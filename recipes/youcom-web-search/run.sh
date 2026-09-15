@@ -66,7 +66,10 @@ echo "Tool ID: $tool_id"
 # Inspect the capability and show its declared parameter schema
 echo
 echo "🔎 Inspecting capability details..."
-inspect_result=$("${qv[@]}" inspect "$tool_id" --search-id "$search_id" --json)
+# --discovery-id (not --search-id): the CLI parser binds inspect/call to
+# this script's discovery session via flags.discoveryId; --search-id is
+# only a usage-history filter and is ignored by inspect/call.
+inspect_result=$("${qv[@]}" inspect "$tool_id" --discovery-id "$search_id" --json)
 echo "$inspect_result" | jq -r '.results[0] | "Parameters: \([.params[]? | .name] | join(", ") // "None specified")"'
 
 # Build params from the declared schema so we only send fields this tool
@@ -90,12 +93,21 @@ fi
 echo
 echo "🌐 Searching: \"latest AI breakthroughs 2026\""
 execution=$("${qv[@]}" call "$tool_id" \
-    --search-id "$search_id" \
+    --discovery-id "$search_id" \
     --params "$params" \
     --json)
 
 execution_id=$(jq -r '.execution_id' <<<"$execution")
 echo "Execution ID: $execution_id"
+
+# A 200 response can still report a failed execution (success: false,
+# e.g. invalid params or a provider failure) — check before treating the
+# paid call as successful.
+if [[ $(jq -r '.success // "true"' <<<"$execution") == "false" ]]; then
+    echo
+    echo "❌ You.com execution failed: $(jq -r '.error_message // "no error detail"' <<<"$execution")"
+    exit 1
+fi
 
 # Show search results (truncated for readability). The provider payload sits
 # under .result.data per the documented response contract.
