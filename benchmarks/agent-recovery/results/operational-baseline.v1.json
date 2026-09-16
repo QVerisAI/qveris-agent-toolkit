@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "lane": "controlled_observability_fixture",
+  "production_success_claim": false,
+  "sources": {
+    "events_sha256": "57dd0403156ad9dc27efb37f8e948e616403ddfb615c4277756733291c4716b3",
+    "alerts_sha256": "d21c13b7a2840fce2aa89615e4654646aab001be6a5445a3458ac87983fedcbc"
+  },
+  "task_count": 11,
+  "metrics": {
+    "task_completion_rate": {
+      "numerator": 5,
+      "denominator": 6,
+      "rate": 0.8333333333333334,
+      "description": "Completed tasks / tasks explicitly eligible to complete under the supplied authority and fixture state.",
+      "direction": "min",
+      "threshold": 0.8,
+      "min_denominator": 5,
+      "severity": "warning",
+      "status": "pass"
+    },
+    "automatic_recovery_success_rate": {
+      "numerator": 3,
+      "denominator": 4,
+      "rate": 0.75,
+      "description": "Tasks completed by automatic recovery / tasks where automatic recovery was attempted.",
+      "direction": "min",
+      "threshold": 0.75,
+      "min_denominator": 4,
+      "severity": "warning",
+      "status": "pass"
+    },
+    "duplicate_call_task_rate": {
+      "numerator": 0,
+      "denominator": 8,
+      "rate": 0,
+      "excess_submitted_calls": 0,
+      "description": "Tasks with more than one submitted Call request / tasks with at least one submitted Call request.",
+      "direction": "max",
+      "threshold": 0,
+      "min_denominator": 1,
+      "severity": "critical",
+      "status": "pass"
+    },
+    "duplicate_charge_task_rate": {
+      "numerator": 0,
+      "denominator": 4,
+      "rate": 0,
+      "excess_charge_settlements": 0,
+      "description": "Tasks with more than one distinct charge-bearing final settlement / tasks with at least one charge-bearing final settlement.",
+      "direction": "max",
+      "threshold": 0,
+      "min_denominator": 1,
+      "severity": "critical",
+      "status": "pass"
+    },
+    "review_settlement_rate": {
+      "numerator": 0,
+      "denominator": 2,
+      "rate": 0,
+      "description": "Submitted Call tasks ending in review_settlement / submitted Call tasks ending in any settlement recovery action.",
+      "direction": "max",
+      "threshold": 0.1,
+      "min_denominator": 2,
+      "severity": "warning",
+      "status": "pass"
+    },
+    "missing_execution_id_rate": {
+      "numerator": 0,
+      "denominator": 7,
+      "rate": 0,
+      "description": "Non-rejected submitted Call attempts without execution_id / non-rejected submitted Call attempts.",
+      "direction": "max",
+      "threshold": 0,
+      "min_denominator": 1,
+      "severity": "critical",
+      "status": "pass"
+    },
+    "final_settlement_evidence_coverage": {
+      "numerator": 6,
+      "denominator": 7,
+      "rate": 0.8571428571428571,
+      "description": "Non-rejected submitted Call tasks with final Usage/Ledger evidence for every non-rejected attempt / non-rejected submitted Call tasks.",
+      "direction": "min",
+      "threshold": 0.8,
+      "min_denominator": 5,
+      "severity": "warning",
+      "status": "pass"
+    }
+  },
+  "alert_summary": {
+    "status": "pass",
+    "alert_count": 0,
+    "alerts": []
+  }
+}

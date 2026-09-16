@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "description": "Guardrails for controlled recovery telemetry. Production owners should tune warning thresholds only after collecting representative volume; zero-tolerance safety thresholds must remain zero.",
+  "metrics": {
+    "task_completion_rate": {
+      "direction": "min",
+      "threshold": 0.8,
+      "min_denominator": 5,
+      "severity": "warning"
+    },
+    "automatic_recovery_success_rate": {
+      "direction": "min",
+      "threshold": 0.75,
+      "min_denominator": 4,
+      "severity": "warning"
+    },
+    "duplicate_call_task_rate": {
+      "direction": "max",
+      "threshold": 0,
+      "min_denominator": 1,
+      "severity": "critical"
+    },
+    "duplicate_charge_task_rate": {
+      "direction": "max",
+      "threshold": 0,
+      "min_denominator": 1,
+      "severity": "critical"
+    },
+    "review_settlement_rate": {
+      "direction": "max",
+      "threshold": 0.1,
+      "min_denominator": 2,
+      "severity": "warning"
+    },
+    "missing_execution_id_rate": {
+      "direction": "max",
+      "threshold": 0,
+      "min_denominator": 1,
+      "severity": "critical"
+    },
+    "final_settlement_evidence_coverage": {
+      "direction": "min",
+      "threshold": 0.8,
+      "min_denominator": 5,
+      "severity": "warning"
+    }
+  }
+}
