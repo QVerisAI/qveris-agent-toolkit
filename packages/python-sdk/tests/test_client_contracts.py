@@ -47,6 +47,22 @@ def test_public_errors_expose_machine_readable_next_action() -> None:
     assert uncertain.next_action["requires_user"] is False
 
 
+def test_paid_call_rate_limit_is_not_a_safe_read_retry() -> None:
+    error = QverisApiError(
+        "rate limited",
+        status=429,
+        operation="call",
+        request_metadata=RequestMetadata(operation="call"),
+    )
+    assert error.next_action == {
+        "action": "reconcile_settlement",
+        "automatic": False,
+        "requires_user": False,
+        "missing_fields": [],
+        "reason": "call_outcome_may_be_unknown",
+    }
+
+
 @pytest.mark.asyncio
 async def test_api_key_provider_preserves_authorization_without_repr_leak() -> None:
     authorizations = []

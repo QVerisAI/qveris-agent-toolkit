@@ -1,0 +1,105 @@
+{
+  "schema_version": 2,
+  "description": "Synthetic public-contract fixtures. No record represents a production call.",
+  "cases": [
+    {
+      "id": "ordinary_success",
+      "scenario": "ordinary",
+      "expected_outcome": "success",
+      "completion_eligible": true,
+      "autonomous_completion_eligible": true,
+      "recovery_expected": false,
+      "expected_intervention": "none"
+    },
+    {
+      "id": "service_only",
+      "scenario": "service_only",
+      "expected_outcome": "needs_user",
+      "completion_eligible": true,
+      "autonomous_completion_eligible": false,
+      "recovery_expected": false,
+      "expected_intervention": "tool_selection"
+    },
+    {
+      "id": "expired_context",
+      "scenario": "expired",
+      "expected_outcome": "success",
+      "completion_eligible": true,
+      "autonomous_completion_eligible": true,
+      "recovery_expected": true,
+      "expected_intervention": "none"
+    },
+    {
+      "id": "unknown_extension",
+      "scenario": "extension",
+      "expected_outcome": "success",
+      "completion_eligible": true,
+      "autonomous_completion_eligible": true,
+      "recovery_expected": false,
+      "expected_intervention": "none"
+    },
+    {
+      "id": "incomplete_schema",
+      "scenario": "inspect",
+      "expected_outcome": "success",
+      "completion_eligible": true,
+      "autonomous_completion_eligible": true,
+      "recovery_expected": true,
+      "expected_intervention": "none"
+    },
+    {
+      "id": "missing_quote",
+      "scenario": "quote_missing",
+      "expected_outcome": "blocked",
+      "completion_eligible": false,
+      "autonomous_completion_eligible": false,
+      "recovery_expected": false,
+      "expected_intervention": "quote"
+    },
+    {
+      "id": "permission_denied",
+      "scenario": "permission",
+      "expected_outcome": "blocked",
+      "completion_eligible": false,
+      "autonomous_completion_eligible": false,
+      "recovery_expected": false,
+      "expected_intervention": "permission"
+    },
+    {
+      "id": "insufficient_balance",
+      "scenario": "balance",
+      "expected_outcome": "blocked",
+      "completion_eligible": false,
+      "autonomous_completion_eligible": false,
+      "recovery_expected": false,
+      "expected_intervention": "credits"
+    },
+    {
+      "id": "upstream_failure",
+      "scenario": "upstream",
+      "expected_outcome": "failed",
+      "completion_eligible": false,
+      "autonomous_completion_eligible": false,
+      "recovery_expected": false,
+      "expected_intervention": "none"
+    },
+    {
+      "id": "unknown_settlement",
+      "scenario": "settlement",
+      "expected_outcome": "unknown_settlement",
+      "completion_eligible": false,
+      "autonomous_completion_eligible": false,
+      "recovery_expected": true,
+      "expected_intervention": "none"
+    },
+    {
+      "id": "provider_fallback",
+      "scenario": "fallback",
+      "expected_outcome": "success",
+      "completion_eligible": true,
+      "autonomous_completion_eligible": true,
+      "recovery_expected": true,
+      "expected_intervention": "none"
+    }
+  ]
+}

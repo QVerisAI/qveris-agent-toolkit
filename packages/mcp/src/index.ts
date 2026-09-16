@@ -771,7 +771,7 @@ function recoveryFor(status: number, operation: string): NextAction {
   if (status === 401) return { action: 'authenticate', requires_user: true, ...base };
   if (status === 402) return { action: 'add_credits', requires_user: true, ...base };
   if (status === 403) return { action: 'request_permission', requires_user: true, ...base };
-  if (operation === 'call' && (status === 0 || status === 408 || status >= 500)) {
+  if (operation === 'call' && (status === 0 || status === 408 || status === 429 || status >= 500)) {
     return {
       action: 'reconcile_settlement',
       requires_user: false,

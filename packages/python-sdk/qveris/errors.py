@@ -71,7 +71,7 @@ class QverisApiError(QverisError):
             recovery = _next_action("add_credits", True)
         elif status == 403:
             recovery = _next_action("request_permission", True)
-        elif operation == "call" and (status in {0, 408} or status >= 500):
+        elif operation == "call" and (status in {0, 408, 429} or status >= 500):
             recovery = _next_action("reconcile_settlement", False, "call_outcome_may_be_unknown")
         elif status in {0, 408, 429, 503}:
             recovery = _next_action("retry", False, "safe_read_retry")

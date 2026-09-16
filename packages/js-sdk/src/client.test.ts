@@ -553,6 +553,20 @@ describe('Qveris client', () => {
     expect((error as QverisApiError).next_action.action).toBe('add_credits');
   });
 
+  it('never classifies a paid-call 429 as a safe read retry', async () => {
+    globalThis.fetch = mockFetch({ message: 'rate limited' }, 429);
+
+    const client = new Qveris({ apiKey: API_KEY });
+    const error = await client.call('t.v1', { parameters: {} }).catch((e: unknown) => e);
+    expect((error as QverisApiError).next_action).toEqual({
+      action: 'reconcile_settlement',
+      automatic: false,
+      requires_user: false,
+      missing_fields: [],
+      reason: 'call_outcome_may_be_unknown',
+    });
+  });
+
   it('usage() issues a GET with query filters and unwraps the envelope', async () => {
     const fetchMock = mockFetch({
       status: 'success',

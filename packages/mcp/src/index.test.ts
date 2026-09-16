@@ -423,6 +423,39 @@ describe('MCP public tool interface', () => {
       },
     });
   });
+
+  it('never classifies a paid-call 429 as a safe read retry', async () => {
+    const client = {
+      searchTools: vi.fn(),
+      getToolsByIds: vi.fn(),
+      executeTool: vi.fn().mockRejectedValue({
+        status: 429,
+        message: 'rate limited',
+        observability: {
+          operation: 'call',
+          endpoint: '/tools/execute?tool_id=weather.forecast.v1',
+          http_status: 429,
+          error_type: 'http_error',
+        },
+      }),
+      getUsageHistory: vi.fn(),
+      getCreditsLedger: vi.fn(),
+    } as unknown as QverisClient;
+
+    const result = await executeQverisMcpTool(client, 'session-1', 'call', {
+      tool_id: 'weather.forecast.v1',
+      search_id: 'search-1',
+      params_to_tool: {},
+    });
+
+    expect(payload(result).next_action).toEqual({
+      action: 'reconcile_settlement',
+      automatic: false,
+      requires_user: false,
+      missing_fields: [],
+      reason: 'call_outcome_may_be_unknown',
+    });
+  });
 });
 
 function hasErrorCode(error: unknown, code: string): boolean {

@@ -770,7 +770,7 @@ async function reconcileSettlement({ apiKey, credentialProvider, baseUrl, execut
     result.ledger_error = error?.code ?? "AUDIT_UNAVAILABLE";
   }
   const usageFinal = result.usage?.some((item) =>
-    ["charged", "not_charged", "refunded", "settled"].includes(item?.charge_outcome),
+    ["charged", "included", "failed_not_charged", "failed_charged_review"].includes(item?.charge_outcome),
   );
   if ((result.ledger?.length ?? 0) > 0 || usageFinal) result.status = "final";
   return result;

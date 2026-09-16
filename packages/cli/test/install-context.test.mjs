@@ -817,39 +817,44 @@ test("ordinary calls with an execution ID reconcile instead of recommending repl
   process.exitCode = previousExitCode;
 });
 
-test("final settlement evidence stops the reconciliation loop", async () => {
-  const previousExitCode = process.exitCode;
-  process.exitCode = undefined;
-  await withMockFetch(
-    (request) => {
-      if (request.url.pathname.endsWith("/tools/execute")) {
-        return response({ message: "gateway timed out", execution_id: "exec-final" }, 504);
-      }
-      if (request.url.pathname.endsWith("/auth/usage/history/v2")) {
-        return response({ items: [{ execution_id: "exec-final", charge_outcome: "charged" }], total: 1 });
-      }
-      if (request.url.pathname.endsWith("/auth/credits/ledger")) return response({ items: [], total: 0 });
-      throw new Error(`Unexpected request: ${request.url.pathname}`);
-    },
-    async () => {
-      const output = await captureOutput(() =>
-        runCall("provider.company.lookup.v1", {
-          apiKey: TEST_API_KEY,
-          baseUrl: "https://unit.test/api/v1",
-          discoveryId: "direct-search",
-          json: true,
-        }),
+for (const finalChargeOutcome of ["charged", "included", "failed_not_charged", "failed_charged_review"]) {
+  test(`final ${finalChargeOutcome} settlement evidence stops the reconciliation loop`, async () => {
+    const previousExitCode = process.exitCode;
+    process.exitCode = undefined;
+    try {
+      await withMockFetch(
+        (request) => {
+          if (request.url.pathname.endsWith("/tools/execute")) {
+            return response({ message: "gateway timed out", execution_id: "exec-final" }, 504);
+          }
+          if (request.url.pathname.endsWith("/auth/usage/history/v2")) {
+            return response({ items: [{ execution_id: "exec-final", charge_outcome: finalChargeOutcome }], total: 1 });
+          }
+          if (request.url.pathname.endsWith("/auth/credits/ledger")) return response({ items: [], total: 0 });
+          throw new Error(`Unexpected request: ${request.url.pathname}`);
+        },
+        async () => {
+          const output = await captureOutput(() =>
+            runCall("provider.company.lookup.v1", {
+              apiKey: TEST_API_KEY,
+              baseUrl: "https://unit.test/api/v1",
+              discoveryId: "direct-search",
+              json: true,
+            }),
+          );
+          const result = JSON.parse(output);
+          assert.equal(result.status, "settlement_final");
+          assert.equal(result.settlement.status, "final");
+          assert.equal(result.next_action.action, "review_settlement");
+          assert.equal(result.next_action.reason, "settlement_final");
+          assert.equal(process.exitCode, 1);
+        },
       );
-      const result = JSON.parse(output);
-      assert.equal(result.status, "settlement_final");
-      assert.equal(result.settlement.status, "final");
-      assert.equal(result.next_action.action, "review_settlement");
-      assert.equal(result.next_action.reason, "settlement_final");
-      assert.equal(process.exitCode, 1);
-    },
-  );
-  process.exitCode = previousExitCode;
-});
+    } finally {
+      process.exitCode = previousExitCode;
+    }
+  });
+}
 
 test("context call fails closed on malformed discovery or probe responses", async () => {
   await withMockFetch(
