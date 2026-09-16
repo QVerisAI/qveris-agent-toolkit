@@ -9,7 +9,7 @@ from qveris.client.api import QverisClient
 from qveris.client.retry import RetryPolicy
 from qveris.config import QverisConfig
 from qveris.credentials import ApiKeyCredentialProvider, CredentialContext
-from qveris.errors import QverisApiError, QverisContractError, QverisCredentialError
+from qveris.errors import QverisApiError, QverisContractError, QverisCredentialError, RequestMetadata
 
 
 def make_client(handler: Callable[[httpx.Request], httpx.Response]) -> QverisClient:
@@ -21,6 +21,30 @@ def make_client(handler: Callable[[httpx.Request], httpx.Response]) -> QverisCli
         timeout=60.0,
     )
     return client
+
+
+def test_public_errors_expose_machine_readable_next_action() -> None:
+    metadata = RequestMetadata(operation="call")
+    insufficient = QverisApiError(
+        "balance too low",
+        status=402,
+        operation="call",
+        request_metadata=metadata,
+    )
+    uncertain = QverisApiError(
+        "gateway timeout",
+        status=504,
+        operation="call",
+        request_metadata=metadata,
+    )
+    assert insufficient.next_action == {
+        "action": "add_credits",
+        "automatic": False,
+        "requires_user": True,
+        "missing_fields": [],
+    }
+    assert uncertain.next_action["action"] == "reconcile_settlement"
+    assert uncertain.next_action["requires_user"] is False
 
 
 @pytest.mark.asyncio

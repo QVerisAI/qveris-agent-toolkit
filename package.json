@@ -21,6 +21,8 @@
     "release:clients:check": "node scripts/release-client-packages.mjs check",
     "release:clients:publish": "node scripts/release-client-packages.mjs publish",
     "test:release-clients": "node --test scripts/release-client-packages.test.mjs scripts/benchmark-release-cadence.test.mjs scripts/sdk-guide-contracts.test.mjs scripts/conditional-routing-contracts.test.mjs",
+    "benchmark:agent-recovery": "node benchmarks/agent-recovery/src/run.mjs",
+    "test:agent-recovery": "node --test benchmarks/agent-recovery/test/*.test.mjs",
     "typecheck": "npm --prefix packages/mcp run typecheck && npm --prefix packages/js-sdk run typecheck && npm --prefix packages/openclaw-qveris-plugin run typecheck",
     "test": "npm --prefix packages/cli test && npm --prefix packages/mcp test && npm --prefix packages/js-sdk test && npm --prefix packages/openclaw-qveris-plugin test && npm run test:py && npm run test:release-clients",
     "test:py": "cd packages/python-sdk && uv run --frozen --extra dev pytest -q",

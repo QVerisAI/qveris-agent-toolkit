@@ -234,7 +234,7 @@ test("v1 parser rejects deeply nested untrusted fields without exhausting the st
   }
 });
 
-test("context call fails closed when the public contract lacks execution-safety metadata", async () => {
+test("context call tolerates absent execution-safety metadata and remains single-submit", async () => {
   await withMockFetch(
     (request) => {
       if (request.url.pathname.endsWith("/search")) {
@@ -250,10 +250,13 @@ test("context call fails closed when the public contract lacks execution-safety 
           ],
         });
       }
+      if (request.url.pathname.endsWith("/tools/execute")) {
+        return response({ execution_id: "exec-safe", success: true, result: { symbol: "AAPL" } });
+      }
       throw new Error(`Unexpected request: ${request.url.pathname}`);
     },
     async (requests) => {
-      await assert.rejects(
+      const output = await captureOutput(() =>
         runCall(undefined, {
           apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
@@ -261,11 +264,16 @@ test("context call fails closed when the public contract lacks execution-safety 
           params: '{"symbol":"AAPL"}',
           json: true,
         }),
-        (error) => error instanceof CliError && error.code === "CONTEXT_EXECUTION_SAFETY_UNVERIFIED",
+      );
+      const result = JSON.parse(output);
+      assert.equal(result.success, true);
+      assert.deepEqual(
+        result.context_handoff.warnings.map((warning) => warning.code),
+        ["SIDE_EFFECT_METADATA_ABSENT", "IDEMPOTENCY_METADATA_ABSENT"],
       );
       assert.deepEqual(
         requests.map((request) => request.url.pathname),
-        ["/api/v1/search"],
+        ["/api/v1/search", "/api/v1/tools/execute"],
       );
       assert.deepEqual(requests[0].body, {
         query: "provider.company.lookup.v1",
@@ -339,7 +347,7 @@ test("context call preserves permission failures", async () => {
   );
 });
 
-test("context call stops when fresh discovery no longer contains the copied tool", async () => {
+test("context call stops after exact and service rediscovery find no safe fallback", async () => {
   await withMockFetch(
     () => response({ search_id: "fresh-search", results: [] }),
     async (requests) => {
@@ -352,12 +360,12 @@ test("context call stops when fresh discovery no longer contains the copied tool
         }),
         (error) => error instanceof CliError && error.code === "CONTEXT_REDISCOVERY_FAILED",
       );
-      assert.equal(requests.length, 1);
+      assert.equal(requests.length, 2);
     },
   );
 });
 
-test("expired context refreshes and checks unknown price without probing before safety rejection", async () => {
+test("expired context refreshes and continues unknown price without redundant probe", async () => {
   const now = Math.floor(Date.now() / 1000);
   await withMockFetch(
     (request) => {
@@ -372,10 +380,13 @@ test("expired context refreshes and checks unknown price without probing before 
           ],
         });
       }
+      if (request.url.pathname.endsWith("/tools/execute")) {
+        return response({ execution_id: "exec-refreshed", success: true, result: { symbol: "AAPL" } });
+      }
       throw new Error(`Unexpected request: ${request.url.pathname}`);
     },
     async (requests) => {
-      await assert.rejects(
+      const output = await captureOutput(() =>
         runCall(undefined, {
           apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
@@ -383,11 +394,13 @@ test("expired context refreshes and checks unknown price without probing before 
           params: '{"symbol":"AAPL"}',
           json: true,
         }),
-        (error) => error instanceof CliError && error.code === "CONTEXT_EXECUTION_SAFETY_UNVERIFIED",
       );
+      const result = JSON.parse(output);
+      assert.equal(result.success, true);
+      assert.ok(result.context_handoff.warnings.some((warning) => warning.code === "PRICE_UNKNOWN"));
       assert.deepEqual(
         requests.map((request) => request.url.pathname),
-        ["/api/v1/search"],
+        ["/api/v1/search", "/api/v1/tools/execute"],
       );
     },
   );
@@ -518,7 +531,7 @@ test("partially understood billing rules require a current quote", async () => {
   );
 });
 
-test("integer parameters use JSON integer semantics before safety rejection", async () => {
+test("integer parameters use JSON integer semantics before execution", async () => {
   await withMockFetch(
     (request) => {
       if (request.url.pathname.endsWith("/search")) {
@@ -533,10 +546,11 @@ test("integer parameters use JSON integer semantics before safety rejection", as
           ],
         });
       }
+      if (request.url.pathname.endsWith("/tools/execute")) return response({ success: true, result: { count: 2 } });
       throw new Error(`Unexpected request: ${request.url.pathname}`);
     },
     async (requests) => {
-      await assert.rejects(
+      const output = await captureOutput(() =>
         runCall(undefined, {
           apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
@@ -544,14 +558,14 @@ test("integer parameters use JSON integer semantics before safety rejection", as
           params: '{"count":2}',
           json: true,
         }),
-        (error) => error instanceof CliError && error.code === "CONTEXT_EXECUTION_SAFETY_UNVERIFIED",
       );
-      assert.equal(requests.length, 1);
+      assert.equal(JSON.parse(output).success, true);
+      assert.equal(requests.length, 2);
     },
   );
 });
 
-test("missing exact tool exposes safe provider fallback candidates without executing", async () => {
+test("fallback without explicit service identity remains a user selection", async () => {
   await withMockFetch(
     () =>
       response({
@@ -572,7 +586,7 @@ test("missing exact tool exposes safe provider fallback candidates without execu
           error.fallbackAvailable === true &&
           error.candidates[0].tool_id === "provider.fallback.v1",
       );
-      assert.equal(requests.length, 1);
+      assert.equal(requests.length, 2);
     },
   );
 });
@@ -590,6 +604,12 @@ test("JSON errors expose one machine-readable recovery contract", () => {
     hint: "Select a returned current candidate or broaden discovery; do not force the old tool ID",
     retryable: false,
     action: "select_fallback",
+    next_action: {
+      action: "select_fallback",
+      automatic: false,
+      requires_user: true,
+      missing_fields: [],
+    },
     missing_fields: [],
     fallback_available: true,
     candidates: [{ tool_id: "provider.fallback.v1", provider_id: "fallback" }],
@@ -597,21 +617,26 @@ test("JSON errors expose one machine-readable recovery contract", () => {
   });
 });
 
-test("execution-safety metadata cannot be bypassed with confirmation flags", async () => {
+test("confirmation flags do not create risk when execution-safety metadata is absent", async () => {
   await withMockFetch(
-    () =>
-      response({
-        search_id: "fresh-search",
-        results: [
-          {
-            tool_id: "provider.company.lookup.v1",
-            params: [],
-            expected_cost: 0,
-          },
-        ],
-      }),
+    (request) => {
+      if (request.url.pathname.endsWith("/search")) {
+        return response({
+          search_id: "fresh-search",
+          results: [
+            {
+              tool_id: "provider.company.lookup.v1",
+              params: [],
+              expected_cost: 0,
+            },
+          ],
+        });
+      }
+      if (request.url.pathname.endsWith("/tools/execute")) return response({ success: true, result: {} });
+      throw new Error(`Unexpected request: ${request.url.pathname}`);
+    },
     async (requests) => {
-      await assert.rejects(
+      const output = await captureOutput(() =>
         runCall(undefined, {
           apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
@@ -620,9 +645,131 @@ test("execution-safety metadata cannot be bypassed with confirmation flags", asy
           allowNonIdempotent: true,
           json: true,
         }),
-        (error) => error instanceof CliError && error.code === "CONTEXT_EXECUTION_SAFETY_UNVERIFIED",
+      );
+      assert.equal(JSON.parse(output).success, true);
+      assert.equal(requests.length, 2);
+    },
+  );
+});
+
+test("explicit dangerous or non-idempotent execution still requires confirmation", async () => {
+  await withMockFetch(
+    (request) => {
+      if (request.url.pathname.endsWith("/search")) {
+        return response({
+          search_id: "fresh-search",
+          results: [
+            {
+              tool_id: "provider.company.lookup.v1",
+              params: [],
+              expected_cost: 0,
+              dangerous_side_effects: true,
+              idempotent: false,
+            },
+          ],
+        });
+      }
+      throw new Error("Explicit risk must block before Call");
+    },
+    async (requests) => {
+      await assert.rejects(
+        runCall(undefined, {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          context: liveContext(),
+          json: true,
+        }),
+        (error) => error instanceof CliError && error.code === "CONTEXT_EXECUTION_BLOCKED",
       );
       assert.equal(requests.length, 1);
+    },
+  );
+});
+
+test("one current same-service candidate is validated and used as a safe pre-call fallback", async () => {
+  let searches = 0;
+  await withMockFetch(
+    (request) => {
+      if (request.url.pathname.endsWith("/search")) {
+        searches += 1;
+        if (searches === 1) return response({ search_id: "exact-search", results: [] });
+        return response({
+          search_id: "service-search",
+          results: [
+            {
+              tool_id: "provider.company.lookup.fallback.v1",
+              service_id: "service.market-data.v1",
+              provider_id: "fallback",
+              params: [{ name: "symbol", type: "string", required: true }],
+              expected_cost: 0,
+            },
+          ],
+        });
+      }
+      if (request.url.pathname.endsWith("/tools/execute")) {
+        assert.equal(request.url.searchParams.get("tool_id"), "provider.company.lookup.fallback.v1");
+        return response({ execution_id: "exec-fallback", success: true, result: { symbol: "AAPL" } });
+      }
+      throw new Error(`Unexpected request: ${request.url.pathname}`);
+    },
+    async (requests) => {
+      const output = await captureOutput(() =>
+        runCall(undefined, {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          context: liveContext(),
+          params: '{"symbol":"AAPL"}',
+          json: true,
+        }),
+      );
+      const result = JSON.parse(output);
+      assert.equal(result.success, true);
+      assert.deepEqual(result.context_handoff.fallback, {
+        from_tool_id: "provider.company.lookup.v1",
+        to_tool_id: "provider.company.lookup.fallback.v1",
+      });
+      assert.equal(requests.length, 3);
+    },
+  );
+});
+
+test("unknown settlement triggers one bounded usage and ledger reconciliation", async () => {
+  await withMockFetch(
+    (request) => {
+      if (request.url.pathname.endsWith("/search")) {
+        return response({
+          search_id: "fresh-search",
+          results: [{ tool_id: "provider.company.lookup.v1", params: [], expected_cost: 0 }],
+        });
+      }
+      if (request.url.pathname.endsWith("/tools/execute")) {
+        return response({ message: "gateway timed out", execution_id: "exec-pending" }, 504);
+      }
+      if (request.url.pathname.endsWith("/auth/usage/history/v2")) {
+        return response({ items: [{ execution_id: "exec-pending", charge_outcome: "pending" }], total: 1 });
+      }
+      if (request.url.pathname.endsWith("/auth/credits/ledger")) return response({ items: [], total: 0 });
+      throw new Error(`Unexpected request: ${request.url.pathname}`);
+    },
+    async (requests) => {
+      const output = await captureOutput(() =>
+        runCall(undefined, {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          context: liveContext(),
+          json: true,
+        }),
+      );
+      const result = JSON.parse(output);
+      assert.equal(result.status, "unknown_settlement");
+      assert.equal(result.execution_id, "exec-pending");
+      assert.equal(result.settlement.usage_checked, true);
+      assert.equal(result.settlement.ledger_checked, true);
+      assert.equal(result.next_action.action, "wait_and_reconcile");
+      assert.deepEqual(
+        requests.map((request) => request.url.pathname),
+        ["/api/v1/search", "/api/v1/tools/execute", "/api/v1/auth/usage/history/v2", "/api/v1/auth/credits/ledger"],
+      );
     },
   );
 });

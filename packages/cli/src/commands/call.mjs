@@ -3,7 +3,16 @@ import {
   resolveApiKey,
   resolveAuthorizationContextId,
 } from "../client/auth.mjs";
-import { callTool, discoverTools, inspectToolsByIds, probeTool, resolveApiBaseUrl } from "../client/api.mjs";
+import {
+  callTool,
+  discoverTools,
+  getCreditsLedger,
+  getUsageHistory,
+  inspectToolsByIds,
+  probeTool,
+  resolveApiBaseUrl,
+  unwrapApiResponse,
+} from "../client/api.mjs";
 import { resolveToolId, getSessionDiscoveryId, readSessionForContext } from "../session/session.mjs";
 import { resolveParams } from "../utils/params.mjs";
 import { formatCallResult } from "../output/formatter.mjs";
@@ -168,7 +177,24 @@ function normalizeToolList(response) {
 function contextError(code, detail, metadata = {}) {
   const error = new CliError(code, detail);
   Object.assign(error, metadata);
+  if (error.nextAction === undefined) {
+    error.nextAction = buildNextAction(error.action ?? "review_and_retry", {
+      automatic: false,
+      requiresUser: true,
+      missingFields: error.missingFields ?? [],
+    });
+  }
   return error;
+}
+
+function buildNextAction(action, { automatic = false, requiresUser = false, missingFields = [], reason } = {}) {
+  return {
+    action,
+    automatic,
+    requires_user: requiresUser,
+    missing_fields: missingFields,
+    ...(reason && { reason }),
+  };
 }
 
 function candidatesFrom(tools) {
@@ -188,7 +214,25 @@ function decorateFailure(error, metadata = {}) {
   if (error.missingFields === undefined) error.missingFields = metadata.missingFields ?? [];
   if (error.fallbackAvailable === undefined) error.fallbackAvailable = metadata.fallbackAvailable ?? false;
   if (error.candidates === undefined && metadata.candidates) error.candidates = metadata.candidates;
+  if (error.nextAction === undefined) {
+    error.nextAction =
+      metadata.nextAction ??
+      buildNextAction(error.action, {
+        automatic: false,
+        requiresUser: !error.retryable,
+        missingFields: error.missingFields,
+      });
+  }
   return error;
+}
+
+function boundaryActionFor(code) {
+  return {
+    AUTH_INVALID_KEY: "authenticate",
+    AUTH_OAUTH_FAILED: "authenticate",
+    PERMISSION_DENIED: "request_permission",
+    CREDITS_INSUFFICIENT: "add_credits",
+  }[code];
 }
 
 function assertContextBudgetSupported(value) {
@@ -206,6 +250,7 @@ function assertContextBudgetSupported(value) {
 }
 
 function assertExecutionPolicy(tool, flags) {
+  const warnings = [];
   const deniedRegions = String(flags.denyRegion ?? "")
     .split(",")
     .map((item) => item.trim().toUpperCase())
@@ -229,13 +274,6 @@ function assertExecutionPolicy(tool, flags) {
   const hasSideEffectMetadata =
     typeof tool.dangerous_side_effects === "boolean" ||
     (typeof tool.side_effects === "string" && tool.side_effects.trim().length > 0);
-  if (!hasSideEffectMetadata || typeof tool.idempotent !== "boolean") {
-    throw contextError(
-      "CONTEXT_EXECUTION_SAFETY_UNVERIFIED",
-      "Current tool metadata does not prove side-effect and idempotency safety",
-      { action: "use_supported_execution_contract" },
-    );
-  }
   const dangerous =
     tool.dangerous_side_effects === true ||
     (typeof tool.side_effects === "string" && !["none", "read_only", "read-only"].includes(tool.side_effects));
@@ -249,6 +287,24 @@ function assertExecutionPolicy(tool, flags) {
       action: "rerun_with_allow_non_idempotent",
     });
   }
+  if (!hasSideEffectMetadata) {
+    warnings.push({ code: "SIDE_EFFECT_METADATA_ABSENT", action: "continued_without_explicit_risk_signal" });
+  }
+  if (typeof tool.idempotent !== "boolean") {
+    warnings.push({ code: "IDEMPOTENCY_METADATA_ABSENT", action: "paid_call_remains_single_submit" });
+  }
+  return warnings;
+}
+
+async function discoverContextCandidates({ apiKey, credentialProvider, baseUrl, context, timeoutMs }) {
+  return discoverTools({
+    apiKey,
+    credentialProvider,
+    baseUrl,
+    query: [context.taskId, context.serviceId].filter(Boolean).join(" "),
+    limit: 100,
+    timeoutMs,
+  });
 }
 
 async function resolveCurrentContextTool({
@@ -275,7 +331,7 @@ async function resolveCurrentContextTool({
       error instanceof CliError &&
       ["AUTH_INVALID_KEY", "AUTH_OAUTH_FAILED", "PERMISSION_DENIED", "CREDITS_INSUFFICIENT"].includes(error.code)
     ) {
-      throw decorateFailure(error, { action: "reauthenticate_or_change_account" });
+      throw decorateFailure(error, { action: boundaryActionFor(error.code) });
     }
     const wrapped = contextError("CONTEXT_REDISCOVERY_FAILED", "Current discovery failed before execution", {
       retryable: true,
@@ -292,15 +348,15 @@ async function resolveCurrentContextTool({
     });
   }
 
-  const discoveryTools = normalizeToolList(discovery);
+  let discoveryTools = normalizeToolList(discovery);
   if (!discoveryTools) {
     throw contextError("CONTEXT_REDISCOVERY_FAILED", "Current discovery did not return a usable tool list", {
       retryable: true,
       action: "rediscover",
     });
   }
-  const discovered = discoveryTools.filter((tool) => tool?.tool_id);
-  const candidates = candidatesFrom(discovered);
+  let discovered = discoveryTools.filter((tool) => tool?.tool_id);
+  let candidates = candidatesFrom(discovered);
   if (!context.toolId) {
     return {
       discoveryOnly: true,
@@ -315,16 +371,64 @@ async function resolveCurrentContextTool({
     };
   }
   let selected = discovered.find((tool) => tool.tool_id === context.toolId);
+  let fallbackFrom;
   if (!selected) {
-    throw contextError("CONTEXT_REDISCOVERY_FAILED", "The copied tool ID is not present in current discovery results", {
-      retryable: false,
-      action: candidates.length > 0 ? "select_fallback" : "broaden_discovery",
-      fallbackAvailable: candidates.length > 0,
-      candidates,
-    });
+    let fallbackDiscovery = discovery;
+    let fallbackTools = discovered;
+    if (context.serviceId) {
+      try {
+        fallbackDiscovery = await discoverContextCandidates({
+          apiKey,
+          credentialProvider,
+          baseUrl,
+          context,
+          timeoutMs,
+        });
+        const normalizedFallback = normalizeToolList(fallbackDiscovery);
+        if (typeof fallbackDiscovery?.search_id !== "string" || !normalizedFallback) {
+          throw new Error("malformed fallback discovery");
+        }
+        fallbackTools = normalizedFallback.filter((tool) => tool?.tool_id);
+      } catch (error) {
+        if (
+          error instanceof CliError &&
+          ["AUTH_INVALID_KEY", "AUTH_OAUTH_FAILED", "PERMISSION_DENIED", "CREDITS_INSUFFICIENT"].includes(error.code)
+        ) {
+          throw decorateFailure(error, { action: boundaryActionFor(error.code) });
+        }
+        const wrapped = contextError("CONTEXT_REDISCOVERY_FAILED", "Service fallback discovery failed", {
+          retryable: true,
+          action: "rediscover",
+        });
+        wrapped.cause = error;
+        throw wrapped;
+      }
+    }
+    const sameService = fallbackTools.filter(
+      (tool) => typeof tool.service_id === "string" && tool.service_id === context.serviceId,
+    );
+    if (sameService.length === 1) {
+      selected = sameService[0];
+      fallbackFrom = context.toolId;
+      discovery = fallbackDiscovery;
+      discovered = fallbackTools;
+      candidates = candidatesFrom(discovered);
+    } else {
+      candidates = candidatesFrom(fallbackTools);
+      throw contextError(
+        "CONTEXT_REDISCOVERY_FAILED",
+        "The copied tool ID is not present in current discovery results",
+        {
+          retryable: false,
+          action: candidates.length > 0 ? "select_fallback" : "broaden_discovery",
+          fallbackAvailable: candidates.length > 0,
+          candidates,
+        },
+      );
+    }
   }
 
-  const steps = ["discover"];
+  const steps = fallbackFrom ? ["discover", "rediscover_service", "fallback"] : ["discover"];
   let schemaAnalysis = analyzeParameterSchema(selected.params);
   if (!schemaAnalysis.complete) {
     let inspection;
@@ -342,7 +446,7 @@ async function resolveCurrentContextTool({
         error instanceof CliError &&
         ["AUTH_INVALID_KEY", "AUTH_OAUTH_FAILED", "PERMISSION_DENIED", "CREDITS_INSUFFICIENT"].includes(error.code)
       ) {
-        throw decorateFailure(error, { action: "reauthenticate_or_change_account" });
+        throw decorateFailure(error, { action: boundaryActionFor(error.code) });
       }
       const wrapped = contextError("CONTEXT_INSPECT_FAILED", "Current inspection failed before execution", {
         retryable: true,
@@ -404,7 +508,7 @@ async function resolveCurrentContextTool({
         error instanceof CliError &&
         ["AUTH_INVALID_KEY", "AUTH_OAUTH_FAILED", "PERMISSION_DENIED", "CREDITS_INSUFFICIENT"].includes(error.code)
       ) {
-        throw decorateFailure(error, { action: "reauthenticate_or_change_account" });
+        throw decorateFailure(error, { action: boundaryActionFor(error.code) });
       }
       const wrapped = contextError("CONTEXT_PROBE_FAILED", "Required preflight failed before execution", {
         retryable: true,
@@ -433,9 +537,9 @@ async function resolveCurrentContextTool({
   }
   const quoteCost = quoteValidation?.amount;
 
-  if (!flags.dryRun) assertExecutionPolicy(selected, flags);
+  const executionWarnings = flags.dryRun ? [] : assertExecutionPolicy(selected, flags);
 
-  const warnings = [...context.warnings];
+  const warnings = [...context.warnings, ...executionWarnings];
   if (!quoteRequired && pricing.status === "absent") {
     warnings.push({ code: "PRICE_UNKNOWN", action: "continued_by_policy" });
   }
@@ -448,6 +552,7 @@ async function resolveCurrentContextTool({
       stale_input: context.stale,
       warnings,
       validation_steps: steps,
+      ...(fallbackFrom && { fallback: { from_tool_id: fallbackFrom, to_tool_id: selected.tool_id } }),
       price_status:
         quoteCost !== undefined ? (quoteValidation.exact ? "quoted_exact" : "quoted_estimate") : pricing.status,
     },
@@ -461,6 +566,7 @@ function outputContextCandidates(current, flags) {
     discovery_id: current.discoveryId,
     candidates: current.candidates,
     context_handoff: current.contextMeta,
+    next_action: buildNextAction("select_tool", { requiresUser: true }),
   };
   if (flags.json) outputJson(result);
   else {
@@ -543,16 +649,26 @@ async function executeCall({
           ? {
               code: "PROVIDER_FAILURE",
               retryable: true,
-              action: fallbackCandidates.length > 0 ? "select_fallback" : "rediscover",
+              action: result.execution_id
+                ? "reconcile_settlement"
+                : fallbackCandidates.length > 0
+                  ? "select_fallback"
+                  : "rediscover",
               missing_fields: [],
               fallback_available: fallbackCandidates.length > 0,
               candidates: fallbackCandidates,
+              next_action: buildNextAction(result.execution_id ? "reconcile_settlement" : "rediscover", {
+                automatic: false,
+                requiresUser: false,
+                reason: result.execution_id ? "call_failed_after_submission" : "provider_failure",
+              }),
             }
           : undefined;
       outputJson({
         ...result,
         ...(contextMeta && { context_handoff: contextMeta }),
         ...(recovery && { recovery }),
+        next_action: buildNextAction(result?.success === true ? "none" : (recovery?.action ?? "review_result")),
       });
     } else {
       console.log(formatCallResult(result));
@@ -574,11 +690,83 @@ async function executeCall({
     }
   } catch (err) {
     spinner.stop();
+    const executionId = err?.responseData?.execution_id;
+    if (contextMeta && executionId) {
+      const settlement = await reconcileSettlement({
+        apiKey,
+        credentialProvider,
+        baseUrl,
+        executionId,
+        timeoutMs,
+      });
+      const nextAction = buildNextAction("wait_and_reconcile", {
+        automatic: false,
+        requiresUser: false,
+        reason: "settlement_not_final",
+      });
+      if (flags.json) {
+        const result = {
+          success: false,
+          status: "unknown_settlement",
+          execution_id: executionId,
+          context_handoff: contextMeta,
+          settlement,
+          next_action: nextAction,
+        };
+        outputJson(result);
+        return result;
+      }
+      err.action = "wait_and_reconcile";
+      err.nextAction = nextAction;
+      err.settlement = settlement;
+    }
+    const boundaryAction = boundaryActionFor(err?.code);
     throw decorateFailure(err, {
       retryable: ["NET_TIMEOUT", "RATE_LIMITED", "PROVIDER_FAILURE", "API_ERROR"].includes(err.code),
-      action: fallbackCandidates.length > 0 ? "select_fallback" : "retry",
+      action: boundaryAction ?? (fallbackCandidates.length > 0 ? "select_fallback" : "retry"),
       fallbackAvailable: fallbackCandidates.length > 0,
       candidates: fallbackCandidates,
     });
   }
+}
+
+async function reconcileSettlement({ apiKey, credentialProvider, baseUrl, executionId, timeoutMs }) {
+  const result = { status: "unknown", usage_checked: false, ledger_checked: false };
+  try {
+    const usage = unwrapApiResponse(
+      await getUsageHistory({
+        apiKey,
+        credentialProvider,
+        baseUrl,
+        query: { execution_id: executionId, page: 1, page_size: 20 },
+        timeoutMs,
+      }),
+    );
+    result.usage_checked = true;
+    result.usage = Array.isArray(usage?.items) ? usage.items.filter((item) => item?.execution_id === executionId) : [];
+  } catch (error) {
+    result.usage_error = error?.code ?? "AUDIT_UNAVAILABLE";
+  }
+  try {
+    const ledger = unwrapApiResponse(
+      await getCreditsLedger({
+        apiKey,
+        credentialProvider,
+        baseUrl,
+        query: { page: 1, page_size: 100 },
+        timeoutMs,
+      }),
+    );
+    result.ledger_checked = true;
+    result.ledger = Array.isArray(ledger?.items)
+      ? ledger.items.filter((item) => item?.execution_id === executionId)
+      : [];
+  } catch (error) {
+    result.ledger_error = error?.code ?? "AUDIT_UNAVAILABLE";
+  }
+  const usageFinal = result.usage?.some((item) =>
+    ["charged", "not_charged", "refunded", "settled"].includes(item?.charge_outcome),
+  );
+  if ((result.ledger?.length ?? 0) > 0 || usageFinal) result.status = "final";
+  return result;
 }

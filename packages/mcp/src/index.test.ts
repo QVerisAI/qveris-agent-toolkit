@@ -347,6 +347,12 @@ describe('MCP public tool interface', () => {
       error: 'bad key',
       status: 401,
       details: { code: 'auth' },
+      next_action: {
+        action: 'authenticate',
+        automatic: false,
+        requires_user: true,
+        missing_fields: [],
+      },
       observability: {
         source: 'qveris_mcp',
         requested_tool: 'discover',
@@ -393,6 +399,13 @@ describe('MCP public tool interface', () => {
       error: 'fetch failed',
       status: 0,
       cause: 'ECONNRESET',
+      next_action: {
+        action: 'reconcile_settlement',
+        automatic: false,
+        requires_user: false,
+        missing_fields: [],
+        reason: 'call_outcome_may_be_unknown',
+      },
       observability: {
         source: 'qveris_mcp',
         requested_tool: 'call',

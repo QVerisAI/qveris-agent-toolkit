@@ -535,6 +535,12 @@ describe('Qveris client', () => {
     expect(apiError.message).toBe('bad key');
     expect(apiError.observability?.operation).toBe('discover');
     expect(apiError.observability?.error_type).toBe('http_error');
+    expect(apiError.next_action).toEqual({
+      action: 'authenticate',
+      automatic: false,
+      requires_user: true,
+      missing_fields: [],
+    });
   });
 
   it('adds a purchase hint on 402 responses', async () => {
@@ -544,6 +550,7 @@ describe('Qveris client', () => {
     const error = await client.call('t.v1', { parameters: {} }).catch((e: unknown) => e);
     expect((error as QverisApiError).message).toContain('Insufficient credits');
     expect((error as QverisApiError).message).toContain('https://qveris.ai/pricing');
+    expect((error as QverisApiError).next_action.action).toBe('add_credits');
   });
 
   it('usage() issues a GET with query filters and unwraps the envelope', async () => {

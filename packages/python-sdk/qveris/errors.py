@@ -3,7 +3,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, Dict, Optional
+
+
+def _next_action(action: str, requires_user: bool, reason: Optional[str] = None) -> Dict[str, Any]:
+    value: Dict[str, Any] = {
+        "action": action,
+        "automatic": False,
+        "requires_user": requires_user,
+        "missing_fields": [],
+    }
+    if reason is not None:
+        value["reason"] = reason
+    return value
 
 
 @dataclass(frozen=True)
@@ -31,10 +43,12 @@ class QverisError(Exception):
         *,
         operation: str,
         request_metadata: RequestMetadata,
+        next_action: Optional[Dict[str, Any]] = None,
     ) -> None:
         super().__init__(message)
         self.operation = operation
         self.request_metadata = request_metadata
+        self.next_action = next_action or _next_action("review_and_retry", True)
 
 
 class QverisApiError(QverisError):
@@ -51,7 +65,24 @@ class QverisApiError(QverisError):
         category: Optional[str] = None,
         details: Any = None,
     ) -> None:
-        super().__init__(message, operation=operation, request_metadata=request_metadata)
+        if status == 401:
+            recovery = _next_action("authenticate", True)
+        elif status == 402:
+            recovery = _next_action("add_credits", True)
+        elif status == 403:
+            recovery = _next_action("request_permission", True)
+        elif operation == "call" and (status in {0, 408} or status >= 500):
+            recovery = _next_action("reconcile_settlement", False, "call_outcome_may_be_unknown")
+        elif status in {0, 408, 429, 503}:
+            recovery = _next_action("retry", False, "safe_read_retry")
+        else:
+            recovery = _next_action("review_and_retry", True)
+        super().__init__(
+            message,
+            operation=operation,
+            request_metadata=request_metadata,
+            next_action=recovery,
+        )
         self.status = status
         self.code = code
         self.category = category
@@ -69,7 +100,17 @@ class QverisTransportError(QverisError):
         operation: str,
         request_metadata: RequestMetadata,
     ) -> None:
-        super().__init__(message, operation=operation, request_metadata=request_metadata)
+        recovery = (
+            _next_action("reconcile_settlement", False, "call_outcome_may_be_unknown")
+            if operation == "call"
+            else _next_action("retry", False, "safe_read_retry")
+        )
+        super().__init__(
+            message,
+            operation=operation,
+            request_metadata=request_metadata,
+            next_action=recovery,
+        )
         self.error_type = error_type
         self.status = 408 if error_type == "timeout" else 0
 
@@ -86,7 +127,12 @@ class QverisCredentialError(QverisError):
         code: Optional[str] = None,
         status: Optional[int] = None,
     ) -> None:
-        super().__init__(message, operation=operation, request_metadata=request_metadata)
+        super().__init__(
+            message,
+            operation=operation,
+            request_metadata=request_metadata,
+            next_action=_next_action("authenticate", True),
+        )
         self.code = code
         self.status = status or 0
 

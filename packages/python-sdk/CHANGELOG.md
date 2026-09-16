@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Public SDK exceptions now expose a stable machine-readable `next_action` recovery contract, including settlement reconciliation guidance for uncertain Call outcomes.
+
 ## [0.7.3] - 2026-09-09
 
 ### Changed

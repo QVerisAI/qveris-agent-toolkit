@@ -1,0 +1,350 @@
+{
+  "schema_version": 1,
+  "lane": "deterministic_fixture",
+  "production_success_claim": false,
+  "fixture_source": "fixtures/v1.json",
+  "summary": {
+    "fixture_cases": 11,
+    "first_attempt_task_completion_rate": 0.18181818181818182,
+    "task_completion_rate": 0.45454545454545453,
+    "api_call_rounds": {
+      "mean": 2.1818181818181817,
+      "p50": 2,
+      "p95": 4
+    },
+    "discover_hit_rate": 1,
+    "contract_rejection_rate": 0.18181818181818182,
+    "automatic_recovery": {
+      "attempts": 4,
+      "success_rate": 0.75
+    },
+    "provider_tool_fallback_success_rate": 1,
+    "unknown_price_continuation_rate": 1,
+    "user_interventions": 5,
+    "usable_tool_false_rejection_rate": 0
+  },
+  "records": [
+    {
+      "id": "ordinary_success",
+      "expected": "success",
+      "outcome": "success",
+      "completed": true,
+      "expected_outcome_observed": true,
+      "usable": true,
+      "api_calls": 2,
+      "discover_hit": true,
+      "contract_rejected": false,
+      "recovery_attempts": 0,
+      "fallback_attempted": false,
+      "fallback_succeeded": false,
+      "unknown_price_observed": true,
+      "unknown_price_continued": true,
+      "user_intervention": false,
+      "false_rejection": false,
+      "error_code": null,
+      "next_action": {
+        "action": "none",
+        "automatic": false,
+        "requires_user": false,
+        "missing_fields": []
+      },
+      "paths": [
+        "/api/v1/search",
+        "/api/v1/tools/execute"
+      ]
+    },
+    {
+      "id": "service_only",
+      "expected": "needs_user",
+      "outcome": "needs_user",
+      "completed": false,
+      "expected_outcome_observed": true,
+      "usable": true,
+      "api_calls": 1,
+      "discover_hit": true,
+      "contract_rejected": false,
+      "recovery_attempts": 0,
+      "fallback_attempted": false,
+      "fallback_succeeded": false,
+      "unknown_price_observed": false,
+      "unknown_price_continued": false,
+      "user_intervention": true,
+      "false_rejection": false,
+      "error_code": null,
+      "next_action": {
+        "action": "select_tool",
+        "automatic": false,
+        "requires_user": true,
+        "missing_fields": []
+      },
+      "paths": [
+        "/api/v1/search"
+      ]
+    },
+    {
+      "id": "expired_context",
+      "expected": "success",
+      "outcome": "success",
+      "completed": true,
+      "expected_outcome_observed": true,
+      "usable": true,
+      "api_calls": 2,
+      "discover_hit": true,
+      "contract_rejected": false,
+      "recovery_attempts": 1,
+      "fallback_attempted": false,
+      "fallback_succeeded": false,
+      "unknown_price_observed": true,
+      "unknown_price_continued": true,
+      "user_intervention": false,
+      "false_rejection": false,
+      "error_code": null,
+      "next_action": {
+        "action": "none",
+        "automatic": false,
+        "requires_user": false,
+        "missing_fields": []
+      },
+      "paths": [
+        "/api/v1/search",
+        "/api/v1/tools/execute"
+      ]
+    },
+    {
+      "id": "unknown_extension",
+      "expected": "success",
+      "outcome": "success",
+      "completed": true,
+      "expected_outcome_observed": true,
+      "usable": true,
+      "api_calls": 2,
+      "discover_hit": true,
+      "contract_rejected": false,
+      "recovery_attempts": 0,
+      "fallback_attempted": false,
+      "fallback_succeeded": false,
+      "unknown_price_observed": true,
+      "unknown_price_continued": true,
+      "user_intervention": false,
+      "false_rejection": false,
+      "error_code": null,
+      "next_action": {
+        "action": "none",
+        "automatic": false,
+        "requires_user": false,
+        "missing_fields": []
+      },
+      "paths": [
+        "/api/v1/search",
+        "/api/v1/tools/execute"
+      ]
+    },
+    {
+      "id": "incomplete_schema",
+      "expected": "success",
+      "outcome": "success",
+      "completed": true,
+      "expected_outcome_observed": true,
+      "usable": true,
+      "api_calls": 3,
+      "discover_hit": true,
+      "contract_rejected": false,
+      "recovery_attempts": 1,
+      "fallback_attempted": false,
+      "fallback_succeeded": false,
+      "unknown_price_observed": false,
+      "unknown_price_continued": false,
+      "user_intervention": false,
+      "false_rejection": false,
+      "error_code": null,
+      "next_action": {
+        "action": "none",
+        "automatic": false,
+        "requires_user": false,
+        "missing_fields": []
+      },
+      "paths": [
+        "/api/v1/search",
+        "/api/v1/tools/by-ids",
+        "/api/v1/tools/execute"
+      ]
+    },
+    {
+      "id": "missing_quote",
+      "expected": "blocked",
+      "outcome": "blocked",
+      "completed": false,
+      "expected_outcome_observed": true,
+      "usable": false,
+      "api_calls": 2,
+      "discover_hit": true,
+      "contract_rejected": true,
+      "recovery_attempts": 0,
+      "fallback_attempted": false,
+      "fallback_succeeded": false,
+      "unknown_price_observed": false,
+      "unknown_price_continued": false,
+      "user_intervention": true,
+      "false_rejection": false,
+      "error_code": "CONTEXT_QUOTE_REQUIRED",
+      "next_action": {
+        "action": "refresh_quote_or_change_budget_policy",
+        "automatic": false,
+        "requires_user": true,
+        "missing_fields": []
+      },
+      "paths": [
+        "/api/v1/search",
+        "/api/v1/tools/probe"
+      ]
+    },
+    {
+      "id": "permission_denied",
+      "expected": "blocked",
+      "outcome": "blocked",
+      "completed": false,
+      "expected_outcome_observed": true,
+      "usable": false,
+      "api_calls": 1,
+      "discover_hit": true,
+      "contract_rejected": true,
+      "recovery_attempts": 0,
+      "fallback_attempted": false,
+      "fallback_succeeded": false,
+      "unknown_price_observed": false,
+      "unknown_price_continued": false,
+      "user_intervention": true,
+      "false_rejection": false,
+      "error_code": "PERMISSION_DENIED",
+      "next_action": {
+        "action": "request_permission",
+        "automatic": false,
+        "requires_user": true,
+        "missing_fields": []
+      },
+      "paths": [
+        "/api/v1/search"
+      ]
+    },
+    {
+      "id": "insufficient_balance",
+      "expected": "blocked",
+      "outcome": "blocked",
+      "completed": false,
+      "expected_outcome_observed": true,
+      "usable": false,
+      "api_calls": 2,
+      "discover_hit": true,
+      "contract_rejected": false,
+      "recovery_attempts": 0,
+      "fallback_attempted": false,
+      "fallback_succeeded": false,
+      "unknown_price_observed": false,
+      "unknown_price_continued": false,
+      "user_intervention": true,
+      "false_rejection": false,
+      "error_code": "CREDITS_INSUFFICIENT",
+      "next_action": {
+        "action": "add_credits",
+        "automatic": false,
+        "requires_user": true,
+        "missing_fields": []
+      },
+      "paths": [
+        "/api/v1/search",
+        "/api/v1/tools/execute"
+      ]
+    },
+    {
+      "id": "upstream_failure",
+      "expected": "failed",
+      "outcome": "failed",
+      "completed": false,
+      "expected_outcome_observed": true,
+      "usable": false,
+      "api_calls": 2,
+      "discover_hit": true,
+      "contract_rejected": false,
+      "recovery_attempts": 0,
+      "fallback_attempted": false,
+      "fallback_succeeded": false,
+      "unknown_price_observed": false,
+      "unknown_price_continued": false,
+      "user_intervention": false,
+      "false_rejection": false,
+      "error_code": null,
+      "next_action": {
+        "action": "reconcile_settlement",
+        "automatic": false,
+        "requires_user": false,
+        "missing_fields": []
+      },
+      "paths": [
+        "/api/v1/search",
+        "/api/v1/tools/execute"
+      ]
+    },
+    {
+      "id": "unknown_settlement",
+      "expected": "unknown_settlement",
+      "outcome": "unknown_settlement",
+      "completed": false,
+      "expected_outcome_observed": true,
+      "usable": false,
+      "api_calls": 4,
+      "discover_hit": true,
+      "contract_rejected": false,
+      "recovery_attempts": 1,
+      "fallback_attempted": false,
+      "fallback_succeeded": false,
+      "unknown_price_observed": false,
+      "unknown_price_continued": false,
+      "user_intervention": true,
+      "false_rejection": false,
+      "error_code": null,
+      "next_action": {
+        "action": "wait_and_reconcile",
+        "automatic": false,
+        "requires_user": false,
+        "missing_fields": [],
+        "reason": "settlement_not_final"
+      },
+      "paths": [
+        "/api/v1/search",
+        "/api/v1/tools/execute",
+        "/api/v1/auth/usage/history/v2",
+        "/api/v1/auth/credits/ledger"
+      ]
+    },
+    {
+      "id": "provider_fallback",
+      "expected": "success",
+      "outcome": "success",
+      "completed": true,
+      "expected_outcome_observed": true,
+      "usable": true,
+      "api_calls": 3,
+      "discover_hit": true,
+      "contract_rejected": false,
+      "recovery_attempts": 1,
+      "fallback_attempted": true,
+      "fallback_succeeded": true,
+      "unknown_price_observed": false,
+      "unknown_price_continued": false,
+      "user_intervention": false,
+      "false_rejection": false,
+      "error_code": null,
+      "next_action": {
+        "action": "none",
+        "automatic": false,
+        "requires_user": false,
+        "missing_fields": []
+      },
+      "paths": [
+        "/api/v1/search",
+        "/api/v1/search",
+        "/api/v1/tools/execute"
+      ]
+    }
+  ]
+}

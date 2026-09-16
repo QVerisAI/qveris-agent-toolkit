@@ -49,7 +49,7 @@ import { probeToolSchema, executeProbeTool, type ProbeToolInput } from './tools/
 import { getToolsByIdsSchema, executeGetToolsByIds, type GetToolsByIdsInput } from './tools/get-by-ids.js';
 import { usageHistorySchema, executeUsageHistory, type UsageHistoryInput } from './tools/usage-history.js';
 import { creditsLedgerSchema, executeCreditsLedger, type CreditsLedgerInput } from './tools/credits-ledger.js';
-import type { ApiError } from './types.js';
+import type { ApiError, NextAction } from './types.js';
 import { TOOL_OUTPUT_SCHEMAS } from './output-schemas.js';
 
 // ============================================================================
@@ -322,6 +322,7 @@ export async function executeQverisMcpTool(
             error:
               'QVERIS_API_KEY is not set. Tool listing works without a key, but tool calls require one. ' +
               'Create a key at https://qveris.ai/account?page=api-keys, set QVERIS_API_KEY, and restart the server.',
+            next_action: requiredAction('authenticate'),
           }),
         },
       ],
@@ -350,6 +351,7 @@ export async function executeQverisMcpTool(
               text: JSON.stringify({
                 error: 'Missing required parameter: query',
                 hint: 'Provide a natural language query describing the tool capability you need',
+                next_action: requiredAction('provide_parameters', ['query']),
               }),
             },
           ],
@@ -382,6 +384,7 @@ export async function executeQverisMcpTool(
               text: JSON.stringify({
                 error: 'Missing or invalid required parameter: tool_ids',
                 hint: 'Provide an array of tool IDs (at least one) to retrieve tool information',
+                next_action: requiredAction('provide_parameters', ['tool_ids']),
               }),
             },
           ],
@@ -419,6 +422,7 @@ export async function executeQverisMcpTool(
               text: JSON.stringify({
                 error: `Missing required parameters: ${missingFields.join(', ')}`,
                 hint: 'tool_id and search_id must come from a previous discover call',
+                next_action: requiredAction('provide_parameters', missingFields),
               }),
             },
           ],
@@ -436,6 +440,7 @@ export async function executeQverisMcpTool(
               text: JSON.stringify({
                 error: 'Call cancelled: the user declined the billing confirmation.',
                 tool_id: input.tool_id,
+                next_action: requiredAction('respect_user_denial'),
               }),
             },
           ],
@@ -444,15 +449,24 @@ export async function executeQverisMcpTool(
       }
 
       const result = await executeExecuteTool(client, input, defaultSessionId);
+      const resultWithAction = {
+        ...result,
+        next_action: {
+          action: result.success === false && result.execution_id ? 'reconcile_settlement' : 'none',
+          automatic: false,
+          requires_user: false,
+          missing_fields: [],
+        },
+      };
 
       return {
         content: [
           {
             type: 'text',
-            text: JSON.stringify(result),
+            text: JSON.stringify(resultWithAction),
           },
         ],
-        structuredContent: result as unknown as Record<string, unknown>,
+        structuredContent: resultWithAction as unknown as Record<string, unknown>,
       };
     }
 
@@ -460,7 +474,15 @@ export async function executeQverisMcpTool(
       const input = (args ?? {}) as unknown as ProbeToolInput;
       if (!input.tool_id || typeof input.tool_id !== 'string') {
         return {
-          content: [{ type: 'text', text: JSON.stringify({ error: 'Missing required parameter: tool_id' }) }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                error: 'Missing required parameter: tool_id',
+                next_action: requiredAction('provide_parameters', ['tool_id']),
+              }),
+            },
+          ],
           isError: true,
         };
       }
@@ -509,6 +531,7 @@ export async function executeQverisMcpTool(
           text: JSON.stringify({
             error: `Unknown tool: ${rawName}`,
             available_tools: ['discover', 'inspect', 'probe', 'call', 'usage_history', 'credits_ledger'],
+            next_action: requiredAction('select_supported_tool'),
           }),
         },
       ],
@@ -526,6 +549,7 @@ export async function executeQverisMcpTool(
               status: error.status,
               ...(error.details !== undefined && { details: error.details }),
               ...(error.cause && { cause: error.cause }),
+              next_action: error.next_action ?? recoveryFor(error.status, name),
               observability: compactObject({
                 ...mcpObservability,
                 api: error.observability,
@@ -548,6 +572,7 @@ export async function executeQverisMcpTool(
           text: JSON.stringify({
             error: errorMessage,
             ...(errorCause && { cause: errorCause }),
+            next_action: requiredAction('review_and_retry'),
           }),
         },
       ],
@@ -739,6 +764,29 @@ export type { ServerCardInfo, ServerCardInput, ServerCardKeyValueInput, ServerCa
  */
 function isApiError(error: unknown): error is ApiError {
   return typeof error === 'object' && error !== null && 'status' in error && 'message' in error;
+}
+
+function recoveryFor(status: number, operation: string): NextAction {
+  const base = { automatic: false, missing_fields: [] as string[] };
+  if (status === 401) return { action: 'authenticate', requires_user: true, ...base };
+  if (status === 402) return { action: 'add_credits', requires_user: true, ...base };
+  if (status === 403) return { action: 'request_permission', requires_user: true, ...base };
+  if (operation === 'call' && (status === 0 || status === 408 || status >= 500)) {
+    return {
+      action: 'reconcile_settlement',
+      requires_user: false,
+      reason: 'call_outcome_may_be_unknown',
+      ...base,
+    };
+  }
+  if (status === 0 || status === 408 || status === 429 || status === 503) {
+    return { action: 'retry', requires_user: false, reason: 'safe_read_retry', ...base };
+  }
+  return { action: 'review_and_retry', requires_user: true, ...base };
+}
+
+function requiredAction(action: string, missingFields: string[] = []): NextAction {
+  return { action, automatic: false, requires_user: true, missing_fields: missingFields };
 }
 
 export function isEntrypoint(argvEntry: string | undefined, moduleUrl = import.meta.url): boolean {

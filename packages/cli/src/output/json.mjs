@@ -8,6 +8,12 @@ export function outputJsonError(error, exitCode = 1) {
   if (error.hint) obj.hint = error.hint;
   obj.retryable = error.retryable ?? false;
   obj.action = error.action ?? "review_and_retry";
+  obj.next_action = error.nextAction ?? {
+    action: obj.action,
+    automatic: false,
+    requires_user: !obj.retryable,
+    missing_fields: error.missingFields ?? [],
+  };
   obj.missing_fields = error.missingFields ?? [];
   obj.fallback_available = error.fallbackAvailable ?? false;
   if (error.candidates !== undefined) obj.candidates = error.candidates;
