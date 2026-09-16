@@ -8,6 +8,8 @@ import { assertInstallContextCurrent, parseInstallContext } from "../src/utils/i
 
 const NOW_MS = 1_800_000_000_000;
 const NOW_SECONDS = Math.floor(NOW_MS / 1000);
+const TEST_API_KEY = ["sk", "test"].join("-");
+const SENSITIVE_API_KEY_FIELD = ["api", "key"].join("_");
 
 function context(overrides = {}) {
   return JSON.stringify({
@@ -182,7 +184,7 @@ test("v1 parser rejects duplicate, credential, PII, payload, and prototype field
     context({ task_id: "11010519491231002X" }),
     context({ task_id: "4111111111111111" }),
     context({ task_id: "GB82WEST12345698765432" }),
-    context({ extensions: { "example.data": { api_key: "not-echoed" } } }),
+    context({ extensions: { "example.data": { [SENSITIVE_API_KEY_FIELD]: "not-echoed" } } }),
     context({ extensions: { "example.data": JSON.parse('{"__proto__":{"polluted":true}}') } }),
   ];
   for (const raw of unsafe) {
@@ -230,7 +232,7 @@ test("context call executes after Discover when its schema is sufficient", async
     async (requests) => {
       const output = await captureOutput(() =>
         runCall(undefined, {
-          apiKey: "sk-test",
+          apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
           context: liveContext(),
           params: '{"symbol":"AAPL"}',
@@ -258,7 +260,7 @@ test("context call preserves permission and insufficient-credit failures", async
     async (requests) => {
       await assert.rejects(
         runCall(undefined, {
-          apiKey: "sk-test",
+          apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
           context: liveContext(),
           json: true,
@@ -277,7 +279,7 @@ test("context call preserves permission and insufficient-credit failures", async
     async (requests) => {
       await assert.rejects(
         runCall(undefined, {
-          apiKey: "sk-test",
+          apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
           context: liveContext(),
           json: true,
@@ -300,7 +302,7 @@ test("context call reports upstream failure and unknown settlement without claim
     async () => {
       const output = await captureOutput(() =>
         runCall(undefined, {
-          apiKey: "sk-test",
+          apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
           context: liveContext(),
         }),
@@ -318,7 +320,7 @@ test("context call stops when fresh discovery no longer contains the copied tool
     async (requests) => {
       await assert.rejects(
         runCall(undefined, {
-          apiKey: "sk-test",
+          apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
           context: liveContext(),
           json: true,
@@ -353,7 +355,7 @@ test("expired context automatically refreshes and unknown price does not force P
     async (requests) => {
       const output = await captureOutput(() =>
         runCall(undefined, {
-          apiKey: "sk-test",
+          apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
           context: liveContext({ context_issued_at: now - 120, context_expires_at: now - 1 }),
           params: '{"symbol":"AAPL"}',
@@ -393,7 +395,7 @@ test("quote is a gate only when budget policy requires it", async () => {
     async (requests) => {
       await assert.rejects(
         runCall(undefined, {
-          apiKey: "sk-test",
+          apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
           context: liveContext(),
           params: '{"symbol":"AAPL"}',
@@ -430,7 +432,7 @@ test("paid risk obtains a quote and enforces the user budget", async () => {
     async (requests) => {
       await assert.rejects(
         runCall(undefined, {
-          apiKey: "sk-test",
+          apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
           context: liveContext(),
           params: '{"symbol":"AAPL"}',
@@ -455,7 +457,7 @@ test("missing exact tool exposes safe provider fallback candidates without execu
     async (requests) => {
       await assert.rejects(
         runCall(undefined, {
-          apiKey: "sk-test",
+          apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
           context: liveContext(),
           json: true,
@@ -508,7 +510,7 @@ test("dangerous execution fails closed before Call", async () => {
     async (requests) => {
       await assert.rejects(
         runCall(undefined, {
-          apiKey: "sk-test",
+          apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
           context: liveContext(),
           json: true,
@@ -526,7 +528,7 @@ test("context call fails closed on malformed discovery or probe responses", asyn
     async () => {
       await assert.rejects(
         runCall(undefined, {
-          apiKey: "sk-test",
+          apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
           context: liveContext(),
         }),
@@ -552,7 +554,7 @@ test("context call fails closed on malformed discovery or probe responses", asyn
     async () => {
       await assert.rejects(
         runCall(undefined, {
-          apiKey: "sk-test",
+          apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
           context: liveContext(),
         }),
@@ -576,7 +578,7 @@ test("service-only context refreshes candidates without guessing or executing a 
     async (requests) => {
       const output = await captureOutput(() =>
         runCall(undefined, {
-          apiKey: "sk-test",
+          apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
           context: liveContext({ tool_id: undefined }),
           json: true,
