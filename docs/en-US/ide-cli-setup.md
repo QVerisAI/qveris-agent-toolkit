@@ -16,6 +16,16 @@ For CLI coding tools, follow the instructions at the following corresponding pag
 
 ## Automated Setup with Coding Agents
 
+### Consuming copied service/task context
+
+When an IDE or coding agent receives a v1 JSON context copied from the installation page, use the CLI as the single strict consumer:
+
+```bash
+qveris call --context @context.json --params @params.json
+```
+
+Do not put parameters, prompts, credentials, or private payloads in `context.json`; construct `params.json` from the current user request. The CLI validates version and lifetime, rejects unknown/duplicate/sensitive fields, and performs fresh Discover, Inspect, and Probe checks before Call. A copied ID does not establish availability, price, permission, result validity, or final settlement. If re-discovery fails, return to discovery for a fresh context instead of forcing the old ID.
+
 You can also tell your coding agents to set it up for you. Simply provide them with the configuration guide URL and your API key:
 
 ```

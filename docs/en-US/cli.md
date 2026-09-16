@@ -185,6 +185,7 @@ qveris call <tool_id|index> [flags]
 | Flag | Description | Default |
 |------|-------------|---------|
 | `--params <json\|@file\|->` | Parameters as JSON, file path, or stdin | `{}` |
+| `--context <json\|@file\|->` | Copied v1 service/task context; requires fresh Discover, Inspect, and Probe | — |
 | `--discovery-id <id>` | Discovery session ID | auto from session |
 | `--model <name>` | Model that selected and parameterized the call | — |
 | `--max-size <bytes>` | Response size limit (-1 = unlimited) | 4KB (TTY) / 20KB (pipe) |
@@ -205,6 +206,9 @@ qveris call 1 --params '{"city": "London"}' --model router-model-v1
 # From file
 qveris call 1 --params @params.json
 
+# Copied installation-page context (no positional tool ID or old discovery ID)
+qveris call --context @context.json --params @params.json
+
 # From stdin
 echo '{"city": "London"}' | qveris call 1 --params -
 
@@ -216,6 +220,38 @@ qveris call 1 --params '{"city": "London"}' --respond-with 'fields:$.temperature
 ```
 
 Projection flags are opt-in. Paid calls are strict single-submit: the CLI does not retry `429`/`503`, follow HTTP redirects, refresh OAuth after `401` and replay, or remove a rejected projection field and resubmit. Projection rejections and invalid projections remain `422` errors. `QVERIS_MAX_RETRIES` continues to apply to read and audit commands only.
+
+#### Copied service/task context
+
+The installation page can copy a version 1 JSON template containing only public selection IDs and Unix-second timestamps. The CLI is the canonical consumer:
+
+```bash
+qveris call --context @context.json --params @params.json
+```
+
+`--context` is mutually exclusive with a positional tool ID and `--discovery-id`. The template is a selection hint, not parameters, authorization, availability, pricing, or execution proof. Supply parameters separately from the current user request.
+
+Before any Call, the CLI validates the context and performs a fresh `Discover → Inspect → Probe` sequence. It executes only if current discovery still returns the exact copied `tool_id` (or a service-only context resolves to exactly one current tool), current inspection confirms the selection, and the schema/quote probe accepts the parameters. The fresh `search_id` is used for Call; old discovery state is ignored.
+
+| Field | v1 contract |
+|---|---|
+| `context_version` | Integer `1` |
+| `context_issued_at` | Integer Unix seconds; no more than five minutes ahead of the local clock |
+| `context_expires_at` | Integer Unix seconds; later than issue time, not expired, and at most 24 hours after issue time |
+| `task_id` | Required public ID |
+| `service_id` | Public ID; at least one of `service_id` or `tool_id` is required |
+| `tool_id` | Exact public tool ID; at least one of `service_id` or `tool_id` is required |
+| `template_id` | Optional public template ID; never template content or a prompt |
+
+Unknown or duplicate fields are rejected. IDs must be 1–128 characters, start with an ASCII letter or digit, and contain only ASCII letters, digits, `.`, `_`, `:`, `/`, or `-`. Credential-like, PII-like, prompt, parameter, and payload content is rejected and never used as context.
+
+- **Expired/unsupported/unsafe context:** return to the discovery surface and copy a fresh v1 public-ID-only template; rotate any credential that was exposed.
+- **Re-discovery or inspection mismatch:** select a current result instead of forcing the old ID.
+- **Probe rejection:** review the latest schema and quote, then correct `--params`. A quote is not a price reservation or execution authorization.
+- **Permission or credit failure:** confirm account/capability access or credits for the configured endpoint.
+- **Upstream failure or unknown settlement:** retain the `execution_id`; use `qveris usage --mode search --execution-id <id>` and `qveris ledger` before claiming a final charge outcome.
+
+This generic path intentionally does not define a main-task service, billing rule, permission set, parameters, expected result, or settlement outcome. Those details require a separately approved service statement and current API responses.
 
 **Dry run (no credits consumed):**
 

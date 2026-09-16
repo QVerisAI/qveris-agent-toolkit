@@ -397,7 +397,8 @@ test("OAuth credentials refresh once on 401 and business 403 is not retried", as
       () => jsonResponse({ message: "missing required scope" }, { status: 403 }),
       () => discoverTools({ credentialProvider: oauthProvider, baseUrl: "https://unit.test/api/v1", query: "weather" }),
     ),
-    (error) => error instanceof CliError && error.code === "API_ERROR" && /missing required scope/.test(error.message),
+    (error) =>
+      error instanceof CliError && error.code === "PERMISSION_DENIED" && /missing required scope/.test(error.message),
   );
 });
 

@@ -55,8 +55,10 @@ export async function main(argv) {
         break;
       }
       case "call": {
-        if (rest.length === 0) {
-          console.error("  Usage: qveris call <tool_id|index> [--params <json>]");
+        if (rest.length === 0 && !flags.context) {
+          console.error(
+            "  Usage: qveris call <tool_id|index> [--params <json>] OR qveris call --context <json|@file|-> [--params <json>]",
+          );
           process.exitCode = 2;
           return;
         }
@@ -210,6 +212,7 @@ const VALUE_FLAGS = {
   "max-credits": "maxCredits",
   scope: "scope",
   resource: "resource",
+  context: "context",
 };
 
 function takeNext(args, i, flag) {
@@ -421,6 +424,9 @@ function extractGlobalFlags(args) {
       case "--resource":
         flags.resource = takeNext(args, i++, arg);
         break;
+      case "--context":
+        flags.context = takeNext(args, i++, arg);
+        break;
       default:
         flags._positional.push(arg);
     }
@@ -479,6 +485,8 @@ function printUsage(flags = {}) {
     --lang <zh|en>         Discover response language
     --respond-with <mode>  Call projection: full | summary | fields:<JSONPath,...>
     --model <model>        Model that selected and parameterized the Call
+    --context <json|@file|->
+                           Validate copied v1 context and re-discover/inspect/probe before Call
     --checks <list>        Probe checks: schema,quote,coverage,sample
     --live-budget <mode>   Probe budget: none | metadata | sampled
     --target <target>      MCP target: cursor | claude-desktop | claude-code | opencode | openclaw | generic
@@ -512,6 +520,7 @@ function printUsage(flags = {}) {
     qveris inspect 1
     qveris probe 1 --params '{"city": "London"}' --checks schema,quote
     qveris call 1 --params '{"city": "London"}'
+    qveris call --context @context.json --params '{"city": "London"}'
     qveris call 1 --params '{"city": "London"}' --respond-with summary
     qveris call 1 --params @params.json --codegen curl
     qveris mcp configure --target cursor --write --include-key

@@ -34,6 +34,7 @@ export function nodeCheck(nodeVersion = process.version) {
 function codeToName(code) {
   if (code === "AUTH_INVALID_KEY") return "api_key_valid";
   if (code === "AUTH_OAUTH_FAILED") return "oauth";
+  if (code === "PERMISSION_DENIED") return "permissions";
   if (code === "CREDITS_INSUFFICIENT") return "credits";
   return "connectivity";
 }
@@ -41,6 +42,7 @@ function codeToName(code) {
 function endpointRecoveryHint(code, baseUrl) {
   const siteUrl = getSiteUrl(baseUrl);
   if (code === "AUTH_INVALID_KEY") return `Check your key at ${siteUrl}/account`;
+  if (code === "PERMISSION_DENIED") return `Confirm account and capability permissions at ${siteUrl}/account`;
   if (code === "CREDITS_INSUFFICIENT") {
     return `Purchase credits at ${siteUrl}/pricing, then confirm balance with 'qveris credits'`;
   }

@@ -187,6 +187,7 @@ qveris call <tool_id|index> [flags]
 | 参数 | 说明 | 默认值 |
 |------|------|--------|
 | `--params <json\|@file\|->` | JSON、文件路径或 stdin | `{}` |
+| `--context <json\|@file\|->` | 复制的 v1 服务/任务上下文；强制重新 Discover、Inspect 和 Probe | — |
 | `--discovery-id <id>` | 发现会话 ID | 自动从会话获取 |
 | `--model <name>` | 选择能力并生成参数的模型 | — |
 | `--max-size <bytes>` | 响应大小限制（-1 = 无限制） | 4KB (TTY) / 20KB (管道) |
@@ -207,6 +208,9 @@ qveris call 1 --params '{"city": "London"}' --model router-model-v1
 # 从文件
 qveris call 1 --params @params.json
 
+# 复制的安装页上下文（不再传位置工具 ID 或旧 discovery ID）
+qveris call --context @context.json --params @params.json
+
 # 从 stdin
 echo '{"city": "London"}' | qveris call 1 --params -
 
@@ -218,6 +222,38 @@ qveris call 1 --params '{"city": "London"}' --respond-with 'fields:$.temperature
 ```
 
 投影参数仅在显式指定时发送。如果旧服务明确把投影字段判定为未知字段，CLI 只移除该字段并重试一次；无效投影仍按 `422` 错误返回。
+
+#### 复制的服务/任务上下文
+
+安装页可以复制只含公开选择 ID 和 Unix 秒时间戳的版本 1 JSON 模板。CLI 是该模板的权威消费者：
+
+```bash
+qveris call --context @context.json --params @params.json
+```
+
+`--context` 与位置工具 ID、`--discovery-id` 互斥。模板只是选择提示，不是参数、授权、可用性、价格或执行证明。参数必须根据当前用户请求另行传入。
+
+执行 Call 前，CLI 会校验上下文并强制运行新的 `Discover → Inspect → Probe`。只有当前 Discover 仍返回复制的准确 `tool_id`（或仅服务上下文恰好解析为一个当前工具）、Inspect 确认该选择且 schema/quote Probe 接受参数时才会执行。Call 使用新的 `search_id`，忽略旧发现状态。
+
+| 字段 | v1 合同 |
+|---|---|
+| `context_version` | 整数 `1` |
+| `context_issued_at` | Unix 秒整数；最多可以比本地时钟快五分钟 |
+| `context_expires_at` | Unix 秒整数；晚于签发时间、尚未过期，且有效期不超过 24 小时 |
+| `task_id` | 必填公开 ID |
+| `service_id` | 公开 ID；`service_id` 与 `tool_id` 至少提供一个 |
+| `tool_id` | 准确公开工具 ID；`service_id` 与 `tool_id` 至少提供一个 |
+| `template_id` | 可选公开模板 ID；绝不是模板内容或提示词 |
+
+未知字段和重复字段都会被拒绝。ID 长度必须为 1–128 个字符，以 ASCII 字母或数字开头，并且只能包含 ASCII 字母、数字、`.`、`_`、`:`、`/` 或 `-`。疑似凭证、PII、提示词、参数和 payload 内容会被拒绝，绝不会作为上下文使用。
+
+- **过期/不支持/不安全的上下文：** 返回发现入口并复制新的 v1 纯公开 ID 模板；若凭证曾暴露，请轮换。
+- **重新发现或检查不匹配：** 选择当前结果，不要强制使用旧 ID。
+- **Probe 拒绝：** 查看最新 schema 和报价后修正 `--params`。报价不是锁价或执行授权。
+- **权限或积分失败：** 确认当前端点的账户/能力权限或积分。
+- **上游失败或结算未知：** 保留 `execution_id`；先运行 `qveris usage --mode search --execution-id <id>` 和 `qveris ledger`，再陈述最终扣费结果。
+
+这条通用路径有意不定义主任务服务、计费规则、权限集、参数、预期结果或结算结果。这些信息必须来自另行批准的服务说明和当前 API 响应。
 
 **试运行（不消耗 credits）：**
 

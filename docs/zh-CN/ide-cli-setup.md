@@ -16,6 +16,16 @@ QVeris 已集成到多种 IDE 和 CLI 编程工具中。通过自动配置 QVeri
 
 ## 通过编程智能体自动配置
 
+### 消费复制的服务/任务上下文
+
+IDE 或编程智能体收到从安装页复制的 v1 JSON 上下文时，请使用 CLI 作为唯一严格消费者：
+
+```bash
+qveris call --context @context.json --params @params.json
+```
+
+不要把参数、提示词、凭证或私有 payload 放入 `context.json`；应根据当前用户请求构建 `params.json`。CLI 会校验版本与有效期、拒绝未知/重复/敏感字段，并在 Call 前重新 Discover、Inspect 和 Probe。复制的 ID 不能证明可用性、价格、权限、结果有效性或最终结算。若重新发现失败，请返回发现入口获取新上下文，不要强制使用旧 ID。
+
 你也可以让编程智能体代为完成配置。只需将配置指南链接和你的 API 密钥提供给智能体：
 
 ```

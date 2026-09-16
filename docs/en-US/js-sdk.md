@@ -187,6 +187,18 @@ function explain(result: ExecuteResponse): string {
 
 ## Bring your own agent loop
 
+### Copied service/task context
+
+The installation page's copied v1 JSON is a short-lived public selection hint, not an SDK request object. Use the canonical CLI consumer when accepting it from a user:
+
+```bash
+qveris call --context @context.json --params @params.json
+```
+
+That boundary rejects expired, future-issued, unsupported-version, unknown-field, duplicate-field, credential-like, and PII-like templates and forces a fresh Discover, Inspect, and schema/quote Probe before Call. Do not pass the JSON directly to `qveris.call`, trust an old `search_id`, or infer availability, price, permission, valid result, or settlement from the template.
+
+An application that deliberately implements the same flow with the SDK must keep parameters separate, use the public IDs only as discovery hints, require an exact current match, call `inspect` and `probe`, and pass the fresh discovery `search_id` to `call`. Reconcile final settlement with `usage` and `ledger`; absent final audit data is unknown, not charged or free.
+
 The typed client is a natural tool backend for any LLM agent framework. Tell the model to use `discover` then `call` by default and to invoke `inspect` only when it needs missing or refreshed detail. Because `discover` returns `why_recommended`, parameter guidance, and `expected_cost` when available, the model should not inspect every candidate by habit.
 
 ## Framework integrations

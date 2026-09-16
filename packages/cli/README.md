@@ -140,6 +140,7 @@ qveris probe 1 --params '{"set":"land","first":"sct","timeOfDay":"day"}' --check
 | `qveris inspect <id\|index>` | View full tool details: parameters (type, required, description, enum values), example, provider info, execution history. |
 | `qveris probe <id\|index>` | Validate candidate parameters and obtain a zero-cost quote without execution. |
 | `qveris call <id\|index>` | Execute a capability. Shows result data, execution time, pre-settlement billing, and remaining credits. |
+| `qveris call --context <json\|@file\|->` | Consume a copied v1 service/task context, re-discover/inspect/probe, then execute with separately supplied parameters. |
 
 ### Account
 
@@ -218,6 +219,16 @@ qveris probe 1 --params '{"symbol":"AAPL"}' --checks schema,quote
 ```
 
 `schema` and `quote` are implemented. `coverage` and `sample` can return an explicit `unknown` verdict. Probe never executes the capability or consumes credits.
+
+### Copied service/task context
+
+Use the CLI as the strict consumer for a v1 JSON template copied from the installation page:
+
+```bash
+qveris call --context @context.json --params @params.json
+```
+
+The context is an expiring public-ID selection hint, not parameters or authorization. The CLI rejects expired, future-issued, unsupported-version, unknown-field, duplicate-field, credential-like, and PII-like templates. It then performs a fresh Discover, Inspect, and schema/quote Probe and calls only an exact current match using the fresh `search_id`. Current availability, price, permissions, result validity, and final settlement always come from current API responses and usage/ledger audit, never from the template.
 
 ### Call
 

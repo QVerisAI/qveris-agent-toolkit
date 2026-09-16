@@ -32,6 +32,11 @@ export const ERROR_CODES = {
     hint: "Run 'qveris auth login' again",
     exit: EX_NOPERM,
   },
+  PERMISSION_DENIED: {
+    message: "Permission denied",
+    hint: "Confirm the account, API key, OAuth scopes, and selected capability permissions for the configured endpoint",
+    exit: EX_NOPERM,
+  },
   NET_TIMEOUT: {
     message: "Request timed out",
     hint: "Check connectivity or increase --timeout",
@@ -45,6 +50,41 @@ export const ERROR_CODES = {
   PARAMS_INVALID_JSON: {
     message: "Invalid JSON in --params",
     hint: "Check JSON syntax in --params value, or pass a file with --params @params.json",
+    exit: EX_USAGE,
+  },
+  CONTEXT_INVALID: {
+    message: "Invalid service/task context",
+    hint: "Copy a fresh v1 JSON template from the installation page",
+    exit: EX_USAGE,
+  },
+  CONTEXT_EXPIRED: {
+    message: "Service/task context expired",
+    hint: "Return to discovery, select a current result, and copy a fresh template",
+    exit: EX_USAGE,
+  },
+  CONTEXT_UNSUPPORTED: {
+    message: "Unsupported service/task context version",
+    hint: "Use a v1 template until this CLI explicitly supports a newer version",
+    exit: EX_USAGE,
+  },
+  CONTEXT_UNSAFE: {
+    message: "Unsafe service/task context",
+    hint: "Remove private data and credentials, rotate any exposed secret, and copy a fresh public-ID-only template",
+    exit: EX_USAGE,
+  },
+  CONTEXT_REDISCOVERY_FAILED: {
+    message: "Context could not be confirmed by current discovery",
+    hint: "Return to discovery, select a currently available result, and copy a fresh template",
+    exit: EX_UNAVAILABLE,
+  },
+  CONTEXT_INSPECT_FAILED: {
+    message: "Context tool could not be confirmed by current inspection",
+    hint: "Return to discovery, select a current result, and copy a fresh template",
+    exit: EX_UNAVAILABLE,
+  },
+  CONTEXT_PROBE_FAILED: {
+    message: "Context parameters failed current preflight validation",
+    hint: "Review the latest tool schema and quote, correct --params, then retry with a fresh context if needed",
     exit: EX_USAGE,
   },
   INIT_PARAMS_REQUIRED: {

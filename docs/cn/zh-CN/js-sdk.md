@@ -175,6 +175,18 @@ function explain(result: ExecuteResponse): string {
 
 ## 接入你自己的 Agent 循环
 
+### 复制的服务/任务上下文
+
+安装页复制的 v1 JSON 是短期公开选择提示，不是 SDK 请求对象。接收用户提供的该上下文时，请使用权威 CLI 消费入口：
+
+```bash
+qveris call --context @context.json --params @params.json
+```
+
+该边界会拒绝过期、未来签发、不支持版本、未知字段、重复字段、疑似凭证和疑似 PII 的模板，并在 Call 前强制重新 Discover、Inspect 和执行 schema/quote Probe。不要把 JSON 直接传给 `qveris.call`，不要信任旧 `search_id`，也不要根据模板推断可用性、价格、权限、有效结果或结算。
+
+若应用明确要用 SDK 复现这条流程，必须保持参数分离，公开 ID 只作发现提示，要求准确的当前匹配，调用 `inspect` 和 `probe`，并把新发现的 `search_id` 传给 `call`。最终结算要通过 `usage` 和 `ledger` 对账；缺少最终审计数据表示未知，不能当作已扣费或免费。
+
 类型化客户端天然可作为任何 LLM Agent 框架的工具后端。应指导模型默认使用 `discover` → `call`，只有缺少或需要刷新详情时才调用 `inspect`。由于 `discover` 会尽可能返回 `why_recommended`、参数指引和 `expected_cost`，模型不应习惯性检查每个候选。
 
 ## 框架集成
