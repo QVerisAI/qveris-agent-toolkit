@@ -84,6 +84,31 @@ async def test_paid_call_strict_mode_does_not_replay_unsupported_projection() ->
 
 
 @pytest.mark.asyncio
+async def test_paid_call_malformed_success_response_requires_settlement_reconciliation() -> None:
+    requests: List[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, content=b"")
+
+    client = make_client(handler)
+    try:
+        with pytest.raises(QverisContractError) as exc_info:
+            await client.call("paid-tool", {})
+    finally:
+        await client.close()
+
+    assert len(requests) == 1
+    assert exc_info.value.next_action == {
+        "action": "reconcile_settlement",
+        "automatic": False,
+        "requires_user": False,
+        "missing_fields": [],
+        "reason": "call_outcome_may_be_unknown",
+    }
+
+
+@pytest.mark.asyncio
 async def test_paid_call_does_not_replay_unauthorized_response() -> None:
     requests: List[httpx.Request] = []
 

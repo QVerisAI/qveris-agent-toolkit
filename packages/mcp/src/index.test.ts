@@ -456,6 +456,39 @@ describe('MCP public tool interface', () => {
       reason: 'call_outcome_may_be_unknown',
     });
   });
+
+  it('classifies a malformed paid-call 2xx response as an unknown outcome', async () => {
+    const client = {
+      searchTools: vi.fn(),
+      getToolsByIds: vi.fn(),
+      executeTool: vi.fn().mockRejectedValue({
+        status: 200,
+        message: 'Invalid or empty JSON response from API',
+        observability: {
+          operation: 'call',
+          endpoint: '/tools/execute?tool_id=weather.forecast.v1',
+          http_status: 200,
+          error_type: 'invalid_json',
+        },
+      }),
+      getUsageHistory: vi.fn(),
+      getCreditsLedger: vi.fn(),
+    } as unknown as QverisClient;
+
+    const result = await executeQverisMcpTool(client, 'session-1', 'call', {
+      tool_id: 'weather.forecast.v1',
+      search_id: 'search-1',
+      params_to_tool: {},
+    });
+
+    expect(payload(result).next_action).toEqual({
+      action: 'reconcile_settlement',
+      automatic: false,
+      requires_user: false,
+      missing_fields: [],
+      reason: 'call_outcome_may_be_unknown',
+    });
+  });
 });
 
 function hasErrorCode(error: unknown, code: string): boolean {

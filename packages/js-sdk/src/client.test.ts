@@ -567,6 +567,28 @@ describe('Qveris client', () => {
     });
   });
 
+  it('classifies a malformed paid-call 2xx response as an unknown outcome', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: () => Promise.reject(new SyntaxError('Unexpected end of JSON input')),
+      headers: new Headers(),
+    } as unknown as Response);
+
+    const client = new Qveris({ apiKey: API_KEY });
+    const error = await client.call('t.v1', { parameters: {} }).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(QverisApiError);
+    expect((error as QverisApiError).status).toBe(200);
+    expect((error as QverisApiError).next_action).toEqual({
+      action: 'reconcile_settlement',
+      automatic: false,
+      requires_user: false,
+      missing_fields: [],
+      reason: 'call_outcome_may_be_unknown',
+    });
+  });
+
   it('usage() issues a GET with query filters and unwraps the envelope', async () => {
     const fetchMock = mockFetch({
       status: 'success',

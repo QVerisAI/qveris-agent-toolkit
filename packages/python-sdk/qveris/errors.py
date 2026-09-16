@@ -140,6 +140,24 @@ class QverisCredentialError(QverisError):
 class QverisContractError(QverisError):
     """The API returned an invalid or explicit failure envelope."""
 
+    def __init__(
+        self,
+        message: str,
+        *,
+        operation: str,
+        request_metadata: RequestMetadata,
+        next_action: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        recovery = next_action
+        if recovery is None and operation == "call":
+            recovery = _next_action("reconcile_settlement", False, "call_outcome_may_be_unknown")
+        super().__init__(
+            message,
+            operation=operation,
+            request_metadata=request_metadata,
+            next_action=recovery,
+        )
+
 
 class QverisClientClosedError(QverisError):
     """The client is closing or has already been closed."""

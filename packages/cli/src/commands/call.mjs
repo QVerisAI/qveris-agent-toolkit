@@ -741,7 +741,7 @@ async function executeCall({
       (err?.code === "NET_TIMEOUT" ||
         err?.code === "RATE_LIMITED" ||
         err?.code === "PROVIDER_FAILURE" ||
-        (err?.code === "API_ERROR" && (err?.status === undefined || err.status >= 500)) ||
+        (err?.code === "API_ERROR" && (err?.status === undefined || err.status === 408 || err.status >= 500)) ||
         !(err instanceof CliError));
     if (!executionId && uncertainCallFailure) {
       err.retryable = false;

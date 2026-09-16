@@ -824,6 +824,7 @@ for (const uncertainFailure of [
     respond: () => Promise.reject(Object.assign(new Error(), { name: "AbortError" })),
   },
   { name: "rate limit", errorCode: "RATE_LIMITED", respond: () => response({ message: "retry later" }, 429) },
+  { name: "request timeout", errorCode: "API_ERROR", respond: () => response({ message: "timed out" }, 408) },
   { name: "server error", errorCode: "API_ERROR", respond: () => response({ message: "gateway failed" }, 503) },
 ]) {
   test(`${uncertainFailure.name} without an execution ID forbids Call replay guidance`, async () => {

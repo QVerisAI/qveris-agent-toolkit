@@ -44,7 +44,10 @@ function recoveryFor(status: number, operation?: ApiObservability['operation']):
   if (status === 401) return action('authenticate', true);
   if (status === 402) return action('add_credits', true);
   if (status === 403) return action('request_permission', true);
-  if (operation === 'call' && (status === 0 || status === 408 || status === 429 || status >= 500)) {
+  if (
+    operation === 'call' &&
+    (status === 0 || status === 408 || status === 429 || (status >= 200 && status < 300) || status >= 500)
+  ) {
     return action('reconcile_settlement', false, 'call_outcome_may_be_unknown');
   }
   if (status === 429 || status === 503 || status === 408 || status === 0) {
