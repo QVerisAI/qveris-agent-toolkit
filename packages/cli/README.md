@@ -140,7 +140,7 @@ qveris probe 1 --params '{"set":"land","first":"sct","timeOfDay":"day"}' --check
 | `qveris inspect <id\|index>` | View full tool details: parameters (type, required, description, enum values), example, provider info, execution history. |
 | `qveris probe <id\|index>` | Validate candidate parameters and obtain a zero-cost quote without execution. |
 | `qveris call <id\|index>` | Execute a capability. Shows result data, execution time, pre-settlement billing, and remaining credits. |
-| `qveris call --context <json\|@file\|->` | Consume a copied v1 service/task context, re-discover/inspect/probe, then execute with separately supplied parameters. |
+| `qveris call --context <json\|@file\|->` | Consume a copied v1 service/task context, refresh discovery, validate only as needed, then execute an exact current tool. |
 
 ### Account
 
@@ -228,7 +228,9 @@ Use the CLI as the strict consumer for a v1 JSON template copied from the instal
 qveris call --context @context.json --params @params.json
 ```
 
-The context is an expiring public-ID selection hint, not parameters or authorization. The CLI rejects expired, future-issued, unsupported-version, unknown-field, duplicate-field, credential-like, and PII-like templates. It then performs a fresh Discover, Inspect, and schema/quote Probe and calls only an exact current match using the fresh `search_id`. Current availability, price, permissions, result validity, and final settlement always come from current API responses and usage/ledger audit, never from the template.
+The context is a public-ID selection hint, not parameters or authorization. The CLI strictly rejects credentials, PII, prompts, raw payloads, executable parameters, duplicate/prototype keys, and unsupported required capabilities. Ordinary future fields are ignored with machine-readable warnings; namespaced `extensions` and capability/version negotiation are supported. Expiry invalidates only cached availability, price, and permission snapshots, so the CLI automatically rediscovers with a fresh `search_id` while preserving safe task intent and public IDs.
+
+Discover can go directly to execution confirmation when it supplies a complete parameter contract. Inspect and Probe are added only when schema, parameters, permissions, or pricing require server confirmation. A service-only context refreshes and returns candidates but never guesses a tool. A quote is a gate only for `--require-quote`, `--max-credits`, or detected paid risk; otherwise unknown price is reported and policy may continue. Immediately before Call, authentication, required parameters, budget, explicit permission/region prohibitions, dangerous side effects, and idempotency metadata are checked fail-closed.
 
 ### Call
 

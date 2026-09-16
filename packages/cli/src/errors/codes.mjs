@@ -59,12 +59,12 @@ export const ERROR_CODES = {
   },
   CONTEXT_EXPIRED: {
     message: "Service/task context expired",
-    hint: "Return to discovery, select a current result, and copy a fresh template",
+    hint: "Refresh current discovery; safe task intent and public IDs can be retained",
     exit: EX_USAGE,
   },
   CONTEXT_UNSUPPORTED: {
     message: "Unsupported service/task context version",
-    hint: "Use a v1 template until this CLI explicitly supports a newer version",
+    hint: "Upgrade the CLI or use a template whose minimum version and required capabilities are supported",
     exit: EX_USAGE,
   },
   CONTEXT_UNSAFE: {
@@ -74,18 +74,33 @@ export const ERROR_CODES = {
   },
   CONTEXT_REDISCOVERY_FAILED: {
     message: "Context could not be confirmed by current discovery",
-    hint: "Return to discovery, select a currently available result, and copy a fresh template",
+    hint: "Select a returned current candidate or broaden discovery; do not force the old tool ID",
     exit: EX_UNAVAILABLE,
   },
   CONTEXT_INSPECT_FAILED: {
     message: "Context tool could not be confirmed by current inspection",
-    hint: "Return to discovery, select a current result, and copy a fresh template",
+    hint: "Retry current discovery/inspection or select a returned fallback candidate",
     exit: EX_UNAVAILABLE,
   },
   CONTEXT_PROBE_FAILED: {
     message: "Context parameters failed current preflight validation",
-    hint: "Review the latest tool schema and quote, correct --params, then retry with a fresh context if needed",
+    hint: "Review the latest schema, correct --params, and retry; request a quote only when policy requires it",
     exit: EX_USAGE,
+  },
+  CONTEXT_QUOTE_REQUIRED: {
+    message: "A current quote is required by execution policy",
+    hint: "Refresh the quote, remove the explicit quote/budget requirement, or select another provider",
+    exit: EX_UNAVAILABLE,
+  },
+  CONTEXT_BUDGET_EXCEEDED: {
+    message: "Current quote exceeds the execution budget",
+    hint: "Increase --max-credits or select a lower-cost provider",
+    exit: EX_NOPERM,
+  },
+  CONTEXT_EXECUTION_BLOCKED: {
+    message: "Execution is blocked by safety policy",
+    hint: "Review permissions, region constraints, side effects, and idempotency before retrying",
+    exit: EX_NOPERM,
   },
   INIT_PARAMS_REQUIRED: {
     message: "Init could not infer safe parameters for the selected capability",

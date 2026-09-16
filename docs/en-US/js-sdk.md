@@ -195,9 +195,9 @@ The installation page's copied v1 JSON is a short-lived public selection hint, n
 qveris call --context @context.json --params @params.json
 ```
 
-That boundary rejects expired, future-issued, unsupported-version, unknown-field, duplicate-field, credential-like, and PII-like templates and forces a fresh Discover, Inspect, and schema/quote Probe before Call. Do not pass the JSON directly to `qveris.call`, trust an old `search_id`, or infer availability, price, permission, valid result, or settlement from the template.
+That boundary rejects credentials, PII, prompts, payloads, executable parameters, duplicate/prototype keys, and unsupported required capabilities. It ignores ordinary future fields with structured warnings and refreshes expired availability/price/permission snapshots through Discover. Inspect and Probe are conditional; quotes gate only explicit budget/quote policy or detected paid risk. Do not pass the JSON directly to `qveris.call` or trust an old `search_id`.
 
-An application that deliberately implements the same flow with the SDK must keep parameters separate, use the public IDs only as discovery hints, require an exact current match, call `inspect` and `probe`, and pass the fresh discovery `search_id` to `call`. Reconcile final settlement with `usage` and `ledger`; absent final audit data is unknown, not charged or free.
+An application that deliberately implements the same flow with the SDK must keep parameters separate, use public IDs only as discovery hints, return candidates rather than guess for service-only context, require an exact current tool match, call `inspect` or `probe` only when current validation requires it, and pass the fresh discovery `search_id` to `call`. Reconcile final settlement with `usage` and `ledger`; absent final audit data is unknown, not charged or free.
 
 The typed client is a natural tool backend for any LLM agent framework. Tell the model to use `discover` then `call` by default and to invoke `inspect` only when it needs missing or refreshed detail. Because `discover` returns `why_recommended`, parameter guidance, and `expected_cost` when available, the model should not inspect every candidate by habit.
 

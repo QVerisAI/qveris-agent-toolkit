@@ -49,7 +49,7 @@ If the installation page gives you a copied v1 service/task context, save that J
 qveris call --context @context.json --params @params.json
 ```
 
-The template is only an expiring public-ID selection hint. The CLI rejects unsafe, ambiguous, expired, and unsupported contexts and re-runs Discover, Inspect, and Probe before execution. It does not trust the template for current availability, price, permissions, result validity, or settlement. See [Copied service/task context](cli.md#copied-servicetask-context) for the contract and recovery steps.
+The template is only a public-ID selection hint. The CLI rejects sensitive or executable content, ignores ordinary future fields with structured warnings, and automatically refreshes expired availability/price/permission snapshots. It runs Inspect or Probe only when the fresh Discover result and execution policy require them; service-only context returns candidates without guessing a tool. See [Copied service/task context](cli.md#copied-servicetask-context) for the contract and recovery steps.
 
 ---
 

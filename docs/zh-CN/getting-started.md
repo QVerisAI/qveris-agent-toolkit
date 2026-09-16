@@ -49,7 +49,7 @@ CLI 还支持交互模式（`qveris interactive`）、代码生成（`--codegen 
 qveris call --context @context.json --params @params.json
 ```
 
-模板只是会过期的公开 ID 选择提示。CLI 会拒绝不安全、有歧义、过期和不支持的上下文，并在执行前重新 Discover、Inspect 和 Probe。它不会信任模板中的当前可用性、价格、权限、结果有效性或结算。合同与恢复步骤见[复制的服务/任务上下文](cli.md#复制的服务任务上下文)。
+模板只是公开 ID 选择提示。CLI 会拒绝敏感或可执行内容，把普通未来字段作为结构化 warning 忽略，并自动刷新已过期的可用性/价格/权限快照。只有当前 Discover 结果和执行策略确实需要时才 Inspect 或 Probe；service-only context 只返回候选，不猜工具。合同与恢复步骤见[复制的服务/任务上下文](cli.md#复制的服务任务上下文)。
 
 ---
 

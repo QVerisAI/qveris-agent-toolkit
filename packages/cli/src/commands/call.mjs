@@ -12,11 +12,7 @@ import { createSpinner } from "../output/spinner.mjs";
 import { generateSnippet } from "../output/codegen.mjs";
 import { CliError } from "../errors/handler.mjs";
 import { bold, dim, cyan } from "../output/colors.mjs";
-import {
-  assertInstallContextCurrent,
-  buildContextDiscoveryQuery,
-  resolveInstallContext,
-} from "../utils/install-context.mjs";
+import { buildContextDiscoveryQuery, resolveInstallContext } from "../utils/install-context.mjs";
 
 // Smart max_response_size defaults:
 //   --max-size N   → user explicit override (highest priority)
@@ -64,10 +60,11 @@ export async function runCall(idOrIndex, flags) {
       context: installContext,
       parameters,
       timeoutMs,
+      flags,
     });
-    // Re-check after network preflight so a context that expires during
-    // Discover/Inspect/Probe is never used to authorize a later Call.
-    assertInstallContextCurrent(installContext);
+    if (current.discoveryOnly) {
+      return outputContextCandidates(current, flags);
+    }
     return executeCall({
       apiKey,
       credentialProvider: contextCredentialProvider,
@@ -78,6 +75,8 @@ export async function runCall(idOrIndex, flags) {
       maxSize,
       timeoutMs,
       flags,
+      contextMeta: current.contextMeta,
+      fallbackCandidates: current.fallbackCandidates,
     });
   }
 
@@ -162,13 +161,141 @@ function normalizeToolList(response) {
   return response?.results ?? response?.tools ?? [];
 }
 
-function matchesService(tool, serviceId) {
-  if (!serviceId) return true;
-  const currentServiceId = tool?.service_id ?? tool?.serviceId;
-  return currentServiceId === undefined || currentServiceId === serviceId;
+function contextError(code, detail, metadata = {}) {
+  const error = new CliError(code, detail);
+  Object.assign(error, metadata);
+  return error;
 }
 
-async function resolveCurrentContextTool({ apiKey, credentialProvider, baseUrl, context, parameters, timeoutMs }) {
+function candidatesFrom(tools) {
+  return tools.slice(0, 10).map((tool) => ({
+    tool_id: tool.tool_id,
+    ...(tool.name && { name: tool.name }),
+    ...(tool.provider_id && { provider_id: tool.provider_id }),
+    ...(tool.provider_name && { provider_name: tool.provider_name }),
+    ...(tool.expected_cost !== undefined && { expected_cost: tool.expected_cost }),
+  }));
+}
+
+function decorateFailure(error, metadata = {}) {
+  if (!(error instanceof Error)) return error;
+  if (error.retryable === undefined) error.retryable = metadata.retryable ?? false;
+  if (error.action === undefined) error.action = metadata.action ?? "review_and_retry";
+  if (error.missingFields === undefined) error.missingFields = metadata.missingFields ?? [];
+  if (error.fallbackAvailable === undefined) error.fallbackAvailable = metadata.fallbackAvailable ?? false;
+  if (error.candidates === undefined && metadata.candidates) error.candidates = metadata.candidates;
+  return error;
+}
+
+function isCompleteParameterSchema(params) {
+  return (
+    Array.isArray(params) &&
+    params.every(
+      (param) =>
+        param &&
+        typeof param.name === "string" &&
+        typeof param.type === "string" &&
+        typeof param.required === "boolean",
+    )
+  );
+}
+
+function parameterViolations(schema, parameters) {
+  const missingFields = schema
+    .filter((param) => param.required && parameters[param.name] === undefined)
+    .map((param) => param.name);
+  const allowed = new Set(schema.map((param) => param.name));
+  const unknown = Object.keys(parameters).filter((name) => !allowed.has(name));
+  const invalid = [];
+  for (const param of schema) {
+    const value = parameters[param.name];
+    if (value === undefined) continue;
+    const actual = Array.isArray(value) ? "array" : value === null ? "null" : typeof value;
+    if (actual !== param.type || (Array.isArray(param.enum) && !param.enum.includes(value))) invalid.push(param.name);
+  }
+  return { missingFields, unknown, invalid };
+}
+
+function numericCost(tool) {
+  const values = [
+    tool?.expected_cost,
+    tool?.cost,
+    tool?.billing_rule?.price?.amount_credits,
+    tool?.billing_rule?.minimum_charge_credits,
+  ];
+  for (const value of values) {
+    const parsed = typeof value === "number" ? value : Number(value);
+    if (Number.isFinite(parsed) && parsed >= 0) return parsed;
+  }
+  return null;
+}
+
+function hasExplicitZeroCost(tool) {
+  return [
+    tool?.expected_cost,
+    tool?.cost,
+    tool?.billing_rule?.price?.amount_credits,
+    tool?.billing_rule?.minimum_charge_credits,
+  ].some((value) => value !== undefined && value !== null && Number(value) === 0);
+}
+
+function parseMaxCredits(value) {
+  if (value === undefined) return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw contextError("CONTEXT_INVALID", "--max-credits must be a non-negative number", {
+      action: "correct_budget_policy",
+      missingFields: ["max_credits"],
+    });
+  }
+  return parsed;
+}
+
+function assertExecutionPolicy(tool, flags) {
+  const deniedRegions = String(flags.denyRegion ?? "")
+    .split(",")
+    .map((item) => item.trim().toUpperCase())
+    .filter(Boolean);
+  const region = typeof tool.region === "string" ? tool.region.toUpperCase() : "";
+  if (deniedRegions.some((item) => region.split("|").includes(item))) {
+    throw contextError("CONTEXT_EXECUTION_BLOCKED", "Tool is prohibited by the requested region policy", {
+      action: "select_allowed_provider",
+    });
+  }
+  if (tool.permission_required === true && tool.permission_granted !== true) {
+    throw contextError("PERMISSION_DENIED", "Current discovery does not confirm the required permission", {
+      action: "grant_permission_or_select_provider",
+    });
+  }
+  if (tool.region_prohibited === true || tool.region_allowed === false) {
+    throw contextError("CONTEXT_EXECUTION_BLOCKED", "Current discovery reports a regional prohibition", {
+      action: "select_allowed_provider",
+    });
+  }
+  const dangerous =
+    tool.dangerous_side_effects === true ||
+    (typeof tool.side_effects === "string" && !["none", "read_only", "read-only"].includes(tool.side_effects));
+  if (dangerous && !flags.allowSideEffects) {
+    throw contextError("CONTEXT_EXECUTION_BLOCKED", "Dangerous side effects require explicit confirmation", {
+      action: "rerun_with_allow_side_effects",
+    });
+  }
+  if (tool.idempotent === false && !flags.allowNonIdempotent) {
+    throw contextError("CONTEXT_EXECUTION_BLOCKED", "Non-idempotent execution requires explicit confirmation", {
+      action: "rerun_with_allow_non_idempotent",
+    });
+  }
+}
+
+async function resolveCurrentContextTool({
+  apiKey,
+  credentialProvider,
+  baseUrl,
+  context,
+  parameters,
+  timeoutMs,
+  flags,
+}) {
   let discovery;
   try {
     discovery = await discoverTools({
@@ -184,95 +311,188 @@ async function resolveCurrentContextTool({ apiKey, credentialProvider, baseUrl, 
       error instanceof CliError &&
       ["AUTH_INVALID_KEY", "AUTH_OAUTH_FAILED", "PERMISSION_DENIED", "CREDITS_INSUFFICIENT"].includes(error.code)
     ) {
-      throw error;
+      throw decorateFailure(error, { action: "reauthenticate_or_change_account" });
     }
-    const wrapped = new CliError("CONTEXT_REDISCOVERY_FAILED", "Current discovery failed before execution");
+    const wrapped = contextError("CONTEXT_REDISCOVERY_FAILED", "Current discovery failed before execution", {
+      retryable: true,
+      action: "rediscover",
+    });
     wrapped.cause = error;
     throw wrapped;
   }
 
   if (typeof discovery?.search_id !== "string" || discovery.search_id.length === 0) {
-    throw new CliError("CONTEXT_REDISCOVERY_FAILED", "Current discovery did not return a usable search ID");
+    throw contextError("CONTEXT_REDISCOVERY_FAILED", "Current discovery did not return a usable search ID", {
+      retryable: true,
+      action: "rediscover",
+    });
   }
 
-  const discovered = normalizeToolList(discovery).filter(
-    (tool) => tool?.tool_id && matchesService(tool, context.serviceId),
-  );
-  let selected;
-  if (context.toolId) {
-    selected = discovered.find((tool) => tool.tool_id === context.toolId);
-  } else {
-    const serviceMatches = discovered.filter((tool) => (tool.service_id ?? tool.serviceId) === context.serviceId);
-    if (serviceMatches.length === 1) selected = serviceMatches[0];
-  }
-  if (!selected) {
-    throw new CliError(
-      "CONTEXT_REDISCOVERY_FAILED",
-      context.toolId
-        ? "The copied tool ID is not present in current discovery results"
-        : "Current discovery did not resolve the copied service ID to exactly one tool",
-    );
-  }
-
-  let inspection;
-  try {
-    inspection = await inspectToolsByIds({
-      apiKey,
-      credentialProvider,
-      baseUrl,
-      toolIds: [selected.tool_id],
+  const discovered = normalizeToolList(discovery).filter((tool) => tool?.tool_id);
+  const candidates = candidatesFrom(discovered);
+  if (!context.toolId) {
+    return {
+      discoveryOnly: true,
       discoveryId: discovery.search_id,
-      timeoutMs,
-    });
-  } catch (error) {
-    if (
-      error instanceof CliError &&
-      ["AUTH_INVALID_KEY", "AUTH_OAUTH_FAILED", "PERMISSION_DENIED", "CREDITS_INSUFFICIENT"].includes(error.code)
-    ) {
-      throw error;
-    }
-    const wrapped = new CliError("CONTEXT_INSPECT_FAILED", "Current inspection failed before execution");
-    wrapped.cause = error;
-    throw wrapped;
+      candidates,
+      contextMeta: {
+        status: "candidates_refreshed",
+        stale_input: context.stale,
+        warnings: context.warnings,
+        action: "select_tool",
+      },
+    };
   }
-  const inspected = normalizeToolList(inspection).find(
-    (tool) => tool?.tool_id === selected.tool_id && matchesService(tool, context.serviceId),
-  );
-  if (!inspected) {
-    throw new CliError(
-      "CONTEXT_INSPECT_FAILED",
-      "Current inspection did not confirm the copied tool and service selection",
-    );
+  let selected = discovered.find((tool) => tool.tool_id === context.toolId);
+  if (!selected) {
+    throw contextError("CONTEXT_REDISCOVERY_FAILED", "The copied tool ID is not present in current discovery results", {
+      retryable: false,
+      action: candidates.length > 0 ? "select_fallback" : "broaden_discovery",
+      fallbackAvailable: candidates.length > 0,
+      candidates,
+    });
   }
 
+  const steps = ["discover"];
+  if (!isCompleteParameterSchema(selected.params)) {
+    let inspection;
+    try {
+      inspection = await inspectToolsByIds({
+        apiKey,
+        credentialProvider,
+        baseUrl,
+        toolIds: [selected.tool_id],
+        discoveryId: discovery.search_id,
+        timeoutMs,
+      });
+    } catch (error) {
+      if (
+        error instanceof CliError &&
+        ["AUTH_INVALID_KEY", "AUTH_OAUTH_FAILED", "PERMISSION_DENIED", "CREDITS_INSUFFICIENT"].includes(error.code)
+      ) {
+        throw decorateFailure(error, { action: "reauthenticate_or_change_account" });
+      }
+      const wrapped = contextError("CONTEXT_INSPECT_FAILED", "Current inspection failed before execution", {
+        retryable: true,
+        action: "inspect_again",
+      });
+      wrapped.cause = error;
+      throw wrapped;
+    }
+    const inspected = normalizeToolList(inspection).find((tool) => tool?.tool_id === selected.tool_id);
+    if (!inspected) {
+      throw contextError("CONTEXT_INSPECT_FAILED", "Current inspection did not confirm the copied tool", {
+        retryable: true,
+        action: "rediscover",
+      });
+    }
+    selected = { ...selected, ...inspected };
+    steps.push("inspect");
+  }
+
+  const schemaKnown = isCompleteParameterSchema(selected.params);
+  if (schemaKnown) {
+    const violations = parameterViolations(selected.params, parameters);
+    if (violations.missingFields.length || violations.unknown.length || violations.invalid.length) {
+      throw contextError("CONTEXT_PROBE_FAILED", "Parameters do not satisfy the current tool schema", {
+        action: "correct_parameters",
+        missingFields: violations.missingFields,
+        parameterErrors: { unknown: violations.unknown, invalid: violations.invalid },
+      });
+    }
+  }
+
+  assertExecutionPolicy(selected, flags);
+  const maxCredits = parseMaxCredits(flags.maxCredits);
+  const discoveredCost = numericCost(selected);
+  const paidRisk = discoveredCost > 0 || (selected.billing_rule !== undefined && !hasExplicitZeroCost(selected));
+  const quoteRequired = flags.requireQuote || maxCredits !== null || paidRisk;
+  const checks = [];
+  if (!schemaKnown) checks.push("schema");
+  if (quoteRequired) checks.push("quote");
   let probe;
-  try {
-    probe = await probeTool({
-      apiKey,
-      credentialProvider,
-      baseUrl,
-      toolId: selected.tool_id,
-      parameters,
-      checks: ["schema", "quote"],
-      liveBudget: "none",
-      timeoutMs,
-    });
-  } catch (error) {
-    if (
-      error instanceof CliError &&
-      ["AUTH_INVALID_KEY", "AUTH_OAUTH_FAILED", "PERMISSION_DENIED", "CREDITS_INSUFFICIENT"].includes(error.code)
-    ) {
-      throw error;
+  if (checks.length > 0) {
+    try {
+      probe = await probeTool({
+        apiKey,
+        credentialProvider,
+        baseUrl,
+        toolId: selected.tool_id,
+        parameters,
+        checks,
+        liveBudget: "none",
+        timeoutMs,
+      });
+    } catch (error) {
+      if (
+        error instanceof CliError &&
+        ["AUTH_INVALID_KEY", "AUTH_OAUTH_FAILED", "PERMISSION_DENIED", "CREDITS_INSUFFICIENT"].includes(error.code)
+      ) {
+        throw decorateFailure(error, { action: "reauthenticate_or_change_account" });
+      }
+      const wrapped = contextError("CONTEXT_PROBE_FAILED", "Required preflight failed before execution", {
+        retryable: true,
+        action: "probe_again",
+      });
+      wrapped.cause = error;
+      throw wrapped;
     }
-    const wrapped = new CliError("CONTEXT_PROBE_FAILED", "Current schema/quote probe failed before execution");
-    wrapped.cause = error;
-    throw wrapped;
+    steps.push("probe");
   }
-  if (probe?.schema?.valid !== true || probe?.valid === false) {
-    throw new CliError("CONTEXT_PROBE_FAILED", "Current probe rejected the supplied parameters");
+  if (!schemaKnown && probe?.schema?.valid !== true) {
+    throw contextError("CONTEXT_PROBE_FAILED", "Current probe did not validate the supplied parameters", {
+      action: "correct_parameters",
+      missingFields: probe?.schema?.violations?.map((item) => item.param).filter(Boolean) ?? [],
+    });
+  }
+  if (quoteRequired && (probe?.quote?.estimate_credits === undefined || probe?.quote?.estimate_credits === null)) {
+    throw contextError("CONTEXT_QUOTE_REQUIRED", "Current pricing policy requires a usable quote", {
+      retryable: true,
+      action: "refresh_quote_or_change_budget_policy",
+    });
+  }
+  const quoteCost = probe?.quote?.estimate_credits;
+  if (maxCredits !== null && quoteCost > maxCredits) {
+    throw contextError("CONTEXT_BUDGET_EXCEEDED", "Current quote exceeds --max-credits", {
+      action: "increase_budget_or_select_fallback",
+      fallbackAvailable: candidates.some((item) => item.tool_id !== selected.tool_id),
+      candidates,
+    });
   }
 
-  return { toolId: selected.tool_id, discoveryId: discovery.search_id };
+  const warnings = [...context.warnings];
+  if (!quoteRequired && discoveredCost === null) {
+    warnings.push({ code: "PRICE_UNKNOWN", action: "continued_by_policy" });
+  }
+  return {
+    toolId: selected.tool_id,
+    discoveryId: discovery.search_id,
+    fallbackCandidates: candidates.filter((item) => item.tool_id !== selected.tool_id),
+    contextMeta: {
+      status: "refreshed",
+      stale_input: context.stale,
+      warnings,
+      validation_steps: steps,
+      price_status: quoteCost !== undefined ? "quoted" : discoveredCost !== null ? "known" : "unknown",
+    },
+  };
+}
+
+function outputContextCandidates(current, flags) {
+  const result = {
+    status: "candidates",
+    execution_skipped: true,
+    discovery_id: current.discoveryId,
+    candidates: current.candidates,
+    context_handoff: current.contextMeta,
+  };
+  if (flags.json) outputJson(result);
+  else {
+    console.log(`\n  ${bold("Current candidates")} (${current.discoveryId})`);
+    for (const candidate of current.candidates) console.log(`  - ${candidate.tool_id}`);
+    console.log(`\n  ${dim("Select an exact tool_id before execution.")}\n`);
+  }
+  return result;
 }
 
 async function executeCall({
@@ -285,6 +505,8 @@ async function executeCall({
   maxSize,
   timeoutMs,
   flags,
+  contextMeta,
+  fallbackCandidates = [],
 }) {
   if (flags.dryRun) {
     if (flags.json) {
@@ -315,6 +537,11 @@ async function executeCall({
     return;
   }
 
+  if (!flags.json && contextMeta?.warnings?.length) {
+    for (const warning of contextMeta.warnings) {
+      console.error(`  Warning [${warning.code}]: ${warning.action}`);
+    }
+  }
   const spinner = flags.json ? { stop() {} } : createSpinner("Calling tool...");
 
   try {
@@ -334,7 +561,22 @@ async function executeCall({
     spinner.stop();
 
     if (flags.json) {
-      outputJson(result);
+      const recovery =
+        result?.success === false
+          ? {
+              code: "PROVIDER_FAILURE",
+              retryable: true,
+              action: fallbackCandidates.length > 0 ? "select_fallback" : "rediscover",
+              missing_fields: [],
+              fallback_available: fallbackCandidates.length > 0,
+              candidates: fallbackCandidates,
+            }
+          : undefined;
+      outputJson({
+        ...result,
+        ...(contextMeta && { context_handoff: contextMeta }),
+        ...(recovery && { recovery }),
+      });
     } else {
       console.log(formatCallResult(result));
     }
@@ -355,6 +597,11 @@ async function executeCall({
     }
   } catch (err) {
     spinner.stop();
-    throw err;
+    throw decorateFailure(err, {
+      retryable: ["NET_TIMEOUT", "RATE_LIMITED", "PROVIDER_FAILURE", "API_ERROR"].includes(err.code),
+      action: fallbackCandidates.length > 0 ? "select_fallback" : "retry",
+      fallbackAvailable: fallbackCandidates.length > 0,
+      candidates: fallbackCandidates,
+    });
   }
 }

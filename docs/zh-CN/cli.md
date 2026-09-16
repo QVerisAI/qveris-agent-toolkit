@@ -185,7 +185,12 @@ qveris call <tool_id|index> [flags]
 | 参数 | 说明 | 默认值 |
 |------|------|--------|
 | `--params <json\|@file\|->` | JSON、文件路径或 stdin | `{}` |
-| `--context <json\|@file\|->` | 复制的 v1 服务/任务上下文；强制重新 Discover、Inspect 和 Probe | — |
+| `--context <json\|@file\|->` | 复制的 v1 服务/任务上下文；刷新发现并按需验证 | — |
+| `--require-quote` | Context Call 前要求当前报价 | false |
+| `--max-credits <n>` | 要求报价，并阻止超过该积分上限的 Context Call | — |
+| `--deny-region <list>` | 禁止逗号分隔的地域 | — |
+| `--allow-side-effects` | 确认工具明确报告的危险副作用 | false |
+| `--allow-non-idempotent` | 确认工具明确报告的非幂等执行 | false |
 | `--discovery-id <id>` | 发现会话 ID | 自动从会话获取 |
 | `--model <name>` | 选择能力并生成参数的模型 | — |
 | `--max-size <bytes>` | 响应大小限制（-1 = 无限制） | 4KB (TTY) / 20KB (管道) |
@@ -231,23 +236,32 @@ qveris call --context @context.json --params @params.json
 
 `--context` 与位置工具 ID、`--discovery-id` 互斥。模板只是选择提示，不是参数、授权、可用性、价格或执行证明。参数必须根据当前用户请求另行传入。
 
-执行 Call 前，CLI 会校验上下文并强制运行新的 `Discover → Inspect → Probe`。只有当前 Discover 仍返回复制的准确 `tool_id`（或仅服务上下文恰好解析为一个当前工具）、Inspect 确认该选择且 schema/quote Probe 接受参数时才会执行。Call 使用新的 `search_id`，忽略旧发现状态。
+执行 Call 前，CLI 会重新 Discover，并且只使用新的 `search_id`。仅含 service 的上下文只返回刷新后的候选并停止，绝不猜测工具。有准确 `tool_id` 时，Discover 若已给出完整参数合同即可直接进入执行前确认；只有必要合同缺失时才 Inspect，只有 schema/参数、权限/价格、显式 `--require-quote`、预算上限或付费风险需要服务器确认时才 Probe。
+
+过期只会让旧的可用性、价格和权限快照失效；安全任务意图和公开 ID 会被保留并自动刷新。只有明确要求报价、用户预算策略或检测到付费风险时，报价才是门禁；否则以结构化 warning 报告价格未知，并可按策略继续。真正 Call 前会严格检查认证、必需参数、预算、明确权限/地域禁止、危险副作用和幂等性元数据。
+
+只要已发布合同能提供充分证明，CLI 就会自动完成安全恢复：旧发现会立即刷新。当前 Discover 合同尚不提供替代 Provider 的 service identity 以及完整副作用/幂等性证明，因此 CLI 会返回 fallback 候选，但不会靠猜测执行。JSON 失败统一包含 `code`、`retryable`、`action`、`missing_fields`、`fallback_available` 和当前 Provider/Tool 候选。
 
 | 字段 | v1 合同 |
 |---|---|
-| `context_version` | 整数 `1` |
+| `context_version` | 整数 `1`；更高版本只有在声明 `context_min_consumer_version: 1` 且没有不支持的必需能力时才接受 |
 | `context_issued_at` | Unix 秒整数；最多可以比本地时钟快五分钟 |
-| `context_expires_at` | Unix 秒整数；晚于签发时间、尚未过期，且有效期不超过 24 小时 |
+| `context_expires_at` | Unix 秒整数；晚于签发时间且有效期不超过 24 小时；已过期时触发刷新 |
 | `task_id` | 必填公开 ID |
 | `service_id` | 公开 ID；`service_id` 与 `tool_id` 至少提供一个 |
 | `tool_id` | 准确公开工具 ID；`service_id` 与 `tool_id` 至少提供一个 |
 | `template_id` | 可选公开模板 ID；绝不是模板内容或提示词 |
+| `extensions` | 可选命名空间对象；其值绝不作为执行参数 |
+| `context_capabilities` | 可选能力名；不支持的可选能力会带 warning 忽略 |
+| `context_required_capabilities` | 必需消费端能力；不支持时严格失败 |
+| `context_min_consumer_version` | 最低兼容消费端版本 |
 
-未知字段和重复字段都会被拒绝。ID 长度必须为 1–128 个字符，以 ASCII 字母或数字开头，并且只能包含 ASCII 字母、数字、`.`、`_`、`:`、`/` 或 `-`。疑似凭证、PII、提示词、参数和 payload 内容会被拒绝，绝不会作为上下文使用。
+普通未知字段会被忽略并返回 machine-readable warning。重复字段、原型污染键、疑似凭证、PII、提示词、raw payload 以及可能成为执行参数的字段会被严格拒绝。ID 长度必须为 1–128 个字符，以 ASCII 字母或数字开头，并且只能包含 ASCII 字母、数字、`.`、`_`、`:`、`/` 或 `-`。
 
-- **过期/不支持/不安全的上下文：** 返回发现入口并复制新的 v1 纯公开 ID 模板；若凭证曾暴露，请轮换。
+- **过期上下文：** CLI 保留安全意图/公开 ID，并自动刷新当前候选和快照。
+- **不支持/不安全的上下文：** 升级以支持必需能力，或移除敏感/可执行内容；若凭证曾暴露，请轮换。
 - **重新发现或检查不匹配：** 选择当前结果，不要强制使用旧 ID。
-- **Probe 拒绝：** 查看最新 schema 和报价后修正 `--params`。报价不是锁价或执行授权。
+- **验证或报价拒绝：** 修正 `--params`、调整预算策略，或选择返回的 fallback 候选。报价不是锁价或执行授权。
 - **权限或积分失败：** 确认当前端点的账户/能力权限或积分。
 - **上游失败或结算未知：** 保留 `execution_id`；先运行 `qveris usage --mode search --execution-id <id>` 和 `qveris ledger`，再陈述最终扣费结果。
 

@@ -254,9 +254,9 @@ Treat the installation page's copied v1 JSON as a short-lived public selection h
 qveris call --context @context.json --params @params.json
 ```
 
-The CLI rejects expired, future-issued, unsupported-version, unknown-field, duplicate-field, credential-like, and PII-like templates, then re-runs Discover, Inspect, and a schema/quote Probe before Call. Parameters stay separate and come from the current request. Never trust the template for availability, price, permission, result validity, or settlement.
+The CLI rejects sensitive/executable content, duplicate/prototype keys, and unsupported required capabilities; ordinary future fields become structured warnings. Expired availability/price/permission snapshots are refreshed automatically. Inspect and Probe are conditional, and quotes gate only explicit budget/quote policy or detected paid risk. Parameters stay separate and come from the current request.
 
-Python applications that intentionally reproduce the flow must validate the same v1 boundary, use public IDs only as search hints, require an exact match from a fresh `discover`, call `inspect` and `probe`, and use the fresh discovery ID for `call`. Query usage and ledger records before reporting final settlement; missing final audit data is an unknown outcome.
+Python applications that intentionally reproduce the flow must validate the same v1 boundary, use public IDs only as search hints, return candidates rather than guess for service-only context, require an exact current tool match, call `inspect` or `probe` only when needed, and use the fresh discovery ID for `call`. Query usage and ledger records before reporting final settlement; missing final audit data is an unknown outcome.
 
 Paid `call()` requests are strict single-submit by default. The SDK does not follow HTTP redirects or automatically retry `429`/`503`, timeout, or transport failures, and it does not remove a rejected projection field and resubmit. A typed error reports `request_metadata.http_attempts == 1`. If an older service requires the former projection fallback, opt in explicitly:
 

@@ -213,6 +213,7 @@ const VALUE_FLAGS = {
   scope: "scope",
   resource: "resource",
   context: "context",
+  "deny-region": "denyRegion",
 };
 
 function takeNext(args, i, flag) {
@@ -306,6 +307,15 @@ function extractGlobalFlags(args) {
         break;
       case "--probe":
         flags.probe = true;
+        break;
+      case "--require-quote":
+        flags.requireQuote = true;
+        break;
+      case "--allow-side-effects":
+        flags.allowSideEffects = true;
+        break;
+      case "--allow-non-idempotent":
+        flags.allowNonIdempotent = true;
         break;
       case "--resume":
         flags.resume = true;
@@ -427,6 +437,9 @@ function extractGlobalFlags(args) {
       case "--context":
         flags.context = takeNext(args, i++, arg);
         break;
+      case "--deny-region":
+        flags.denyRegion = takeNext(args, i++, arg);
+        break;
       default:
         flags._positional.push(arg);
     }
@@ -486,7 +499,11 @@ function printUsage(flags = {}) {
     --respond-with <mode>  Call projection: full | summary | fields:<JSONPath,...>
     --model <model>        Model that selected and parameterized the Call
     --context <json|@file|->
-                           Validate copied v1 context and re-discover/inspect/probe before Call
+                           Refresh copied v1 context and validate as needed before Call
+    --require-quote        Require a current price quote before context Call
+    --deny-region <list>   Block context Call in comma-separated regions
+    --allow-side-effects   Confirm explicitly reported dangerous side effects
+    --allow-non-idempotent Confirm explicitly reported non-idempotent execution
     --checks <list>        Probe checks: schema,quote,coverage,sample
     --live-budget <mode>   Probe budget: none | metadata | sampled
     --target <target>      MCP target: cursor | claude-desktop | claude-code | opencode | openclaw | generic
@@ -501,7 +518,7 @@ function printUsage(flags = {}) {
     --start-date <date>    Usage/ledger range start (YYYY-MM-DD)
     --end-date <date>      Usage/ledger range end (YYYY-MM-DD)
     --min-credits <n>      Usage/ledger amount lower bound
-    --max-credits <n>      Usage/ledger amount upper bound
+    --max-credits <n>      Usage/ledger upper bound or context Call budget cap
     --no-color             Disable colors
     --verbose, -v          Show request details
     --version, -V          Print version

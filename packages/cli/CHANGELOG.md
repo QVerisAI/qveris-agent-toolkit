@@ -8,11 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
-- Added `qveris call --context <json|@file|->` as the strict consumer for copied v1 service/task contexts. It rejects expired, unsupported, ambiguous, unknown-field, credential-like, and PII-like templates and re-runs Discover, Inspect, and Probe before any Call.
+- Added `qveris call --context <json|@file|->` as a tolerant-input, strict-execution consumer for copied v1 service/task contexts. It rejects sensitive or executable content, refreshes expired snapshots, ignores ordinary future fields with structured warnings, supports capability negotiation, and runs Inspect, Probe, or quote gates only when current execution policy requires them.
 
 ### Changed
 
 - Report HTTP 403 responses as actionable permission failures instead of treating every 403 as an invalid API key.
+- Return structured recovery metadata (`retryable`, `action`, `missing_fields`, `fallback_available`, and current candidates) for context failures; service-only contexts now return candidates without guessing a tool.
 
 ## [0.11.3] - 2026-09-09
 
