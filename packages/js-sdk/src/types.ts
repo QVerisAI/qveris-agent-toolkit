@@ -432,6 +432,9 @@ export interface ExecuteResponse {
   /** Whether the execution completed successfully */
   success: boolean;
 
+  /** Recovery guidance when execution failed; added client-side when absent. */
+  next_action?: NextAction;
+
   /**
    * Error message if execution failed.
    * Common reasons: insufficient balance, quota exceeded, invalid parameters.
@@ -642,7 +645,7 @@ export interface QverisClientConfig {
  * Error response from the Qveris API.
  */
 export type ApiOperation = 'discover' | 'inspect' | 'probe' | 'call' | 'credits' | 'usage_history' | 'credits_ledger';
-export type ApiErrorType = 'http_error' | 'invalid_json' | 'timeout' | 'network_error';
+export type ApiErrorType = 'http_error' | 'invalid_json' | 'invalid_response' | 'timeout' | 'network_error';
 
 export interface NextAction {
   action: string;

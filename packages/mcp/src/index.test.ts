@@ -400,11 +400,11 @@ describe('MCP public tool interface', () => {
       status: 0,
       cause: 'ECONNRESET',
       next_action: {
-        action: 'reconcile_settlement',
+        action: 'review_settlement',
         automatic: false,
-        requires_user: false,
+        requires_user: true,
         missing_fields: [],
-        reason: 'call_outcome_may_be_unknown',
+        reason: 'execution_id_unavailable',
       },
       observability: {
         source: 'qveris_mcp',
@@ -449,11 +449,11 @@ describe('MCP public tool interface', () => {
     });
 
     expect(payload(result).next_action).toEqual({
-      action: 'reconcile_settlement',
+      action: 'review_settlement',
       automatic: false,
-      requires_user: false,
+      requires_user: true,
       missing_fields: [],
-      reason: 'call_outcome_may_be_unknown',
+      reason: 'execution_id_unavailable',
     });
   });
 
@@ -482,11 +482,129 @@ describe('MCP public tool interface', () => {
     });
 
     expect(payload(result).next_action).toEqual({
-      action: 'reconcile_settlement',
+      action: 'review_settlement',
       automatic: false,
-      requires_user: false,
+      requires_user: true,
       missing_fields: [],
-      reason: 'call_outcome_may_be_unknown',
+      reason: 'execution_id_unavailable',
+    });
+  });
+
+  it('prioritizes an execution ID over an HTTP boundary status', async () => {
+    const client = {
+      searchTools: vi.fn(),
+      getToolsByIds: vi.fn(),
+      executeTool: vi.fn().mockRejectedValue({
+        status: 402,
+        message: 'balance changed',
+        details: { data: { execution_id: 'exec-boundary' } },
+        next_action: { action: 'retry', automatic: true, requires_user: false, missing_fields: [] },
+      }),
+      getUsageHistory: vi.fn(),
+      getCreditsLedger: vi.fn(),
+    } as unknown as QverisClient;
+
+    const result = await executeQverisMcpTool(client, 'session-1', 'call', {
+      tool_id: 'weather.forecast.v1',
+      search_id: 'search-1',
+      params_to_tool: {},
+    });
+
+    expect(payload(result).next_action).toMatchObject({
+      action: 'reconcile_settlement',
+      requires_user: false,
+    });
+  });
+
+  it.each([400, 422])('requires parameter correction for a rejected Call HTTP %s', async (status) => {
+    const client = {
+      searchTools: vi.fn(),
+      getToolsByIds: vi.fn(),
+      executeTool: vi.fn().mockRejectedValue({ status, message: 'invalid parameters' }),
+      getUsageHistory: vi.fn(),
+      getCreditsLedger: vi.fn(),
+    } as unknown as QverisClient;
+
+    const result = await executeQverisMcpTool(client, 'session-1', 'call', {
+      tool_id: 'weather.forecast.v1',
+      search_id: 'search-1',
+      params_to_tool: {},
+    });
+
+    expect(payload(result).next_action).toMatchObject({
+      action: 'correct_parameters',
+      requires_user: true,
+      reason: 'invalid_call_request',
+    });
+  });
+
+  it('fails closed when a Call throws an unstructured error', async () => {
+    const client = {
+      searchTools: vi.fn(),
+      getToolsByIds: vi.fn(),
+      executeTool: vi.fn().mockRejectedValue(new Error('unexpected transport failure')),
+      getUsageHistory: vi.fn(),
+      getCreditsLedger: vi.fn(),
+    } as unknown as QverisClient;
+
+    const result = await executeQverisMcpTool(client, 'session-1', 'call', {
+      tool_id: 'weather.forecast.v1',
+      search_id: 'search-1',
+      params_to_tool: {},
+    });
+
+    expect(payload(result).next_action).toEqual({
+      action: 'review_settlement',
+      automatic: false,
+      requires_user: true,
+      missing_fields: [],
+      reason: 'execution_id_unavailable',
+    });
+  });
+
+  it.each([
+    {
+      name: 'failed response with an execution ID',
+      response: { execution_id: 'exec-failed', success: false },
+      action: 'reconcile_settlement',
+      requiresUser: false,
+      reason: 'call_failed_after_submission',
+    },
+    {
+      name: 'failed response without an execution ID',
+      response: { success: false },
+      action: 'review_settlement',
+      requiresUser: true,
+      reason: 'execution_id_unavailable',
+    },
+    {
+      name: 'nominal success without an execution ID',
+      response: { success: true },
+      action: 'review_settlement',
+      requiresUser: true,
+      reason: 'execution_id_unavailable',
+    },
+  ])('fails closed for $name', async ({ response, action, requiresUser, reason }) => {
+    const client = {
+      searchTools: vi.fn(),
+      getToolsByIds: vi.fn(),
+      probeTool: vi.fn(),
+      executeTool: vi.fn().mockResolvedValue(response),
+      getUsageHistory: vi.fn(),
+      getCreditsLedger: vi.fn(),
+    } as unknown as QverisClient;
+
+    const result = await executeQverisMcpTool(client, 'session-1', 'call', {
+      tool_id: 'weather.forecast.v1',
+      search_id: 'search-1',
+      params_to_tool: {},
+    });
+
+    expect(result.isError).toBe(true);
+    expect(payload(result).next_action).toMatchObject({
+      action,
+      requires_user: requiresUser,
+      reason,
     });
   });
 });

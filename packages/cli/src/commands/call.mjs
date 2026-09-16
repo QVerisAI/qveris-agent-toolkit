@@ -88,7 +88,6 @@ export async function runCall(idOrIndex, flags) {
       timeoutMs,
       flags,
       contextMeta: current.contextMeta,
-      fallbackCandidates: current.fallbackCandidates,
     });
   }
 
@@ -237,6 +236,36 @@ function boundaryActionFor(code) {
   }[code];
 }
 
+function executionIdFrom(value) {
+  const direct = value?.execution_id;
+  if (typeof direct === "string" && direct.trim()) return direct;
+  const enveloped = value?.data?.execution_id;
+  return typeof enveloped === "string" && enveloped.trim() ? enveloped : null;
+}
+
+function returnedCallRecovery(result) {
+  const executionId = executionIdFrom(result);
+  const validSuccess = result?.success === true && executionId;
+  if (validSuccess) return null;
+  const action = executionId ? "reconcile_settlement" : "review_settlement";
+  return {
+    code: result?.success === false ? "PROVIDER_FAILURE" : "API_ERROR",
+    retryable: false,
+    action,
+    missing_fields: [],
+    fallback_available: false,
+    candidates: [],
+    next_action: buildNextAction(action, {
+      requiresUser: !executionId,
+      reason: executionId
+        ? result?.success === false
+          ? "call_failed_after_submission"
+          : "invalid_call_response"
+        : "execution_id_unavailable",
+    }),
+  };
+}
+
 function assertContextBudgetSupported(value) {
   if (value === undefined) return;
   const parsed = Number(value);
@@ -357,7 +386,7 @@ async function resolveCurrentContextTool({
       action: "rediscover",
     });
   }
-  let discovered = discoveryTools.filter((tool) => tool?.tool_id);
+  const discovered = discoveryTools.filter((tool) => tool?.tool_id);
   let candidates = candidatesFrom(discovered);
   if (!context.toolId) {
     const action = candidates.length > 0 ? "select_tool" : "broaden_discovery";
@@ -414,8 +443,6 @@ async function resolveCurrentContextTool({
       selected = sameService[0];
       fallbackFrom = context.toolId;
       discovery = fallbackDiscovery;
-      discovered = fallbackTools;
-      candidates = candidatesFrom(discovered);
     } else {
       candidates = candidatesFrom(fallbackTools);
       throw contextError(
@@ -549,7 +576,6 @@ async function resolveCurrentContextTool({
   return {
     toolId: selected.tool_id,
     discoveryId: discovery.search_id,
-    fallbackCandidates: candidates.filter((item) => item.tool_id !== selected.tool_id),
     contextMeta: {
       status: "refreshed",
       stale_input: context.stale,
@@ -598,7 +624,6 @@ async function executeCall({
   timeoutMs,
   flags,
   contextMeta,
-  fallbackCandidates = [],
 }) {
   if (flags.dryRun) {
     if (flags.json) {
@@ -653,36 +678,20 @@ async function executeCall({
 
     spinner.stop();
 
+    const recovery = returnedCallRecovery(result);
     if (flags.json) {
-      const recovery =
-        result?.success === false
-          ? {
-              code: "PROVIDER_FAILURE",
-              retryable: true,
-              action: result.execution_id
-                ? "reconcile_settlement"
-                : fallbackCandidates.length > 0
-                  ? "select_fallback"
-                  : "rediscover",
-              missing_fields: [],
-              fallback_available: fallbackCandidates.length > 0,
-              candidates: fallbackCandidates,
-              next_action: buildNextAction(result.execution_id ? "reconcile_settlement" : "rediscover", {
-                automatic: false,
-                requiresUser: false,
-                reason: result.execution_id ? "call_failed_after_submission" : "provider_failure",
-              }),
-            }
-          : undefined;
       outputJson({
         ...result,
         ...(contextMeta && { context_handoff: contextMeta }),
         ...(recovery && { recovery }),
-        next_action: buildNextAction(result?.success === true ? "none" : (recovery?.action ?? "review_result")),
+        next_action: recovery?.next_action ?? buildNextAction("none"),
       });
     } else {
       console.log(formatCallResult(result));
+      if (recovery) console.error(`  Action: ${recovery.action}`);
     }
+
+    if (recovery) process.exitCode = process.exitCode || 1;
 
     if (flags.codegen && result.success) {
       const snippet = generateSnippet(flags.codegen, {
@@ -700,7 +709,7 @@ async function executeCall({
     }
   } catch (err) {
     spinner.stop();
-    const executionId = err?.responseData?.execution_id;
+    const executionId = executionIdFrom(err?.responseData);
     if (executionId) {
       const settlement = await reconcileSettlement({
         apiKey,
@@ -734,26 +743,17 @@ async function executeCall({
       err.action = action;
       err.nextAction = nextAction;
       err.settlement = settlement;
+      throw decorateFailure(err, { fallbackAvailable: false });
     }
     const boundaryAction = boundaryActionFor(err?.code);
-    const uncertainCallFailure =
-      !boundaryAction &&
-      (err?.code === "NET_TIMEOUT" ||
-        err?.code === "RATE_LIMITED" ||
-        err?.code === "PROVIDER_FAILURE" ||
-        (err?.code === "API_ERROR" && (err?.status === undefined || err.status === 408 || err.status >= 500)) ||
-        !(err instanceof CliError));
-    if (!executionId && uncertainCallFailure) {
-      err.retryable = false;
-      err.action = "review_settlement";
-      err.fallbackAvailable = false;
-      err.nextAction = buildNextAction("review_settlement", {
-        requiresUser: true,
-        reason: "execution_id_unavailable",
+    if (boundaryAction) {
+      throw decorateFailure(err, {
+        retryable: false,
+        action: boundaryAction,
+        fallbackAvailable: false,
       });
-      throw decorateFailure(err);
     }
-    const rejectedCall = err?.code === "API_ERROR" && err?.status >= 400 && err.status < 500;
+    const rejectedCall = err?.code === "API_ERROR" && err?.status >= 400 && err.status < 500 && err.status !== 408;
     if (rejectedCall) {
       const validationFailure = err.status === 400 || err.status === 422;
       const action = validationFailure ? "correct_parameters" : "review_request";
@@ -766,12 +766,14 @@ async function executeCall({
       });
       throw decorateFailure(err);
     }
-    throw decorateFailure(err, {
-      retryable: ["NET_TIMEOUT", "RATE_LIMITED", "PROVIDER_FAILURE"].includes(err.code),
-      action: boundaryAction ?? (fallbackCandidates.length > 0 ? "select_fallback" : "retry"),
-      fallbackAvailable: fallbackCandidates.length > 0,
-      candidates: fallbackCandidates,
+    err.retryable = false;
+    err.action = "review_settlement";
+    err.fallbackAvailable = false;
+    err.nextAction = buildNextAction("review_settlement", {
+      requiresUser: true,
+      reason: "execution_id_unavailable",
     });
+    throw decorateFailure(err);
   }
 }
 

@@ -358,15 +358,49 @@ export class Qveris {
     };
     const timeoutMs = options.timeoutMs ?? EXECUTE_TIMEOUT_MS;
     const compatibilityMode = options.compatibilityMode ?? 'strict';
+    const validateResponse = (result: ExecuteResponse): ExecuteResponse => {
+      const executionId =
+        typeof result?.execution_id === 'string' && result.execution_id.trim() ? result.execution_id : null;
+      if (typeof result?.success === 'boolean' && executionId) {
+        if (result.success === false) {
+          return {
+            ...result,
+            next_action: {
+              action: 'reconcile_settlement',
+              automatic: false,
+              requires_user: false,
+              missing_fields: [],
+              reason: 'call_failed_after_submission',
+            },
+          };
+        }
+        return result;
+      }
+      throw new QverisApiError({
+        status: 200,
+        message: 'Call response did not match the expected contract',
+        ...(executionId && { details: { execution_id: executionId } }),
+        observability: {
+          source: 'qveris_api',
+          operation: 'call',
+          method: 'POST',
+          endpoint,
+          url: `${this.baseUrl}${endpoint}`,
+          timeout_ms: timeoutMs,
+          http_status: 200,
+          error_type: 'invalid_response',
+        },
+      });
+    };
     try {
-      return await this.request<ExecuteResponse>('call', 'POST', endpoint, body, timeoutMs);
+      return validateResponse(await this.request<ExecuteResponse>('call', 'POST', endpoint, body, timeoutMs));
     } catch (error) {
       if (compatibilityMode !== 'legacyOptionalFields') throw error;
       const unsupported = unsupportedOptionalFields(error, new Set(['respond_with']));
       if (unsupported.length === 0) throw error;
       globalThis.console?.warn('QVeris legacyOptionalFields compatibility may resubmit a paid call and is deprecated.');
       delete body.respond_with;
-      return this.request<ExecuteResponse>('call', 'POST', endpoint, body, timeoutMs);
+      return validateResponse(await this.request<ExecuteResponse>('call', 'POST', endpoint, body, timeoutMs));
     }
   }
 

@@ -100,11 +100,60 @@ async def test_paid_call_malformed_success_response_requires_settlement_reconcil
 
     assert len(requests) == 1
     assert exc_info.value.next_action == {
+        "action": "review_settlement",
+        "automatic": False,
+        "requires_user": True,
+        "missing_fields": [],
+        "reason": "execution_id_unavailable",
+    }
+
+
+@pytest.mark.asyncio
+async def test_paid_call_invalid_contract_preserves_safe_execution_id_for_reconciliation() -> None:
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"execution_id": "exec-invalid-contract", "success": "invalid"})
+
+    client = make_client(handler)
+    try:
+        with pytest.raises(QverisContractError) as exc_info:
+            await client.call("paid-tool", {})
+    finally:
+        await client.close()
+
+    assert exc_info.value.execution_id == "exec-invalid-contract"
+    assert exc_info.value.next_action["action"] == "reconcile_settlement"
+    assert exc_info.value.next_action["requires_user"] is False
+
+
+@pytest.mark.asyncio
+async def test_paid_call_failed_response_adds_settlement_guidance() -> None:
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "execution_id": "exec-failed",
+                "success": False,
+                "next_action": {
+                    "action": "retry",
+                    "automatic": True,
+                    "requires_user": False,
+                    "missing_fields": [],
+                },
+            },
+        )
+
+    client = make_client(handler)
+    try:
+        result = await client.call("paid-tool", {})
+    finally:
+        await client.close()
+
+    assert result.next_action == {
         "action": "reconcile_settlement",
         "automatic": False,
         "requires_user": False,
         "missing_fields": [],
-        "reason": "call_outcome_may_be_unknown",
+        "reason": "call_failed_after_submission",
     }
 
 

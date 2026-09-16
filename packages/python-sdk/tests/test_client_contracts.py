@@ -43,8 +43,8 @@ def test_public_errors_expose_machine_readable_next_action() -> None:
         "requires_user": True,
         "missing_fields": [],
     }
-    assert uncertain.next_action["action"] == "reconcile_settlement"
-    assert uncertain.next_action["requires_user"] is False
+    assert uncertain.next_action["action"] == "review_settlement"
+    assert uncertain.next_action["requires_user"] is True
 
 
 def test_paid_call_rate_limit_is_not_a_safe_read_retry() -> None:
@@ -55,11 +55,56 @@ def test_paid_call_rate_limit_is_not_a_safe_read_retry() -> None:
         request_metadata=RequestMetadata(operation="call"),
     )
     assert error.next_action == {
-        "action": "reconcile_settlement",
+        "action": "review_settlement",
         "automatic": False,
-        "requires_user": False,
+        "requires_user": True,
         "missing_fields": [],
-        "reason": "call_outcome_may_be_unknown",
+        "reason": "execution_id_unavailable",
+    }
+
+    correlated = QverisApiError(
+        "rate limited",
+        status=429,
+        operation="call",
+        request_metadata=RequestMetadata(operation="call"),
+        details={"execution_id": "exec-rate-limited"},
+    )
+    assert correlated.next_action["action"] == "reconcile_settlement"
+    assert correlated.next_action["requires_user"] is False
+
+    boundary_with_id = QverisApiError(
+        "balance changed",
+        status=402,
+        operation="call",
+        request_metadata=RequestMetadata(operation="call"),
+        details={"execution_id": "exec-boundary"},
+    )
+    assert boundary_with_id.next_action["action"] == "reconcile_settlement"
+
+    enveloped_with_id = QverisApiError(
+        "gateway timeout",
+        status=504,
+        operation="call",
+        request_metadata=RequestMetadata(operation="call"),
+        details={"data": {"execution_id": "exec-enveloped"}},
+    )
+    assert enveloped_with_id.next_action["action"] == "reconcile_settlement"
+
+
+@pytest.mark.parametrize("status", [400, 422])
+def test_rejected_call_requires_parameter_correction(status: int) -> None:
+    error = QverisApiError(
+        "invalid parameters",
+        status=status,
+        operation="call",
+        request_metadata=RequestMetadata(operation="call"),
+    )
+    assert error.next_action == {
+        "action": "correct_parameters",
+        "automatic": False,
+        "requires_user": True,
+        "missing_fields": [],
+        "reason": "invalid_call_request",
     }
 
 

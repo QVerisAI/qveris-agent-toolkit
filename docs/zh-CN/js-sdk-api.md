@@ -1572,6 +1572,12 @@ Unique identifier for this execution record
 
 Execution duration in seconds
 
+##### next\_action?
+
+> `optional` **next\_action?**: [`NextAction`](#nextaction)
+
+Recovery guidance when execution failed; added client-side when absent.
+
 ##### parameters?
 
 > `optional` **parameters?**: `Record`\<`string`, `unknown`\>
@@ -2622,7 +2628,7 @@ Historical success rate (0.0 - 1.0)
 
 ### ApiErrorType
 
-> **ApiErrorType** = `"http_error"` \| `"invalid_json"` \| `"timeout"` \| `"network_error"`
+> **ApiErrorType** = `"http_error"` \| `"invalid_json"` \| `"invalid_response"` \| `"timeout"` \| `"network_error"`
 
 ***
 

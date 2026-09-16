@@ -544,7 +544,7 @@ It takes context as an argument since that's what pydantic-core passes when call
 
 <a id="qveris.ToolExecutionResponse"></a>
 
-### *class* qveris.ToolExecutionResponse(\*, execution_id: str, success: bool, result: Any | None = None, error_message: str | None = None, elapsed_time_ms: float | None = None, execution_time: float | None = None, tool_id: str | None = None, parameters: Dict[str, Any] | None = None, cost: float | None = None, billing: [CompactBillingStatement](#qveris.CompactBillingStatement) | None = None, pre_settlement_bill: Dict[str, Any] | None = None, remaining_credits: float | None = None, created_at: str | None = None, \*\*extra_data: Any)
+### *class* qveris.ToolExecutionResponse(\*, execution_id: str, success: bool, next_action: Dict[str, Any] | None = None, result: Any | None = None, error_message: str | None = None, elapsed_time_ms: float | None = None, execution_time: float | None = None, tool_id: str | None = None, parameters: Dict[str, Any] | None = None, cost: float | None = None, billing: [CompactBillingStatement](#qveris.CompactBillingStatement) | None = None, pre_settlement_bill: Dict[str, Any] | None = None, remaining_credits: float | None = None, created_at: str | None = None, \*\*extra_data: Any)
 
 <a id="qveris.ToolExecutionResponse.model_post_init"></a>
 

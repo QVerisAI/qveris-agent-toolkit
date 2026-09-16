@@ -151,6 +151,7 @@ class _SendFailure:
 class _DecodedResponse:
     value: Any = None
     error_message: Optional[str] = None
+    execution_id: Optional[str] = None
 
 
 def _pre_settlement_credits(response: ToolExecutionResponse) -> Optional[float]:
@@ -646,13 +647,30 @@ class QverisClient:
 
             safe_data = self._redact_sensitive(data)
             self._debug(f"[Qveris API] Response body: {json.dumps(safe_data, indent=2)}")
+            execution_id = data.get("execution_id") if isinstance(data, dict) else None
+            if not isinstance(execution_id, str) or not execution_id.strip():
+                execution_id = None
             try:
                 payload = self._unwrap_envelope(data, operation=operation, state=state)
+                if execution_id is None and isinstance(payload, dict):
+                    payload_execution_id = payload.get("execution_id")
+                    if isinstance(payload_execution_id, str) and payload_execution_id.strip():
+                        execution_id = payload_execution_id
+                if operation == "call" and (
+                    not isinstance(payload, dict)
+                    or not isinstance(payload.get("success"), bool)
+                    or not isinstance(payload.get("execution_id"), str)
+                    or not payload["execution_id"].strip()
+                ):
+                    raise ValueError("invalid Call response contract")
                 return _DecodedResponse(value=model_type(**payload))
             except QverisContractError as error:
-                return _DecodedResponse(error_message=str(error))
+                return _DecodedResponse(error_message=str(error), execution_id=execution_id)
             except Exception:
-                return _DecodedResponse(error_message="API response did not match the expected contract")
+                return _DecodedResponse(
+                    error_message="API response did not match the expected contract",
+                    execution_id=execution_id,
+                )
 
         outcome = attempt()
         if outcome.error_message is not None:
@@ -661,6 +679,7 @@ class QverisClient:
                 outcome.error_message,
                 operation=operation,
                 request_metadata=self._request_metadata(state),
+                execution_id=outcome.execution_id,
             ) from None
         return outcome.value
 
@@ -1078,6 +1097,14 @@ class QverisClient:
             if error is not None:
                 raise error from None
             result = self._decode_response_model(response, ToolExecutionResponse, operation="call", state=state)
+            if not result.success:
+                result.next_action = {
+                    "action": "reconcile_settlement",
+                    "automatic": False,
+                    "requires_user": False,
+                    "missing_fields": [],
+                    "reason": "call_failed_after_submission",
+                }
             result._set_request_metadata(self._request_metadata(state))
             set_span_attributes(
                 span,

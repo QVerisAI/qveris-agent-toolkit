@@ -449,14 +449,25 @@ export async function executeQverisMcpTool(
       }
 
       const result = await executeExecuteTool(client, input, defaultSessionId);
+      const executionId =
+        typeof result.execution_id === 'string' && result.execution_id.trim() ? result.execution_id : null;
+      const validSuccess = result.success === true && executionId;
+      const action = validSuccess ? 'none' : executionId ? 'reconcile_settlement' : 'review_settlement';
       const resultWithAction = {
         ...result,
         next_action: {
-          action: result.success === false && result.execution_id ? 'reconcile_settlement' : 'none',
+          action,
           automatic: false,
-          requires_user: false,
+          requires_user: !validSuccess && !executionId,
           missing_fields: [],
-        },
+          ...(!validSuccess && {
+            reason: executionId
+              ? result.success === false
+                ? 'call_failed_after_submission'
+                : 'invalid_call_response'
+              : 'execution_id_unavailable',
+          }),
+        } satisfies NextAction,
       };
 
       return {
@@ -467,6 +478,7 @@ export async function executeQverisMcpTool(
           },
         ],
         structuredContent: resultWithAction as unknown as Record<string, unknown>,
+        ...(validSuccess ? {} : { isError: true }),
       };
     }
 
@@ -549,7 +561,10 @@ export async function executeQverisMcpTool(
               status: error.status,
               ...(error.details !== undefined && { details: error.details }),
               ...(error.cause && { cause: error.cause }),
-              next_action: error.next_action ?? recoveryFor(error.status, name),
+              next_action:
+                name === 'call'
+                  ? recoveryFor(error.status, name, error.details)
+                  : (error.next_action ?? recoveryFor(error.status, name, error.details)),
               observability: compactObject({
                 ...mcpObservability,
                 api: error.observability,
@@ -564,6 +579,10 @@ export async function executeQverisMcpTool(
     // Handle other errors (including fetch network errors).
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     const errorCause = error instanceof Error && error.cause instanceof Error ? error.cause.message : undefined;
+    const nextAction =
+      name === 'call'
+        ? { action: 'review_settlement', requires_user: true, reason: 'execution_id_unavailable' as const }
+        : { action: 'review_and_retry', requires_user: true };
 
     return {
       content: [
@@ -572,7 +591,11 @@ export async function executeQverisMcpTool(
           text: JSON.stringify({
             error: errorMessage,
             ...(errorCause && { cause: errorCause }),
-            next_action: requiredAction('review_and_retry'),
+            next_action: {
+              ...nextAction,
+              automatic: false,
+              missing_fields: [],
+            },
           }),
         },
       ],
@@ -766,8 +789,20 @@ function isApiError(error: unknown): error is ApiError {
   return typeof error === 'object' && error !== null && 'status' in error && 'message' in error;
 }
 
-function recoveryFor(status: number, operation: string): NextAction {
+function executionIdFrom(details: unknown): string | undefined {
+  if (!details || typeof details !== 'object') return undefined;
+  const value = details as { execution_id?: unknown; data?: unknown };
+  if (typeof value.execution_id === 'string' && value.execution_id.trim()) return value.execution_id;
+  if (!value.data || typeof value.data !== 'object') return undefined;
+  const enveloped = (value.data as { execution_id?: unknown }).execution_id;
+  return typeof enveloped === 'string' && enveloped.trim() ? enveloped : undefined;
+}
+
+function recoveryFor(status: number, operation: string, details?: unknown): NextAction {
   const base = { automatic: false, missing_fields: [] as string[] };
+  if (operation === 'call' && executionIdFrom(details)) {
+    return { action: 'reconcile_settlement', requires_user: false, reason: 'call_outcome_may_be_unknown', ...base };
+  }
   if (status === 401) return { action: 'authenticate', requires_user: true, ...base };
   if (status === 402) return { action: 'add_credits', requires_user: true, ...base };
   if (status === 403) return { action: 'request_permission', requires_user: true, ...base };
@@ -775,12 +810,13 @@ function recoveryFor(status: number, operation: string): NextAction {
     operation === 'call' &&
     (status === 0 || status === 408 || status === 429 || (status >= 200 && status < 300) || status >= 500)
   ) {
-    return {
-      action: 'reconcile_settlement',
-      requires_user: false,
-      reason: 'call_outcome_may_be_unknown',
-      ...base,
-    };
+    return { action: 'review_settlement', requires_user: true, reason: 'execution_id_unavailable', ...base };
+  }
+  if (operation === 'call' && (status === 400 || status === 422)) {
+    return { action: 'correct_parameters', requires_user: true, reason: 'invalid_call_request', ...base };
+  }
+  if (operation === 'call' && status >= 400 && status < 500) {
+    return { action: 'review_request', requires_user: true, reason: 'call_rejected', ...base };
   }
   if (status === 0 || status === 408 || status === 429 || status === 503) {
     return { action: 'retry', requires_user: false, reason: 'safe_read_retry', ...base };

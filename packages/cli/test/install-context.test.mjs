@@ -546,7 +546,9 @@ test("integer parameters use JSON integer semantics before execution", async () 
           ],
         });
       }
-      if (request.url.pathname.endsWith("/tools/execute")) return response({ success: true, result: { count: 2 } });
+      if (request.url.pathname.endsWith("/tools/execute")) {
+        return response({ execution_id: "exec-unconfirmed-risk", success: true, result: { count: 2 } });
+      }
       throw new Error(`Unexpected request: ${request.url.pathname}`);
     },
     async (requests) => {
@@ -632,7 +634,9 @@ test("confirmation flags do not create risk when execution-safety metadata is ab
           ],
         });
       }
-      if (request.url.pathname.endsWith("/tools/execute")) return response({ success: true, result: {} });
+      if (request.url.pathname.endsWith("/tools/execute")) {
+        return response({ execution_id: "exec-confirmed-risk", success: true, result: {} });
+      }
       throw new Error(`Unexpected request: ${request.url.pathname}`);
     },
     async (requests) => {
@@ -879,6 +883,171 @@ for (const uncertainFailure of [
   });
 }
 
+test("a failed Call response without an execution ID cannot select a fallback", async () => {
+  const previousExitCode = process.exitCode;
+  process.exitCode = undefined;
+  try {
+    await withMockFetch(
+      (request) => {
+        if (request.url.pathname.endsWith("/search")) {
+          return response({
+            search_id: "fresh-search",
+            results: [
+              {
+                tool_id: "provider.company.lookup.v1",
+                service_id: "service.market-data.v1",
+                params: [],
+                expected_cost: 0,
+              },
+              {
+                tool_id: "provider.company.lookup.fallback.v1",
+                service_id: "service.market-data.v1",
+                params: [],
+                expected_cost: 0,
+              },
+            ],
+          });
+        }
+        if (request.url.pathname.endsWith("/tools/execute")) {
+          return response({ success: false, error_message: "provider failed" });
+        }
+        throw new Error(`Unexpected request: ${request.url.pathname}`);
+      },
+      async (requests) => {
+        const output = await captureOutput(() =>
+          runCall(undefined, {
+            apiKey: TEST_API_KEY,
+            baseUrl: "https://unit.test/api/v1",
+            context: liveContext(),
+            json: true,
+          }),
+        );
+        const result = JSON.parse(output);
+        assert.equal(result.success, false);
+        assert.equal(result.recovery.retryable, false);
+        assert.equal(result.recovery.action, "review_settlement");
+        assert.equal(result.recovery.fallback_available, false);
+        assert.deepEqual(result.recovery.candidates, []);
+        assert.deepEqual(result.next_action, {
+          action: "review_settlement",
+          automatic: false,
+          requires_user: true,
+          missing_fields: [],
+          reason: "execution_id_unavailable",
+        });
+        assert.equal(process.exitCode, 1);
+        assert.equal(requests.filter((request) => request.url.pathname.endsWith("/tools/execute")).length, 1);
+      },
+    );
+  } finally {
+    process.exitCode = previousExitCode;
+  }
+});
+
+test("a malformed successful Call response fails closed", async () => {
+  const previousExitCode = process.exitCode;
+  process.exitCode = undefined;
+  try {
+    await withMockFetch(
+      (request) => {
+        if (request.url.pathname.endsWith("/tools/execute")) return response({ success: true, result: { ok: true } });
+        throw new Error(`Unexpected request: ${request.url.pathname}`);
+      },
+      async () => {
+        const output = await captureOutput(() =>
+          runCall("provider.company.lookup.v1", {
+            apiKey: TEST_API_KEY,
+            baseUrl: "https://unit.test/api/v1",
+            discoveryId: "direct-search",
+            json: true,
+          }),
+        );
+        const result = JSON.parse(output);
+        assert.equal(result.recovery.code, "API_ERROR");
+        assert.equal(result.next_action.action, "review_settlement");
+        assert.equal(result.next_action.requires_user, true);
+        assert.equal(process.exitCode, 1);
+      },
+    );
+  } finally {
+    process.exitCode = previousExitCode;
+  }
+});
+
+test("a failed Call response with an execution ID exposes executable reconciliation", async () => {
+  const previousExitCode = process.exitCode;
+  process.exitCode = undefined;
+  try {
+    await withMockFetch(
+      (request) => {
+        if (request.url.pathname.endsWith("/tools/execute")) {
+          return response({ execution_id: "exec-failed-result", success: false, error_message: "provider failed" });
+        }
+        throw new Error(`Unexpected request: ${request.url.pathname}`);
+      },
+      async () => {
+        const output = await captureOutput(() =>
+          runCall("provider.company.lookup.v1", {
+            apiKey: TEST_API_KEY,
+            baseUrl: "https://unit.test/api/v1",
+            discoveryId: "direct-search",
+            json: true,
+          }),
+        );
+        const result = JSON.parse(output);
+        assert.equal(result.recovery.retryable, false);
+        assert.equal(result.recovery.action, "reconcile_settlement");
+        assert.equal(result.recovery.fallback_available, false);
+        assert.deepEqual(result.next_action, {
+          action: "reconcile_settlement",
+          automatic: false,
+          requires_user: false,
+          missing_fields: [],
+          reason: "call_failed_after_submission",
+        });
+        assert.equal(process.exitCode, 1);
+      },
+    );
+  } finally {
+    process.exitCode = previousExitCode;
+  }
+});
+
+test("human output preserves settlement recovery for HTTP 408 with an execution ID", async () => {
+  await withMockFetch(
+    (request) => {
+      if (request.url.pathname.endsWith("/tools/execute")) {
+        return response({ message: "request timed out", execution_id: "exec-human-408" }, 408);
+      }
+      if (request.url.pathname.endsWith("/auth/usage/history/v2")) {
+        return response({ items: [{ execution_id: "exec-human-408", charge_outcome: "pending" }], total: 1 });
+      }
+      if (request.url.pathname.endsWith("/auth/credits/ledger")) return response({ items: [], total: 0 });
+      throw new Error(`Unexpected request: ${request.url.pathname}`);
+    },
+    async (requests) => {
+      await assert.rejects(
+        runCall("provider.company.lookup.v1", {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          discoveryId: "direct-search",
+          json: false,
+        }),
+        (error) =>
+          error instanceof CliError &&
+          error.action === "wait_and_reconcile" &&
+          error.nextAction?.action === "wait_and_reconcile" &&
+          error.nextAction?.reason === "settlement_not_final" &&
+          error.settlement?.status === "unknown",
+      );
+      assert.deepEqual(
+        requests.map((request) => request.url.pathname),
+        ["/api/v1/tools/execute", "/api/v1/auth/usage/history/v2", "/api/v1/auth/credits/ledger"],
+      );
+    },
+  );
+});
+
 test("a rate-limit response with an execution ID is reconciled", async () => {
   const previousExitCode = process.exitCode;
   process.exitCode = undefined;
@@ -919,6 +1088,48 @@ test("a rate-limit response with an execution ID is reconciled", async () => {
     process.exitCode = previousExitCode;
   }
 });
+
+for (const boundaryStatus of [401, 402, 403]) {
+  test(`an HTTP ${boundaryStatus} response with an execution ID is reconciled before boundary guidance`, async () => {
+    const previousExitCode = process.exitCode;
+    process.exitCode = undefined;
+    try {
+      await withMockFetch(
+        (request) => {
+          if (request.url.pathname.endsWith("/tools/execute")) {
+            return response(
+              { message: "boundary response", execution_id: `exec-boundary-${boundaryStatus}` },
+              boundaryStatus,
+            );
+          }
+          if (request.url.pathname.endsWith("/auth/usage/history/v2")) {
+            return response({ items: [], total: 0 });
+          }
+          if (request.url.pathname.endsWith("/auth/credits/ledger")) return response({ items: [], total: 0 });
+          throw new Error(`Unexpected request: ${request.url.pathname}`);
+        },
+        async (requests) => {
+          const output = await captureOutput(() =>
+            runCall("provider.company.lookup.v1", {
+              apiKey: TEST_API_KEY,
+              baseUrl: "https://unit.test/api/v1",
+              discoveryId: "direct-search",
+              json: true,
+            }),
+          );
+          const result = JSON.parse(output);
+          assert.equal(result.status, "unknown_settlement");
+          assert.equal(result.execution_id, `exec-boundary-${boundaryStatus}`);
+          assert.equal(result.next_action.action, "wait_and_reconcile");
+          assert.ok(process.exitCode && process.exitCode !== 0);
+          assert.equal(requests.filter((request) => request.url.pathname.endsWith("/tools/execute")).length, 1);
+        },
+      );
+    } finally {
+      process.exitCode = previousExitCode;
+    }
+  });
+}
 
 for (const status of [400, 422]) {
   test(`Call HTTP ${status} requires parameter correction instead of retry`, async () => {

@@ -18,6 +18,25 @@ def _next_action(action: str, requires_user: bool, reason: Optional[str] = None)
     return value
 
 
+def _execution_id_from(details: Any) -> Optional[str]:
+    if not isinstance(details, dict):
+        return None
+    execution_id = details.get("execution_id")
+    if isinstance(execution_id, str) and execution_id.strip():
+        return execution_id
+    data = details.get("data")
+    if not isinstance(data, dict):
+        return None
+    execution_id = data.get("execution_id")
+    return execution_id if isinstance(execution_id, str) and execution_id.strip() else None
+
+
+def _unknown_call_action(execution_id: Optional[str] = None) -> Dict[str, Any]:
+    if execution_id:
+        return _next_action("reconcile_settlement", False, "call_outcome_may_be_unknown")
+    return _next_action("review_settlement", True, "execution_id_unavailable")
+
+
 @dataclass(frozen=True)
 class RequestMetadata:
     """Client-side metadata for one logical SDK operation."""
@@ -65,14 +84,21 @@ class QverisApiError(QverisError):
         category: Optional[str] = None,
         details: Any = None,
     ) -> None:
-        if status == 401:
+        execution_id = _execution_id_from(details)
+        if operation == "call" and execution_id:
+            recovery = _unknown_call_action(execution_id)
+        elif status == 401:
             recovery = _next_action("authenticate", True)
         elif status == 402:
             recovery = _next_action("add_credits", True)
         elif status == 403:
             recovery = _next_action("request_permission", True)
-        elif operation == "call" and (status in {0, 408, 429} or status >= 500):
-            recovery = _next_action("reconcile_settlement", False, "call_outcome_may_be_unknown")
+        elif operation == "call" and (status in {0, 408, 429} or 200 <= status < 300 or status >= 500):
+            recovery = _unknown_call_action()
+        elif operation == "call" and status in {400, 422}:
+            recovery = _next_action("correct_parameters", True, "invalid_call_request")
+        elif operation == "call" and 400 <= status < 500:
+            recovery = _next_action("review_request", True, "call_rejected")
         elif status in {0, 408, 429, 503}:
             recovery = _next_action("retry", False, "safe_read_retry")
         else:
@@ -100,11 +126,7 @@ class QverisTransportError(QverisError):
         operation: str,
         request_metadata: RequestMetadata,
     ) -> None:
-        recovery = (
-            _next_action("reconcile_settlement", False, "call_outcome_may_be_unknown")
-            if operation == "call"
-            else _next_action("retry", False, "safe_read_retry")
-        )
+        recovery = _unknown_call_action() if operation == "call" else _next_action("retry", False, "safe_read_retry")
         super().__init__(
             message,
             operation=operation,
@@ -147,16 +169,18 @@ class QverisContractError(QverisError):
         operation: str,
         request_metadata: RequestMetadata,
         next_action: Optional[Dict[str, Any]] = None,
+        execution_id: Optional[str] = None,
     ) -> None:
         recovery = next_action
         if recovery is None and operation == "call":
-            recovery = _next_action("reconcile_settlement", False, "call_outcome_may_be_unknown")
+            recovery = _unknown_call_action(execution_id)
         super().__init__(
             message,
             operation=operation,
             request_metadata=request_metadata,
             next_action=recovery,
         )
+        self.execution_id = execution_id
 
 
 class QverisClientClosedError(QverisError):
