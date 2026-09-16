@@ -225,6 +225,16 @@ function assertExecutionPolicy(tool, flags) {
       action: "select_allowed_provider",
     });
   }
+  const hasSideEffectMetadata =
+    typeof tool.dangerous_side_effects === "boolean" ||
+    (typeof tool.side_effects === "string" && tool.side_effects.trim().length > 0);
+  if (!hasSideEffectMetadata || typeof tool.idempotent !== "boolean") {
+    throw contextError(
+      "CONTEXT_EXECUTION_SAFETY_UNVERIFIED",
+      "Current tool metadata does not prove side-effect and idempotency safety",
+      { action: "use_supported_execution_contract" },
+    );
+  }
   const dangerous =
     tool.dangerous_side_effects === true ||
     (typeof tool.side_effects === "string" && !["none", "read_only", "read-only"].includes(tool.side_effects));
@@ -356,7 +366,6 @@ async function resolveCurrentContextTool({
     }
   }
 
-  assertExecutionPolicy(selected, flags);
   const pricing = classifyPricing(selected);
   const quoteRequired = flags.requireQuote || pricing.requiresQuote;
   const checks = [];
@@ -405,6 +414,8 @@ async function resolveCurrentContextTool({
     });
   }
   const quoteCost = quoteValidation?.amount;
+
+  assertExecutionPolicy(selected, flags);
 
   const warnings = [...context.warnings];
   if (!quoteRequired && pricing.status === "absent") {

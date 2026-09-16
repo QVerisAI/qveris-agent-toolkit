@@ -97,6 +97,11 @@ export const ERROR_CODES = {
     hint: "Remove --max-credits, or use a capability-aware workflow with a server-enforced budget",
     exit: EX_USAGE,
   },
+  CONTEXT_EXECUTION_SAFETY_UNVERIFIED: {
+    message: "Current tool metadata cannot prove execution safety",
+    hint: "Use a supported execution contract that declares side effects and idempotency before calling this context tool",
+    exit: EX_UNAVAILABLE,
+  },
   CONTEXT_EXECUTION_BLOCKED: {
     message: "Execution is blocked by safety policy",
     hint: "Review permissions, region constraints, side effects, and idempotency before retrying",

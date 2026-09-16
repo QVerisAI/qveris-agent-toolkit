@@ -96,25 +96,6 @@ function captureErrorOutput(fn) {
   return chunks.join("");
 }
 
-function currentPipeline(request, executePayload = { execution_id: "exec-1", success: true, result: { data: {} } }) {
-  if (request.url.pathname.endsWith("/search")) {
-    return response({
-      search_id: "fresh-search",
-      results: [{ tool_id: "provider.company.lookup.v1" }],
-    });
-  }
-  if (request.url.pathname.endsWith("/tools/by-ids")) {
-    return response({
-      results: [{ tool_id: "provider.company.lookup.v1" }],
-    });
-  }
-  if (request.url.pathname.endsWith("/tools/probe")) {
-    return response({ schema: { valid: true }, quote: { estimate_credits: 2 } });
-  }
-  if (request.url.pathname.endsWith("/tools/execute")) return response(executePayload);
-  throw new Error(`Unexpected request: ${request.url.pathname}`);
-}
-
 test("v1 parser accepts public IDs and negotiates forward-compatible fields", () => {
   const parsed = parseInstallContext(
     context({
@@ -225,7 +206,7 @@ test("v1 parser rejects deeply nested untrusted fields without exhausting the st
   }
 });
 
-test("context call executes after Discover when its schema is sufficient", async () => {
+test("context call fails closed when the public contract lacks execution-safety metadata", async () => {
   await withMockFetch(
     (request) => {
       if (request.url.pathname.endsWith("/search")) {
@@ -241,13 +222,10 @@ test("context call executes after Discover when its schema is sufficient", async
           ],
         });
       }
-      if (request.url.pathname.endsWith("/tools/execute")) {
-        return response({ execution_id: "exec-1", success: true, result: { data: {} } });
-      }
       throw new Error(`Unexpected request: ${request.url.pathname}`);
     },
     async (requests) => {
-      const output = await captureOutput(() =>
+      await assert.rejects(
         runCall(undefined, {
           apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
@@ -255,23 +233,21 @@ test("context call executes after Discover when its schema is sufficient", async
           params: '{"symbol":"AAPL"}',
           json: true,
         }),
+        (error) => error instanceof CliError && error.code === "CONTEXT_EXECUTION_SAFETY_UNVERIFIED",
       );
-      assert.equal(JSON.parse(output).execution_id, "exec-1");
       assert.deepEqual(
         requests.map((request) => request.url.pathname),
-        ["/api/v1/search", "/api/v1/tools/execute"],
+        ["/api/v1/search"],
       );
       assert.deepEqual(requests[0].body, {
         query: "provider.company.lookup.v1",
         limit: 100,
       });
-      assert.equal(requests[1].body.search_id, "fresh-search");
-      assert.deepEqual(JSON.parse(output).context_handoff.validation_steps, ["discover"]);
     },
   );
 });
 
-test("context call preserves permission and insufficient-credit failures", async () => {
+test("context call preserves permission failures", async () => {
   await withMockFetch(
     () => response({ message: "missing required scope" }, 403),
     async (requests) => {
@@ -285,48 +261,6 @@ test("context call preserves permission and insufficient-credit failures", async
         (error) => error instanceof CliError && error.code === "PERMISSION_DENIED",
       );
       assert.equal(requests.length, 1);
-    },
-  );
-
-  await withMockFetch(
-    (request) =>
-      request.url.pathname.endsWith("/tools/execute")
-        ? response({ message: "not enough credits" }, 402)
-        : currentPipeline(request),
-    async (requests) => {
-      await assert.rejects(
-        runCall(undefined, {
-          apiKey: TEST_API_KEY,
-          baseUrl: "https://unit.test/api/v1",
-          context: liveContext(),
-          json: true,
-        }),
-        (error) => error instanceof CliError && error.code === "CREDITS_INSUFFICIENT",
-      );
-      assert.equal(requests.length, 4);
-    },
-  );
-});
-
-test("context call reports upstream failure and unknown settlement without claiming a charge", async () => {
-  const upstreamFailure = {
-    execution_id: "exec-failed",
-    success: false,
-    error_message: "upstream provider unavailable",
-  };
-  await withMockFetch(
-    (request) => currentPipeline(request, upstreamFailure),
-    async () => {
-      const output = await captureOutput(() =>
-        runCall(undefined, {
-          apiKey: TEST_API_KEY,
-          baseUrl: "https://unit.test/api/v1",
-          context: liveContext(),
-        }),
-      );
-      assert.match(output, /upstream provider unavailable/);
-      assert.match(output, /Final charge status: qveris usage --mode search --execution-id exec-failed/);
-      assert.doesNotMatch(output, /credits (?:charged|included)|settlement complete/i);
     },
   );
 });
@@ -349,7 +283,7 @@ test("context call stops when fresh discovery no longer contains the copied tool
   );
 });
 
-test("expired context automatically refreshes and unknown price does not force Probe", async () => {
+test("expired context refreshes and checks unknown price without probing before safety rejection", async () => {
   const now = Math.floor(Date.now() / 1000);
   await withMockFetch(
     (request) => {
@@ -364,13 +298,10 @@ test("expired context automatically refreshes and unknown price does not force P
           ],
         });
       }
-      if (request.url.pathname.endsWith("/tools/execute")) {
-        return response({ execution_id: "exec-refreshed", success: true, result: { data: {} } });
-      }
       throw new Error(`Unexpected request: ${request.url.pathname}`);
     },
     async (requests) => {
-      const output = await captureOutput(() =>
+      await assert.rejects(
         runCall(undefined, {
           apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
@@ -378,15 +309,11 @@ test("expired context automatically refreshes and unknown price does not force P
           params: '{"symbol":"AAPL"}',
           json: true,
         }),
+        (error) => error instanceof CliError && error.code === "CONTEXT_EXECUTION_SAFETY_UNVERIFIED",
       );
-      const result = JSON.parse(output);
-      assert.equal(result.execution_id, "exec-refreshed");
-      assert.equal(result.context_handoff.stale_input, true);
-      assert.deepEqual(result.context_handoff.validation_steps, ["discover"]);
-      assert.ok(result.context_handoff.warnings.some((warning) => warning.code === "PRICE_UNKNOWN"));
       assert.deepEqual(
         requests.map((request) => request.url.pathname),
-        ["/api/v1/search", "/api/v1/tools/execute"],
+        ["/api/v1/search"],
       );
     },
   );
@@ -482,7 +409,7 @@ test("human-readable paid pricing requires a current quote", async () => {
   );
 });
 
-test("integer parameters use JSON integer semantics and execute", async () => {
+test("integer parameters use JSON integer semantics before safety rejection", async () => {
   await withMockFetch(
     (request) => {
       if (request.url.pathname.endsWith("/search")) {
@@ -497,13 +424,10 @@ test("integer parameters use JSON integer semantics and execute", async () => {
           ],
         });
       }
-      if (request.url.pathname.endsWith("/tools/execute")) {
-        return response({ execution_id: "exec-integer", success: true, result: { data: {} } });
-      }
       throw new Error(`Unexpected request: ${request.url.pathname}`);
     },
     async (requests) => {
-      const output = await captureOutput(() =>
+      await assert.rejects(
         runCall(undefined, {
           apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
@@ -511,9 +435,9 @@ test("integer parameters use JSON integer semantics and execute", async () => {
           params: '{"count":2}',
           json: true,
         }),
+        (error) => error instanceof CliError && error.code === "CONTEXT_EXECUTION_SAFETY_UNVERIFIED",
       );
-      assert.equal(JSON.parse(output).execution_id, "exec-integer");
-      assert.equal(requests.length, 2);
+      assert.equal(requests.length, 1);
     },
   );
 });
@@ -564,7 +488,7 @@ test("JSON errors expose one machine-readable recovery contract", () => {
   });
 });
 
-test("dangerous execution fails closed before Call", async () => {
+test("execution-safety metadata cannot be bypassed with confirmation flags", async () => {
   await withMockFetch(
     () =>
       response({
@@ -574,7 +498,6 @@ test("dangerous execution fails closed before Call", async () => {
             tool_id: "provider.company.lookup.v1",
             params: [],
             expected_cost: 0,
-            dangerous_side_effects: true,
           },
         ],
       }),
@@ -584,9 +507,11 @@ test("dangerous execution fails closed before Call", async () => {
           apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
           context: liveContext(),
+          allowSideEffects: true,
+          allowNonIdempotent: true,
           json: true,
         }),
-        (error) => error instanceof CliError && error.code === "CONTEXT_EXECUTION_BLOCKED",
+        (error) => error instanceof CliError && error.code === "CONTEXT_EXECUTION_SAFETY_UNVERIFIED",
       );
       assert.equal(requests.length, 1);
     },
