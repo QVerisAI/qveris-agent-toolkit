@@ -178,9 +178,11 @@ function contextError(code, detail, metadata = {}) {
   const error = new CliError(code, detail);
   Object.assign(error, metadata);
   if (error.nextAction === undefined) {
+    const safeReadRetry =
+      error.retryable === true && ["rediscover", "inspect_again", "probe_again"].includes(error.action);
     error.nextAction = buildNextAction(error.action ?? "review_and_retry", {
       automatic: false,
-      requiresUser: true,
+      requiresUser: !safeReadRetry,
       missingFields: error.missingFields ?? [],
     });
   }
@@ -358,6 +360,7 @@ async function resolveCurrentContextTool({
   let discovered = discoveryTools.filter((tool) => tool?.tool_id);
   let candidates = candidatesFrom(discovered);
   if (!context.toolId) {
+    const action = candidates.length > 0 ? "select_tool" : "broaden_discovery";
     return {
       discoveryOnly: true,
       discoveryId: discovery.search_id,
@@ -366,7 +369,7 @@ async function resolveCurrentContextTool({
         status: "candidates_refreshed",
         stale_input: context.stale,
         warnings: context.warnings,
-        action: "select_tool",
+        action,
       },
     };
   }
@@ -560,19 +563,26 @@ async function resolveCurrentContextTool({
 }
 
 function outputContextCandidates(current, flags) {
+  const hasCandidates = current.candidates.length > 0;
+  const action = hasCandidates ? "select_tool" : "broaden_discovery";
   const result = {
     status: "candidates",
     execution_skipped: true,
     discovery_id: current.discoveryId,
     candidates: current.candidates,
     context_handoff: current.contextMeta,
-    next_action: buildNextAction("select_tool", { requiresUser: true }),
+    next_action: buildNextAction(action, {
+      requiresUser: hasCandidates,
+      ...(!hasCandidates && { reason: "no_candidates" }),
+    }),
   };
   if (flags.json) outputJson(result);
   else {
     console.log(`\n  ${bold("Current candidates")} (${current.discoveryId})`);
     for (const candidate of current.candidates) console.log(`  - ${candidate.tool_id}`);
-    console.log(`\n  ${dim("Select an exact tool_id before execution.")}\n`);
+    console.log(
+      `\n  ${dim(hasCandidates ? "Select an exact tool_id before execution." : "No current candidates; broaden discovery.")}\n`,
+    );
   }
   return result;
 }
@@ -726,6 +736,23 @@ async function executeCall({
       err.settlement = settlement;
     }
     const boundaryAction = boundaryActionFor(err?.code);
+    const uncertainCallFailure =
+      !boundaryAction &&
+      (err?.code === "NET_TIMEOUT" ||
+        err?.code === "RATE_LIMITED" ||
+        err?.code === "PROVIDER_FAILURE" ||
+        (err?.code === "API_ERROR" && (err?.status === undefined || err.status >= 500)) ||
+        !(err instanceof CliError));
+    if (!executionId && uncertainCallFailure) {
+      err.retryable = false;
+      err.action = "review_settlement";
+      err.fallbackAvailable = false;
+      err.nextAction = buildNextAction("review_settlement", {
+        requiresUser: true,
+        reason: "execution_id_unavailable",
+      });
+      throw decorateFailure(err);
+    }
     throw decorateFailure(err, {
       retryable: ["NET_TIMEOUT", "RATE_LIMITED", "PROVIDER_FAILURE", "API_ERROR"].includes(err.code),
       action: boundaryAction ?? (fallbackCandidates.length > 0 ? "select_fallback" : "retry"),

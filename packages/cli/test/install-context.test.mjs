@@ -817,6 +817,67 @@ test("ordinary calls with an execution ID reconcile instead of recommending repl
   process.exitCode = previousExitCode;
 });
 
+for (const uncertainFailure of [
+  {
+    name: "timeout",
+    errorCode: "NET_TIMEOUT",
+    respond: () => Promise.reject(Object.assign(new Error(), { name: "AbortError" })),
+  },
+  { name: "rate limit", errorCode: "RATE_LIMITED", respond: () => response({ message: "retry later" }, 429) },
+  { name: "server error", errorCode: "API_ERROR", respond: () => response({ message: "gateway failed" }, 503) },
+]) {
+  test(`${uncertainFailure.name} without an execution ID forbids Call replay guidance`, async () => {
+    await withMockFetch(
+      (request) => {
+        if (request.url.pathname.endsWith("/search")) {
+          return response({
+            search_id: "fresh-search",
+            results: [
+              {
+                tool_id: "provider.company.lookup.v1",
+                service_id: "service.market-data.v1",
+                params: [],
+                expected_cost: 0,
+              },
+              {
+                tool_id: "provider.company.lookup.fallback.v1",
+                service_id: "service.market-data.v1",
+                params: [],
+                expected_cost: 0,
+              },
+            ],
+          });
+        }
+        if (request.url.pathname.endsWith("/tools/execute")) return uncertainFailure.respond();
+        throw new Error(`Unexpected request: ${request.url.pathname}`);
+      },
+      async (requests) => {
+        await assert.rejects(
+          runCall(undefined, {
+            apiKey: TEST_API_KEY,
+            baseUrl: "https://unit.test/api/v1",
+            context: liveContext(),
+            json: true,
+          }),
+          (error) =>
+            error instanceof CliError &&
+            error.code === uncertainFailure.errorCode &&
+            error.retryable === false &&
+            error.action === "review_settlement" &&
+            error.fallbackAvailable === false &&
+            error.nextAction?.action === "review_settlement" &&
+            error.nextAction?.requires_user === true &&
+            error.nextAction?.reason === "execution_id_unavailable",
+        );
+        assert.deepEqual(
+          requests.map((request) => request.url.pathname),
+          ["/api/v1/search", "/api/v1/tools/execute"],
+        );
+      },
+    );
+  });
+}
+
 for (const finalChargeOutcome of ["charged", "included", "failed_not_charged", "failed_charged_review"]) {
   test(`final ${finalChargeOutcome} settlement evidence stops the reconciliation loop`, async () => {
     const previousExitCode = process.exitCode;
@@ -965,6 +1026,81 @@ test("context call fails closed on malformed discovery or probe responses", asyn
   );
 });
 
+test("retryable context reads remain non-interactive", async () => {
+  await withMockFetch(
+    () => response({ results: [] }),
+    async () => {
+      await assert.rejects(
+        runCall(undefined, {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          context: liveContext(),
+        }),
+        (error) =>
+          error instanceof CliError &&
+          error.action === "rediscover" &&
+          error.retryable === true &&
+          error.nextAction?.requires_user === false,
+      );
+    },
+  );
+
+  await withMockFetch(
+    (request) => {
+      if (request.url.pathname.endsWith("/search")) {
+        return response({ search_id: "fresh-search", results: [{ tool_id: "provider.company.lookup.v1" }] });
+      }
+      if (request.url.pathname.endsWith("/tools/by-ids")) return response({ results: {} });
+      throw new Error(`Unexpected request: ${request.url.pathname}`);
+    },
+    async () => {
+      await assert.rejects(
+        runCall(undefined, {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          context: liveContext(),
+        }),
+        (error) =>
+          error instanceof CliError &&
+          error.action === "inspect_again" &&
+          error.retryable === true &&
+          error.nextAction?.requires_user === false,
+      );
+    },
+  );
+
+  await withMockFetch(
+    (request) => {
+      if (request.url.pathname.endsWith("/search")) {
+        return response({ search_id: "fresh-search", results: [{ tool_id: "provider.company.lookup.v1" }] });
+      }
+      if (request.url.pathname.endsWith("/tools/by-ids")) {
+        return response({ results: [{ tool_id: "provider.company.lookup.v1" }] });
+      }
+      if (request.url.pathname.endsWith("/tools/probe")) {
+        const error = new Error("aborted");
+        error.name = "AbortError";
+        throw error;
+      }
+      throw new Error(`Unexpected request: ${request.url.pathname}`);
+    },
+    async () => {
+      await assert.rejects(
+        runCall(undefined, {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          context: liveContext(),
+        }),
+        (error) =>
+          error instanceof CliError &&
+          error.action === "probe_again" &&
+          error.retryable === true &&
+          error.nextAction?.requires_user === false,
+      );
+    },
+  );
+});
+
 test("service-only context refreshes candidates without guessing or executing a tool", async () => {
   await withMockFetch(
     (request) => {
@@ -994,6 +1130,34 @@ test("service-only context refreshes candidates without guessing or executing a 
       );
       assert.equal(requests.length, 1);
       assert.equal(requests[0].body.query, "company-latest-filing service.market-data.v1");
+    },
+  );
+});
+
+test("service-only context broadens discovery when no candidate exists", async () => {
+  await withMockFetch(
+    () => response({ search_id: "fresh-search", results: [] }),
+    async (requests) => {
+      const output = await captureOutput(() =>
+        runCall(undefined, {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          context: liveContext({ tool_id: undefined }),
+          json: true,
+        }),
+      );
+      const result = JSON.parse(output);
+      assert.equal(result.status, "candidates");
+      assert.deepEqual(result.candidates, []);
+      assert.equal(result.context_handoff.action, "broaden_discovery");
+      assert.deepEqual(result.next_action, {
+        action: "broaden_discovery",
+        automatic: false,
+        requires_user: false,
+        missing_fields: [],
+        reason: "no_candidates",
+      });
+      assert.equal(requests.length, 1);
     },
   );
 });
