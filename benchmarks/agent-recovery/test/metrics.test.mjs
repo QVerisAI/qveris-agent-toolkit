@@ -194,7 +194,8 @@ test('fail-on-alert exits nonzero and emits GitHub annotations', async (t) => {
     },
   );
   assert.equal(result.status, 1);
-  assert.match(result.stdout, /::error title=Recovery metric missing_execution_id_rate::/);
+  assert.match(result.stderr, /::error title=Recovery metric missing_execution_id_rate::/);
+  assert.equal(JSON.parse(result.stdout).alert_summary.status, 'alerting');
 });
 
 test('low-volume rates stay insufficient instead of paging on an empty denominator', async () => {

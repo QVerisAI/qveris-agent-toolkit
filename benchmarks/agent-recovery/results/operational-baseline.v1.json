@@ -80,7 +80,7 @@
       "numerator": 6,
       "denominator": 7,
       "rate": 0.8571428571428571,
-      "description": "Non-rejected submitted Call tasks with at least one final Usage/Ledger outcome / non-rejected submitted Call tasks.",
+      "description": "Non-rejected submitted Call tasks with final Usage/Ledger evidence for every non-rejected attempt / non-rejected submitted Call tasks.",
       "direction": "min",
       "threshold": 0.8,
       "min_denominator": 5,

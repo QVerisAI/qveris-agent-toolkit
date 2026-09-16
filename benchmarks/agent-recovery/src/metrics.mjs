@@ -26,6 +26,8 @@ const NEXT_ACTIONS = new Set([
   'retry',
   'review_and_retry',
   'select_tool',
+  'select_fallback',
+  'upgrade_consumer',
   'broaden_discovery',
   'rediscover',
   'inspect_again',
@@ -55,8 +57,18 @@ const METRIC_DESCRIPTIONS = {
   missing_execution_id_rate:
     'Non-rejected submitted Call attempts without execution_id / non-rejected submitted Call attempts.',
   final_settlement_evidence_coverage:
-    'Non-rejected submitted Call tasks with at least one final Usage/Ledger outcome / non-rejected submitted Call tasks.',
+    'Non-rejected submitted Call tasks with final Usage/Ledger evidence for every non-rejected attempt / non-rejected submitted Call tasks.',
 };
+const SAFETY_METRICS = new Set([
+  'duplicate_call_task_rate',
+  'duplicate_charge_task_rate',
+  'missing_execution_id_rate',
+]);
+const MIN_METRICS = new Set([
+  'task_completion_rate',
+  'automatic_recovery_success_rate',
+  'final_settlement_evidence_coverage',
+]);
 
 function ratioMetric(numerator, denominator, extra = {}) {
   return {
@@ -68,7 +80,7 @@ function ratioMetric(numerator, denominator, extra = {}) {
 }
 
 function nonEmptyString(value) {
-  return typeof value === 'string' && value.trim().length > 0;
+  return typeof value === 'string' && value.trim().length > 0 && value === value.trim();
 }
 
 function isChargeBearingSettlement(settlement) {
@@ -83,6 +95,8 @@ export function validateOperationalDataset(dataset) {
     throw new Error('Operational dataset must declare production_data');
   }
   const taskIds = new Set();
+  const callIds = new Set();
+  const settlementOwners = new Map();
   for (const task of dataset.tasks) {
     if (!nonEmptyString(task?.task_id) || taskIds.has(task.task_id)) {
       throw new Error(`Operational task has an invalid or duplicate task_id: ${task?.task_id ?? '<missing>'}`);
@@ -107,7 +121,8 @@ export function validateOperationalDataset(dataset) {
       throw new Error(`Task ${task.task_id} cannot succeed automatic recovery without completing`);
     }
     if (!Array.isArray(task.calls)) throw new Error(`Task ${task.task_id} must declare calls`);
-    const callIds = new Set();
+    // Deduplication and conflict detection must have the same task-wide scope.
+    const settlementsById = new Map();
     for (const call of task.calls) {
       if (!nonEmptyString(call?.call_id) || callIds.has(call.call_id)) {
         throw new Error(`Task ${task.task_id} has an invalid or duplicate call_id: ${call?.call_id ?? '<missing>'}`);
@@ -123,7 +138,6 @@ export function validateOperationalDataset(dataset) {
         throw new Error(`Call ${call.call_id} has an unsupported next_action`);
       }
       if (!Array.isArray(call.settlements)) throw new Error(`Call ${call.call_id} must declare settlements`);
-      const settlementsById = new Map();
       for (const settlement of call.settlements) {
         if (!nonEmptyString(settlement?.settlement_id)) {
           throw new Error(`Call ${call.call_id} has an invalid settlement_id: ${settlement?.settlement_id ?? '<missing>'}`);
@@ -134,12 +148,23 @@ export function validateOperationalDataset(dataset) {
         if (!SUPPORTED_CHARGE_OUTCOMES.has(settlement.charge_outcome)) {
           throw new Error(`Settlement ${settlement.settlement_id} has an unsupported charge_outcome`);
         }
-        if (typeof settlement.amount_credits !== 'number' || settlement.amount_credits < 0) {
+        if (!Number.isFinite(settlement.amount_credits) || settlement.amount_credits < 0) {
           throw new Error(`Settlement ${settlement.settlement_id} must declare a non-negative amount_credits`);
         }
         if (call.submission_outcome === 'rejected' && isChargeBearingSettlement(settlement)) {
           throw new Error(`Rejected call ${call.call_id} cannot include a charge-bearing settlement`);
         }
+        if (
+          !CHARGE_BEARING_OUTCOMES.has(settlement.charge_outcome) &&
+          settlement.amount_credits !== 0
+        ) {
+          throw new Error(`Settlement ${settlement.settlement_id} has an amount inconsistent with charge_outcome`);
+        }
+        const owner = settlementOwners.get(settlement.settlement_id);
+        if (owner && owner !== task.task_id) {
+          throw new Error(`Settlement ${settlement.settlement_id} belongs to multiple tasks`);
+        }
+        settlementOwners.set(settlement.settlement_id, task.task_id);
         const previous = settlementsById.get(settlement.settlement_id);
         if (
           previous &&
@@ -155,14 +180,25 @@ export function validateOperationalDataset(dataset) {
 }
 
 export function validateAlertConfig(config) {
-  if (config?.schema_version !== 1 || !config.metrics || typeof config.metrics !== 'object') {
+  if (config?.schema_version !== 1 || !config.metrics || typeof config.metrics !== 'object' || Array.isArray(config.metrics)) {
     throw new Error('Alert config must use schema_version 1 and declare metrics');
+  }
+  for (const name of Object.keys(config.metrics)) {
+    if (!Object.hasOwn(METRIC_DESCRIPTIONS, name)) throw new Error(`Unknown alert metric: ${name}`);
   }
   for (const metricName of Object.keys(METRIC_DESCRIPTIONS)) {
     const rule = config.metrics[metricName];
     if (!rule) throw new Error(`Alert config is missing ${metricName}`);
+    for (const key of Object.keys(rule)) {
+      if (!['direction', 'threshold', 'min_denominator', 'severity'].includes(key)) {
+        throw new Error(`Unknown alert rule field: ${metricName}.${key}`);
+      }
+    }
     if (!['min', 'max'].includes(rule.direction)) throw new Error(`${metricName} must use min or max direction`);
-    if (typeof rule.threshold !== 'number' || rule.threshold < 0 || rule.threshold > 1) {
+    if (rule.direction !== (MIN_METRICS.has(metricName) ? 'min' : 'max')) {
+      throw new Error(`${metricName} has an inverted alert direction`);
+    }
+    if (!Number.isFinite(rule.threshold) || rule.threshold < 0 || rule.threshold > 1) {
       throw new Error(`${metricName} threshold must be between 0 and 1`);
     }
     if (!Number.isInteger(rule.min_denominator) || rule.min_denominator < 1) {
@@ -170,6 +206,12 @@ export function validateAlertConfig(config) {
     }
     if (!['warning', 'critical'].includes(rule.severity)) {
       throw new Error(`${metricName} severity must be warning or critical`);
+    }
+    if (
+      SAFETY_METRICS.has(metricName) &&
+      (rule.threshold !== 0 || rule.min_denominator !== 1 || rule.severity !== 'critical')
+    ) {
+      throw new Error(`${metricName} must preserve the zero-tolerance safety policy`);
     }
   }
   return config;
@@ -186,6 +228,7 @@ function distinctChargeBearingSettlements(task) {
 }
 
 export function summarizeOperationalTasks(tasks) {
+  validateOperationalDataset({ schema_version: 1, production_data: false, tasks });
   const completionEligible = tasks.filter((task) => task.completion_eligible);
   const automaticRecoveryAttempted = tasks.filter((task) => task.automatic_recovery.attempted);
   const submittedTasks = tasks.filter((task) => task.calls.length > 0);
@@ -207,7 +250,7 @@ export function summarizeOperationalTasks(tasks) {
     const relevantCalls = task.calls.filter((call) => call.submission_outcome !== 'rejected');
     return (
       relevantCalls.length > 0 &&
-      relevantCalls.some((call) =>
+      relevantCalls.every((call) =>
         call.settlements.some((settlement) => FINAL_CHARGE_OUTCOMES.has(settlement.charge_outcome)),
       )
     );
@@ -244,10 +287,18 @@ export function summarizeOperationalTasks(tasks) {
 }
 
 export function evaluateAlerts(metrics, alertConfig) {
+  validateAlertConfig(alertConfig);
   const evaluations = {};
   const alerts = [];
   for (const [metricName, description] of Object.entries(METRIC_DESCRIPTIONS)) {
     const metric = metrics[metricName];
+    if (
+      !metric || !Number.isSafeInteger(metric.numerator) || !Number.isSafeInteger(metric.denominator) ||
+      metric.numerator < 0 || metric.denominator < metric.numerator ||
+      metric.rate !== (metric.denominator ? metric.numerator / metric.denominator : null)
+    ) {
+      throw new Error(`Invalid metric counts or rate: ${metricName}`);
+    }
     const rule = alertConfig.metrics[metricName];
     const enoughData = metric.denominator >= rule.min_denominator;
     const breached =
@@ -286,7 +337,11 @@ export function evaluateOperationalMetrics(dataset, alertConfig, sources = {}) {
     task_count: dataset.tasks.length,
     metrics: evaluations,
     alert_summary: {
-      status: alerts.length > 0 ? 'alerting' : 'pass',
+      status: alerts.length > 0
+        ? 'alerting'
+        : Object.values(evaluations).some((metric) => metric.status === 'insufficient_data')
+          ? 'insufficient_data'
+          : 'pass',
       alert_count: alerts.length,
       alerts,
     },
@@ -306,9 +361,24 @@ function annotationEscape(value) {
 
 async function main() {
   const args = process.argv.slice(2);
+  const seen = new Set();
+  for (let i = 0; i < args.length; i += 1) {
+    const flag = args[i];
+    if (!['--input', '--thresholds', '--output', '--fail-on-alert'].includes(flag) || seen.has(flag)) {
+      throw new Error(`Unknown or duplicate option: ${flag}`);
+    }
+    seen.add(flag);
+    if (flag !== '--fail-on-alert') {
+      argumentValue(args, flag, null);
+      i += 1;
+    }
+  }
   const inputPath = argumentValue(args, '--input', DEFAULT_INPUT);
   const alertsPath = argumentValue(args, '--thresholds', DEFAULT_ALERTS);
   const outputPath = argumentValue(args, '--output', null);
+  if (outputPath === inputPath || outputPath === alertsPath) {
+    throw new Error('--output must not overwrite an input or threshold file');
+  }
   const inputContents = await readFile(inputPath, 'utf8');
   const alertContents = await readFile(alertsPath, 'utf8');
   const result = evaluateOperationalMetrics(JSON.parse(inputContents), JSON.parse(alertContents), {
@@ -322,7 +392,7 @@ async function main() {
     if (process.env.GITHUB_ACTIONS === 'true') {
       for (const alert of result.alert_summary.alerts) {
         const message = `${alert.metric}=${alert.rate} breached ${alert.direction} threshold ${alert.threshold} (${alert.numerator}/${alert.denominator})`;
-        process.stdout.write(`::error title=Recovery metric ${annotationEscape(alert.metric)}::${annotationEscape(message)}\n`);
+        process.stderr.write(`::error title=Recovery metric ${annotationEscape(alert.metric)}::${annotationEscape(message)}\n`);
       }
     }
     process.exitCode = 1;
