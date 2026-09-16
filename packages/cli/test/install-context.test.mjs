@@ -156,6 +156,15 @@ test("context lifetime can be checked without turning snapshot expiry into autho
 });
 
 test("v1 parser rejects duplicate, credential, PII, payload, and prototype fields without echoing values", () => {
+  const embeddedCredentials = [
+    "token sk-abcdefghijklmnopqrstuv",
+    "token ghp_abcdefghijklmnopqrst",
+    "token xoxb-abcdefghijklmnop",
+    "token AKIAABCDEFGHIJKLMNOP",
+    "token AIzaabcdefghijklmnopqrst",
+    "token Bearer abcdefghijklmnopqrstuvwxyz",
+    "token eyJabc.def.ghi",
+  ];
   const unsafe = [
     context({ prompt: "private-customer-request" }),
     context({ service_id: "service:sk-abcdefghijklmnopqrstuv" }),
@@ -165,8 +174,11 @@ test("v1 parser rejects duplicate, credential, PII, payload, and prototype field
     context({ task_id: "11010519491231002X" }),
     context({ task_id: "4111111111111111" }),
     context({ task_id: "GB82WEST12345698765432" }),
-    context({ extensions: { "example.data": { note: "Bearer abcdefghijklmnopqrstuvwxyz" } } }),
+    ...embeddedCredentials.map((value) => context({ extensions: { "example.data": { note: value } } })),
     context({ future_display_hint: "prefix: Bearer abcdefghijklmnopqrstuvwxyz; suffix" }),
+    context({ extensions: { "example.data": { note: "contact operator@example.com" } } }),
+    context({ extensions: { "example.data": { note: "ssn 123-45-6789" } } }),
+    context({ extensions: { "example.data": { note: "card 4111111111111111" } } }),
     context({ extensions: { "example.data": { [SENSITIVE_API_KEY_FIELD]: "not-echoed" } } }),
     context({ extensions: { "example.data": JSON.parse('{"__proto__":{"polluted":true}}') } }),
   ];

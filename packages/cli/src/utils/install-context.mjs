@@ -27,14 +27,14 @@ const PROTOTYPE_POLLUTION_FIELDS = new Set(["__proto__", "prototype", "construct
 const SENSITIVE_FIELD_PATTERN =
   /(?:^|[_-])(?:api[_-]?key|authorization|auth[_-]?token|access[_-]?token|refresh[_-]?token|credential|secret|password|private[_-]?key|cookie|prompt|raw[_-]?(?:payload|prompt)|payload|parameters?|params|user[_-]?data|pii)(?:$|[_-])/i;
 const KNOWN_CREDENTIAL_PATTERN =
-  /(?:^|[:/._-])(?:sk-[A-Za-z0-9_-]{20,}|gh[oprsu]_[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{16,}|AKIA[A-Z0-9]{16}|AIza[A-Za-z0-9_-]{20,})(?:$|[:/._-])/i;
-const BEARER_CREDENTIAL_PATTERN = /(?:^|[\s:/._-])Bearer\s+[A-Za-z0-9._-]{12,}(?=$|[^A-Za-z0-9._-])/i;
-const JWT_PATTERN = /^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
-const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-const US_SSN_PATTERN = /^\d{3}-\d{2}-\d{4}$/;
-const CN_MOBILE_PATTERN = /^1[3-9]\d{9}$/;
-const CN_RESIDENT_ID_PATTERN = /^\d{17}[\dXx]$/;
-const IBAN_PATTERN = /^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/i;
+  /(?:^|[^A-Za-z0-9])(?:sk-[A-Za-z0-9_-]{20,}|gh[oprsu]_[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{16,}|AKIA[A-Z0-9]{16}|AIza[A-Za-z0-9_-]{20,})(?=$|[^A-Za-z0-9_-])/i;
+const BEARER_CREDENTIAL_PATTERN = /(?:^|[^A-Za-z0-9])Bearer\s+[A-Za-z0-9._-]{12,}(?=$|[^A-Za-z0-9._-])/i;
+const JWT_PATTERN = /(?:^|[^A-Za-z0-9_-])eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?=$|[^A-Za-z0-9_-])/;
+const EMAIL_PATTERN = /(?:^|[^A-Za-z0-9._%+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?=$|[^A-Za-z0-9.-])/;
+const US_SSN_PATTERN = /(?:^|[^\d])\d{3}-\d{2}-\d{4}(?=$|[^\d])/;
+const CN_MOBILE_PATTERN = /(?:^|[^\d])1[3-9]\d{9}(?=$|[^\d])/;
+const CN_RESIDENT_ID_PATTERN = /(?:^|[^\d])\d{17}[\dXx](?=$|[^\dA-Za-z])/;
+const IBAN_PATTERN = /(?:^|[^A-Za-z0-9])[A-Z]{2}\d{2}[A-Z0-9]{11,30}(?=$|[^A-Za-z0-9])/i;
 
 function contextError(code, detail, hint) {
   const error = new CliError(code, detail);
@@ -148,6 +148,13 @@ function isPaymentCard(value) {
   return sum % 10 === 0;
 }
 
+function containsPaymentCard(value) {
+  for (const match of value.matchAll(/(?:^|[^\d])(\d{13,19})(?=$|[^\d])/g)) {
+    if (isPaymentCard(match[1])) return true;
+  }
+  return false;
+}
+
 function isSensitiveId(value) {
   return (
     KNOWN_CREDENTIAL_PATTERN.test(value) ||
@@ -158,7 +165,7 @@ function isSensitiveId(value) {
     CN_MOBILE_PATTERN.test(value) ||
     CN_RESIDENT_ID_PATTERN.test(value) ||
     IBAN_PATTERN.test(value) ||
-    isPaymentCard(value)
+    containsPaymentCard(value)
   );
 }
 
