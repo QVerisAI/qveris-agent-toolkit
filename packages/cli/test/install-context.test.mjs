@@ -464,6 +464,41 @@ test("human-readable paid pricing requires a current quote", async () => {
   );
 });
 
+test("partially understood billing rules require a current quote", async () => {
+  await withMockFetch(
+    (request) => {
+      if (request.url.pathname.endsWith("/search")) {
+        return response({
+          search_id: "fresh-search",
+          results: [
+            {
+              tool_id: "provider.company.lookup.v1",
+              params: [],
+              billing_rule: { amount_credits: 0, future_component: 5 },
+            },
+          ],
+        });
+      }
+      if (request.url.pathname.endsWith("/tools/probe")) return response({});
+      throw new Error("Call must not execute without a quote for an incomplete billing rule");
+    },
+    async (requests) => {
+      await assert.rejects(
+        runCall(undefined, {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          context: liveContext(),
+          dryRun: true,
+          json: true,
+        }),
+        (error) => error instanceof CliError && error.code === "CONTEXT_QUOTE_REQUIRED",
+      );
+      assert.deepEqual(requests[1].body.checks, ["quote"]);
+      assert.equal(requests.length, 2);
+    },
+  );
+});
+
 test("integer parameters use JSON integer semantics before safety rejection", async () => {
   await withMockFetch(
     (request) => {

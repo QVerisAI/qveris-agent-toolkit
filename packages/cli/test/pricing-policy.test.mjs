@@ -7,6 +7,12 @@ test("pricing classification distinguishes absence, explicit free, and any paid 
   assert.deepEqual(classifyPricing({}), { status: "absent", requiresQuote: false });
   assert.equal(classifyPricing({ expected_cost: "0 credits per request" }).status, "free");
   assert.equal(classifyPricing({ billing_rule: { price: { amount_credits: 0 } } }).status, "free");
+  assert.equal(
+    classifyPricing({
+      billing_rule: { metering_mode: "per_request", price: { amount_credits: 0, unit: "request" } },
+    }).status,
+    "free",
+  );
 
   for (const tool of [
     { expected_cost: "5 credits per successful request" },
@@ -14,6 +20,10 @@ test("pricing classification distinguishes absence, explicit free, and any paid 
     { cost_class: "low" },
     { billing_rule: {} },
     { billing_rule: { amount_credits: 0, minimum_charge_credits: 5 } },
+    { billing_rule: { amount_credits: 0, overage_rate: 5 } },
+    { billing_rule: { amount_credits: 0, future_component: 5 } },
+    { billing_rule: { amount_credits: 0, future_component: {} } },
+    { billing_rule: { amount_credits: 0, future_component: { amount_credits: 0 } } },
     { expected_cost: "0 credits plus variable usage" },
   ]) {
     assert.deepEqual(classifyPricing(tool), { status: "paid_or_uncertain", requiresQuote: true });
