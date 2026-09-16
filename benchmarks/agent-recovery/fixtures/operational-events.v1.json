@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "description": "Synthetic post-merge observability baseline. No record represents a production call or charge.",
+  "production_data": false,
+  "tasks": [
+    {
+      "task_id": "ordinary_success",
+      "completion_eligible": true,
+      "completed": true,
+      "automatic_recovery": { "attempted": false, "succeeded": false },
+      "calls": [
+        {
+          "call_id": "call-ordinary",
+          "submission_outcome": "success",
+          "execution_id": "exec-ordinary",
+          "next_action": "none",
+          "settlements": [
+            { "settlement_id": "settlement-ordinary", "charge_outcome": "charged", "amount_credits": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "service_only",
+      "completion_eligible": true,
+      "completed": false,
+      "automatic_recovery": { "attempted": false, "succeeded": false },
+      "calls": []
+    },
+    {
+      "task_id": "expired_context",
+      "completion_eligible": true,
+      "completed": true,
+      "automatic_recovery": { "attempted": true, "succeeded": true },
+      "calls": [
+        {
+          "call_id": "call-expired",
+          "submission_outcome": "success",
+          "execution_id": "exec-expired",
+          "next_action": "none",
+          "settlements": [
+            { "settlement_id": "settlement-expired", "charge_outcome": "charged", "amount_credits": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "unknown_extension",
+      "completion_eligible": true,
+      "completed": true,
+      "automatic_recovery": { "attempted": false, "succeeded": false },
+      "calls": [
+        {
+          "call_id": "call-extension",
+          "submission_outcome": "success",
+          "execution_id": "exec-extension",
+          "next_action": "none",
+          "settlements": [
+            { "settlement_id": "settlement-extension", "charge_outcome": "included", "amount_credits": 0 }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "incomplete_schema",
+      "completion_eligible": true,
+      "completed": true,
+      "automatic_recovery": { "attempted": true, "succeeded": true },
+      "calls": [
+        {
+          "call_id": "call-inspect",
+          "submission_outcome": "success",
+          "execution_id": "exec-inspect",
+          "next_action": "none",
+          "settlements": [
+            { "settlement_id": "settlement-inspect", "charge_outcome": "charged", "amount_credits": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "missing_quote",
+      "completion_eligible": false,
+      "completed": false,
+      "automatic_recovery": { "attempted": false, "succeeded": false },
+      "calls": []
+    },
+    {
+      "task_id": "permission_denied",
+      "completion_eligible": false,
+      "completed": false,
+      "automatic_recovery": { "attempted": false, "succeeded": false },
+      "calls": []
+    },
+    {
+      "task_id": "insufficient_balance",
+      "completion_eligible": false,
+      "completed": false,
+      "automatic_recovery": { "attempted": false, "succeeded": false },
+      "calls": [
+        {
+          "call_id": "call-balance",
+          "submission_outcome": "rejected",
+          "execution_id": null,
+          "next_action": "add_credits",
+          "settlements": []
+        }
+      ]
+    },
+    {
+      "task_id": "upstream_failure",
+      "completion_eligible": false,
+      "completed": false,
+      "automatic_recovery": { "attempted": false, "succeeded": false },
+      "calls": [
+        {
+          "call_id": "call-upstream",
+          "submission_outcome": "failed",
+          "execution_id": "exec-upstream",
+          "next_action": "reconcile_settlement",
+          "settlements": [
+            {
+              "settlement_id": "settlement-upstream",
+              "charge_outcome": "failed_not_charged",
+              "amount_credits": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "unknown_settlement",
+      "completion_eligible": false,
+      "completed": false,
+      "automatic_recovery": { "attempted": true, "succeeded": false },
+      "calls": [
+        {
+          "call_id": "call-settlement",
+          "submission_outcome": "unknown",
+          "execution_id": "exec-pending",
+          "next_action": "wait_and_reconcile",
+          "settlements": [
+            { "settlement_id": "settlement-pending", "charge_outcome": "pending", "amount_credits": 0 }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "provider_fallback",
+      "completion_eligible": true,
+      "completed": true,
+      "automatic_recovery": { "attempted": true, "succeeded": true },
+      "calls": [
+        {
+          "call_id": "call-fallback",
+          "submission_outcome": "success",
+          "execution_id": "exec-fallback",
+          "next_action": "none",
+          "settlements": [
+            { "settlement_id": "settlement-fallback", "charge_outcome": "charged", "amount_credits": 1 }
+          ]
+        }
+      ]
+    }
+  ]
+}

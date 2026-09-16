@@ -259,6 +259,8 @@ jobs:
         run: npm run test:agent-recovery
       - name: Record deterministic result
         run: npm run benchmark:agent-recovery -- --output /tmp/agent-recovery-result.json
+      - name: Evaluate recovery observability guardrails
+        run: npm run metrics:agent-recovery -- --fail-on-alert --output /tmp/agent-recovery-metrics.json
 
   openclaw-plugin-tests:
     needs: plan
