@@ -650,6 +650,12 @@ class QverisClient:
             execution_id = data.get("execution_id") if isinstance(data, dict) else None
             if not isinstance(execution_id, str) or not execution_id.strip():
                 execution_id = None
+            if execution_id is None and isinstance(data, dict):
+                envelope_data = data.get("data")
+                if isinstance(envelope_data, dict):
+                    envelope_execution_id = envelope_data.get("execution_id")
+                    if isinstance(envelope_execution_id, str) and envelope_execution_id.strip():
+                        execution_id = envelope_execution_id
             try:
                 payload = self._unwrap_envelope(data, operation=operation, state=state)
                 if execution_id is None and isinstance(payload, dict):

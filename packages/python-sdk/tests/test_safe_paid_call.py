@@ -126,6 +126,30 @@ async def test_paid_call_invalid_contract_preserves_safe_execution_id_for_reconc
 
 
 @pytest.mark.asyncio
+async def test_paid_call_failure_envelope_preserves_nested_execution_id() -> None:
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "status": "failure",
+                "message": "provider failed",
+                "data": {"execution_id": "exec-enveloped-failure"},
+            },
+        )
+
+    client = make_client(handler)
+    try:
+        with pytest.raises(QverisContractError) as exc_info:
+            await client.call("paid-tool", {})
+    finally:
+        await client.close()
+
+    assert exc_info.value.execution_id == "exec-enveloped-failure"
+    assert exc_info.value.next_action["action"] == "reconcile_settlement"
+    assert exc_info.value.next_action["requires_user"] is False
+
+
+@pytest.mark.asyncio
 async def test_paid_call_failed_response_adds_settlement_guidance() -> None:
     def handler(_request: httpx.Request) -> httpx.Response:
         return httpx.Response(
