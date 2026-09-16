@@ -97,6 +97,11 @@ export const ERROR_CODES = {
     hint: "Increase --max-credits or select a lower-cost provider",
     exit: EX_NOPERM,
   },
+  CONTEXT_BUDGET_UNVERIFIED: {
+    message: "The execution budget cannot be guaranteed",
+    hint: "Obtain an exact quote, remove --max-credits, or select a provider with a provable upper bound",
+    exit: EX_NOPERM,
+  },
   CONTEXT_EXECUTION_BLOCKED: {
     message: "Execution is blocked by safety policy",
     hint: "Review permissions, region constraints, side effects, and idempotency before retrying",

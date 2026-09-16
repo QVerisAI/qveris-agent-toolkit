@@ -122,6 +122,9 @@ test("parameter resolution supports inline JSON, files, defaults, and invalid JS
     assert.deepEqual(resolveParams('{"city":"London"}'), { city: "London" });
     assert.deepEqual(resolveParams(`@${paramsFile}`), { symbol: "AAPL" });
     assert.throws(() => resolveParams("{bad"), /Expected property name|JSON/);
+    for (const value of ["null", "[]", '"value"', "1", "true"]) {
+      assert.throws(() => resolveParams(value), /JSON object/);
+    }
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

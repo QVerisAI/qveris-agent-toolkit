@@ -31,8 +31,13 @@ export function resolveParams(value) {
   }
 
   try {
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new CliError("PARAMS_INVALID_JSON", "--params must be a JSON object");
+    }
+    return parsed;
   } catch (err) {
+    if (err instanceof CliError) throw err;
     throw new CliError("PARAMS_INVALID_JSON", `${err.message}`);
   }
 }

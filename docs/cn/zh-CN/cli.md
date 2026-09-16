@@ -238,9 +238,9 @@ qveris call --context @context.json --params @params.json
 
 `--context` 与位置工具 ID、`--discovery-id` 互斥。模板只是选择提示，不是参数、授权、可用性、价格或执行证明。参数必须根据当前用户请求另行传入。
 
-执行 Call 前，CLI 会重新 Discover，并且只使用新的 `search_id`。仅含 service 的上下文只返回刷新后的候选并停止，绝不猜测工具。有准确 `tool_id` 时，Discover 若已给出完整参数合同即可直接进入执行前确认；只有必要合同缺失时才 Inspect，只有 schema/参数、权限/价格、显式 `--require-quote`、预算上限或付费风险需要服务器确认时才 Probe。
+执行 Call 前，CLI 会重新 Discover，并且只使用新的 `search_id`。有准确 tool 的上下文仅用 `tool_id` 作确定性查询；仅含 service 的上下文使用 task/service 意图，只返回刷新后的候选并停止，绝不猜测工具。Discover 若已给出完整参数合同即可直接进入执行前确认；只有必要合同缺失时才 Inspect，只有 schema/参数、权限/价格、显式 `--require-quote`、预算上限或付费风险需要服务器确认时才 Probe。
 
-过期只会让旧的可用性、价格和权限快照失效；安全任务意图和公开 ID 会被保留并自动刷新。只有明确要求报价、用户预算策略或检测到付费风险时，报价才是门禁；否则以结构化 warning 报告价格未知，并可按策略继续。真正 Call 前会严格检查认证、必需参数、预算、明确权限/地域禁止、危险副作用和幂等性元数据。
+过期只会让旧的可用性、价格和权限快照失效；安全任务意图和公开 ID 会被保留并自动刷新。任何已出现但非明确免费或含义不确定的价格信号（包括自然语言 `expected_cost`）都属于付费风险，必须取得结构合法的 credits 报价。`--max-credits` 还要求 `exact: true`，不精确估算不能保证硬预算上限。完全没有价格信号时，以结构化 warning 报告价格未知，并可按策略继续。真正 Call 前会严格检查认证、JSON 参数类型（包括 integer 与 number）、必需参数、预算、明确权限/地域禁止、危险副作用和幂等性元数据。
 
 只要已发布合同能提供充分证明，CLI 就会自动完成安全恢复：旧发现会立即刷新。当前 Discover 合同尚不提供替代 Provider 的 service identity 以及完整副作用/幂等性证明，因此 CLI 会返回 fallback 候选，但不会靠猜测执行。JSON 失败统一包含 `code`、`retryable`、`action`、`missing_fields`、`fallback_available` 和当前 Provider/Tool 候选。
 

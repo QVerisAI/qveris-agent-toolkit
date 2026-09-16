@@ -13,6 +13,8 @@ import { generateSnippet } from "../output/codegen.mjs";
 import { CliError } from "../errors/handler.mjs";
 import { bold, dim, cyan } from "../output/colors.mjs";
 import { buildContextDiscoveryQuery, resolveInstallContext } from "../utils/install-context.mjs";
+import { analyzeParameterSchema, validateParameters } from "../utils/tool-contract.mjs";
+import { classifyPricing, validateQuote } from "../utils/pricing-policy.mjs";
 
 // Smart max_response_size defaults:
 //   --max-size N   → user explicit override (highest priority)
@@ -187,58 +189,6 @@ function decorateFailure(error, metadata = {}) {
   return error;
 }
 
-function isCompleteParameterSchema(params) {
-  return (
-    Array.isArray(params) &&
-    params.every(
-      (param) =>
-        param &&
-        typeof param.name === "string" &&
-        typeof param.type === "string" &&
-        typeof param.required === "boolean",
-    )
-  );
-}
-
-function parameterViolations(schema, parameters) {
-  const missingFields = schema
-    .filter((param) => param.required && parameters[param.name] === undefined)
-    .map((param) => param.name);
-  const allowed = new Set(schema.map((param) => param.name));
-  const unknown = Object.keys(parameters).filter((name) => !allowed.has(name));
-  const invalid = [];
-  for (const param of schema) {
-    const value = parameters[param.name];
-    if (value === undefined) continue;
-    const actual = Array.isArray(value) ? "array" : value === null ? "null" : typeof value;
-    if (actual !== param.type || (Array.isArray(param.enum) && !param.enum.includes(value))) invalid.push(param.name);
-  }
-  return { missingFields, unknown, invalid };
-}
-
-function numericCost(tool) {
-  const values = [
-    tool?.expected_cost,
-    tool?.cost,
-    tool?.billing_rule?.price?.amount_credits,
-    tool?.billing_rule?.minimum_charge_credits,
-  ];
-  for (const value of values) {
-    const parsed = typeof value === "number" ? value : Number(value);
-    if (Number.isFinite(parsed) && parsed >= 0) return parsed;
-  }
-  return null;
-}
-
-function hasExplicitZeroCost(tool) {
-  return [
-    tool?.expected_cost,
-    tool?.cost,
-    tool?.billing_rule?.price?.amount_credits,
-    tool?.billing_rule?.minimum_charge_credits,
-  ].some((value) => value !== undefined && value !== null && Number(value) === 0);
-}
-
 function parseMaxCredits(value) {
   if (value === undefined) return null;
   const parsed = Number(value);
@@ -354,7 +304,8 @@ async function resolveCurrentContextTool({
   }
 
   const steps = ["discover"];
-  if (!isCompleteParameterSchema(selected.params)) {
+  let schemaAnalysis = analyzeParameterSchema(selected.params);
+  if (!schemaAnalysis.complete) {
     let inspection;
     try {
       inspection = await inspectToolsByIds({
@@ -388,27 +339,26 @@ async function resolveCurrentContextTool({
     }
     selected = { ...selected, ...inspected };
     steps.push("inspect");
+    schemaAnalysis = analyzeParameterSchema(selected.params);
   }
 
-  const schemaKnown = isCompleteParameterSchema(selected.params);
-  if (schemaKnown) {
-    const violations = parameterViolations(selected.params, parameters);
-    if (violations.missingFields.length || violations.unknown.length || violations.invalid.length) {
+  if (schemaAnalysis.complete) {
+    const validation = validateParameters(schemaAnalysis.definitions, parameters);
+    if (!validation.valid) {
       throw contextError("CONTEXT_PROBE_FAILED", "Parameters do not satisfy the current tool schema", {
         action: "correct_parameters",
-        missingFields: violations.missingFields,
-        parameterErrors: { unknown: violations.unknown, invalid: violations.invalid },
+        missingFields: validation.missingFields,
+        parameterErrors: { unknown: validation.unknown, invalid: validation.invalid },
       });
     }
   }
 
   assertExecutionPolicy(selected, flags);
   const maxCredits = parseMaxCredits(flags.maxCredits);
-  const discoveredCost = numericCost(selected);
-  const paidRisk = discoveredCost > 0 || (selected.billing_rule !== undefined && !hasExplicitZeroCost(selected));
-  const quoteRequired = flags.requireQuote || maxCredits !== null || paidRisk;
+  const pricing = classifyPricing(selected);
+  const quoteRequired = flags.requireQuote || maxCredits !== null || pricing.requiresQuote;
   const checks = [];
-  if (!schemaKnown) checks.push("schema");
+  if (!schemaAnalysis.complete) checks.push("schema");
   if (quoteRequired) checks.push("quote");
   let probe;
   if (checks.length > 0) {
@@ -439,19 +389,26 @@ async function resolveCurrentContextTool({
     }
     steps.push("probe");
   }
-  if (!schemaKnown && probe?.schema?.valid !== true) {
+  if (!schemaAnalysis.complete && probe?.schema?.valid !== true) {
     throw contextError("CONTEXT_PROBE_FAILED", "Current probe did not validate the supplied parameters", {
       action: "correct_parameters",
       missingFields: probe?.schema?.violations?.map((item) => item.param).filter(Boolean) ?? [],
     });
   }
-  if (quoteRequired && (probe?.quote?.estimate_credits === undefined || probe?.quote?.estimate_credits === null)) {
+  const quoteValidation = quoteRequired ? validateQuote(probe?.quote, { requireExact: maxCredits !== null }) : null;
+  if (quoteValidation && !quoteValidation.valid) {
+    if (maxCredits !== null && quoteValidation.reason === "inexact") {
+      throw contextError("CONTEXT_BUDGET_UNVERIFIED", "An inexact quote cannot enforce --max-credits", {
+        retryable: true,
+        action: "obtain_exact_quote_or_remove_budget_cap",
+      });
+    }
     throw contextError("CONTEXT_QUOTE_REQUIRED", "Current pricing policy requires a usable quote", {
       retryable: true,
       action: "refresh_quote_or_change_budget_policy",
     });
   }
-  const quoteCost = probe?.quote?.estimate_credits;
+  const quoteCost = quoteValidation?.amount;
   if (maxCredits !== null && quoteCost > maxCredits) {
     throw contextError("CONTEXT_BUDGET_EXCEEDED", "Current quote exceeds --max-credits", {
       action: "increase_budget_or_select_fallback",
@@ -461,8 +418,11 @@ async function resolveCurrentContextTool({
   }
 
   const warnings = [...context.warnings];
-  if (!quoteRequired && discoveredCost === null) {
+  if (!quoteRequired && pricing.status === "absent") {
     warnings.push({ code: "PRICE_UNKNOWN", action: "continued_by_policy" });
+  }
+  if (quoteValidation?.valid && quoteValidation.exact === false) {
+    warnings.push({ code: "QUOTE_INEXACT", action: "continued_without_budget_cap" });
   }
   return {
     toolId: selected.tool_id,
@@ -473,7 +433,8 @@ async function resolveCurrentContextTool({
       stale_input: context.stale,
       warnings,
       validation_steps: steps,
-      price_status: quoteCost !== undefined ? "quoted" : discoveredCost !== null ? "known" : "unknown",
+      price_status:
+        quoteCost !== undefined ? (quoteValidation.exact ? "quoted_exact" : "quoted_estimate") : pricing.status,
     },
   };
 }

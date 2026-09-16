@@ -245,7 +245,7 @@ test("context call executes after Discover when its schema is sufficient", async
         ["/api/v1/search", "/api/v1/tools/execute"],
       );
       assert.deepEqual(requests[0].body, {
-        query: "company-latest-filing service.market-data.v1 provider.company.lookup.v1",
+        query: "provider.company.lookup.v1",
         limit: 100,
       });
       assert.equal(requests[1].body.search_id, "fresh-search");
@@ -447,6 +447,106 @@ test("paid risk obtains a quote and enforces the user budget", async () => {
   );
 });
 
+test("human-readable paid pricing requires a current quote", async () => {
+  await withMockFetch(
+    (request) => {
+      if (request.url.pathname.endsWith("/search")) {
+        return response({
+          search_id: "fresh-search",
+          results: [
+            {
+              tool_id: "provider.company.lookup.v1",
+              params: [],
+              expected_cost: "5 credits per successful request",
+            },
+          ],
+        });
+      }
+      if (request.url.pathname.endsWith("/tools/probe")) return response({});
+      throw new Error("Call must not execute without a quote for paid risk");
+    },
+    async (requests) => {
+      await assert.rejects(
+        runCall(undefined, {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          context: liveContext(),
+          json: true,
+        }),
+        (error) => error instanceof CliError && error.code === "CONTEXT_QUOTE_REQUIRED",
+      );
+      assert.deepEqual(requests[1].body.checks, ["quote"]);
+      assert.equal(requests.length, 2);
+    },
+  );
+});
+
+test("an inexact quote cannot authorize execution under a hard budget cap", async () => {
+  await withMockFetch(
+    (request) => {
+      if (request.url.pathname.endsWith("/search")) {
+        return response({
+          search_id: "fresh-search",
+          results: [{ tool_id: "provider.company.lookup.v1", params: [], expected_cost: 1 }],
+        });
+      }
+      if (request.url.pathname.endsWith("/tools/probe")) {
+        return response({ quote: { estimate_credits: 1, currency: "credits", exact: false } });
+      }
+      throw new Error("Call must not execute under an unverified budget cap");
+    },
+    async (requests) => {
+      await assert.rejects(
+        runCall(undefined, {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          context: liveContext(),
+          maxCredits: "2",
+          json: true,
+        }),
+        (error) => error instanceof CliError && error.code === "CONTEXT_BUDGET_UNVERIFIED",
+      );
+      assert.equal(requests.length, 2);
+    },
+  );
+});
+
+test("integer parameters use JSON integer semantics and execute", async () => {
+  await withMockFetch(
+    (request) => {
+      if (request.url.pathname.endsWith("/search")) {
+        return response({
+          search_id: "fresh-search",
+          results: [
+            {
+              tool_id: "provider.company.lookup.v1",
+              params: [{ name: "count", type: "integer", required: true }],
+              expected_cost: 0,
+            },
+          ],
+        });
+      }
+      if (request.url.pathname.endsWith("/tools/execute")) {
+        return response({ execution_id: "exec-integer", success: true, result: { data: {} } });
+      }
+      throw new Error(`Unexpected request: ${request.url.pathname}`);
+    },
+    async (requests) => {
+      const output = await captureOutput(() =>
+        runCall(undefined, {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          context: liveContext(),
+          params: '{"count":2}',
+          json: true,
+        }),
+      );
+      assert.equal(JSON.parse(output).execution_id, "exec-integer");
+      assert.equal(requests.length, 2);
+    },
+  );
+});
+
 test("missing exact tool exposes safe provider fallback candidates without executing", async () => {
   await withMockFetch(
     () =>
@@ -592,6 +692,7 @@ test("service-only context refreshes candidates without guessing or executing a 
         ["provider.current.v1"],
       );
       assert.equal(requests.length, 1);
+      assert.equal(requests[0].body.query, "company-latest-filing service.market-data.v1");
     },
   );
 });

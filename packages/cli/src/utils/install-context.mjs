@@ -411,7 +411,8 @@ export function resolveInstallContext(value, nowMs = Date.now()) {
 }
 
 export function buildContextDiscoveryQuery(context) {
-  return [context.taskId, context.serviceId, context.toolId].filter(Boolean).join(" ");
+  if (context.toolId) return context.toolId;
+  return [context.taskId, context.serviceId].filter(Boolean).join(" ");
 }
 
 export function assertInstallContextCurrent(context, nowMs = Date.now()) {
