@@ -160,6 +160,22 @@ test('conflicting or unsupported settlement observations are rejected before sco
   assert.throws(() => validateOperationalDataset(unsupported), /unsupported charge_outcome/);
 });
 
+test('rejected calls cannot hide charge evidence and unknown actions cannot hide settlement recovery', async () => {
+  const dataset = await fixture('fixtures/operational-events.v1.json');
+  const chargedRejected = structuredClone(dataset);
+  const rejectedCall = chargedRejected.tasks.find((task) => task.task_id === 'insufficient_balance').calls[0];
+  rejectedCall.settlements.push({
+    settlement_id: 'settlement-rejected-charge',
+    charge_outcome: 'charged',
+    amount_credits: 1,
+  });
+  assert.throws(() => validateOperationalDataset(chargedRejected), /cannot include a charge-bearing settlement/);
+
+  const unknownAction = structuredClone(dataset);
+  unknownAction.tasks.find((task) => task.task_id === 'upstream_failure').calls[0].next_action = 'review-settlemnt';
+  assert.throws(() => validateOperationalDataset(unknownAction), /unsupported next_action/);
+});
+
 test('fail-on-alert exits nonzero and emits GitHub annotations', async (t) => {
   const dataset = await fixture('fixtures/operational-events.v1.json');
   const incident = structuredClone(dataset);

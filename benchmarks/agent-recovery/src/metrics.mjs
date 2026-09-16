@@ -13,6 +13,34 @@ const FINAL_CHARGE_OUTCOMES = new Set(['charged', 'included', 'failed_not_charge
 const SUPPORTED_CHARGE_OUTCOMES = new Set([...FINAL_CHARGE_OUTCOMES, 'pending']);
 const CHARGE_BEARING_OUTCOMES = new Set(['charged', 'failed_charged_review']);
 const SETTLEMENT_ACTIONS = new Set(['reconcile_settlement', 'wait_and_reconcile', 'review_settlement']);
+const NEXT_ACTIONS = new Set([
+  'none',
+  'authenticate',
+  'add_credits',
+  'request_permission',
+  'reconcile_settlement',
+  'wait_and_reconcile',
+  'review_settlement',
+  'correct_parameters',
+  'review_request',
+  'retry',
+  'review_and_retry',
+  'select_tool',
+  'broaden_discovery',
+  'rediscover',
+  'inspect_again',
+  'probe_again',
+  'refresh_quote_or_change_budget_policy',
+  'correct_budget_policy',
+  'use_server_enforced_capability_budget_or_remove_budget_cap',
+  'select_allowed_provider',
+  'grant_permission_or_select_provider',
+  'rerun_with_allow_side_effects',
+  'rerun_with_allow_non_idempotent',
+  'provide_parameters',
+  'respect_user_denial',
+  'select_supported_tool',
+]);
 const METRIC_DESCRIPTIONS = {
   task_completion_rate:
     'Completed tasks / tasks explicitly eligible to complete under the supplied authority and fixture state.',
@@ -41,6 +69,10 @@ function ratioMetric(numerator, denominator, extra = {}) {
 
 function nonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isChargeBearingSettlement(settlement) {
+  return settlement.amount_credits > 0 || CHARGE_BEARING_OUTCOMES.has(settlement.charge_outcome);
 }
 
 export function validateOperationalDataset(dataset) {
@@ -87,7 +119,9 @@ export function validateOperationalDataset(dataset) {
       if (!(call.execution_id === null || nonEmptyString(call.execution_id))) {
         throw new Error(`Call ${call.call_id} must use a non-empty execution_id or null`);
       }
-      if (!nonEmptyString(call.next_action)) throw new Error(`Call ${call.call_id} must declare next_action`);
+      if (!nonEmptyString(call.next_action) || !NEXT_ACTIONS.has(call.next_action)) {
+        throw new Error(`Call ${call.call_id} has an unsupported next_action`);
+      }
       if (!Array.isArray(call.settlements)) throw new Error(`Call ${call.call_id} must declare settlements`);
       const settlementsById = new Map();
       for (const settlement of call.settlements) {
@@ -102,6 +136,9 @@ export function validateOperationalDataset(dataset) {
         }
         if (typeof settlement.amount_credits !== 'number' || settlement.amount_credits < 0) {
           throw new Error(`Settlement ${settlement.settlement_id} must declare a non-negative amount_credits`);
+        }
+        if (call.submission_outcome === 'rejected' && isChargeBearingSettlement(settlement)) {
+          throw new Error(`Rejected call ${call.call_id} cannot include a charge-bearing settlement`);
         }
         const previous = settlementsById.get(settlement.settlement_id);
         if (
@@ -142,9 +179,7 @@ function distinctChargeBearingSettlements(task) {
   const settlements = new Map();
   for (const call of task.calls) {
     for (const settlement of call.settlements) {
-      const chargeBearing =
-        settlement.amount_credits > 0 || CHARGE_BEARING_OUTCOMES.has(settlement.charge_outcome);
-      if (chargeBearing) settlements.set(settlement.settlement_id, settlement);
+      if (isChargeBearingSettlement(settlement)) settlements.set(settlement.settlement_id, settlement);
     }
   }
   return [...settlements.values()];
