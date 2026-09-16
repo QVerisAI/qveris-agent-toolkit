@@ -404,10 +404,14 @@ async function resolveCurrentContextTool({
   }
   let selected = discovered.find((tool) => tool.tool_id === context.toolId);
   let fallbackFrom;
+  let fallbackRediscovered = false;
   if (!selected) {
     let fallbackDiscovery = discovery;
     let fallbackTools = discovered;
-    if (context.serviceId) {
+    let sameService = fallbackTools.filter(
+      (tool) => typeof tool.service_id === "string" && tool.service_id === context.serviceId,
+    );
+    if (context.serviceId && sameService.length === 0) {
       try {
         fallbackDiscovery = await discoverContextCandidates({
           apiKey,
@@ -421,6 +425,10 @@ async function resolveCurrentContextTool({
           throw new Error("malformed fallback discovery");
         }
         fallbackTools = normalizedFallback.filter((tool) => tool?.tool_id);
+        sameService = fallbackTools.filter(
+          (tool) => typeof tool.service_id === "string" && tool.service_id === context.serviceId,
+        );
+        fallbackRediscovered = true;
       } catch (error) {
         if (
           error instanceof CliError &&
@@ -436,9 +444,6 @@ async function resolveCurrentContextTool({
         throw wrapped;
       }
     }
-    const sameService = fallbackTools.filter(
-      (tool) => typeof tool.service_id === "string" && tool.service_id === context.serviceId,
-    );
     if (sameService.length === 1) {
       selected = sameService[0];
       fallbackFrom = context.toolId;
@@ -458,7 +463,11 @@ async function resolveCurrentContextTool({
     }
   }
 
-  const steps = fallbackFrom ? ["discover", "rediscover_service", "fallback"] : ["discover"];
+  const steps = fallbackFrom
+    ? fallbackRediscovered
+      ? ["discover", "rediscover_service", "fallback"]
+      : ["discover", "fallback"]
+    : ["discover"];
   let schemaAnalysis = analyzeParameterSchema(selected.params);
   if (!schemaAnalysis.complete) {
     let inspection;

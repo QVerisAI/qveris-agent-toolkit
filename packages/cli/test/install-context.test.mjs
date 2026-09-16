@@ -737,6 +737,48 @@ test("one current same-service candidate is validated and used as a safe pre-cal
   );
 });
 
+test("an already discovered same-service fallback is reused without a duplicate search", async () => {
+  await withMockFetch(
+    (request) => {
+      if (request.url.pathname.endsWith("/search")) {
+        return response({
+          search_id: "exact-search",
+          results: [
+            {
+              tool_id: "provider.company.lookup.fallback.v1",
+              service_id: "service.market-data.v1",
+              params: [{ name: "symbol", type: "string", required: true }],
+              expected_cost: 0,
+            },
+          ],
+        });
+      }
+      if (request.url.pathname.endsWith("/tools/execute")) {
+        return response({ execution_id: "exec-reused-fallback", success: true, result: { symbol: "AAPL" } });
+      }
+      throw new Error(`Unexpected request: ${request.url.pathname}`);
+    },
+    async (requests) => {
+      const output = await captureOutput(() =>
+        runCall(undefined, {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          context: liveContext(),
+          params: '{"symbol":"AAPL"}',
+          json: true,
+        }),
+      );
+      const result = JSON.parse(output);
+      assert.equal(result.success, true);
+      assert.deepEqual(result.context_handoff.validation_steps, ["discover", "fallback"]);
+      assert.deepEqual(
+        requests.map((request) => request.url.pathname),
+        ["/api/v1/search", "/api/v1/tools/execute"],
+      );
+    },
+  );
+});
+
 test("unknown settlement triggers one bounded usage and ledger reconciliation", async () => {
   const previousExitCode = process.exitCode;
   process.exitCode = undefined;

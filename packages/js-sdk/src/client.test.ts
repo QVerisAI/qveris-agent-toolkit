@@ -524,6 +524,24 @@ describe('Qveris client', () => {
     expect((error as QverisApiError).message).toContain('quota exhausted');
   });
 
+  it('keeps the transport status when a paid Call returns a 2xx failure envelope', async () => {
+    globalThis.fetch = mockFetch({
+      status: 'failure',
+      message: 'provider failed',
+      data: {},
+    });
+
+    const error = await new Qveris({ apiKey: API_KEY }).call('t.v1', { parameters: {} }).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(QverisApiError);
+    expect((error as QverisApiError).status).toBe(200);
+    expect((error as QverisApiError).observability?.error_type).toBe('invalid_response');
+    expect((error as QverisApiError).next_action).toMatchObject({
+      action: 'review_settlement',
+      requires_user: true,
+      reason: 'execution_id_unavailable',
+    });
+  });
+
   it('throws QverisApiError with parsed message and details on HTTP errors', async () => {
     globalThis.fetch = mockFetch({ error_message: 'bad key' }, 401);
 

@@ -565,7 +565,9 @@ export class Qveris {
             });
           }
 
-          return normalizeCreditBalanceResponse(this.unwrapEnvelope<T>(payload, requestContext));
+          return normalizeCreditBalanceResponse(
+            this.unwrapEnvelope<T>(payload, requestContext, response.status, extractRequestId(response)),
+          );
         }
       } catch (err: unknown) {
         if (err instanceof QverisApiError) {
@@ -599,7 +601,12 @@ export class Qveris {
    * through. A failure envelope throws before any result parsing, matching
    * the Python SDK behavior.
    */
-  private unwrapEnvelope<T>(payload: unknown, context: ApiObservability): T {
+  private unwrapEnvelope<T>(
+    payload: unknown,
+    context: ApiObservability,
+    transportStatus: number,
+    requestId?: string,
+  ): T {
     if (
       payload !== null &&
       typeof payload === 'object' &&
@@ -609,11 +616,17 @@ export class Qveris {
     ) {
       const envelope = payload as ApiEnvelope<T>;
       if (envelope.status !== 'success') {
+        const status = envelope.status_code ?? transportStatus;
         throw new QverisApiError({
-          status: envelope.status_code ?? 400,
+          status,
           message: envelope.message ?? `API returned status "${envelope.status}"`,
           details: payload,
-          observability: withErrorContext(context, 'http_error', envelope.status_code ?? 400),
+          observability: withErrorContext(
+            context,
+            status >= 200 && status < 300 ? 'invalid_response' : 'http_error',
+            status,
+            requestId,
+          ),
         });
       }
       return envelope.data;
