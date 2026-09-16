@@ -609,6 +609,16 @@ Error message
 
 `Error.name`
 
+##### next\_action
+
+> `readonly` **next\_action**: [`NextAction`](#nextaction)
+
+Machine-readable recovery guidance. Paid calls are never replayed automatically.
+
+###### 实现了
+
+[`ApiError`](#apierror).[`next_action`](#next_action-1)
+
 ##### observability?
 
 > `readonly` `optional` **observability?**: [`ApiObservability`](#apiobservability)
@@ -910,6 +920,12 @@ Original error details if available
 > **message**: `string`
 
 Error message
+
+##### next\_action?
+
+> `optional` **next\_action?**: [`NextAction`](#nextaction)
+
+Stable recovery guidance; callers do not need internal contract versions or evidence digests.
 
 ##### observability?
 
@@ -1757,6 +1773,32 @@ Per-request timeout override in milliseconds
 
 ***
 
+### NextAction
+
+#### 属性
+
+##### action
+
+> **action**: `string`
+
+##### automatic
+
+> **automatic**: `boolean`
+
+##### missing\_fields
+
+> **missing\_fields**: `string`[]
+
+##### reason?
+
+> `optional` **reason?**: `string`
+
+##### requires\_user
+
+> **requires\_user**: `boolean`
+
+***
+
 ### ProbeOptions
 
 Options for [Qveris.probe](#probe).
@@ -2279,6 +2321,12 @@ Geographic availability of the tool.
 > `optional` **reliability?**: `string`
 
 Compact reliability grade returned by the routing projection.
+
+##### service\_id?
+
+> `optional` **service\_id?**: `string`
+
+Stable public service identity when the backend can prove provider equivalence.
 
 ##### stats?
 
