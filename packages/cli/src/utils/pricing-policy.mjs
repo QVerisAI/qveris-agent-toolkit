@@ -59,7 +59,7 @@ export function classifyPricing(tool) {
   return { status: "free", requiresQuote: false, billingRulePresent };
 }
 
-export function validateQuote(quote, { requireExact = false } = {}) {
+export function validateQuote(quote) {
   if (
     !quote ||
     typeof quote !== "object" ||
@@ -71,6 +71,5 @@ export function validateQuote(quote, { requireExact = false } = {}) {
   ) {
     return { valid: false, reason: "malformed" };
   }
-  if (requireExact && quote.exact !== true) return { valid: false, reason: "inexact" };
   return { valid: true, amount: quote.estimate_credits, exact: quote.exact };
 }

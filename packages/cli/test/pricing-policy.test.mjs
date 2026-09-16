@@ -20,11 +20,10 @@ test("pricing classification distinguishes absence, explicit free, and any paid 
   }
 });
 
-test("quote validation separates a usable estimate from an exact budget guarantee", () => {
+test("quote validation accepts a structurally valid current estimate", () => {
   const estimate = { estimate_credits: 2, currency: "credits", exact: false };
   assert.deepEqual(validateQuote(estimate), { valid: true, amount: 2, exact: false });
-  assert.deepEqual(validateQuote(estimate, { requireExact: true }), { valid: false, reason: "inexact" });
-  assert.deepEqual(validateQuote({ estimate_credits: 2, currency: "credits", exact: true }, { requireExact: true }), {
+  assert.deepEqual(validateQuote({ estimate_credits: 2, currency: "credits", exact: true }), {
     valid: true,
     amount: 2,
     exact: true,

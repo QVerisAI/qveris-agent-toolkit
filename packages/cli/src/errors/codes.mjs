@@ -92,15 +92,10 @@ export const ERROR_CODES = {
     hint: "Refresh the quote, remove the explicit quote/budget requirement, or select another provider",
     exit: EX_UNAVAILABLE,
   },
-  CONTEXT_BUDGET_EXCEEDED: {
-    message: "Current quote exceeds the execution budget",
-    hint: "Increase --max-credits or select a lower-cost provider",
-    exit: EX_NOPERM,
-  },
-  CONTEXT_BUDGET_UNVERIFIED: {
-    message: "The execution budget cannot be guaranteed",
-    hint: "Obtain an exact quote, remove --max-credits, or select a provider with a provable upper bound",
-    exit: EX_NOPERM,
+  CONTEXT_BUDGET_UNSUPPORTED: {
+    message: "A hard execution budget is unavailable for this context call",
+    hint: "Remove --max-credits, or use a capability-aware workflow with a server-enforced budget",
+    exit: EX_USAGE,
   },
   CONTEXT_EXECUTION_BLOCKED: {
     message: "Execution is blocked by safety policy",

@@ -187,7 +187,7 @@ qveris call <tool_id|index> [flags]
 | `--params <json\|@file\|->` | JSON、文件路径或 stdin | `{}` |
 | `--context <json\|@file\|->` | 复制的 v1 服务/任务上下文；刷新发现并按需验证 | — |
 | `--require-quote` | Context Call 前要求当前报价 | false |
-| `--max-credits <n>` | 要求报价，并阻止超过该积分上限的 Context Call | — |
+| `--max-credits <n>` | 不支持用于 Context Call：精确 tool 执行端点没有服务端强制预算字段 | — |
 | `--deny-region <list>` | 禁止逗号分隔的地域 | — |
 | `--allow-side-effects` | 确认工具明确报告的危险副作用 | false |
 | `--allow-non-idempotent` | 确认工具明确报告的非幂等执行 | false |
@@ -238,7 +238,7 @@ qveris call --context @context.json --params @params.json
 
 执行 Call 前，CLI 会重新 Discover，并且只使用新的 `search_id`。有准确 tool 的上下文仅用 `tool_id` 作确定性查询；仅含 service 的上下文使用 task/service 意图，只返回刷新后的候选并停止，绝不猜测工具。Discover 若已给出完整参数合同即可直接进入执行前确认；只有必要合同缺失时才 Inspect，只有 schema/参数、权限/价格、显式 `--require-quote`、预算上限或付费风险需要服务器确认时才 Probe。
 
-过期只会让旧的可用性、价格和权限快照失效；安全任务意图和公开 ID 会被保留并自动刷新。任何已出现但非明确免费或含义不确定的价格信号（包括自然语言 `expected_cost`）都属于付费风险，必须取得结构合法的 credits 报价。`--max-credits` 还要求 `exact: true`，不精确估算不能保证硬预算上限。完全没有价格信号时，以结构化 warning 报告价格未知，并可按策略继续。真正 Call 前会严格检查认证、JSON 参数类型（包括 integer 与 number）、必需参数、预算、明确权限/地域禁止、危险副作用和幂等性元数据。
+过期只会让旧的可用性、价格和权限快照失效；安全任务意图和公开 ID 会被保留并自动刷新。任何已出现但非明确免费或含义不确定的价格信号（包括自然语言 `expected_cost`）都属于付费风险，必须取得结构合法的 credits 报价。Probe 报价不会锁定价格或授权执行，所以在精确 tool Context Call 的执行端点具备服务端预算字段前，`--max-credits` 会被拒绝。完全没有价格信号时，以结构化 warning 报告价格未知，并可按策略继续。真正 Call 前会严格检查认证、JSON 参数类型（包括 integer 与 number）、必需参数、明确权限/地域禁止、危险副作用和幂等性元数据。Context 校验采用有深度上限的迭代遍历，恶意深层嵌套会得到结构化拒绝，不会耗尽调用栈。
 
 只要已发布合同能提供充分证明，CLI 就会自动完成安全恢复：旧发现会立即刷新。当前 Discover 合同尚不提供替代 Provider 的 service identity 以及完整副作用/幂等性证明，因此 CLI 会返回 fallback 候选，但不会靠猜测执行。JSON 失败统一包含 `code`、`retryable`、`action`、`missing_fields`、`fallback_available` 和当前 Provider/Tool 候选。
 

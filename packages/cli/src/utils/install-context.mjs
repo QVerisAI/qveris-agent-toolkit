@@ -6,6 +6,7 @@ export const INSTALL_CONTEXT_MAX_AGE_SECONDS = 24 * 60 * 60;
 export const INSTALL_CONTEXT_CLOCK_SKEW_SECONDS = 5 * 60;
 
 const MAX_CONTEXT_BYTES = 64 * 1024;
+const MAX_CONTEXT_DEPTH = 64;
 const ALLOWED_FIELDS = new Set([
   "context_version",
   "context_issued_at",
@@ -197,33 +198,48 @@ function isSensitiveId(value) {
 }
 
 function validateSafeTree(value, path = "context") {
-  if (typeof value === "string") {
-    if (isSensitiveId(value)) {
+  const pending = [{ value, path, depth: 0 }];
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (typeof current.value === "string") {
+      if (isSensitiveId(current.value)) {
+        throw contextError(
+          "CONTEXT_UNSAFE",
+          `Context ${current.path} looks like a credential or personal identifier`,
+          "Remove sensitive data, rotate any exposed credential, and copy a fresh public-ID-only template",
+        );
+      }
+      continue;
+    }
+    if (current.value === null || typeof current.value === "number" || typeof current.value === "boolean") continue;
+    if (typeof current.value !== "object") {
+      throw contextError("CONTEXT_UNSAFE", `Context ${current.path} contains an unsupported value`);
+    }
+
+    const children = Array.isArray(current.value)
+      ? current.value.map((child, index) => [`${current.path}[${index}]`, child])
+      : Object.entries(current.value).map(([field, child]) => {
+          if (PROTOTYPE_POLLUTION_FIELDS.has(field) || SENSITIVE_FIELD_PATTERN.test(field)) {
+            throw contextError(
+              "CONTEXT_UNSAFE",
+              `Context ${current.path} contains a private, executable, or unsafe field`,
+              "Keep task intent and public IDs only; never include prompts, parameters, payloads, credentials, or prototype keys",
+            );
+          }
+          return [`${current.path}.${field}`, child];
+        });
+
+    if (current.depth >= MAX_CONTEXT_DEPTH && children.length > 0) {
       throw contextError(
         "CONTEXT_UNSAFE",
-        `Context ${path} looks like a credential or personal identifier`,
-        "Remove sensitive data, rotate any exposed credential, and copy a fresh public-ID-only template",
+        "Context is nested too deeply",
+        "Keep the public context template shallow and remove deeply nested extension or future fields",
       );
     }
-    return;
-  }
-  if (value === null || typeof value === "number" || typeof value === "boolean") return;
-  if (Array.isArray(value)) {
-    value.forEach((item, index) => validateSafeTree(item, `${path}[${index}]`));
-    return;
-  }
-  if (typeof value !== "object") {
-    throw contextError("CONTEXT_UNSAFE", `Context ${path} contains an unsupported value`);
-  }
-  for (const [field, child] of Object.entries(value)) {
-    if (PROTOTYPE_POLLUTION_FIELDS.has(field) || SENSITIVE_FIELD_PATTERN.test(field)) {
-      throw contextError(
-        "CONTEXT_UNSAFE",
-        `Context ${path} contains a private, executable, or unsafe field`,
-        "Keep task intent and public IDs only; never include prompts, parameters, payloads, credentials, or prototype keys",
-      );
+    for (let index = children.length - 1; index >= 0; index -= 1) {
+      const [childPath, child] = children[index];
+      pending.push({ value: child, path: childPath, depth: current.depth + 1 });
     }
-    validateSafeTree(child, `${path}.${field}`);
   }
 }
 

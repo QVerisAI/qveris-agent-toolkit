@@ -14,7 +14,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Report HTTP 403 responses as actionable permission failures instead of treating every 403 as an invalid API key.
 - Return structured recovery metadata (`retryable`, `action`, `missing_fields`, `fallback_available`, and current candidates) for context failures; service-only contexts now return candidates without guessing a tool.
-- Use deterministic exact-ID discovery for tool contexts, validate parameters with JSON type semantics (including integers), treat every ambiguous/non-free price signal as paid risk, and require an exact credits quote before enforcing `--max-credits`.
+- Use deterministic exact-ID discovery for tool contexts, validate parameters with JSON type semantics (including integers), treat every ambiguous/non-free price signal as paid risk, reject unsupported `--max-credits` context calls instead of claiming a local quote is a hard cap, and bound context nesting during safe validation.
 
 ## [0.11.3] - 2026-09-09
 

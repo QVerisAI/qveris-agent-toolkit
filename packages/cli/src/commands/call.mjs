@@ -49,6 +49,7 @@ export async function runCall(idOrIndex, flags) {
     if (flags.discoveryId) {
       throw new CliError("CONTEXT_INVALID", "Do not combine a stored --discovery-id with --context");
     }
+    assertContextBudgetSupported(flags.maxCredits);
     const parameters = resolveParams(flags.params || "{}");
     const authorizationContext = await resolveAuthorizationContextId({ apiKey });
     const contextCredentialProvider = createAuthorizationContextCredentialProvider({
@@ -189,8 +190,8 @@ function decorateFailure(error, metadata = {}) {
   return error;
 }
 
-function parseMaxCredits(value) {
-  if (value === undefined) return null;
+function assertContextBudgetSupported(value) {
+  if (value === undefined) return;
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed < 0) {
     throw contextError("CONTEXT_INVALID", "--max-credits must be a non-negative number", {
@@ -198,7 +199,9 @@ function parseMaxCredits(value) {
       missingFields: ["max_credits"],
     });
   }
-  return parsed;
+  throw contextError("CONTEXT_BUDGET_UNSUPPORTED", "--max-credits cannot be enforced for an exact-tool context call", {
+    action: "use_server_enforced_capability_budget_or_remove_budget_cap",
+  });
 }
 
 function assertExecutionPolicy(tool, flags) {
@@ -354,9 +357,8 @@ async function resolveCurrentContextTool({
   }
 
   assertExecutionPolicy(selected, flags);
-  const maxCredits = parseMaxCredits(flags.maxCredits);
   const pricing = classifyPricing(selected);
-  const quoteRequired = flags.requireQuote || maxCredits !== null || pricing.requiresQuote;
+  const quoteRequired = flags.requireQuote || pricing.requiresQuote;
   const checks = [];
   if (!schemaAnalysis.complete) checks.push("schema");
   if (quoteRequired) checks.push("quote");
@@ -395,34 +397,18 @@ async function resolveCurrentContextTool({
       missingFields: probe?.schema?.violations?.map((item) => item.param).filter(Boolean) ?? [],
     });
   }
-  const quoteValidation = quoteRequired ? validateQuote(probe?.quote, { requireExact: maxCredits !== null }) : null;
+  const quoteValidation = quoteRequired ? validateQuote(probe?.quote) : null;
   if (quoteValidation && !quoteValidation.valid) {
-    if (maxCredits !== null && quoteValidation.reason === "inexact") {
-      throw contextError("CONTEXT_BUDGET_UNVERIFIED", "An inexact quote cannot enforce --max-credits", {
-        retryable: true,
-        action: "obtain_exact_quote_or_remove_budget_cap",
-      });
-    }
     throw contextError("CONTEXT_QUOTE_REQUIRED", "Current pricing policy requires a usable quote", {
       retryable: true,
       action: "refresh_quote_or_change_budget_policy",
     });
   }
   const quoteCost = quoteValidation?.amount;
-  if (maxCredits !== null && quoteCost > maxCredits) {
-    throw contextError("CONTEXT_BUDGET_EXCEEDED", "Current quote exceeds --max-credits", {
-      action: "increase_budget_or_select_fallback",
-      fallbackAvailable: candidates.some((item) => item.tool_id !== selected.tool_id),
-      candidates,
-    });
-  }
 
   const warnings = [...context.warnings];
   if (!quoteRequired && pricing.status === "absent") {
     warnings.push({ code: "PRICE_UNKNOWN", action: "continued_by_policy" });
-  }
-  if (quoteValidation?.valid && quoteValidation.exact === false) {
-    warnings.push({ code: "QUOTE_INEXACT", action: "continued_without_budget_cap" });
   }
   return {
     toolId: selected.tool_id,

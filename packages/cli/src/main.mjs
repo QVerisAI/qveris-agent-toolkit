@@ -518,7 +518,7 @@ function printUsage(flags = {}) {
     --start-date <date>    Usage/ledger range start (YYYY-MM-DD)
     --end-date <date>      Usage/ledger range end (YYYY-MM-DD)
     --min-credits <n>      Usage/ledger amount lower bound
-    --max-credits <n>      Usage/ledger upper bound or context Call budget cap
+    --max-credits <n>      Usage/ledger upper bound (not supported with context Call)
     --no-color             Disable colors
     --verbose, -v          Show request details
     --version, -V          Print version

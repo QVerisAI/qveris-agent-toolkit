@@ -208,6 +208,23 @@ test("v1 parser rejects duplicate, credential, PII, payload, and prototype field
   );
 });
 
+test("v1 parser rejects deeply nested untrusted fields without exhausting the stack", () => {
+  const nested = [];
+  let cursor = nested;
+  for (let depth = 0; depth <= 64; depth += 1) {
+    const child = [];
+    cursor.push(child);
+    cursor = child;
+  }
+  for (const raw of [context({ future_display_hint: nested }), context({ extensions: { "example.deep": nested } })]) {
+    assert.throws(
+      () => parseInstallContext(raw, NOW_MS),
+      (error) =>
+        error instanceof CliError && error.code === "CONTEXT_UNSAFE" && /nested too deeply/.test(error.message),
+    );
+  }
+});
+
 test("context call executes after Discover when its schema is sufficient", async () => {
   await withMockFetch(
     (request) => {
@@ -375,7 +392,7 @@ test("expired context automatically refreshes and unknown price does not force P
   );
 });
 
-test("quote is a gate only when budget policy requires it", async () => {
+test("quote is a gate only when quote policy requires it", async () => {
   await withMockFetch(
     (request) => {
       if (request.url.pathname.endsWith("/search")) {
@@ -409,25 +426,10 @@ test("quote is a gate only when budget policy requires it", async () => {
   );
 });
 
-test("paid risk obtains a quote and enforces the user budget", async () => {
+test("context calls reject a requested hard budget before any remote request", async () => {
   await withMockFetch(
-    (request) => {
-      if (request.url.pathname.endsWith("/search")) {
-        return response({
-          search_id: "fresh-search",
-          results: [
-            {
-              tool_id: "provider.company.lookup.v1",
-              params: [{ name: "symbol", type: "string", required: true, description: "ticker" }],
-              expected_cost: 2,
-            },
-          ],
-        });
-      }
-      if (request.url.pathname.endsWith("/tools/probe")) {
-        return response({ quote: { estimate_credits: 3, currency: "credits", exact: true } });
-      }
-      throw new Error("Call must not execute above the user budget");
+    () => {
+      throw new Error("Context budget rejection must happen before any remote request");
     },
     async (requests) => {
       await assert.rejects(
@@ -439,10 +441,9 @@ test("paid risk obtains a quote and enforces the user budget", async () => {
           maxCredits: "2",
           json: true,
         }),
-        (error) => error instanceof CliError && error.code === "CONTEXT_BUDGET_EXCEEDED",
+        (error) => error instanceof CliError && error.code === "CONTEXT_BUDGET_UNSUPPORTED",
       );
-      assert.deepEqual(requests[1].body.checks, ["quote"]);
-      assert.equal(requests.length, 2);
+      assert.equal(requests.length, 0);
     },
   );
 });
@@ -476,36 +477,6 @@ test("human-readable paid pricing requires a current quote", async () => {
         (error) => error instanceof CliError && error.code === "CONTEXT_QUOTE_REQUIRED",
       );
       assert.deepEqual(requests[1].body.checks, ["quote"]);
-      assert.equal(requests.length, 2);
-    },
-  );
-});
-
-test("an inexact quote cannot authorize execution under a hard budget cap", async () => {
-  await withMockFetch(
-    (request) => {
-      if (request.url.pathname.endsWith("/search")) {
-        return response({
-          search_id: "fresh-search",
-          results: [{ tool_id: "provider.company.lookup.v1", params: [], expected_cost: 1 }],
-        });
-      }
-      if (request.url.pathname.endsWith("/tools/probe")) {
-        return response({ quote: { estimate_credits: 1, currency: "credits", exact: false } });
-      }
-      throw new Error("Call must not execute under an unverified budget cap");
-    },
-    async (requests) => {
-      await assert.rejects(
-        runCall(undefined, {
-          apiKey: TEST_API_KEY,
-          baseUrl: "https://unit.test/api/v1",
-          context: liveContext(),
-          maxCredits: "2",
-          json: true,
-        }),
-        (error) => error instanceof CliError && error.code === "CONTEXT_BUDGET_UNVERIFIED",
-      );
       assert.equal(requests.length, 2);
     },
   );
