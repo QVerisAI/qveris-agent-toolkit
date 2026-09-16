@@ -165,6 +165,8 @@ test("v1 parser rejects duplicate, credential, PII, payload, and prototype field
     context({ task_id: "11010519491231002X" }),
     context({ task_id: "4111111111111111" }),
     context({ task_id: "GB82WEST12345698765432" }),
+    context({ extensions: { "example.data": { note: "Bearer abcdefghijklmnopqrstuvwxyz" } } }),
+    context({ future_display_hint: "prefix: Bearer abcdefghijklmnopqrstuvwxyz; suffix" }),
     context({ extensions: { "example.data": { [SENSITIVE_API_KEY_FIELD]: "not-echoed" } } }),
     context({ extensions: { "example.data": JSON.parse('{"__proto__":{"polluted":true}}') } }),
   ];
@@ -174,6 +176,10 @@ test("v1 parser rejects duplicate, credential, PII, payload, and prototype field
       (error) => error instanceof CliError && error.code === "CONTEXT_UNSAFE",
     );
   }
+
+  assert.doesNotThrow(() =>
+    parseInstallContext(context({ extensions: { "example.data": { note: "Bearer brief" } } }), NOW_MS),
+  );
 
   const duplicate = context().replace(
     '"task_id":"company-latest-filing"',
