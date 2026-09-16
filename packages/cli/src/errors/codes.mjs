@@ -32,6 +32,11 @@ export const ERROR_CODES = {
     hint: "Run 'qveris auth login' again",
     exit: EX_NOPERM,
   },
+  PERMISSION_DENIED: {
+    message: "Permission denied",
+    hint: "Confirm the account, API key, OAuth scopes, and selected capability permissions for the configured endpoint",
+    exit: EX_NOPERM,
+  },
   NET_TIMEOUT: {
     message: "Request timed out",
     hint: "Check connectivity or increase --timeout",
@@ -46,6 +51,61 @@ export const ERROR_CODES = {
     message: "Invalid JSON in --params",
     hint: "Check JSON syntax in --params value, or pass a file with --params @params.json",
     exit: EX_USAGE,
+  },
+  CONTEXT_INVALID: {
+    message: "Invalid service/task context",
+    hint: "Copy a fresh v1 JSON template from the installation page",
+    exit: EX_USAGE,
+  },
+  CONTEXT_EXPIRED: {
+    message: "Service/task context expired",
+    hint: "Refresh current discovery; safe task intent and public IDs can be retained",
+    exit: EX_USAGE,
+  },
+  CONTEXT_UNSUPPORTED: {
+    message: "Unsupported service/task context version",
+    hint: "Upgrade the CLI or use a template whose minimum version and required capabilities are supported",
+    exit: EX_USAGE,
+  },
+  CONTEXT_UNSAFE: {
+    message: "Unsafe service/task context",
+    hint: "Remove private data and credentials, rotate any exposed secret, and copy a fresh public-ID-only template",
+    exit: EX_USAGE,
+  },
+  CONTEXT_REDISCOVERY_FAILED: {
+    message: "Context could not be confirmed by current discovery",
+    hint: "Select a returned current candidate or broaden discovery; do not force the old tool ID",
+    exit: EX_UNAVAILABLE,
+  },
+  CONTEXT_INSPECT_FAILED: {
+    message: "Context tool could not be confirmed by current inspection",
+    hint: "Retry current discovery/inspection or select a returned fallback candidate",
+    exit: EX_UNAVAILABLE,
+  },
+  CONTEXT_PROBE_FAILED: {
+    message: "Context parameters failed current preflight validation",
+    hint: "Review the latest schema, correct --params, and retry; request a quote only when policy requires it",
+    exit: EX_USAGE,
+  },
+  CONTEXT_QUOTE_REQUIRED: {
+    message: "A current quote is required by execution policy",
+    hint: "Refresh the quote, remove the explicit quote/budget requirement, or select another provider",
+    exit: EX_UNAVAILABLE,
+  },
+  CONTEXT_BUDGET_UNSUPPORTED: {
+    message: "A hard execution budget is unavailable for this context call",
+    hint: "Remove --max-credits, or use a capability-aware workflow with a server-enforced budget",
+    exit: EX_USAGE,
+  },
+  CONTEXT_EXECUTION_SAFETY_UNVERIFIED: {
+    message: "Current tool metadata cannot prove execution safety",
+    hint: "Use a supported execution contract that declares side effects and idempotency before calling this context tool",
+    exit: EX_UNAVAILABLE,
+  },
+  CONTEXT_EXECUTION_BLOCKED: {
+    message: "Execution is blocked by safety policy",
+    hint: "Review permissions, region constraints, side effects, and idempotency before retrying",
+    exit: EX_NOPERM,
   },
   INIT_PARAMS_REQUIRED: {
     message: "Init could not infer safe parameters for the selected capability",

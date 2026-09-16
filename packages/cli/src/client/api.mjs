@@ -110,12 +110,13 @@ async function requestJson(
         if (status === 401 && credentialProvider.authType === "oauth") {
           throw new CliError("AUTH_OAUTH_FAILED", errorDetail);
         }
-        if (status === 403 && credentialProvider.authType === "oauth") {
-          const err = new CliError("API_ERROR", `HTTP 403: ${errorDetail || rawText}`);
+        if (status === 403) {
+          const err = new CliError("PERMISSION_DENIED", errorDetail || "The current credential lacks permission");
+          err.hint = `Confirm access for the configured account at ${getSiteUrl(baseUrl)}/account`;
           if (jsonBody) err.responseData = jsonBody;
           throw err;
         }
-        if (status === 401 || status === 403) {
+        if (status === 401) {
           const err = new CliError("AUTH_INVALID_KEY", errorDetail);
           err.hint = `Check your key at ${getSiteUrl(baseUrl)}/account`;
           throw err;

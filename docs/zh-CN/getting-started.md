@@ -43,6 +43,14 @@ qveris call 1 --params '{"wfo":"LWX","x":90,"y":90}'  # 调用执行
 
 CLI 还支持交互模式（`qveris interactive`）、代码生成（`--codegen curl|python|js`）和 Shell 自动补全。完整参考见 [CLI 文档](cli.md)。
 
+如果安装页提供复制的 v1 服务/任务上下文，请保存该 JSON，不要加入参数或密钥，然后使用 CLI 的权威消费入口：
+
+```bash
+qveris call --context @context.json --params @params.json
+```
+
+模板只是公开 ID 选择提示。CLI 会拒绝敏感或可执行内容，把普通未来字段作为结构化 warning 忽略，并自动刷新已过期的可用性/价格/权限快照。只有当前 Discover 结果和执行策略确实需要时才 Inspect 或 Probe；service-only context 只返回候选，不猜工具。合同与恢复步骤见[复制的服务/任务上下文](cli.md#复制的服务任务上下文)。
+
 ---
 
 ### 通过 MCP 使用 QVeris

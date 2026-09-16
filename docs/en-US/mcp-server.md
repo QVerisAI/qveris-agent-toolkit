@@ -505,6 +505,18 @@ For very large call outputs, QVeris may return:
 
 ## Recommended Usage Pattern
 
+### Copied service/task context
+
+If a user pastes a v1 JSON context copied from the installation page, route it through the canonical CLI consumer:
+
+```bash
+qveris call --context @context.json --params @params.json
+```
+
+The context contains public IDs and expiry only; it contains no parameters or authorization. The CLI rejects sensitive/executable content and unsupported required capabilities, ignores ordinary future fields with warnings, and refreshes expired availability/price/permission snapshots. It uses Inspect or Probe only when current validation needs them, and a service-only context returns candidates without guessing. Do not translate the JSON directly into an MCP `call` or reuse an old `search_id`.
+
+If the workflow must stay inside MCP, apply the same policy manually: use public IDs only as search hints, Discover again, return candidates for service-only context, require an exact current tool match, Inspect or Probe only when contract/parameter/pricing validation needs it, and Call with the fresh `search_id`. Use `usage_history` and `credits_ledger` to resolve final settlement; missing final audit data means settlement is unknown.
+
 Choose between connected tools and QVeris by task fit, data quality/freshness, cost, user constraints, and call overhead. QVeris is especially useful when a capability is missing, the provider is unknown, cross-provider comparison matters, fallback is needed, or the user requests it; it is not a mandatory gateway.
 
 For most QVeris tasks, use this flow:

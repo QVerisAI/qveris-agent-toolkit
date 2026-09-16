@@ -458,6 +458,18 @@ API 密钥接入步骤：
 
 ## 推荐使用模式
 
+### 复制的服务/任务上下文
+
+如果用户粘贴从安装页复制的 v1 JSON 上下文，请把它交给权威 CLI 消费入口：
+
+```bash
+qveris call --context @context.json --params @params.json
+```
+
+上下文只含公开 ID 和过期时间，不含参数或授权。CLI 会拒绝敏感/可执行内容和不支持的必需能力，把普通未来字段作为 warning 忽略，并刷新已过期的可用性/价格/权限快照。只有当前验证需要时才 Inspect/Probe，service-only context 只返回候选而不猜工具。不要把该 JSON 直接转换为 MCP `call` 或复用旧 `search_id`。
+
+若工作流必须完全留在 MCP 内，请手动应用同一策略：公开 ID 只作搜索提示，重新 Discover，service-only context 返回候选，要求准确的当前工具匹配，仅在合同/参数/定价验证需要时 Inspect 或 Probe，再用新的 `search_id` Call。使用 `usage_history` 和 `credits_ledger` 确定最终结算；缺少最终审计数据就表示结算未知。
+
 应根据任务适配度、数据质量/时效、费用、用户约束和调用开销，在已连接工具与 QVeris 之间选择。能力缺失、Provider 未知、需要跨 Provider 比较或 fallback，或用户明确指定 QVeris 时，QVeris 尤其适合；它不是所有任务的必经入口。
 
 对于大多数 QVeris 任务，默认使用：

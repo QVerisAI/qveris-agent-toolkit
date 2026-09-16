@@ -187,6 +187,12 @@ qveris call <tool_id|index> [flags]
 | 参数 | 说明 | 默认值 |
 |------|------|--------|
 | `--params <json\|@file\|->` | JSON、文件路径或 stdin | `{}` |
+| `--context <json\|@file\|->` | 复制的 v1 服务/任务上下文；刷新发现并按需验证 | — |
+| `--require-quote` | Context Call 前要求当前报价 | false |
+| `--max-credits <n>` | 不支持用于 Context Call：精确 tool 执行端点没有服务端强制预算字段 | — |
+| `--deny-region <list>` | 禁止逗号分隔的地域 | — |
+| `--allow-side-effects` | 确认工具明确报告的危险副作用 | false |
+| `--allow-non-idempotent` | 确认工具明确报告的非幂等执行 | false |
 | `--discovery-id <id>` | 发现会话 ID | 自动从会话获取 |
 | `--model <name>` | 选择能力并生成参数的模型 | — |
 | `--max-size <bytes>` | 响应大小限制（-1 = 无限制） | 4KB (TTY) / 20KB (管道) |
@@ -207,6 +213,9 @@ qveris call 1 --params '{"city": "London"}' --model router-model-v1
 # 从文件
 qveris call 1 --params @params.json
 
+# 复制的安装页上下文（不再传位置工具 ID 或旧 discovery ID）
+qveris call --context @context.json --params @params.json
+
 # 从 stdin
 echo '{"city": "London"}' | qveris call 1 --params -
 
@@ -218,6 +227,47 @@ qveris call 1 --params '{"city": "London"}' --respond-with 'fields:$.temperature
 ```
 
 投影参数仅在显式指定时发送。如果旧服务明确把投影字段判定为未知字段，CLI 只移除该字段并重试一次；无效投影仍按 `422` 错误返回。
+
+#### 复制的服务/任务上下文
+
+安装页可以复制只含公开选择 ID 和 Unix 秒时间戳的版本 1 JSON 模板。CLI 是该模板的权威消费者：
+
+```bash
+qveris call --context @context.json --params @params.json
+```
+
+`--context` 与位置工具 ID、`--discovery-id` 互斥。模板只是选择提示，不是参数、授权、可用性、价格或执行证明。参数必须根据当前用户请求另行传入。
+
+执行 Call 前，CLI 会重新 Discover，并且只使用新的 `search_id`。有准确 tool 的上下文仅用 `tool_id` 作确定性查询；仅含 service 的上下文使用 task/service 意图，只返回刷新后的候选并停止，绝不猜测工具。Discover 若已给出完整参数合同即可完成参数预检；只有必要合同缺失时才 Inspect，只有 schema/参数、权限/价格、显式 `--require-quote`、预算上限或付费风险需要服务器确认时才 Probe。
+
+过期只会让旧的可用性、价格和权限快照失效；安全任务意图和公开 ID 会被保留并自动刷新。任何已出现但非明确免费或含义不确定的价格信号（包括自然语言 `expected_cost`）都属于付费风险，必须取得结构合法的 credits 报价。Probe 报价不会锁定价格或授权执行，所以在精确 tool Context Call 的执行端点具备服务端预算字段前，`--max-credits` 会被拒绝。当前公开的精确 tool 合同没有声明副作用或幂等性，所以 Context Call 会 fail closed，绝不会把字段缺失当作安全；`--allow-side-effects` 与 `--allow-non-idempotent` 只确认明确报告的风险，不能绕过缺失的安全元数据。Context 校验采用有深度上限的迭代遍历，恶意深层嵌套会得到结构化拒绝，不会耗尽调用栈。
+
+只要已发布合同能提供充分证明，CLI 就会自动完成安全恢复：旧发现会立即刷新。当前 Discover/Inspect 合同不提供 service identity，也不提供任何精确 tool 的副作用/幂等性证明，因此 CLI 会返回当前或 fallback 候选，但不会靠猜测执行。JSON 失败统一包含 `code`、`retryable`、`action`、`missing_fields`、`fallback_available` 和当前 Provider/Tool 候选。
+
+| 字段 | v1 合同 |
+|---|---|
+| `context_version` | 整数 `1`；更高版本只有在声明 `context_min_consumer_version: 1` 且没有不支持的必需能力时才接受 |
+| `context_issued_at` | Unix 秒整数；最多可以比本地时钟快五分钟 |
+| `context_expires_at` | Unix 秒整数；晚于签发时间且有效期不超过 24 小时；已过期时触发刷新 |
+| `task_id` | 必填公开 ID |
+| `service_id` | 公开 ID；`service_id` 与 `tool_id` 至少提供一个 |
+| `tool_id` | 准确公开工具 ID；`service_id` 与 `tool_id` 至少提供一个 |
+| `template_id` | 可选公开模板 ID；绝不是模板内容或提示词 |
+| `extensions` | 可选命名空间对象；其值绝不作为执行参数 |
+| `context_capabilities` | 可选能力名；不支持的可选能力会带 warning 忽略 |
+| `context_required_capabilities` | 必需消费端能力；不支持时严格失败 |
+| `context_min_consumer_version` | 最低兼容消费端版本 |
+
+普通未知字段会被忽略并返回 machine-readable warning。重复字段、原型污染键、疑似凭证、PII、提示词、raw payload 以及可能成为执行参数的字段会被严格拒绝。ID 长度必须为 1–128 个字符，以 ASCII 字母或数字开头，并且只能包含 ASCII 字母、数字、`.`、`_`、`:`、`/` 或 `-`。
+
+- **过期上下文：** CLI 保留安全意图/公开 ID，并自动刷新当前候选和快照。
+- **不支持/不安全的上下文：** 升级以支持必需能力，或移除敏感/可执行内容；若凭证曾暴露，请轮换。
+- **重新发现或检查不匹配：** 选择当前结果，不要强制使用旧 ID。
+- **验证或报价拒绝：** 修正 `--params`、调整预算策略，或选择返回的 fallback 候选。报价不是锁价或执行授权。
+- **权限或积分失败：** 确认当前端点的账户/能力权限或积分。
+- **上游失败或结算未知：** 保留 `execution_id`；先运行 `qveris usage --mode search --execution-id <id>` 和 `qveris ledger`，再陈述最终扣费结果。
+
+这条通用路径有意不定义主任务服务、计费规则、权限集、参数、预期结果或结算结果。这些信息必须来自另行批准的服务说明和当前 API 响应。
 
 **试运行（不消耗 credits）：**
 

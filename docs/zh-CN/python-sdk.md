@@ -237,6 +237,18 @@ agent = Agent(
 
 ## 安全付费调用与 transport 所有权
 
+### 复制的服务/任务上下文
+
+安装页复制的 v1 JSON 是短期公开选择提示，不是 `QverisClient.call()` payload。受支持的统一消费入口是：
+
+```bash
+qveris call --context @context.json --params @params.json
+```
+
+CLI 会拒绝敏感/可执行内容、重复/原型键和不支持的必需能力；普通未来字段会变成结构化 warning。已过期的可用性/价格/权限快照会自动刷新。Inspect/Probe 按需执行，只有明确预算/报价策略或付费风险才把报价作为门禁。参数保持分离并来自当前请求。
+
+明确要用 Python 复现该流程的应用必须校验同一 v1 边界，公开 ID 只作搜索提示，service-only context 返回候选而不猜工具，要求新的 `discover` 给出准确工具匹配，只在需要时调用 `inspect` 或 `probe`，并在 `call` 中使用新的发现 ID。陈述最终结算前要查询 usage 和 ledger；缺少最终审计数据就是未知结果。
+
 付费 `call()` 默认严格 single-submit。SDK 不会跟随 HTTP 重定向，不会自动重试 `429`/`503`、超时或 transport 失败，也不会删除被拒绝的投影字段后再次提交；类型化错误会报告 `request_metadata.http_attempts == 1`。如果旧服务仍需要原来的投影降级，可显式选择：
 
 ```python

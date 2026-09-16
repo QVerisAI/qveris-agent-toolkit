@@ -64,6 +64,27 @@ test("CLI sources do not reintroduce unsupported catalog-wide claims", async () 
   }
 })
 
+test("toolkit-owned client docs project the canonical v1 context consumer", async () => {
+  const guides = [
+    "cli.md",
+    "mcp-server.md",
+    "js-sdk.md",
+    "python-sdk.md",
+    "getting-started.md",
+    "ide-cli-setup.md",
+  ]
+  for (const locale of ["en-US", "zh-CN", "cn/zh-CN"]) {
+    for (const guide of guides) {
+      const relPath = `docs/${locale}/${guide}`
+      const source = await fs.readFile(path.join(REPOSITORY_ROOT, relPath), "utf8")
+      assert.match(source, /qveris call --context @context\.json --params @params\.json/, relPath)
+      assert.match(source, /Discover/, relPath)
+      assert.match(source, /Inspect/, relPath)
+      assert.match(source, /Probe/, relPath)
+    }
+  }
+})
+
 test("China getting-started preserves the approved trial grant and dynamic top-up minimum", async () => {
   const source = await fs.readFile(path.join(REPOSITORY_ROOT, "docs/cn/zh-CN/getting-started.md"), "utf8")
   assert.match(source, /\| 免费版 \| ¥0 \| 注册验证后一次性获得 1,000 体验积分 \|/)

@@ -185,6 +185,12 @@ qveris call <tool_id|index> [flags]
 | Flag | Description | Default |
 |------|-------------|---------|
 | `--params <json\|@file\|->` | Parameters as JSON, file path, or stdin | `{}` |
+| `--context <json\|@file\|->` | Copied v1 service/task context; refreshes discovery and validates only as needed | — |
+| `--require-quote` | Require a current quote before a context Call | false |
+| `--max-credits <n>` | Not supported for a context Call: the exact-tool execution endpoint has no server-enforced budget field | — |
+| `--deny-region <list>` | Block comma-separated regions for a context Call | — |
+| `--allow-side-effects` | Confirm explicitly reported dangerous side effects | false |
+| `--allow-non-idempotent` | Confirm explicitly reported non-idempotent execution | false |
 | `--discovery-id <id>` | Discovery session ID | auto from session |
 | `--model <name>` | Model that selected and parameterized the call | — |
 | `--max-size <bytes>` | Response size limit (-1 = unlimited) | 4KB (TTY) / 20KB (pipe) |
@@ -205,6 +211,9 @@ qveris call 1 --params '{"city": "London"}' --model router-model-v1
 # From file
 qveris call 1 --params @params.json
 
+# Copied installation-page context (no positional tool ID or old discovery ID)
+qveris call --context @context.json --params @params.json
+
 # From stdin
 echo '{"city": "London"}' | qveris call 1 --params -
 
@@ -216,6 +225,47 @@ qveris call 1 --params '{"city": "London"}' --respond-with 'fields:$.temperature
 ```
 
 Projection flags are opt-in. Paid calls are strict single-submit: the CLI does not retry `429`/`503`, follow HTTP redirects, refresh OAuth after `401` and replay, or remove a rejected projection field and resubmit. Projection rejections and invalid projections remain `422` errors. `QVERIS_MAX_RETRIES` continues to apply to read and audit commands only.
+
+#### Copied service/task context
+
+The installation page can copy a version 1 JSON template containing only public selection IDs and Unix-second timestamps. The CLI is the canonical consumer:
+
+```bash
+qveris call --context @context.json --params @params.json
+```
+
+`--context` is mutually exclusive with a positional tool ID and `--discovery-id`. The template is a selection hint, not parameters, authorization, availability, pricing, or execution proof. Supply parameters separately from the current user request.
+
+Before any Call, the CLI performs a fresh Discover and uses only its new `search_id`. An exact-tool context uses the `tool_id` alone as the deterministic query. A service-only context uses task/service intent, returns refreshed candidates, and stops; it never guesses a tool. A complete Discover schema can complete parameter preflight. Inspect is used only when required contract detail is missing, and Probe only when schema/parameter validation, permission/pricing confirmation, explicit `--require-quote`, a budget cap, or paid risk requires it.
+
+Expiry invalidates the old availability, price, and permission snapshots, not safe task intent or public IDs; the CLI automatically refreshes instead of terminating. Any present non-free or ambiguous price signal, including human-readable `expected_cost`, is paid risk and requires a structurally valid credits quote. A Probe quote never reserves price or authorizes execution, so `--max-credits` is rejected for exact-tool context calls until their execution route accepts a server-enforced cap. The current public exact-tool contract does not declare side effects or idempotency; Context Call therefore fails closed instead of treating their absence as safe. `--allow-side-effects` and `--allow-non-idempotent` confirm only explicitly reported risks and cannot override missing safety metadata. Context validation uses a bounded iterative traversal, so hostile deep nesting returns a structured rejection instead of exhausting the call stack.
+
+Safe recovery is automatic where the published contract provides enough proof: stale discovery is refreshed immediately. The current Discover/Inspect contract does not expose a service identity or side-effect/idempotency proof for any exact tool, so the CLI returns current or fallback candidates but does not execute one by guesswork. JSON failures include `code`, `retryable`, `action`, `missing_fields`, `fallback_available`, and current provider/tool candidates.
+
+| Field | v1 contract |
+|---|---|
+| `context_version` | Integer `1`; a newer version is accepted only when it declares `context_min_consumer_version: 1` and no unsupported required capability |
+| `context_issued_at` | Integer Unix seconds; no more than five minutes ahead of the local clock |
+| `context_expires_at` | Integer Unix seconds; later than issue time and at most 24 hours after issue time; past values trigger refresh |
+| `task_id` | Required public ID |
+| `service_id` | Public ID; at least one of `service_id` or `tool_id` is required |
+| `tool_id` | Exact public tool ID; at least one of `service_id` or `tool_id` is required |
+| `template_id` | Optional public template ID; never template content or a prompt |
+| `extensions` | Optional object with namespaced keys; values are never treated as execution parameters |
+| `context_capabilities` | Optional capability names; unsupported optional capabilities are ignored with warnings |
+| `context_required_capabilities` | Required consumer capabilities; unsupported requirements fail closed |
+| `context_min_consumer_version` | Minimum compatible context consumer version |
+
+Ordinary unknown fields are ignored and returned as machine-readable warnings. Duplicate fields, prototype-pollution keys, credentials, PII, prompts, raw payloads, and fields that could become execution parameters are rejected. IDs must be 1–128 characters, start with an ASCII letter or digit, and contain only ASCII letters, digits, `.`, `_`, `:`, `/`, or `-`.
+
+- **Expired context:** the CLI preserves safe intent/public IDs and automatically refreshes current candidates and snapshots.
+- **Unsupported/unsafe context:** upgrade for required capabilities or remove sensitive/executable content; rotate any exposed credential.
+- **Re-discovery or inspection mismatch:** select a current result instead of forcing the old ID.
+- **Validation or quote rejection:** correct `--params`, change budget policy, or select a returned fallback candidate. A quote is not a price reservation or execution authorization.
+- **Permission or credit failure:** confirm account/capability access or credits for the configured endpoint.
+- **Upstream failure or unknown settlement:** retain the `execution_id`; use `qveris usage --mode search --execution-id <id>` and `qveris ledger` before claiming a final charge outcome.
+
+This generic path intentionally does not define a main-task service, billing rule, permission set, parameters, expected result, or settlement outcome. Those details require a separately approved service statement and current API responses.
 
 **Dry run (no credits consumed):**
 

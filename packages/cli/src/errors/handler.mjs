@@ -21,6 +21,7 @@ export function handleError(err, jsonMode = false) {
     console.error(`\n  ${red("\u2718")}  ${bold("Error:")} ${err.message}`);
     const hint = err.hint || ERROR_CODES[err.code]?.hint;
     if (hint) console.error(`     ${dim(hint)}`);
+    if (err.action) console.error(`     ${dim(`Action: ${err.action}`)}`);
   }
 
   process.exitCode = exitCode;

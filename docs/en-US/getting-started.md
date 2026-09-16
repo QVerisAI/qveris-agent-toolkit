@@ -43,6 +43,14 @@ qveris call 1 --params '{"wfo":"LWX","x":90,"y":90}'  # Execute
 
 The CLI also supports interactive mode (`qveris interactive`), code generation (`--codegen curl|python|js`), and shell completions. For the full reference, see [CLI documentation](cli.md).
 
+If the installation page gives you a copied v1 service/task context, save that JSON without adding parameters or secrets, then use the CLI's canonical consumer:
+
+```bash
+qveris call --context @context.json --params @params.json
+```
+
+The template is only a public-ID selection hint. The CLI rejects sensitive or executable content, ignores ordinary future fields with structured warnings, and automatically refreshes expired availability/price/permission snapshots. It runs Inspect or Probe only when the fresh Discover result and execution policy require them; service-only context returns candidates without guessing a tool. See [Copied service/task context](cli.md#copied-servicetask-context) for the contract and recovery steps.
+
 ---
 
 ### Use QVeris MCP anywhere MCP is supported

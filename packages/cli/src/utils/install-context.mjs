@@ -1,0 +1,408 @@
+import { readFileSync } from "node:fs";
+import { CliError } from "../errors/handler.mjs";
+
+export const INSTALL_CONTEXT_VERSION = 1;
+export const INSTALL_CONTEXT_MAX_AGE_SECONDS = 24 * 60 * 60;
+export const INSTALL_CONTEXT_CLOCK_SKEW_SECONDS = 5 * 60;
+
+const MAX_CONTEXT_BYTES = 64 * 1024;
+const MAX_CONTEXT_DEPTH = 64;
+const ALLOWED_FIELDS = new Set([
+  "context_version",
+  "context_issued_at",
+  "context_expires_at",
+  "task_id",
+  "service_id",
+  "tool_id",
+  "template_id",
+  "extensions",
+  "context_capabilities",
+  "context_required_capabilities",
+  "context_min_consumer_version",
+]);
+const SUPPORTED_CAPABILITIES = new Set(["public_ids", "refresh_on_expiry", "extensions", "warnings_v1"]);
+const SAFE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/;
+const EXTENSION_NAME_PATTERN = /^(?=.{3,128}$)[A-Za-z0-9][A-Za-z0-9_-]*[.:][A-Za-z0-9][A-Za-z0-9._:-]*$/;
+const PROTOTYPE_POLLUTION_FIELDS = new Set(["__proto__", "prototype", "constructor"]);
+const SENSITIVE_FIELD_PATTERN =
+  /(?:^|[_-])(?:api[_-]?key|authorization|auth[_-]?token|access[_-]?token|refresh[_-]?token|credential|secret|password|private[_-]?key|cookie|prompt|raw[_-]?(?:payload|prompt)|payload|parameters?|params|user[_-]?data|pii)(?:$|[_-])/i;
+const KNOWN_CREDENTIAL_PATTERN =
+  /(?:^|[^A-Za-z0-9])(?:sk-[A-Za-z0-9_-]{20,}|gh[oprsu]_[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{16,}|AKIA[A-Z0-9]{16}|AIza[A-Za-z0-9_-]{20,})(?=$|[^A-Za-z0-9_-])/i;
+const BEARER_CREDENTIAL_PATTERN = /(?:^|[^A-Za-z0-9])Bearer\s+[A-Za-z0-9._-]{12,}(?=$|[^A-Za-z0-9._-])/i;
+const JWT_PATTERN = /(?:^|[^A-Za-z0-9_-])eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?=$|[^A-Za-z0-9_-])/;
+const EMAIL_PATTERN = /(?:^|[^A-Za-z0-9._%+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?=$|[^A-Za-z0-9.-])/;
+const US_SSN_PATTERN = /(?:^|[^\d])\d{3}-\d{2}-\d{4}(?=$|[^\d])/;
+const CN_MOBILE_PATTERN = /(?:^|[^\d])1[3-9]\d{9}(?=$|[^\d])/;
+const CN_RESIDENT_ID_PATTERN = /(?:^|[^\d])\d{17}[\dXx](?=$|[^\dA-Za-z])/;
+const IBAN_PATTERN = /(?:^|[^A-Za-z0-9])[A-Z]{2}\d{2}[A-Z0-9]{11,30}(?=$|[^A-Za-z0-9])/i;
+
+function contextError(code, detail, hint) {
+  const error = new CliError(code, detail);
+  if (hint) error.hint = hint;
+  return error;
+}
+
+function readContextInput(value) {
+  if (!value) {
+    throw contextError(
+      "CONTEXT_INVALID",
+      "Missing --context value",
+      "Paste the v1 JSON template, pass @context.json, or pipe it with --context -",
+    );
+  }
+
+  let raw = value;
+  if (value === "-") {
+    if (process.stdin.isTTY) {
+      throw contextError(
+        "CONTEXT_INVALID",
+        "No context JSON was piped to stdin",
+        "Pipe the copied template to 'qveris call --context - --params ...'",
+      );
+    }
+    try {
+      raw = readFileSync(0, "utf8");
+    } catch {
+      throw contextError("CONTEXT_INVALID", "Failed to read context JSON from stdin");
+    }
+  } else if (value.startsWith("@")) {
+    const filePath = value.slice(1);
+    try {
+      raw = readFileSync(filePath, "utf8");
+    } catch {
+      throw contextError(
+        "CONTEXT_INVALID",
+        "Cannot read the context JSON file",
+        "Confirm the path after @ is readable and contains only the copied v1 template",
+      );
+    }
+  }
+
+  if (Buffer.byteLength(raw, "utf8") > MAX_CONTEXT_BYTES) {
+    throw contextError(
+      "CONTEXT_UNSAFE",
+      "Context JSON is too large for the public v1 template",
+      "Copy only the public ID and timestamp fields; never include prompts, parameters, payloads, or credentials",
+    );
+  }
+  return raw;
+}
+
+function hasDuplicateProperty(raw) {
+  const containers = [];
+  for (let index = 0; index < raw.length; index += 1) {
+    const char = raw[index];
+    if (/\s/.test(char)) continue;
+    if (char === "{") {
+      containers.push({ type: "object", expectingKey: true, keys: new Set() });
+      continue;
+    }
+    if (char === "[") {
+      containers.push({ type: "array" });
+      continue;
+    }
+    if (char === "}" || char === "]") {
+      containers.pop();
+      continue;
+    }
+    if (char === ",") {
+      const current = containers.at(-1);
+      if (current?.type === "object") current.expectingKey = true;
+      continue;
+    }
+    if (char !== '"') continue;
+
+    const start = index;
+    index += 1;
+    while (index < raw.length) {
+      if (raw[index] === "\\") {
+        index += 2;
+        continue;
+      }
+      if (raw[index] === '"') break;
+      index += 1;
+    }
+    const current = containers.at(-1);
+    if (current?.type !== "object" || !current.expectingKey) continue;
+    const key = JSON.parse(raw.slice(start, index + 1));
+    if (current.keys.has(key)) return true;
+    current.keys.add(key);
+    current.expectingKey = false;
+  }
+  return false;
+}
+
+function isPaymentCard(value) {
+  if (!/^\d{13,19}$/.test(value)) return false;
+  let sum = 0;
+  let double = false;
+  for (let index = value.length - 1; index >= 0; index -= 1) {
+    let digit = Number(value[index]);
+    if (double) {
+      digit *= 2;
+      if (digit > 9) digit -= 9;
+    }
+    sum += digit;
+    double = !double;
+  }
+  return sum % 10 === 0;
+}
+
+function containsPaymentCard(value) {
+  for (const match of value.matchAll(/(?:^|[^\d])(\d{13,19})(?=$|[^\d])/g)) {
+    if (isPaymentCard(match[1])) return true;
+  }
+  return false;
+}
+
+function isSensitiveId(value) {
+  return (
+    KNOWN_CREDENTIAL_PATTERN.test(value) ||
+    BEARER_CREDENTIAL_PATTERN.test(value) ||
+    JWT_PATTERN.test(value) ||
+    EMAIL_PATTERN.test(value) ||
+    US_SSN_PATTERN.test(value) ||
+    CN_MOBILE_PATTERN.test(value) ||
+    CN_RESIDENT_ID_PATTERN.test(value) ||
+    IBAN_PATTERN.test(value) ||
+    containsPaymentCard(value)
+  );
+}
+
+function validateSafeTree(value, path = "context") {
+  const pending = [{ value, path, depth: 0 }];
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (typeof current.value === "string") {
+      if (isSensitiveId(current.value)) {
+        throw contextError(
+          "CONTEXT_UNSAFE",
+          `Context ${current.path} looks like a credential or personal identifier`,
+          "Remove sensitive data, rotate any exposed credential, and copy a fresh public-ID-only template",
+        );
+      }
+      continue;
+    }
+    if (current.value === null || typeof current.value === "number" || typeof current.value === "boolean") continue;
+    if (typeof current.value !== "object") {
+      throw contextError("CONTEXT_UNSAFE", `Context ${current.path} contains an unsupported value`);
+    }
+
+    const children = Array.isArray(current.value)
+      ? current.value.map((child, index) => [`${current.path}[${index}]`, child])
+      : Object.entries(current.value).map(([field, child]) => {
+          if (PROTOTYPE_POLLUTION_FIELDS.has(field) || SENSITIVE_FIELD_PATTERN.test(field)) {
+            throw contextError(
+              "CONTEXT_UNSAFE",
+              `Context ${current.path} contains a private, executable, or unsafe field`,
+              "Keep task intent and public IDs only; never include prompts, parameters, payloads, credentials, or prototype keys",
+            );
+          }
+          return [`${current.path}.${field}`, child];
+        });
+
+    if (current.depth >= MAX_CONTEXT_DEPTH && children.length > 0) {
+      throw contextError(
+        "CONTEXT_UNSAFE",
+        "Context is nested too deeply",
+        "Keep the public context template shallow and remove deeply nested extension or future fields",
+      );
+    }
+    for (let index = children.length - 1; index >= 0; index -= 1) {
+      const [childPath, child] = children[index];
+      pending.push({ value: child, path: childPath, depth: current.depth + 1 });
+    }
+  }
+}
+
+function validateCapabilityList(value, field) {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "string" || !SAFE_ID_PATTERN.test(item))) {
+    throw contextError("CONTEXT_INVALID", `Context ${field} must be an array of capability names`);
+  }
+  return [...new Set(value)];
+}
+
+function requireInteger(value, field) {
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw contextError(
+      "CONTEXT_INVALID",
+      `Context ${field} must be a non-negative integer`,
+      "Copy a fresh template without changing its Unix-second timestamps",
+    );
+  }
+  return value;
+}
+
+function validatePublicId(value, field, required) {
+  if (value === undefined && !required) return undefined;
+  if (typeof value !== "string" || value.length === 0) {
+    throw contextError("CONTEXT_INVALID", `Context ${field} must be a non-empty public identifier`);
+  }
+  if (isSensitiveId(value)) {
+    throw contextError(
+      "CONTEXT_UNSAFE",
+      `Context ${field} looks like a credential or personal identifier`,
+      "Remove sensitive data, rotate any exposed credential, and copy a fresh public-ID-only template",
+    );
+  }
+  if (!SAFE_ID_PATTERN.test(value)) {
+    throw contextError(
+      "CONTEXT_INVALID",
+      `Context ${field} is not a valid public identifier`,
+      "IDs must be 1-128 characters, start with an ASCII letter or digit, and use only letters, digits, '.', '_', ':', '/', or '-'",
+    );
+  }
+  return value;
+}
+
+export function parseInstallContext(raw, nowMs = Date.now()) {
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw contextError(
+      "CONTEXT_INVALID",
+      "Context is not valid JSON",
+      "Copy the complete v1 JSON template without adding prose or Markdown fences",
+    );
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw contextError("CONTEXT_INVALID", "Context JSON must be one object");
+  }
+  if (hasDuplicateProperty(raw)) {
+    throw contextError(
+      "CONTEXT_UNSAFE",
+      "Context JSON contains duplicate fields",
+      "Copy a fresh template; duplicate fields are rejected because their meaning is ambiguous",
+    );
+  }
+  validateSafeTree(parsed);
+  const unknownFields = Object.keys(parsed).filter((field) => !ALLOWED_FIELDS.has(field));
+  const warnings = unknownFields.map((field) => ({
+    code: "CONTEXT_FIELD_IGNORED",
+    field,
+    action: "ignored",
+  }));
+  if (parsed.extensions !== undefined) {
+    if (!parsed.extensions || typeof parsed.extensions !== "object" || Array.isArray(parsed.extensions)) {
+      throw contextError("CONTEXT_INVALID", "Context extensions must be an object");
+    }
+    for (const name of Object.keys(parsed.extensions)) {
+      if (!EXTENSION_NAME_PATTERN.test(name)) {
+        throw contextError("CONTEXT_INVALID", "Context extension names must be namespaced public identifiers");
+      }
+    }
+  }
+
+  // Validate every supplied identifier before version/time semantics so a
+  // mixed invalid context can never hide credential- or PII-shaped content.
+  const taskId = validatePublicId(parsed.task_id, "task_id", true);
+  const serviceId = validatePublicId(parsed.service_id, "service_id", false);
+  const toolId = validatePublicId(parsed.tool_id, "tool_id", false);
+  const templateId = validatePublicId(parsed.template_id, "template_id", false);
+  if (!serviceId && !toolId) {
+    throw contextError(
+      "CONTEXT_INVALID",
+      "Context must include service_id, tool_id, or both",
+      "Copy a fresh template that preserves the selected task and at least one exact public service/tool ID",
+    );
+  }
+
+  const version = requireInteger(parsed.context_version, "context_version");
+  if (version < 1) {
+    throw contextError(
+      "CONTEXT_UNSUPPORTED",
+      `Unsupported context version ${version}`,
+      "Use a version 1 or explicitly backward-compatible newer template",
+    );
+  }
+
+  const minimumConsumerVersion =
+    parsed.context_min_consumer_version === undefined
+      ? version
+      : requireInteger(parsed.context_min_consumer_version, "context_min_consumer_version");
+  const capabilities = validateCapabilityList(parsed.context_capabilities, "context_capabilities");
+  const requiredCapabilities = validateCapabilityList(
+    parsed.context_required_capabilities,
+    "context_required_capabilities",
+  );
+  const unsupportedRequired = requiredCapabilities.filter((item) => !SUPPORTED_CAPABILITIES.has(item));
+  if (minimumConsumerVersion < 1 || minimumConsumerVersion > version) {
+    throw contextError("CONTEXT_INVALID", "Context minimum consumer version must be between 1 and context_version");
+  }
+  if (minimumConsumerVersion > INSTALL_CONTEXT_VERSION || unsupportedRequired.length > 0) {
+    const error = contextError(
+      "CONTEXT_UNSUPPORTED",
+      "Context requires a newer consumer capability",
+      "Upgrade the CLI or use a template whose required capabilities are supported",
+    );
+    error.missingFields = unsupportedRequired;
+    error.retryable = false;
+    error.action = "upgrade_consumer";
+    throw error;
+  }
+  for (const capability of capabilities) {
+    if (!SUPPORTED_CAPABILITIES.has(capability)) {
+      warnings.push({ code: "CONTEXT_CAPABILITY_IGNORED", capability, action: "ignored" });
+    }
+  }
+  if (version > INSTALL_CONTEXT_VERSION) {
+    warnings.push({
+      code: "CONTEXT_VERSION_FORWARD_COMPAT",
+      version,
+      minimum_consumer_version: minimumConsumerVersion,
+      action: "known_fields_only",
+    });
+  }
+
+  const issuedAt = requireInteger(parsed.context_issued_at, "context_issued_at");
+  const expiresAt = requireInteger(parsed.context_expires_at, "context_expires_at");
+  const nowSeconds = Math.floor(nowMs / 1000);
+  if (
+    issuedAt > nowSeconds + INSTALL_CONTEXT_CLOCK_SKEW_SECONDS ||
+    expiresAt <= issuedAt ||
+    expiresAt - issuedAt > INSTALL_CONTEXT_MAX_AGE_SECONDS
+  ) {
+    throw contextError(
+      "CONTEXT_INVALID",
+      "Context timestamps have an invalid issue time, order, or lifetime",
+      "Use integer Unix seconds, no more than five minutes of future clock skew, and a lifetime no longer than 24 hours",
+    );
+  }
+  const stale = expiresAt <= nowSeconds;
+  if (stale) {
+    warnings.push({
+      code: "CONTEXT_SNAPSHOT_EXPIRED",
+      action: "rediscover",
+      invalidated: ["availability", "price", "permission"],
+    });
+  }
+  return {
+    version,
+    issuedAt,
+    expiresAt,
+    taskId,
+    serviceId,
+    toolId,
+    templateId,
+    stale,
+    warnings,
+    capabilities,
+    requiredCapabilities,
+    minimumConsumerVersion,
+  };
+}
+
+export function resolveInstallContext(value, nowMs = Date.now()) {
+  return parseInstallContext(readContextInput(value), nowMs);
+}
+
+export function buildContextDiscoveryQuery(context) {
+  if (context.toolId) return context.toolId;
+  return [context.taskId, context.serviceId].filter(Boolean).join(" ");
+}
+
+export function assertInstallContextCurrent(context, nowMs = Date.now()) {
+  return context.expiresAt > Math.floor(nowMs / 1000);
+}
