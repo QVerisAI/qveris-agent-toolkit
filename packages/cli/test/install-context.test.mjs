@@ -187,6 +187,15 @@ test("v1 parser rejects duplicate, credential, PII, payload, and prototype field
     () => parseInstallContext(context({ context_version: 2, service_id: "service:sk-abcdefghijklmnopqrstuv" }), NOW_MS),
     (error) => error instanceof CliError && error.code === "CONTEXT_UNSAFE",
   );
+
+  const nestedDuplicate = context().replace(
+    /}$/,
+    ',"extensions":{"example.data":{"api_key":"not-echoed","api\\u005fkey":{}}}}',
+  );
+  assert.throws(
+    () => parseInstallContext(nestedDuplicate, NOW_MS),
+    (error) => error instanceof CliError && error.code === "CONTEXT_UNSAFE" && /duplicate/.test(error.message),
+  );
 });
 
 test("v1 parser rejects deeply nested untrusted fields without exhausting the stack", () => {
@@ -243,6 +252,45 @@ test("context call fails closed when the public contract lacks execution-safety 
         query: "provider.company.lookup.v1",
         limit: 100,
       });
+    },
+  );
+});
+
+test("context dry runs bypass execution-only safety checks without submitting a call", async () => {
+  await withMockFetch(
+    (request) => {
+      if (request.url.pathname.endsWith("/search")) {
+        return response({
+          search_id: "fresh-search",
+          results: [
+            {
+              tool_id: "provider.company.lookup.v1",
+              params: [{ name: "symbol", type: "string", required: true }],
+              expected_cost: 0,
+            },
+          ],
+        });
+      }
+      throw new Error(`Unexpected request: ${request.url.pathname}`);
+    },
+    async (requests) => {
+      const output = await captureOutput(() =>
+        runCall(undefined, {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          context: liveContext(),
+          params: '{"symbol":"AAPL"}',
+          dryRun: true,
+          json: true,
+        }),
+      );
+      const result = JSON.parse(output);
+      assert.equal(result.dry_run, true);
+      assert.equal(result.tool_id, "provider.company.lookup.v1");
+      assert.deepEqual(
+        requests.map((request) => request.url.pathname),
+        ["/api/v1/search"],
+      );
     },
   );
 });
@@ -529,6 +577,41 @@ test("context call fails closed on malformed discovery or probe responses", asyn
           context: liveContext(),
         }),
         (error) => error instanceof CliError && error.code === "CONTEXT_REDISCOVERY_FAILED",
+      );
+    },
+  );
+
+  await withMockFetch(
+    () => response({ search_id: "fresh-search", results: { tool_id: "provider.company.lookup.v1" } }),
+    async () => {
+      await assert.rejects(
+        runCall(undefined, {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          context: liveContext(),
+        }),
+        (error) => error instanceof CliError && error.code === "CONTEXT_REDISCOVERY_FAILED",
+      );
+    },
+  );
+
+  await withMockFetch(
+    (request) => {
+      if (request.url.pathname.endsWith("/search")) {
+        return response({ search_id: "fresh-search", results: [{ tool_id: "provider.company.lookup.v1" }] });
+      }
+      if (request.url.pathname.endsWith("/tools/by-ids"))
+        return response({ results: { tool_id: "provider.company.lookup.v1" } });
+      throw new Error(`Unexpected request: ${request.url.pathname}`);
+    },
+    async () => {
+      await assert.rejects(
+        runCall(undefined, {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          context: liveContext(),
+        }),
+        (error) => error instanceof CliError && error.code === "CONTEXT_INSPECT_FAILED",
       );
     },
   );

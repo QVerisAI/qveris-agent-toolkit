@@ -161,7 +161,8 @@ export async function runCall(idOrIndex, flags) {
 
 function normalizeToolList(response) {
   if (Array.isArray(response)) return response;
-  return response?.results ?? response?.tools ?? [];
+  const tools = response?.results ?? response?.tools;
+  return Array.isArray(tools) ? tools : null;
 }
 
 function contextError(code, detail, metadata = {}) {
@@ -291,7 +292,14 @@ async function resolveCurrentContextTool({
     });
   }
 
-  const discovered = normalizeToolList(discovery).filter((tool) => tool?.tool_id);
+  const discoveryTools = normalizeToolList(discovery);
+  if (!discoveryTools) {
+    throw contextError("CONTEXT_REDISCOVERY_FAILED", "Current discovery did not return a usable tool list", {
+      retryable: true,
+      action: "rediscover",
+    });
+  }
+  const discovered = discoveryTools.filter((tool) => tool?.tool_id);
   const candidates = candidatesFrom(discovered);
   if (!context.toolId) {
     return {
@@ -343,7 +351,14 @@ async function resolveCurrentContextTool({
       wrapped.cause = error;
       throw wrapped;
     }
-    const inspected = normalizeToolList(inspection).find((tool) => tool?.tool_id === selected.tool_id);
+    const inspectedTools = normalizeToolList(inspection);
+    if (!inspectedTools) {
+      throw contextError("CONTEXT_INSPECT_FAILED", "Current inspection did not return a usable tool list", {
+        retryable: true,
+        action: "inspect_again",
+      });
+    }
+    const inspected = inspectedTools.find((tool) => tool?.tool_id === selected.tool_id);
     if (!inspected) {
       throw contextError("CONTEXT_INSPECT_FAILED", "Current inspection did not confirm the copied tool", {
         retryable: true,
@@ -415,7 +430,7 @@ async function resolveCurrentContextTool({
   }
   const quoteCost = quoteValidation?.amount;
 
-  assertExecutionPolicy(selected, flags);
+  if (!flags.dryRun) assertExecutionPolicy(selected, flags);
 
   const warnings = [...context.warnings];
   if (!quoteRequired && pricing.status === "absent") {

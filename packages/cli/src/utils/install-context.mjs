@@ -87,13 +87,30 @@ function readContextInput(value) {
   return raw;
 }
 
-function topLevelPropertyNames(raw) {
-  const names = [];
-  let index = 0;
-  const skipWhitespace = () => {
-    while (/\s/.test(raw[index] ?? "")) index += 1;
-  };
-  const readString = () => {
+function hasDuplicateProperty(raw) {
+  const containers = [];
+  for (let index = 0; index < raw.length; index += 1) {
+    const char = raw[index];
+    if (/\s/.test(char)) continue;
+    if (char === "{") {
+      containers.push({ type: "object", expectingKey: true, keys: new Set() });
+      continue;
+    }
+    if (char === "[") {
+      containers.push({ type: "array" });
+      continue;
+    }
+    if (char === "}" || char === "]") {
+      containers.pop();
+      continue;
+    }
+    if (char === ",") {
+      const current = containers.at(-1);
+      if (current?.type === "object") current.expectingKey = true;
+      continue;
+    }
+    if (char !== '"') continue;
+
     const start = index;
     index += 1;
     while (index < raw.length) {
@@ -101,71 +118,17 @@ function topLevelPropertyNames(raw) {
         index += 2;
         continue;
       }
-      if (raw[index] === '"') {
-        index += 1;
-        return JSON.parse(raw.slice(start, index));
-      }
+      if (raw[index] === '"') break;
       index += 1;
     }
-    return null;
-  };
-  const skipValue = () => {
-    let objectDepth = 0;
-    let arrayDepth = 0;
-    let inString = false;
-    let escaped = false;
-    while (index < raw.length) {
-      const char = raw[index];
-      if (inString) {
-        if (escaped) escaped = false;
-        else if (char === "\\") escaped = true;
-        else if (char === '"') inString = false;
-        index += 1;
-        continue;
-      }
-      if (char === '"') inString = true;
-      else if (char === "{") objectDepth += 1;
-      else if (char === "}") {
-        if (objectDepth === 0 && arrayDepth === 0) return;
-        objectDepth -= 1;
-      } else if (char === "[") arrayDepth += 1;
-      else if (char === "]") arrayDepth -= 1;
-      else if (char === "," && objectDepth === 0 && arrayDepth === 0) return;
-      index += 1;
-    }
-  };
-
-  skipWhitespace();
-  if (raw[index] !== "{") return names;
-  index += 1;
-  for (;;) {
-    skipWhitespace();
-    if (raw[index] === "}") return names;
-    if (raw[index] !== '"') return names;
-    const name = readString();
-    if (name === null) return names;
-    names.push(name);
-    skipWhitespace();
-    if (raw[index] !== ":") return names;
-    index += 1;
-    skipWhitespace();
-    skipValue();
-    skipWhitespace();
-    if (raw[index] === ",") {
-      index += 1;
-      continue;
-    }
-    return names;
+    const current = containers.at(-1);
+    if (current?.type !== "object" || !current.expectingKey) continue;
+    const key = JSON.parse(raw.slice(start, index + 1));
+    if (current.keys.has(key)) return true;
+    current.keys.add(key);
+    current.expectingKey = false;
   }
-}
-
-function hasDuplicateTopLevelField(raw) {
-  const seen = new Set();
-  return topLevelPropertyNames(raw).some((name) => {
-    if (seen.has(name)) return true;
-    seen.add(name);
-    return false;
-  });
+  return false;
 }
 
 function isPaymentCard(value) {
@@ -298,7 +261,7 @@ export function parseInstallContext(raw, nowMs = Date.now()) {
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
     throw contextError("CONTEXT_INVALID", "Context JSON must be one object");
   }
-  if (hasDuplicateTopLevelField(raw)) {
+  if (hasDuplicateProperty(raw)) {
     throw contextError(
       "CONTEXT_UNSAFE",
       "Context JSON contains duplicate fields",
