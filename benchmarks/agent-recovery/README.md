@@ -52,7 +52,7 @@ The checked-in `results/before.json` and `results/after.json` files use the same
 | Non-autonomous outcome accuracy | 66.7% | 100% |
 | Submitted Call replays | 0 | 0 |
 | Mean / p50 / p95 API rounds | 1.18 / 1 / 2 | 2.18 / 2 / 4 |
-| Discover hit rate | 90.9% | 100% |
+| Discover hit rate | 81.8% | 81.8% |
 | Provider/tool fallback success | 0% | 100% |
 | Unknown-price continuation | 0% | 100% |
 

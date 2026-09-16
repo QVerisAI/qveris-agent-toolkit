@@ -878,6 +878,79 @@ for (const uncertainFailure of [
   });
 }
 
+test("a rate-limit response with an execution ID is reconciled", async () => {
+  const previousExitCode = process.exitCode;
+  process.exitCode = undefined;
+  try {
+    await withMockFetch(
+      (request) => {
+        if (request.url.pathname.endsWith("/tools/execute")) {
+          return response({ message: "retry later", execution_id: "exec-rate-limited" }, 429);
+        }
+        if (request.url.pathname.endsWith("/auth/usage/history/v2")) {
+          assert.equal(request.url.searchParams.get("execution_id"), "exec-rate-limited");
+          return response({ items: [{ execution_id: "exec-rate-limited", charge_outcome: "pending" }], total: 1 });
+        }
+        if (request.url.pathname.endsWith("/auth/credits/ledger")) return response({ items: [], total: 0 });
+        throw new Error(`Unexpected request: ${request.url.pathname}`);
+      },
+      async (requests) => {
+        const output = await captureOutput(() =>
+          runCall("provider.company.lookup.v1", {
+            apiKey: TEST_API_KEY,
+            baseUrl: "https://unit.test/api/v1",
+            discoveryId: "direct-search",
+            json: true,
+          }),
+        );
+        const result = JSON.parse(output);
+        assert.equal(result.status, "unknown_settlement");
+        assert.equal(result.execution_id, "exec-rate-limited");
+        assert.equal(result.next_action.action, "wait_and_reconcile");
+        assert.notEqual(process.exitCode, 0);
+        assert.deepEqual(
+          requests.map((request) => request.url.pathname),
+          ["/api/v1/tools/execute", "/api/v1/auth/usage/history/v2", "/api/v1/auth/credits/ledger"],
+        );
+      },
+    );
+  } finally {
+    process.exitCode = previousExitCode;
+  }
+});
+
+for (const status of [400, 422]) {
+  test(`Call HTTP ${status} requires parameter correction instead of retry`, async () => {
+    await withMockFetch(
+      (request) => {
+        if (request.url.pathname.endsWith("/tools/execute")) return response({ message: "invalid parameters" }, status);
+        throw new Error(`Unexpected request: ${request.url.pathname}`);
+      },
+      async (requests) => {
+        await assert.rejects(
+          runCall("provider.company.lookup.v1", {
+            apiKey: TEST_API_KEY,
+            baseUrl: "https://unit.test/api/v1",
+            discoveryId: "direct-search",
+            json: true,
+          }),
+          (error) =>
+            error instanceof CliError &&
+            error.code === "API_ERROR" &&
+            error.status === status &&
+            error.retryable === false &&
+            error.action === "correct_parameters" &&
+            error.fallbackAvailable === false &&
+            error.nextAction?.action === "correct_parameters" &&
+            error.nextAction?.requires_user === true &&
+            error.nextAction?.reason === "invalid_call_request",
+        );
+        assert.equal(requests.filter((request) => request.url.pathname.endsWith("/tools/execute")).length, 1);
+      },
+    );
+  });
+}
+
 for (const finalChargeOutcome of ["charged", "included", "failed_not_charged", "failed_charged_review"]) {
   test(`final ${finalChargeOutcome} settlement evidence stops the reconciliation loop`, async () => {
     const previousExitCode = process.exitCode;

@@ -753,8 +753,21 @@ async function executeCall({
       });
       throw decorateFailure(err);
     }
+    const rejectedCall = err?.code === "API_ERROR" && err?.status >= 400 && err.status < 500;
+    if (rejectedCall) {
+      const validationFailure = err.status === 400 || err.status === 422;
+      const action = validationFailure ? "correct_parameters" : "review_request";
+      err.retryable = false;
+      err.action = action;
+      err.fallbackAvailable = false;
+      err.nextAction = buildNextAction(action, {
+        requiresUser: true,
+        reason: validationFailure ? "invalid_call_request" : "call_rejected",
+      });
+      throw decorateFailure(err);
+    }
     throw decorateFailure(err, {
-      retryable: ["NET_TIMEOUT", "RATE_LIMITED", "PROVIDER_FAILURE", "API_ERROR"].includes(err.code),
+      retryable: ["NET_TIMEOUT", "RATE_LIMITED", "PROVIDER_FAILURE"].includes(err.code),
       action: boundaryAction ?? (fallbackCandidates.length > 0 ? "select_fallback" : "retry"),
       fallbackAvailable: fallbackCandidates.length > 0,
       candidates: fallbackCandidates,

@@ -49,7 +49,7 @@
       }
     },
     "discovery": {
-      "hit_rate": 0.9090909090909091
+      "hit_rate": 0.8181818181818182
     },
     "fallback": {
       "attempts": 0,
@@ -231,7 +231,7 @@
       "api_calls": 1,
       "execute_calls": 0,
       "submitted_call_replayed": false,
-      "discover_hit": true,
+      "discover_hit": false,
       "contract_rejected": true,
       "recovery_attempts": 0,
       "fallback_attempted": false,

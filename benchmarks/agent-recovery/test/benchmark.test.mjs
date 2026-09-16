@@ -56,9 +56,12 @@ test('fixture benchmark covers every required recovery class without production 
     replayed_submitted_calls: 0,
   });
   assert.equal(result.summary.fallback.success_rate, 1);
+  assert.equal(result.summary.discovery.hit_rate, 9 / 11);
   assert.equal(result.summary.pricing.continuation_rate, 1);
   assert.ok(result.records.every((record) => record.expected_outcome_observed));
   assert.equal(result.records.find((record) => record.id === 'unknown_settlement').observed_intervention, 'none');
+  assert.equal(result.records.find((record) => record.id === 'permission_denied').discover_hit, false);
+  assert.equal(result.records.find((record) => record.id === 'provider_fallback').discover_hit, false);
   assert.equal(process.exitCode, undefined);
 });
 

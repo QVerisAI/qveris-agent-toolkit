@@ -305,7 +305,13 @@ export async function runFixtureBenchmark(fixturePath = DEFAULT_FIXTURES) {
         body: options.body ? JSON.parse(options.body) : undefined,
       };
       requests.push(request);
-      return handleRequest(request);
+      const response = await handleRequest(request);
+      request.response_ok = response.ok;
+      if (request.url.pathname.endsWith('/search') && response.ok) {
+        const payload = await response.clone().json();
+        request.candidate_count = Array.isArray(payload?.results) ? payload.results.length : 0;
+      }
+      return response;
     };
     let error;
     let output;
@@ -353,9 +359,7 @@ export async function runFixtureBenchmark(fixturePath = DEFAULT_FIXTURES) {
       api_calls: requests.length,
       execute_calls: executeCalls.length,
       submitted_call_replayed: executeCalls.length > 1,
-      discover_hit:
-        searchCalls.some((request, index) => index === 0) &&
-        !(testCase.scenario === 'fallback' && searchCalls.length === 1),
+      discover_hit: searchCalls[0]?.response_ok === true && searchCalls[0]?.candidate_count > 0,
       contract_rejected: contractRejected,
       recovery_attempts: recoveryAttempts,
       fallback_attempted: fallbackAttempted,

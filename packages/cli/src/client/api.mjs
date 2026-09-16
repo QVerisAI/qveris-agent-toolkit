@@ -126,7 +126,12 @@ async function requestJson(
           err.hint = `Purchase credits at ${getSiteUrl(baseUrl)}/pricing`;
           throw err;
         }
-        if (status === 429) throw new CliError("RATE_LIMITED", errorDetail);
+        if (status === 429) {
+          const err = new CliError("RATE_LIMITED", errorDetail);
+          err.status = status;
+          if (jsonBody) err.responseData = jsonBody;
+          throw err;
+        }
         const err = new CliError("API_ERROR", `HTTP ${status}: ${errorDetail || rawText}`);
         err.status = status;
         if (jsonBody) err.responseData = jsonBody;

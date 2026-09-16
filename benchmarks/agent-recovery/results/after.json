@@ -49,7 +49,7 @@
       }
     },
     "discovery": {
-      "hit_rate": 1
+      "hit_rate": 0.8181818181818182
     },
     "fallback": {
       "attempts": 1,
@@ -90,7 +90,10 @@
         "requires_user": false,
         "missing_fields": []
       },
-      "paths": ["/api/v1/search", "/api/v1/tools/execute"]
+      "paths": [
+        "/api/v1/search",
+        "/api/v1/tools/execute"
+      ]
     },
     {
       "id": "service_only",
@@ -121,7 +124,9 @@
         "requires_user": true,
         "missing_fields": []
       },
-      "paths": ["/api/v1/search"]
+      "paths": [
+        "/api/v1/search"
+      ]
     },
     {
       "id": "expired_context",
@@ -152,7 +157,10 @@
         "requires_user": false,
         "missing_fields": []
       },
-      "paths": ["/api/v1/search", "/api/v1/tools/execute"]
+      "paths": [
+        "/api/v1/search",
+        "/api/v1/tools/execute"
+      ]
     },
     {
       "id": "unknown_extension",
@@ -183,7 +191,10 @@
         "requires_user": false,
         "missing_fields": []
       },
-      "paths": ["/api/v1/search", "/api/v1/tools/execute"]
+      "paths": [
+        "/api/v1/search",
+        "/api/v1/tools/execute"
+      ]
     },
     {
       "id": "incomplete_schema",
@@ -214,7 +225,11 @@
         "requires_user": false,
         "missing_fields": []
       },
-      "paths": ["/api/v1/search", "/api/v1/tools/by-ids", "/api/v1/tools/execute"]
+      "paths": [
+        "/api/v1/search",
+        "/api/v1/tools/by-ids",
+        "/api/v1/tools/execute"
+      ]
     },
     {
       "id": "missing_quote",
@@ -245,7 +260,10 @@
         "requires_user": true,
         "missing_fields": []
       },
-      "paths": ["/api/v1/search", "/api/v1/tools/probe"]
+      "paths": [
+        "/api/v1/search",
+        "/api/v1/tools/probe"
+      ]
     },
     {
       "id": "permission_denied",
@@ -261,7 +279,7 @@
       "api_calls": 1,
       "execute_calls": 0,
       "submitted_call_replayed": false,
-      "discover_hit": true,
+      "discover_hit": false,
       "contract_rejected": true,
       "recovery_attempts": 0,
       "fallback_attempted": false,
@@ -276,7 +294,9 @@
         "requires_user": true,
         "missing_fields": []
       },
-      "paths": ["/api/v1/search"]
+      "paths": [
+        "/api/v1/search"
+      ]
     },
     {
       "id": "insufficient_balance",
@@ -307,7 +327,10 @@
         "requires_user": true,
         "missing_fields": []
       },
-      "paths": ["/api/v1/search", "/api/v1/tools/execute"]
+      "paths": [
+        "/api/v1/search",
+        "/api/v1/tools/execute"
+      ]
     },
     {
       "id": "upstream_failure",
@@ -338,7 +361,10 @@
         "requires_user": false,
         "missing_fields": []
       },
-      "paths": ["/api/v1/search", "/api/v1/tools/execute"]
+      "paths": [
+        "/api/v1/search",
+        "/api/v1/tools/execute"
+      ]
     },
     {
       "id": "unknown_settlement",
@@ -391,7 +417,7 @@
       "api_calls": 3,
       "execute_calls": 1,
       "submitted_call_replayed": false,
-      "discover_hit": true,
+      "discover_hit": false,
       "contract_rejected": false,
       "recovery_attempts": 1,
       "fallback_attempted": true,
@@ -406,7 +432,11 @@
         "requires_user": false,
         "missing_fields": []
       },
-      "paths": ["/api/v1/search", "/api/v1/search", "/api/v1/tools/execute"]
+      "paths": [
+        "/api/v1/search",
+        "/api/v1/search",
+        "/api/v1/tools/execute"
+      ]
     }
   ]
 }
