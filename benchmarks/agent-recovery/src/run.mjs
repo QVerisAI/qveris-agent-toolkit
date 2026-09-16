@@ -157,6 +157,8 @@ export async function runFixtureBenchmark(fixturePath = DEFAULT_FIXTURES) {
   const records = [];
   for (const testCase of fixtureSet.cases) {
     const originalFetch = globalThis.fetch;
+    const originalExitCode = process.exitCode;
+    process.exitCode = undefined;
     const requests = [];
     const handleRequest = handlerFor(testCase);
     globalThis.fetch = async (url, options = {}) => {
@@ -183,6 +185,7 @@ export async function runFixtureBenchmark(fixturePath = DEFAULT_FIXTURES) {
     } catch (caught) {
       error = caught;
     } finally {
+      process.exitCode = originalExitCode;
       globalThis.fetch = originalFetch;
     }
     const outcome = classify(error, output);

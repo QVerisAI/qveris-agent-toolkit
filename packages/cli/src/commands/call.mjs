@@ -691,7 +691,7 @@ async function executeCall({
   } catch (err) {
     spinner.stop();
     const executionId = err?.responseData?.execution_id;
-    if (contextMeta && executionId) {
+    if (executionId) {
       const settlement = await reconcileSettlement({
         apiKey,
         credentialProvider,
@@ -699,24 +699,29 @@ async function executeCall({
         executionId,
         timeoutMs,
       });
-      const nextAction = buildNextAction("wait_and_reconcile", {
+      const settlementFinal = settlement.status === "final";
+      const status = settlementFinal ? "settlement_final" : "unknown_settlement";
+      const action = settlementFinal ? "review_settlement" : "wait_and_reconcile";
+      const reason = settlementFinal ? "settlement_final" : "settlement_not_final";
+      const nextAction = buildNextAction(action, {
         automatic: false,
         requiresUser: false,
-        reason: "settlement_not_final",
+        reason,
       });
       if (flags.json) {
         const result = {
           success: false,
-          status: "unknown_settlement",
+          status,
           execution_id: executionId,
-          context_handoff: contextMeta,
+          ...(contextMeta && { context_handoff: contextMeta }),
           settlement,
           next_action: nextAction,
         };
         outputJson(result);
+        process.exitCode = process.exitCode || err.exitCode || 1;
         return result;
       }
-      err.action = "wait_and_reconcile";
+      err.action = action;
       err.nextAction = nextAction;
       err.settlement = settlement;
     }

@@ -29,4 +29,5 @@ test('fixture benchmark covers every required recovery class without production 
   assert.equal(result.summary.usable_tool_false_rejection_rate, 0);
   assert.equal(result.summary.provider_tool_fallback_success_rate, 1);
   assert.ok(result.records.every((record) => record.expected_outcome_observed));
+  assert.equal(process.exitCode, undefined);
 });

@@ -734,6 +734,8 @@ test("one current same-service candidate is validated and used as a safe pre-cal
 });
 
 test("unknown settlement triggers one bounded usage and ledger reconciliation", async () => {
+  const previousExitCode = process.exitCode;
+  process.exitCode = undefined;
   await withMockFetch(
     (request) => {
       if (request.url.pathname.endsWith("/search")) {
@@ -766,12 +768,87 @@ test("unknown settlement triggers one bounded usage and ledger reconciliation", 
       assert.equal(result.settlement.usage_checked, true);
       assert.equal(result.settlement.ledger_checked, true);
       assert.equal(result.next_action.action, "wait_and_reconcile");
+      assert.equal(process.exitCode, 1);
       assert.deepEqual(
         requests.map((request) => request.url.pathname),
         ["/api/v1/search", "/api/v1/tools/execute", "/api/v1/auth/usage/history/v2", "/api/v1/auth/credits/ledger"],
       );
     },
   );
+  process.exitCode = previousExitCode;
+});
+
+test("ordinary calls with an execution ID reconcile instead of recommending replay", async () => {
+  const previousExitCode = process.exitCode;
+  process.exitCode = undefined;
+  await withMockFetch(
+    (request) => {
+      if (request.url.pathname.endsWith("/tools/execute")) {
+        return response({ message: "gateway timed out", execution_id: "exec-direct" }, 504);
+      }
+      if (request.url.pathname.endsWith("/auth/usage/history/v2")) {
+        assert.equal(request.url.searchParams.get("execution_id"), "exec-direct");
+        return response({ items: [{ execution_id: "exec-direct", charge_outcome: "pending" }], total: 1 });
+      }
+      if (request.url.pathname.endsWith("/auth/credits/ledger")) return response({ items: [], total: 0 });
+      throw new Error(`Unexpected request: ${request.url.pathname}`);
+    },
+    async (requests) => {
+      const output = await captureOutput(() =>
+        runCall("provider.company.lookup.v1", {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          discoveryId: "direct-search",
+          json: true,
+        }),
+      );
+      const result = JSON.parse(output);
+      assert.equal(result.status, "unknown_settlement");
+      assert.equal(result.execution_id, "exec-direct");
+      assert.equal(result.context_handoff, undefined);
+      assert.equal(result.next_action.action, "wait_and_reconcile");
+      assert.equal(process.exitCode, 1);
+      assert.deepEqual(
+        requests.map((request) => request.url.pathname),
+        ["/api/v1/tools/execute", "/api/v1/auth/usage/history/v2", "/api/v1/auth/credits/ledger"],
+      );
+    },
+  );
+  process.exitCode = previousExitCode;
+});
+
+test("final settlement evidence stops the reconciliation loop", async () => {
+  const previousExitCode = process.exitCode;
+  process.exitCode = undefined;
+  await withMockFetch(
+    (request) => {
+      if (request.url.pathname.endsWith("/tools/execute")) {
+        return response({ message: "gateway timed out", execution_id: "exec-final" }, 504);
+      }
+      if (request.url.pathname.endsWith("/auth/usage/history/v2")) {
+        return response({ items: [{ execution_id: "exec-final", charge_outcome: "charged" }], total: 1 });
+      }
+      if (request.url.pathname.endsWith("/auth/credits/ledger")) return response({ items: [], total: 0 });
+      throw new Error(`Unexpected request: ${request.url.pathname}`);
+    },
+    async () => {
+      const output = await captureOutput(() =>
+        runCall("provider.company.lookup.v1", {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          discoveryId: "direct-search",
+          json: true,
+        }),
+      );
+      const result = JSON.parse(output);
+      assert.equal(result.status, "settlement_final");
+      assert.equal(result.settlement.status, "final");
+      assert.equal(result.next_action.action, "review_settlement");
+      assert.equal(result.next_action.reason, "settlement_final");
+      assert.equal(process.exitCode, 1);
+    },
+  );
+  process.exitCode = previousExitCode;
 });
 
 test("context call fails closed on malformed discovery or probe responses", async () => {
