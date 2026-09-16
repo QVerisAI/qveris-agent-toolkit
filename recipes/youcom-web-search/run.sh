@@ -102,8 +102,9 @@ echo "Execution ID: $execution_id"
 
 # A 200 response can still report a failed execution (success: false,
 # e.g. invalid params or a provider failure) — check before treating the
-# paid call as successful.
-if [[ $(jq -r '.success // "true"' <<<"$execution") == "false" ]]; then
+# paid call as successful. Test .success == false directly: jq's // operator
+# treats an explicit false as absent, which would silently pass this guard.
+if jq -e '.success == false' >/dev/null <<<"$execution"; then
     echo
     echo "❌ You.com execution failed: $(jq -r '.error_message // "no error detail"' <<<"$execution")"
     exit 1

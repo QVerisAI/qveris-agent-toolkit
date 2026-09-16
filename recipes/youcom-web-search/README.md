@@ -70,9 +70,11 @@ execution=$(qveris call "$tool_id" \
   --json)
 
 # 5. Extract execution ID for audit, and verify the execution actually
-#    succeeded — a 200 response can still carry success: false
+#    succeeded — a 200 response can still carry success: false.
+#    Note: test `.success == false` directly; jq's `//` treats an explicit
+#    false as absent, so `.success // "true"` would never report a failure.
 execution_id=$(echo "$execution" | jq -r '.execution_id')
-if [[ $(echo "$execution" | jq -r '.success // "true"') == "false" ]]; then
+if jq -e '.success == false' >/dev/null <<<"$execution"; then
   echo "Execution failed: $(echo "$execution" | jq -r '.error_message // "no error detail"')" && exit 1
 fi
 
