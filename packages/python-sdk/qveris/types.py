@@ -174,6 +174,7 @@ class ExecuteResultTruncated(QverisModel):
 class ToolExecutionResponse(QverisModel):
     execution_id: str
     success: bool
+    next_action: Optional[Dict[str, Any]] = None
     result: Optional[Any] = Field(default=None, repr=False)
     error_message: Optional[str] = None
     elapsed_time_ms: Optional[float] = None

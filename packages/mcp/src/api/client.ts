@@ -322,7 +322,39 @@ export class QverisClient {
    */
   async executeTool(toolId: string, request: ExecuteRequest): Promise<ExecuteResponse> {
     const endpoint = `/tools/execute?tool_id=${encodeURIComponent(toolId)}`;
-    return this.request<ExecuteResponse>('call', 'POST', endpoint, request, EXECUTE_TIMEOUT_MS);
+    const result = await this.request<ExecuteResponse>('call', 'POST', endpoint, request, EXECUTE_TIMEOUT_MS);
+    const executionId = executionIdFrom(result) ?? null;
+    if (typeof result?.success === 'boolean' && executionId) {
+      if (result.success === false) {
+        return {
+          ...result,
+          next_action: {
+            action: 'reconcile_settlement',
+            automatic: false,
+            requires_user: false,
+            missing_fields: [],
+            reason: 'call_failed_after_submission',
+          },
+        };
+      }
+      return result;
+    }
+    const error: ApiError = {
+      status: 200,
+      message: 'Call response did not match the expected contract',
+      ...(executionId && { details: { execution_id: executionId } }),
+      observability: {
+        source: 'qveris_api',
+        operation: 'call',
+        method: 'POST',
+        endpoint,
+        url: `${this.baseUrl}${endpoint}`,
+        timeout_ms: EXECUTE_TIMEOUT_MS,
+        http_status: 200,
+        error_type: 'invalid_response',
+      },
+    };
+    throw error;
   }
 
   /**
@@ -429,6 +461,15 @@ function getErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof Error && error.message) return error.message;
   if (typeof error === 'string' && error) return error;
   return fallback;
+}
+
+function executionIdFrom(value: unknown): string | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const record = value as { execution_id?: unknown; data?: unknown };
+  if (typeof record.execution_id === 'string' && record.execution_id.trim()) return record.execution_id;
+  if (!record.data || typeof record.data !== 'object') return undefined;
+  const enveloped = (record.data as { execution_id?: unknown }).execution_id;
+  return typeof enveloped === 'string' && enveloped.trim() ? enveloped : undefined;
 }
 
 function getErrorCause(error: unknown): string | undefined {

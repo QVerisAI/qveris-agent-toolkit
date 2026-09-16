@@ -160,6 +160,9 @@ export interface ToolInfo {
   /** Unique identifier for the tool (used in call) */
   tool_id: string;
 
+  /** Stable public service identity when the backend can prove provider equivalence. */
+  service_id?: string;
+
   /** Human-readable display name */
   name?: string;
 
@@ -429,6 +432,9 @@ export interface ExecuteResponse {
   /** Whether the execution completed successfully */
   success: boolean;
 
+  /** Recovery guidance when execution failed; added client-side when absent. */
+  next_action?: NextAction;
+
   /**
    * Error message if execution failed.
    * Common reasons: insufficient balance, quota exceeded, invalid parameters.
@@ -639,7 +645,15 @@ export interface QverisClientConfig {
  * Error response from the Qveris API.
  */
 export type ApiOperation = 'discover' | 'inspect' | 'probe' | 'call' | 'credits' | 'usage_history' | 'credits_ledger';
-export type ApiErrorType = 'http_error' | 'invalid_json' | 'timeout' | 'network_error';
+export type ApiErrorType = 'http_error' | 'invalid_json' | 'invalid_response' | 'timeout' | 'network_error';
+
+export interface NextAction {
+  action: string;
+  automatic: boolean;
+  requires_user: boolean;
+  missing_fields: string[];
+  reason?: string;
+}
 
 export interface ApiObservability {
   source: 'qveris_api';
@@ -669,4 +683,7 @@ export interface ApiError {
 
   /** Lower-level transport or runtime cause when available. */
   cause?: string;
+
+  /** Stable recovery guidance; callers do not need internal contract versions or evidence digests. */
+  next_action?: NextAction;
 }

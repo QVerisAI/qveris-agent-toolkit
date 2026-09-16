@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Public API errors now expose a stable machine-readable `next_action` recovery contract without requiring callers to interpret internal contract metadata.
+
 ## [0.8.4] - 2026-09-09
 
 ### Changed

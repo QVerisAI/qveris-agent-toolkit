@@ -577,6 +577,52 @@ describe('QverisClient', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
+    it('should reject a Call response without an execution ID', async () => {
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: new Headers(),
+        json: async () => ({ success: false, error_message: 'provider failed' }),
+      });
+
+      await expect(
+        client.executeTool('weather-tool', {
+          search_id: 'search-123',
+          parameters: {},
+        }),
+      ).rejects.toMatchObject({
+        status: 200,
+        observability: { operation: 'call', error_type: 'invalid_response' },
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should add settlement guidance to a failed Call response with an execution ID', async () => {
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: new Headers(),
+        json: async () => ({
+          execution_id: 'exec-failed',
+          success: false,
+          error_message: 'provider failed',
+          next_action: { action: 'retry', automatic: true, requires_user: false, missing_fields: [] },
+        }),
+      });
+
+      const result = await client.executeTool('weather-tool', {
+        search_id: 'search-123',
+        parameters: {},
+      });
+      expect(result.next_action).toMatchObject({
+        action: 'reconcile_settlement',
+        requires_user: false,
+        reason: 'call_failed_after_submission',
+      });
+    });
+
     it.each(PAID_CALL_POLICY.read_operations.retryable_statuses)(
       'should single-submit a paid call on HTTP %s',
       async (status) => {

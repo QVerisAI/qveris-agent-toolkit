@@ -358,15 +358,49 @@ export class Qveris {
     };
     const timeoutMs = options.timeoutMs ?? EXECUTE_TIMEOUT_MS;
     const compatibilityMode = options.compatibilityMode ?? 'strict';
+    const validateResponse = (result: ExecuteResponse): ExecuteResponse => {
+      const executionId =
+        typeof result?.execution_id === 'string' && result.execution_id.trim() ? result.execution_id : null;
+      if (typeof result?.success === 'boolean' && executionId) {
+        if (result.success === false) {
+          return {
+            ...result,
+            next_action: {
+              action: 'reconcile_settlement',
+              automatic: false,
+              requires_user: false,
+              missing_fields: [],
+              reason: 'call_failed_after_submission',
+            },
+          };
+        }
+        return result;
+      }
+      throw new QverisApiError({
+        status: 200,
+        message: 'Call response did not match the expected contract',
+        ...(executionId && { details: { execution_id: executionId } }),
+        observability: {
+          source: 'qveris_api',
+          operation: 'call',
+          method: 'POST',
+          endpoint,
+          url: `${this.baseUrl}${endpoint}`,
+          timeout_ms: timeoutMs,
+          http_status: 200,
+          error_type: 'invalid_response',
+        },
+      });
+    };
     try {
-      return await this.request<ExecuteResponse>('call', 'POST', endpoint, body, timeoutMs);
+      return validateResponse(await this.request<ExecuteResponse>('call', 'POST', endpoint, body, timeoutMs));
     } catch (error) {
       if (compatibilityMode !== 'legacyOptionalFields') throw error;
       const unsupported = unsupportedOptionalFields(error, new Set(['respond_with']));
       if (unsupported.length === 0) throw error;
       globalThis.console?.warn('QVeris legacyOptionalFields compatibility may resubmit a paid call and is deprecated.');
       delete body.respond_with;
-      return this.request<ExecuteResponse>('call', 'POST', endpoint, body, timeoutMs);
+      return validateResponse(await this.request<ExecuteResponse>('call', 'POST', endpoint, body, timeoutMs));
     }
   }
 
@@ -531,7 +565,9 @@ export class Qveris {
             });
           }
 
-          return normalizeCreditBalanceResponse(this.unwrapEnvelope<T>(payload, requestContext));
+          return normalizeCreditBalanceResponse(
+            this.unwrapEnvelope<T>(payload, requestContext, response.status, extractRequestId(response)),
+          );
         }
       } catch (err: unknown) {
         if (err instanceof QverisApiError) {
@@ -565,7 +601,12 @@ export class Qveris {
    * through. A failure envelope throws before any result parsing, matching
    * the Python SDK behavior.
    */
-  private unwrapEnvelope<T>(payload: unknown, context: ApiObservability): T {
+  private unwrapEnvelope<T>(
+    payload: unknown,
+    context: ApiObservability,
+    transportStatus: number,
+    requestId?: string,
+  ): T {
     if (
       payload !== null &&
       typeof payload === 'object' &&
@@ -575,11 +616,17 @@ export class Qveris {
     ) {
       const envelope = payload as ApiEnvelope<T>;
       if (envelope.status !== 'success') {
+        const status = envelope.status_code ?? transportStatus;
         throw new QverisApiError({
-          status: envelope.status_code ?? 400,
+          status,
           message: envelope.message ?? `API returned status "${envelope.status}"`,
           details: payload,
-          observability: withErrorContext(context, 'http_error', envelope.status_code ?? 400),
+          observability: withErrorContext(
+            context,
+            status >= 200 && status < 300 ? 'invalid_response' : 'http_error',
+            status,
+            requestId,
+          ),
         });
       }
       return envelope.data;

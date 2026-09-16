@@ -15,7 +15,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Report HTTP 403 responses as actionable permission failures instead of treating every 403 as an invalid API key.
 - Return structured recovery metadata (`retryable`, `action`, `missing_fields`, `fallback_available`, and current candidates) for context failures; service-only contexts now return candidates without guessing a tool.
 - Use deterministic exact-ID discovery for tool contexts, validate parameters with JSON type semantics (including integers), treat every ambiguous/non-free price signal as paid risk, reject unsupported `--max-credits` context calls instead of claiming a local quote is a hard cap, and bound context nesting during safe validation.
-- Fail closed when the published exact-tool contract does not declare side effects and idempotency; explicit confirmation flags never override missing safety metadata.
+- Warn when side-effect or idempotency metadata is absent while retaining strict single-submit Call behavior; only explicit dangerous or non-idempotent signals require confirmation.
+- Added bounded service-identity fallback, unknown-settlement Usage/Ledger reconciliation, and machine-readable `next_action` guidance.
 
 ## [0.11.3] - 2026-09-09
 

@@ -611,6 +611,16 @@ Error message
 
 `Error.name`
 
+##### next\_action
+
+> `readonly` **next\_action**: [`NextAction`](#nextaction)
+
+Machine-readable recovery guidance. Paid calls are never replayed automatically.
+
+###### Implementation of
+
+[`ApiError`](#apierror).[`next_action`](#next_action-1)
+
 ##### observability?
 
 > `readonly` `optional` **observability?**: [`ApiObservability`](#apiobservability)
@@ -912,6 +922,12 @@ Original error details if available
 > **message**: `string`
 
 Error message
+
+##### next\_action?
+
+> `optional` **next\_action?**: [`NextAction`](#nextaction)
+
+Stable recovery guidance; callers do not need internal contract versions or evidence digests.
 
 ##### observability?
 
@@ -1558,6 +1574,12 @@ Unique identifier for this execution record
 
 Execution duration in seconds
 
+##### next\_action?
+
+> `optional` **next\_action?**: [`NextAction`](#nextaction)
+
+Recovery guidance when execution failed; added client-side when absent.
+
 ##### parameters?
 
 > `optional` **parameters?**: `Record`\<`string`, `unknown`\>
@@ -1756,6 +1778,32 @@ Session identifier for tracking
 > `optional` **timeoutMs?**: `number`
 
 Per-request timeout override in milliseconds
+
+***
+
+### NextAction
+
+#### Properties
+
+##### action
+
+> **action**: `string`
+
+##### automatic
+
+> **automatic**: `boolean`
+
+##### missing\_fields
+
+> **missing\_fields**: `string`[]
+
+##### reason?
+
+> `optional` **reason?**: `string`
+
+##### requires\_user
+
+> **requires\_user**: `boolean`
 
 ***
 
@@ -2282,6 +2330,12 @@ Geographic availability of the tool.
 
 Compact reliability grade returned by the routing projection.
 
+##### service\_id?
+
+> `optional` **service\_id?**: `string`
+
+Stable public service identity when the backend can prove provider equivalence.
+
 ##### stats?
 
 > `optional` **stats?**: [`ToolStats`](#toolstats)
@@ -2576,7 +2630,7 @@ Historical success rate (0.0 - 1.0)
 
 ### ApiErrorType
 
-> **ApiErrorType** = `"http_error"` \| `"invalid_json"` \| `"timeout"` \| `"network_error"`
+> **ApiErrorType** = `"http_error"` \| `"invalid_json"` \| `"invalid_response"` \| `"timeout"` \| `"network_error"`
 
 ***
 

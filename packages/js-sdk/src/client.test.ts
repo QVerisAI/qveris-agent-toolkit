@@ -524,6 +524,24 @@ describe('Qveris client', () => {
     expect((error as QverisApiError).message).toContain('quota exhausted');
   });
 
+  it('keeps the transport status when a paid Call returns a 2xx failure envelope', async () => {
+    globalThis.fetch = mockFetch({
+      status: 'failure',
+      message: 'provider failed',
+      data: {},
+    });
+
+    const error = await new Qveris({ apiKey: API_KEY }).call('t.v1', { parameters: {} }).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(QverisApiError);
+    expect((error as QverisApiError).status).toBe(200);
+    expect((error as QverisApiError).observability?.error_type).toBe('invalid_response');
+    expect((error as QverisApiError).next_action).toMatchObject({
+      action: 'review_settlement',
+      requires_user: true,
+      reason: 'execution_id_unavailable',
+    });
+  });
+
   it('throws QverisApiError with parsed message and details on HTTP errors', async () => {
     globalThis.fetch = mockFetch({ error_message: 'bad key' }, 401);
 
@@ -535,6 +553,12 @@ describe('Qveris client', () => {
     expect(apiError.message).toBe('bad key');
     expect(apiError.observability?.operation).toBe('discover');
     expect(apiError.observability?.error_type).toBe('http_error');
+    expect(apiError.next_action).toEqual({
+      action: 'authenticate',
+      automatic: false,
+      requires_user: true,
+      missing_fields: [],
+    });
   });
 
   it('adds a purchase hint on 402 responses', async () => {
@@ -544,6 +568,134 @@ describe('Qveris client', () => {
     const error = await client.call('t.v1', { parameters: {} }).catch((e: unknown) => e);
     expect((error as QverisApiError).message).toContain('Insufficient credits');
     expect((error as QverisApiError).message).toContain('https://qveris.ai/pricing');
+    expect((error as QverisApiError).next_action.action).toBe('add_credits');
+  });
+
+  it('never classifies a paid-call 429 as a safe read retry', async () => {
+    globalThis.fetch = mockFetch({ message: 'rate limited' }, 429);
+
+    const client = new Qveris({ apiKey: API_KEY });
+    const error = await client.call('t.v1', { parameters: {} }).catch((e: unknown) => e);
+    expect((error as QverisApiError).next_action).toEqual({
+      action: 'review_settlement',
+      automatic: false,
+      requires_user: true,
+      missing_fields: [],
+      reason: 'execution_id_unavailable',
+    });
+  });
+
+  it('classifies a malformed paid-call 2xx response as an unknown outcome', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: () => Promise.reject(new SyntaxError('Unexpected end of JSON input')),
+      headers: new Headers(),
+    } as unknown as Response);
+
+    const client = new Qveris({ apiKey: API_KEY });
+    const error = await client.call('t.v1', { parameters: {} }).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(QverisApiError);
+    expect((error as QverisApiError).status).toBe(200);
+    expect((error as QverisApiError).next_action).toEqual({
+      action: 'review_settlement',
+      automatic: false,
+      requires_user: true,
+      missing_fields: [],
+      reason: 'execution_id_unavailable',
+    });
+  });
+
+  it('preserves executable settlement guidance when an uncertain response includes an execution ID', async () => {
+    globalThis.fetch = mockFetch({ message: 'gateway timeout', execution_id: 'exec-uncertain' }, 504);
+
+    const client = new Qveris({ apiKey: API_KEY });
+    const error = await client.call('t.v1', { parameters: {} }).catch((e: unknown) => e);
+    expect((error as QverisApiError).next_action).toEqual({
+      action: 'reconcile_settlement',
+      automatic: false,
+      requires_user: false,
+      missing_fields: [],
+      reason: 'call_outcome_may_be_unknown',
+    });
+  });
+
+  it('prioritizes an execution ID over an HTTP boundary status', async () => {
+    globalThis.fetch = mockFetch({ message: 'balance changed', execution_id: 'exec-boundary' }, 402);
+
+    const client = new Qveris({ apiKey: API_KEY });
+    const error = await client.call('t.v1', { parameters: {} }).catch((e: unknown) => e);
+    expect((error as QverisApiError).next_action).toMatchObject({
+      action: 'reconcile_settlement',
+      requires_user: false,
+    });
+  });
+
+  it('does not allow remote recovery guidance to override paid-call evidence', () => {
+    const error = new QverisApiError({
+      status: 504,
+      message: 'gateway timeout',
+      details: { data: { execution_id: 'exec-enveloped' } },
+      next_action: { action: 'retry', automatic: true, requires_user: false, missing_fields: [] },
+      observability: {
+        source: 'qveris_api',
+        operation: 'call',
+        method: 'POST',
+        endpoint: '/tools/execute',
+        url: 'https://unit.test/tools/execute',
+        timeout_ms: 1000,
+      },
+    });
+
+    expect(error.next_action).toMatchObject({
+      action: 'reconcile_settlement',
+      automatic: false,
+      requires_user: false,
+    });
+  });
+
+  it('rejects a failed Call response that omits its execution ID', async () => {
+    const fetchMock = mockFetch({ success: false, error_message: 'provider failed' });
+    globalThis.fetch = fetchMock;
+
+    const client = new Qveris({ apiKey: API_KEY });
+    const error = await client.call('t.v1', { parameters: {} }).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(QverisApiError);
+    expect((error as QverisApiError).next_action).toMatchObject({
+      action: 'review_settlement',
+      requires_user: true,
+      reason: 'execution_id_unavailable',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('adds settlement guidance to a failed Call response with an execution ID', async () => {
+    globalThis.fetch = mockFetch({
+      execution_id: 'exec-failed',
+      success: false,
+      error_message: 'provider failed',
+      next_action: { action: 'retry', automatic: true, requires_user: false, missing_fields: [] },
+    });
+
+    const result = await new Qveris({ apiKey: API_KEY }).call('t.v1', { parameters: {} });
+    expect(result.next_action).toMatchObject({
+      action: 'reconcile_settlement',
+      requires_user: false,
+      reason: 'call_failed_after_submission',
+    });
+  });
+
+  it.each([400, 422])('requires parameter correction for a rejected Call HTTP %s', async (status) => {
+    globalThis.fetch = mockFetch({ message: 'invalid parameters' }, status);
+
+    const client = new Qveris({ apiKey: API_KEY });
+    const error = await client.call('t.v1', { parameters: {} }).catch((e: unknown) => e);
+    expect((error as QverisApiError).next_action).toMatchObject({
+      action: 'correct_parameters',
+      requires_user: true,
+      reason: 'invalid_call_request',
+    });
   });
 
   it('usage() issues a GET with query filters and unwraps the envelope', async () => {

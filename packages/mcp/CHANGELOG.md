@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- MCP success/error payloads now include machine-readable `next_action` guidance for authentication, required parameters, billing, retries, and unknown Call settlement.
+
 ## [0.14.5] - 2026-09-10
 
 ### Changed
