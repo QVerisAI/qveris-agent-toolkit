@@ -10,6 +10,7 @@ const NOW_MS = 1_800_000_000_000;
 const NOW_SECONDS = Math.floor(NOW_MS / 1000);
 const TEST_API_KEY = ["sk", "test"].join("-");
 const SENSITIVE_API_KEY_FIELD = ["api", "key"].join("_");
+const fixtureValue = (...parts) => parts.join("");
 
 function context(overrides = {}) {
   return JSON.stringify({
@@ -157,13 +158,13 @@ test("context lifetime can be checked without turning snapshot expiry into autho
 
 test("v1 parser rejects duplicate, credential, PII, payload, and prototype fields without echoing values", () => {
   const embeddedCredentials = [
-    "token sk-abcdefghijklmnopqrstuv",
-    "token ghp_abcdefghijklmnopqrst",
-    "token xoxb-abcdefghijklmnop",
-    "token AKIAABCDEFGHIJKLMNOP",
-    "token AIzaabcdefghijklmnopqrst",
-    "token Bearer abcdefghijklmnopqrstuvwxyz",
-    "token eyJabc.def.ghi",
+    fixtureValue("token ", fixtureValue("sk-", "abcdefghijklmnopqrstuv")),
+    fixtureValue("token ", fixtureValue("ghp_", "abcdefghijklmnopqrst")),
+    fixtureValue("token ", fixtureValue("xoxb-", "abcdefghijklmnop")),
+    fixtureValue("token ", fixtureValue("AKIA", "ABCDEFGHIJKLMNOP")),
+    fixtureValue("token ", fixtureValue("AIza", "abcdefghijklmnopqrst")),
+    fixtureValue("token ", fixtureValue("Bearer ", "abcdefghijklmnopqrstuvwxyz")),
+    fixtureValue("token ", fixtureValue("eyJabc.", "def.", "ghi")),
   ];
   const unsafe = [
     context({ prompt: "private-customer-request" }),
@@ -175,7 +176,7 @@ test("v1 parser rejects duplicate, credential, PII, payload, and prototype field
     context({ task_id: "4111111111111111" }),
     context({ task_id: "GB82WEST12345698765432" }),
     ...embeddedCredentials.map((value) => context({ extensions: { "example.data": { note: value } } })),
-    context({ future_display_hint: "prefix: Bearer abcdefghijklmnopqrstuvwxyz; suffix" }),
+    context({ future_display_hint: fixtureValue("prefix: Bearer ", "abcdefghijklmnopqrstuvwxyz; suffix") }),
     context({ extensions: { "example.data": { note: "contact operator@example.com" } } }),
     context({ extensions: { "example.data": { note: "ssn 123-45-6789" } } }),
     context({ extensions: { "example.data": { note: "card 4111111111111111" } } }),
