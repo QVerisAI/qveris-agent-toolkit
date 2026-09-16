@@ -278,7 +278,7 @@ test("context dry runs bypass execution-only safety checks without submitting a 
         runCall(undefined, {
           apiKey: TEST_API_KEY,
           baseUrl: "https://unit.test/api/v1",
-          context: liveContext(),
+          context: liveContext({ future_display_hint: "compact" }),
           params: '{"symbol":"AAPL"}',
           dryRun: true,
           json: true,
@@ -287,6 +287,13 @@ test("context dry runs bypass execution-only safety checks without submitting a 
       const result = JSON.parse(output);
       assert.equal(result.dry_run, true);
       assert.equal(result.tool_id, "provider.company.lookup.v1");
+      assert.deepEqual(result.context_handoff, {
+        status: "refreshed",
+        stale_input: false,
+        warnings: [{ code: "CONTEXT_FIELD_IGNORED", field: "future_display_hint", action: "ignored" }],
+        validation_steps: ["discover"],
+        price_status: "free",
+      });
       assert.deepEqual(
         requests.map((request) => request.url.pathname),
         ["/api/v1/search"],
@@ -638,6 +645,38 @@ test("context call fails closed on malformed discovery or probe responses", asyn
           context: liveContext(),
         }),
         (error) => error instanceof CliError && error.code === "CONTEXT_PROBE_FAILED",
+      );
+    },
+  );
+
+  await withMockFetch(
+    (request) => {
+      if (request.url.pathname.endsWith("/search")) {
+        return response({
+          search_id: "fresh-search",
+          results: [{ tool_id: "provider.company.lookup.v1" }],
+        });
+      }
+      if (request.url.pathname.endsWith("/tools/by-ids")) {
+        return response({ results: [{ tool_id: "provider.company.lookup.v1" }] });
+      }
+      if (request.url.pathname.endsWith("/tools/probe")) {
+        return response({ schema: { valid: false, violations: { param: "symbol" } } });
+      }
+      throw new Error("Call must not execute after malformed probe violations");
+    },
+    async () => {
+      await assert.rejects(
+        runCall(undefined, {
+          apiKey: TEST_API_KEY,
+          baseUrl: "https://unit.test/api/v1",
+          context: liveContext(),
+        }),
+        (error) =>
+          error instanceof CliError &&
+          error.code === "CONTEXT_PROBE_FAILED" &&
+          Array.isArray(error.missingFields) &&
+          error.missingFields.length === 0,
       );
     },
   );

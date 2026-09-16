@@ -416,9 +416,12 @@ async function resolveCurrentContextTool({
     steps.push("probe");
   }
   if (!schemaAnalysis.complete && probe?.schema?.valid !== true) {
+    const violations = Array.isArray(probe?.schema?.violations) ? probe.schema.violations : [];
     throw contextError("CONTEXT_PROBE_FAILED", "Current probe did not validate the supplied parameters", {
       action: "correct_parameters",
-      missingFields: probe?.schema?.violations?.map((item) => item.param).filter(Boolean) ?? [],
+      missingFields: violations
+        .map((item) => item?.param)
+        .filter((param) => typeof param === "string" && param.length > 0),
     });
   }
   const quoteValidation = quoteRequired ? validateQuote(probe?.quote) : null;
@@ -491,6 +494,7 @@ async function executeCall({
         max_response_size: maxSize,
         ...(flags.respondWith !== undefined && { respond_with: flags.respondWith }),
         ...(flags.model !== undefined && { model: flags.model }),
+        ...(contextMeta && { context_handoff: contextMeta }),
       });
     } else {
       console.log(`\n  ${bold("Dry run")} -- would send:\n`);
