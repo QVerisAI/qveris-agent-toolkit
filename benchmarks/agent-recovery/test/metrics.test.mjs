@@ -135,6 +135,31 @@ test('zero-tolerance safety regressions and settlement toil breach guardrails', 
   );
 });
 
+test('identical repeated settlement observations are deduplicated before scoring', async () => {
+  const dataset = await fixture('fixtures/operational-events.v1.json');
+  const alerts = await fixture('config/alerts.v1.json');
+  const repeated = structuredClone(dataset);
+  const settlements = repeated.tasks.find((task) => task.task_id === 'ordinary_success').calls[0].settlements;
+  settlements.push(structuredClone(settlements[0]));
+
+  const result = evaluateOperationalMetrics(repeated, alerts);
+  assert.equal(result.metrics.duplicate_charge_task_rate.numerator, 0);
+  assert.equal(result.metrics.duplicate_charge_task_rate.denominator, 4);
+  assert.equal(result.metrics.final_settlement_evidence_coverage.rate, 6 / 7);
+});
+
+test('conflicting or unsupported settlement observations are rejected before scoring', async () => {
+  const dataset = await fixture('fixtures/operational-events.v1.json');
+  const conflicting = structuredClone(dataset);
+  const settlements = conflicting.tasks.find((task) => task.task_id === 'ordinary_success').calls[0].settlements;
+  settlements.push({ ...settlements[0], amount_credits: 2 });
+  assert.throws(() => validateOperationalDataset(conflicting), /conflicting observations/);
+
+  const unsupported = structuredClone(dataset);
+  unsupported.tasks.find((task) => task.task_id === 'ordinary_success').calls[0].settlements[0].charge_outcome = 'settled';
+  assert.throws(() => validateOperationalDataset(unsupported), /unsupported charge_outcome/);
+});
+
 test('fail-on-alert exits nonzero and emits GitHub annotations', async (t) => {
   const dataset = await fixture('fixtures/operational-events.v1.json');
   const incident = structuredClone(dataset);

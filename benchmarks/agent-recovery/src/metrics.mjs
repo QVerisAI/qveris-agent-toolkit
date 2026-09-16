@@ -10,6 +10,7 @@ const DEFAULT_INPUT = resolve(HERE, '../fixtures/operational-events.v1.json');
 const DEFAULT_ALERTS = resolve(HERE, '../config/alerts.v1.json');
 const SUBMISSION_OUTCOMES = new Set(['success', 'rejected', 'failed', 'unknown']);
 const FINAL_CHARGE_OUTCOMES = new Set(['charged', 'included', 'failed_not_charged', 'failed_charged_review']);
+const SUPPORTED_CHARGE_OUTCOMES = new Set([...FINAL_CHARGE_OUTCOMES, 'pending']);
 const CHARGE_BEARING_OUTCOMES = new Set(['charged', 'failed_charged_review']);
 const SETTLEMENT_ACTIONS = new Set(['reconcile_settlement', 'wait_and_reconcile', 'review_settlement']);
 const METRIC_DESCRIPTIONS = {
@@ -88,20 +89,28 @@ export function validateOperationalDataset(dataset) {
       }
       if (!nonEmptyString(call.next_action)) throw new Error(`Call ${call.call_id} must declare next_action`);
       if (!Array.isArray(call.settlements)) throw new Error(`Call ${call.call_id} must declare settlements`);
-      const settlementIds = new Set();
+      const settlementsById = new Map();
       for (const settlement of call.settlements) {
-        if (!nonEmptyString(settlement?.settlement_id) || settlementIds.has(settlement.settlement_id)) {
-          throw new Error(
-            `Call ${call.call_id} has an invalid or duplicate settlement_id: ${settlement?.settlement_id ?? '<missing>'}`,
-          );
+        if (!nonEmptyString(settlement?.settlement_id)) {
+          throw new Error(`Call ${call.call_id} has an invalid settlement_id: ${settlement?.settlement_id ?? '<missing>'}`);
         }
-        settlementIds.add(settlement.settlement_id);
         if (!nonEmptyString(settlement.charge_outcome)) {
           throw new Error(`Settlement ${settlement.settlement_id} must declare charge_outcome`);
+        }
+        if (!SUPPORTED_CHARGE_OUTCOMES.has(settlement.charge_outcome)) {
+          throw new Error(`Settlement ${settlement.settlement_id} has an unsupported charge_outcome`);
         }
         if (typeof settlement.amount_credits !== 'number' || settlement.amount_credits < 0) {
           throw new Error(`Settlement ${settlement.settlement_id} must declare a non-negative amount_credits`);
         }
+        const previous = settlementsById.get(settlement.settlement_id);
+        if (
+          previous &&
+          (previous.charge_outcome !== settlement.charge_outcome || previous.amount_credits !== settlement.amount_credits)
+        ) {
+          throw new Error(`Call ${call.call_id} has conflicting observations for ${settlement.settlement_id}`);
+        }
+        settlementsById.set(settlement.settlement_id, settlement);
       }
     }
   }
