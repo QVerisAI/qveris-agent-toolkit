@@ -81,9 +81,21 @@ param_names=$(jq -r '[.results[0].params[]?.name] | join(" ")' <<<"$inspect_resu
 has_param() {
     [[ " $param_names " == *" $1 "* ]]
 }
-query_param="query"
-if has_param "q" && ! has_param "query"; then
+# Map the search term onto a field the capability actually declares.
+# Fail closed when a nonempty schema declares neither "query" nor "q":
+# sending an undeclared field would make strict tools reject the paid call.
+if [[ -z "$param_names" ]]; then
+    # No schema published; send the minimal common shape.
+    query_param="query"
+elif has_param "query"; then
+    query_param="query"
+elif has_param "q"; then
     query_param="q"
+else
+    echo "❌ Capability declares no supported search field (expected \"query\" or \"q\")."
+    echo "   Declared parameters: ${param_names// /, }"
+    echo "   Refusing to send an undeclared parameter and risk a failed paid call."
+    exit 1
 fi
 params="{\"$query_param\":\"latest AI breakthroughs 2026\"}"
 if has_param "count"; then

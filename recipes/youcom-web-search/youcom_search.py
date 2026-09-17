@@ -174,10 +174,20 @@ class YouComSearchClient:
         if not declared:
             # No schema available; send the minimal common shape.
             return {"query": query, "count": count}
-        if "q" in declared and "query" not in declared:
+        if "query" in declared:
+            params["query"] = query
+        elif "q" in declared:
             params["q"] = query
         else:
-            params["query"] = query
+            # A nonempty schema that declares neither supported search
+            # field: sending an undeclared "query" would make strict
+            # capabilities reject the paid call. Fail closed instead —
+            # the RuntimeError handlers report this as "not executed".
+            raise RuntimeError(
+                "Capability declares no supported search field (expected "
+                f"'query' or 'q'; declared: {declared}). Refusing to send "
+                "an undeclared parameter."
+            )
         if "count" in declared:
             params["count"] = count
         return params
