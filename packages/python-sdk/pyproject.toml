@@ -15,7 +15,7 @@ dependencies = [
     "httpx>=0.25.0",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
-    "openai>=1.0.0",  # Default provider
+    "openai>=1.109.1",  # Default provider
 ]
 
 [project.optional-dependencies]
