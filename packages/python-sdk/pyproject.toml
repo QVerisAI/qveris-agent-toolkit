@@ -33,7 +33,7 @@ openai-agents = [
 # `dev` — its integration test is importorskip-gated and run against an
 # on-demand install.
 crewai = [
-    "crewai>=0.80.0; python_version >= '3.10'",
+    "crewai>=0.203.2; python_version >= '3.10'",
 ]
 # These three frameworks require Python >=3.10. Only their lightweight/core
 # packages are adapter dependencies; install a model-provider package as well
