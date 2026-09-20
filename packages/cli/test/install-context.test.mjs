@@ -164,6 +164,7 @@ test("v1 parser rejects duplicate, credential, PII, payload, and prototype field
     fixtureValue("token ", fixtureValue("AKIA", "ABCDEFGHIJKLMNOP")),
     fixtureValue("token ", fixtureValue("AIza", "abcdefghijklmnopqrst")),
     fixtureValue("token ", fixtureValue("Bearer ", "abcdefghijklmnopqrstuvwxyz")),
+    fixtureValue("token ", fixtureValue("Bearer ", "abcdefghij", "~+/", "abcdefghijkl", "==")),
     fixtureValue("token ", fixtureValue("eyJabc.", "def.", "ghi")),
   ];
   const unsafe = [
