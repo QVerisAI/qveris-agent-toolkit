@@ -28,7 +28,8 @@ const SENSITIVE_FIELD_PATTERN =
   /(?:^|[_-])(?:api[_-]?key|authorization|auth[_-]?token|access[_-]?token|refresh[_-]?token|credential|secret|password|private[_-]?key|cookie|prompt|raw[_-]?(?:payload|prompt)|payload|parameters?|params|user[_-]?data|pii)(?:$|[_-])/i;
 const KNOWN_CREDENTIAL_PATTERN =
   /(?:^|[^A-Za-z0-9])(?:sk-[A-Za-z0-9_-]{20,}|gh[oprsu]_[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{16,}|AKIA[A-Z0-9]{16}|AIza[A-Za-z0-9_-]{20,})(?=$|[^A-Za-z0-9_-])/i;
-const BEARER_CREDENTIAL_PATTERN = /(?:^|[^A-Za-z0-9])Bearer\s+[A-Za-z0-9._-]{12,}(?=$|[^A-Za-z0-9._-])/i;
+// RFC 6750 b64token: ALPHA / DIGIT / "-" / "." / "_" / "~" / "+" / "/", with optional trailing "=".
+const BEARER_CREDENTIAL_PATTERN = /(?:^|[^A-Za-z0-9])Bearer\s+[-A-Za-z0-9._~+/]{12,}={0,}(?=$|[^-A-Za-z0-9._~+/=])/i;
 const JWT_PATTERN = /(?:^|[^A-Za-z0-9_-])eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?=$|[^A-Za-z0-9_-])/;
 const EMAIL_PATTERN = /(?:^|[^A-Za-z0-9._%+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?=$|[^A-Za-z0-9.-])/;
 const US_SSN_PATTERN = /(?:^|[^\d])\d{3}-\d{2}-\d{4}(?=$|[^\d])/;
