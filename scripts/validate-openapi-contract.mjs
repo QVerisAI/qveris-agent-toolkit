@@ -32,7 +32,6 @@ const REQUIRED_PATHS = [
 const REQUIRED_SCHEMAS = [
   "PublicSearchResponse",
   "PublicCapabilityResult",
-  "PublicToolParameter",
   "PublicToolStats",
   "PublicBillingRule",
   "PublicExecuteToolResponse",
@@ -44,6 +43,40 @@ const REQUIRED_SCHEMAS = [
   "CreditsLedgerResponse",
   "CreditsLedgerItem",
 ];
+
+const JSON_SCHEMA_TYPES = ["object", "array", "string", "number", "boolean", "null"];
+
+function validateCapabilityParamsSchema(schemas, errors) {
+  const paramsSchema = schemas.PublicCapabilityResult?.properties?.params;
+  if (!paramsSchema || typeof paramsSchema !== "object" || Array.isArray(paramsSchema)) {
+    errors.push("PublicCapabilityResult.params schema is missing");
+    return;
+  }
+
+  // The legacy contract used an array of PublicToolParameter objects. Keep it
+  // valid while old mirrored specs remain in supported branches, but require
+  // the referenced component whenever that shape is advertised.
+  if (paramsSchema.type === "array") {
+    const reference = paramsSchema.items?.$ref;
+    if (reference !== "#/components/schemas/PublicToolParameter") {
+      errors.push("PublicCapabilityResult.params legacy array must reference PublicToolParameter");
+    } else if (!Object.prototype.hasOwnProperty.call(schemas, "PublicToolParameter")) {
+      errors.push("missing referenced component schema: PublicToolParameter");
+    }
+    return;
+  }
+
+  // The current catalog contract preserves provider metadata as any JSON
+  // value. OpenAPI 3.1 expresses that union through a type array.
+  if (!Array.isArray(paramsSchema.type)) {
+    errors.push("PublicCapabilityResult.params must use the legacy array or JSON-value union");
+    return;
+  }
+  const missingTypes = JSON_SCHEMA_TYPES.filter((type) => !paramsSchema.type.includes(type));
+  if (missingTypes.length > 0) {
+    errors.push(`PublicCapabilityResult.params JSON-value union is missing: ${missingTypes.join(", ")}`);
+  }
+}
 
 function fail(errors) {
   console.error("OpenAPI contract validation FAILED:");
@@ -104,6 +137,7 @@ function main() {
       errors.push(`missing required component schema: ${required}`);
     }
   }
+  validateCapabilityParamsSchema(schemas, errors);
 
   if (errors.length > 0) {
     fail(errors);
