@@ -410,7 +410,7 @@ curl -sS -X POST "https://qveris.ai/api/v1/tools/execute?tool_id=openweathermap.
   -d "{\"search_id\":\"YOUR_SEARCH_ID\",\"parameters\":{\"city\":\"London\",\"units\":\"metric\"},\"max_response_size\":20480}"
 ```
 
-若输出超过 `max_response_size`，响应会包含 `truncated_content` 和临时的 `full_content_file_url`。
+在兼容自动交付模式（未传 `respond_with`）下，输出超过 `max_response_size` 时，响应会包含 `truncated_content` 和临时的 `full_content_file_url`。显式传入 `respond_with: "full"` 则要求完整内联的 `result.data`；超过平台硬上限时会以 `response_too_large` 失败。
 
 **Python**
 

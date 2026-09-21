@@ -408,7 +408,7 @@ curl -sS -X POST "https://qveris.ai/api/v1/tools/execute?tool_id=openweathermap.
   -d "{\"search_id\":\"YOUR_SEARCH_ID\",\"parameters\":{\"city\":\"London\",\"units\":\"metric\"},\"max_response_size\":20480}"
 ```
 
-If output exceeds `max_response_size`, the response includes `truncated_content` plus a temporary `full_content_file_url`.
+With compatibility auto-delivery (no `respond_with`), output over `max_response_size` includes `truncated_content` plus a temporary `full_content_file_url`. Explicit `respond_with: "full"` instead requires complete inline `result.data` or fails with `response_too_large` at the platform hard limit.
 
 **Python**
 
