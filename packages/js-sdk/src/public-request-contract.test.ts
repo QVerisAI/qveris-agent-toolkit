@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, expect, test, vi } from 'vitest';
 import { Qveris, type CallOptions, type ProbeOptions } from './client.js';
+import { getQverisTools } from './integrations/ai.js';
 
 interface RequestContract {
   body: Record<string, unknown>;
@@ -11,6 +12,31 @@ const contracts = JSON.parse(
 ) as Record<'call' | 'probe', RequestContract>;
 
 afterEach(() => vi.unstubAllGlobals());
+
+test.each([undefined, 'tenant-user', '用户/tenant-a'])(
+  'adapter preserves host OAuth identity through actual HTTP: %s',
+  async (subUserId) => {
+    const fetch = vi
+      .fn()
+      .mockImplementation(() =>
+        Promise.resolve(new Response(JSON.stringify({ execution_id: 'exec-adapter', success: true }), { status: 200 })),
+      );
+    vi.stubGlobal('fetch', fetch);
+    const client = new Qveris({ apiKey: '<fixture-key>' });
+    await client.probe('tool-fixture', { subUserId });
+    const tools = getQverisTools(client, { subUserId });
+    await tools.qveris_call.execute!(
+      { tool_id: 'tool-fixture', params_to_tool: {} },
+      { toolCallId: 'call-fixture', messages: [] },
+    );
+    expect(fetch).toHaveBeenCalledTimes(2);
+    for (const [, init] of fetch.mock.calls as [string, RequestInit][]) {
+      const body = JSON.parse(init.body as string);
+      expect(Object.hasOwn(body, 'sub_user_id')).toBe(subUserId !== undefined);
+      expect(body.sub_user_id).toBe(subUserId);
+    }
+  },
+);
 
 const summaryCases = JSON.parse(
   readFileSync(new URL('../../../contracts/result-delivery.v1.json', import.meta.url), 'utf8'),

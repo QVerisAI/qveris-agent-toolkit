@@ -86,11 +86,20 @@ def build_qveris_workflow(
     *,
     session_id: Optional[str] = None,
     model: Optional[str] = None,
+    sub_user_id: Optional[str] = None,
 ) -> QverisWorkflow:
     """Bind the canonical discover/inspect/call functions to a client."""
 
+    if sub_user_id is not None and (not isinstance(sub_user_id, str) or not sub_user_id.strip()):
+        raise ValueError("sub_user_id must be a non-empty host-controlled identity.")
+
     async def _route(name: str, args: Dict[str, Any]) -> str:
-        result, _is_error, _handled = await client.handle_tool_call(name, args, session_id=session_id)
+        result, _is_error, _handled = await client.handle_tool_call(
+            name,
+            args,
+            session_id=session_id,
+            **({"sub_user_id": sub_user_id} if name == "call" and sub_user_id is not None else {}),
+        )
         return serialize_tool_result(result)
 
     async def qveris_discover(query: str, limit: int = 20) -> str:

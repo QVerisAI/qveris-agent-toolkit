@@ -42,9 +42,16 @@ class FakeClient:
         self.calls: List[Dict[str, Any]] = []
 
     async def handle_tool_call(
-        self, func_name: str, func_args: Dict[str, Any], session_id: Optional[str] = None
+        self,
+        func_name: str,
+        func_args: Dict[str, Any],
+        session_id: Optional[str] = None,
+        *,
+        sub_user_id: Optional[str] = None,
     ) -> Tuple[Any, bool, bool]:
         self.calls.append({"name": func_name, "args": func_args, "session_id": session_id})
+        if sub_user_id is not None:
+            self.calls[-1]["sub_user_id"] = sub_user_id
         if func_name == "discover":
             return {"search_id": "s1", "results": [{"tool_id": "t1"}]}, False, True
         if func_name == "inspect":
@@ -60,7 +67,12 @@ def run(coro: Any) -> Any:
 class AdapterConformance:
     """Inherit and implement :meth:`make_tools` and :meth:`invoke`."""
 
-    def make_tools(self, client: Any, session_id: Optional[str] = None) -> List[Any]:
+    def make_tools(
+        self,
+        client: Any,
+        session_id: Optional[str] = None,
+        sub_user_id: Optional[str] = None,
+    ) -> List[Any]:
         """Return the adapter's tools for ``client`` (its get_qveris_tools)."""
         raise NotImplementedError
 
@@ -119,6 +131,31 @@ class AdapterConformance:
     def test_client_is_required(self) -> None:
         with pytest.raises(TypeError):
             self.make_tools_no_client()
+
+    def test_host_identity_is_bound_per_adapter_and_only_forwarded_to_call(self) -> None:
+        client = FakeClient()
+        adapters = [self.make_tools(client, sub_user_id=identity) for identity in ("tenant-a", "tenant-b", None)]
+        for tools in adapters:
+            self.invoke(self.tool(tools, "qveris_discover"), {"query": "weather", "limit": 1})
+            self.invoke(self.tool(tools, "qveris_inspect"), {"tool_ids": ["t1"]})
+            self.invoke(self.tool(tools, "qveris_call"), {"tool_id": "t1", "params_to_tool": {}})
+        assert [call.get("sub_user_id") for call in client.calls] == [
+            None,
+            None,
+            "tenant-a",
+            None,
+            None,
+            "tenant-b",
+            None,
+            None,
+            None,
+        ]
+        assert all("sub_user_id" not in call["args"] for call in client.calls)
+
+    @pytest.mark.parametrize("identity", ["", " ", "\t\n"])
+    def test_blank_host_identity_is_rejected(self, identity: str) -> None:
+        with pytest.raises(ValueError, match="sub_user_id"):
+            self.make_tools(FakeClient(), sub_user_id=identity)
 
     def test_tool_schemas_expose_described_canonical_parameters(self) -> None:
         for tool in self.make_tools(FakeClient()):

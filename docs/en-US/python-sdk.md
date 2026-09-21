@@ -299,6 +299,8 @@ drift.
 
 When provider OAuth is scoped to an end user, pass the same non-empty `sub_user_id` to `probe` and `call`. Omit it otherwise; it is an identity, not an access token.
 
+For framework tools, bind the authenticated identity in host code: `get_qveris_tools(client, sub_user_id=authenticated_user.id)`. Create a tool set per end user and use the same identity for any host-side Probe. The identity is not exposed in the model tool schema, and model-generated arguments cannot override it.
+
 | Method | REST endpoint | Purpose |
 |--------|---------------|---------|
 | `discover(query, limit=20, session_id=None, view=None, lang=None, timeout=None, correlation_id=None)` | `POST /search` | Find capabilities; `view="routing"` returns compact routing cards (free) |

@@ -21,8 +21,13 @@ class TestLlamaIndexAdapterConformance(AdapterConformance):
     def tool_schema(self, tool: Any) -> Dict[str, Any]:
         return tool.metadata.fn_schema.model_json_schema()
 
-    def make_tools(self, client: Any, session_id: Optional[str] = None) -> List[Any]:
-        return get_qveris_tools(client, session_id=session_id)
+    def make_tools(
+        self,
+        client: Any,
+        session_id: Optional[str] = None,
+        sub_user_id: Optional[str] = None,
+    ) -> List[Any]:
+        return get_qveris_tools(client, session_id=session_id, sub_user_id=sub_user_id)
 
     def make_tools_no_client(self) -> Any:
         return get_qveris_tools()  # type: ignore[call-arg]

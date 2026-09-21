@@ -153,6 +153,8 @@ AI SDK 集成。该页面直接根据 TypeScript 源码重新生成，并由 CI 
 
 当 provider OAuth 按终端用户隔离时，Probe 与 Call 应使用相同的非空 `subUserId`；否则省略。该字段是用户身份，不是令牌。
 
+使用框架工具时，由宿主代码绑定已认证身份：`getQverisTools(qveris, { subUserId: authenticatedUser.id })`。为每个终端用户创建独立工具集合，宿主侧 Probe 使用相同身份。该身份不向模型工具 schema 暴露，也不能被模型生成的参数覆盖。
+
 投影参数仅在显式指定时发送。省略 `respondWith` 时保留兼容的自动交付：`maxResponseSize` 默认 20KB，超限结果使用溢出信封。显式 `respondWith: 'full'` 强制返回完整内联 `result.data`，优先于有限的 `maxResponseSize`；超过平台硬限制时返回 `response_too_large`，不会截断。摘要模式至少保留一种可用载荷：`summary` 对象、无损 `data`，或同时存在的 `truncated_content` 与 `full_content_file_url`。这些字段可以共存；仅凭模式不能保证摘要或下载链接存在。先检查 `success`，再检查字段是否存在；失败的摘要调用保留空 `data` 对象。
 
 付费调用严格 single-submit：不会跟随 HTTP 重定向，`429`/`503` 和投影错误会直接返回，不会重放。已弃用的 `compatibilityMode: 'legacyOptionalFields'` 可显式允许一次删除旧服务拒绝的可选字段后重放；无效投影仍按错误返回。

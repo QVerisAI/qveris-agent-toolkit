@@ -40,7 +40,7 @@ export interface AdapterConformanceOptions {
   /** The adapter's getQverisTools(client, options?). */
   getTools: (
     client: FakeQveris,
-    options?: { sessionId?: string; model?: string },
+    options?: { sessionId?: string; model?: string; subUserId?: string },
   ) => Record<string, { description?: string }>;
   /** Invoke a tool produced by the adapter with raw tool arguments. */
   invoke: (tool: unknown, args: Record<string, unknown>) => Promise<unknown>;
@@ -162,6 +162,34 @@ export function describeQverisAdapterConformance(opts: AdapterConformanceOptions
         toolId: 't1',
         options: { parameters: {}, model: 'router-model-v1' },
       });
+    });
+
+    it('binds host identity per adapter instance and ignores model-supplied identity', async () => {
+      const client = new FakeQveris();
+      const options = { subUserId: 'tenant-a' };
+      const first = getTools(client, options);
+      options.subUserId = 'mutated';
+      const second = getTools(client, { subUserId: 'tenant-b' });
+      const anonymous = getTools(client);
+      for (const tools of [first, second, anonymous]) {
+        await invoke(tools.qveris_call, {
+          tool_id: 't1',
+          sub_user_id: 'forged',
+          subUserId: 'forged',
+        });
+      }
+      expect(client.calls.map(({ options }) => options)).toEqual([
+        { parameters: {}, subUserId: 'tenant-a' },
+        { parameters: {}, subUserId: 'tenant-b' },
+        { parameters: {} },
+      ]);
+      await invoke(first.qveris_discover, { query: 'weather' });
+      await invoke(first.qveris_inspect, { tool_ids: ['t1'] });
+      expect(client.calls.slice(3).map(({ options }) => options)).toEqual([{}, {}]);
+    });
+
+    it.each(['', '   ', '\t\n'])('rejects blank host identity before execution: %j', (subUserId) => {
+      expect(() => getTools(new FakeQveris(), { subUserId })).toThrow('subUserId');
     });
   });
 }

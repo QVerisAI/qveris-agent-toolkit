@@ -288,6 +288,8 @@ Sphinx 会根据 Python 对象与 docstring 重新生成该页面，CI 同时检
 
 当 provider OAuth 按终端用户隔离时，向 `probe` 和 `call` 传入相同的非空 `sub_user_id`；否则省略。该字段是用户身份，不是访问令牌。
 
+使用框架工具时，由宿主代码绑定已认证身份：`get_qveris_tools(client, sub_user_id=authenticated_user.id)`。为每个终端用户创建独立工具集合，宿主侧 Probe 使用相同身份。该身份不向模型工具 schema 暴露，也不能被模型生成的参数覆盖。
+
 | 方法 | REST 端点 | 用途 |
 |------|-----------|------|
 | `discover(query, limit=20, session_id=None, view=None, lang=None, timeout=None, correlation_id=None)` | `POST /search` | 发现能力；`view="routing"` 返回精简 routing card（免费） |

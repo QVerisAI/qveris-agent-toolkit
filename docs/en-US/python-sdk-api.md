@@ -121,7 +121,7 @@ Use this when you need authoritative credit balance movements rather than pre-se
 
 <a id="qveris.QverisClient.handle_tool_call"></a>
 
-#### *async* handle_tool_call(func_name: str, func_args: Dict[str, Any], session_id: str | None = None) → Tuple[Any, bool, bool]
+#### *async* handle_tool_call(func_name: str, func_args: Dict[str, Any], session_id: str | None = None, \*, sub_user_id: str | None = None) → Tuple[Any, bool, bool]
 
 Handle a built-in Qveris tool call from an LLM response.
 
@@ -129,6 +129,7 @@ Handle a built-in Qveris tool call from an LLM response.
   * **func_name** – The name of the function/tool to call
   * **func_args** – The arguments parsed from the LLM response
   * **session_id** – Optional session ID for tracking
+  * **sub_user_id** – Host-controlled OAuth identity; never read from model arguments.
 * **Returns:**
   - result: the tool output (None if not handled)
   - is_error: True if an error occurred

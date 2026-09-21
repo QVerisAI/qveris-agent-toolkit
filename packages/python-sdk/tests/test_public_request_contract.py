@@ -11,10 +11,41 @@ import pytest
 
 from qveris import QverisClient, QverisConfig
 from qveris.errors import QverisApiError
+from qveris.integrations._workflow import build_qveris_workflow
 
 ROOT = Path(__file__).resolve().parents[3]
 CONTRACTS = json.loads((ROOT / "contracts/public-client-requests.v1.json").read_text())
 SCHEMAS = json.loads((ROOT / "docs/openapi/qveris-public-api.openapi.json").read_text())["components"]["schemas"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("identity", [None, "tenant-user", "用户/tenant-a"])
+async def test_adapter_and_dispatch_preserve_only_host_identity_at_http(identity: Optional[str]) -> None:
+    requests = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(json.loads(request.content))
+        return httpx.Response(200, json={"execution_id": "exec-adapter", "success": True})
+
+    client = QverisClient(QverisConfig(api_key="sk-fixture"))
+    client.client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    try:
+        workflow = build_qveris_workflow(client, sub_user_id=identity)
+        result = json.loads(await workflow.call("tool-fixture", {}))
+        assert result["success"] is True
+        for name in ("call", "execute_tool"):
+            _, is_error, handled = await client.handle_tool_call(
+                name,
+                {"tool_id": "tool-fixture", "params_to_tool": {}, "sub_user_id": "forged"},
+                sub_user_id=identity,
+            )
+            assert handled and not is_error
+        assert len(requests) == 3
+        for body in requests:
+            assert ("sub_user_id" in body) == (identity is not None)
+            assert body.get("sub_user_id") == identity
+    finally:
+        await client.close()
 
 
 @pytest.mark.asyncio

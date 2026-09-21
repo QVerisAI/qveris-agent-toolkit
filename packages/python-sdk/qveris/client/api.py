@@ -1280,6 +1280,8 @@ class QverisClient:
         func_name: str,
         func_args: Dict[str, Any],
         session_id: Optional[str] = None,
+        *,
+        sub_user_id: Optional[str] = None,
     ) -> Tuple[Any, bool, bool]:
         """
         Handle a built-in Qveris tool call from an LLM response.
@@ -1288,6 +1290,7 @@ class QverisClient:
             func_name: The name of the function/tool to call
             func_args: The arguments parsed from the LLM response
             session_id: Optional session ID for tracking
+            sub_user_id: Host-controlled OAuth identity; never read from model arguments.
 
         Returns:
             Tuple of (result, is_error, handled) where:
@@ -1334,6 +1337,7 @@ class QverisClient:
                     session_id=session_id,
                     max_response_size=func_args.get("max_response_size"),
                     model=func_args.get("model"),
+                    **({"sub_user_id": sub_user_id} if sub_user_id is not None else {}),
                 )
                 return result.model_dump(), False, True
 

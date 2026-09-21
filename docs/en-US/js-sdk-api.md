@@ -3296,13 +3296,17 @@ The Qveris client to route calls through.
 
 ##### options?
 
-Optional session and model metadata for correlation and quality analysis.
+Host-controlled OAuth identity plus optional session and model metadata.
 
 ###### model?
 
 `string`
 
 ###### sessionId?
+
+`string`
+
+###### subUserId?
 
 `string`
 

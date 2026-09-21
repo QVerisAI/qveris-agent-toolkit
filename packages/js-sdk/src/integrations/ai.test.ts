@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 import { getQverisTools } from './ai.js';
 import { describeQverisAdapterConformance, FakeQveris } from './adapter-conformance.js';
@@ -20,6 +21,9 @@ describe('getQverisTools (Vercel AI SDK specifics)', () => {
     const tools = getQverisTools(new FakeQveris() as never);
     for (const tool of Object.values(tools)) {
       expect((tool as { inputSchema?: unknown }).inputSchema).toBeDefined();
+      const properties = z.toJSONSchema(tool.inputSchema as z.ZodObject).properties;
+      expect(properties).not.toHaveProperty('sub_user_id');
+      expect(properties).not.toHaveProperty('subUserId');
     }
   });
 
