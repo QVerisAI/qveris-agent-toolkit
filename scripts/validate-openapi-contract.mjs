@@ -139,6 +139,15 @@ function main() {
   }
   validateCapabilityParamsSchema(schemas, errors);
 
+  const capabilityProperties = schemas.PublicCapabilityResult?.properties;
+  if (
+    !capabilityProperties ||
+    typeof capabilityProperties !== "object" ||
+    !Object.prototype.hasOwnProperty.call(capabilityProperties, "params")
+  ) {
+    errors.push("missing required property: PublicCapabilityResult.params");
+  }
+
   if (errors.length > 0) {
     fail(errors);
     return;
