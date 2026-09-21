@@ -48,6 +48,7 @@ def get_qveris_tools(
     *,
     session_id: Optional[str] = None,
     model: Optional[str] = None,
+    sub_user_id: Optional[str] = None,
 ) -> List[Any]:
     """Return LlamaIndex tools for the QVeris discover/inspect/call workflow.
 
@@ -57,6 +58,7 @@ def get_qveris_tools(
             ``await client.close()`` when done.
         session_id: Optional session id for correlation/pricing context.
         model: Optional model attribution forwarded only to capability calls.
+        sub_user_id: Host-controlled OAuth identity, matching the identity used for Probe.
 
     Returns:
         Three async LlamaIndex ``FunctionTool`` objects named
@@ -71,7 +73,7 @@ def get_qveris_tools(
     except ImportError as exc:  # pragma: no cover - exercised via install extras
         raise ImportError(_INSTALL_HINT) from exc
 
-    workflow = build_qveris_workflow(client, session_id=session_id, model=model)
+    workflow = build_qveris_workflow(client, session_id=session_id, model=model, sub_user_id=sub_user_id)
 
     return [
         FunctionTool.from_defaults(

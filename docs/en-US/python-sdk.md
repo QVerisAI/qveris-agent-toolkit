@@ -260,6 +260,8 @@ Python applications that intentionally reproduce the flow must validate the same
 
 Paid `call()` requests are strict single-submit by default. The SDK does not follow HTTP redirects or automatically retry `429`/`503`, timeout, or transport failures, and it does not remove a rejected projection field and resubmit. A typed error reports `request_metadata.http_attempts == 1`. If an older service requires the former projection fallback, opt in explicitly:
 
+Omitting `respond_with` preserves compatibility auto-delivery: `max_response_size` defaults to 20KB and oversized results use the overflow envelope. Explicit `respond_with="full"` forces complete inline `result.data` and takes precedence over a finite `max_response_size`; hard-limit failures use `response_too_large`. Summary mode preserves at least one usable payload: a `summary` object, lossless `data`, or `truncated_content` together with `full_content_file_url`. These fields may coexist. Neither statistics nor a URL is guaranteed by the mode alone. Check `success` first, then field availability; failed summary calls retain an empty `data` object.
+
 ```python
 result = await client.call(
     "tool.id",
@@ -295,11 +297,15 @@ drift.
 
 ### `QverisClient`
 
+When provider OAuth is scoped to an end user, pass the same non-empty `sub_user_id` to `probe` and `call`. Omit it otherwise; it is an identity, not an access token.
+
+For framework tools, bind the authenticated identity in host code: `get_qveris_tools(client, sub_user_id=authenticated_user.id)`. Create a tool set per end user and use the same identity for any host-side Probe. The identity is not exposed in the model tool schema, and model-generated arguments cannot override it.
+
 | Method | REST endpoint | Purpose |
 |--------|---------------|---------|
 | `discover(query, limit=20, session_id=None, view=None, lang=None, timeout=None, correlation_id=None)` | `POST /search` | Find capabilities; `view="routing"` returns compact routing cards (free) |
 | `inspect(tool_ids, search_id=None, session_id=None, timeout=None, correlation_id=None)` | `POST /tools/by-ids` | Fetch full capability metadata (free) |
-| `probe(tool_id, parameters=None, checks=None, live_budget="none", timeout=None, correlation_id=None)` | `POST /tools/probe` | Validate parameters and request a zero-cost quote |
+| `probe(tool_id, parameters=None, checks=None, live_budget="none", timeout=None, correlation_id=None, sub_user_id=None)` | `POST /tools/probe` | Validate parameters and request a zero-cost quote |
 | `call(tool_id, parameters, ..., model=None, compatibility_mode="strict", timeout=None, correlation_id=None)` | `POST /tools/execute` | Execute with strict single-submit semantics and optional model attribution |
 | `usage(**filters)` | `GET /auth/usage/history/v2` | Audit request status and charge outcome |
 | `ledger(**filters)` | `GET /auth/credits/ledger` | Inspect final credit balance movements |

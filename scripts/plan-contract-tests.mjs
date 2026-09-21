@@ -41,9 +41,16 @@ export function classifyContractChanges(files, { full = false } = {}) {
       continue;
     }
 
-    if (file.startsWith('docs/openapi/')) {
+    if (
+      file.startsWith('docs/openapi/') ||
+      file.startsWith('contracts/') ||
+      file === 'scripts/result-delivery-contract.test.mjs' ||
+      file === 'scripts/public-capability-contract.test.mjs'
+    ) {
       OPENAPI_TARGETS.forEach((target) => selected.add(target));
     }
+    // The JS suite compiles both handwritten TS surfaces against the wire.
+    if (file === 'packages/mcp/src/types.ts') selected.add('js');
 
     if (SHARED_LINT_FILES.has(file)) {
       packageTargets.forEach((target) => lintTargets.add(target));

@@ -433,29 +433,39 @@ async def test_discover_contract_parses_tool_quality_and_billing() -> None:
         7,
         2.5,
         True,
+        None,
         ["opaque", 3, False],
         [{"name": "x", "type": "custom", "enum": "opaque"}],
     ],
 )
-async def test_discover_contract_accepts_broadened_params_json(params: object) -> None:
+@pytest.mark.parametrize("provider_name", ["Provider", {"en-US": "Provider", "zh-CN": "服务商"}])
+@pytest.mark.parametrize("operation", ["discover", "inspect"])
+async def test_discovery_contract_accepts_provider_owned_json(
+    params: object, provider_name: object, operation: str
+) -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(
             200,
             json={
                 "search_id": "search-params",
-                "results": [{"tool_id": "provider.tool", "params": params}],
+                "results": [{"tool_id": "provider.tool", "params": params, "provider_name": provider_name}],
             },
         )
 
     client = make_client(handler)
     try:
-        response = await client.discover("provider tool")
+        response = (
+            await client.discover("provider tool")
+            if operation == "discover"
+            else await client.inspect(["provider.tool"])
+        )
     finally:
         await client.close()
 
     decoded_params = response.results[0].params
     assert decoded_params == params
     assert type(decoded_params) is type(params)
+    assert response.results[0].provider_name == provider_name
 
 
 @pytest.mark.asyncio
@@ -548,6 +558,13 @@ async def test_probe_contract_posts_zero_cost_defaults_and_parses_results() -> N
             json={
                 "schema": {"valid": True},
                 "quote": {"estimate_credits": 3, "currency": "credits", "exact": True, "basis": "per_call"},
+                "recovery": {
+                    "missing_fields": [],
+                    "safe_fixes": [],
+                    "retryable": False,
+                    "next_action": "execute",
+                    "provider_fallback": False,
+                },
             },
         )
 
@@ -683,6 +700,36 @@ async def test_call_summary_projection_passes_through_and_parses_compact_respons
 
 
 @pytest.mark.asyncio
+async def test_call_explicit_full_with_finite_limit_maps_once() -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        assert json.loads(request.content) == {
+            "parameters": {},
+            "respond_with": "full",
+            "max_response_size": 1024,
+        }
+        return httpx.Response(
+            200, json={"execution_id": "exec-full", "success": True, "result": {"data": {"complete": True}}}
+        )
+
+    client = make_client(handler)
+    try:
+        response = await client.call(
+            "weather.forecast.v1",
+            {},
+            respond_with="full",
+            max_response_size=1024,
+        )
+    finally:
+        await client.close()
+
+    assert len(requests) == 1
+    assert response.result["data"] == {"complete": True}
+
+
+@pytest.mark.asyncio
 async def test_call_projection_retries_only_legacy_extra_field_rejection() -> None:
     payloads = []
 
@@ -703,13 +750,14 @@ async def test_call_projection_retries_only_legacy_extra_field_rejection() -> No
                 {},
                 respond_with="summary",
                 compatibility_mode="legacy_optional_fields",
+                sub_user_id="tenant-user-fixture",
             )
     finally:
         await client.close()
 
     assert payloads == [
-        {"parameters": {}, "respond_with": "summary"},
-        {"parameters": {}},
+        {"parameters": {}, "respond_with": "summary", "sub_user_id": "tenant-user-fixture"},
+        {"parameters": {}, "sub_user_id": "tenant-user-fixture"},
     ]
 
 

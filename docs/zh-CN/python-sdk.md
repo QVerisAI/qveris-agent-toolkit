@@ -251,6 +251,8 @@ CLI 会拒绝敏感/可执行内容、重复/原型键和不支持的必需能�
 
 付费 `call()` 默认严格 single-submit。SDK 不会跟随 HTTP 重定向，不会自动重试 `429`/`503`、超时或 transport 失败，也不会删除被拒绝的投影字段后再次提交；类型化错误会报告 `request_metadata.http_attempts == 1`。如果旧服务仍需要原来的投影降级，可显式选择：
 
+省略 `respond_with` 时保留兼容的自动交付：`max_response_size` 默认 20KB，超限结果使用溢出信封。显式 `respond_with="full"` 强制返回完整内联 `result.data`，优先于有限的 `max_response_size`；超过平台硬限制时返回 `response_too_large`。摘要模式至少保留一种可用载荷：`summary` 对象、无损 `data`，或同时存在的 `truncated_content` 与 `full_content_file_url`。这些字段可以共存；仅凭模式不能保证摘要或下载链接存在。先检查 `success`，再检查字段是否存在；失败的摘要调用保留空 `data` 对象。
+
 ```python
 result = await client.call(
     "tool.id",
@@ -284,11 +286,15 @@ Sphinx 会根据 Python 对象与 docstring 重新生成该页面，CI 同时检
 
 ### `QverisClient`
 
+当 provider OAuth 按终端用户隔离时，向 `probe` 和 `call` 传入相同的非空 `sub_user_id`；否则省略。该字段是用户身份，不是访问令牌。
+
+使用框架工具时，由宿主代码绑定已认证身份：`get_qveris_tools(client, sub_user_id=authenticated_user.id)`。为每个终端用户创建独立工具集合，宿主侧 Probe 使用相同身份。该身份不向模型工具 schema 暴露，也不能被模型生成的参数覆盖。
+
 | 方法 | REST 端点 | 用途 |
 |------|-----------|------|
 | `discover(query, limit=20, session_id=None, view=None, lang=None, timeout=None, correlation_id=None)` | `POST /search` | 发现能力；`view="routing"` 返回精简 routing card（免费） |
 | `inspect(tool_ids, search_id=None, session_id=None, timeout=None, correlation_id=None)` | `POST /tools/by-ids` | 获取能力完整元数据（免费） |
-| `probe(tool_id, parameters=None, checks=None, live_budget="none", timeout=None, correlation_id=None)` | `POST /tools/probe` | 校验参数并请求零成本报价 |
+| `probe(tool_id, parameters=None, checks=None, live_budget="none", timeout=None, correlation_id=None, sub_user_id=None)` | `POST /tools/probe` | 校验参数并请求零成本报价 |
 | `call(tool_id, parameters, ..., model=None, compatibility_mode="strict", timeout=None, correlation_id=None)` | `POST /tools/execute` | 使用严格 single-submit 语义执行能力，并可记录模型归因 |
 | `usage(**filters)` | `GET /auth/usage/history/v2` | 审计请求状态与扣费结果 |
 | `ledger(**filters)` | `GET /auth/credits/ledger` | 查看最终积分余额变动 |

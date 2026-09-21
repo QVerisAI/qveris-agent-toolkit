@@ -15,6 +15,8 @@ import type { ExecuteResponse } from '../types.js';
  * Input parameters for the call tool.
  */
 export interface ExecuteToolInput {
+  /** End-user identity for provider OAuth; use the same value as Probe. */
+  sub_user_id?: string;
   /**
    * The ID of the remote tool to execute.
    * Must be obtained from discover results.
@@ -51,7 +53,7 @@ export interface ExecuteToolInput {
    * will be truncated and a download URL provided for the full content.
    *
    * @default 20480 (20KB)
-   * @minimum -1 (-1 means no limit)
+   * Must be -1 (no limit) or a positive integer.
    */
   max_response_size?: number;
 
@@ -66,6 +68,12 @@ export interface ExecuteToolInput {
 export const executeToolSchema = {
   type: 'object' as const,
   properties: {
+    sub_user_id: {
+      type: 'string',
+      minLength: 1,
+      pattern: '.*\\S.*',
+      description: 'End-user identity for provider OAuth; use the same value as Probe.',
+    },
     tool_id: {
       type: 'string',
       description: 'The ID of the remote tool to execute. Must come from a previous discover call.',
@@ -95,17 +103,19 @@ export const executeToolSchema = {
       description: 'Model that selected and parameterized this capability call.',
     },
     max_response_size: {
-      type: 'number',
+      anyOf: [{ const: -1 }, { type: 'integer', minimum: 1 }],
       description:
-        'Maximum size of response data in bytes. ' +
-        'If tool generates data longer than this, it will be truncated and a download URL provided. ' +
+        'Automatic inline limit measured in UTF-8 bytes. When respond_with is omitted, oversized results use the overflow envelope. ' +
+        'Explicit full takes precedence over a finite value and either returns complete inline data or fails with response_too_large. ' +
         'Use -1 for no limit. Default is 20480 (20KB).',
       default: 20480,
     },
     respond_with: {
       type: 'string',
       pattern: '^(full|summary|fields:.+)$',
-      description: 'Server-side result projection: "full", "summary", or "fields:<JSONPath,...>". Omit for full.',
+      description:
+        'Server-side result projection: omit for compatibility auto-delivery; use "full" to force complete inline data, ' +
+        '"summary", or "fields:<JSONPath,...>".',
     },
   },
   required: ['tool_id', 'search_id', 'params_to_tool'],
@@ -128,12 +138,20 @@ export async function executeExecuteTool(
   if (!isParamsObject(input.params_to_tool)) {
     throw new Error('params_to_tool must be a JSON object.');
   }
+  if (
+    input.max_response_size !== undefined &&
+    input.max_response_size !== -1 &&
+    (!Number.isInteger(input.max_response_size) || input.max_response_size <= 0)
+  ) {
+    throw new Error('max_response_size must be -1 or a positive integer.');
+  }
 
   const response = await client.executeTool(input.tool_id, {
     search_id: input.search_id,
     session_id: input.session_id ?? defaultSessionId,
     ...(input.model !== undefined && { model: input.model }),
     parameters: input.params_to_tool,
+    ...(input.sub_user_id !== undefined && { sub_user_id: input.sub_user_id }),
     max_response_size: input.max_response_size,
     ...(input.respond_with !== undefined && { respond_with: input.respond_with }),
   });

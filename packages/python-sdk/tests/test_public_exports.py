@@ -1,10 +1,13 @@
 from qveris import (
     Agent,
     ApiKeyCredentialProvider,
+    CatalogVerification,
     CredentialContext,
     CredentialProvider,
+    ExecutionRestrictions,
     Message,
     ProbeQuoteResult,
+    ProbeRecoveryAdvice,
     ProbeSchemaResult,
     ProbeSchemaViolation,
     ProbeUnknownResult,
@@ -15,6 +18,7 @@ from qveris import (
     SearchResponse,
     ToolExecutionResponse,
     ToolProbeResponse,
+    VerificationCheck,
 )
 from qveris.client import (
     CALL_TOOL_DEF,
@@ -43,9 +47,17 @@ def test_public_sdk_exports_cover_core_classes_and_models() -> None:
     schema = ProbeSchemaResult(valid=False, violations=[violation])
     quote = ProbeQuoteResult(currency="credits", exact=False, estimate_credits=1.5)
     unknown = ProbeUnknownResult(verdict="unknown", reason="not available")
-    probe = ToolProbeResponse(schema=schema, quote=quote, coverage=unknown, sample=unknown)
+    recovery = ProbeRecoveryAdvice(
+        missing_fields=["city"],
+        safe_fixes=["supply city"],
+        retryable=True,
+        next_action="probe",
+        provider_fallback=False,
+    )
+    probe = ToolProbeResponse(schema=schema, quote=quote, coverage=unknown, sample=unknown, recovery=recovery)
     assert probe.schema_ is schema
     assert probe.quote is quote
+    assert probe.recovery is recovery
 
 
 def test_tool_models_accept_additive_and_multilingual_api_fields() -> None:
@@ -72,6 +84,63 @@ def test_tool_models_accept_additive_and_multilingual_api_fields() -> None:
     assert tool.billing_rule is not None
     assert tool.billing_rule.model_extra == {"x_snapshot": "future-field"}
     assert tool.model_extra == {"x_provider_rank": 1}
+
+
+def test_tool_models_preserve_all_published_parameter_contract_shapes() -> None:
+    values = [
+        {"city": {"type": "string"}},
+        ["opaque"],
+        "opaque",
+        7,
+        1.5,
+        True,
+        None,
+    ]
+
+    for value in values:
+        assert ToolInfo(tool_id="tool-1", params=value).params == value
+
+    typed = ToolInfo(
+        tool_id="tool-1",
+        params=[{"name": "city", "type": "string", "required": True}],
+    )
+    assert typed.params is not None
+    assert isinstance(typed.params[0], ToolParameter)
+
+
+def test_tool_models_expose_typed_fail_closed_verification_metadata() -> None:
+    check = VerificationCheck(name="schema", status="passed", checked_at="2026-09-21T00:00:00Z")
+    verification = CatalogVerification(
+        status="verified",
+        policy_version="2026-09-21",
+        required_checks=["schema"],
+        checks=[check],
+        verified_at="2026-09-21T00:00:00Z",
+        expires_at="2026-09-22T00:00:00Z",
+        test_run_digest="sha256:" + "a" * 64,
+        quality_issues=[],
+    )
+    restrictions = ExecutionRestrictions(
+        callable=True,
+        eligibility="not_required",
+        license="approved",
+        regions={"allow": [], "deny": []},
+        commercial_use="allowed",
+        warnings=[],
+    )
+    tool = ToolInfo(
+        tool_id="tool-1",
+        verification_status="verified",
+        verification=verification,
+        execution_restrictions=restrictions,
+    )
+
+    assert tool.verification.checks[0].name == "schema"
+    assert tool.execution_restrictions.callable is True
+
+    legacy = ToolInfo(tool_id="legacy-tool")
+    assert legacy.verification_status == "unverified"
+    assert legacy.execution_restrictions.callable is False
 
 
 def test_tool_definitions_expose_canonical_names_and_legacy_aliases() -> None:

@@ -10,7 +10,7 @@
  *   QVERIS_API_KEY=sk-... RUN_QVERIS_CALLS=1 npx tsx examples/quickstart.ts
  */
 
-import { getClientOrExplain, shouldCall, supportsParameters } from './_shared.js';
+import { getClientOrExplain, isToolParameterArray, shouldCall, supportsParameters } from './_shared.js';
 
 async function main(): Promise<void> {
   const qveris = getClientOrExplain();
@@ -34,7 +34,7 @@ async function main(): Promise<void> {
     );
     tool = details.results.find((candidate) => supportsParameters(candidate, parameters));
   }
-  if (!tool || !Array.isArray(tool.params)) {
+  if (!tool || !isToolParameterArray(tool.params)) {
     throw new Error('No candidate exposed a current parameter contract with a symbol field.');
   }
   console.log(`selected: ${tool.tool_id} - ${tool.name || tool.description || 'unnamed'}`);

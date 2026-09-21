@@ -184,6 +184,8 @@ First-class typed APIs:
 | `usage(...)` | `GET /auth/usage/history/v2` | Audit request status and charge outcome |
 | `ledger(...)` | `GET /auth/credits/ledger` | Inspect final credit balance movements |
 
+Omitting `respond_with` preserves compatibility auto-delivery with a 20KB default inline limit and overflow envelope. Explicit `respond_with="full"` forces complete inline `result.data`, takes precedence over a finite `max_response_size`, and reports `response_too_large` at the platform hard limit instead of truncating. Summary delivery is independent of `max_response_size`.
+
 Backward-compatible aliases remain available: `search_tools`, `get_tools_by_ids`, and `execute_tool`.
 
 Projection arguments are never sent unless explicitly configured. A paid `call()` is strict single-submit by default: it does not retry `429`/`503`, follow HTTP redirects, retry transport/timeout failures, or replay a rejected optional field. If an older service requires projection fallback, `compatibility_mode="legacy_optional_fields"` explicitly opts into one deprecated replay and records it in `response.request_metadata`.

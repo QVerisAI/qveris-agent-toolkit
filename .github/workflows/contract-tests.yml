@@ -16,6 +16,9 @@ on:
       - "package.json"
       - "package-lock.json"
       - "docs/openapi/**"
+      - "contracts/**"
+      - "scripts/result-delivery-contract.test.mjs"
+      - "scripts/public-capability-contract.test.mjs"
       - "packages/cli/src/**"
       - "packages/cli/test/**"
       - "packages/cli/scripts/**"
@@ -93,6 +96,8 @@ jobs:
         run: node --test scripts/plan-contract-tests.test.mjs
       - name: Test conditional-routing guidance contracts
         run: node --test scripts/conditional-routing-contracts.test.mjs
+      - name: Test public capability and result-delivery contracts
+        run: node --test scripts/public-capability-contract.test.mjs scripts/result-delivery-contract.test.mjs
       - name: Classify changed targets
         id: plan
         env:

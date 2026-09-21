@@ -147,6 +147,8 @@ export interface InspectOptions {
 
 /** Options for {@link Qveris.call}. */
 export interface CallOptions {
+  /** End-user identity for provider OAuth; use the same value for Probe and Call. */
+  subUserId?: string;
   /** Key-value parameters matching the tool's parameter schema */
   parameters: Record<string, unknown>;
   /** The search_id from the discover call that returned this tool */
@@ -155,9 +157,9 @@ export interface CallOptions {
   sessionId?: string;
   /** Model that selected and parameterized this capability call. */
   model?: string;
-  /** Max response bytes before truncation (-1 for no limit, server default 20480) */
+  /** Auto-delivery inline limit in UTF-8 bytes (-1 for unlimited, server default 20480). Explicit full takes precedence. */
   maxResponseSize?: number;
-  /** Server-side result projection. Omit for the legacy/full response. */
+  /** Server-side result projection. Omit for compatibility auto-delivery; explicit full forces complete inline data. */
   respondWith?: 'full' | 'summary' | `fields:${string}`;
   /** Per-request timeout override in milliseconds (default 120s) */
   timeoutMs?: number;
@@ -171,6 +173,8 @@ export interface CallOptions {
 
 /** Options for {@link Qveris.probe}. */
 export interface ProbeOptions {
+  /** End-user identity for provider OAuth readiness checks. */
+  subUserId?: string;
   /** Candidate parameters to validate without executing the capability. */
   parameters?: Record<string, unknown>;
   /** Checks to run. Defaults to schema. */
@@ -202,7 +206,10 @@ export interface ProbeOptions {
  *   return false;
  * };
  * const tool = found.results.find((candidate) => {
- *   if (!candidate.params) return false;
+ *   if (!Array.isArray(candidate.params) || !candidate.params.every((parameter) =>
+ *     parameter !== null && typeof parameter === 'object' && !Array.isArray(parameter) &&
+ *     typeof parameter.name === 'string' && typeof parameter.type === 'string' &&
+ *     typeof parameter.required === 'boolean')) return false;
  *   const definitions = new Map(candidate.params.map((parameter) => [parameter.name, parameter]));
  *   if (definitions.size !== candidate.params.length) return false;
  *   return Object.entries(parameters).every(([name, value]) => {
@@ -335,6 +342,7 @@ export class Qveris {
         parameters: options.parameters ?? {},
         checks: options.checks ?? ['schema'],
         live_budget: options.liveBudget ?? 'none',
+        ...(options.subUserId !== undefined && { sub_user_id: options.subUserId }),
       },
       options.timeoutMs,
     );
@@ -348,6 +356,7 @@ export class Qveris {
     const endpoint = `/tools/execute?tool_id=${encodeURIComponent(toolId)}`;
     const body: Record<string, unknown> = {
       parameters: options.parameters,
+      ...(options.subUserId !== undefined && { sub_user_id: options.subUserId }),
       search_id: options.searchId ?? null,
       ...(options.sessionId !== undefined && { session_id: options.sessionId }),
       ...(options.model !== undefined && { model: options.model }),

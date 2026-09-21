@@ -55,7 +55,7 @@ test("all TypeScript SDK guides document Probe and strict paid calls", () => {
     const guide = read(path);
     for (const marker of [
       "probe(toolId, options?)",
-      "probe(toolId, { parameters?, checks?, liveBudget?, timeoutMs? })",
+      "probe(toolId, { parameters?, checks?, liveBudget?, subUserId?, timeoutMs? })",
       "compatibilityMode: 'legacyOptionalFields'",
       "single-submit",
     ]) {

@@ -28,7 +28,10 @@ describe('call (execute_tool)', () => {
     });
 
     it('should define max_response_size with default', () => {
-      expect(executeToolSchema.properties.max_response_size.type).toBe('number');
+      expect(executeToolSchema.properties.max_response_size.anyOf).toEqual([
+        { const: -1 },
+        { type: 'integer', minimum: 1 },
+      ]);
       expect(executeToolSchema.properties.max_response_size.default).toBe(20480);
     });
 
@@ -46,6 +49,8 @@ describe('call (execute_tool)', () => {
     it('should define respond_with as an optional projection', () => {
       expect(executeToolSchema.properties.respond_with.pattern).toBe('^(full|summary|fields:.+)$');
       expect(executeToolSchema.required).not.toContain('respond_with');
+      expect(executeToolSchema.properties.respond_with.description).toContain('compatibility auto-delivery');
+      expect(executeToolSchema.properties.max_response_size.description).toContain('UTF-8 bytes');
     });
   });
 
@@ -176,6 +181,35 @@ describe('call (execute_tool)', () => {
         parameters: {},
         max_response_size: undefined,
         respond_with: 'summary',
+      });
+    });
+
+    it('should pass explicit full with a finite limit exactly once', async () => {
+      executeToolMock.mockResolvedValueOnce({
+        execution_id: 'exec-full',
+        success: true,
+        result: { data: { complete: true } },
+      });
+
+      await executeExecuteTool(
+        mockClient,
+        {
+          tool_id: 'tool-1',
+          search_id: 'search-123',
+          params_to_tool: {},
+          respond_with: 'full',
+          max_response_size: 1024,
+        },
+        'default-session',
+      );
+
+      expect(executeToolMock).toHaveBeenCalledTimes(1);
+      expect(executeToolMock).toHaveBeenCalledWith('tool-1', {
+        search_id: 'search-123',
+        session_id: 'default-session',
+        parameters: {},
+        max_response_size: 1024,
+        respond_with: 'full',
       });
     });
 

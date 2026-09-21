@@ -16,6 +16,7 @@ from pydantic import (
     PositiveFloat,
     PositiveInt,
     RootModel,
+    confloat,
     conint,
     constr,
 )
@@ -330,7 +331,7 @@ class PublicApiMetadata(BaseModel):
     contract_version: str = Field(
         ...,
         description='Version of the published QVeris REST API contract.',
-        examples=['2026-09-12.1'],
+        examples=['2026-09-21.1'],
         title='Contract Version',
     )
     registration: Optional[AnonymousTrialMetadata] = None
@@ -368,6 +369,40 @@ class TokenVerificationResponse(BaseModel):
     payload: Optional[Dict[str, Any]] = Field(None, title='Payload')
 
 
+class Status(Enum):
+    pending = 'pending'
+    completed = 'completed'
+    unavailable = 'unavailable'
+
+
+class RetryDisposition(Enum):
+    terminal = 'terminal'
+    reconcile_first = 'reconcile_first'
+
+
+class ToolExecutionReconciliationData(BaseModel):
+    """
+    Durable state returned for one caller-scoped execution key.
+    """
+
+    status: Status = Field(..., title='Status')
+    execution_id: str = Field(..., title='Execution Id')
+    execution_state: str = Field(..., title='Execution State')
+    provider_request_dispatched: bool = Field(..., title='Provider Request Dispatched')
+    provider_execution_id: Optional[str] = Field(None, title='Provider Execution Id')
+    charge_event_id: Optional[str] = Field(None, title='Charge Event Id')
+    settlement_state: str = Field(..., title='Settlement State')
+    amount_credits: Optional[float] = Field(None, title='Amount Credits')
+    settlement_batch_id: Optional[str] = Field(None, title='Settlement Batch Id')
+    ledger_entry_id: Optional[str] = Field(None, title='Ledger Entry Id')
+    retry_disposition: RetryDisposition = Field(..., title='Retry Disposition')
+    response: Optional[Dict[str, Any]] = Field(None, title='Response')
+    response_http_status: Optional[int] = Field(None, title='Response Http Status')
+    result_unavailable_reason: Optional[str] = Field(
+        None, title='Result Unavailable Reason'
+    )
+
+
 class UsageCreditsSpentResponse(BaseModel):
     total_credits: float = Field(..., title='Total Credits')
     start_date: Optional[str] = Field(None, title='Start Date')
@@ -378,6 +413,12 @@ class UsageEventApiKey(BaseModel):
     id: str = Field(..., title='Id')
     name: str = Field(..., title='Name')
     masked_value: str = Field(..., title='Masked Value')
+
+
+class Anomaly(Enum):
+    failed_charged_review = 'failed_charged_review'
+    missing_ledger_link = 'missing_ledger_link'
+    missing_billing_snapshot = 'missing_billing_snapshot'
 
 
 class CredentialAttributionStatus(Enum):
@@ -393,6 +434,7 @@ class UsageEventOAuthClient(BaseModel):
 
 
 class UsageEventSummaryItem(BaseModel):
+    anomalies: Optional[List[Anomaly]] = Field(None, title='Anomalies')
     id: str = Field(..., title='Id')
     event_type: str = Field(..., title='Event Type')
     source_system: str = Field(..., title='Source System')
@@ -444,6 +486,12 @@ class UsageEventSummaryItem(BaseModel):
     actual_amount_credits: Optional[float] = Field(None, title='Actual Amount Credits')
     credits_ledger_entry_id: Optional[str] = Field(
         None, title='Credits Ledger Entry Id'
+    )
+    charge_event_id: Optional[str] = Field(None, title='Charge Event Id')
+    settlement_state: Optional[str] = Field(None, title='Settlement State')
+    settlement_batch_id: Optional[str] = Field(None, title='Settlement Batch Id')
+    settlement_ledger_entry_id: Optional[str] = Field(
+        None, title='Settlement Ledger Entry Id'
     )
     display_target: Optional[str] = Field(None, title='Display Target')
     billing_unit: Optional[str] = Field(None, title='Billing Unit')
@@ -516,22 +564,13 @@ class PublicApiError(BaseModel):
     results: Optional[List[Dict[str, Any]]] = None
 
 
-class PublicCapabilityDetailResponse(BaseModel):
-    model_config = ConfigDict(
-        extra='allow',
-    )
-    capability_id: str
-    name: Optional[str] = None
-    description: Optional[str] = None
-    params: Optional[List[Dict[str, Any]]] = None
-    field_spec: Optional[Dict[str, Any]] = None
-    contract_version: Optional[conint(ge=1)] = Field(
-        None, description='Published CAP contract version.'
-    )
-    schema_hash: Optional[constr(pattern=r'^[0-9a-f]{64}$')] = Field(
-        None, description='SHA-256 identity of the published CAP contract.'
-    )
-    remaining_credits: Optional[float] = None
+class VerificationStatus(Enum):
+    unverified = 'unverified'
+    verifying = 'verifying'
+    verified = 'verified'
+    stale = 'stale'
+    failed = 'failed'
+    restricted = 'restricted'
 
 
 class PublicCapabilityQueryRequest1(BaseModel):
@@ -606,7 +645,7 @@ class PublicCapabilityQueryResponse(BaseModel):
 
 class View(Enum):
     """
-    Response projection. `routing` returns compact routing cards (`tool_id`, `capability`, `cost_class`, `reliability`, `as_of_support`) sized for model context; `full` or omitted returns the complete result shape, byte-identical to previous releases.
+    Response projection. `routing` returns compact routing cards (`tool_id`, `capability`, `cost_class`, `reliability`, `as_of_support`) plus the required verification and restriction contract; `full` or omitted returns the complete result shape.
     """
 
     routing = 'routing'
@@ -636,7 +675,7 @@ class PublicSearchRequest(BaseModel):
     )
     view: Optional[View] = Field(
         None,
-        description='Response projection. `routing` returns compact routing cards (`tool_id`, `capability`, `cost_class`, `reliability`, `as_of_support`) sized for model context; `full` or omitted returns the complete result shape, byte-identical to previous releases.',
+        description='Response projection. `routing` returns compact routing cards (`tool_id`, `capability`, `cost_class`, `reliability`, `as_of_support`) plus the required verification and restriction contract; `full` or omitted returns the complete result shape.',
     )
     lang: Optional[Lang] = Field(
         None,
@@ -697,6 +736,10 @@ class PublicToolProbeRequest(BaseModel):
         'none',
         description='M1 is zero-cost; every value avoids an upstream tool execution.',
     )
+    sub_user_id: Optional[constr(pattern=r'.*\S.*', min_length=1)] = Field(
+        None,
+        description='Optional sub-user identity used for provider OAuth readiness checks.',
+    )
 
 
 class PublicProbeSchemaViolation(BaseModel):
@@ -744,14 +787,35 @@ class PublicProbeUnknownResult(BaseModel):
     reason: str
 
 
-class PublicToolProbeResponse(BaseModel):
+class NextAction(Enum):
+    execute = 'execute'
+    inspect = 'inspect'
+    probe = 'probe'
+    authorize = 'authorize'
+    confirm_budget = 'confirm_budget'
+    switch_provider = 'switch_provider'
+    retry = 'retry'
+
+
+class PublicProbeRecoveryAdvice(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    schema_: Optional[PublicProbeSchemaResult] = Field(None, alias='schema')
-    quote: Optional[PublicProbeQuoteResult] = None
-    coverage: Optional[PublicProbeUnknownResult] = None
-    sample: Optional[PublicProbeUnknownResult] = None
+    missing_fields: List[str]
+    safe_fixes: List[str]
+    retryable: bool
+    next_action: NextAction
+    provider_fallback: bool
+
+
+class Reason(Enum):
+    tool_unavailable = 'tool_unavailable'
+    tool_disabled = 'tool_disabled'
+    realtime_unavailable = 'realtime_unavailable'
+    region_restricted = 'region_restricted'
+    insufficient_scope = 'insufficient_scope'
+    delegation_budget_not_supported = 'delegation_budget_not_supported'
+    oauth2_signin_required = 'oauth2_signin_required'
 
 
 class PublicExecuteToolRequest(BaseModel):
@@ -766,6 +830,10 @@ class PublicExecuteToolRequest(BaseModel):
         None,
         description='Optional tracking and pricing-context identifier. If omitted, the service may use the execution id.',
     )
+    sub_user_id: Optional[constr(pattern=r'.*\S.*', min_length=1)] = Field(
+        None,
+        description='Optional sub-user identity used consistently for provider OAuth and execution.',
+    )
     model: Optional[
         constr(pattern=r'^[^\s\x00-\x1f\x7f]+$', min_length=1, max_length=128)
     ] = Field(
@@ -776,22 +844,14 @@ class PublicExecuteToolRequest(BaseModel):
         ...,
         description='Capability-specific parameters validated by the selected tool schema.',
     )
-    max_response_size: Optional[int] = Field(
+    max_response_size: Optional[Union[int, conint(ge=1)]] = Field(
         20480,
-        description='Maximum response payload bytes before truncation. Use -1 for no limit.',
+        description='Automatic inline-delivery limit, measured as the UTF-8 byte length of serialized `result.data`. The default is 20480 when omitted; use -1 for unlimited inline delivery. An explicit `respond_with: full` takes precedence over any finite value. Summary mode may preserve lossless data or a complete overflow fallback.',
     )
     respond_with: Optional[constr(pattern=r'^(full|summary|fields:.+)$')] = Field(
         None,
-        description='Server-side result projection. `full` (default) returns the complete result, byte-identical to previous releases. `fields:<JSONPath,...>` returns only the selected fields — JSONPath expressions are rooted at `result.data`, comma-separated, and at least one non-empty expression is required. `summary` returns the response schema, size/row statistics, and a `full_content_file_url` for the complete payload.',
+        description='Result delivery mode. When omitted, the compatibility mode uses `max_response_size` (default 20480) and may return a truncated preview plus `full_content_file_url`. Explicit `full` forces the complete `result.data` inline and takes precedence over a finite `max_response_size`; if the platform hard safety limit is exceeded, the call fails with `error_code: response_too_large` instead of silently degrading. `fields:<JSONPath,...>` returns only the selected fields — JSONPath expressions are rooted at `result.data`, comma-separated, and at least one non-empty expression is required. `summary` normally returns statistics with optional schema and download URL. It preserves lossless `data` or a `truncated_content` plus `full_content_file_url` fallback when available. Check success and field availability; the mode alone does not guarantee statistics or a URL.',
     )
-
-
-class PublicToolParameter(BaseModel):
-    name: str
-    type: str
-    required: bool
-    description: Optional[str] = None
-    enum: Optional[List[str]] = None
 
 
 class DataStatus(Enum):
@@ -856,6 +916,153 @@ class PublicBillingRule(BaseModel):
     )
 
 
+class Name(Enum):
+    schema = 'schema'
+    authentication = 'authentication'
+    description_contract = 'description_contract'
+    provider_identity = 'provider_identity'
+    permissions = 'permissions'
+    freshness = 'freshness'
+    live_check = 'live_check'
+
+
+class Status1(Enum):
+    missing = 'missing'
+    verifying = 'verifying'
+    passed = 'passed'
+    stale = 'stale'
+    failed = 'failed'
+    restricted = 'restricted'
+
+
+class PublicVerificationCheck(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    name: Name
+    status: Status1
+    checked_at: Optional[datetime] = None
+    evidence_digest: Optional[str] = None
+    reason: Optional[str] = None
+
+
+class Status2(Enum):
+    unverified = 'unverified'
+    verifying = 'verifying'
+    verified = 'verified'
+    stale = 'stale'
+    failed = 'failed'
+    restricted = 'restricted'
+
+
+class PublicCatalogVerification(BaseModel):
+    """
+    Fail-closed catalog verification result. Only records with every required check passed, a valid test digest, and an unexpired 24-hour evidence window are verified.
+    """
+
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    status: Status2
+    policy_version: str
+    required_checks: List[str]
+    checks: List[PublicVerificationCheck]
+    verified_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
+    test_run_digest: Optional[str] = None
+    quality_issues: List[str]
+
+
+class PublicRegionRestrictions(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    allow: List[str]
+    deny: List[str]
+
+
+class Eligibility(Enum):
+    unknown = 'unknown'
+    not_required = 'not_required'
+    required = 'required'
+    restricted = 'restricted'
+
+
+class License(Enum):
+    unknown = 'unknown'
+    not_required = 'not_required'
+    required = 'required'
+    approved = 'approved'
+    restricted = 'restricted'
+
+
+class CommercialUse(Enum):
+    unknown = 'unknown'
+    allowed = 'allowed'
+    conditional = 'conditional'
+    prohibited = 'prohibited'
+
+
+class Technical(Enum):
+    unknown = 'unknown'
+    ready = 'ready'
+    blocked = 'blocked'
+
+
+class Authentication(Enum):
+    unknown = 'unknown'
+    ready = 'ready'
+    required = 'required'
+    blocked = 'blocked'
+
+
+class RegionStatus(Enum):
+    unknown = 'unknown'
+    ready = 'ready'
+    conditional = 'conditional'
+    blocked = 'blocked'
+
+
+class Freshness(Enum):
+    unknown = 'unknown'
+    fresh = 'fresh'
+    stale = 'stale'
+    failed = 'failed'
+
+
+class PriceCertainty(Enum):
+    unknown = 'unknown'
+    estimated = 'estimated'
+    exact = 'exact'
+
+
+class PublicExecutionRestrictions(BaseModel):
+    """
+    Additive readiness axes and action guidance. Discovery remains available for unknown or incomplete evidence; execution stays fail-closed through blocked_actions and the legacy callable field.
+    """
+
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    callable: bool
+    eligibility: Eligibility
+    license: License
+    regions: PublicRegionRestrictions
+    commercial_use: CommercialUse
+    data_as_of: Optional[datetime] = None
+    warnings: List[str]
+    technical: Optional[Technical] = None
+    authentication: Optional[Authentication] = None
+    region_status: Optional[RegionStatus] = None
+    freshness: Optional[Freshness] = None
+    price_certainty: Optional[PriceCertainty] = None
+    confidence: Optional[confloat(ge=0.0, le=1.0)] = None
+    allowed_actions: Optional[List[str]] = None
+    blocked_actions: Optional[List[str]] = None
+    next_action: Optional[str] = None
+    retryable: Optional[bool] = None
+
+
 class PublicToolCategory(BaseModel):
     """
     Category/tag attached to a capability.
@@ -904,7 +1111,9 @@ class PublicCapabilityResult(BaseModel):
     tool_name: Optional[str] = None
     description: Optional[str] = None
     provider_id: Optional[str] = None
-    provider_name: Optional[str] = None
+    provider_name: Optional[Union[str, Dict[str, str]]] = Field(
+        None, description='Provider display name as text or a locale-keyed text map.'
+    )
     provider_description: Optional[str] = None
     category: Optional[str] = None
     categories: Optional[List[Union[PublicToolCategory, str]]] = Field(
@@ -920,7 +1129,33 @@ class PublicCapabilityResult(BaseModel):
         None,
         description='Human-readable explanation of why this capability was recommended for the query. Returned by Discover.',
     )
-    params: Optional[List[PublicToolParameter]] = None
+    params: Optional[Union[Dict[str, Any], List[Any], str, float, bool]] = Field(
+        None,
+        description='Provider parameter contract preserved for catalog inspection.',
+    )
+    parameters: Optional[Union[Dict[str, Any], List[Any], str, float, bool]] = Field(
+        None,
+        description='Alternative public input contract when supplied by the provider.',
+    )
+    input_schema: Optional[Union[Dict[str, Any], List[Any], str, float, bool]] = Field(
+        None, description='Provider input schema used by catalog verification.'
+    )
+    parameters_schema: Optional[Union[Dict[str, Any], List[Any], str, float, bool]] = (
+        Field(
+            None, description='Provider parameter schema used by catalog verification.'
+        )
+    )
+    query_params: Optional[Union[Dict[str, Any], List[Any], str, float, bool]] = Field(
+        None,
+        description='Provider query-parameter contract used by catalog verification.',
+    )
+    body_params: Optional[Union[Dict[str, Any], List[Any], str, float, bool]] = Field(
+        None,
+        description='Provider request-body parameter contract used by catalog verification.',
+    )
+    requestBody: Optional[Union[Dict[str, Any], List[Any], str, float, bool]] = Field(
+        None, description='OpenAPI request body contract used by catalog verification.'
+    )
     output_schema: Optional[Union[Dict[str, Any], List[Any], str, float, bool]] = Field(
         None,
         description='Public output schema advertised by the capability when available.',
@@ -941,6 +1176,9 @@ class PublicCapabilityResult(BaseModel):
     )
     billing_rule: Optional[PublicBillingRule] = None
     calls_count: Optional[str] = None
+    verification_status: VerificationStatus
+    verification: PublicCatalogVerification
+    execution_restrictions: PublicExecutionRestrictions
     capability: Optional[str] = Field(
         None,
         description='Compact capability summary. Returned instead of the full descriptor fields when the request sets `view: routing`.',
@@ -970,6 +1208,8 @@ class PublicSearchResponse(BaseModel):
     elapsed_time_ms: Optional[float] = None
     remaining_credits: Optional[float] = None
     error_message: Optional[str] = None
+    contract_warnings: Optional[List[str]] = None
+    contract_features: Optional[List[str]] = None
 
 
 class PublicInspectResponse(BaseModel):
@@ -982,6 +1222,8 @@ class PublicInspectResponse(BaseModel):
     elapsed_time_ms: Optional[float] = None
     remaining_credits: Optional[float] = None
     error_message: Optional[str] = None
+    contract_warnings: Optional[List[str]] = None
+    contract_features: Optional[List[str]] = None
 
 
 class Summary(BaseModel):
@@ -1001,10 +1243,16 @@ class PublicExecuteResult(BaseModel):
     model_config = ConfigDict(
         extra='allow',
     )
-    data: Optional[Dict[str, Any]] = None
+    data: Optional[Any] = None
     message: Optional[str] = None
-    truncated_content: Optional[str] = None
-    full_content_file_url: Optional[AnyUrl] = None
+    truncated_content: Optional[str] = Field(
+        None,
+        description='UTF-8-safe preview used by automatic, oversized fields, or summary fallback delivery; never present on a successful explicit full response.',
+    )
+    full_content_file_url: Optional[AnyUrl] = Field(
+        None,
+        description='Temporary signed URL used by automatic overflow, fields overflow, or summary delivery; never substitutes for data on a successful explicit full response.',
+    )
     content_schema: Optional[Dict[str, Any]] = None
     respond_with: Optional[str] = Field(
         None,
@@ -1023,6 +1271,11 @@ class PublicCompactBillingStatement(BaseModel):
     summary: Optional[str] = None
     list_amount_credits: Optional[float] = None
     final_amount_credits: Optional[float] = None
+    recorded_amount_credits: Optional[float] = None
+    settlement_state: Optional[str] = None
+    settlement_status: Optional[str] = None
+    execution_intent_id: Optional[str] = None
+    charge_event_id: Optional[str] = None
 
 
 class PublicExecuteToolResponse(BaseModel):
@@ -1035,6 +1288,10 @@ class PublicExecuteToolResponse(BaseModel):
         description='Capability result. Projected responses use the documented object shape; default/full responses may contain any JSON value.',
     )
     success: bool
+    error_code: Optional[str] = Field(
+        None,
+        description='Stable machine-readable failure code, including `response_too_large` when explicit full exceeds the platform hard safety limit.',
+    )
     error_message: Optional[str] = None
     execution_time: Optional[float] = None
     elapsed_time_ms: Optional[float] = None
@@ -1095,6 +1352,14 @@ class APIResponseTokenVerificationResponse(BaseModel):
     message_key: Optional[str] = Field(None, title='Message Key')
 
 
+class APIResponseToolExecutionReconciliationData(BaseModel):
+    status: str = Field(..., title='Status')
+    message: str = Field(..., title='Message')
+    status_code: Optional[int] = Field(0, title='Status Code')
+    data: Optional[ToolExecutionReconciliationData] = None
+    message_key: Optional[str] = Field(None, title='Message Key')
+
+
 class APIResponseUnionAgentClaimStartResponseAgentClaimRiskBlockResponse(BaseModel):
     status: str = Field(..., title='Status')
     message: str = Field(..., title='Message')
@@ -1140,6 +1405,7 @@ class HTTPValidationError(BaseModel):
 
 
 class UsageEventItem(BaseModel):
+    anomalies: Optional[List[Anomaly]] = Field(None, title='Anomalies')
     id: str = Field(..., title='Id')
     event_type: str = Field(..., title='Event Type')
     source_system: str = Field(..., title='Source System')
@@ -1205,6 +1471,12 @@ class UsageEventItem(BaseModel):
     credits_ledger_entry_id: Optional[str] = Field(
         None, title='Credits Ledger Entry Id'
     )
+    charge_event_id: Optional[str] = Field(None, title='Charge Event Id')
+    settlement_state: Optional[str] = Field(None, title='Settlement State')
+    settlement_batch_id: Optional[str] = Field(None, title='Settlement Batch Id')
+    settlement_ledger_entry_id: Optional[str] = Field(
+        None, title='Settlement Ledger Entry Id'
+    )
     display_target: Optional[str] = Field(None, title='Display Target')
     billing_unit: Optional[str] = Field(None, title='Billing Unit')
     unit_price_credits: Optional[float] = Field(None, title='Unit Price Credits')
@@ -1242,6 +1514,46 @@ class UsageEventsSummary(BaseModel):
     settled_credits: float = Field(..., title='Settled Credits')
     max_charge_items: List[UsageEventItem] = Field(..., title='Max Charge Items')
     buckets: List[UsageEventsSummaryBucket] = Field(..., title='Buckets')
+
+
+class PublicCapabilityDetailResponse(BaseModel):
+    model_config = ConfigDict(
+        extra='allow',
+    )
+    capability_id: str
+    name: Optional[str] = None
+    description: Optional[str] = None
+    params: Optional[List[Dict[str, Any]]] = None
+    field_spec: Optional[Dict[str, Any]] = None
+    contract_version: Optional[conint(ge=1)] = Field(
+        None, description='Published CAP contract version.'
+    )
+    schema_hash: Optional[constr(pattern=r'^[0-9a-f]{64}$')] = Field(
+        None, description='SHA-256 identity of the published CAP contract.'
+    )
+    verification_status: VerificationStatus
+    verification: PublicCatalogVerification
+    execution_restrictions: PublicExecutionRestrictions
+    remaining_credits: Optional[float] = None
+
+
+class PublicToolProbeResponse(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    exists: Optional[bool] = None
+    executable: Optional[bool] = None
+    status: Optional[int] = None
+    reason: Optional[Reason] = None
+    schema_: Optional[PublicProbeSchemaResult] = Field(None, alias='schema')
+    quote: Optional[PublicProbeQuoteResult] = None
+    coverage: Optional[PublicProbeUnknownResult] = None
+    sample: Optional[PublicProbeUnknownResult] = None
+    recovery: PublicProbeRecoveryAdvice
+    verification_status: VerificationStatus
+    verification: PublicCatalogVerification
+    execution_restrictions: PublicExecutionRestrictions
+    contract_features: Optional[List[str]] = None
 
 
 class APIResponseUsageEventItem(BaseModel):

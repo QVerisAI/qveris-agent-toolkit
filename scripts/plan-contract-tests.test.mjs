@@ -1,7 +1,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 
 import { classifyContractChanges, resolveContractPlan } from './plan-contract-tests.mjs';
+
+test('PR workflow executes the shared contract guards rather than only watching their paths', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/contract-tests.yml', import.meta.url), 'utf8');
+  for (const guard of ['public-capability-contract', 'result-delivery-contract']) {
+    assert.match(workflow, new RegExp('run: node --test[^\\n]*scripts/' + guard + '\\.test\\.mjs'));
+  }
+});
 
 test('a CLI-only change does not schedule unrelated SDKs', () => {
   assert.deepEqual(classifyContractChanges(['packages/cli/src/main.mjs']), {
@@ -31,6 +39,12 @@ test('the public OpenAPI contract schedules every contract consumer', () => {
   assert.equal(plan.mcp, true);
   assert.equal(plan.plugin, false);
   assert.equal(plan.benchmark, false);
+});
+
+test('delivery profiles and either handwritten TS surface run the wire compatibility guard', () => {
+  for (const file of ['contracts/result-delivery.v1.json', 'scripts/result-delivery-contract.test.mjs', 'scripts/public-capability-contract.test.mjs', 'packages/mcp/src/types.ts', 'packages/js-sdk/src/types.ts']) {
+    assert.equal(classifyContractChanges([file]).js, true, file);
+  }
 });
 
 test('shared lint configuration schedules lint without expensive test suites', () => {

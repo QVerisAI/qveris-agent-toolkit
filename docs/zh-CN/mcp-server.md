@@ -392,6 +392,8 @@ API 密钥接入步骤：
 
 ### 3. `probe`
 
+若 provider OAuth 按终端用户隔离，请向 `probe` 和 `call` 传入相同的可选非空 `sub_user_id`。不需要子用户身份时省略；该字段不是访问令牌。
+
 用于在不执行能力的情况下校验候选参数并获取零成本报价。输入包括 `tool_id`、可选 `parameters`、可选 `checks`（`schema`、`quote`、`coverage`、`sample`）以及可选 `live_budget`（`none`、`metadata`、`sampled`）。当前已实现 schema 与 quote；coverage 和 sample 可能返回 `unknown`。Probe 不执行能力，也不消耗积分。
 
 ---
@@ -409,10 +411,14 @@ API 密钥接入步骤：
 | `params_to_tool` | object | 是 | 传递给工具的参数字典 |
 | `session_id` | string | 否 | 用于追踪的会话标识符 |
 | `model` | string | 否 | 选择能力并生成参数的模型（最多 128 个字符） |
-| `max_response_size` | number | 否 | 最大响应字节数（默认 `20480`） |
-| `respond_with` | string | 否 | `full`、`summary` 或 `fields:<JSONPath,...>`；省略时为 full |
+| `max_response_size` | number | 否 | 自动内联交付的 UTF-8 字节上限（默认 `20480`，`-1` 表示不限）；显式 `full` 优先于有限值 |
+| `respond_with` | string | 否 | 省略时采用兼容的自动交付；`full` 强制完整内联数据，也可用 `summary` 或 `fields:<JSONPath,...>` |
 
 示例：
+
+显式 `respond_with: "full"` 必须返回完整内联 `result.data`，不得以 `truncated_content` 或替代性的 `full_content_file_url` 降级。超过平台硬安全限制时调用以 `response_too_large` 失败。省略 `respond_with` 时仍保留既有的 20KB 自动溢出行为。
+
+摘要模式至少保留一种可用载荷：`summary` 对象、无损 `data`，或同时存在的 `truncated_content` 与 `full_content_file_url`。这些字段可以共存；仅凭模式不能保证摘要或下载链接存在。先检查 `success`，再检查字段是否存在；失败的摘要调用保留空 `data` 对象。
 
 ```json
 {

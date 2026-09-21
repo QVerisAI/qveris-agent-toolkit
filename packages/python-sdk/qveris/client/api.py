@@ -93,6 +93,7 @@ _SENSITIVE_KEYS = frozenset(
         "secret",
         "password",
         "selection_token",
+        "sub_user_id",
         "full_content_file_url",
         "cookie",
         "set-cookie",
@@ -977,14 +978,17 @@ class QverisClient:
         live_budget: Literal["none", "metadata", "sampled"] = "none",
         timeout: Optional[float] = None,
         correlation_id: Optional[str] = None,
+        sub_user_id: Optional[str] = None,
     ) -> ToolProbeResponse:
-        """Validate candidate parameters and obtain a zero-cost quote without execution."""
+        """Validate parameters without execution; use the same sub_user_id as Call for provider OAuth."""
         url = self._url_for("POST", "tools/probe", params={"tool_id": tool_id})
         payload: Dict[str, Any] = {
             "parameters": parameters if parameters is not None else {},
             "checks": checks if checks is not None else ["schema"],
             "live_budget": live_budget,
         }
+        if sub_user_id is not None:
+            payload["sub_user_id"] = sub_user_id
         state = _RequestState("probe", time.monotonic())
         with start_span("qveris.probe", {ATTR_OPERATION: "probe", ATTR_TOOL_ID: tool_id}) as span:
             self._debug(f"[Qveris API] POST {url}")
@@ -1021,6 +1025,7 @@ class QverisClient:
         timeout: Optional[float] = None,
         correlation_id: Optional[str] = None,
         model: Optional[str] = None,
+        sub_user_id: Optional[str] = None,
     ) -> ToolExecutionResponse:
         """
         Call a specific capability.
@@ -1030,13 +1035,17 @@ class QverisClient:
             parameters: JSON-serializable parameters for the tool.
             search_id: Search ID returned by `discover(...)` (recommended for traceability).
             session_id: Optional correlation id.
-            max_response_size: Optional max response size in bytes. Large responses may be truncated.
-            respond_with: Optional server-side projection (`full`, `summary`, or `fields:<JSONPath,...>`).
+            max_response_size: Optional auto-delivery inline limit measured in UTF-8 bytes. `-1`
+                is unlimited; explicit `respond_with="full"` takes precedence over a finite value.
+            respond_with: Optional server-side projection. Omit for compatibility auto-delivery;
+                `full` forces complete inline data, while `summary` and `fields:<JSONPath,...>`
+                select compact projections. Hard-limit failures use `response_too_large`.
             compatibility_mode: Strict mode never resubmits a paid call. The deprecated
                 legacy mode may replay once without an unsupported optional field.
             timeout: HTTP request timeout in seconds; credential acquisition is separate.
             correlation_id: Non-sensitive reference forwarded only to the credential provider.
             model: Model that selected and parameterized this capability call.
+            sub_user_id: End-user identity for provider OAuth; use the same value as Probe.
 
         Returns:
             `ToolExecutionResponse` with `success`, `result`, and metadata.
@@ -1060,6 +1069,8 @@ class QverisClient:
 
         if model is not None:
             payload["model"] = model
+        if sub_user_id is not None:
+            payload["sub_user_id"] = sub_user_id
 
         if compatibility_mode not in {"strict", "legacy_optional_fields"}:
             raise ValueError("compatibility_mode must be 'strict' or 'legacy_optional_fields'")
@@ -1269,6 +1280,8 @@ class QverisClient:
         func_name: str,
         func_args: Dict[str, Any],
         session_id: Optional[str] = None,
+        *,
+        sub_user_id: Optional[str] = None,
     ) -> Tuple[Any, bool, bool]:
         """
         Handle a built-in Qveris tool call from an LLM response.
@@ -1277,6 +1290,7 @@ class QverisClient:
             func_name: The name of the function/tool to call
             func_args: The arguments parsed from the LLM response
             session_id: Optional session ID for tracking
+            sub_user_id: Host-controlled OAuth identity; never read from model arguments.
 
         Returns:
             Tuple of (result, is_error, handled) where:
@@ -1323,6 +1337,7 @@ class QverisClient:
                     session_id=session_id,
                     max_response_size=func_args.get("max_response_size"),
                     model=func_args.get("model"),
+                    **({"sub_user_id": sub_user_id} if sub_user_id is not None else {}),
                 )
                 return result.model_dump(), False, True
 

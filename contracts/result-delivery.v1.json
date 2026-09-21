@@ -1,0 +1,227 @@
+{
+  "schema_version": 1,
+  "contract_id": "qveris.result-delivery",
+  "contract_version": "1.0.0",
+  "measurement": "UTF-8 byte length of the JSON serialization of result.data",
+  "size_profiles": {
+    "over_default": {"bytes": 20481},
+    "one_megabyte": {"bytes": 1048576},
+    "under_limit_after_projection": {"bytes": 1024},
+    "near_gateway_limit": {"bytes_from_gateway_limit": -1}
+  },
+  "parameter_mapping": {
+    "http": {
+      "respond_with": "respond_with",
+      "max_response_size": "max_response_size"
+    },
+    "javascript": {
+      "respondWith": "respond_with",
+      "maxResponseSize": "max_response_size"
+    },
+    "python": {
+      "respond_with": "respond_with",
+      "max_response_size": "max_response_size"
+    },
+    "hosted_mcp": {
+      "respond_with": "respond_with",
+      "max_response_size": "max_response_size"
+    }
+  },
+  "summary_cases": [
+    {
+      "id": "statistics-without-url",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "summary": {
+          "row_count": 1
+        }
+      }
+    },
+    {
+      "id": "statistics-with-url",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "summary": {
+          "row_count": 1
+        },
+        "full_content_file_url": "https://storage.invalid/result"
+      }
+    },
+    {
+      "id": "lossless-0",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "data": {}
+      }
+    },
+    {
+      "id": "lossless-1",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "data": [
+          1,
+          null,
+          "数据"
+        ]
+      }
+    },
+    {
+      "id": "lossless-2",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "data": ""
+      }
+    },
+    {
+      "id": "lossless-3",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "data": 0
+      }
+    },
+    {
+      "id": "lossless-4",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "data": false
+      }
+    },
+    {
+      "id": "overflow",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "truncated_content": "partial",
+        "full_content_file_url": "https://storage.invalid/result"
+      }
+    },
+    {
+      "id": "coexisting-payloads",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "summary": {
+          "row_count": 1
+        },
+        "data": [
+          1
+        ],
+        "truncated_content": "partial",
+        "full_content_file_url": "https://storage.invalid/result"
+      }
+    },
+    {
+      "id": "failed-empty-data",
+      "success": false,
+      "result": {
+        "respond_with": "summary",
+        "data": {}
+      }
+    }
+  ],
+  "vectors": [
+    {
+      "id": "explicit-full-default-over-20kb",
+      "request": {"respond_with": "full"},
+      "payload_profile": "over_default",
+      "expected": {"delivery": "inline", "required_result_fields": ["data"], "forbidden_result_fields": ["truncated_content", "full_content_file_url"]}
+    },
+    {
+      "id": "explicit-full-finite-one-megabyte",
+      "request": {"respond_with": "full", "max_response_size": 20480},
+      "payload_profile": "one_megabyte",
+      "expected": {"delivery": "inline", "required_result_fields": ["data"], "forbidden_result_fields": ["truncated_content", "full_content_file_url"]}
+    },
+    {
+      "id": "omitted-default-overflow",
+      "request": {},
+      "payload_profile": "over_default",
+      "expected": {"delivery": "overflow", "required_result_fields": ["truncated_content", "full_content_file_url"], "forbidden_result_fields": ["data"]}
+    },
+    {
+      "id": "omitted-finite-overflow",
+      "request": {"max_response_size": 1024},
+      "payload_profile": "over_default",
+      "expected": {"delivery": "overflow", "required_result_fields": ["truncated_content", "full_content_file_url"], "forbidden_result_fields": ["data"]}
+    },
+    {
+      "id": "omitted-unlimited-inline",
+      "request": {"max_response_size": -1},
+      "payload_profile": "one_megabyte",
+      "expected": {"delivery": "inline", "required_result_fields": ["data"], "forbidden_result_fields": ["truncated_content", "full_content_file_url"]}
+    },
+    {
+      "id": "fields-under-limit-inline",
+      "request": {"respond_with": "fields:$.rows", "max_response_size": 20480},
+      "payload_profile": "under_limit_after_projection",
+      "expected": {"delivery": "inline", "required_result_fields": ["data", "respond_with"], "forbidden_result_fields": ["truncated_content", "full_content_file_url"]}
+    },
+    {
+      "id": "fields-over-limit-overflow",
+      "request": {"respond_with": "fields:$.rows", "max_response_size": 1024},
+      "payload_profile": "over_default",
+      "expected": {"delivery": "overflow", "required_result_fields": ["respond_with", "truncated_content", "full_content_file_url"], "forbidden_result_fields": ["data"]}
+    },
+    {
+      "id": "fields-unlimited-inline",
+      "request": {"respond_with": "fields:$.rows", "max_response_size": -1},
+      "payload_profile": "one_megabyte",
+      "expected": {"delivery": "inline", "required_result_fields": ["data", "respond_with"], "forbidden_result_fields": ["truncated_content", "full_content_file_url"]}
+    },
+    {
+      "id": "summary-default",
+      "request": {"respond_with": "summary"},
+      "payload_profile": "one_megabyte",
+      "expected": {"delivery": "summary", "required_result_fields": ["respond_with"], "any_of_required_result_fields": [["summary"], ["data"], ["truncated_content", "full_content_file_url"]]}
+    },
+    {
+      "id": "summary-finite",
+      "request": {"respond_with": "summary", "max_response_size": 1024},
+      "payload_profile": "one_megabyte",
+      "expected": {"delivery": "summary", "required_result_fields": ["respond_with"], "any_of_required_result_fields": [["summary"], ["data"], ["truncated_content", "full_content_file_url"]]}
+    },
+    {
+      "id": "summary-unlimited",
+      "request": {"respond_with": "summary", "max_response_size": -1},
+      "payload_profile": "one_megabyte",
+      "expected": {"delivery": "summary", "required_result_fields": ["respond_with"], "any_of_required_result_fields": [["summary"], ["data"], ["truncated_content", "full_content_file_url"]]}
+    },
+    {
+      "id": "failure-null-data",
+      "request": {"respond_with": "full"},
+      "upstream": {"success": false, "result": {"data": null}, "error_code": "tool_unavailable"},
+      "expected": {"delivery": "failure", "success": false, "required_response_fields": ["error_code", "error_message", "result"]}
+    },
+    {
+      "id": "failure-missing-data",
+      "request": {"respond_with": "fields:$.rows"},
+      "upstream": {"success": false, "result": {}, "error_code": "provider_error"},
+      "expected": {"delivery": "failure", "success": false, "required_response_fields": ["error_code", "error_message", "result"]}
+    },
+    {
+      "id": "utf8-multibyte-byte-count",
+      "request": {"max_response_size": 8},
+      "payload": {"data": "数据🙂"},
+      "expected": {"measurement": "utf8_bytes", "delivery": "overflow"}
+    },
+    {
+      "id": "explicit-full-upstream-overflow-drift",
+      "request": {"respond_with": "full"},
+      "upstream": {"success": true, "result": {"truncated_content": "partial", "full_content_file_url": "signed-tool-result-url"}},
+      "expected": {"delivery": "reject", "error_code": "upstream_contract_violation"}
+    },
+    {
+      "id": "explicit-full-hard-limit",
+      "request": {"respond_with": "full"},
+      "payload_profile": "near_gateway_limit",
+      "expected": {"delivery": "failure", "success": false, "error_code": "response_too_large", "forbidden_result_fields": ["truncated_content", "full_content_file_url"]}
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, PrivateAttr, ValidationError, field_validator
 
 from .errors import RequestMetadata
 
@@ -57,6 +57,12 @@ class BillingRule(QverisModel):
 
 
 class CompactBillingStatement(QverisModel):
+    final_amount_credits: Optional[float] = None
+    recorded_amount_credits: Optional[float] = None
+    settlement_state: Optional[str] = None
+    settlement_status: Optional[str] = None
+    execution_intent_id: Optional[str] = None
+    charge_event_id: Optional[str] = None
     price: Optional[BillingPrice] = None
     quantity: Optional[float] = None
     charge_lines: Optional[List[BillingChargeLine]] = None
@@ -105,17 +111,123 @@ class ToolParameter(QverisModel):
     enum: Optional[List[Any]] = None
 
 
+VerificationStatus = Literal["unverified", "verifying", "verified", "stale", "failed", "restricted"]
+VerificationCheckName = Literal[
+    "schema",
+    "authentication",
+    "description_contract",
+    "provider_identity",
+    "permissions",
+    "freshness",
+    "live_check",
+]
+
+
+class VerificationCheck(QverisModel):
+    name: VerificationCheckName
+    status: Literal["missing", "verifying", "passed", "stale", "failed", "restricted"]
+    checked_at: Optional[str] = None
+    evidence_digest: Optional[str] = None
+    reason: Optional[str] = None
+
+
+class CatalogVerification(QverisModel):
+    status: VerificationStatus
+    policy_version: str
+    required_checks: List[str]
+    checks: List[VerificationCheck]
+    verified_at: Optional[str] = None
+    expires_at: Optional[str] = None
+    test_run_digest: Optional[str] = None
+    quality_issues: List[str]
+
+
+class RegionRestrictions(QverisModel):
+    allow: List[str]
+    deny: List[str]
+
+
+class ExecutionRestrictions(QverisModel):
+    callable: bool
+    eligibility: Literal["unknown", "not_required", "required", "restricted"]
+    license: Literal["unknown", "not_required", "required", "approved", "restricted"]
+    regions: RegionRestrictions
+    commercial_use: Literal["unknown", "allowed", "conditional", "prohibited"]
+    data_as_of: Optional[str] = None
+    warnings: List[str]
+    technical: Optional[Literal["unknown", "ready", "blocked"]] = None
+    authentication: Optional[Literal["unknown", "ready", "required", "blocked"]] = None
+    region_status: Optional[Literal["unknown", "ready", "conditional", "blocked"]] = None
+    freshness: Optional[Literal["unknown", "fresh", "stale", "failed"]] = None
+    price_certainty: Optional[Literal["unknown", "estimated", "exact"]] = None
+    confidence: Optional[float] = None
+    allowed_actions: Optional[List[str]] = None
+    blocked_actions: Optional[List[str]] = None
+    next_action: Optional[str] = None
+    retryable: Optional[bool] = None
+
+
+def _missing_catalog_verification() -> CatalogVerification:
+    return CatalogVerification(
+        status="unverified",
+        policy_version="unknown",
+        required_checks=[],
+        checks=[],
+        quality_issues=["verification_metadata_missing"],
+    )
+
+
+def _missing_execution_restrictions() -> ExecutionRestrictions:
+    return ExecutionRestrictions(
+        callable=False,
+        eligibility="unknown",
+        license="unknown",
+        regions=RegionRestrictions(allow=[], deny=[]),
+        commercial_use="unknown",
+        warnings=["verification_metadata_missing"],
+    )
+
+
 class ToolExamples(QverisModel):
     sample_parameters: Optional[Dict[str, Any]] = None
 
 
 class ToolStats(QverisModel):
+    sample_count: Optional[int] = None
+    quality_sample_count: Optional[int] = None
+    metrics_sample_count: Optional[int] = None
+    success_rate_sample_count: Optional[int] = None
+    latency_sample_count: Optional[int] = None
+    minimum_sample_count: Optional[int] = None
+    success_rate_minimum_sample_count: Optional[int] = None
+    latency_minimum_sample_count: Optional[int] = None
+    data_status: Optional[Literal["available", "insufficient", "stale", "unavailable"]] = None
+    quality_data_status: Optional[Literal["available", "insufficient", "stale", "unavailable"]] = None
+    success_rate_status: Optional[Literal["available", "insufficient", "stale", "unavailable"]] = None
+    latency_status: Optional[Literal["available", "insufficient", "stale", "unavailable"]] = None
+    metric_window: Optional[str] = None
+    window: Optional[str] = None
+    window_label: Optional[str] = None
+    window_start: Optional[str] = None
+    window_end: Optional[str] = None
+    metrics_updated_at: Optional[str] = None
+    last_checked_at: Optional[str] = None
     avg_execution_time_ms: Optional[float] = None
     success_rate: Optional[float] = None
     cost: Optional[float] = None
 
 
 class ToolInfo(QverisModel):
+    tool_name: Optional[str] = None
+    cost: Optional[Union[float, str]] = None
+    calls_count: Optional[str] = None
+    parameters: Optional[JsonValue] = None
+    input_schema: Optional[JsonValue] = None
+    parameters_schema: Optional[JsonValue] = None
+    query_params: Optional[JsonValue] = None
+    body_params: Optional[JsonValue] = None
+    requestBody: Optional[JsonValue] = None
+    output_schema: Optional[JsonValue] = None
     tool_id: str
     name: Optional[str] = None
     description: Optional[Any] = None
@@ -127,7 +239,7 @@ class ToolInfo(QverisModel):
     category: Optional[str] = None
     capabilities: Optional[List[ToolCapability]] = None
     provider_id: Optional[str] = None
-    provider_name: Optional[str] = None
+    provider_name: Optional[Union[str, Dict[str, str]]] = None
     provider_description: Optional[Any] = None
     provider_website_url: Optional[str] = None
     region: Optional[str] = None
@@ -142,6 +254,9 @@ class ToolInfo(QverisModel):
             bool,
         ]
     ] = None
+    verification_status: VerificationStatus = "unverified"
+    verification: CatalogVerification = Field(default_factory=_missing_catalog_verification)
+    execution_restrictions: ExecutionRestrictions = Field(default_factory=_missing_execution_restrictions)
     examples: Optional[ToolExamples] = None
     stats: Optional[ToolStats] = None
     billing_rule: Optional[BillingRule] = None
@@ -179,6 +294,9 @@ class SearchStats(QverisModel):
 
 
 class SearchResponse(QverisModel):
+    error_message: Optional[str] = None
+    contract_warnings: Optional[List[str]] = None
+    contract_features: Optional[List[str]] = None
     query: Optional[str] = None
     search_id: Optional[str] = None
     total: Optional[int] = None
@@ -189,17 +307,27 @@ class SearchResponse(QverisModel):
 
 
 class ExecuteResultTruncated(QverisModel):
-    message: str
+    message: Optional[str] = None
     full_content_file_url: str = Field(repr=False)
     truncated_content: str
     content_schema: Optional[Dict[str, Any]] = None
 
 
+class ValidationIssue(QverisModel):
+    loc: List[Union[str, int]]
+    msg: str
+    type: str
+    input: Optional[JsonValue] = None
+    ctx: Optional[Dict[str, JsonValue]] = None
+
+
 class ToolExecutionResponse(QverisModel):
+    details: Optional[List[ValidationIssue]] = None
     execution_id: str
     success: bool
     next_action: Optional[Dict[str, Any]] = None
     result: Optional[Any] = Field(default=None, repr=False)
+    error_code: Optional[str] = None
     error_message: Optional[str] = None
     elapsed_time_ms: Optional[float] = None
     execution_time: Optional[float] = None
@@ -237,7 +365,34 @@ class ProbeUnknownResult(QverisModel):
     reason: str
 
 
+class ProbeRecoveryAdvice(QverisModel):
+    missing_fields: List[str]
+    safe_fixes: List[str]
+    retryable: bool
+    next_action: Literal["execute", "inspect", "probe", "authorize", "confirm_budget", "switch_provider", "retry"]
+    provider_fallback: bool
+
+
 class ToolProbeResponse(QverisModel):
+    verification_status: VerificationStatus = "unverified"
+    verification: CatalogVerification = Field(default_factory=_missing_catalog_verification)
+    execution_restrictions: ExecutionRestrictions = Field(default_factory=_missing_execution_restrictions)
+    recovery: ProbeRecoveryAdvice
+    exists: Optional[bool] = None
+    executable: Optional[bool] = None
+    status: Optional[int] = None
+    reason: Optional[
+        Literal[
+            "tool_unavailable",
+            "tool_disabled",
+            "realtime_unavailable",
+            "region_restricted",
+            "insufficient_scope",
+            "delegation_budget_not_supported",
+            "oauth2_signin_required",
+        ]
+    ] = None
+    contract_features: Optional[List[str]] = None
     schema_: Optional[ProbeSchemaResult] = Field(default=None, alias="schema")
     quote: Optional[ProbeQuoteResult] = None
     coverage: Optional[ProbeUnknownResult] = None

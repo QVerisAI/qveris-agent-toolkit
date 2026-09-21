@@ -440,6 +440,29 @@ describe('Qveris client', () => {
     expect(response.result).toMatchObject({ respond_with: 'summary' });
   });
 
+  it('maps explicit full and a finite limit without resubmitting', async () => {
+    const fetchMock = mockFetch({
+      execution_id: 'exec-full',
+      success: true,
+      result: { data: { complete: true } },
+    });
+    globalThis.fetch = fetchMock;
+
+    await new Qveris({ apiKey: API_KEY }).call('weather.forecast.v1', {
+      parameters: {},
+      respondWith: 'full',
+      maxResponseSize: 1024,
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      parameters: {},
+      search_id: null,
+      respond_with: 'full',
+      max_response_size: 1024,
+    });
+  });
+
   it('call strict mode does not resubmit when a legacy service rejects respond_with', async () => {
     const previous = PAID_CALL_POLICY.contract_fixtures.n_minus_1;
     const fetchMock = mockFetch(previous.body, previous.status);
@@ -471,6 +494,7 @@ describe('Qveris client', () => {
       parameters: { city: 'London' },
       respondWith: 'summary',
       compatibilityMode: 'legacyOptionalFields',
+      subUserId: 'tenant-user-fixture',
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -478,6 +502,7 @@ describe('Qveris client', () => {
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       parameters: { city: 'London' },
       search_id: null,
+      sub_user_id: 'tenant-user-fixture',
     });
   });
 

@@ -312,6 +312,7 @@ export class QverisClient {
       parameters: request.parameters ?? {},
       checks: request.checks ?? ['schema'],
       live_budget: request.live_budget ?? 'none',
+      ...(request.sub_user_id !== undefined && { sub_user_id: request.sub_user_id }),
     });
   }
 

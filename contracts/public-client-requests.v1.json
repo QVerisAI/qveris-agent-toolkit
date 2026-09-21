@@ -1,0 +1,42 @@
+{
+  "call": {
+    "schema": "PublicExecuteToolRequest",
+    "query_fields": ["tool_id"],
+    "body": {
+      "parameters": {"city": "London"},
+      "search_id": "discovery-request-fixture",
+      "session_id": "session-request-fixture",
+      "sub_user_id": "tenant-user-fixture",
+      "model": "model-fixture",
+      "max_response_size": 1024,
+      "respond_with": "fields:$.rows"
+    },
+    "javascript": {
+      "parameters": "parameters",
+      "search_id": "searchId",
+      "session_id": "sessionId",
+      "sub_user_id": "subUserId",
+      "model": "model",
+      "max_response_size": "maxResponseSize",
+      "respond_with": "respondWith"
+    },
+    "mcp": {"parameters": "params_to_tool"}
+  },
+  "probe": {
+    "schema": "PublicToolProbeRequest",
+    "query_fields": [],
+    "body": {
+      "parameters": {"city": "London"},
+      "checks": ["schema", "quote"],
+      "live_budget": "metadata",
+      "sub_user_id": "tenant-user-fixture"
+    },
+    "javascript": {
+      "parameters": "parameters",
+      "checks": "checks",
+      "live_budget": "liveBudget",
+      "sub_user_id": "subUserId"
+    },
+    "mcp": {}
+  }
+}

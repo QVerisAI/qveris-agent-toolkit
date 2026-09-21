@@ -331,7 +331,10 @@ const matchesType = (type: string, value: unknown) => {
   return false;
 };
 const tool = found.results.find((candidate) => {
-  if (!candidate.params) return false;
+  if (!Array.isArray(candidate.params) || !candidate.params.every((parameter) =>
+    parameter !== null && typeof parameter === 'object' && !Array.isArray(parameter) &&
+    typeof parameter.name === 'string' && typeof parameter.type === 'string' &&
+    typeof parameter.required === 'boolean')) return false;
   const definitions = new Map(candidate.params.map((parameter) => [parameter.name, parameter]));
   if (definitions.size !== candidate.params.length) return false;
   return Object.entries(parameters).every(([name, value]) => {
@@ -1126,7 +1129,7 @@ replay once without an optional field rejected by an older service.
 
 > `optional` **maxResponseSize?**: `number`
 
-Max response bytes before truncation (-1 for no limit, server default 20480)
+Auto-delivery inline limit in UTF-8 bytes (-1 for unlimited, server default 20480). Explicit full takes precedence.
 
 ##### model?
 
@@ -1144,7 +1147,7 @@ Key-value parameters matching the tool's parameter schema
 
 > `optional` **respondWith?**: `"full"` \| `` `fields:${string}` `` \| `"summary"`
 
-Server-side result projection. Omit for the legacy/full response.
+Server-side result projection. Omit for compatibility auto-delivery; explicit full forces complete inline data.
 
 ##### searchId?
 
@@ -1158,6 +1161,12 @@ The search_id from the discover call that returned this tool
 
 Session identifier for tracking
 
+##### subUserId?
+
+> `optional` **subUserId?**: `string`
+
+End-user identity for provider OAuth; use the same value for Probe and Call.
+
 ##### timeoutMs?
 
 > `optional` **timeoutMs?**: `number`
@@ -1166,13 +1175,63 @@ Per-request timeout override in milliseconds (default 120s)
 
 ***
 
+### CatalogVerification
+
+#### Properties
+
+##### checks
+
+> **checks**: [`VerificationCheck`](#verificationcheck)[]
+
+##### expires\_at?
+
+> `optional` **expires\_at?**: `string` \| `null`
+
+##### policy\_version
+
+> **policy\_version**: `string`
+
+##### quality\_issues
+
+> **quality\_issues**: `string`[]
+
+##### required\_checks
+
+> **required\_checks**: `string`[]
+
+##### status
+
+> **status**: [`VerificationStatus`](#verificationstatus)
+
+##### test\_run\_digest?
+
+> `optional` **test\_run\_digest?**: `string` \| `null`
+
+##### verified\_at?
+
+> `optional` **verified\_at?**: `string` \| `null`
+
+***
+
 ### CompactBillingStatement
 
 #### Properties
 
+##### charge\_event\_id?
+
+> `optional` **charge\_event\_id?**: `string` \| `null`
+
 ##### charge\_lines?
 
 > `optional` **charge\_lines?**: [`BillingChargeLine`](#billingchargeline)[] \| `null`
+
+##### execution\_intent\_id?
+
+> `optional` **execution\_intent\_id?**: `string` \| `null`
+
+##### final\_amount\_credits?
+
+> `optional` **final\_amount\_credits?**: `number`
 
 ##### list\_amount\_credits?
 
@@ -1190,9 +1249,21 @@ Per-request timeout override in milliseconds (default 120s)
 
 > `optional` **quantity?**: `number` \| `null`
 
+##### recorded\_amount\_credits?
+
+> `optional` **recorded\_amount\_credits?**: `number`
+
 ##### requested\_amount\_credits?
 
 > `optional` **requested\_amount\_credits?**: `number` \| `null`
+
+##### settlement\_state?
+
+> `optional` **settlement\_state?**: `string`
+
+##### settlement\_status?
+
+> `optional` **settlement\_status?**: `string`
 
 ##### summary?
 
@@ -1480,9 +1551,10 @@ Request body for the Execute Tool API.
 
 > `optional` **max\_response\_size?**: `number`
 
-Maximum size of response data in bytes.
-If the tool generates data longer than this, it will be truncated
-and a download URL will be provided for the full content.
+Automatic inline limit measured in UTF-8 bytes. When `respond_with` is
+omitted, oversized results use the overflow envelope. Explicit `full`
+takes precedence over a finite value and either returns complete inline
+data or fails with `response_too_large` at the platform hard limit.
 Minimum: -1 (`-1` means no limit).
 
 ###### Default
@@ -1508,7 +1580,7 @@ Must match the parameter schema from the tool's definition.
 
 > `optional` **respond\_with?**: `"full"` \| `` `fields:${string}` `` \| `"summary"`
 
-Server-side result projection. Omit for the legacy/full response.
+Server-side result projection. Omit for compatibility auto-delivery; explicit `full` forces complete inline data.
 
 ##### search\_id
 
@@ -1523,11 +1595,15 @@ Links the execution to the original search for analytics and billing.
 
 Session identifier for tracking user sessions.
 
+##### sub\_user\_id?
+
+> `optional` **sub\_user\_id?**: `string`
+
+End-user identity for provider OAuth; use the same value for Probe and Call.
+
 ***
 
 ### ExecuteResponse
-
-Response from the Execute Tool API.
 
 #### Properties
 
@@ -1549,11 +1625,21 @@ Legacy fallback estimate; use usage audit or credits ledger for final charge
 
 Timestamp of execution (ISO 8601 format)
 
+##### details?
+
+> `optional` **details?**: [`ValidationIssue`](#validationissue)[]
+
 ##### elapsed\_time\_ms?
 
 > `optional` **elapsed\_time\_ms?**: `number`
 
 Execution duration in milliseconds (alternative field)
+
+##### error\_code?
+
+> `optional` **error\_code?**: `string` \| `null`
+
+Stable machine-readable error code when execution failed.
 
 ##### error\_message?
 
@@ -1631,6 +1717,12 @@ Result data when the response fits within max_response_size.
 
 The actual result data from the tool execution
 
+##### respond\_with?
+
+> `optional` **respond\_with?**: `"full"`
+
+Projection markers belong to the projected result variants, not full data.
+
 ***
 
 ### ExecuteResultFields
@@ -1639,9 +1731,9 @@ Selected result fields returned by a `fields:<JSONPath,...>` projection.
 
 #### Properties
 
-##### data?
+##### data
 
-> `optional` **data?**: `unknown`
+> **data**: `unknown`
 
 ##### respond\_with
 
@@ -1649,15 +1741,96 @@ Selected result fields returned by a `fields:<JSONPath,...>` projection.
 
 ***
 
-### ExecuteResultSummary
+### ExecuteResultProjectedOverflow
 
-Compact result returned by `respond_with: "summary"`.
+Overflow envelope returned when a fields projection still exceeds the size limit.
+
+#### Extends
+
+- [`ExecuteResultTruncated`](#executeresulttruncated)
 
 #### Properties
 
 ##### content\_schema?
 
 > `optional` **content\_schema?**: `Record`\<`string`, `unknown`\>
+
+JSON Schema describing the structure of the full content.
+Helps the agent understand the data shape without downloading.
+
+###### Inherited from
+
+[`ExecuteResultTruncated`](#executeresulttruncated).[`content_schema`](#content_schema-2)
+
+##### full\_content\_file\_url
+
+> **full\_content\_file\_url**: `string`
+
+URL to download the complete result file.
+Valid for 120 minutes.
+
+###### Inherited from
+
+[`ExecuteResultTruncated`](#executeresulttruncated).[`full_content_file_url`](#full_content_file_url-2)
+
+##### message?
+
+> `optional` **message?**: `string`
+
+Explanation message about the truncation
+
+###### Inherited from
+
+[`ExecuteResultTruncated`](#executeresulttruncated).[`message`](#message-6)
+
+##### respond\_with
+
+> **respond\_with**: `` `fields:${string}` ``
+
+##### truncated\_content
+
+> **truncated\_content**: `string`
+
+The initial portion of the response (max_response_size bytes).
+Useful for previewing the data structure.
+
+###### Inherited from
+
+[`ExecuteResultTruncated`](#executeresulttruncated).[`truncated_content`](#truncated_content-2)
+
+***
+
+### ExecuteResultRawObject
+
+Provider-owned object in an unprojected/full response.
+Projection markers are reserved at the result-envelope level. Provider data
+may contain arbitrary keys (including respond_with) inside its data payload.
+
+#### Indexable
+
+> \[`key`: `string`\]: `unknown`
+
+#### Properties
+
+##### respond\_with?
+
+> `optional` **respond\_with?**: `"full"`
+
+***
+
+### ExecuteResultSummaryBase
+
+Shared metadata for summary delivery, including preserved fallback payloads.
+
+#### Properties
+
+##### content\_schema?
+
+> `optional` **content\_schema?**: `Record`\<`string`, `unknown`\>
+
+##### data?
+
+> `optional` **data?**: `unknown`
 
 ##### full\_content\_file\_url?
 
@@ -1691,12 +1864,21 @@ Compact result returned by `respond_with: "summary"`.
 
 > `optional` **size\_bytes?**: `number`
 
+##### truncated\_content?
+
+> `optional` **truncated\_content?**: `string`
+
 ***
 
 ### ExecuteResultTruncated
 
-Result data when the response exceeds max_response_size.
+Overflow result used by compatibility auto-delivery or an oversized fields projection.
+A successful explicit full response never uses this shape.
 Provides truncated content and a URL to download the full result.
+
+#### Extended by
+
+- [`ExecuteResultProjectedOverflow`](#executeresultprojectedoverflow)
 
 #### Properties
 
@@ -1714,9 +1896,9 @@ Helps the agent understand the data shape without downloading.
 URL to download the complete result file.
 Valid for 120 minutes.
 
-##### message
+##### message?
 
-> **message**: `string`
+> `optional` **message?**: `string`
 
 Explanation message about the truncation
 
@@ -1726,6 +1908,80 @@ Explanation message about the truncation
 
 The initial portion of the response (max_response_size bytes).
 Useful for previewing the data structure.
+
+***
+
+### ExecutionRestrictions
+
+#### Properties
+
+##### allowed\_actions?
+
+> `optional` **allowed\_actions?**: `string`[]
+
+##### authentication?
+
+> `optional` **authentication?**: `"unknown"` \| `"required"` \| `"ready"` \| `"blocked"`
+
+##### blocked\_actions?
+
+> `optional` **blocked\_actions?**: `string`[]
+
+##### callable
+
+> **callable**: `boolean`
+
+##### commercial\_use
+
+> **commercial\_use**: `"unknown"` \| `"allowed"` \| `"conditional"` \| `"prohibited"`
+
+##### confidence?
+
+> `optional` **confidence?**: `number`
+
+##### data\_as\_of?
+
+> `optional` **data\_as\_of?**: `string` \| `null`
+
+##### eligibility
+
+> **eligibility**: `"restricted"` \| `"unknown"` \| `"not_required"` \| `"required"`
+
+##### freshness?
+
+> `optional` **freshness?**: `"stale"` \| `"failed"` \| `"unknown"` \| `"fresh"`
+
+##### license
+
+> **license**: `"restricted"` \| `"unknown"` \| `"not_required"` \| `"required"` \| `"approved"`
+
+##### next\_action?
+
+> `optional` **next\_action?**: `string`
+
+##### price\_certainty?
+
+> `optional` **price\_certainty?**: `"unknown"` \| `"estimated"` \| `"exact"`
+
+##### region\_status?
+
+> `optional` **region\_status?**: `"unknown"` \| `"conditional"` \| `"ready"` \| `"blocked"`
+
+##### regions
+
+> **regions**: [`RegionRestrictions`](#regionrestrictions)
+
+##### retryable?
+
+> `optional` **retryable?**: `boolean`
+
+##### technical?
+
+> `optional` **technical?**: `"unknown"` \| `"ready"` \| `"blocked"`
+
+##### warnings
+
+> **warnings**: `string`[]
 
 ***
 
@@ -1831,6 +2087,12 @@ Probe budget. Every current value avoids capability execution.
 
 Candidate parameters to validate without executing the capability.
 
+##### subUserId?
+
+> `optional` **subUserId?**: `string`
+
+End-user identity for provider OAuth readiness checks.
+
 ##### timeoutMs?
 
 > `optional` **timeoutMs?**: `number`
@@ -1865,6 +2127,32 @@ Per-request timeout override in milliseconds.
 
 ***
 
+### ProbeRecoveryAdvice
+
+#### Properties
+
+##### missing\_fields
+
+> **missing\_fields**: `string`[]
+
+##### next\_action
+
+> **next\_action**: `"execute"` \| `"inspect"` \| `"probe"` \| `"authorize"` \| `"confirm_budget"` \| `"switch_provider"` \| `"retry"`
+
+##### provider\_fallback
+
+> **provider\_fallback**: `boolean`
+
+##### retryable
+
+> **retryable**: `boolean`
+
+##### safe\_fixes
+
+> **safe\_fixes**: `string`[]
+
+***
+
 ### ProbeRequest
 
 #### Properties
@@ -1881,19 +2169,49 @@ Per-request timeout override in milliseconds.
 
 > `optional` **parameters?**: `Record`\<`string`, `unknown`\>
 
+##### sub\_user\_id?
+
+> `optional` **sub\_user\_id?**: `string`
+
+End-user identity for provider OAuth readiness checks.
+
 ***
 
 ### ProbeResponse
 
 #### Properties
 
+##### contract\_features?
+
+> `optional` **contract\_features?**: `string`[]
+
 ##### coverage?
 
 > `optional` **coverage?**: [`ProbeUnknownResult`](#probeunknownresult)
 
+##### executable?
+
+> `optional` **executable?**: `boolean`
+
+##### execution\_restrictions
+
+> **execution\_restrictions**: [`ExecutionRestrictions`](#executionrestrictions)
+
+##### exists?
+
+> `optional` **exists?**: `boolean`
+
 ##### quote?
 
 > `optional` **quote?**: [`ProbeQuoteResult`](#probequoteresult)
+
+##### reason?
+
+> `optional` **reason?**: `"tool_unavailable"` \| `"tool_disabled"` \| `"realtime_unavailable"` \| `"region_restricted"` \| `"insufficient_scope"` \| `"delegation_budget_not_supported"` \| `"oauth2_signin_required"`
+
+##### recovery
+
+> **recovery**: [`ProbeRecoveryAdvice`](#proberecoveryadvice)
 
 ##### sample?
 
@@ -1902,6 +2220,18 @@ Per-request timeout override in milliseconds.
 ##### schema?
 
 > `optional` **schema?**: [`ProbeSchemaResult`](#probeschemaresult)
+
+##### status?
+
+> `optional` **status?**: `number`
+
+##### verification
+
+> **verification**: [`CatalogVerification`](#catalogverification)
+
+##### verification\_status
+
+> **verification\_status**: [`VerificationStatus`](#verificationstatus)
 
 ***
 
@@ -1989,6 +2319,20 @@ Default request timeout in milliseconds
 
 ***
 
+### RegionRestrictions
+
+#### Properties
+
+##### allow
+
+> **allow**: `string`[]
+
+##### deny
+
+> **deny**: `string`[]
+
+***
+
 ### SearchRequest
 
 Request body for the Search Tools API.
@@ -2040,11 +2384,23 @@ Response from the Search Tools API.
 
 #### Properties
 
+##### contract\_features?
+
+> `optional` **contract\_features?**: `string`[]
+
+##### contract\_warnings?
+
+> `optional` **contract\_warnings?**: `string`[]
+
 ##### elapsed\_time\_ms?
 
 > `optional` **elapsed\_time\_ms?**: `number`
 
 Total elapsed time in milliseconds
+
+##### error\_message?
+
+> `optional` **error\_message?**: `string` \| `null`
 
 ##### query?
 
@@ -2207,6 +2563,14 @@ Whether the capability supports point-in-time requests.
 
 Structured rule-level billing metadata when available
 
+##### body\_params?
+
+> `optional` **body\_params?**: [`JsonValue`](#jsonvalue)
+
+##### calls\_count?
+
+> `optional` **calls\_count?**: `string`
+
 ##### capabilities?
 
 > `optional` **capabilities?**: [`ToolCapability`](#toolcapability)[]
@@ -2224,6 +2588,14 @@ Compact capability label returned by the routing projection.
 > `optional` **categories?**: (`string` \| [`ToolCategory`](#toolcategory))[]
 
 Tool categories/tags: category objects, or plain strings in legacy responses
+
+##### category?
+
+> `optional` **category?**: `string`
+
+##### cost?
+
+> `optional` **cost?**: `string` \| `number`
 
 ##### cost\_class?
 
@@ -2249,6 +2621,12 @@ Documentation URL for the tool
 
 Usage examples with sample parameters
 
+##### execution\_restrictions
+
+> **execution\_restrictions**: [`ExecutionRestrictions`](#executionrestrictions)
+
+Eligibility, policy, and execution-readiness restrictions.
+
 ##### expected\_cost?
 
 > `optional` **expected\_cost?**: `string` \| `number`
@@ -2267,6 +2645,10 @@ Relevance score for the search query (0.0 - 1.0, higher = better match)
 
 Whether this tool has execution history; not a guarantee of correctness or reliability
 
+##### input\_schema?
+
+> `optional` **input\_schema?**: [`JsonValue`](#jsonvalue)
+
 ##### last\_execution\_record?
 
 > `optional` **last\_execution\_record?**: `Record`\<`string`, `unknown`\>
@@ -2279,11 +2661,23 @@ Most recent execution record, if available
 
 Human-readable display name
 
+##### output\_schema?
+
+> `optional` **output\_schema?**: [`JsonValue`](#jsonvalue)
+
+##### parameters?
+
+> `optional` **parameters?**: [`JsonValue`](#jsonvalue)
+
+##### parameters\_schema?
+
+> `optional` **parameters\_schema?**: [`JsonValue`](#jsonvalue)
+
 ##### params?
 
-> `optional` **params?**: [`ToolParameter`](#toolparameter)[]
+> `optional` **params?**: [`ToolParameterContract`](#toolparametercontract)
 
-List of parameters the tool accepts
+Provider parameter contract preserved exactly as JSON.
 
 ##### protocol?
 
@@ -2305,7 +2699,7 @@ Provider identifier
 
 ##### provider\_name?
 
-> `optional` **provider\_name?**: `string`
+> `optional` **provider\_name?**: `string` \| `Record`\<`string`, `string`\>
 
 Name of the organization/service providing this tool
 
@@ -2314,6 +2708,10 @@ Name of the organization/service providing this tool
 > `optional` **provider\_website\_url?**: `string`
 
 Provider website URL
+
+##### query\_params?
+
+> `optional` **query\_params?**: [`JsonValue`](#jsonvalue)
 
 ##### region?
 
@@ -2329,6 +2727,14 @@ Geographic availability of the tool.
 > `optional` **reliability?**: `string`
 
 Compact reliability grade returned by the routing projection.
+
+##### requestBody?
+
+> `optional` **requestBody?**: [`JsonValue`](#jsonvalue)
+
+##### score?
+
+> `optional` **score?**: `number`
 
 ##### service\_id?
 
@@ -2347,6 +2753,22 @@ Historical execution performance statistics
 > **tool\_id**: `string`
 
 Unique identifier for the tool (used in call)
+
+##### tool\_name?
+
+> `optional` **tool\_name?**: `string`
+
+##### verification
+
+> **verification**: [`CatalogVerification`](#catalogverification)
+
+Evidence supporting the verification state.
+
+##### verification\_status
+
+> **verification\_status**: [`VerificationStatus`](#verificationstatus)
+
+Fail-closed verification state for this catalog result.
 
 ##### why\_recommended?
 
@@ -2388,7 +2810,7 @@ Whether this parameter must be provided
 
 ##### type
 
-> **type**: `"string"` \| `"number"` \| `"boolean"` \| `"object"` \| `"array"`
+> **type**: `"string"` \| `"number"` \| `"boolean"` \| `"object"` \| `"integer"` \| `"array"`
 
 Data type of the parameter
 
@@ -2402,7 +2824,7 @@ Historical execution performance statistics for a tool.
 
 ##### avg\_execution\_time\_ms?
 
-> `optional` **avg\_execution\_time\_ms?**: `number`
+> `optional` **avg\_execution\_time\_ms?**: `number` \| `null`
 
 Historical average execution time in milliseconds
 
@@ -2412,11 +2834,87 @@ Historical average execution time in milliseconds
 
 Legacy fallback estimate in credits per call
 
+##### data\_status?
+
+> `optional` **data\_status?**: `"available"` \| `"insufficient"` \| `"stale"` \| `"unavailable"`
+
+##### last\_checked\_at?
+
+> `optional` **last\_checked\_at?**: `string`
+
+##### latency\_minimum\_sample\_count?
+
+> `optional` **latency\_minimum\_sample\_count?**: `number`
+
+##### latency\_sample\_count?
+
+> `optional` **latency\_sample\_count?**: `number`
+
+##### latency\_status?
+
+> `optional` **latency\_status?**: `"available"` \| `"insufficient"` \| `"stale"` \| `"unavailable"`
+
+##### metric\_window?
+
+> `optional` **metric\_window?**: `string`
+
+##### metrics\_sample\_count?
+
+> `optional` **metrics\_sample\_count?**: `number`
+
+##### metrics\_updated\_at?
+
+> `optional` **metrics\_updated\_at?**: `string`
+
+##### minimum\_sample\_count?
+
+> `optional` **minimum\_sample\_count?**: `number`
+
+##### quality\_data\_status?
+
+> `optional` **quality\_data\_status?**: `"available"` \| `"insufficient"` \| `"stale"` \| `"unavailable"`
+
+##### quality\_sample\_count?
+
+> `optional` **quality\_sample\_count?**: `number`
+
+##### sample\_count?
+
+> `optional` **sample\_count?**: `number`
+
 ##### success\_rate?
 
-> `optional` **success\_rate?**: `number`
+> `optional` **success\_rate?**: `number` \| `null`
 
 Historical success rate (0.0 - 1.0)
+
+##### success\_rate\_minimum\_sample\_count?
+
+> `optional` **success\_rate\_minimum\_sample\_count?**: `number`
+
+##### success\_rate\_sample\_count?
+
+> `optional` **success\_rate\_sample\_count?**: `number`
+
+##### success\_rate\_status?
+
+> `optional` **success\_rate\_status?**: `"available"` \| `"insufficient"` \| `"stale"` \| `"unavailable"`
+
+##### window?
+
+> `optional` **window?**: `string`
+
+##### window\_end?
+
+> `optional` **window\_end?**: `string`
+
+##### window\_label?
+
+> `optional` **window\_label?**: `string`
+
+##### window\_start?
+
+> `optional` **window\_start?**: `string`
 
 ***
 
@@ -2620,6 +3118,60 @@ Historical success rate (0.0 - 1.0)
 
 > `optional` **summary?**: `boolean`
 
+***
+
+### ValidationIssue
+
+Response from the Execute Tool API.
+
+#### Properties
+
+##### ctx?
+
+> `optional` **ctx?**: `Record`\<`string`, [`JsonValue`](#jsonvalue)\>
+
+##### input?
+
+> `optional` **input?**: [`JsonValue`](#jsonvalue)
+
+##### loc
+
+> **loc**: (`string` \| `number`)[]
+
+##### msg
+
+> **msg**: `string`
+
+##### type
+
+> **type**: `string`
+
+***
+
+### VerificationCheck
+
+#### Properties
+
+##### checked\_at?
+
+> `optional` **checked\_at?**: `string` \| `null`
+
+##### evidence\_digest?
+
+> `optional` **evidence\_digest?**: `string` \| `null`
+
+##### name
+
+> **name**: [`VerificationCheckName`](#verificationcheckname-1)
+
+##### reason?
+
+> `optional` **reason?**: `string` \| `null`
+
+##### status
+
+> **status**: `"stale"` \| `"verifying"` \| `"failed"` \| `"restricted"` \| `"missing"` \| `"passed"`
+
 ## Type Aliases
 
 ### AgentDelegationErrorCode
@@ -2650,9 +3202,27 @@ Error response from the Qveris API.
 
 ### ExecuteResult
 
-> **ExecuteResult** = [`ExecuteResultData`](#executeresultdata) \| [`ExecuteResultTruncated`](#executeresulttruncated) \| [`ExecuteResultSummary`](#executeresultsummary) \| [`ExecuteResultFields`](#executeresultfields) \| `unknown`[] \| `string` \| `number` \| `boolean` \| `null`
+> **ExecuteResult** = [`ExecuteResultRawObject`](#executeresultrawobject) \| [`ExecuteResultData`](#executeresultdata) \| [`ExecuteResultTruncated`](#executeresulttruncated) \| [`ExecuteResultProjectedOverflow`](#executeresultprojectedoverflow) \| [`ExecuteResultSummary`](#executeresultsummary) \| [`ExecuteResultFields`](#executeresultfields) \| `unknown`[] \| `string` \| `number` \| `boolean` \| `null`
 
 Union type for execution results (either full data or truncated).
+
+***
+
+### ExecuteResultSummary
+
+> **ExecuteResultSummary** = [`ExecuteResultSummaryBase`](#executeresultsummarybase) & \{ `summary`: `NonNullable`\<[`ExecuteResultSummaryBase`](#executeresultsummarybase)\[`"summary"`\]\>; \} \| \{ `data`: `unknown`; \} \| \{ `full_content_file_url`: `string`; `truncated_content`: `string`; \}
+
+Summary mode preserves at least one usable payload: statistics, lossless data,
+or a preview with its download URL. These payloads may coexist. Check success
+and field availability before consuming them; a summary need not have a URL.
+
+***
+
+### JsonValue
+
+> **JsonValue** = `string` \| `number` \| `boolean` \| `null` \| [`JsonValue`](#jsonvalue)[] \| \{\[`key`: `string`\]: [`JsonValue`](#jsonvalue); \}
+
+Any JSON value preserved from a provider-owned parameter contract.
 
 ***
 
@@ -2688,6 +3258,26 @@ Exact OAuth audience/resource forwarded to credential providers.
 
 OAuth scopes forwarded to credential providers.
 
+***
+
+### ToolParameterContract
+
+> **ToolParameterContract** = [`ToolParameter`](#toolparameter)[] \| [`JsonValue`](#jsonvalue)
+
+A legacy parameter-definition list or any provider-owned JSON contract.
+
+***
+
+### VerificationCheckName
+
+> **VerificationCheckName** = `"schema"` \| `"authentication"` \| `"description_contract"` \| `"provider_identity"` \| `"permissions"` \| `"freshness"` \| `"live_check"`
+
+***
+
+### VerificationStatus
+
+> **VerificationStatus** = `"unverified"` \| `"verifying"` \| `"verified"` \| `"stale"` \| `"failed"` \| `"restricted"`
+
 ## Functions
 
 ### getQverisTools()
@@ -2706,13 +3296,17 @@ The Qveris client to route calls through.
 
 ##### options?
 
-Optional session and model metadata for correlation and quality analysis.
+Host-controlled OAuth identity plus optional session and model metadata.
 
 ###### model?
 
 `string`
 
 ###### sessionId?
+
+`string`
+
+###### subUserId?
 
 `string`
 

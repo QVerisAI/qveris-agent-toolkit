@@ -398,6 +398,8 @@ The response schema matches `/search` for the requested tools, including paramet
 
 ### 3. `probe`
 
+For provider OAuth scoped to an end user, pass the optional non-empty `sub_user_id` to both `probe` and `call`, using the same value. Omit it when no sub-user identity is needed; it is not an access token.
+
 Use this tool to validate candidate parameters and obtain a zero-cost quote without executing the capability.
 
 Inputs are `tool_id`, optional `parameters`, optional `checks` (`schema`, `quote`, `coverage`, `sample`), and optional `live_budget` (`none`, `metadata`, `sampled`). Schema and quote are implemented; coverage and sample may return `unknown`. Probe never executes the capability or consumes credits.
@@ -417,10 +419,14 @@ The call response may include compact pre-settlement `billing`. Final charge sta
 | `params_to_tool` | object | Yes | Dictionary of parameters to pass to the tool |
 | `session_id` | string | No | Session identifier for tracking |
 | `model` | string | No | Model that selected and parameterized the call (maximum 128 characters) |
-| `max_response_size` | number | No | Max response size in bytes (default `20480`) |
-| `respond_with` | string | No | `full`, `summary`, or `fields:<JSONPath,...>`; omitted defaults to full |
+| `max_response_size` | number | No | Automatic inline limit in UTF-8 bytes (default `20480`, `-1` unlimited); explicit `full` takes precedence over a finite value |
+| `respond_with` | string | No | Omit for compatibility auto-delivery; use `full` to force complete inline data, `summary`, or `fields:<JSONPath,...>` |
 
 Example:
+
+An explicit `respond_with: "full"` must return complete inline `result.data` without `truncated_content` or a replacement `full_content_file_url`. If the platform hard safety limit is exceeded, the call fails with `response_too_large`. When `respond_with` is omitted, the historical 20KB automatic overflow behavior remains unchanged.
+
+Summary mode preserves at least one usable payload: a `summary` object, lossless `data`, or `truncated_content` together with `full_content_file_url`. These fields may coexist. Neither statistics nor a URL is guaranteed by the mode alone. Check `success` first, then field availability; failed summary calls retain an empty `data` object.
 
 ```json
 {

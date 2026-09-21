@@ -2,6 +2,7 @@ import type { QverisClient } from '../api/client.js';
 import type { ProbeCheck, ProbeLiveBudget, ProbeResponse } from '../types.js';
 
 export interface ProbeToolInput {
+  sub_user_id?: string;
   tool_id: string;
   parameters?: Record<string, unknown>;
   checks?: ProbeCheck[];
@@ -11,6 +12,12 @@ export interface ProbeToolInput {
 export const probeToolSchema = {
   type: 'object' as const,
   properties: {
+    sub_user_id: {
+      type: 'string',
+      minLength: 1,
+      pattern: '.*\\S.*',
+      description: 'End-user identity for provider OAuth; use the same value for Probe and Call.',
+    },
     tool_id: {
       type: 'string',
       minLength: 1,
@@ -44,5 +51,6 @@ export async function executeProbeTool(client: QverisClient, input: ProbeToolInp
     parameters: input.parameters ?? {},
     checks: input.checks ?? ['schema'],
     live_budget: input.live_budget ?? 'none',
+    ...(input.sub_user_id !== undefined && { sub_user_id: input.sub_user_id }),
   });
 }
