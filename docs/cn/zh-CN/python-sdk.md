@@ -293,11 +293,13 @@ Capability Resolve/Query、selection token、idempotency key 和 execution looku
 
 ### `QverisClient`
 
+当 provider OAuth 按终端用户隔离时，向 `probe` 和 `call` 传入相同的非空 `sub_user_id`；否则省略。该字段是用户身份，不是访问令牌。
+
 | 方法 | REST 端点 | 用途 |
 |------|-----------|------|
 | `discover(query, limit=20, session_id=None, view=None, lang=None, timeout=None, correlation_id=None)` | `POST /search` | 发现能力；`view="routing"` 返回精简 routing card（免费） |
 | `inspect(tool_ids, search_id=None, session_id=None, timeout=None, correlation_id=None)` | `POST /tools/by-ids` | 获取能力完整元数据（免费） |
-| `probe(tool_id, parameters=None, checks=None, live_budget="none", timeout=None, correlation_id=None)` | `POST /tools/probe` | 校验参数并请求零成本报价 |
+| `probe(tool_id, parameters=None, checks=None, live_budget="none", timeout=None, correlation_id=None, sub_user_id=None)` | `POST /tools/probe` | 校验参数并请求零成本报价 |
 | `call(tool_id, parameters, ..., model=None, compatibility_mode="strict", timeout=None, correlation_id=None)` | `POST /tools/execute` | 使用严格 single-submit 语义执行能力，并可记录模型归因 |
 | `usage(**filters)` | `GET /auth/usage/history/v2` | 审计请求状态与扣费结果 |
 | `ledger(**filters)` | `GET /auth/credits/ledger` | 查看最终积分余额变动 |

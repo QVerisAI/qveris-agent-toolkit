@@ -1,7 +1,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 
 import { classifyContractChanges, resolveContractPlan } from './plan-contract-tests.mjs';
+
+test('PR workflow executes the shared contract guards rather than only watching their paths', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/contract-tests.yml', import.meta.url), 'utf8');
+  for (const guard of ['public-capability-contract', 'result-delivery-contract']) {
+    assert.match(workflow, new RegExp('run: node --test[^\\n]*scripts/' + guard + '\\.test\\.mjs'));
+  }
+});
 
 test('a CLI-only change does not schedule unrelated SDKs', () => {
   assert.deepEqual(classifyContractChanges(['packages/cli/src/main.mjs']), {

@@ -398,6 +398,8 @@ The response schema matches `/search` for the requested tools, including paramet
 
 ### 3. `probe`
 
+For provider OAuth scoped to an end user, pass the optional non-empty `sub_user_id` to both `probe` and `call`, using the same value. Omit it when no sub-user identity is needed; it is not an access token.
+
 Use this tool to validate candidate parameters and obtain a zero-cost quote without executing the capability.
 
 Inputs are `tool_id`, optional `parameters`, optional `checks` (`schema`, `quote`, `coverage`, `sample`), and optional `live_budget` (`none`, `metadata`, `sampled`). Schema and quote are implemented; coverage and sample may return `unknown`. Probe never executes the capability or consumes credits.

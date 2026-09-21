@@ -2331,7 +2331,7 @@ export interface components {
             };
         } & {
             [key: string]: unknown;
-        }) & unknown;
+        }) & (unknown & unknown);
         /** PublicCompactBillingStatement */
         PublicCompactBillingStatement: {
             summary?: string;

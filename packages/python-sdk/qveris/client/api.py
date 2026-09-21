@@ -93,6 +93,7 @@ _SENSITIVE_KEYS = frozenset(
         "secret",
         "password",
         "selection_token",
+        "sub_user_id",
         "full_content_file_url",
         "cookie",
         "set-cookie",
@@ -977,14 +978,17 @@ class QverisClient:
         live_budget: Literal["none", "metadata", "sampled"] = "none",
         timeout: Optional[float] = None,
         correlation_id: Optional[str] = None,
+        sub_user_id: Optional[str] = None,
     ) -> ToolProbeResponse:
-        """Validate candidate parameters and obtain a zero-cost quote without execution."""
+        """Validate parameters without execution; use the same sub_user_id as Call for provider OAuth."""
         url = self._url_for("POST", "tools/probe", params={"tool_id": tool_id})
         payload: Dict[str, Any] = {
             "parameters": parameters if parameters is not None else {},
             "checks": checks if checks is not None else ["schema"],
             "live_budget": live_budget,
         }
+        if sub_user_id is not None:
+            payload["sub_user_id"] = sub_user_id
         state = _RequestState("probe", time.monotonic())
         with start_span("qveris.probe", {ATTR_OPERATION: "probe", ATTR_TOOL_ID: tool_id}) as span:
             self._debug(f"[Qveris API] POST {url}")
@@ -1021,6 +1025,7 @@ class QverisClient:
         timeout: Optional[float] = None,
         correlation_id: Optional[str] = None,
         model: Optional[str] = None,
+        sub_user_id: Optional[str] = None,
     ) -> ToolExecutionResponse:
         """
         Call a specific capability.
@@ -1040,6 +1045,7 @@ class QverisClient:
             timeout: HTTP request timeout in seconds; credential acquisition is separate.
             correlation_id: Non-sensitive reference forwarded only to the credential provider.
             model: Model that selected and parameterized this capability call.
+            sub_user_id: End-user identity for provider OAuth; use the same value as Probe.
 
         Returns:
             `ToolExecutionResponse` with `success`, `result`, and metadata.
@@ -1063,6 +1069,8 @@ class QverisClient:
 
         if model is not None:
             payload["model"] = model
+        if sub_user_id is not None:
+            payload["sub_user_id"] = sub_user_id
 
         if compatibility_mode not in {"strict", "legacy_optional_fields"}:
             raise ValueError("compatibility_mode must be 'strict' or 'legacy_optional_fields'")

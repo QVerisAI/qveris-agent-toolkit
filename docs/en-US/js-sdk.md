@@ -159,8 +159,10 @@ Option shapes:
 
 - `discover(query, { limit?, sessionId?, view?, lang?, timeoutMs? })`
 - `inspect(toolIds, { searchId?, sessionId?, timeoutMs? })` — `toolIds` accepts a single string or an array; an **empty array short-circuits** and returns an empty response without a network request.
-- `probe(toolId, { parameters?, checks?, liveBudget?, timeoutMs? })`
-- `call(toolId, { parameters, searchId?, sessionId?, model?, maxResponseSize?, respondWith?, timeoutMs?, compatibilityMode? })`
+- `probe(toolId, { parameters?, checks?, liveBudget?, subUserId?, timeoutMs? })`
+- `call(toolId, { parameters, searchId?, sessionId?, subUserId?, model?, maxResponseSize?, respondWith?, timeoutMs?, compatibilityMode? })`
+
+Use the same non-empty `subUserId` for Probe and Call when provider OAuth is scoped to an end user. Omit it otherwise; it is an identity, not a token.
 
 Projection options are opt-in. Omitting `respondWith` keeps compatibility auto-delivery: `maxResponseSize` defaults to 20KB and oversized results use the overflow envelope. Explicit `respondWith: 'full'` forces complete inline `result.data` and takes precedence over a finite `maxResponseSize`; a platform hard-limit failure is reported as `response_too_large` instead of truncation. `respondWith: 'summary'` keeps the summary shape regardless of `maxResponseSize`.
 

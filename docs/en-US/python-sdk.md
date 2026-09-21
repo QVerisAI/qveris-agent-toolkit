@@ -297,11 +297,13 @@ drift.
 
 ### `QverisClient`
 
+When provider OAuth is scoped to an end user, pass the same non-empty `sub_user_id` to `probe` and `call`. Omit it otherwise; it is an identity, not an access token.
+
 | Method | REST endpoint | Purpose |
 |--------|---------------|---------|
 | `discover(query, limit=20, session_id=None, view=None, lang=None, timeout=None, correlation_id=None)` | `POST /search` | Find capabilities; `view="routing"` returns compact routing cards (free) |
 | `inspect(tool_ids, search_id=None, session_id=None, timeout=None, correlation_id=None)` | `POST /tools/by-ids` | Fetch full capability metadata (free) |
-| `probe(tool_id, parameters=None, checks=None, live_budget="none", timeout=None, correlation_id=None)` | `POST /tools/probe` | Validate parameters and request a zero-cost quote |
+| `probe(tool_id, parameters=None, checks=None, live_budget="none", timeout=None, correlation_id=None, sub_user_id=None)` | `POST /tools/probe` | Validate parameters and request a zero-cost quote |
 | `call(tool_id, parameters, ..., model=None, compatibility_mode="strict", timeout=None, correlation_id=None)` | `POST /tools/execute` | Execute with strict single-submit semantics and optional model attribution |
 | `usage(**filters)` | `GET /auth/usage/history/v2` | Audit request status and charge outcome |
 | `ledger(**filters)` | `GET /auth/credits/ledger` | Inspect final credit balance movements |

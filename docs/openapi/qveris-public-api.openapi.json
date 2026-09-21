@@ -12703,6 +12703,53 @@
                 "full_content_file_url"
               ]
             }
+          },
+          {
+            "if": {
+              "required": [
+                "respond_with"
+              ],
+              "properties": {
+                "respond_with": {
+                  "type": "string",
+                  "pattern": "^fields:"
+                }
+              }
+            },
+            "then": {
+              "oneOf": [
+                {
+                  "required": [
+                    "data"
+                  ],
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "truncated_content"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "full_content_file_url"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "required": [
+                    "truncated_content",
+                    "full_content_file_url"
+                  ],
+                  "not": {
+                    "required": [
+                      "data"
+                    ]
+                  }
+                }
+              ]
+            }
           }
         ],
         "properties": {

@@ -44,6 +44,14 @@ const models: Record<string, string> = {
   PublicProbeUnknownResult: 'ProbeUnknownResult',
   PublicCompactBillingStatement: 'CompactBillingStatement',
 };
+const requests = JSON.parse(readFileSync(resolve('../../contracts/public-client-requests.v1.json'), 'utf8')) as Record<
+  string,
+  {
+    body: Record<string, unknown>;
+    javascript: Record<string, string>;
+    mcp: Record<string, string>;
+  }
+>;
 
 // Check the wire's structural superset, not just a few happy-path fixtures.
 // Conditional constraints are tested by the authoritative JSON Schema tests.
@@ -70,9 +78,26 @@ function compatibilityDiagnostics(mutate: (source: string) => string = (source) 
   const imports = [
     `import type * as SDK from './types';`,
     `import type * as MCP from '../../mcp/src/types';`,
+    `import type * as Client from './client';`,
+    `import type {ExecuteToolInput} from '../../mcp/src/tools/execute';`,
+    `import type {ProbeToolInput} from '../../mcp/src/tools/probe';`,
     'type Assert<T extends true> = T;',
     'type WireJson = string | number | boolean | null | WireJson[] | { [key: string]: WireJson };',
   ];
+  for (const [operation, request] of Object.entries(requests)) {
+    const options = Object.fromEntries(
+      Object.entries(request.body).map(([key, value]) => [request.javascript[key], value]),
+    );
+    const input = {
+      tool_id: 'tool-fixture',
+      ...Object.fromEntries(Object.entries(request.body).map(([key, value]) => [request.mcp[key] ?? key, value])),
+    };
+    imports.push(
+      `const options${operation}: Client.${operation === 'call' ? 'CallOptions' : 'ProbeOptions'} = ${JSON.stringify(options)};`,
+      `const input${operation}: ${operation === 'call' ? 'ExecuteToolInput' : 'ProbeToolInput'} = ${JSON.stringify(input)};`,
+      `const request${operation}: MCP.${operation === 'call' ? 'ExecuteRequest' : 'ProbeRequest'} = ${JSON.stringify(request.body)};`,
+    );
+  }
   for (const [schema, model] of Object.entries(models)) {
     expect(schemas[schema], schema).toBeDefined();
     imports.push(`type ${schema} = ${wire(schemas[schema])};`);
@@ -92,7 +117,15 @@ function compatibilityDiagnostics(mutate: (source: string) => string = (source) 
             ? vector.request.respond_with?.startsWith('fields:')
               ? 'ExecuteResultProjectedOverflow'
               : 'ExecuteResultTruncated'
-            : undefined;
+            : vector.expected.delivery === 'inline'
+              ? vector.request.respond_with?.startsWith('fields:')
+                ? 'ExecuteResultFields'
+                : 'ExecuteResultData'
+              : undefined;
+      if (!model) {
+        // Failure/rejection vectors concern the response envelope, not a successful result.
+        expect(['failure', 'reject']).toContain(vector.expected.delivery);
+      }
       if (model) {
         const fields = (vector.expected.required_result_fields ?? [])
           .map((field) => `${JSON.stringify(field)}: unknown`)
@@ -120,7 +153,7 @@ function compatibilityDiagnostics(mutate: (source: string) => string = (source) 
   host.getSourceFile = (name, languageVersion, onError, shouldCreateNewSourceFile) =>
     name === filename
       ? ts.createSourceFile(name, imports.join('\n'), languageVersion, true)
-      : [resolve('src/types.ts'), resolve('../mcp/src/types.ts')].includes(name)
+      : [resolve('src/types.ts'), resolve('../mcp/src/types.ts'), resolve('src/client.ts')].includes(name)
         ? ts.createSourceFile(name, mutate(readFileSync(name, 'utf8')), languageVersion, true)
         : original(name, languageVersion, onError, shouldCreateNewSourceFile);
   const diagnostics = ts.getPreEmitDiagnostics(ts.createProgram([filename], options, host));
@@ -140,11 +173,17 @@ test.each([
   ['Probe recovery', '  recovery: ProbeRecoveryAdvice;', ''],
   ['required summary', '  summary: {', '  summary?: {'],
   ['nullable metrics', 'avg_execution_time_ms?: number | null;', 'avg_execution_time_ms?: number;'],
+  [
+    'inline fields data',
+    'export interface ExecuteResultFields {\n  respond_with: `fields:${string}`;\n  data: unknown;',
+    'export interface ExecuteResultFields {\n  respond_with: `fields:${string}`;\n  data?: unknown;',
+  ],
+  ['OAuth request identity', '  subUserId?: string;', ''],
 ])('the guard detects regression of %s', (_label, before, after) => {
   expect(
     compatibilityDiagnostics((source) => {
-      expect(source).toContain(before);
-      return source.replace(before, after);
+      if (!source.includes(before)) return source;
+      return source.replaceAll(before, after);
     }),
   ).not.toBe('');
 });

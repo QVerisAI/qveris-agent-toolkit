@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const root = new URL('../', import.meta.url);
+const requestContracts = JSON.parse(await readFile(new URL('contracts/public-client-requests.v1.json', root), 'utf8'));
 const [spec, javascriptTypes, pythonTypes, mcpTypes] = await Promise.all([
   readFile(new URL('docs/openapi/qveris-public-api.openapi.json', root), 'utf8').then(JSON.parse),
   readFile(new URL('packages/js-sdk/src/types.ts', root), 'utf8'),
@@ -37,6 +38,18 @@ test('hand-written client capability models track required public OpenAPI fields
   assert.match(pythonTypes, /verification_status: VerificationStatus/);
   assert.match(pythonTypes, /verification: CatalogVerification/);
   assert.match(pythonTypes, /execution_restrictions: ExecutionRestrictions/);
+});
+
+test('every published Call/Probe request field has a transport fixture and SDK mapping', () => {
+  for (const contract of Object.values(requestContracts)) {
+    assert.deepEqual(
+      [...Object.keys(contract.body), ...contract.query_fields].sort(),
+      Object.keys(spec.components.schemas[contract.schema].properties).sort(),
+      contract.schema,
+    );
+    assert.deepEqual(Object.keys(contract.javascript).sort(), Object.keys(contract.body).sort());
+    assert.equal(new Set(Object.values(contract.javascript)).size, Object.keys(contract.body).length);
+  }
 });
 
 test('projected overflow models require only contract-guaranteed fields', () => {

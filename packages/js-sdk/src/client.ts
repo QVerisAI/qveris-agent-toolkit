@@ -147,6 +147,8 @@ export interface InspectOptions {
 
 /** Options for {@link Qveris.call}. */
 export interface CallOptions {
+  /** End-user identity for provider OAuth; use the same value for Probe and Call. */
+  subUserId?: string;
   /** Key-value parameters matching the tool's parameter schema */
   parameters: Record<string, unknown>;
   /** The search_id from the discover call that returned this tool */
@@ -171,6 +173,8 @@ export interface CallOptions {
 
 /** Options for {@link Qveris.probe}. */
 export interface ProbeOptions {
+  /** End-user identity for provider OAuth readiness checks. */
+  subUserId?: string;
   /** Candidate parameters to validate without executing the capability. */
   parameters?: Record<string, unknown>;
   /** Checks to run. Defaults to schema. */
@@ -338,6 +342,7 @@ export class Qveris {
         parameters: options.parameters ?? {},
         checks: options.checks ?? ['schema'],
         live_budget: options.liveBudget ?? 'none',
+        ...(options.subUserId !== undefined && { sub_user_id: options.subUserId }),
       },
       options.timeoutMs,
     );
@@ -351,6 +356,7 @@ export class Qveris {
     const endpoint = `/tools/execute?tool_id=${encodeURIComponent(toolId)}`;
     const body: Record<string, unknown> = {
       parameters: options.parameters,
+      ...(options.subUserId !== undefined && { sub_user_id: options.subUserId }),
       search_id: options.searchId ?? null,
       ...(options.sessionId !== undefined && { session_id: options.sessionId }),
       ...(options.model !== undefined && { model: options.model }),

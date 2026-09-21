@@ -1159,6 +1159,12 @@ The search_id from the discover call that returned this tool
 
 Session identifier for tracking
 
+##### subUserId?
+
+> `optional` **subUserId?**: `string`
+
+End-user identity for provider OAuth; use the same value for Probe and Call.
+
 ##### timeoutMs?
 
 > `optional` **timeoutMs?**: `number`
@@ -1587,6 +1593,12 @@ Links the execution to the original search for analytics and billing.
 
 Session identifier for tracking user sessions.
 
+##### sub\_user\_id?
+
+> `optional` **sub\_user\_id?**: `string`
+
+End-user identity for provider OAuth; use the same value for Probe and Call.
+
 ***
 
 ### ExecuteResponse
@@ -1711,9 +1723,9 @@ Selected result fields returned by a `fields:<JSONPath,...>` projection.
 
 #### 属性
 
-##### data?
+##### data
 
-> `optional` **data?**: `unknown`
+> **data**: `unknown`
 
 ##### respond\_with
 
@@ -2041,6 +2053,12 @@ Probe budget. Every current value avoids capability execution.
 
 Candidate parameters to validate without executing the capability.
 
+##### subUserId?
+
+> `optional` **subUserId?**: `string`
+
+End-user identity for provider OAuth readiness checks.
+
 ##### timeoutMs?
 
 > `optional` **timeoutMs?**: `number`
@@ -2116,6 +2134,12 @@ Per-request timeout override in milliseconds.
 ##### parameters?
 
 > `optional` **parameters?**: `Record`\<`string`, `unknown`\>
+
+##### sub\_user\_id?
+
+> `optional` **sub\_user\_id?**: `string`
+
+End-user identity for provider OAuth readiness checks.
 
 ***
 

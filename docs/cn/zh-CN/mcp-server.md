@@ -361,6 +361,8 @@ API 密钥接入步骤：
 
 ### 3. `probe`
 
+若 provider OAuth 按终端用户隔离，请向 `probe` 和 `call` 传入相同的可选非空 `sub_user_id`。不需要子用户身份时省略；该字段不是访问令牌。
+
 用于在不执行能力的情况下校验候选参数并获取零成本报价。输入包括 `tool_id`、可选 `parameters`、可选 `checks`（`schema`、`quote`、`coverage`、`sample`）以及可选 `live_budget`（`none`、`metadata`、`sampled`）。当前已实现 schema 与 quote；coverage 和 sample 可能返回 `unknown`。Probe 不执行能力，也不消耗 credits。
 
 ---

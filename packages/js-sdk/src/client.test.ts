@@ -494,6 +494,7 @@ describe('Qveris client', () => {
       parameters: { city: 'London' },
       respondWith: 'summary',
       compatibilityMode: 'legacyOptionalFields',
+      subUserId: 'tenant-user-fixture',
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -501,6 +502,7 @@ describe('Qveris client', () => {
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       parameters: { city: 'London' },
       search_id: null,
+      sub_user_id: 'tenant-user-fixture',
     });
   });
 

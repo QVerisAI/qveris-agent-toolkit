@@ -72,13 +72,13 @@ Deprecated alias for inspect(…).
 
 <a id="qveris.QverisClient.probe"></a>
 
-#### *async* probe(tool_id: str, parameters: Dict[str, Any] | None = None, checks: List[Literal['schema', 'quote', 'coverage', 'sample']] | None = None, live_budget: Literal['none', 'metadata', 'sampled'] = 'none', timeout: float | None = None, correlation_id: str | None = None) → [ToolProbeResponse](#qveris.ToolProbeResponse)
+#### *async* probe(tool_id: str, parameters: Dict[str, Any] | None = None, checks: List[Literal['schema', 'quote', 'coverage', 'sample']] | None = None, live_budget: Literal['none', 'metadata', 'sampled'] = 'none', timeout: float | None = None, correlation_id: str | None = None, sub_user_id: str | None = None) → [ToolProbeResponse](#qveris.ToolProbeResponse)
 
-Validate candidate parameters and obtain a zero-cost quote without execution.
+Validate parameters without execution; use the same sub_user_id as Call for provider OAuth.
 
 <a id="qveris.QverisClient.call"></a>
 
-#### *async* call(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, respond_with: str | None = None, compatibility_mode: Literal['strict', 'legacy_optional_fields'] = 'strict', timeout: float | None = None, correlation_id: str | None = None, model: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
+#### *async* call(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, respond_with: str | None = None, compatibility_mode: Literal['strict', 'legacy_optional_fields'] = 'strict', timeout: float | None = None, correlation_id: str | None = None, model: str | None = None, sub_user_id: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
 
 Call a specific capability.
 
@@ -93,6 +93,7 @@ Call a specific capability.
   * **timeout** – HTTP request timeout in seconds; credential acquisition is separate.
   * **correlation_id** – Non-sensitive reference forwarded only to the credential provider.
   * **model** – Model that selected and parameterized this capability call.
+  * **sub_user_id** – End-user identity for provider OAuth; use the same value as Probe.
 * **Returns:**
   ToolExecutionResponse with success, result, and metadata.
 

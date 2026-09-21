@@ -743,13 +743,14 @@ async def test_call_projection_retries_only_legacy_extra_field_rejection() -> No
                 {},
                 respond_with="summary",
                 compatibility_mode="legacy_optional_fields",
+                sub_user_id="tenant-user-fixture",
             )
     finally:
         await client.close()
 
     assert payloads == [
-        {"parameters": {}, "respond_with": "summary"},
-        {"parameters": {}},
+        {"parameters": {}, "respond_with": "summary", "sub_user_id": "tenant-user-fixture"},
+        {"parameters": {}, "sub_user_id": "tenant-user-fixture"},
     ]
 
 

@@ -15,6 +15,8 @@ import type { ExecuteResponse } from '../types.js';
  * Input parameters for the call tool.
  */
 export interface ExecuteToolInput {
+  /** End-user identity for provider OAuth; use the same value as Probe. */
+  sub_user_id?: string;
   /**
    * The ID of the remote tool to execute.
    * Must be obtained from discover results.
@@ -66,6 +68,12 @@ export interface ExecuteToolInput {
 export const executeToolSchema = {
   type: 'object' as const,
   properties: {
+    sub_user_id: {
+      type: 'string',
+      minLength: 1,
+      pattern: '.*\\S.*',
+      description: 'End-user identity for provider OAuth; use the same value as Probe.',
+    },
     tool_id: {
       type: 'string',
       description: 'The ID of the remote tool to execute. Must come from a previous discover call.',
@@ -136,6 +144,7 @@ export async function executeExecuteTool(
     session_id: input.session_id ?? defaultSessionId,
     ...(input.model !== undefined && { model: input.model }),
     parameters: input.params_to_tool,
+    ...(input.sub_user_id !== undefined && { sub_user_id: input.sub_user_id }),
     max_response_size: input.max_response_size,
     ...(input.respond_with !== undefined && { respond_with: input.respond_with }),
   });

@@ -420,6 +420,8 @@ export interface GetToolsByIdsRequest {
  * Request body for the Execute Tool API.
  */
 export interface ExecuteRequest {
+  /** End-user identity for provider OAuth; use the same value for Probe and Call. */
+  sub_user_id?: string;
   /**
    * The search_id from the search that returned this tool.
    * Links the execution to the original search for analytics and billing.
@@ -510,7 +512,7 @@ export interface ExecuteResultSummary {
 /** Selected result fields returned by a `fields:<JSONPath,...>` projection. */
 export interface ExecuteResultFields {
   respond_with: `fields:${string}`;
-  data?: unknown;
+  data: unknown;
 }
 
 /**
@@ -598,6 +600,8 @@ export type ProbeCheck = 'schema' | 'quote' | 'coverage' | 'sample';
 export type ProbeLiveBudget = 'none' | 'metadata' | 'sampled';
 
 export interface ProbeRequest {
+  /** End-user identity for provider OAuth readiness checks. */
+  sub_user_id?: string;
   parameters?: Record<string, unknown>;
   checks?: ProbeCheck[];
   live_budget?: ProbeLiveBudget;
