@@ -1,5 +1,5 @@
 {
-  "contract_version": "2026-09-12.1",
+  "contract_version": "2026-09-20.1",
   "compatibility": {
     "legacy_service_ignores_projection": {
       "request": {"query": "current weather", "view": "routing"},
@@ -46,7 +46,50 @@
           "capability": "Current weather by location",
           "cost_class": "low",
           "reliability": "A",
-          "as_of_support": false
+          "as_of_support": false,
+          "verification_status": "unverified",
+          "verification": {
+            "status": "unverified",
+            "policy_version": "catalog-verification-v1",
+            "required_checks": [
+              "schema",
+              "authentication",
+              "description_contract",
+              "provider_identity",
+              "permissions",
+              "freshness",
+              "live_check"
+            ],
+            "checks": [
+              {"name": "schema", "status": "missing", "reason": "schema_missing"},
+              {"name": "authentication", "status": "missing", "reason": "authentication_path_missing"},
+              {"name": "description_contract", "status": "missing", "reason": "description_missing"},
+              {"name": "provider_identity", "status": "missing", "reason": "provider_id_missing"},
+              {"name": "permissions", "status": "missing", "reason": "permission_disclosure_incomplete"},
+              {"name": "freshness", "status": "missing", "reason": "expires_at_missing"},
+              {"name": "live_check", "status": "missing", "reason": "live_check_samples_missing"}
+            ],
+            "quality_issues": [
+              "live_check_samples_missing",
+              "schema_missing",
+              "authentication_path_missing",
+              "description_missing",
+              "provider_id_missing",
+              "permission_disclosure_incomplete",
+              "verified_at_missing",
+              "expires_at_missing",
+              "test_run_digest_missing",
+              "verification_status_missing"
+            ]
+          },
+          "execution_restrictions": {
+            "callable": false,
+            "eligibility": "unknown",
+            "license": "unknown",
+            "regions": {"allow": [], "deny": []},
+            "commercial_use": "unknown",
+            "warnings": []
+          }
         }
       ]
     }
@@ -92,7 +135,49 @@
       "name": "End-of-Day Bars",
       "description": "Daily market bars for a symbol.",
       "contract_version": 7,
-      "schema_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      "schema_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "verification_status": "unverified",
+      "verification": {
+        "status": "unverified",
+        "policy_version": "catalog-verification-v1",
+        "required_checks": [
+          "schema",
+          "authentication",
+          "description_contract",
+          "provider_identity",
+          "permissions",
+          "freshness",
+          "live_check"
+        ],
+        "checks": [
+          {"name": "schema", "status": "missing", "reason": "schema_missing"},
+          {"name": "authentication", "status": "missing", "reason": "authentication_path_missing"},
+          {"name": "description_contract", "status": "missing"},
+          {"name": "provider_identity", "status": "missing", "reason": "provider_id_missing"},
+          {"name": "permissions", "status": "missing", "reason": "permission_disclosure_incomplete"},
+          {"name": "freshness", "status": "missing", "reason": "expires_at_missing"},
+          {"name": "live_check", "status": "missing", "reason": "live_check_samples_missing"}
+        ],
+        "quality_issues": [
+          "live_check_samples_missing",
+          "schema_missing",
+          "authentication_path_missing",
+          "provider_id_missing",
+          "permission_disclosure_incomplete",
+          "verified_at_missing",
+          "expires_at_missing",
+          "test_run_digest_missing",
+          "verification_status_missing"
+        ]
+      },
+      "execution_restrictions": {
+        "callable": false,
+        "eligibility": "unknown",
+        "license": "unknown",
+        "regions": {"allow": [], "deny": []},
+        "commercial_use": "unknown",
+        "warnings": []
+      }
     }
   },
   "capability_query": {

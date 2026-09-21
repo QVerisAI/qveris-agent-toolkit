@@ -1,6 +1,6 @@
 # QVeris REST API Documentation
 
-Version: 2026-09-12.1
+Version: 2026-09-20.1
 
 The public REST API exposes the core agent path:
 
@@ -66,6 +66,8 @@ codes cannot be bound to an email that already belongs to a formal account.
 
 Discover, Inspect, and Probe are free. Discover and Inspect may return `expected_cost`, legacy `cost`, or `billing_rule`; Probe validates the selected parameters and returns a zero-cost quote before spending credits.
 
+Every capability returned by Discover or Inspect, and every successful Probe, includes `verification_status`, the supporting `verification` checks, and `execution_restrictions`. Only `verified` means the complete evidence is current. Verification is an evidence claim, not an execution prerequisite: other states remain discoverable and may become executable when the current input, authorization, permission, region, and exact price facts are resolved. Use `confidence`, the independent readiness axes, `allowed_actions`, `blocked_actions`, and `next_action` to inspect, authorize, probe, confirm a budget, retry, or switch providers. The legacy `callable` field describes immediate execution readiness; it does not control Discover or Inspect visibility.
+
 The default/full Call response can return compact pre-settlement fields such as `billing` and `cost`. Projection responses (`summary` and `fields:*`) intentionally omit billing internals to keep the response small. Final settlement is reported by usage audit and the credits ledger; use those endpoints for support, reconciliation, and user-facing billing history.
 
 `session_id` is optional. Use one stable value per user task or conversation for tracing, analytics, and pricing context. It is not a cache contract and does not promise cache reuse or `session_cache_hit`.
@@ -79,9 +81,9 @@ Recommended contract:
 1. Generate one stable `session_id` for a user task or conversation.
 2. Call `POST /search` with a capability-level query.
 3. Save the returned `search_id`.
-4. Select a result that fits the requested capability, provider, freshness, and cost constraints. Do not take the first result and attach unrelated sample parameters.
+4. Select a result that fits the requested capability, provider, freshness, and cost constraints. Check `verification_status` and disclose eligibility, license, region, data-as-of, and commercial-use restrictions before execution. Do not take the first result and attach unrelated sample parameters.
 5. If the result has a complete current `params` contract, build `parameters` from it. An explicit empty contract describes a true zero-parameter capability; an omitted or incomplete contract requires Inspect. Ask the user for missing business inputs instead of guessing them.
-6. Call `POST /tools/probe?tool_id=...` only when you need schema validation or a current quote. A Probe quote is not a hard spending cap, price reservation, or authorization to execute.
+6. Call `POST /tools/probe?tool_id=...` only when you need schema validation or a current quote. An exact Probe quote can resolve the price-readiness check for the current request; an estimate without a bound still requires budget confirmation. A Probe quote is not a price reservation or authorization to execute.
 7. Call `POST /tools/execute`, passing `tool_id`, `parameters`, `search_id`, `session_id`, and, for agent clients, `model`.
 8. Save `execution_id` for audit and support. Do not automatically replay a paid Call when its execution outcome is unknown.
 
@@ -90,6 +92,50 @@ Do not infer parameters from the tool name alone. Do not reuse parameters from a
 `examples.sample_parameters` is a starter example, not a contract or user intent. Preserve required, enum, and alternative/one-of constraints, but replace sample business values with values from the current request.
 
 For LLM/agent integrations, include `model` in Call metadata whenever possible, for example `"model": "gpt-4.1"` or `"model": "deepseek-v4-pro"`. This helps correlate tool selection and parameter-generation quality with the model that produced the call.
+
+## Service/task context for installation
+
+After a user selects a current service or tool, a discovery surface may send its public selection to the [Plugins page](/plugins). This is a manual handoff, not an execution or authorization contract: the installation page validates the context and lets the user copy exact IDs or a JSON template into their agent. It never copies request parameters, a user prompt, or an API key into the URL.
+
+Version 1 uses these query parameters:
+
+| Parameter | Required | Contract |
+| --- | --- | --- |
+| `context_version` | Recommended | Producer contract version. Missing values default to version `1`; newer versions remain usable when their minimum consumer version is supported. |
+| `context_min_version` | No | Oldest consumer version that can safely interpret the stable fields. A value above the consumer version triggers refresh while preserving safe public IDs. |
+| `context_issued_at` | Yes | Unix time in seconds. It may be at most five minutes ahead of the consumer clock. |
+| `context_expires_at` | Yes | Unix time in seconds, later than `context_issued_at`, with a maximum lifetime of 24 hours. |
+| `task_id` | Yes | Public task identifier, 1–128 characters. |
+| `service_id` | Conditional | Public service identifier. At least one of `service_id` or `tool_id` is required. |
+| `tool_id` | Conditional | Exact public tool identifier returned by Discover or Inspect. |
+| `template_id` | No | Public template identifier; it is not template content or a prompt. |
+| `platform` | No | An installation-page platform identifier already supported by the Plugins page. |
+| `extensions.<namespace>.<field>` | No | Forward-compatible public metadata. Names and values use the same restricted public-ID alphabet; private or credential-shaped values are removed. |
+
+Public IDs must start with an ASCII letter or digit and may contain only ASCII letters, digits, `.`, `_`, `:`, `/`, or `-`. Producers must not put `prompt`, `query`, `parameters`, `payload`, `api_key`, `token`, `authorization`, credentials, PII, or other private data in an installation URL. The consumer strictly removes those values. Ordinary unknown fields are ignored with a warning instead of invalidating the whole handoff. Safe field-name casing, surrounding whitespace, and equivalent duplicates are canonicalized; conflicting duplicates, ambiguity, and security risks are rejected.
+
+Example shape (generate fresh timestamps; do not reuse these literal values):
+
+```text
+/plugins?context_version=1&context_issued_at=1800000000&context_expires_at=1800003600&task_id=company-latest-filing&service_id=service.market-data.v1&tool_id=provider.company.lookup.v1&template_id=filing-summary.v1
+```
+
+The handoff remains in the same site-relative URL during login. On return, the installation page automatically revalidates it. Expiration invalidates only discovery-time snapshots such as availability, price, and permission signals; safe task intent and public service/tool/task/template IDs remain available for one-click rediscovery. Changing the selected installation platform also preserves safe public intent.
+
+Recoverable and rejected states expose a structured issue with `code`, `retryable`, `next_action`, and `preserved_safe_fields`. Consumers should follow `next_action` rather than deleting the whole handoff. Safe warnings use stable codes such as `unknown_field_ignored`, `duplicate_collapsed`, and `newer_version_accepted`.
+
+Troubleshooting:
+
+| Message | Meaning | Recovery |
+| --- | --- | --- |
+| Snapshot expired | Availability, price, permission, or terms may have changed. | Use the one-click [Tool Finder](/discover) action to rediscover with the preserved safe task intent. |
+| Context incomplete | `task_id` or both service/tool identifiers are absent or malformed. | Rediscover while preserving any remaining safe public IDs. |
+| Invalid snapshot | Timestamps are malformed, future-issued beyond clock tolerance, reversed, or longer than 24 hours. | Refresh discovery metadata; do not discard safe task intent. |
+| Version refresh required | `context_min_version` is newer than the consumer. | Refresh from [Tool Finder](/discover); stable public IDs remain preserved. |
+| Ambiguous context | The same canonical field has conflicting values. | Resolve the producer conflict before applying the handoff. |
+| Unsafe context | The URL included a credential, PII, prompt, parameters, payload, or another dangerous field. | Remove private data at the producer boundary. Rotate a credential if it was exposed before removal. |
+
+The installation page provides guidance only. A valid context, copied template, or installation confirmation does not prove service availability and must not be counted as a tool call, useful result, charge, or settlement. Immediately before execution, clients must strictly re-confirm authentication, authorization, current price, limits, parameter schema, provider/upstream status, and any required user approval. If execution fails, use the returned structured state to rediscover or refresh instead of silently replaying a paid call.
 
 ## Billing transparency contract
 
@@ -161,10 +207,12 @@ This walkthrough uses the exact tool ID as its query so every following step is 
 | `query` | string | Yes | Natural-language capability query, or an exact tool ID for deterministic lookup |
 | `limit` | integer | No | Maximum result count; default `20`, range `1-100` |
 | `session_id` | string | No | Tracking and pricing-context id for this user task |
-| `view` | string | No | Response projection: `routing` returns compact routing cards (`tool_id`, `capability`, `cost_class`, `reliability`, `as_of_support`); `full` or omitted returns the complete shape, identical to previous releases |
+| `view` | string | No | Response projection: `routing` returns compact routing cards plus required verification and restriction fields; `full` or omitted returns the complete shape. |
 | `lang` | string | No | Response language, `zh` or `en`; defaults to `Accept-Language` negotiation |
 
-### Success response
+### Success response (verification objects abbreviated)
+
+For readability, this walkthrough omits the required `verification` and `execution_restrictions` objects from the JSON sample. Use the fields below or the OpenAPI schema for their complete shape.
 
 ```json
 {
@@ -218,6 +266,9 @@ This walkthrough uses the exact tool ID as its query so every following step is 
 | Field | Type | Description |
 | --- | --- | --- |
 | `tool_id` | string | Unique capability id used by Inspect and Call. |
+| `verification_status` | string | Evidence state: `unverified`, `verifying`, `verified`, `stale`, `failed`, or `restricted`. Only `verified` asserts complete current evidence; other states remain visible with recovery guidance. |
+| `verification` | object | Policy version, required checks, evidence timestamps, test-run digest, and quality issues. |
+| `execution_restrictions` | object | Immediate callability plus eligibility, license, region, data-as-of, and commercial-use restrictions. |
 | `name` | string | Human-readable capability name. |
 | `description` | string | Capability description. |
 | `provider_name` | string | Capability provider name. |
@@ -289,7 +340,9 @@ Inspect returns the same capability result shape as Discover, usually with more 
 | `session_id` | string | No | Tracking and pricing-context id for this user task |
 | `view` | string | No | Response projection: `lean` trims per-capability metadata for model context; `full` or omitted returns the complete shape |
 
-### Success response
+### Success response (verification objects abbreviated)
+
+Each result also contains the required `verification_status`, `verification`, and `execution_restrictions` fields described under Discover.
 
 ```json
 {
@@ -366,7 +419,7 @@ Unexpected proxy failure:
 POST /tools/probe?tool_id={tool_id}
 ```
 
-Probe is an optional preflight that validates candidate parameters or returns a current quote without executing the capability or consuming credits. Use it when validation or a quote is needed for the task; it is not required before Call. The `schema` and `quote` checks return implemented verdicts; `coverage` and `sample` currently return an explicit unknown verdict.
+Probe is an optional preflight that validates candidate parameters or returns a current quote without executing the capability or consuming credits. Use it when validation or a quote is needed for the task; it is not required before Call. The response includes `recovery` with missing fields, safe fixes, retryability, the next action, and provider-fallback guidance. Missing noncritical metadata lowers confidence or produces a warning instead of hiding the capability; explicit safety, identity, legal, region, budget, or irreversible-execution conflicts still block the corresponding action.
 
 ### Request
 
@@ -382,7 +435,7 @@ Probe is an optional preflight that validates candidate parameters or returns a 
 
 Use the exact `tool_id` selected during Discover or Inspect. Keep `live_budget` set to `none` for a validation-only probe.
 
-### Success response
+### Success response (verification fields abbreviated)
 
 ```json
 {
@@ -563,6 +616,14 @@ Upstream tool failure:
 | Provider failure | Parameters are accepted but upstream returns an HTTP/provider error. | Check `error_message`; use usage audit when the structured `reason_code` is needed. | Retry when appropriate, choose another provider, or share `execution_id` with support. |
 
 When contacting support, include `execution_id`, `search_id`, `session_id`, `tool_id`, and, for agent clients, `model`. These fields make it possible to tell whether the failure came from search ranking, tool selection, parameter generation, local validation, or the third-party provider.
+
+### Reconcile an uncertain Call
+
+```text
+GET /tools/executions/by-idempotency-key?key={original_idempotency_key}
+```
+
+When a paid Call loses its HTTP response, query this read-only endpoint with the original `Idempotency-Key`. It never authorizes another provider execution. If the selected settlement path cannot provide durable recovery, the original Call is rejected with `409 idempotency_key_unsupported` before provider dispatch. The response uses the standard API envelope; `data.status` is `pending`, `completed`, or `unavailable`. A completed response contains the original recoverable Call in `data.response`. `unavailable` means the execution is known but its full result cannot be reproduced safely, for example after a short-lived overflow download URL expired.
 
 ## Long tool responses
 

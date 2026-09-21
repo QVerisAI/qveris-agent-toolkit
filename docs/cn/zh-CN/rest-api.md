@@ -1,6 +1,6 @@
 # QVeris REST API 文档
 
-版本：2026-09-12.1
+版本：2026-09-20.1
 
 公开 REST API 暴露核心 Agent 路径：
 
@@ -64,6 +64,8 @@ curl -X POST https://qveris.cn/api/v1/agent/claim-verify \
 
 Discover、Inspect 和 Probe 免费。Discover 与 Inspect 可能返回 `expected_cost`、旧字段 `cost` 或 `billing_rule`；Probe 会在花费积分前校验所选参数并返回零成本报价。
 
+Discover 或 Inspect 返回的每项能力，以及每个成功的 Probe，都包含 `verification_status`、对应的 `verification` 检查证据和 `execution_restrictions`。只有 `verified` 表示完整证据仍在有效期内。Verification 是证据声明，而不是执行的必要条件；其他状态仍作为候选展示，并可在当前输入、授权、许可、地域和精确价格事实均已确定时进入可执行状态。请通过 `confidence`、各独立就绪维度、`allowed_actions`、`blocked_actions` 和 `next_action` 引导 Inspect、授权、Probe、确认预算、重试或切换 Provider。旧字段 `callable` 表示当前是否可立即执行，但不决定 Discover 或 Inspect 是否可见。
+
 默认/full Call 响应可能返回 `billing`、`cost` 等紧凑预结算字段。投影响应（`summary` 和 `fields:*`）会刻意省略计费内部详情，以保持结构精简。最终结算由调用历史和积分账本报告；客服、对账和用户账单历史应以这些端点为准。
 
 `session_id` 可选。建议每个用户任务或会话使用一个稳定值，用于追踪、分析和计费上下文。它不是缓存合同，也不承诺缓存复用或 `session_cache_hit`。
@@ -77,9 +79,9 @@ Discover、Inspect 和 Probe 免费。Discover 与 Inspect 可能返回 `expecte
 1. 为一次用户任务或会话生成稳定的 `session_id`。
 2. 用能力级查询调用 `POST /search`。
 3. 保存返回的 `search_id`。
-4. 按能力、Provider、时效和费用约束选择结果。不要直接取第一条结果再填入无关样例参数。
+4. 按能力、Provider、时效和费用约束选择结果。执行前检查 `verification_status`，并披露资格、许可、地域、数据截至时间和商业使用限制。不要直接取第一条结果再填入无关样例参数。
 5. 若结果包含完整且当前有效的 `params` 契约，直接据此构造 `parameters`。明确的空契约表示真正的零参数能力；契约缺失或不完整则需要 Inspect。业务输入不足时应向用户询问，不要猜测。
-6. 仅在需要 schema 校验或当前报价时调用 `POST /tools/probe?tool_id=...`。Probe 报价不是硬性费用上限、价格预留或执行授权。
+6. 仅在需要 schema 校验或当前报价时调用 `POST /tools/probe?tool_id=...`。精确 Probe 报价可以满足当前请求的价格就绪检查；没有上限的估算仍需确认预算。Probe 报价不是价格预留或执行授权。
 7. 调用 `POST /tools/execute`，传入 `tool_id`、`parameters`、`search_id`、`session_id`；如果是智能体客户端，也传入 `model`。
 8. 保存 `execution_id`，用于审计和客服排查。付费 Call 的执行结果未知时不要自动重放。
 
@@ -88,6 +90,50 @@ Discover、Inspect 和 Probe 免费。Discover 与 Inspect 可能返回 `expecte
 `examples.sample_parameters` 只是起步示例，不是完整合同或用户意图。保留 required、enum 和 alternative/one-of 约束，但应使用当前请求中的业务值替换样例值。
 
 对于 LLM/智能体集成，建议在 Call 元数据中传入 `model`，例如 `"model": "gpt-4.1"` 或 `"model": "deepseek-v4-pro"`。这有助于把工具选择、参数生成质量和具体模型关联起来。
+
+## 安装页的服务/任务上下文
+
+用户选择当前可用的服务或工具后，发现入口可以把公开选择承接到[插件页面](/plugins)。这是显式手动承接，不是执行或授权合同：安装页会校验上下文，并允许用户把准确 ID 或 JSON 模板复制给智能体。URL 不得包含请求参数、用户提示词或 API Key。
+
+版本 1 使用以下查询参数：
+
+| 参数 | 是否必填 | 合同 |
+| --- | --- | --- |
+| `context_version` | 建议 | 生产方协议版本。缺失时按版本 `1` 处理；只要最低消费者版本仍受支持，新版本也可继续使用。 |
+| `context_min_version` | 否 | 能安全解释稳定字段的最低消费者版本。若高于当前消费者版本，则进入刷新状态并保留安全公开 ID。 |
+| `context_issued_at` | 是 | Unix 秒时间戳，最多可以比消费者时钟快五分钟。 |
+| `context_expires_at` | 是 | Unix 秒时间戳，必须晚于 `context_issued_at`，且最长有效期为 24 小时。 |
+| `task_id` | 是 | 公开任务标识符，长度为 1–128 个字符。 |
+| `service_id` | 条件必填 | 公开服务标识符；`service_id` 和 `tool_id` 至少提供一个。 |
+| `tool_id` | 条件必填 | Discover 或 Inspect 返回的准确公开工具标识符。 |
+| `template_id` | 否 | 公开模板标识符；它不是模板内容或提示词。 |
+| `platform` | 否 | 插件页面已经支持的安装平台标识符。 |
+| `extensions.<namespace>.<field>` | 否 | 用于前向兼容的公开元数据。名称和值使用受限的公开 ID 字符集；私有数据或疑似凭证会被清除。 |
+
+公开 ID 必须以 ASCII 字母或数字开头，只能包含 ASCII 字母、数字、`.`、`_`、`:`、`/` 或 `-`。生产者不得在安装 URL 中放入 `prompt`、`query`、`parameters`、`payload`、`api_key`、`token`、`authorization`、凭证、PII 或其他私有数据；消费者会严格清除。普通未知字段只会被忽略并产生告警，不再让整个交接失效。可安全处理的字段名大小写、首尾空白和等价重复值会被规范化；只有冲突重复、歧义或安全风险才会被拒绝。
+
+示例结构（请生成当前时间戳，不要复用以下字面值）：
+
+```text
+/plugins?context_version=1&context_issued_at=1800000000&context_expires_at=1800003600&task_id=company-latest-filing&service_id=service.market-data.v1&tool_id=provider.company.lookup.v1&template_id=filing-summary.v1
+```
+
+登录期间，上下文会保留在同站点相对 URL 中。登录返回后，安装页会自动重新校验。过期只会让发现时的可用性、价格和权限等快照失效；安全任务意图以及公开的 service/tool/task/template ID 会继续保留，用于一键重新发现。切换安装平台时也会保留安全公开意图。
+
+可恢复状态和拒绝状态都会返回结构化问题：`code`、`retryable`、`next_action` 与 `preserved_safe_fields`。消费者应按 `next_action` 恢复，而不是删除整个交接。安全告警使用 `unknown_field_ignored`、`duplicate_collapsed`、`newer_version_accepted` 等稳定代码。
+
+故障排查：
+
+| 提示 | 含义 | 处理方式 |
+| --- | --- | --- |
+| 快照已过期 | 可用性、价格、权限或条件可能已经变化。 | 使用一键[工具搜索](/discover)操作，基于已保留的安全任务意图重新发现。 |
+| 上下文不完整 | `task_id` 缺失/格式错误，或服务/工具标识符均缺失。 | 保留其余安全公开 ID 并重新发现。 |
+| 快照无效 | 时间戳格式错误、签发时间超出时钟容差、顺序颠倒或有效期超过 24 小时。 | 刷新发现元数据，不要丢弃安全任务意图。 |
+| 需要刷新版本 | `context_min_version` 高于当前消费者。 | 从[工具搜索](/discover)刷新；稳定公开 ID 会继续保留。 |
+| 上下文有歧义 | 同一个规范字段包含冲突值。 | 解决生产方冲突后再应用交接。 |
+| 上下文不安全 | URL 包含凭证、PII、提示词、参数、载荷或其他危险字段。 | 在生产者边界移除私有数据；若凭证曾暴露，请立即轮换。 |
+
+安装页只负责引导。有效上下文、已复制模板或安装确认不代表服务可用，也不得计为工具调用、有效结果、扣费或结算完成。真正执行前，客户端必须再次严格确认认证、权限、当前价格、限制、参数 schema、provider/上游状态以及必要的用户确认。执行失败后，应根据返回的结构化状态重新发现或刷新，不得静默重放付费调用。
 
 ## 计费透明化合同
 
@@ -159,10 +205,12 @@ POST /search
 | `query` | string | 是 | 自然语言能力查询；需要确定性查找时也可传入完整工具 ID |
 | `limit` | integer | 否 | 最大结果数；默认 `20`，范围 `1-100` |
 | `session_id` | string | 否 | 当前用户任务的追踪和计费上下文 ID |
-| `view` | string | 否 | 响应投影：`routing` 返回精简路由卡（`tool_id`、`capability`、`cost_class`、`reliability`、`as_of_support`）；`full` 或缺省返回与既有版本一致的完整结构 |
+| `view` | string | 否 | 响应投影：`routing` 返回精简路由卡和必需的验证、限制字段；`full` 或缺省返回完整结构。 |
 | `lang` | string | 否 | 响应语言，`zh` 或 `en`；缺省按 `Accept-Language` 协商 |
 
-### 成功响应
+### 成功响应（验证对象从略）
+
+为便于阅读，本流程的 JSON 示例省略了必需的 `verification` 和 `execution_restrictions` 对象；完整结构以以下字段说明或 OpenAPI schema 为准。
 
 ```json
 {
@@ -216,6 +264,9 @@ POST /search
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | `tool_id` | string | Inspect 和 Call 使用的唯一能力 id。 |
+| `verification_status` | string | 证据状态：`unverified`、`verifying`、`verified`、`stale`、`failed` 或 `restricted`。只有 `verified` 声明证据完整且有效；其他状态仍可见并带恢复指引。 |
+| `verification` | object | 策略版本、必需检查、证据时间、测试摘要和质量问题。 |
+| `execution_restrictions` | object | 是否可立即调用，以及资格、许可、地域、数据截至时间和商业使用限制。 |
 | `name` | string | 面向用户的能力名称。 |
 | `description` | string | 能力说明。 |
 | `provider_name` | string | 能力提供方名称。 |
@@ -287,7 +338,9 @@ Inspect 返回与 Discover 相同的能力结果结构，通常包含更完整�
 | `session_id` | string | 否 | 当前用户任务的追踪和计费上下文 ID |
 | `view` | string | 否 | 响应投影：`lean` 精简每个能力的元数据以节省模型上下文；`full` 或缺省返回完整结构 |
 
-### 成功响应
+### 成功响应（验证对象从略）
+
+每项结果还包含 Discover 中说明的必需字段 `verification_status`、`verification` 和 `execution_restrictions`。
 
 ```json
 {
@@ -364,7 +417,7 @@ Inspect 返回与 Discover 相同的能力结果结构，通常包含更完整�
 POST /tools/probe?tool_id={tool_id}
 ```
 
-Probe 是可选预检：它会在不执行能力、不消耗积分的前提下校验候选参数或返回当前报价。仅在任务需要校验或报价时使用，无需把它作为 Call 的固定前置步骤。`schema` 和 `quote` 检查会返回已实现的判定；`coverage` 与 `sample` 当前会明确返回 unknown 判定。
+Probe 是可选预检：它会在不执行能力、不消耗积分的前提下校验候选参数或返回当前报价。仅在任务需要校验或报价时使用，无需把它作为 Call 的固定前置步骤。响应中的 `recovery` 会给出缺失字段、安全修复、是否可重试、下一步动作和 Provider 回退建议。非关键元数据缺失只会降低置信度或产生 warning，不会隐藏能力；明确的安全、身份、法律、地域、预算或不可逆执行冲突仍会阻止对应动作。
 
 ### 请求
 
@@ -380,7 +433,7 @@ Probe 是可选预检：它会在不执行能力、不消耗积分的前提下�
 
 请使用 Discover 或 Inspect 选中的原始 `tool_id`。仅做校验时，应保持 `live_budget` 为 `none`。
 
-### 成功响应
+### 成功响应（验证字段从略）
 
 ```json
 {
@@ -561,6 +614,14 @@ POST /tools/execute?tool_id={tool_id}
 | 第三方接口错误 | 参数已接受，但上游返回 HTTP/provider 错误。 | 查看 `error_message`；需要结构化 `reason_code` 时查询调用审计。 | 视情况重试、选择其他 provider，或带 `execution_id` 联系支持。 |
 
 联系支持时，请提供 `execution_id`、`search_id`、`session_id`、`tool_id`；如果是智能体客户端，也提供 `model`。这些字段可以帮助区分问题来自搜索排序、工具选择、参数生成、本地校验，还是第三方 provider。
+
+### 核对结果未知的 Call
+
+```text
+GET /tools/executions/by-idempotency-key?key={original_idempotency_key}
+```
+
+付费 Call 的 HTTP 响应丢失后，请使用原始 `Idempotency-Key` 查询这个只读端点。该端点不会授权新的 provider 执行。如果所选结算路径无法提供持久恢复能力，原始 Call 会在 provider 请求发出前返回 `409 idempotency_key_unsupported`。响应使用标准 API envelope；`data.status` 为 `pending`、`completed` 或 `unavailable`。`completed` 时，`data.response` 包含可恢复的原始 Call 响应；`unavailable` 表示已确认该执行存在，但无法安全重建完整结果，例如长结果的短期下载链接已经失效。
 
 ## 长响应
 
