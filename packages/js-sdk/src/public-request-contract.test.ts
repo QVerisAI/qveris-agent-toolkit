@@ -12,6 +12,35 @@ const contracts = JSON.parse(
 
 afterEach(() => vi.unstubAllGlobals());
 
+test.each([
+  { vendor: 'value', nested: { respond_with: 'provider-owned' } },
+  { respond_with: 'full', data: { respond_with: 'summary', arbitrary: true } },
+  [1, null, { nested: true }],
+  'text',
+  0,
+  false,
+  null,
+])('full delivery preserves raw JSON without wrapping or reinterpreting it: %j', async (result) => {
+  const fetch = vi.fn().mockResolvedValue(
+    new Response(
+      JSON.stringify({
+        execution_id: 'exec-fixture',
+        success: true,
+        result,
+      }),
+      { status: 200 },
+    ),
+  );
+  vi.stubGlobal('fetch', fetch);
+  const client = new Qveris({ apiKey: '<fixture-key>', baseUrl: 'https://qveris.ai/api/v1' });
+  const response = await client.call('tool-fixture', {
+    parameters: {},
+    respondWith: 'full',
+  });
+  expect(response.result).toEqual(result);
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
 test.each(['strict', 'legacyOptionalFields'] as const)(
   'identity rejection never falls back to another identity in %s mode',
   async (compatibilityMode) => {

@@ -13,6 +13,36 @@ const contracts = JSON.parse(
 ) as Record<'call' | 'probe', RequestContract>;
 afterEach(() => vi.unstubAllGlobals());
 
+test.each([
+  { vendor: 'value', nested: { respond_with: 'provider-owned' } },
+  { respond_with: 'full', data: { respond_with: 'summary', arbitrary: true } },
+  [1, null, { nested: true }],
+  'text',
+  0,
+  false,
+  null,
+])('full delivery preserves raw JSON without wrapping or reinterpreting it: %j', async (result) => {
+  const fetch = vi.fn().mockResolvedValue(
+    new Response(
+      JSON.stringify({
+        execution_id: 'exec-fixture',
+        success: true,
+        result,
+      }),
+      { status: 200 },
+    ),
+  );
+  vi.stubGlobal('fetch', fetch);
+  const client = new QverisClient({ apiKey: '<fixture-key>', baseUrl: 'https://qveris.ai/api/v1' });
+  const response = await client.executeTool('tool-fixture', {
+    parameters: {},
+    respond_with: 'full',
+    search_id: 'search-fixture',
+  });
+  expect(response.result).toEqual(result);
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
 test.each(['call', 'probe'] as const)(
   '%s exposes and forwards every public field through the complete MCP path',
   async (operation) => {

@@ -8,6 +8,10 @@ interface Schema {
   type?: string | string[];
   enum?: unknown[];
   anyOf?: Schema[];
+  allOf?: Array<{
+    if: { properties: { respond_with: { const?: string; pattern?: string } } };
+    then: { required?: string[]; oneOf?: Array<{ required: string[] }> };
+  }>;
   properties?: Record<string, Schema>;
   required?: string[];
   items?: Schema;
@@ -53,10 +57,17 @@ const requests = JSON.parse(readFileSync(resolve('../../contracts/public-client-
   }
 >;
 
-// Check the wire's structural superset, not just a few happy-path fixtures.
-// Conditional constraints are tested by the authoritative JSON Schema tests.
+// Check structural wire compatibility and supported conditional delivery modes.
+// Also compile consumer code: assignability alone cannot prove union narrowing.
 function wire(schema: Schema): string {
-  if (schema.$ref) return wire(schemas[schema.$ref.split('/').pop()!]);
+  if (schema.$ref) {
+    const name = schema.$ref.split('/').pop()!;
+    // PublicExecuteResult uses conditional delivery shapes. Flattening allOf
+    // into optional properties loses the discriminant and invents invalid
+    // projected envelopes. Check the supported modes independently instead.
+    if (name === 'PublicExecuteResult') return wireDelivery(schemas[name]);
+    return wire(schemas[name]);
+  }
   if (schema.enum) return schema.enum.map((value) => JSON.stringify(value)).join(' | ');
   if (schema.anyOf) return schema.anyOf.map(wire).join(' | ');
   if (Array.isArray(schema.type)) return schema.type.map((type) => wire({ ...schema, type })).join(' | ');
@@ -73,12 +84,32 @@ function wire(schema: Schema): string {
   return schema.type ?? 'WireJson';
 }
 
+function wireDelivery(schema: Schema): string {
+  const variants = ['{[key: string]: WireJson | undefined; respond_with?: "full"}'];
+  for (const rule of schema.allOf ?? []) {
+    const selector = rule.if.properties.respond_with;
+    const mode =
+      selector.const === 'summary' ? '"summary"' : selector.pattern === '^fields:' ? '`fields:${string}`' : undefined;
+    expect(mode, 'every conditional result mode must be represented').toBeDefined();
+    for (const branch of rule.then.oneOf ?? [rule.then]) {
+      expect(branch.required?.length).toBeGreaterThan(0);
+      const fields = Object.entries(schema.properties!)
+        .filter(([name]) => name !== 'respond_with')
+        .map(([name, property]) => `${name}${branch.required!.includes(name) ? '' : '?'}: ${wire(property)}`);
+      variants.push(`{respond_with: ${mode}; ${fields.join('; ')}}`);
+    }
+  }
+  expect(variants.length).toBe(4);
+  return variants.join(' | ');
+}
+
 function compatibilityDiagnostics(mutate: (source: string) => string = (source) => source): string {
   const filename = resolve('src/__wire_contract__.ts');
   const imports = [
     `import type * as SDK from './types';`,
     `import type * as MCP from '../../mcp/src/types';`,
     `import type * as Client from './client';`,
+    `import type * as McpClient from '../../mcp/src/api/client';`,
     `import type {ExecuteToolInput} from '../../mcp/src/tools/execute';`,
     `import type {ProbeToolInput} from '../../mcp/src/tools/probe';`,
     'type Assert<T extends true> = T;',
@@ -138,6 +169,35 @@ function compatibilityDiagnostics(mutate: (source: string) => string = (source) 
     imports.push(
       `type Summary${surface} = Assert<${surface}.ExecuteResultSummary extends {summary: object; full_content_file_url: string} ? true : false>;`,
       `const overflow${surface}: ${surface}.ExecuteResultProjectedOverflow = {respond_with:'fields:$.x', truncated_content:'x', full_content_file_url:'https://qveris.ai/result'};`,
+      `function consume${surface}(response: Awaited<ReturnType<${surface === 'SDK' ? "Client.Qveris['call']" : "McpClient.QverisClient['executeTool']"}>>, selection: \`fields:\${string}\`): void {
+        const result = response.result;
+        if (!result || typeof result !== 'object' || Array.isArray(result)) return;
+        if ('respond_with' in result && result.respond_with === 'summary') {
+          const summary: ${surface}.ExecuteResultSummary['summary'] = result.summary;
+          const url: string = result.full_content_file_url;
+          const rows: number | undefined = result.summary.row_count;
+        }
+        if ('respond_with' in result && result.respond_with === selection) {
+          const projected: ${surface}.ExecuteResultFields | ${surface}.ExecuteResultProjectedOverflow = result;
+          if ('truncated_content' in result) {
+            const preview: string = result.truncated_content;
+            const url: string = result.full_content_file_url;
+          } else {
+            const inline: {data: unknown} = result;
+          }
+        }
+      }`,
+      `const raw${surface}: ${surface}.ExecuteResult = {vendor: [1, null, {respond_with:'provider-value'}]};`,
+      `const json${surface}: ${surface}.ExecuteResult[] = [[], [1, {nested:true}], "text", 0, false, null];`,
+      `declare const unknownObject${surface}: Record<string, unknown>;
+        const preservedObject${surface}: ${surface}.ExecuteResult = unknownObject${surface};`,
+      `const full${surface}: ${surface}.ExecuteResult = {respond_with:'full', data:{respond_with:'summary', arbitrary:true}};`,
+      `// @ts-expect-error A tagged summary cannot fall through to the raw object arm.
+      const badSummary${surface}: ${surface}.ExecuteResult = {respond_with:'summary'};`,
+      `// @ts-expect-error An inline fields envelope requires data (or a complete overflow).
+      const badFields${surface}: ${surface}.ExecuteResult = {respond_with:'fields:$.rows'};`,
+      `// @ts-expect-error A projected overflow cannot omit its download URL.
+      const badOverflow${surface}: ${surface}.ExecuteResult = {respond_with:'fields:$.rows', truncated_content:'preview'};`,
     );
   }
   const options: ts.CompilerOptions = {
@@ -186,4 +246,12 @@ test.each([
       return source.replaceAll(before, after);
     }),
   ).not.toBe('');
+});
+
+test('a catch-all regression is rejected by consumer compilation, not just fixture assignment', () => {
+  const diagnostics = compatibilityDiagnostics((source) =>
+    source.replace('  | ExecuteResultRawObject', '  | Record<string, unknown>'),
+  );
+  expect(diagnostics).toContain('result.summary');
+  expect(diagnostics).toContain('result.full_content_file_url');
 });

@@ -458,6 +458,8 @@ export interface ExecuteRequest {
  * Result data when the response fits within max_response_size.
  */
 export interface ExecuteResultData {
+  /** Projection markers belong to the projected result variants, not full data. */
+  respond_with?: 'full';
   /** The actual result data from the tool execution */
   data: unknown;
 }
@@ -516,10 +518,20 @@ export interface ExecuteResultFields {
 }
 
 /**
+ * Provider-owned object in an unprojected/full response.
+ * Projection markers are reserved at the result-envelope level. Provider data
+ * may contain arbitrary keys (including respond_with) inside its data payload.
+ */
+export interface ExecuteResultRawObject {
+  [key: string]: unknown;
+  respond_with?: 'full';
+}
+
+/**
  * Union type for execution results (either full data or truncated).
  */
 export type ExecuteResult =
-  | Record<string, unknown>
+  | ExecuteResultRawObject
   | ExecuteResultData
   | ExecuteResultTruncated
   | ExecuteResultProjectedOverflow

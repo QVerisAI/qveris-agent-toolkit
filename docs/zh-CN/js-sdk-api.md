@@ -1715,6 +1715,12 @@ Result data when the response fits within max_response_size.
 
 The actual result data from the tool execution
 
+##### respond\_with?
+
+> `optional` **respond\_with?**: `"full"`
+
+Projection markers belong to the projected result variants, not full data.
+
 ***
 
 ### ExecuteResultFields
@@ -1789,6 +1795,24 @@ Useful for previewing the data structure.
 ###### 继承自
 
 [`ExecuteResultTruncated`](#executeresulttruncated).[`truncated_content`](#truncated_content-1)
+
+***
+
+### ExecuteResultRawObject
+
+Provider-owned object in an unprojected/full response.
+Projection markers are reserved at the result-envelope level. Provider data
+may contain arbitrary keys (including respond_with) inside its data payload.
+
+#### 可索引
+
+> \[`key`: `string`\]: `unknown`
+
+#### 属性
+
+##### respond\_with?
+
+> `optional` **respond\_with?**: `"full"`
 
 ***
 
@@ -3168,7 +3192,7 @@ Error response from the Qveris API.
 
 ### ExecuteResult
 
-> **ExecuteResult** = `Record`\<`string`, `unknown`\> \| [`ExecuteResultData`](#executeresultdata) \| [`ExecuteResultTruncated`](#executeresulttruncated) \| [`ExecuteResultProjectedOverflow`](#executeresultprojectedoverflow) \| [`ExecuteResultSummary`](#executeresultsummary) \| [`ExecuteResultFields`](#executeresultfields) \| `unknown`[] \| `string` \| `number` \| `boolean` \| `null`
+> **ExecuteResult** = [`ExecuteResultRawObject`](#executeresultrawobject) \| [`ExecuteResultData`](#executeresultdata) \| [`ExecuteResultTruncated`](#executeresulttruncated) \| [`ExecuteResultProjectedOverflow`](#executeresultprojectedoverflow) \| [`ExecuteResultSummary`](#executeresultsummary) \| [`ExecuteResultFields`](#executeresultfields) \| `unknown`[] \| `string` \| `number` \| `boolean` \| `null`
 
 Union type for execution results (either full data or truncated).
 
