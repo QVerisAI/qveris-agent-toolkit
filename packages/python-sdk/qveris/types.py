@@ -377,7 +377,7 @@ class ToolProbeResponse(QverisModel):
     verification_status: VerificationStatus = "unverified"
     verification: CatalogVerification = Field(default_factory=_missing_catalog_verification)
     execution_restrictions: ExecutionRestrictions = Field(default_factory=_missing_execution_restrictions)
-    recovery: Optional[ProbeRecoveryAdvice] = None
+    recovery: ProbeRecoveryAdvice
     exists: Optional[bool] = None
     executable: Optional[bool] = None
     status: Optional[int] = None

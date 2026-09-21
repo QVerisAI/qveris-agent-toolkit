@@ -164,7 +164,7 @@ Option shapes:
 
 Use the same non-empty `subUserId` for Probe and Call when provider OAuth is scoped to an end user. Omit it otherwise; it is an identity, not a token.
 
-Projection options are opt-in. Omitting `respondWith` keeps compatibility auto-delivery: `maxResponseSize` defaults to 20KB and oversized results use the overflow envelope. Explicit `respondWith: 'full'` forces complete inline `result.data` and takes precedence over a finite `maxResponseSize`; a platform hard-limit failure is reported as `response_too_large` instead of truncation. `respondWith: 'summary'` keeps the summary shape regardless of `maxResponseSize`.
+Projection options are opt-in. Omitting `respondWith` keeps compatibility auto-delivery: `maxResponseSize` defaults to 20KB and oversized results use the overflow envelope. Explicit `respondWith: 'full'` forces complete inline `result.data` and takes precedence over a finite `maxResponseSize`; a platform hard-limit failure is reported as `response_too_large` instead of truncation. Summary mode preserves at least one usable payload: a `summary` object, lossless `data`, or `truncated_content` together with `full_content_file_url`. These fields may coexist. Neither statistics nor a URL is guaranteed by the mode alone. Check `success` first, then field availability; failed summary calls retain an empty `data` object.
 
 Paid calls are strict single-submit: HTTP redirects are not followed, and `429`/`503` and projection errors are returned without replay. The deprecated `compatibilityMode: 'legacyOptionalFields'` opt-in permits exactly one replay without an optional field rejected by an older service; invalid projections remain errors.
 

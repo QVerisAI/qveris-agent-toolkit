@@ -387,6 +387,8 @@ API 密钥接入步骤：
 
 显式 `respond_with: "full"` 必须返回完整内联 `result.data`，不得以 `truncated_content` 或替代性的 `full_content_file_url` 降级。超过平台硬安全限制时调用以 `response_too_large` 失败。省略 `respond_with` 时仍保留既有的 20KB 自动溢出行为。
 
+摘要模式至少保留一种可用载荷：`summary` 对象、无损 `data`，或同时存在的 `truncated_content` 与 `full_content_file_url`。这些字段可以共存；仅凭模式不能保证摘要或下载链接存在。先检查 `success`，再检查字段是否存在；失败的摘要调用保留空 `data` 对象。
+
 ```json
 {
   "tool_id": "openweathermap.weather.execute.v1",

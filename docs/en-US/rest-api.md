@@ -490,7 +490,7 @@ You may pass `tool_id` as a query parameter or in the JSON body. Use the query p
 | `model` | string | Recommended for agents | Non-blank model identifier without whitespace or control characters, at most 128 characters, that selected the tool or generated the parameters, such as `gpt-4.1`, `deepseek-v4-pro`, or `claude-sonnet-4` |
 | `parameters` | object | Yes | Capability-specific parameters built from the selected current contract returned by Discover or Inspect |
 | `max_response_size` | integer | No | Automatic inline-delivery limit measured from serialized `result.data` in UTF-8 bytes; default `20480`, `-1` means unlimited. An explicit `full` takes precedence over a finite value; `summary` ignores it. |
-| `respond_with` | string | No | Delivery mode: omit it for compatibility auto-delivery; explicit `full` forces complete inline `result.data`; `fields:<JSONPath,...>` projects first and then applies the size limit; `summary` returns schema, statistics, and `full_content_file_url`. |
+| `respond_with` | string | No | Delivery mode: omit it for compatibility auto-delivery; explicit `full` forces complete inline `result.data`; `fields:<JSONPath,...>` projects first and then applies the size limit; `summary` returns statistics or preserves a data/overflow fallback. |
 
 Invalid tool parameters or projections return HTTP `422` with field-level `details`; authentication failures return the standard API error object instead of a successful Call or empty Search shape.
 
@@ -502,7 +502,7 @@ Delivery precedence:
 | Omitted | `-1` | Complete inline data |
 | `full` | Any value or omitted | Complete inline `result.data`; a finite size value does not downgrade it |
 | `fields:...` | Omitted / positive / `-1` | Project first, then apply the default / requested / unlimited inline rule |
-| `summary` | Any value or omitted | Summary shape is unchanged by the size value |
+| `summary` | Any value or omitted | Statistics, lossless data, or complete overflow fallback |
 
 If explicit `full` exceeds the platform hard safety limit, the request fails with `error_code: response_too_large`; it is never silently converted into an overflow envelope. Binary attachments keep their attachment delivery contract and are not implicitly base64-encoded into JSON.
 
@@ -552,7 +552,7 @@ Build `parameters` from the selected tool only:
 | `cost` | number | Legacy/pre-settlement cost signal when available. |
 | `remaining_credits` | number/null | Remaining account credits when available. |
 
-With `respond_with: "summary"`, the top-level response is intentionally limited to execution identity/status, timing when available, `cost`, `remaining_credits`, and `result`. The result is limited to `respond_with`, `content_schema`, `summary`, `full_content_file_url`, and `message`. It does not include raw `billing`, `execution_outcome`, parameters, experiment metadata, status codes, or sample rows. The signed `full_content_file_url` points directly to object storage and must be used exactly as returned.
+Summary mode preserves at least one usable payload: a `summary` object, lossless `data`, or `truncated_content` together with `full_content_file_url`. These fields may coexist. Neither statistics nor a URL is guaranteed by the mode alone. Check `success` first, then field availability; failed summary calls retain an empty `data` object. Optional metadata includes `content_schema` and `message`. Use any signed URL exactly as returned.
 
 ### Example: empty result, not charged
 

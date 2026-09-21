@@ -28,7 +28,10 @@ describe('call (execute_tool)', () => {
     });
 
     it('should define max_response_size with default', () => {
-      expect(executeToolSchema.properties.max_response_size.type).toBe('number');
+      expect(executeToolSchema.properties.max_response_size.anyOf).toEqual([
+        { const: -1 },
+        { type: 'integer', minimum: 1 },
+      ]);
       expect(executeToolSchema.properties.max_response_size.default).toBe(20480);
     });
 

@@ -35,7 +35,21 @@ async def test_public_request_fields_reach_http(operation: str, identity: Option
         attempts.append(request)
         assert request.url.params["tool_id"] == "tool/fixture"
         assert json.loads(request.content) == body
-        return httpx.Response(200, json={"execution_id": "exec-fixture", "success": True, "result": {}})
+        return httpx.Response(
+            200,
+            json={
+                "execution_id": "exec-fixture",
+                "success": True,
+                "result": {},
+                "recovery": {
+                    "missing_fields": [],
+                    "safe_fixes": [],
+                    "retryable": False,
+                    "next_action": "execute",
+                    "provider_fallback": False,
+                },
+            },
+        )
 
     client = QverisClient(QverisConfig(api_key="sk-fixture", base_url="https://qveris.ai/api/v1"))
     client.client = httpx.AsyncClient(transport=httpx.MockTransport(handler))

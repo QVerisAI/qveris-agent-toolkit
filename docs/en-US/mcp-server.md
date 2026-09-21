@@ -426,6 +426,8 @@ Example:
 
 An explicit `respond_with: "full"` must return complete inline `result.data` without `truncated_content` or a replacement `full_content_file_url`. If the platform hard safety limit is exceeded, the call fails with `response_too_large`. When `respond_with` is omitted, the historical 20KB automatic overflow behavior remains unchanged.
 
+Summary mode preserves at least one usable payload: a `summary` object, lossless `data`, or `truncated_content` together with `full_content_file_url`. These fields may coexist. Neither statistics nor a URL is guaranteed by the mode alone. Check `success` first, then field availability; failed summary calls retain an empty `data` object.
+
 ```json
 {
   "tool_id": "openweathermap.weather.execute.v1",

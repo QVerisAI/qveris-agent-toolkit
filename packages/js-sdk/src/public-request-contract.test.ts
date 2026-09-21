@@ -12,6 +12,25 @@ const contracts = JSON.parse(
 
 afterEach(() => vi.unstubAllGlobals());
 
+const summaryCases = JSON.parse(
+  readFileSync(new URL('../../../contracts/result-delivery.v1.json', import.meta.url), 'utf8'),
+).summary_cases as Array<{ id: string; success: boolean; result: Record<string, unknown> }>;
+
+test.each(summaryCases)('preserves shared summary payload: $id', async ({ success, result }) => {
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ execution_id: 'exec-summary', success, result }), { status: 200 }),
+      ),
+  );
+  const client = new Qveris({ apiKey: '<fixture-key>', baseUrl: 'https://qveris.ai/api/v1' });
+  const response = await client.call('tool-fixture', { parameters: {}, respondWith: 'summary' });
+  expect(response.result).toEqual(result);
+  expect(response.success).toBe(success);
+});
+
 test.each([
   { vendor: 'value', nested: { respond_with: 'provider-owned' } },
   { respond_with: 'full', data: { respond_with: 'summary', arbitrary: true } },

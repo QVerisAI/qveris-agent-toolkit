@@ -14,6 +14,7 @@ from typing import Any
 import pytest
 
 from qveris import types
+from pydantic import ValidationError
 
 ROOT = Path(__file__).resolve().parents[3]
 SCHEMAS = json.loads((ROOT / "docs/openapi/qveris-public-api.openapi.json").read_text())["components"]["schemas"]
@@ -39,6 +40,36 @@ MODELS = {
     "PublicProbeUnknownResult": types.ProbeUnknownResult,
     "PublicCompactBillingStatement": types.CompactBillingStatement,
 }
+
+
+def test_probe_recovery_is_required_and_non_nullable() -> None:
+    payload = samples(SCHEMAS["PublicToolProbeResponse"])[0]
+    response = types.ToolProbeResponse.model_validate(payload)
+    assert isinstance(response.recovery, types.ProbeRecoveryAdvice)
+    assert types.ToolProbeResponse.model_fields["recovery"].is_required()
+    for missing in (True, False):
+        invalid = {**payload, "recovery": None}
+        if missing:
+            del invalid["recovery"]
+        with pytest.raises(ValidationError):
+            types.ToolProbeResponse.model_validate(invalid)
+
+
+@pytest.mark.parametrize(
+    "case",
+    json.loads((ROOT / "contracts/result-delivery.v1.json").read_text())["summary_cases"],
+    ids=lambda case: case["id"],
+)
+def test_shared_summary_payloads_survive_public_parser(case: dict[str, Any]) -> None:
+    response = types.ToolExecutionResponse.model_validate(
+        {
+            "execution_id": case["id"],
+            "success": case["success"],
+            "result": case["result"],
+        }
+    )
+    assert response.result == case["result"]
+    assert response.success == case["success"]
 
 
 def samples(schema: dict[str, Any]) -> list[Any]:

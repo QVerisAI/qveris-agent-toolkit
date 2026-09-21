@@ -7,6 +7,7 @@ from qveris import (
     ExecutionRestrictions,
     Message,
     ProbeQuoteResult,
+    ProbeRecoveryAdvice,
     ProbeSchemaResult,
     ProbeSchemaViolation,
     ProbeUnknownResult,
@@ -46,9 +47,17 @@ def test_public_sdk_exports_cover_core_classes_and_models() -> None:
     schema = ProbeSchemaResult(valid=False, violations=[violation])
     quote = ProbeQuoteResult(currency="credits", exact=False, estimate_credits=1.5)
     unknown = ProbeUnknownResult(verdict="unknown", reason="not available")
-    probe = ToolProbeResponse(schema=schema, quote=quote, coverage=unknown, sample=unknown)
+    recovery = ProbeRecoveryAdvice(
+        missing_fields=["city"],
+        safe_fixes=["supply city"],
+        retryable=True,
+        next_action="probe",
+        provider_fallback=False,
+    )
+    probe = ToolProbeResponse(schema=schema, quote=quote, coverage=unknown, sample=unknown, recovery=recovery)
     assert probe.schema_ is schema
     assert probe.quote is quote
+    assert probe.recovery is recovery
 
 
 def test_tool_models_accept_additive_and_multilingual_api_fields() -> None:

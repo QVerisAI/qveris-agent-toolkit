@@ -57,6 +57,22 @@ test('HTTP, JavaScript, Python, and Hosted MCP parameter mappings stay aligned',
   assert.deepEqual(contract.parameter_mapping.hosted_mcp, contract.parameter_mapping.http);
 });
 
+test('summary fixtures and vectors agree on inclusive fallback alternatives', () => {
+  const alternatives = [['summary'], ['data'], ['truncated_content', 'full_content_file_url']];
+  for (const vector of contract.vectors.filter(({ expected }) => expected.delivery === 'summary')) {
+    assert.deepEqual(vector.expected.required_result_fields, ['respond_with']);
+    assert.deepEqual(vector.expected.any_of_required_result_fields, alternatives);
+  }
+  assert.equal(contract.summary_cases.length, 10);
+  for (const { result } of contract.summary_cases) {
+    assert.equal(result.respond_with, 'summary');
+    assert.ok(alternatives.some((fields) => fields.every((field) => Object.hasOwn(result, field))));
+  }
+  assert.ok(contract.summary_cases.some(({result}) => Object.hasOwn(result, 'summary') && !Object.hasOwn(result, 'full_content_file_url')));
+  assert.ok(contract.summary_cases.some(({result}) => Object.hasOwn(result, 'summary') && Object.hasOwn(result, 'data')));
+  assert.ok(contract.summary_cases.some(({success, result}) => !success && Object.hasOwn(result, 'data')));
+});
+
 test('client sources implement the shared parameter names', async () => {
   const [javascript, python, mcp, javascriptTypes, pythonTypes, mcpTypes] = await Promise.all([
     readFile(new URL('packages/js-sdk/src/client.ts', root), 'utf8'),

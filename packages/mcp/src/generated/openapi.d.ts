@@ -2078,11 +2078,11 @@ export interface components {
                 [key: string]: unknown;
             };
             /**
-             * @description Automatic inline-delivery limit, measured as the UTF-8 byte length of serialized `result.data`. The default is 20480 when omitted; use -1 for unlimited inline delivery. An explicit `respond_with: full` takes precedence over any finite value. This parameter does not change the `summary` response shape.
+             * @description Automatic inline-delivery limit, measured as the UTF-8 byte length of serialized `result.data`. The default is 20480 when omitted; use -1 for unlimited inline delivery. An explicit `respond_with: full` takes precedence over any finite value. Summary mode may preserve lossless data or a complete overflow fallback.
              * @default 20480
              */
             max_response_size: -1 | number;
-            /** @description Result delivery mode. When omitted, the compatibility mode uses `max_response_size` (default 20480) and may return a truncated preview plus `full_content_file_url`. Explicit `full` forces the complete `result.data` inline and takes precedence over a finite `max_response_size`; if the platform hard safety limit is exceeded, the call fails with `error_code: response_too_large` instead of silently degrading. `fields:<JSONPath,...>` returns only the selected fields — JSONPath expressions are rooted at `result.data`, comma-separated, and at least one non-empty expression is required. `summary` returns the response schema, size/row statistics, and a `full_content_file_url` for the complete payload. */
+            /** @description Result delivery mode. When omitted, the compatibility mode uses `max_response_size` (default 20480) and may return a truncated preview plus `full_content_file_url`. Explicit `full` forces the complete `result.data` inline and takes precedence over a finite `max_response_size`; if the platform hard safety limit is exceeded, the call fails with `error_code: response_too_large` instead of silently degrading. `fields:<JSONPath,...>` returns only the selected fields — JSONPath expressions are rooted at `result.data`, comma-separated, and at least one non-empty expression is required. `summary` normally returns statistics with optional schema and download URL. It preserves lossless `data` or a `truncated_content` plus `full_content_file_url` fallback when available. Check success and field availability; the mode alone does not guarantee statistics or a URL. */
             respond_with?: string;
         };
         /** PublicToolStats */
@@ -2240,21 +2240,37 @@ export interface components {
             /** @description Human-readable explanation of why this capability was recommended for the query. Returned by Discover. */
             why_recommended?: string;
             /** @description Provider parameter contract preserved for catalog inspection. */
-            params?: Record<string, never> | unknown[] | string | number | boolean | null;
+            params?: {
+                [key: string]: unknown;
+            } | unknown[] | string | number | boolean | null;
             /** @description Alternative public input contract when supplied by the provider. */
-            parameters?: Record<string, never> | unknown[] | string | number | boolean | null;
+            parameters?: {
+                [key: string]: unknown;
+            } | unknown[] | string | number | boolean | null;
             /** @description Provider input schema used by catalog verification. */
-            input_schema?: Record<string, never> | unknown[] | string | number | boolean | null;
+            input_schema?: {
+                [key: string]: unknown;
+            } | unknown[] | string | number | boolean | null;
             /** @description Provider parameter schema used by catalog verification. */
-            parameters_schema?: Record<string, never> | unknown[] | string | number | boolean | null;
+            parameters_schema?: {
+                [key: string]: unknown;
+            } | unknown[] | string | number | boolean | null;
             /** @description Provider query-parameter contract used by catalog verification. */
-            query_params?: Record<string, never> | unknown[] | string | number | boolean | null;
+            query_params?: {
+                [key: string]: unknown;
+            } | unknown[] | string | number | boolean | null;
             /** @description Provider request-body parameter contract used by catalog verification. */
-            body_params?: Record<string, never> | unknown[] | string | number | boolean | null;
+            body_params?: {
+                [key: string]: unknown;
+            } | unknown[] | string | number | boolean | null;
             /** @description OpenAPI request body contract used by catalog verification. */
-            requestBody?: Record<string, never> | unknown[] | string | number | boolean | null;
+            requestBody?: {
+                [key: string]: unknown;
+            } | unknown[] | string | number | boolean | null;
             /** @description Public output schema advertised by the capability when available. */
-            output_schema?: Record<string, never> | unknown[] | string | number | boolean | null;
+            output_schema?: {
+                [key: string]: unknown;
+            } | unknown[] | string | number | boolean | null;
             examples?: {
                 [key: string]: unknown;
             };
@@ -2305,11 +2321,9 @@ export interface components {
         };
         /** PublicExecuteResult */
         PublicExecuteResult: ({
-            data?: {
-                [key: string]: unknown;
-            };
+            data?: unknown;
             message?: string;
-            /** @description UTF-8-safe preview used only by automatic or oversized fields delivery; never present on a successful explicit full response. */
+            /** @description UTF-8-safe preview used by automatic, oversized fields, or summary fallback delivery; never present on a successful explicit full response. */
             truncated_content?: string;
             /**
              * Format: uri

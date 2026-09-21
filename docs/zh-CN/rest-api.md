@@ -488,7 +488,7 @@ POST /tools/execute?tool_id={tool_id}
 | `model` | string | 智能体推荐 | 选择工具或生成参数的不含空白或控制字符的非空模型标识，最长 128 个字符，例如 `gpt-4.1`、`deepseek-v4-pro` 或 `claude-sonnet-4` |
 | `parameters` | object | 是 | 根据 Discover 或 Inspect 返回的所选能力当前契约构造的能力专属参数 |
 | `max_response_size` | integer | 否 | 自动内联阈值，按 `result.data` JSON 序列化后的 UTF-8 字节数计算；默认 `20480`，`-1` 表示完整内联。显式 `full` 优先于有限值；`summary` 不受其影响。 |
-| `respond_with` | string | 否 | 交付模式：省略时使用兼容自动交付；显式 `full` 强制完整内联 `result.data`；`fields:<JSONPath,...>` 先投影再应用大小阈值；`summary` 返回 schema、统计和 `full_content_file_url`。 |
+| `respond_with` | string | 否 | 交付模式：省略时使用兼容自动交付；显式 `full` 强制完整内联 `result.data`；`fields:<JSONPath,...>` 先投影再应用大小阈值；`summary` 返回统计或保留 data/溢出回退。 |
 
 工具参数或投影无效时返回 HTTP `422`，并通过 `details` 给出字段级错误；鉴权失败返回统一 API 错误对象，不再伪装成成功 Call 或空 Search 结果。
 
@@ -500,7 +500,7 @@ POST /tools/execute?tool_id={tool_id}
 | 省略 | `-1` | 完整内联数据 |
 | `full` | 任意值或省略 | 完整内联 `result.data`；有限大小值不会使其降级 |
 | `fields:...` | 省略 / 正整数 / `-1` | 先投影，再应用默认 / 指定 / 不限大小的内联规则 |
-| `summary` | 任意值或省略 | 大小值不改变摘要响应形态 |
+| `summary` | 任意值或省略 | 摘要、无损数据或完整溢出回退 |
 
 如果显式 `full` 超过平台硬安全上限，请求会以 `error_code: response_too_large` 失败，不会静默改成截断信封。二进制附件继续使用独立附件交付契约，不会隐式 base64 编码进 JSON。
 
@@ -550,7 +550,7 @@ POST /tools/execute?tool_id={tool_id}
 | `cost` | number | 可用时返回旧版/预结算成本信号。 |
 | `remaining_credits` | number/null | 可用时返回账户剩余积分。 |
 
-使用 `respond_with: "summary"` 时，顶层响应会刻意限定为执行标识/状态、可用时的耗时、`cost`、`remaining_credits` 和 `result`。`result` 仅包含 `respond_with`、`content_schema`、`summary`、`full_content_file_url` 和 `message`，不包含原始 `billing`、`execution_outcome`、参数、实验元数据、状态码或样例行。签名 `full_content_file_url` 直接指向对象存储，必须按原样使用。
+摘要模式至少保留一种可用载荷：`summary` 对象、无损 `data`，或同时存在的 `truncated_content` 与 `full_content_file_url`。这些字段可以共存；仅凭模式不能保证摘要或下载链接存在。先检查 `success`，再检查字段是否存在；失败的摘要调用保留空 `data` 对象。 可选元数据包括 `content_schema` 和 `message`。签名链接必须按返回的原样使用。
 
 ### 示例：空结果，不扣费
 

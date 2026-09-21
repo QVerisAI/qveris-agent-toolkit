@@ -260,7 +260,7 @@ Python applications that intentionally reproduce the flow must validate the same
 
 Paid `call()` requests are strict single-submit by default. The SDK does not follow HTTP redirects or automatically retry `429`/`503`, timeout, or transport failures, and it does not remove a rejected projection field and resubmit. A typed error reports `request_metadata.http_attempts == 1`. If an older service requires the former projection fallback, opt in explicitly:
 
-Omitting `respond_with` preserves compatibility auto-delivery: `max_response_size` defaults to 20KB and oversized results use the overflow envelope. Explicit `respond_with="full"` forces complete inline `result.data` and takes precedence over a finite `max_response_size`; hard-limit failures use `response_too_large`. Summary delivery is unchanged by `max_response_size`.
+Omitting `respond_with` preserves compatibility auto-delivery: `max_response_size` defaults to 20KB and oversized results use the overflow envelope. Explicit `respond_with="full"` forces complete inline `result.data` and takes precedence over a finite `max_response_size`; hard-limit failures use `response_too_large`. Summary mode preserves at least one usable payload: a `summary` object, lossless `data`, or `truncated_content` together with `full_content_file_url`. These fields may coexist. Neither statistics nor a URL is guaranteed by the mode alone. Check `success` first, then field availability; failed summary calls retain an empty `data` object.
 
 ```python
 result = await client.call(

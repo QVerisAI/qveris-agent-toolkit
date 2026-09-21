@@ -1794,7 +1794,7 @@ Useful for previewing the data structure.
 
 ###### 继承自
 
-[`ExecuteResultTruncated`](#executeresulttruncated).[`truncated_content`](#truncated_content-1)
+[`ExecuteResultTruncated`](#executeresulttruncated).[`truncated_content`](#truncated_content-2)
 
 ***
 
@@ -1816,9 +1816,9 @@ may contain arbitrary keys (including respond_with) inside its data payload.
 
 ***
 
-### ExecuteResultSummary
+### ExecuteResultSummaryBase
 
-Compact result returned by `respond_with: "summary"`.
+Shared metadata for summary delivery, including preserved fallback payloads.
 
 #### 属性
 
@@ -1826,9 +1826,13 @@ Compact result returned by `respond_with: "summary"`.
 
 > `optional` **content\_schema?**: `Record`\<`string`, `unknown`\>
 
-##### full\_content\_file\_url
+##### data?
 
-> **full\_content\_file\_url**: `string`
+> `optional` **data?**: `unknown`
+
+##### full\_content\_file\_url?
+
+> `optional` **full\_content\_file\_url?**: `string`
 
 ##### message?
 
@@ -1838,9 +1842,9 @@ Compact result returned by `respond_with: "summary"`.
 
 > **respond\_with**: `"summary"`
 
-##### summary
+##### summary?
 
-> **summary**: `object`
+> `optional` **summary?**: `object`
 
 ###### 索引签名
 
@@ -1857,6 +1861,10 @@ Compact result returned by `respond_with: "summary"`.
 ###### size\_bytes?
 
 > `optional` **size\_bytes?**: `number`
+
+##### truncated\_content?
+
+> `optional` **truncated\_content?**: `string`
 
 ***
 
@@ -3195,6 +3203,16 @@ Error response from the Qveris API.
 > **ExecuteResult** = [`ExecuteResultRawObject`](#executeresultrawobject) \| [`ExecuteResultData`](#executeresultdata) \| [`ExecuteResultTruncated`](#executeresulttruncated) \| [`ExecuteResultProjectedOverflow`](#executeresultprojectedoverflow) \| [`ExecuteResultSummary`](#executeresultsummary) \| [`ExecuteResultFields`](#executeresultfields) \| `unknown`[] \| `string` \| `number` \| `boolean` \| `null`
 
 Union type for execution results (either full data or truncated).
+
+***
+
+### ExecuteResultSummary
+
+> **ExecuteResultSummary** = [`ExecuteResultSummaryBase`](#executeresultsummarybase) & \{ `summary`: `NonNullable`\<[`ExecuteResultSummaryBase`](#executeresultsummarybase)\[`"summary"`\]\>; \} \| \{ `data`: `unknown`; \} \| \{ `full_content_file_url`: `string`; `truncated_content`: `string`; \}
+
+Summary mode preserves at least one usable payload: statistics, lossless data,
+or a preview with its download URL. These payloads may coexist. Check success
+and field availability before consuming them; a summary need not have a URL.
 
 ***
 

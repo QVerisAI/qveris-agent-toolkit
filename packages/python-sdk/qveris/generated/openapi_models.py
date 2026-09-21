@@ -846,11 +846,11 @@ class PublicExecuteToolRequest(BaseModel):
     )
     max_response_size: Optional[Union[int, conint(ge=1)]] = Field(
         20480,
-        description='Automatic inline-delivery limit, measured as the UTF-8 byte length of serialized `result.data`. The default is 20480 when omitted; use -1 for unlimited inline delivery. An explicit `respond_with: full` takes precedence over any finite value. This parameter does not change the `summary` response shape.',
+        description='Automatic inline-delivery limit, measured as the UTF-8 byte length of serialized `result.data`. The default is 20480 when omitted; use -1 for unlimited inline delivery. An explicit `respond_with: full` takes precedence over any finite value. Summary mode may preserve lossless data or a complete overflow fallback.',
     )
     respond_with: Optional[constr(pattern=r'^(full|summary|fields:.+)$')] = Field(
         None,
-        description='Result delivery mode. When omitted, the compatibility mode uses `max_response_size` (default 20480) and may return a truncated preview plus `full_content_file_url`. Explicit `full` forces the complete `result.data` inline and takes precedence over a finite `max_response_size`; if the platform hard safety limit is exceeded, the call fails with `error_code: response_too_large` instead of silently degrading. `fields:<JSONPath,...>` returns only the selected fields — JSONPath expressions are rooted at `result.data`, comma-separated, and at least one non-empty expression is required. `summary` returns the response schema, size/row statistics, and a `full_content_file_url` for the complete payload.',
+        description='Result delivery mode. When omitted, the compatibility mode uses `max_response_size` (default 20480) and may return a truncated preview plus `full_content_file_url`. Explicit `full` forces the complete `result.data` inline and takes precedence over a finite `max_response_size`; if the platform hard safety limit is exceeded, the call fails with `error_code: response_too_large` instead of silently degrading. `fields:<JSONPath,...>` returns only the selected fields — JSONPath expressions are rooted at `result.data`, comma-separated, and at least one non-empty expression is required. `summary` normally returns statistics with optional schema and download URL. It preserves lossless `data` or a `truncated_content` plus `full_content_file_url` fallback when available. Check success and field availability; the mode alone does not guarantee statistics or a URL.',
     )
 
 
@@ -1243,11 +1243,11 @@ class PublicExecuteResult(BaseModel):
     model_config = ConfigDict(
         extra='allow',
     )
-    data: Optional[Dict[str, Any]] = None
+    data: Optional[Any] = None
     message: Optional[str] = None
     truncated_content: Optional[str] = Field(
         None,
-        description='UTF-8-safe preview used only by automatic or oversized fields delivery; never present on a successful explicit full response.',
+        description='UTF-8-safe preview used by automatic, oversized fields, or summary fallback delivery; never present on a successful explicit full response.',
     )
     full_content_file_url: Optional[AnyUrl] = Field(
         None,

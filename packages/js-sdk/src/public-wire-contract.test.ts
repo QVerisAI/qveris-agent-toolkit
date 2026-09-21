@@ -10,7 +10,7 @@ interface Schema {
   anyOf?: Schema[];
   allOf?: Array<{
     if: { properties: { respond_with: { const?: string; pattern?: string } } };
-    then: { required?: string[]; oneOf?: Array<{ required: string[] }> };
+    then: { required?: string[]; oneOf?: Array<{ required: string[] }>; anyOf?: Array<{ required: string[] }> };
   }>;
   properties?: Record<string, Schema>;
   required?: string[];
@@ -21,9 +21,10 @@ interface Schema {
 const schemas = JSON.parse(readFileSync(resolve('../../docs/openapi/qveris-public-api.openapi.json'), 'utf8'))
   .components.schemas as Record<string, Schema>;
 const delivery = JSON.parse(readFileSync(resolve('../../contracts/result-delivery.v1.json'), 'utf8')) as {
+  summary_cases: Array<{ result: Record<string, unknown> }>;
   vectors: Array<{
     request: { respond_with?: string };
-    expected: { delivery?: string; required_result_fields?: string[] };
+    expected: { delivery?: string; required_result_fields?: string[]; any_of_required_result_fields?: string[][] };
   }>;
 };
 const models: Record<string, string> = {
@@ -91,7 +92,7 @@ function wireDelivery(schema: Schema): string {
     const mode =
       selector.const === 'summary' ? '"summary"' : selector.pattern === '^fields:' ? '`fields:${string}`' : undefined;
     expect(mode, 'every conditional result mode must be represented').toBeDefined();
-    for (const branch of rule.then.oneOf ?? [rule.then]) {
+    for (const branch of rule.then.oneOf ?? rule.then.anyOf ?? [rule.then]) {
       expect(branch.required?.length).toBeGreaterThan(0);
       const fields = Object.entries(schema.properties!)
         .filter(([name]) => name !== 'respond_with')
@@ -99,7 +100,7 @@ function wireDelivery(schema: Schema): string {
       variants.push(`{respond_with: ${mode}; ${fields.join('; ')}}`);
     }
   }
-  expect(variants.length).toBe(4);
+  expect(variants.length).toBe(6);
   return variants.join(' | ');
 }
 
@@ -110,6 +111,7 @@ function compatibilityDiagnostics(mutate: (source: string) => string = (source) 
     `import type * as MCP from '../../mcp/src/types';`,
     `import type * as Client from './client';`,
     `import type * as McpClient from '../../mcp/src/api/client';`,
+    `import type {components as Generated} from '../../mcp/src/generated/openapi';`,
     `import type {ExecuteToolInput} from '../../mcp/src/tools/execute';`,
     `import type {ProbeToolInput} from '../../mcp/src/tools/probe';`,
     'type Assert<T extends true> = T;',
@@ -140,6 +142,11 @@ function compatibilityDiagnostics(mutate: (source: string) => string = (source) 
     }
   }
   for (const surface of ['SDK', 'MCP']) {
+    for (const [index, sample] of delivery.summary_cases.entries()) {
+      imports.push(
+        `const summaryCase${surface}${index}: ${surface}.ExecuteResultSummary = ${JSON.stringify(sample.result)};`,
+      );
+    }
     for (const [index, vector] of delivery.vectors.entries()) {
       const model =
         vector.expected.delivery === 'summary'
@@ -158,6 +165,14 @@ function compatibilityDiagnostics(mutate: (source: string) => string = (source) 
         expect(['failure', 'reject']).toContain(vector.expected.delivery);
       }
       if (model) {
+        if (vector.expected.any_of_required_result_fields) {
+          const alternatives = vector.expected.any_of_required_result_fields
+            .map((fields) => '{' + fields.map((field) => field + ': unknown').join('; ') + '}')
+            .join(' | ');
+          imports.push(
+            `type Alternatives${surface}${index} = Assert<${surface}.${model} extends ${alternatives} ? true : false>;`,
+          );
+        }
         const fields = (vector.expected.required_result_fields ?? [])
           .map((field) => `${JSON.stringify(field)}: unknown`)
           .join('; ');
@@ -167,15 +182,23 @@ function compatibilityDiagnostics(mutate: (source: string) => string = (source) 
       }
     }
     imports.push(
-      `type Summary${surface} = Assert<${surface}.ExecuteResultSummary extends {summary: object; full_content_file_url: string} ? true : false>;`,
       `const overflow${surface}: ${surface}.ExecuteResultProjectedOverflow = {respond_with:'fields:$.x', truncated_content:'x', full_content_file_url:'https://qveris.ai/result'};`,
       `function consume${surface}(response: Awaited<ReturnType<${surface === 'SDK' ? "Client.Qveris['call']" : "McpClient.QverisClient['executeTool']"}>>, selection: \`fields:\${string}\`): void {
         const result = response.result;
         if (!result || typeof result !== 'object' || Array.isArray(result)) return;
         if ('respond_with' in result && result.respond_with === 'summary') {
           const summary: ${surface}.ExecuteResultSummary['summary'] = result.summary;
-          const url: string = result.full_content_file_url;
-          const rows: number | undefined = result.summary.row_count;
+          const url: string | undefined = result.full_content_file_url;
+          if (result.summary !== undefined) {
+            const rows: number | undefined = result.summary.row_count;
+          }
+          if ('data' in result) {
+            const data: unknown = result.data;
+          }
+          if (result.truncated_content !== undefined && result.full_content_file_url !== undefined) {
+            const preview: string = result.truncated_content;
+            const download: string = result.full_content_file_url;
+          }
         }
         if ('respond_with' in result && result.respond_with === selection) {
           const projected: ${surface}.ExecuteResultFields | ${surface}.ExecuteResultProjectedOverflow = result;
@@ -200,6 +223,31 @@ function compatibilityDiagnostics(mutate: (source: string) => string = (source) 
       const badOverflow${surface}: ${surface}.ExecuteResult = {respond_with:'fields:$.rows', truncated_content:'preview'};`,
     );
   }
+  // Exercise the actual generated output as well as our wire approximation.
+  // An omitted additionalProperties formerly generated Record<string, never>.
+  for (const field of [
+    'params',
+    'parameters',
+    'input_schema',
+    'parameters_schema',
+    'query_params',
+    'body_params',
+    'requestBody',
+    'output_schema',
+  ]) {
+    for (const [index, value] of [
+      { city: 'string', nested: [null, 1, false, {}] },
+      [1, { city: 'string' }],
+      'legacy',
+      0,
+      false,
+      null,
+    ].entries()) {
+      imports.push(
+        `const generated${field}${index}: Generated['schemas']['PublicCapabilityResult']['${field}'] = ${JSON.stringify(value)};`,
+      );
+    }
+  }
   const options: ts.CompilerOptions = {
     strict: true,
     noEmit: true,
@@ -213,7 +261,12 @@ function compatibilityDiagnostics(mutate: (source: string) => string = (source) 
   host.getSourceFile = (name, languageVersion, onError, shouldCreateNewSourceFile) =>
     name === filename
       ? ts.createSourceFile(name, imports.join('\n'), languageVersion, true)
-      : [resolve('src/types.ts'), resolve('../mcp/src/types.ts'), resolve('src/client.ts')].includes(name)
+      : [
+            resolve('src/types.ts'),
+            resolve('../mcp/src/types.ts'),
+            resolve('src/client.ts'),
+            resolve('../mcp/src/generated/openapi.d.ts'),
+          ].includes(name)
         ? ts.createSourceFile(name, mutate(readFileSync(name, 'utf8')), languageVersion, true)
         : original(name, languageVersion, onError, shouldCreateNewSourceFile);
   const diagnostics = ts.getPreEmitDiagnostics(ts.createProgram([filename], options, host));
@@ -231,7 +284,8 @@ test('all declared public response fields are represented and accepted by both S
 test.each([
   ['localized provider', 'provider_name?: string | Record<string, string>;', 'provider_name?: string;'],
   ['Probe recovery', '  recovery: ProbeRecoveryAdvice;', ''],
-  ['required summary', '  summary: {', '  summary?: {'],
+  ['summary payload guarantee', '{ data: unknown }', '{ data?: unknown }'],
+  ['optional summary URL', '  full_content_file_url?: string;', '  full_content_file_url: string;'],
   ['nullable metrics', 'avg_execution_time_ms?: number | null;', 'avg_execution_time_ms?: number;'],
   [
     'inline fields data',
@@ -239,6 +293,11 @@ test.each([
     'export interface ExecuteResultFields {\n  respond_with: `fields:${string}`;\n  data?: unknown;',
   ],
   ['OAuth request identity', '  subUserId?: string;', ''],
+  [
+    'generated provider object',
+    'params?: {\n                [key: string]: unknown;',
+    'params?: {\n                [key: string]: never;',
+  ],
 ])('the guard detects regression of %s', (_label, before, after) => {
   expect(
     compatibilityDiagnostics((source) => {

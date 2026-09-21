@@ -558,6 +558,13 @@ async def test_probe_contract_posts_zero_cost_defaults_and_parses_results() -> N
             json={
                 "schema": {"valid": True},
                 "quote": {"estimate_credits": 3, "currency": "credits", "exact": True, "basis": "per_call"},
+                "recovery": {
+                    "missing_fields": [],
+                    "safe_fixes": [],
+                    "retryable": False,
+                    "next_action": "execute",
+                    "provider_fallback": False,
+                },
             },
         )
 

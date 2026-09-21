@@ -27,6 +27,105 @@
       "max_response_size": "max_response_size"
     }
   },
+  "summary_cases": [
+    {
+      "id": "statistics-without-url",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "summary": {
+          "row_count": 1
+        }
+      }
+    },
+    {
+      "id": "statistics-with-url",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "summary": {
+          "row_count": 1
+        },
+        "full_content_file_url": "https://storage.invalid/result"
+      }
+    },
+    {
+      "id": "lossless-0",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "data": {}
+      }
+    },
+    {
+      "id": "lossless-1",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "data": [
+          1,
+          null,
+          "数据"
+        ]
+      }
+    },
+    {
+      "id": "lossless-2",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "data": ""
+      }
+    },
+    {
+      "id": "lossless-3",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "data": 0
+      }
+    },
+    {
+      "id": "lossless-4",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "data": false
+      }
+    },
+    {
+      "id": "overflow",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "truncated_content": "partial",
+        "full_content_file_url": "https://storage.invalid/result"
+      }
+    },
+    {
+      "id": "coexisting-payloads",
+      "success": true,
+      "result": {
+        "respond_with": "summary",
+        "summary": {
+          "row_count": 1
+        },
+        "data": [
+          1
+        ],
+        "truncated_content": "partial",
+        "full_content_file_url": "https://storage.invalid/result"
+      }
+    },
+    {
+      "id": "failed-empty-data",
+      "success": false,
+      "result": {
+        "respond_with": "summary",
+        "data": {}
+      }
+    }
+  ],
   "vectors": [
     {
       "id": "explicit-full-default-over-20kb",
@@ -80,19 +179,19 @@
       "id": "summary-default",
       "request": {"respond_with": "summary"},
       "payload_profile": "one_megabyte",
-      "expected": {"delivery": "summary", "required_result_fields": ["respond_with", "summary", "full_content_file_url"], "forbidden_result_fields": ["data", "truncated_content"]}
+      "expected": {"delivery": "summary", "required_result_fields": ["respond_with"], "any_of_required_result_fields": [["summary"], ["data"], ["truncated_content", "full_content_file_url"]]}
     },
     {
       "id": "summary-finite",
       "request": {"respond_with": "summary", "max_response_size": 1024},
       "payload_profile": "one_megabyte",
-      "expected": {"delivery": "summary", "required_result_fields": ["respond_with", "summary", "full_content_file_url"], "forbidden_result_fields": ["data", "truncated_content"]}
+      "expected": {"delivery": "summary", "required_result_fields": ["respond_with"], "any_of_required_result_fields": [["summary"], ["data"], ["truncated_content", "full_content_file_url"]]}
     },
     {
       "id": "summary-unlimited",
       "request": {"respond_with": "summary", "max_response_size": -1},
       "payload_profile": "one_megabyte",
-      "expected": {"delivery": "summary", "required_result_fields": ["respond_with", "summary", "full_content_file_url"], "forbidden_result_fields": ["data", "truncated_content"]}
+      "expected": {"delivery": "summary", "required_result_fields": ["respond_with"], "any_of_required_result_fields": [["summary"], ["data"], ["truncated_content", "full_content_file_url"]]}
     },
     {
       "id": "failure-null-data",

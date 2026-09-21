@@ -497,19 +497,33 @@ export interface ExecuteResultProjectedOverflow extends ExecuteResultTruncated {
   respond_with: `fields:${string}`;
 }
 
-/** Compact result returned by `respond_with: "summary"`. */
-export interface ExecuteResultSummary {
+/** Shared metadata for summary delivery, including preserved fallback payloads. */
+export interface ExecuteResultSummaryBase {
   respond_with: 'summary';
   content_schema?: Record<string, unknown>;
-  summary: {
+  summary?: {
     size_bytes?: number;
     row_count?: number;
     fields?: string[];
     [key: string]: unknown;
   };
-  full_content_file_url: string;
+  data?: unknown;
+  truncated_content?: string;
+  full_content_file_url?: string;
   message?: string;
 }
+
+/**
+ * Summary mode preserves at least one usable payload: statistics, lossless data,
+ * or a preview with its download URL. These payloads may coexist. Check success
+ * and field availability before consuming them; a summary need not have a URL.
+ */
+export type ExecuteResultSummary = ExecuteResultSummaryBase &
+  (
+    | { summary: NonNullable<ExecuteResultSummaryBase['summary']> }
+    | { data: unknown }
+    | { truncated_content: string; full_content_file_url: string }
+  );
 
 /** Selected result fields returned by a `fields:<JSONPath,...>` projection. */
 export interface ExecuteResultFields {

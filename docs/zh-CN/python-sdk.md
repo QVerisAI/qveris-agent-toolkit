@@ -251,7 +251,7 @@ CLI 会拒绝敏感/可执行内容、重复/原型键和不支持的必需能�
 
 付费 `call()` 默认严格 single-submit。SDK 不会跟随 HTTP 重定向，不会自动重试 `429`/`503`、超时或 transport 失败，也不会删除被拒绝的投影字段后再次提交；类型化错误会报告 `request_metadata.http_attempts == 1`。如果旧服务仍需要原来的投影降级，可显式选择：
 
-省略 `respond_with` 时保留兼容的自动交付：`max_response_size` 默认 20KB，超限结果使用溢出信封。显式 `respond_with="full"` 强制返回完整内联 `result.data`，优先于有限的 `max_response_size`；超过平台硬限制时返回 `response_too_large`。摘要交付不受 `max_response_size` 影响。
+省略 `respond_with` 时保留兼容的自动交付：`max_response_size` 默认 20KB，超限结果使用溢出信封。显式 `respond_with="full"` 强制返回完整内联 `result.data`，优先于有限的 `max_response_size`；超过平台硬限制时返回 `response_too_large`。摘要模式至少保留一种可用载荷：`summary` 对象、无损 `data`，或同时存在的 `truncated_content` 与 `full_content_file_url`。这些字段可以共存；仅凭模式不能保证摘要或下载链接存在。先检查 `success`，再检查字段是否存在；失败的摘要调用保留空 `data` 对象。
 
 ```python
 result = await client.call(
