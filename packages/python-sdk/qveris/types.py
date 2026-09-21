@@ -200,6 +200,7 @@ class ToolExecutionResponse(QverisModel):
     success: bool
     next_action: Optional[Dict[str, Any]] = None
     result: Optional[Any] = Field(default=None, repr=False)
+    error_code: Optional[str] = None
     error_message: Optional[str] = None
     elapsed_time_ms: Optional[float] = None
     execution_time: Optional[float] = None

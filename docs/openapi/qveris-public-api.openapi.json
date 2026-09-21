@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "QVeris Public REST API",
-    "version": "2026-09-12.1",
+    "version": "2026-09-21.1",
     "summary": "External REST API for enterprise integration.",
     "description": "OpenAPI 3.1 schema for the formally released public `/api/v1` REST API surface. It covers search, provider discovery, tool metadata lookup/execution, credits, and account audit endpoints. Unreleased API families are intentionally excluded from this customer-facing schema."
   },
@@ -65,7 +65,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -85,7 +85,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -121,7 +121,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             },
@@ -204,7 +204,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -224,7 +224,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -260,7 +260,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             },
@@ -343,7 +343,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -363,7 +363,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -399,7 +399,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             },
@@ -535,7 +535,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -555,7 +555,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -589,7 +589,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -602,7 +602,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -881,7 +881,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -901,7 +901,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -927,7 +927,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -1004,7 +1004,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -1024,7 +1024,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -1121,7 +1121,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -1171,7 +1171,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -1191,7 +1191,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -1304,7 +1304,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -1324,7 +1324,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -1824,7 +1824,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -1844,7 +1844,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -1870,7 +1870,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -2203,7 +2203,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -2567,7 +2567,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -2587,7 +2587,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -2638,7 +2638,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -2658,7 +2658,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -2692,7 +2692,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -2749,7 +2749,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -2773,7 +2773,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -2797,7 +2797,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -2821,7 +2821,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -2845,7 +2845,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -2869,7 +2869,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -2893,7 +2893,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -2917,7 +2917,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -2941,7 +2941,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -2979,7 +2979,7 @@
           "Capabilities"
         ],
         "summary": "Inspect a CAP contract",
-        "description": "Return the current published CAP contract. `contract_version` and `schema_hash` identify the exact contract; legacy CAP records may omit both fields.",
+        "description": "Return the current published CAP contract. `contract_version` and `schema_hash` identify the exact contract; legacy CAP records may omit both fields. The response always discloses fail-closed verification evidence and execution restrictions.",
         "operationId": "capabilities_detail_api_v1_capabilities__capability_id__get",
         "security": [
           {
@@ -3031,7 +3031,116 @@
                   "description": "Daily market bars for a symbol.",
                   "contract_version": 7,
                   "schema_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                  "remaining_credits": 995
+                  "remaining_credits": 995,
+                  "verification_status": "unverified",
+                  "verification": {
+                    "status": "unverified",
+                    "policy_version": "catalog-verification-v1",
+                    "required_checks": [
+                      "schema",
+                      "authentication",
+                      "description_contract",
+                      "provider_identity",
+                      "permissions",
+                      "freshness",
+                      "live_check"
+                    ],
+                    "checks": [
+                      {
+                        "name": "schema",
+                        "status": "missing",
+                        "checked_at": null,
+                        "evidence_digest": null,
+                        "reason": "schema_missing"
+                      },
+                      {
+                        "name": "authentication",
+                        "status": "missing",
+                        "checked_at": null,
+                        "evidence_digest": null,
+                        "reason": "authentication_path_missing"
+                      },
+                      {
+                        "name": "description_contract",
+                        "status": "missing",
+                        "checked_at": null,
+                        "evidence_digest": null,
+                        "reason": null
+                      },
+                      {
+                        "name": "provider_identity",
+                        "status": "missing",
+                        "checked_at": null,
+                        "evidence_digest": null,
+                        "reason": "provider_id_missing"
+                      },
+                      {
+                        "name": "permissions",
+                        "status": "missing",
+                        "checked_at": null,
+                        "evidence_digest": null,
+                        "reason": null
+                      },
+                      {
+                        "name": "freshness",
+                        "status": "missing",
+                        "checked_at": null,
+                        "evidence_digest": null,
+                        "reason": "expires_at_missing"
+                      },
+                      {
+                        "name": "live_check",
+                        "status": "missing",
+                        "checked_at": null,
+                        "evidence_digest": null,
+                        "reason": "live_check_samples_missing"
+                      }
+                    ],
+                    "verified_at": null,
+                    "expires_at": null,
+                    "test_run_digest": null,
+                    "quality_issues": [
+                      "live_check_samples_missing",
+                      "schema_missing",
+                      "authentication_path_missing",
+                      "provider_id_missing",
+                      "permission_disclosure_incomplete",
+                      "verified_at_missing",
+                      "expires_at_missing",
+                      "test_run_digest_missing",
+                      "verification_status_missing"
+                    ]
+                  },
+                  "execution_restrictions": {
+                    "callable": false,
+                    "technical": "unknown",
+                    "authentication": "unknown",
+                    "eligibility": "unknown",
+                    "license": "unknown",
+                    "regions": {
+                      "allow": [],
+                      "deny": []
+                    },
+                    "region_status": "unknown",
+                    "commercial_use": "unknown",
+                    "freshness": "unknown",
+                    "price_certainty": "unknown",
+                    "data_as_of": null,
+                    "warnings": [
+                      "Region restrictions are malformed or contradictory."
+                    ],
+                    "confidence": 0.0,
+                    "allowed_actions": [
+                      "discover",
+                      "inspect",
+                      "probe"
+                    ],
+                    "blocked_actions": [
+                      "execute"
+                    ],
+                    "next_action": "inspect",
+                    "retryable": true
+                  }
                 }
               }
             },
@@ -3041,7 +3150,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3061,7 +3170,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3085,7 +3194,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3109,7 +3218,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3133,7 +3242,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3157,7 +3266,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3181,7 +3290,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3205,7 +3314,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3239,7 +3348,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3278,7 +3387,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3501,7 +3610,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3521,7 +3630,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3601,7 +3710,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3621,7 +3730,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3641,7 +3750,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3661,7 +3770,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3698,7 +3807,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             },
@@ -3725,7 +3834,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3809,7 +3918,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3829,7 +3938,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3849,7 +3958,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3869,7 +3978,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3889,7 +3998,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -3989,7 +4098,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -4009,7 +4118,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -4029,7 +4138,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -4049,7 +4158,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -4069,7 +4178,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -4256,7 +4365,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -4276,7 +4385,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -4296,7 +4405,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -4316,7 +4425,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -4336,7 +4445,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -4785,7 +4894,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -4805,7 +4914,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -4927,7 +5036,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -4947,7 +5056,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -4979,7 +5088,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -5000,7 +5109,7 @@
           "Discovery"
         ],
         "summary": "Discover capabilities",
-        "description": "Find ranked capabilities from a natural-language query. Discover is free. Results may include `expected_cost` and `billing_rule` so clients can estimate a later Call.",
+        "description": "Find ranked capabilities from a natural-language query. Discover is free. Results include fail-closed verification evidence and execution restrictions; clients must not treat any status other than `verified` as verified. Results may include `expected_cost` and `billing_rule` so clients can estimate a later Call.",
         "operationId": "search_api_v1_search_post",
         "responses": {
           "200": {
@@ -5035,7 +5144,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             },
@@ -5070,6 +5179,114 @@
                       "stats": {
                         "avg_execution_time_ms": 210.7,
                         "success_rate": 0.982
+                      },
+                      "verification_status": "unverified",
+                      "verification": {
+                        "status": "unverified",
+                        "policy_version": "catalog-verification-v1",
+                        "required_checks": [
+                          "schema",
+                          "authentication",
+                          "description_contract",
+                          "provider_identity",
+                          "permissions",
+                          "freshness",
+                          "live_check"
+                        ],
+                        "checks": [
+                          {
+                            "name": "schema",
+                            "status": "missing",
+                            "checked_at": null,
+                            "evidence_digest": null,
+                            "reason": null
+                          },
+                          {
+                            "name": "authentication",
+                            "status": "missing",
+                            "checked_at": null,
+                            "evidence_digest": null,
+                            "reason": "authentication_path_missing"
+                          },
+                          {
+                            "name": "description_contract",
+                            "status": "missing",
+                            "checked_at": null,
+                            "evidence_digest": null,
+                            "reason": null
+                          },
+                          {
+                            "name": "provider_identity",
+                            "status": "missing",
+                            "checked_at": null,
+                            "evidence_digest": null,
+                            "reason": "provider_id_missing"
+                          },
+                          {
+                            "name": "permissions",
+                            "status": "missing",
+                            "checked_at": null,
+                            "evidence_digest": null,
+                            "reason": null
+                          },
+                          {
+                            "name": "freshness",
+                            "status": "missing",
+                            "checked_at": null,
+                            "evidence_digest": null,
+                            "reason": "expires_at_missing"
+                          },
+                          {
+                            "name": "live_check",
+                            "status": "missing",
+                            "checked_at": null,
+                            "evidence_digest": null,
+                            "reason": "live_check_samples_missing"
+                          }
+                        ],
+                        "verified_at": null,
+                        "expires_at": null,
+                        "test_run_digest": null,
+                        "quality_issues": [
+                          "live_check_samples_missing",
+                          "authentication_path_missing",
+                          "provider_id_missing",
+                          "permission_disclosure_incomplete",
+                          "verified_at_missing",
+                          "expires_at_missing",
+                          "test_run_digest_missing",
+                          "verification_status_missing"
+                        ]
+                      },
+                      "execution_restrictions": {
+                        "callable": false,
+                        "technical": "unknown",
+                        "authentication": "unknown",
+                        "eligibility": "unknown",
+                        "license": "unknown",
+                        "regions": {
+                          "allow": [],
+                          "deny": []
+                        },
+                        "region_status": "unknown",
+                        "commercial_use": "unknown",
+                        "freshness": "unknown",
+                        "price_certainty": "estimated",
+                        "data_as_of": null,
+                        "warnings": [
+                          "Region restrictions are malformed or contradictory."
+                        ],
+                        "confidence": 0.0,
+                        "allowed_actions": [
+                          "discover",
+                          "inspect",
+                          "probe"
+                        ],
+                        "blocked_actions": [
+                          "execute"
+                        ],
+                        "next_action": "inspect",
+                        "retryable": true
                       }
                     }
                   ],
@@ -5111,7 +5328,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             },
@@ -5160,7 +5377,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             },
@@ -5212,7 +5429,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             },
@@ -5260,7 +5477,7 @@
           "Tool Execution"
         ],
         "summary": "Inspect capabilities by id",
-        "description": "Fetch full capability metadata for one or more tool ids. Inspect is free and returns the same capability shape as Discover, including parameter schema, examples, quality signals, and cost estimates.",
+        "description": "Fetch full capability metadata for one or more tool ids. Inspect is free and returns the same capability shape as Discover, including parameter schema, verification evidence, provider access restrictions, examples, quality signals, and cost estimates. Clients must disclose restrictions before Call.",
         "operationId": "get_tools_by_ids_api_v1_tools_by_ids_post",
         "responses": {
           "200": {
@@ -5295,7 +5512,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             },
@@ -5321,11 +5538,6 @@
                           "description": "Location query accepted by the weather provider."
                         }
                       ],
-                      "examples": {
-                        "sample_parameters": {
-                          "q": "London"
-                        }
-                      },
                       "expected_cost": "5 credits per successful request",
                       "billing_rule": {
                         "unit": "request",
@@ -5334,6 +5546,118 @@
                       "stats": {
                         "avg_execution_time_ms": 210.7,
                         "success_rate": 0.982
+                      },
+                      "verification_status": "unverified",
+                      "verification": {
+                        "status": "unverified",
+                        "policy_version": "catalog-verification-v1",
+                        "required_checks": [
+                          "schema",
+                          "authentication",
+                          "description_contract",
+                          "provider_identity",
+                          "permissions",
+                          "freshness",
+                          "live_check"
+                        ],
+                        "checks": [
+                          {
+                            "name": "schema",
+                            "status": "missing",
+                            "checked_at": null,
+                            "evidence_digest": null,
+                            "reason": null
+                          },
+                          {
+                            "name": "authentication",
+                            "status": "missing",
+                            "checked_at": null,
+                            "evidence_digest": null,
+                            "reason": "authentication_path_missing"
+                          },
+                          {
+                            "name": "description_contract",
+                            "status": "missing",
+                            "checked_at": null,
+                            "evidence_digest": null,
+                            "reason": null
+                          },
+                          {
+                            "name": "provider_identity",
+                            "status": "missing",
+                            "checked_at": null,
+                            "evidence_digest": null,
+                            "reason": "provider_id_missing"
+                          },
+                          {
+                            "name": "permissions",
+                            "status": "missing",
+                            "checked_at": null,
+                            "evidence_digest": null,
+                            "reason": null
+                          },
+                          {
+                            "name": "freshness",
+                            "status": "missing",
+                            "checked_at": null,
+                            "evidence_digest": null,
+                            "reason": "expires_at_missing"
+                          },
+                          {
+                            "name": "live_check",
+                            "status": "missing",
+                            "checked_at": null,
+                            "evidence_digest": null,
+                            "reason": "live_check_samples_missing"
+                          }
+                        ],
+                        "verified_at": null,
+                        "expires_at": null,
+                        "test_run_digest": null,
+                        "quality_issues": [
+                          "live_check_samples_missing",
+                          "authentication_path_missing",
+                          "provider_id_missing",
+                          "permission_disclosure_incomplete",
+                          "verified_at_missing",
+                          "expires_at_missing",
+                          "test_run_digest_missing"
+                        ]
+                      },
+                      "execution_restrictions": {
+                        "callable": false,
+                        "technical": "unknown",
+                        "authentication": "unknown",
+                        "eligibility": "unknown",
+                        "license": "unknown",
+                        "regions": {
+                          "allow": [],
+                          "deny": []
+                        },
+                        "region_status": "unknown",
+                        "commercial_use": "unknown",
+                        "freshness": "unknown",
+                        "price_certainty": "estimated",
+                        "data_as_of": null,
+                        "warnings": [
+                          "Region restrictions are malformed or contradictory."
+                        ],
+                        "confidence": 0.0,
+                        "allowed_actions": [
+                          "discover",
+                          "inspect",
+                          "probe"
+                        ],
+                        "blocked_actions": [
+                          "execute"
+                        ],
+                        "next_action": "inspect",
+                        "retryable": true
+                      },
+                      "examples": {
+                        "sample_parameters": {
+                          "q": "London"
+                        }
                       }
                     }
                   ],
@@ -5374,7 +5698,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             },
@@ -5423,7 +5747,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             },
@@ -5456,7 +5780,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -5537,6 +5861,24 @@
               "title": "X-Qveris-Cache-Mode"
             },
             "description": "缓存策略：default（默认）或 bypass（跳过provider缓存）"
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Caller-generated key used to reconcile uncertain execution outcomes",
+              "title": "Idempotency-Key"
+            },
+            "description": "Caller-generated key used to reconcile uncertain execution outcomes"
           }
         ],
         "responses": {
@@ -5597,7 +5939,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -5634,7 +5976,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             },
@@ -5687,7 +6029,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             },
@@ -5741,7 +6083,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             },
@@ -5754,6 +6096,32 @@
                   "status": "failure",
                   "status_code": 429,
                   "message": "Rate limit exceeded. Please try again later."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Idempotency key already exists, conflicts, or cannot be honored by the selected settlement path",
+            "content": {
+              "application/json": {
+                "example": {
+                  "execution_id": "exec_01HZX9R2R4S2E",
+                  "result": {
+                    "data": {}
+                  },
+                  "success": false,
+                  "error_code": "idempotency_key_replay",
+                  "error_message": "This Idempotency-Key already identifies an execution."
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -5793,7 +6161,67 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Explicit full response exceeds the platform safety limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicExecuteToolResponse"
+                },
+                "example": {
+                  "execution_id": "exec_01HZX9R2R4S2E",
+                  "result": {
+                    "data": {}
+                  },
+                  "success": false,
+                  "error_code": "response_too_large",
+                  "error_message": "The complete response exceeds the platform safety limit.",
+                  "execution_time": 0.211
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-21.1"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream result delivery violated the public contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicExecuteToolResponse"
+                },
+                "example": {
+                  "execution_id": "exec_01HZX9R2R4S2E",
+                  "result": {
+                    "data": {}
+                  },
+                  "success": false,
+                  "error_code": "upstream_contract_violation",
+                  "error_message": "Execute response could not be delivered safely.",
+                  "execution_time": 0.211
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -5822,14 +6250,14 @@
         }
       }
     },
-    "/tools/probe": {
-      "post": {
+    "/tools/executions/by-idempotency-key": {
+      "get": {
         "tags": [
           "Tool Execution"
         ],
-        "summary": "Probe a capability without executing it",
-        "description": "Optionally validate candidate parameters or obtain a zero-cost quote when the task needs preflight validation or a current quote. Probe is not required before Call and a quote does not reserve price or authorize execution. The M1 `schema` and `quote` checks are implemented; `coverage` and `sample` return an explicit unknown verdict. Probe never executes the capability or consumes credits.",
-        "operationId": "probe_tool_api_v1_tools_probe_post",
+        "summary": "Reconcile Tool Execution",
+        "description": "Read a prior paid execution without authorizing another provider call.",
+        "operationId": "reconcile_tool_execution_api_v1_tools_executions_by_idempotency_key_get",
         "security": [
           {
             "HTTPBearer": []
@@ -5837,16 +6265,15 @@
         ],
         "parameters": [
           {
-            "name": "tool_id",
+            "name": "key",
             "in": "query",
             "required": true,
             "schema": {
               "type": "string",
-              "minLength": 1,
-              "description": "Tool ID to validate",
-              "title": "Tool Id"
+              "description": "Original Idempotency-Key value",
+              "title": "Key"
             },
-            "description": "Tool ID to validate"
+            "description": "Original Idempotency-Key value"
           }
         ],
         "responses": {
@@ -5855,18 +6282,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PublicToolProbeResponse"
-                },
-                "example": {
-                  "schema": {
-                    "valid": true
-                  },
-                  "quote": {
-                    "estimate_credits": 5,
-                    "currency": "credits",
-                    "exact": true,
-                    "basis": "per_call"
-                  }
+                  "$ref": "#/components/schemas/APIResponse_ToolExecutionReconciliationData_"
                 }
               }
             },
@@ -5900,7 +6316,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -5937,7 +6353,351 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient credits",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-21.1"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-21.1"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "failure",
+                  "status_code": 429,
+                  "message": "Rate limit exceeded. Please try again later."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-21.1"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published"
+      }
+    },
+    "/tools/probe": {
+      "post": {
+        "tags": [
+          "Tool Execution"
+        ],
+        "summary": "Probe a capability without executing it",
+        "description": "Optionally validate candidate parameters or obtain a zero-cost quote when the task needs preflight validation or a current quote. Probe is not required before Call and a quote does not reserve price or authorize execution. The M1 `schema` and `quote` checks are implemented; `coverage` and `sample` return an explicit unknown verdict. Every successful Probe includes the fail-closed verification and execution-restriction contract. Probe never executes the capability or consumes credits.",
+        "operationId": "probe_tool_api_v1_tools_probe_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tool_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Tool ID to validate",
+              "title": "Tool Id"
+            },
+            "description": "Tool ID to validate"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicToolProbeResponse"
+                },
+                "example": {
+                  "schema": {
+                    "valid": true
+                  },
+                  "quote": {
+                    "estimate_credits": 5.0,
+                    "currency": "credits",
+                    "exact": true,
+                    "basis": "per_call"
+                  },
+                  "recovery": {
+                    "missing_fields": [
+                      "live_check_samples",
+                      "schema",
+                      "authentication_path",
+                      "description",
+                      "provider_id",
+                      "verified_at",
+                      "expires_at",
+                      "test_run_digest",
+                      "verification_status"
+                    ],
+                    "safe_fixes": [
+                      "supply_missing_fields",
+                      "inspect"
+                    ],
+                    "retryable": true,
+                    "next_action": "inspect",
+                    "provider_fallback": false
+                  },
+                  "verification_status": "unverified",
+                  "verification": {
+                    "status": "unverified",
+                    "policy_version": "catalog-verification-v1",
+                    "required_checks": [
+                      "schema",
+                      "authentication",
+                      "description_contract",
+                      "provider_identity",
+                      "permissions",
+                      "freshness",
+                      "live_check"
+                    ],
+                    "checks": [
+                      {
+                        "name": "schema",
+                        "status": "missing",
+                        "reason": "schema_missing"
+                      },
+                      {
+                        "name": "authentication",
+                        "status": "missing",
+                        "reason": "authentication_path_missing"
+                      },
+                      {
+                        "name": "description_contract",
+                        "status": "missing",
+                        "reason": "description_missing"
+                      },
+                      {
+                        "name": "provider_identity",
+                        "status": "missing",
+                        "reason": "provider_id_missing"
+                      },
+                      {
+                        "name": "permissions",
+                        "status": "missing"
+                      },
+                      {
+                        "name": "freshness",
+                        "status": "missing",
+                        "reason": "expires_at_missing"
+                      },
+                      {
+                        "name": "live_check",
+                        "status": "missing",
+                        "reason": "live_check_samples_missing"
+                      }
+                    ],
+                    "quality_issues": [
+                      "live_check_samples_missing",
+                      "schema_missing",
+                      "authentication_path_missing",
+                      "description_missing",
+                      "provider_id_missing",
+                      "permission_disclosure_incomplete",
+                      "verified_at_missing",
+                      "expires_at_missing",
+                      "test_run_digest_missing",
+                      "verification_status_missing"
+                    ]
+                  },
+                  "execution_restrictions": {
+                    "callable": false,
+                    "technical": "unknown",
+                    "authentication": "unknown",
+                    "eligibility": "unknown",
+                    "license": "unknown",
+                    "regions": {
+                      "allow": [],
+                      "deny": []
+                    },
+                    "region_status": "unknown",
+                    "commercial_use": "unknown",
+                    "freshness": "unknown",
+                    "price_certainty": "exact",
+                    "warnings": [
+                      "Region restrictions are malformed or contradictory."
+                    ],
+                    "confidence": 0.125,
+                    "allowed_actions": [
+                      "discover",
+                      "inspect",
+                      "probe"
+                    ],
+                    "blocked_actions": [
+                      "execute"
+                    ],
+                    "next_action": "inspect",
+                    "retryable": true
+                  },
+                  "contract_features": [
+                    "verification-evidence-v1",
+                    "action-guidance-v1",
+                    "probe-recovery-v1"
+                  ]
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-21.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Maximum requests allowed in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current rate-limit window.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix epoch seconds when the current rate-limit window resets.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until the client should retry after a rate-limit response.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-09-21.1"
                 }
               }
             },
@@ -5986,7 +6746,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             },
@@ -6019,7 +6779,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -6043,7 +6803,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -6068,7 +6828,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -6093,7 +6853,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -6113,7 +6873,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-12.1"
+                  "const": "2026-09-21.1"
                 }
               }
             }
@@ -6453,6 +7213,50 @@
           "message"
         ],
         "title": "APIResponse[TokenVerificationResponse]"
+      },
+      "APIResponse_ToolExecutionReconciliationData_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ToolExecutionReconciliationData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[ToolExecutionReconciliationData]"
       },
       "APIResponse_Union_AgentClaimStartResponse__AgentClaimRiskBlockResponse__": {
         "properties": {
@@ -7887,7 +8691,7 @@
             "title": "Contract Version",
             "description": "Version of the published QVeris REST API contract.",
             "examples": [
-              "2026-09-12.1"
+              "2026-09-21.1"
             ]
           },
           "registration": {
@@ -8090,6 +8894,143 @@
         ],
         "title": "TokenVerificationResponse"
       },
+      "ToolExecutionReconciliationData": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "completed",
+              "unavailable"
+            ],
+            "title": "Status"
+          },
+          "execution_id": {
+            "type": "string",
+            "title": "Execution Id"
+          },
+          "execution_state": {
+            "type": "string",
+            "title": "Execution State"
+          },
+          "provider_request_dispatched": {
+            "type": "boolean",
+            "title": "Provider Request Dispatched"
+          },
+          "provider_execution_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Execution Id"
+          },
+          "charge_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Charge Event Id"
+          },
+          "settlement_state": {
+            "type": "string",
+            "title": "Settlement State"
+          },
+          "amount_credits": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount Credits"
+          },
+          "settlement_batch_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement Batch Id"
+          },
+          "ledger_entry_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ledger Entry Id"
+          },
+          "retry_disposition": {
+            "type": "string",
+            "enum": [
+              "terminal",
+              "reconcile_first"
+            ],
+            "title": "Retry Disposition"
+          },
+          "response": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response"
+          },
+          "response_http_status": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Http Status"
+          },
+          "result_unavailable_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Unavailable Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "execution_id",
+          "execution_state",
+          "provider_request_dispatched",
+          "settlement_state",
+          "retry_disposition"
+        ],
+        "title": "ToolExecutionReconciliationData",
+        "description": "Durable state returned for one caller-scoped execution key."
+      },
       "UsageCreditsSpentResponse": {
         "properties": {
           "total_credits": {
@@ -8150,6 +9091,25 @@
       },
       "UsageEventItem": {
         "properties": {
+          "anomalies": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "failed_charged_review",
+                    "missing_ledger_link",
+                    "missing_billing_snapshot"
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anomalies"
+          },
           "id": {
             "type": "string",
             "title": "Id"
@@ -8631,6 +9591,50 @@
             ],
             "title": "Credits Ledger Entry Id"
           },
+          "charge_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Charge Event Id"
+          },
+          "settlement_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement State"
+          },
+          "settlement_batch_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement Batch Id"
+          },
+          "settlement_ledger_entry_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement Ledger Entry Id"
+          },
           "display_target": {
             "anyOf": [
               {
@@ -8817,6 +9821,25 @@
       },
       "UsageEventSummaryItem": {
         "properties": {
+          "anomalies": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "failed_charged_review",
+                    "missing_ledger_link",
+                    "missing_billing_snapshot"
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anomalies"
+          },
           "id": {
             "type": "string",
             "title": "Id"
@@ -9214,6 +10237,50 @@
               }
             ],
             "title": "Credits Ledger Entry Id"
+          },
+          "charge_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Charge Event Id"
+          },
+          "settlement_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement State"
+          },
+          "settlement_batch_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement Batch Id"
+          },
+          "settlement_ledger_entry_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement Ledger Entry Id"
           },
           "display_target": {
             "anyOf": [
@@ -9734,7 +10801,10 @@
         "title": "PublicCapabilityDetailResponse",
         "additionalProperties": true,
         "required": [
-          "capability_id"
+          "capability_id",
+          "verification_status",
+          "verification",
+          "execution_restrictions"
         ],
         "dependentRequired": {
           "contract_version": [
@@ -9774,6 +10844,23 @@
             "type": "string",
             "pattern": "^[0-9a-f]{64}$",
             "description": "SHA-256 identity of the published CAP contract."
+          },
+          "verification_status": {
+            "type": "string",
+            "enum": [
+              "unverified",
+              "verifying",
+              "verified",
+              "stale",
+              "failed",
+              "restricted"
+            ]
+          },
+          "verification": {
+            "$ref": "#/components/schemas/PublicCatalogVerification"
+          },
+          "execution_restrictions": {
+            "$ref": "#/components/schemas/PublicExecutionRestrictions"
           },
           "remaining_credits": {
             "anyOf": [
@@ -9987,7 +11074,7 @@
               "routing",
               "full"
             ],
-            "description": "Response projection. `routing` returns compact routing cards (`tool_id`, `capability`, `cost_class`, `reliability`, `as_of_support`) sized for model context; `full` or omitted returns the complete result shape, byte-identical to previous releases."
+            "description": "Response projection. `routing` returns compact routing cards (`tool_id`, `capability`, `cost_class`, `reliability`, `as_of_support`) plus the required verification and restriction contract; `full` or omitted returns the complete result shape."
           },
           "lang": {
             "type": "string",
@@ -10067,6 +11154,12 @@
             ],
             "default": "none",
             "description": "M1 is zero-cost; every value avoids an upstream tool execution."
+          },
+          "sub_user_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": ".*\\S.*",
+            "description": "Optional sub-user identity used for provider OAuth readiness checks."
           }
         }
       },
@@ -10204,11 +11297,158 @@
           }
         }
       },
+      "PublicProbeRecoveryAdvice": {
+        "type": "object",
+        "title": "PublicProbeRecoveryAdvice",
+        "additionalProperties": false,
+        "required": [
+          "missing_fields",
+          "safe_fixes",
+          "retryable",
+          "next_action",
+          "provider_fallback"
+        ],
+        "properties": {
+          "missing_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "safe_fixes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "retryable": {
+            "type": "boolean"
+          },
+          "next_action": {
+            "type": "string",
+            "enum": [
+              "execute",
+              "inspect",
+              "probe",
+              "authorize",
+              "confirm_budget",
+              "switch_provider",
+              "retry"
+            ]
+          },
+          "provider_fallback": {
+            "type": "boolean"
+          }
+        }
+      },
       "PublicToolProbeResponse": {
         "type": "object",
         "title": "PublicToolProbeResponse",
         "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "anyOf": [
+                {
+                  "required": [
+                    "exists"
+                  ]
+                },
+                {
+                  "required": [
+                    "executable"
+                  ]
+                },
+                {
+                  "required": [
+                    "status"
+                  ]
+                },
+                {
+                  "required": [
+                    "reason"
+                  ]
+                }
+              ]
+            },
+            "then": {
+              "required": [
+                "exists",
+                "executable",
+                "status"
+              ],
+              "properties": {
+                "exists": {
+                  "const": true
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "executable"
+              ],
+              "properties": {
+                "executable": {
+                  "const": false
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "reason"
+              ]
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "executable"
+              ],
+              "properties": {
+                "executable": {
+                  "const": true
+                }
+              }
+            },
+            "then": {
+              "not": {
+                "required": [
+                  "reason"
+                ]
+              }
+            }
+          }
+        ],
+        "required": [
+          "verification_status",
+          "verification",
+          "execution_restrictions",
+          "recovery"
+        ],
         "properties": {
+          "exists": {
+            "type": "boolean"
+          },
+          "executable": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "tool_unavailable",
+              "tool_disabled",
+              "realtime_unavailable",
+              "region_restricted",
+              "insufficient_scope",
+              "delegation_budget_not_supported",
+              "oauth2_signin_required"
+            ]
+          },
           "schema": {
             "$ref": "#/components/schemas/PublicProbeSchemaResult"
           },
@@ -10220,6 +11460,32 @@
           },
           "sample": {
             "$ref": "#/components/schemas/PublicProbeUnknownResult"
+          },
+          "recovery": {
+            "$ref": "#/components/schemas/PublicProbeRecoveryAdvice"
+          },
+          "verification_status": {
+            "type": "string",
+            "enum": [
+              "unverified",
+              "verifying",
+              "verified",
+              "stale",
+              "failed",
+              "restricted"
+            ]
+          },
+          "verification": {
+            "$ref": "#/components/schemas/PublicCatalogVerification"
+          },
+          "execution_restrictions": {
+            "$ref": "#/components/schemas/PublicExecutionRestrictions"
+          },
+          "contract_features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -10242,6 +11508,12 @@
             "type": "string",
             "description": "Optional tracking and pricing-context identifier. If omitted, the service may use the execution id."
           },
+          "sub_user_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": ".*\\S.*",
+            "description": "Optional sub-user identity used consistently for provider OAuth and execution."
+          },
           "model": {
             "type": "string",
             "minLength": 1,
@@ -10255,45 +11527,24 @@
             "description": "Capability-specific parameters validated by the selected tool schema."
           },
           "max_response_size": {
-            "type": "integer",
+            "oneOf": [
+              {
+                "const": -1
+              },
+              {
+                "type": "integer",
+                "minimum": 1
+              }
+            ],
             "default": 20480,
-            "description": "Maximum response payload bytes before truncation. Use -1 for no limit."
+            "description": "Automatic inline-delivery limit, measured as the UTF-8 byte length of serialized `result.data`. The default is 20480 when omitted; use -1 for unlimited inline delivery. An explicit `respond_with: full` takes precedence over any finite value. This parameter does not change the `summary` response shape."
           },
           "respond_with": {
             "type": "string",
             "pattern": "^(full|summary|fields:.+)$",
-            "description": "Server-side result projection. `full` (default) returns the complete result, byte-identical to previous releases. `fields:<JSONPath,...>` returns only the selected fields — JSONPath expressions are rooted at `result.data`, comma-separated, and at least one non-empty expression is required. `summary` returns the response schema, size/row statistics, and a `full_content_file_url` for the complete payload."
+            "description": "Result delivery mode. When omitted, the compatibility mode uses `max_response_size` (default 20480) and may return a truncated preview plus `full_content_file_url`. Explicit `full` forces the complete `result.data` inline and takes precedence over a finite `max_response_size`; if the platform hard safety limit is exceeded, the call fails with `error_code: response_too_large` instead of silently degrading. `fields:<JSONPath,...>` returns only the selected fields — JSONPath expressions are rooted at `result.data`, comma-separated, and at least one non-empty expression is required. `summary` returns the response schema, size/row statistics, and a `full_content_file_url` for the complete payload."
           }
         }
-      },
-      "PublicToolParameter": {
-        "type": "object",
-        "title": "PublicToolParameter",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          },
-          "required": {
-            "type": "boolean"
-          },
-          "description": {
-            "type": "string"
-          },
-          "enum": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "name",
-          "type",
-          "required"
-        ]
       },
       "PublicToolStats": {
         "type": "object",
@@ -10412,6 +11663,615 @@
         "additionalProperties": true,
         "description": "Capability billing rule used for pre-call estimation. Final settlement is reflected in usage audit and credits ledger endpoints."
       },
+      "PublicVerificationCheck": {
+        "type": "object",
+        "title": "PublicVerificationCheck",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "schema",
+              "authentication",
+              "description_contract",
+              "provider_identity",
+              "permissions",
+              "freshness",
+              "live_check"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "missing",
+              "verifying",
+              "passed",
+              "stale",
+              "failed",
+              "restricted"
+            ]
+          },
+          "checked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evidence_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "PublicCatalogVerification": {
+        "type": "object",
+        "title": "PublicCatalogVerification",
+        "additionalProperties": false,
+        "description": "Fail-closed catalog verification result. Only records with every required check passed, a valid test digest, and an unexpired 24-hour evidence window are verified.",
+        "required": [
+          "status",
+          "policy_version",
+          "required_checks",
+          "checks",
+          "quality_issues"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "verified"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "required": [
+                "verified_at",
+                "expires_at",
+                "test_run_digest"
+              ],
+              "properties": {
+                "required_checks": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "schema",
+                      "authentication",
+                      "description_contract",
+                      "provider_identity",
+                      "permissions",
+                      "freshness",
+                      "live_check"
+                    ]
+                  },
+                  "minItems": 7,
+                  "maxItems": 7,
+                  "uniqueItems": true,
+                  "allOf": [
+                    {
+                      "contains": {
+                        "const": "schema"
+                      },
+                      "minContains": 1,
+                      "maxContains": 1
+                    },
+                    {
+                      "contains": {
+                        "const": "authentication"
+                      },
+                      "minContains": 1,
+                      "maxContains": 1
+                    },
+                    {
+                      "contains": {
+                        "const": "description_contract"
+                      },
+                      "minContains": 1,
+                      "maxContains": 1
+                    },
+                    {
+                      "contains": {
+                        "const": "provider_identity"
+                      },
+                      "minContains": 1,
+                      "maxContains": 1
+                    },
+                    {
+                      "contains": {
+                        "const": "permissions"
+                      },
+                      "minContains": 1,
+                      "maxContains": 1
+                    },
+                    {
+                      "contains": {
+                        "const": "freshness"
+                      },
+                      "minContains": 1,
+                      "maxContains": 1
+                    },
+                    {
+                      "contains": {
+                        "const": "live_check"
+                      },
+                      "minContains": 1,
+                      "maxContains": 1
+                    }
+                  ]
+                },
+                "checks": {
+                  "type": "array",
+                  "minItems": 7,
+                  "maxItems": 7,
+                  "allOf": [
+                    {
+                      "contains": {
+                        "type": "object",
+                        "required": [
+                          "name",
+                          "status",
+                          "checked_at"
+                        ],
+                        "properties": {
+                          "name": {
+                            "const": "schema"
+                          },
+                          "status": {
+                            "const": "passed"
+                          },
+                          "checked_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      },
+                      "minContains": 1,
+                      "maxContains": 1
+                    },
+                    {
+                      "contains": {
+                        "type": "object",
+                        "required": [
+                          "name",
+                          "status",
+                          "checked_at"
+                        ],
+                        "properties": {
+                          "name": {
+                            "const": "authentication"
+                          },
+                          "status": {
+                            "const": "passed"
+                          },
+                          "checked_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      },
+                      "minContains": 1,
+                      "maxContains": 1
+                    },
+                    {
+                      "contains": {
+                        "type": "object",
+                        "required": [
+                          "name",
+                          "status",
+                          "checked_at"
+                        ],
+                        "properties": {
+                          "name": {
+                            "const": "description_contract"
+                          },
+                          "status": {
+                            "const": "passed"
+                          },
+                          "checked_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      },
+                      "minContains": 1,
+                      "maxContains": 1
+                    },
+                    {
+                      "contains": {
+                        "type": "object",
+                        "required": [
+                          "name",
+                          "status",
+                          "checked_at"
+                        ],
+                        "properties": {
+                          "name": {
+                            "const": "provider_identity"
+                          },
+                          "status": {
+                            "const": "passed"
+                          },
+                          "checked_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      },
+                      "minContains": 1,
+                      "maxContains": 1
+                    },
+                    {
+                      "contains": {
+                        "type": "object",
+                        "required": [
+                          "name",
+                          "status",
+                          "checked_at"
+                        ],
+                        "properties": {
+                          "name": {
+                            "const": "permissions"
+                          },
+                          "status": {
+                            "const": "passed"
+                          },
+                          "checked_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      },
+                      "minContains": 1,
+                      "maxContains": 1
+                    },
+                    {
+                      "contains": {
+                        "type": "object",
+                        "required": [
+                          "name",
+                          "status",
+                          "checked_at"
+                        ],
+                        "properties": {
+                          "name": {
+                            "const": "freshness"
+                          },
+                          "status": {
+                            "const": "passed"
+                          },
+                          "checked_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      },
+                      "minContains": 1,
+                      "maxContains": 1
+                    },
+                    {
+                      "contains": {
+                        "type": "object",
+                        "required": [
+                          "name",
+                          "status",
+                          "checked_at"
+                        ],
+                        "properties": {
+                          "name": {
+                            "const": "live_check"
+                          },
+                          "status": {
+                            "const": "passed"
+                          },
+                          "checked_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      },
+                      "minContains": 1,
+                      "maxContains": 1
+                    }
+                  ]
+                },
+                "verified_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "expires_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "test_run_digest": {
+                  "type": "string",
+                  "pattern": "^(sha256:)?[0-9a-fA-F]{64}$"
+                }
+              }
+            }
+          }
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "unverified",
+              "verifying",
+              "verified",
+              "stale",
+              "failed",
+              "restricted"
+            ]
+          },
+          "policy_version": {
+            "type": "string"
+          },
+          "required_checks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicVerificationCheck"
+            }
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "test_run_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "quality_issues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PublicRegionRestrictions": {
+        "type": "object",
+        "title": "PublicRegionRestrictions",
+        "additionalProperties": false,
+        "required": [
+          "allow",
+          "deny"
+        ],
+        "properties": {
+          "allow": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "deny": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PublicExecutionRestrictions": {
+        "type": "object",
+        "title": "PublicExecutionRestrictions",
+        "additionalProperties": false,
+        "description": "Additive readiness axes and action guidance. Discovery remains available for unknown or incomplete evidence; execution stays fail-closed through blocked_actions and the legacy callable field.",
+        "required": [
+          "callable",
+          "eligibility",
+          "license",
+          "regions",
+          "commercial_use",
+          "warnings"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "callable": {
+                  "const": true
+                }
+              },
+              "required": [
+                "callable"
+              ]
+            },
+            "then": {
+              "properties": {
+                "eligibility": {
+                  "const": "not_required"
+                },
+                "license": {
+                  "enum": [
+                    "not_required",
+                    "approved"
+                  ]
+                },
+                "commercial_use": {
+                  "const": "allowed"
+                }
+              }
+            }
+          }
+        ],
+        "properties": {
+          "callable": {
+            "type": "boolean"
+          },
+          "eligibility": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "not_required",
+              "required",
+              "restricted"
+            ]
+          },
+          "license": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "not_required",
+              "required",
+              "approved",
+              "restricted"
+            ]
+          },
+          "regions": {
+            "$ref": "#/components/schemas/PublicRegionRestrictions"
+          },
+          "commercial_use": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "allowed",
+              "conditional",
+              "prohibited"
+            ]
+          },
+          "data_as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "technical": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "ready",
+              "blocked"
+            ]
+          },
+          "authentication": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "ready",
+              "required",
+              "blocked"
+            ]
+          },
+          "region_status": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "ready",
+              "conditional",
+              "blocked"
+            ]
+          },
+          "freshness": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "fresh",
+              "stale",
+              "failed"
+            ]
+          },
+          "price_certainty": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "estimated",
+              "exact"
+            ]
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "allowed_actions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "blocked_actions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "next_action": {
+            "type": "string"
+          },
+          "retryable": {
+            "type": "boolean"
+          }
+        }
+      },
       "PublicToolCategory": {
         "type": "object",
         "title": "PublicToolCategory",
@@ -10471,7 +12331,10 @@
         "title": "PublicCapabilityResult",
         "additionalProperties": false,
         "required": [
-          "tool_id"
+          "tool_id",
+          "verification_status",
+          "verification",
+          "execution_restrictions"
         ],
         "properties": {
           "tool_id": {
@@ -10490,7 +12353,19 @@
             "type": "string"
           },
           "provider_name": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "minProperties": 1,
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Provider display name as text or a locale-keyed text map."
           },
           "provider_description": {
             "type": "string"
@@ -10530,10 +12405,81 @@
             "description": "Human-readable explanation of why this capability was recommended for the query. Returned by Discover."
           },
           "params": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PublicToolParameter"
-            }
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ],
+            "description": "Provider parameter contract preserved for catalog inspection."
+          },
+          "parameters": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ],
+            "description": "Alternative public input contract when supplied by the provider."
+          },
+          "input_schema": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ],
+            "description": "Provider input schema used by catalog verification."
+          },
+          "parameters_schema": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ],
+            "description": "Provider parameter schema used by catalog verification."
+          },
+          "query_params": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ],
+            "description": "Provider query-parameter contract used by catalog verification."
+          },
+          "body_params": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ],
+            "description": "Provider request-body parameter contract used by catalog verification."
+          },
+          "requestBody": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ],
+            "description": "OpenAPI request body contract used by catalog verification."
           },
           "output_schema": {
             "type": [
@@ -10577,6 +12523,23 @@
           },
           "calls_count": {
             "type": "string"
+          },
+          "verification_status": {
+            "type": "string",
+            "enum": [
+              "unverified",
+              "verifying",
+              "verified",
+              "stale",
+              "failed",
+              "restricted"
+            ]
+          },
+          "verification": {
+            "$ref": "#/components/schemas/PublicCatalogVerification"
+          },
+          "execution_restrictions": {
+            "$ref": "#/components/schemas/PublicExecutionRestrictions"
           },
           "capability": {
             "type": "string",
@@ -10644,6 +12607,18 @@
                 "type": "null"
               }
             ]
+          },
+          "contract_warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "contract_features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -10691,6 +12666,18 @@
                 "type": "null"
               }
             ]
+          },
+          "contract_warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "contract_features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -10707,11 +12694,13 @@
             "type": "string"
           },
           "truncated_content": {
-            "type": "string"
+            "type": "string",
+            "description": "UTF-8-safe preview used only by automatic or oversized fields delivery; never present on a successful explicit full response."
           },
           "full_content_file_url": {
             "type": "string",
-            "format": "uri"
+            "format": "uri",
+            "description": "Temporary signed URL used by automatic overflow, fields overflow, or summary delivery; never substitutes for data on a successful explicit full response."
           },
           "content_schema": {
             "type": "object",
@@ -10755,6 +12744,35 @@
           },
           "final_amount_credits": {
             "type": "number"
+          },
+          "recorded_amount_credits": {
+            "type": "number"
+          },
+          "settlement_state": {
+            "type": "string"
+          },
+          "settlement_status": {
+            "type": "string"
+          },
+          "execution_intent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "charge_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -10797,6 +12815,10 @@
           },
           "success": {
             "type": "boolean"
+          },
+          "error_code": {
+            "type": "string",
+            "description": "Stable machine-readable failure code, including `response_too_large` when explicit full exceeds the platform hard safety limit."
           },
           "error_message": {
             "anyOf": [
@@ -10903,8 +12925,8 @@
       "description": "Anonymous agent trial registration and claim operations."
     }
   ],
-  "x-qveris-route-count": 31,
-  "x-qveris-public-operation-count": 31,
+  "x-qveris-route-count": 32,
+  "x-qveris-public-operation-count": 32,
   "x-qveris-private-operation-count": 0,
   "x-qveris-generation-source": "Filtered from qveris-internal-api.openapi.json"
 }

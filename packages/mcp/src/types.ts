@@ -378,6 +378,11 @@ export interface ExecuteResultTruncated {
   content_schema?: Record<string, unknown>;
 }
 
+/** Overflow envelope returned when a fields projection still exceeds the size limit. */
+export interface ExecuteResultProjectedOverflow extends ExecuteResultTruncated {
+  respond_with: `fields:${string}`;
+}
+
 /** Compact result returned by `respond_with: "summary"`. */
 export interface ExecuteResultSummary {
   respond_with: 'summary';
@@ -404,6 +409,7 @@ export interface ExecuteResultFields {
 export type ExecuteResult =
   | ExecuteResultData
   | ExecuteResultTruncated
+  | ExecuteResultProjectedOverflow
   | ExecuteResultSummary
   | ExecuteResultFields
   | unknown[]
@@ -436,6 +442,9 @@ export interface ExecuteResponse {
 
   /** Recovery guidance when execution failed; added client-side when absent. */
   next_action?: NextAction;
+
+  /** Stable machine-readable error code when execution failed. */
+  error_code?: string | null;
 
   /**
    * Error message if execution failed.

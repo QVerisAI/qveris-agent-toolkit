@@ -1556,6 +1556,12 @@ Timestamp of execution (ISO 8601 format)
 
 Execution duration in milliseconds (alternative field)
 
+##### error\_code?
+
+> `optional` **error\_code?**: `string` \| `null`
+
+Stable machine-readable error code when execution failed.
+
 ##### error\_message?
 
 > `optional` **error\_message?**: `string` \| `null`
@@ -1650,6 +1656,65 @@ Selected result fields returned by a `fields:<JSONPath,...>` projection.
 
 ***
 
+### ExecuteResultProjectedOverflow
+
+Overflow envelope returned when a fields projection still exceeds the size limit.
+
+#### Extends
+
+- [`ExecuteResultTruncated`](#executeresulttruncated)
+
+#### Properties
+
+##### content\_schema?
+
+> `optional` **content\_schema?**: `Record`\<`string`, `unknown`\>
+
+JSON Schema describing the structure of the full content.
+Helps the agent understand the data shape without downloading.
+
+###### Inherited from
+
+[`ExecuteResultTruncated`](#executeresulttruncated).[`content_schema`](#content_schema-2)
+
+##### full\_content\_file\_url
+
+> **full\_content\_file\_url**: `string`
+
+URL to download the complete result file.
+Valid for 120 minutes.
+
+###### Inherited from
+
+[`ExecuteResultTruncated`](#executeresulttruncated).[`full_content_file_url`](#full_content_file_url-2)
+
+##### message
+
+> **message**: `string`
+
+Explanation message about the truncation
+
+###### Inherited from
+
+[`ExecuteResultTruncated`](#executeresulttruncated).[`message`](#message-6)
+
+##### respond\_with
+
+> **respond\_with**: `` `fields:${string}` ``
+
+##### truncated\_content
+
+> **truncated\_content**: `string`
+
+The initial portion of the response (max_response_size bytes).
+Useful for previewing the data structure.
+
+###### Inherited from
+
+[`ExecuteResultTruncated`](#executeresulttruncated).[`truncated_content`](#truncated_content-1)
+
+***
+
 ### ExecuteResultSummary
 
 Compact result returned by `respond_with: "summary"`.
@@ -1699,6 +1764,10 @@ Compact result returned by `respond_with: "summary"`.
 Overflow result used by compatibility auto-delivery or an oversized fields projection.
 A successful explicit full response never uses this shape.
 Provides truncated content and a URL to download the full result.
+
+#### Extended by
+
+- [`ExecuteResultProjectedOverflow`](#executeresultprojectedoverflow)
 
 #### Properties
 
@@ -2652,7 +2721,7 @@ Error response from the Qveris API.
 
 ### ExecuteResult
 
-> **ExecuteResult** = [`ExecuteResultData`](#executeresultdata) \| [`ExecuteResultTruncated`](#executeresulttruncated) \| [`ExecuteResultSummary`](#executeresultsummary) \| [`ExecuteResultFields`](#executeresultfields) \| `unknown`[] \| `string` \| `number` \| `boolean` \| `null`
+> **ExecuteResult** = [`ExecuteResultData`](#executeresultdata) \| [`ExecuteResultTruncated`](#executeresulttruncated) \| [`ExecuteResultProjectedOverflow`](#executeresultprojectedoverflow) \| [`ExecuteResultSummary`](#executeresultsummary) \| [`ExecuteResultFields`](#executeresultfields) \| `unknown`[] \| `string` \| `number` \| `boolean` \| `null`
 
 Union type for execution results (either full data or truncated).
 

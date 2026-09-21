@@ -6,6 +6,7 @@
   "size_profiles": {
     "over_default": {"bytes": 20481},
     "one_megabyte": {"bytes": 1048576},
+    "under_limit_after_projection": {"bytes": 1024},
     "near_gateway_limit": {"bytes_from_gateway_limit": -1}
   },
   "parameter_mapping": {
