@@ -351,7 +351,8 @@ export interface ExecuteResultData {
 }
 
 /**
- * Result data when the response exceeds max_response_size.
+ * Overflow result used by compatibility auto-delivery or an oversized fields projection.
+ * A successful explicit full response never uses this shape.
  * Provides truncated content and a URL to download the full result.
  */
 export interface ExecuteResultTruncated {
