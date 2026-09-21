@@ -12685,6 +12685,26 @@
         "type": "object",
         "title": "PublicExecuteResult",
         "additionalProperties": true,
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "respond_with"
+              ],
+              "properties": {
+                "respond_with": {
+                  "const": "summary"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "summary",
+                "full_content_file_url"
+              ]
+            }
+          }
+        ],
         "properties": {
           "data": {
             "type": "object",

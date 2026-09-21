@@ -33,7 +33,31 @@ Configuration
 Response models
 ---------------
 
+.. autoclass:: qveris.ProbeRecoveryAdvice
+   :members:
+   :exclude-members: model_config
+
+.. autoclass:: qveris.CatalogVerification
+   :members:
+   :exclude-members: model_config
+
+.. autoclass:: qveris.VerificationCheck
+   :members:
+   :exclude-members: model_config
+
+.. autoclass:: qveris.ExecutionRestrictions
+   :members:
+   :exclude-members: model_config
+
+.. autoclass:: qveris.RegionRestrictions
+   :members:
+   :exclude-members: model_config
+
 .. autoclass:: qveris.CompactBillingStatement
+   :members:
+   :exclude-members: model_config
+
+.. autoclass:: qveris.ValidationIssue
    :members:
    :exclude-members: model_config
 

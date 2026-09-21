@@ -1209,9 +1209,21 @@ Per-request timeout override in milliseconds (default 120s)
 
 #### 属性
 
+##### charge\_event\_id?
+
+> `optional` **charge\_event\_id?**: `string` \| `null`
+
 ##### charge\_lines?
 
 > `optional` **charge\_lines?**: [`BillingChargeLine`](#billingchargeline)[] \| `null`
+
+##### execution\_intent\_id?
+
+> `optional` **execution\_intent\_id?**: `string` \| `null`
+
+##### final\_amount\_credits?
+
+> `optional` **final\_amount\_credits?**: `number`
 
 ##### list\_amount\_credits?
 
@@ -1229,9 +1241,21 @@ Per-request timeout override in milliseconds (default 120s)
 
 > `optional` **quantity?**: `number` \| `null`
 
+##### recorded\_amount\_credits?
+
+> `optional` **recorded\_amount\_credits?**: `number`
+
 ##### requested\_amount\_credits?
 
 > `optional` **requested\_amount\_credits?**: `number` \| `null`
+
+##### settlement\_state?
+
+> `optional` **settlement\_state?**: `string`
+
+##### settlement\_status?
+
+> `optional` **settlement\_status?**: `string`
 
 ##### summary?
 
@@ -1567,8 +1591,6 @@ Session identifier for tracking user sessions.
 
 ### ExecuteResponse
 
-Response from the Execute Tool API.
-
 #### 属性
 
 ##### billing?
@@ -1588,6 +1610,10 @@ Legacy fallback estimate; use usage audit or credits ledger for final charge
 > `optional` **created\_at?**: `string`
 
 Timestamp of execution (ISO 8601 format)
+
+##### details?
+
+> `optional` **details?**: [`ValidationIssue`](#validationissue)[]
 
 ##### elapsed\_time\_ms?
 
@@ -1764,9 +1790,9 @@ Compact result returned by `respond_with: "summary"`.
 
 > `optional` **content\_schema?**: `Record`\<`string`, `unknown`\>
 
-##### full\_content\_file\_url?
+##### full\_content\_file\_url
 
-> `optional` **full\_content\_file\_url?**: `string`
+> **full\_content\_file\_url**: `string`
 
 ##### message?
 
@@ -1776,9 +1802,9 @@ Compact result returned by `respond_with: "summary"`.
 
 > **respond\_with**: `"summary"`
 
-##### summary?
+##### summary
 
-> `optional` **summary?**: `object`
+> **summary**: `object`
 
 ###### 索引签名
 
@@ -2049,6 +2075,32 @@ Per-request timeout override in milliseconds.
 
 ***
 
+### ProbeRecoveryAdvice
+
+#### 属性
+
+##### missing\_fields
+
+> **missing\_fields**: `string`[]
+
+##### next\_action
+
+> **next\_action**: `"execute"` \| `"inspect"` \| `"probe"` \| `"authorize"` \| `"confirm_budget"` \| `"switch_provider"` \| `"retry"`
+
+##### provider\_fallback
+
+> **provider\_fallback**: `boolean`
+
+##### retryable
+
+> **retryable**: `boolean`
+
+##### safe\_fixes
+
+> **safe\_fixes**: `string`[]
+
+***
+
 ### ProbeRequest
 
 #### 属性
@@ -2071,13 +2123,37 @@ Per-request timeout override in milliseconds.
 
 #### 属性
 
+##### contract\_features?
+
+> `optional` **contract\_features?**: `string`[]
+
 ##### coverage?
 
 > `optional` **coverage?**: [`ProbeUnknownResult`](#probeunknownresult)
 
+##### executable?
+
+> `optional` **executable?**: `boolean`
+
+##### execution\_restrictions
+
+> **execution\_restrictions**: [`ExecutionRestrictions`](#executionrestrictions)
+
+##### exists?
+
+> `optional` **exists?**: `boolean`
+
 ##### quote?
 
 > `optional` **quote?**: [`ProbeQuoteResult`](#probequoteresult)
+
+##### reason?
+
+> `optional` **reason?**: `"tool_unavailable"` \| `"tool_disabled"` \| `"realtime_unavailable"` \| `"region_restricted"` \| `"insufficient_scope"` \| `"delegation_budget_not_supported"` \| `"oauth2_signin_required"`
+
+##### recovery
+
+> **recovery**: [`ProbeRecoveryAdvice`](#proberecoveryadvice)
 
 ##### sample?
 
@@ -2086,6 +2162,18 @@ Per-request timeout override in milliseconds.
 ##### schema?
 
 > `optional` **schema?**: [`ProbeSchemaResult`](#probeschemaresult)
+
+##### status?
+
+> `optional` **status?**: `number`
+
+##### verification
+
+> **verification**: [`CatalogVerification`](#catalogverification)
+
+##### verification\_status
+
+> **verification\_status**: [`VerificationStatus`](#verificationstatus)
 
 ***
 
@@ -2238,11 +2326,23 @@ Response from the Search Tools API.
 
 #### 属性
 
+##### contract\_features?
+
+> `optional` **contract\_features?**: `string`[]
+
+##### contract\_warnings?
+
+> `optional` **contract\_warnings?**: `string`[]
+
 ##### elapsed\_time\_ms?
 
 > `optional` **elapsed\_time\_ms?**: `number`
 
 Total elapsed time in milliseconds
+
+##### error\_message?
+
+> `optional` **error\_message?**: `string` \| `null`
 
 ##### query?
 
@@ -2405,6 +2505,14 @@ Whether the capability supports point-in-time requests.
 
 Structured rule-level billing metadata when available
 
+##### body\_params?
+
+> `optional` **body\_params?**: [`JsonValue`](#jsonvalue)
+
+##### calls\_count?
+
+> `optional` **calls\_count?**: `string`
+
 ##### capabilities?
 
 > `optional` **capabilities?**: [`ToolCapability`](#toolcapability)[]
@@ -2422,6 +2530,14 @@ Compact capability label returned by the routing projection.
 > `optional` **categories?**: (`string` \| [`ToolCategory`](#toolcategory))[]
 
 Tool categories/tags: category objects, or plain strings in legacy responses
+
+##### category?
+
+> `optional` **category?**: `string`
+
+##### cost?
+
+> `optional` **cost?**: `string` \| `number`
 
 ##### cost\_class?
 
@@ -2471,6 +2587,10 @@ Relevance score for the search query (0.0 - 1.0, higher = better match)
 
 Whether this tool has execution history; not a guarantee of correctness or reliability
 
+##### input\_schema?
+
+> `optional` **input\_schema?**: [`JsonValue`](#jsonvalue)
+
 ##### last\_execution\_record?
 
 > `optional` **last\_execution\_record?**: `Record`\<`string`, `unknown`\>
@@ -2482,6 +2602,18 @@ Most recent execution record, if available
 > `optional` **name?**: `string`
 
 Human-readable display name
+
+##### output\_schema?
+
+> `optional` **output\_schema?**: [`JsonValue`](#jsonvalue)
+
+##### parameters?
+
+> `optional` **parameters?**: [`JsonValue`](#jsonvalue)
+
+##### parameters\_schema?
+
+> `optional` **parameters\_schema?**: [`JsonValue`](#jsonvalue)
 
 ##### params?
 
@@ -2509,7 +2641,7 @@ Provider identifier
 
 ##### provider\_name?
 
-> `optional` **provider\_name?**: `string`
+> `optional` **provider\_name?**: `string` \| `Record`\<`string`, `string`\>
 
 Name of the organization/service providing this tool
 
@@ -2518,6 +2650,10 @@ Name of the organization/service providing this tool
 > `optional` **provider\_website\_url?**: `string`
 
 Provider website URL
+
+##### query\_params?
+
+> `optional` **query\_params?**: [`JsonValue`](#jsonvalue)
 
 ##### region?
 
@@ -2533,6 +2669,14 @@ Geographic availability of the tool.
 > `optional` **reliability?**: `string`
 
 Compact reliability grade returned by the routing projection.
+
+##### requestBody?
+
+> `optional` **requestBody?**: [`JsonValue`](#jsonvalue)
+
+##### score?
+
+> `optional` **score?**: `number`
 
 ##### service\_id?
 
@@ -2551,6 +2695,10 @@ Historical execution performance statistics
 > **tool\_id**: `string`
 
 Unique identifier for the tool (used in call)
+
+##### tool\_name?
+
+> `optional` **tool\_name?**: `string`
 
 ##### verification
 
@@ -2618,7 +2766,7 @@ Historical execution performance statistics for a tool.
 
 ##### avg\_execution\_time\_ms?
 
-> `optional` **avg\_execution\_time\_ms?**: `number`
+> `optional` **avg\_execution\_time\_ms?**: `number` \| `null`
 
 Historical average execution time in milliseconds
 
@@ -2628,11 +2776,87 @@ Historical average execution time in milliseconds
 
 Legacy fallback estimate in credits per call
 
+##### data\_status?
+
+> `optional` **data\_status?**: `"available"` \| `"insufficient"` \| `"stale"` \| `"unavailable"`
+
+##### last\_checked\_at?
+
+> `optional` **last\_checked\_at?**: `string`
+
+##### latency\_minimum\_sample\_count?
+
+> `optional` **latency\_minimum\_sample\_count?**: `number`
+
+##### latency\_sample\_count?
+
+> `optional` **latency\_sample\_count?**: `number`
+
+##### latency\_status?
+
+> `optional` **latency\_status?**: `"available"` \| `"insufficient"` \| `"stale"` \| `"unavailable"`
+
+##### metric\_window?
+
+> `optional` **metric\_window?**: `string`
+
+##### metrics\_sample\_count?
+
+> `optional` **metrics\_sample\_count?**: `number`
+
+##### metrics\_updated\_at?
+
+> `optional` **metrics\_updated\_at?**: `string`
+
+##### minimum\_sample\_count?
+
+> `optional` **minimum\_sample\_count?**: `number`
+
+##### quality\_data\_status?
+
+> `optional` **quality\_data\_status?**: `"available"` \| `"insufficient"` \| `"stale"` \| `"unavailable"`
+
+##### quality\_sample\_count?
+
+> `optional` **quality\_sample\_count?**: `number`
+
+##### sample\_count?
+
+> `optional` **sample\_count?**: `number`
+
 ##### success\_rate?
 
-> `optional` **success\_rate?**: `number`
+> `optional` **success\_rate?**: `number` \| `null`
 
 Historical success rate (0.0 - 1.0)
+
+##### success\_rate\_minimum\_sample\_count?
+
+> `optional` **success\_rate\_minimum\_sample\_count?**: `number`
+
+##### success\_rate\_sample\_count?
+
+> `optional` **success\_rate\_sample\_count?**: `number`
+
+##### success\_rate\_status?
+
+> `optional` **success\_rate\_status?**: `"available"` \| `"insufficient"` \| `"stale"` \| `"unavailable"`
+
+##### window?
+
+> `optional` **window?**: `string`
+
+##### window\_end?
+
+> `optional` **window\_end?**: `string`
+
+##### window\_label?
+
+> `optional` **window\_label?**: `string`
+
+##### window\_start?
+
+> `optional` **window\_start?**: `string`
 
 ***
 
@@ -2838,6 +3062,34 @@ Historical success rate (0.0 - 1.0)
 
 ***
 
+### ValidationIssue
+
+Response from the Execute Tool API.
+
+#### 属性
+
+##### ctx?
+
+> `optional` **ctx?**: `Record`\<`string`, [`JsonValue`](#jsonvalue)\>
+
+##### input?
+
+> `optional` **input?**: [`JsonValue`](#jsonvalue)
+
+##### loc
+
+> **loc**: (`string` \| `number`)[]
+
+##### msg
+
+> **msg**: `string`
+
+##### type
+
+> **type**: `string`
+
+***
+
 ### VerificationCheck
 
 #### 属性
@@ -2860,7 +3112,7 @@ Historical success rate (0.0 - 1.0)
 
 ##### status
 
-> **status**: `"verifying"` \| `"stale"` \| `"failed"` \| `"restricted"` \| `"missing"` \| `"passed"`
+> **status**: `"stale"` \| `"verifying"` \| `"failed"` \| `"restricted"` \| `"missing"` \| `"passed"`
 
 ## 类型别名
 
@@ -2892,7 +3144,7 @@ Error response from the Qveris API.
 
 ### ExecuteResult
 
-> **ExecuteResult** = [`ExecuteResultData`](#executeresultdata) \| [`ExecuteResultTruncated`](#executeresulttruncated) \| [`ExecuteResultProjectedOverflow`](#executeresultprojectedoverflow) \| [`ExecuteResultSummary`](#executeresultsummary) \| [`ExecuteResultFields`](#executeresultfields) \| `unknown`[] \| `string` \| `number` \| `boolean` \| `null`
+> **ExecuteResult** = `Record`\<`string`, `unknown`\> \| [`ExecuteResultData`](#executeresultdata) \| [`ExecuteResultTruncated`](#executeresulttruncated) \| [`ExecuteResultProjectedOverflow`](#executeresultprojectedoverflow) \| [`ExecuteResultSummary`](#executeresultsummary) \| [`ExecuteResultFields`](#executeresultfields) \| `unknown`[] \| `string` \| `number` \| `boolean` \| `null`
 
 Union type for execution results (either full data or truncated).
 

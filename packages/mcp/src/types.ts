@@ -69,11 +69,30 @@ export interface ToolExamples {
  * Historical execution performance statistics for a tool.
  */
 export interface ToolStats {
+  sample_count?: number;
+  quality_sample_count?: number;
+  metrics_sample_count?: number;
+  success_rate_sample_count?: number;
+  latency_sample_count?: number;
+  minimum_sample_count?: number;
+  success_rate_minimum_sample_count?: number;
+  latency_minimum_sample_count?: number;
+  data_status?: 'available' | 'insufficient' | 'stale' | 'unavailable';
+  quality_data_status?: 'available' | 'insufficient' | 'stale' | 'unavailable';
+  success_rate_status?: 'available' | 'insufficient' | 'stale' | 'unavailable';
+  latency_status?: 'available' | 'insufficient' | 'stale' | 'unavailable';
+  metric_window?: string;
+  window?: string;
+  window_label?: string;
+  window_start?: string;
+  window_end?: string;
+  metrics_updated_at?: string;
+  last_checked_at?: string;
   /** Historical average execution time in milliseconds */
-  avg_execution_time_ms?: number;
+  avg_execution_time_ms?: number | null;
 
   /** Historical success rate (0.0 - 1.0) */
-  success_rate?: number;
+  success_rate?: number | null;
 
   /** Legacy fallback estimate in credits per call */
   cost?: number;
@@ -113,6 +132,12 @@ export interface BillingRule {
 }
 
 export interface CompactBillingStatement {
+  final_amount_credits?: number;
+  recorded_amount_credits?: number;
+  settlement_state?: string;
+  settlement_status?: string;
+  execution_intent_id?: string | null;
+  charge_event_id?: string | null;
   price?: BillingPrice | null;
   quantity?: number | null;
   charge_lines?: BillingChargeLine[] | null;
@@ -252,7 +277,7 @@ export interface ToolInfo {
   provider_id?: string;
 
   /** Name of the organization/service providing this tool */
-  provider_name?: string;
+  provider_name?: string | Record<string, string>;
 
   /** Description of the provider */
   provider_description?: string;
@@ -270,6 +295,18 @@ export interface ToolInfo {
 
   /** Provider parameter contract preserved exactly as JSON. */
   params?: ToolParameterContract;
+  tool_name?: string;
+  category?: string;
+  score?: number;
+  cost?: number | string;
+  calls_count?: string;
+  parameters?: JsonValue;
+  input_schema?: JsonValue;
+  parameters_schema?: JsonValue;
+  query_params?: JsonValue;
+  body_params?: JsonValue;
+  requestBody?: JsonValue;
+  output_schema?: JsonValue;
 
   /** Fail-closed verification state for this catalog result. */
   verification_status: VerificationStatus;
@@ -329,6 +366,9 @@ export interface SearchStats {
  * Response from the Search Tools API.
  */
 export interface SearchResponse {
+  error_message?: string | null;
+  contract_warnings?: string[];
+  contract_features?: string[];
   /** The original search query */
   query?: string;
 
@@ -457,13 +497,13 @@ export interface ExecuteResultProjectedOverflow extends ExecuteResultTruncated {
 export interface ExecuteResultSummary {
   respond_with: 'summary';
   content_schema?: Record<string, unknown>;
-  summary?: {
+  summary: {
     size_bytes?: number;
     row_count?: number;
     fields?: string[];
     [key: string]: unknown;
   };
-  full_content_file_url?: string;
+  full_content_file_url: string;
   message?: string;
 }
 
@@ -477,6 +517,7 @@ export interface ExecuteResultFields {
  * Union type for execution results (either full data or truncated).
  */
 export type ExecuteResult =
+  | Record<string, unknown>
   | ExecuteResultData
   | ExecuteResultTruncated
   | ExecuteResultProjectedOverflow
@@ -491,7 +532,16 @@ export type ExecuteResult =
 /**
  * Response from the Execute Tool API.
  */
+export interface ValidationIssue {
+  loc: Array<string | number>;
+  msg: string;
+  type: string;
+  input?: JsonValue;
+  ctx?: Record<string, JsonValue>;
+}
+
 export interface ExecuteResponse {
+  details?: ValidationIssue[];
   /** Unique identifier for this execution record */
   execution_id: string;
 
@@ -578,7 +628,31 @@ export interface ProbeUnknownResult {
   reason: string;
 }
 
+export interface ProbeRecoveryAdvice {
+  missing_fields: string[];
+  safe_fixes: string[];
+  retryable: boolean;
+  next_action: 'execute' | 'inspect' | 'probe' | 'authorize' | 'confirm_budget' | 'switch_provider' | 'retry';
+  provider_fallback: boolean;
+}
+
 export interface ProbeResponse {
+  verification_status: VerificationStatus;
+  verification: CatalogVerification;
+  execution_restrictions: ExecutionRestrictions;
+  recovery: ProbeRecoveryAdvice;
+  exists?: boolean;
+  executable?: boolean;
+  status?: number;
+  reason?:
+    | 'tool_unavailable'
+    | 'tool_disabled'
+    | 'realtime_unavailable'
+    | 'region_restricted'
+    | 'insufficient_scope'
+    | 'delegation_budget_not_supported'
+    | 'oauth2_signin_required';
+  contract_features?: string[];
   schema?: ProbeSchemaResult;
   quote?: ProbeQuoteResult;
   coverage?: ProbeUnknownResult;

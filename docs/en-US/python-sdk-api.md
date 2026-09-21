@@ -308,11 +308,107 @@ Configuration for LLM behavior used by Agent.
 
 ## Response models
 
+<a id="qveris.ProbeRecoveryAdvice"></a>
+
+### *class* qveris.ProbeRecoveryAdvice(\*, missing_fields: List[str], safe_fixes: List[str], retryable: bool, next_action: Literal['execute', 'inspect', 'probe', 'authorize', 'confirm_budget', 'switch_provider', 'retry'], provider_fallback: bool, \*\*extra_data: Any)
+
+<a id="qveris.ProbeRecoveryAdvice.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
+<a id="qveris.CatalogVerification"></a>
+
+### *class* qveris.CatalogVerification(\*, status: Literal['unverified', 'verifying', 'verified', 'stale', 'failed', 'restricted'], policy_version: str, required_checks: List[str], checks: List[[VerificationCheck](#qveris.VerificationCheck)], verified_at: str | None = None, expires_at: str | None = None, test_run_digest: str | None = None, quality_issues: List[str], \*\*extra_data: Any)
+
+<a id="qveris.CatalogVerification.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
+<a id="qveris.VerificationCheck"></a>
+
+### *class* qveris.VerificationCheck(\*, name: Literal['schema', 'authentication', 'description_contract', 'provider_identity', 'permissions', 'freshness', 'live_check'], status: Literal['missing', 'verifying', 'passed', 'stale', 'failed', 'restricted'], checked_at: str | None = None, evidence_digest: str | None = None, reason: str | None = None, \*\*extra_data: Any)
+
+<a id="qveris.VerificationCheck.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
+<a id="qveris.ExecutionRestrictions"></a>
+
+### *class* qveris.ExecutionRestrictions(\*, callable: bool, eligibility: Literal['unknown', 'not_required', 'required', 'restricted'], license: Literal['unknown', 'not_required', 'required', 'approved', 'restricted'], regions: [RegionRestrictions](#qveris.RegionRestrictions), commercial_use: Literal['unknown', 'allowed', 'conditional', 'prohibited'], data_as_of: str | None = None, warnings: List[str], technical: Literal['unknown', 'ready', 'blocked'] | None = None, authentication: Literal['unknown', 'ready', 'required', 'blocked'] | None = None, region_status: Literal['unknown', 'ready', 'conditional', 'blocked'] | None = None, freshness: Literal['unknown', 'fresh', 'stale', 'failed'] | None = None, price_certainty: Literal['unknown', 'estimated', 'exact'] | None = None, confidence: float | None = None, allowed_actions: List[str] | None = None, blocked_actions: List[str] | None = None, next_action: str | None = None, retryable: bool | None = None, \*\*extra_data: Any)
+
+<a id="qveris.ExecutionRestrictions.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
+<a id="qveris.RegionRestrictions"></a>
+
+### *class* qveris.RegionRestrictions(\*, allow: List[str], deny: List[str], \*\*extra_data: Any)
+
+<a id="qveris.RegionRestrictions.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
 <a id="qveris.CompactBillingStatement"></a>
 
-### *class* qveris.CompactBillingStatement(\*, price: BillingPrice | None = None, quantity: float | None = None, charge_lines: List[BillingChargeLine] | None = None, minimum_charge_credits: float | None = None, list_amount_credits: float | None = None, requested_amount_credits: float | None = None, summary: str | None = None, \*\*extra_data: Any)
+### *class* qveris.CompactBillingStatement(\*, final_amount_credits: float | None = None, recorded_amount_credits: float | None = None, settlement_state: str | None = None, settlement_status: str | None = None, execution_intent_id: str | None = None, charge_event_id: str | None = None, price: BillingPrice | None = None, quantity: float | None = None, charge_lines: List[BillingChargeLine] | None = None, minimum_charge_credits: float | None = None, list_amount_credits: float | None = None, requested_amount_credits: float | None = None, summary: str | None = None, \*\*extra_data: Any)
 
 <a id="qveris.CompactBillingStatement.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
+<a id="qveris.ValidationIssue"></a>
+
+### *class* qveris.ValidationIssue(\*, loc: List[str | int], msg: str, type: str, input: JsonValue | None = None, ctx: Dict[str, JsonValue] | None = None, \*\*extra_data: Any)
+
+<a id="qveris.ValidationIssue.model_post_init"></a>
 
 #### model_post_init(context: Any, /) → None
 
@@ -438,7 +534,7 @@ It takes context as an argument since that’s what pydantic-core passes when ca
 
 <a id="qveris.ToolProbeResponse"></a>
 
-### *class* qveris.ToolProbeResponse(\*, schema: [ProbeSchemaResult](#qveris.ProbeSchemaResult) | None = None, quote: [ProbeQuoteResult](#qveris.ProbeQuoteResult) | None = None, coverage: [ProbeUnknownResult](#qveris.ProbeUnknownResult) | None = None, sample: [ProbeUnknownResult](#qveris.ProbeUnknownResult) | None = None, \*\*extra_data: Any)
+### *class* qveris.ToolProbeResponse(\*, verification_status: ~typing.Literal['unverified', 'verifying', 'verified', 'stale', 'failed', 'restricted'] = 'unverified', verification: ~qveris.types.CatalogVerification = <factory>, execution_restrictions: ~qveris.types.ExecutionRestrictions = <factory>, recovery: ~qveris.types.ProbeRecoveryAdvice | None = None, exists: bool | None = None, executable: bool | None = None, status: int | None = None, reason: ~typing.Literal['tool_unavailable', 'tool_disabled', 'realtime_unavailable', 'region_restricted', 'insufficient_scope', 'delegation_budget_not_supported', 'oauth2_signin_required'] | None = None, contract_features: ~typing.List[str] | None = None, schema: ~qveris.types.ProbeSchemaResult | None = None, quote: ~qveris.types.ProbeQuoteResult | None = None, coverage: ~qveris.types.ProbeUnknownResult | None = None, sample: ~qveris.types.ProbeUnknownResult | None = None, \*\*extra_data: ~typing.Any)
 
 <a id="qveris.ToolProbeResponse.model_post_init"></a>
 
@@ -454,7 +550,7 @@ It takes context as an argument since that’s what pydantic-core passes when ca
 
 <a id="qveris.SearchResponse"></a>
 
-### *class* qveris.SearchResponse(\*, query: str | None = None, search_id: str | None = None, total: int | None = None, results: ~typing.List[~qveris.types.ToolInfo] = <factory>, stats: ~qveris.types.SearchStats | None = None, remaining_credits: float | None = None, elapsed_time_ms: float | None = None, \*\*extra_data: ~typing.Any)
+### *class* qveris.SearchResponse(\*, error_message: str | None = None, contract_warnings: ~typing.List[str] | None = None, contract_features: ~typing.List[str] | None = None, query: str | None = None, search_id: str | None = None, total: int | None = None, results: ~typing.List[~qveris.types.ToolInfo] = <factory>, stats: ~qveris.types.SearchStats | None = None, remaining_credits: float | None = None, elapsed_time_ms: float | None = None, \*\*extra_data: ~typing.Any)
 
 <a id="qveris.SearchResponse.model_post_init"></a>
 
@@ -544,7 +640,7 @@ It takes context as an argument since that’s what pydantic-core passes when ca
 
 <a id="qveris.ToolExecutionResponse"></a>
 
-### *class* qveris.ToolExecutionResponse(\*, execution_id: str, success: bool, next_action: Dict[str, Any] | None = None, result: Any | None = None, error_code: str | None = None, error_message: str | None = None, elapsed_time_ms: float | None = None, execution_time: float | None = None, tool_id: str | None = None, parameters: Dict[str, Any] | None = None, cost: float | None = None, billing: [CompactBillingStatement](#qveris.CompactBillingStatement) | None = None, pre_settlement_bill: Dict[str, Any] | None = None, remaining_credits: float | None = None, created_at: str | None = None, \*\*extra_data: Any)
+### *class* qveris.ToolExecutionResponse(\*, details: List[[ValidationIssue](#qveris.ValidationIssue)] | None = None, execution_id: str, success: bool, next_action: Dict[str, Any] | None = None, result: Any | None = None, error_code: str | None = None, error_message: str | None = None, elapsed_time_ms: float | None = None, execution_time: float | None = None, tool_id: str | None = None, parameters: Dict[str, Any] | None = None, cost: float | None = None, billing: [CompactBillingStatement](#qveris.CompactBillingStatement) | None = None, pre_settlement_bill: Dict[str, Any] | None = None, remaining_credits: float | None = None, created_at: str | None = None, \*\*extra_data: Any)
 
 <a id="qveris.ToolExecutionResponse.model_post_init"></a>
 
@@ -560,7 +656,7 @@ It takes context as an argument since that’s what pydantic-core passes when ca
 
 <a id="qveris.ToolInfo"></a>
 
-### *class* qveris.ToolInfo(\*, tool_id: str, name: str | None = None, description: ~typing.Any | None = None, capability: str | None = None, cost_class: str | None = None, reliability: str | None = None, as_of_support: bool | None = None, categories: ~typing.List[str | ~qveris.types.ToolCategory] | None = None, category: str | None = None, capabilities: ~typing.List[~qveris.types.ToolCapability] | None = None, provider_id: str | None = None, provider_name: str | None = None, provider_description: ~typing.Any | None = None, provider_website_url: str | None = None, region: str | None = None, params: ~typing.List[~qveris.types.ToolParameter] | ~typing.Dict[str, ~typing.Any] | ~typing.List[~typing.Any] | str | int | float | bool | None = None, verification_status: ~typing.Literal['unverified', 'verifying', 'verified', 'stale', 'failed', 'restricted'] = 'unverified', verification: ~qveris.types.CatalogVerification = <factory>, execution_restrictions: ~qveris.types.ExecutionRestrictions = <factory>, examples: ~qveris.types.ToolExamples | None = None, stats: ~qveris.types.ToolStats | None = None, billing_rule: ~qveris.types.BillingRule | None = None, expected_cost: str | float | None = None, final_score: float | None = None, score: float | None = None, why_recommended: str | None = None, has_last_execution: bool | None = None, last_execution_record: ~typing.Dict[str, ~typing.Any] | None = None, docs_url: str | None = None, protocol: str | None = None, \*\*extra_data: ~typing.Any)
+### *class* qveris.ToolInfo(\*, tool_name: str | None = None, cost: float | str | None = None, calls_count: str | None = None, parameters: JsonValue | None = None, input_schema: JsonValue | None = None, parameters_schema: JsonValue | None = None, query_params: JsonValue | None = None, body_params: JsonValue | None = None, requestBody: JsonValue | None = None, output_schema: JsonValue | None = None, tool_id: str, name: str | None = None, description: ~typing.Any | None = None, capability: str | None = None, cost_class: str | None = None, reliability: str | None = None, as_of_support: bool | None = None, categories: ~typing.List[str | ~qveris.types.ToolCategory] | None = None, category: str | None = None, capabilities: ~typing.List[~qveris.types.ToolCapability] | None = None, provider_id: str | None = None, provider_name: str | ~typing.Dict[str, str] | None = None, provider_description: ~typing.Any | None = None, provider_website_url: str | None = None, region: str | None = None, params: ~typing.List[~qveris.types.ToolParameter] | ~typing.Dict[str, ~typing.Any] | ~typing.List[~typing.Any] | str | int | float | bool | None = None, verification_status: ~typing.Literal['unverified', 'verifying', 'verified', 'stale', 'failed', 'restricted'] = 'unverified', verification: ~qveris.types.CatalogVerification = <factory>, execution_restrictions: ~qveris.types.ExecutionRestrictions = <factory>, examples: ~qveris.types.ToolExamples | None = None, stats: ~qveris.types.ToolStats | None = None, billing_rule: ~qveris.types.BillingRule | None = None, expected_cost: float | str | None = None, final_score: float | None = None, score: float | None = None, why_recommended: str | None = None, has_last_execution: bool | None = None, last_execution_record: ~typing.Dict[str, ~typing.Any] | None = None, docs_url: str | None = None, protocol: str | None = None, \*\*extra_data: ~typing.Any)
 
 <a id="qveris.ToolInfo.model_post_init"></a>
 

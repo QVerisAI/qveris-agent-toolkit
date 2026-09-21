@@ -438,25 +438,34 @@ async def test_discover_contract_parses_tool_quality_and_billing() -> None:
         [{"name": "x", "type": "custom", "enum": "opaque"}],
     ],
 )
-async def test_discover_contract_accepts_broadened_params_json(params: object) -> None:
+@pytest.mark.parametrize("provider_name", ["Provider", {"en-US": "Provider", "zh-CN": "服务商"}])
+@pytest.mark.parametrize("operation", ["discover", "inspect"])
+async def test_discovery_contract_accepts_provider_owned_json(
+    params: object, provider_name: object, operation: str
+) -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(
             200,
             json={
                 "search_id": "search-params",
-                "results": [{"tool_id": "provider.tool", "params": params}],
+                "results": [{"tool_id": "provider.tool", "params": params, "provider_name": provider_name}],
             },
         )
 
     client = make_client(handler)
     try:
-        response = await client.discover("provider tool")
+        response = (
+            await client.discover("provider tool")
+            if operation == "discover"
+            else await client.inspect(["provider.tool"])
+        )
     finally:
         await client.close()
 
     decoded_params = response.results[0].params
     assert decoded_params == params
     assert type(decoded_params) is type(params)
+    assert response.results[0].provider_name == provider_name
 
 
 @pytest.mark.asyncio

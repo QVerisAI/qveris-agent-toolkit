@@ -445,6 +445,13 @@ Probe 是可选预检：它会在不执行能力、不消耗积分的前提下�
     "currency": "credits",
     "exact": true,
     "basis": "per_call"
+  },
+  "recovery": {
+    "missing_fields": [],
+    "safe_fixes": [],
+    "retryable": false,
+    "next_action": "execute",
+    "provider_fallback": false
   }
 }
 ```

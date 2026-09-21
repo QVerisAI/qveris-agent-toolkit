@@ -33,6 +33,12 @@ test('the public OpenAPI contract schedules every contract consumer', () => {
   assert.equal(plan.benchmark, false);
 });
 
+test('delivery profiles and either handwritten TS surface run the wire compatibility guard', () => {
+  for (const file of ['contracts/result-delivery.v1.json', 'scripts/result-delivery-contract.test.mjs', 'scripts/public-capability-contract.test.mjs', 'packages/mcp/src/types.ts', 'packages/js-sdk/src/types.ts']) {
+    assert.equal(classifyContractChanges([file]).js, true, file);
+  }
+});
+
 test('shared lint configuration schedules lint without expensive test suites', () => {
   const plan = classifyContractChanges(['.prettierrc.json']);
 

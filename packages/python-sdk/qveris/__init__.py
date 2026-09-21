@@ -27,6 +27,7 @@ from .types import (
     ExecutionRestrictions,
     Message,
     ProbeQuoteResult,
+    ProbeRecoveryAdvice,
     ProbeSchemaResult,
     ProbeSchemaViolation,
     ProbeUnknownResult,
@@ -45,6 +46,7 @@ from .types import (
     VerificationCheck,
     VerificationCheckName,
     VerificationStatus,
+    ValidationIssue,
 )
 
 __all__ = [
@@ -68,6 +70,7 @@ __all__ = [
     "AgentConfig",
     "Message",
     "ProbeQuoteResult",
+    "ProbeRecoveryAdvice",
     "ProbeSchemaResult",
     "ProbeSchemaViolation",
     "ProbeUnknownResult",
@@ -85,6 +88,7 @@ __all__ = [
     "VerificationCheck",
     "VerificationCheckName",
     "VerificationStatus",
+    "ValidationIssue",
     "RegionRestrictions",
     "ExecutionRestrictions",
     "UsageEventItem",

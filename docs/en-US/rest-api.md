@@ -447,6 +447,13 @@ Use the exact `tool_id` selected during Discover or Inspect. Keep `live_budget` 
     "currency": "credits",
     "exact": true,
     "basis": "per_call"
+  },
+  "recovery": {
+    "missing_fields": [],
+    "safe_fixes": [],
+    "retryable": false,
+    "next_action": "execute",
+    "provider_fallback": false
   }
 }
 ```

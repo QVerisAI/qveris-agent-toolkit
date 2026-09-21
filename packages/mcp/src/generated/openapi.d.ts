@@ -2304,7 +2304,7 @@ export interface components {
             contract_features?: string[];
         };
         /** PublicExecuteResult */
-        PublicExecuteResult: {
+        PublicExecuteResult: ({
             data?: {
                 [key: string]: unknown;
             };
@@ -2331,7 +2331,7 @@ export interface components {
             };
         } & {
             [key: string]: unknown;
-        };
+        }) & unknown;
         /** PublicCompactBillingStatement */
         PublicCompactBillingStatement: {
             summary?: string;
