@@ -78,6 +78,39 @@ const tests = [
     assert.equal(result.status, 1);
     assert.match(result.stderr, /missing required component schema: PublicSearchResponse/);
   }],
+  ["accepts the broadened inline params contract without the legacy component", () => {
+    const target = writeSpec("broad-params.json", (spec) => {
+      spec.components.schemas.PublicCapabilityResult.properties.params = {
+        type: ["object", "array", "string", "number", "boolean", "null"],
+      };
+      delete spec.components.schemas.PublicToolParameter;
+    });
+    const result = run(target);
+    assert.equal(result.status, 0, result.stderr);
+  }],
+  ["rejects a missing component still referenced by legacy params", () => {
+    const target = writeSpec("missing-parameter-schema.json", (spec) => {
+      spec.components.schemas.PublicCapabilityResult.properties.params = {
+        type: "array",
+        items: { $ref: "#/components/schemas/PublicToolParameter" },
+      };
+      delete spec.components.schemas.PublicToolParameter;
+    });
+    const result = run(target);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /missing referenced component schema: PublicToolParameter/);
+  }],
+  ["rejects an incomplete JSON-value params union", () => {
+    const target = writeSpec("incomplete-params-union.json", (spec) => {
+      spec.components.schemas.PublicCapabilityResult.properties.params = {
+        type: ["object", "array", "string", "null"],
+      };
+      delete spec.components.schemas.PublicToolParameter;
+    });
+    const result = run(target);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /JSON-value union is missing: number, boolean/);
+  }],
 ];
 
 try {

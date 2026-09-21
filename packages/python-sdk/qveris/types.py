@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError, field_validator
 
 from .errors import RequestMetadata
 
@@ -131,7 +131,17 @@ class ToolInfo(QverisModel):
     provider_description: Optional[Any] = None
     provider_website_url: Optional[str] = None
     region: Optional[str] = None
-    params: Optional[List[ToolParameter]] = None
+    params: Optional[
+        Union[
+            List[ToolParameter],
+            Dict[str, Any],
+            List[Any],
+            str,
+            int,
+            float,
+            bool,
+        ]
+    ] = None
     examples: Optional[ToolExamples] = None
     stats: Optional[ToolStats] = None
     billing_rule: Optional[BillingRule] = None
@@ -143,6 +153,20 @@ class ToolInfo(QverisModel):
     last_execution_record: Optional[Dict[str, Any]] = None
     docs_url: Optional[str] = None
     protocol: Optional[str] = None
+
+    @field_validator("params", mode="before")
+    @classmethod
+    def _preserve_structured_parameter_lists(cls, value: Any) -> Any:
+        if isinstance(value, list) and all(
+            isinstance(item, dict) and "name" in item and "type" in item for item in value
+        ):
+            try:
+                return [ToolParameter.model_validate(item) for item in value]
+            except ValidationError:
+                # The public contract permits arbitrary JSON arrays. Preserve a
+                # parameter-like list when it is not valid legacy ToolParameter data.
+                return value
+        return value
 
 
 SearchToolResult = ToolInfo

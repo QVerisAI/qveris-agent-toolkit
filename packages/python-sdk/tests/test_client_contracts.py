@@ -425,6 +425,40 @@ async def test_discover_contract_parses_tool_quality_and_billing() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"type": "object", "properties": {"city": {"type": "string"}}},
+        "provider-defined",
+        7,
+        2.5,
+        True,
+        ["opaque", 3, False],
+        [{"name": "x", "type": "custom", "enum": "opaque"}],
+    ],
+)
+async def test_discover_contract_accepts_broadened_params_json(params: object) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "search_id": "search-params",
+                "results": [{"tool_id": "provider.tool", "params": params}],
+            },
+        )
+
+    client = make_client(handler)
+    try:
+        response = await client.discover("provider tool")
+    finally:
+        await client.close()
+
+    decoded_params = response.results[0].params
+    assert decoded_params == params
+    assert type(decoded_params) is type(params)
+
+
+@pytest.mark.asyncio
 async def test_discover_projection_passes_through_and_retries_legacy_rejection_once() -> None:
     payloads = []
 
