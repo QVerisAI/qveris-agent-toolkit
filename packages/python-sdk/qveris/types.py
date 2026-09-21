@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError, field_validator
 
 from .errors import RequestMetadata
 
@@ -160,7 +160,12 @@ class ToolInfo(QverisModel):
         if isinstance(value, list) and all(
             isinstance(item, dict) and "name" in item and "type" in item for item in value
         ):
-            return [ToolParameter.model_validate(item) for item in value]
+            try:
+                return [ToolParameter.model_validate(item) for item in value]
+            except ValidationError:
+                # The public contract permits arbitrary JSON arrays. Preserve a
+                # parameter-like list when it is not valid legacy ToolParameter data.
+                return value
         return value
 
 
