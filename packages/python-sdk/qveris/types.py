@@ -105,6 +105,83 @@ class ToolParameter(QverisModel):
     enum: Optional[List[Any]] = None
 
 
+VerificationStatus = Literal["unverified", "verifying", "verified", "stale", "failed", "restricted"]
+VerificationCheckName = Literal[
+    "schema",
+    "authentication",
+    "description_contract",
+    "provider_identity",
+    "permissions",
+    "freshness",
+    "live_check",
+]
+
+
+class VerificationCheck(QverisModel):
+    name: VerificationCheckName
+    status: Literal["missing", "verifying", "passed", "stale", "failed", "restricted"]
+    checked_at: Optional[str] = None
+    evidence_digest: Optional[str] = None
+    reason: Optional[str] = None
+
+
+class CatalogVerification(QverisModel):
+    status: VerificationStatus
+    policy_version: str
+    required_checks: List[str]
+    checks: List[VerificationCheck]
+    verified_at: Optional[str] = None
+    expires_at: Optional[str] = None
+    test_run_digest: Optional[str] = None
+    quality_issues: List[str]
+
+
+class RegionRestrictions(QverisModel):
+    allow: List[str]
+    deny: List[str]
+
+
+class ExecutionRestrictions(QverisModel):
+    callable: bool
+    eligibility: Literal["unknown", "not_required", "required", "restricted"]
+    license: Literal["unknown", "not_required", "required", "approved", "restricted"]
+    regions: RegionRestrictions
+    commercial_use: Literal["unknown", "allowed", "conditional", "prohibited"]
+    data_as_of: Optional[str] = None
+    warnings: List[str]
+    technical: Optional[Literal["unknown", "ready", "blocked"]] = None
+    authentication: Optional[Literal["unknown", "ready", "required", "blocked"]] = None
+    region_status: Optional[Literal["unknown", "ready", "conditional", "blocked"]] = None
+    freshness: Optional[Literal["unknown", "fresh", "stale", "failed"]] = None
+    price_certainty: Optional[Literal["unknown", "estimated", "exact"]] = None
+    confidence: Optional[float] = None
+    allowed_actions: Optional[List[str]] = None
+    blocked_actions: Optional[List[str]] = None
+    next_action: Optional[str] = None
+    retryable: Optional[bool] = None
+
+
+def _missing_catalog_verification() -> CatalogVerification:
+    return CatalogVerification(
+        status="unverified",
+        policy_version="unknown",
+        required_checks=[],
+        checks=[],
+        quality_issues=["verification_metadata_missing"],
+    )
+
+
+def _missing_execution_restrictions() -> ExecutionRestrictions:
+    return ExecutionRestrictions(
+        callable=False,
+        eligibility="unknown",
+        license="unknown",
+        regions=RegionRestrictions(allow=[], deny=[]),
+        commercial_use="unknown",
+        warnings=["verification_metadata_missing"],
+    )
+
+
 class ToolExamples(QverisModel):
     sample_parameters: Optional[Dict[str, Any]] = None
 
@@ -142,6 +219,9 @@ class ToolInfo(QverisModel):
             bool,
         ]
     ] = None
+    verification_status: VerificationStatus = "unverified"
+    verification: CatalogVerification = Field(default_factory=_missing_catalog_verification)
+    execution_restrictions: ExecutionRestrictions = Field(default_factory=_missing_execution_restrictions)
     examples: Optional[ToolExamples] = None
     stats: Optional[ToolStats] = None
     billing_rule: Optional[BillingRule] = None
@@ -189,7 +269,7 @@ class SearchResponse(QverisModel):
 
 
 class ExecuteResultTruncated(QverisModel):
-    message: str
+    message: Optional[str] = None
     full_content_file_url: str = Field(repr=False)
     truncated_content: str
     content_schema: Optional[Dict[str, Any]] = None

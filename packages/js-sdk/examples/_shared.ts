@@ -9,7 +9,7 @@
 
 import { Qveris } from '@qverisai/sdk';
 
-export { supportsParameters } from './contract.js';
+export { isToolParameterArray, supportsParameters } from './contract.js';
 
 /**
  * Build a client from `QVERIS_API_KEY`, or explain how to set one and return

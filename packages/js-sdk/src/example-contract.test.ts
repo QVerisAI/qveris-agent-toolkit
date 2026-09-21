@@ -1,10 +1,29 @@
 import { describe, expect, it } from 'vitest';
 
 import { supportsParameters } from '../examples/contract.js';
-import type { ToolInfo, ToolParameter } from './types.js';
+import type { JsonValue, ToolInfo, ToolParameter, ToolParameterContract } from './types.js';
 
-function tool(params?: ToolParameter[]): ToolInfo {
-  return { tool_id: 'provider.tool', params };
+function tool(params?: ToolParameterContract): ToolInfo {
+  return {
+    tool_id: 'provider.tool',
+    params,
+    verification_status: 'unverified',
+    verification: {
+      status: 'unverified',
+      policy_version: 'test',
+      required_checks: [],
+      checks: [],
+      quality_issues: [],
+    },
+    execution_restrictions: {
+      callable: false,
+      eligibility: 'unknown',
+      license: 'unknown',
+      regions: { allow: [], deny: [] },
+      commercial_use: 'unknown',
+      warnings: [],
+    },
+  };
 }
 
 function parameter(name: string, type: string, required = false, values?: string[]): ToolParameter {
@@ -39,4 +58,11 @@ describe('example parameter contract selection', () => {
   ])('rejects %s', (_label, candidate, requested) => {
     expect(supportsParameters(candidate, requested)).toBe(false);
   });
+
+  it.each([[{ city: { type: 'string' } }], ['opaque'], [7], [true], [null]])(
+    'rejects a non-list provider parameter contract before field access',
+    (params) => {
+      expect(supportsParameters(tool(params as JsonValue), {})).toBe(false);
+    },
+  );
 });

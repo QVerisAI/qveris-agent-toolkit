@@ -202,7 +202,10 @@ export interface ProbeOptions {
  *   return false;
  * };
  * const tool = found.results.find((candidate) => {
- *   if (!candidate.params) return false;
+ *   if (!Array.isArray(candidate.params) || !candidate.params.every((parameter) =>
+ *     parameter !== null && typeof parameter === 'object' && !Array.isArray(parameter) &&
+ *     typeof parameter.name === 'string' && typeof parameter.type === 'string' &&
+ *     typeof parameter.required === 'boolean')) return false;
  *   const definitions = new Map(candidate.params.map((parameter) => [parameter.name, parameter]));
  *   if (definitions.size !== candidate.params.length) return false;
  *   return Object.entries(parameters).every(([name, value]) => {

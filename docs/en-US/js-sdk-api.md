@@ -331,7 +331,10 @@ const matchesType = (type: string, value: unknown) => {
   return false;
 };
 const tool = found.results.find((candidate) => {
-  if (!candidate.params) return false;
+  if (!Array.isArray(candidate.params) || !candidate.params.every((parameter) =>
+    parameter !== null && typeof parameter === 'object' && !Array.isArray(parameter) &&
+    typeof parameter.name === 'string' && typeof parameter.type === 'string' &&
+    typeof parameter.required === 'boolean')) return false;
   const definitions = new Map(candidate.params.map((parameter) => [parameter.name, parameter]));
   if (definitions.size !== candidate.params.length) return false;
   return Object.entries(parameters).every(([name, value]) => {
@@ -1166,6 +1169,44 @@ Per-request timeout override in milliseconds (default 120s)
 
 ***
 
+### CatalogVerification
+
+#### Properties
+
+##### checks
+
+> **checks**: [`VerificationCheck`](#verificationcheck)[]
+
+##### expires\_at?
+
+> `optional` **expires\_at?**: `string` \| `null`
+
+##### policy\_version
+
+> **policy\_version**: `string`
+
+##### quality\_issues
+
+> **quality\_issues**: `string`[]
+
+##### required\_checks
+
+> **required\_checks**: `string`[]
+
+##### status
+
+> **status**: [`VerificationStatus`](#verificationstatus)
+
+##### test\_run\_digest?
+
+> `optional` **test\_run\_digest?**: `string` \| `null`
+
+##### verified\_at?
+
+> `optional` **verified\_at?**: `string` \| `null`
+
+***
+
 ### CompactBillingStatement
 
 #### Properties
@@ -1688,9 +1729,9 @@ Valid for 120 minutes.
 
 [`ExecuteResultTruncated`](#executeresulttruncated).[`full_content_file_url`](#full_content_file_url-2)
 
-##### message
+##### message?
 
-> **message**: `string`
+> `optional` **message?**: `string`
 
 Explanation message about the truncation
 
@@ -1785,9 +1826,9 @@ Helps the agent understand the data shape without downloading.
 URL to download the complete result file.
 Valid for 120 minutes.
 
-##### message
+##### message?
 
-> **message**: `string`
+> `optional` **message?**: `string`
 
 Explanation message about the truncation
 
@@ -1797,6 +1838,80 @@ Explanation message about the truncation
 
 The initial portion of the response (max_response_size bytes).
 Useful for previewing the data structure.
+
+***
+
+### ExecutionRestrictions
+
+#### Properties
+
+##### allowed\_actions?
+
+> `optional` **allowed\_actions?**: `string`[]
+
+##### authentication?
+
+> `optional` **authentication?**: `"unknown"` \| `"required"` \| `"ready"` \| `"blocked"`
+
+##### blocked\_actions?
+
+> `optional` **blocked\_actions?**: `string`[]
+
+##### callable
+
+> **callable**: `boolean`
+
+##### commercial\_use
+
+> **commercial\_use**: `"unknown"` \| `"allowed"` \| `"conditional"` \| `"prohibited"`
+
+##### confidence?
+
+> `optional` **confidence?**: `number`
+
+##### data\_as\_of?
+
+> `optional` **data\_as\_of?**: `string` \| `null`
+
+##### eligibility
+
+> **eligibility**: `"restricted"` \| `"unknown"` \| `"not_required"` \| `"required"`
+
+##### freshness?
+
+> `optional` **freshness?**: `"stale"` \| `"failed"` \| `"unknown"` \| `"fresh"`
+
+##### license
+
+> **license**: `"restricted"` \| `"unknown"` \| `"not_required"` \| `"required"` \| `"approved"`
+
+##### next\_action?
+
+> `optional` **next\_action?**: `string`
+
+##### price\_certainty?
+
+> `optional` **price\_certainty?**: `"unknown"` \| `"estimated"` \| `"exact"`
+
+##### region\_status?
+
+> `optional` **region\_status?**: `"unknown"` \| `"conditional"` \| `"ready"` \| `"blocked"`
+
+##### regions
+
+> **regions**: [`RegionRestrictions`](#regionrestrictions)
+
+##### retryable?
+
+> `optional` **retryable?**: `boolean`
+
+##### technical?
+
+> `optional` **technical?**: `"unknown"` \| `"ready"` \| `"blocked"`
+
+##### warnings
+
+> **warnings**: `string`[]
 
 ***
 
@@ -2060,6 +2175,20 @@ Default request timeout in milliseconds
 
 ***
 
+### RegionRestrictions
+
+#### Properties
+
+##### allow
+
+> **allow**: `string`[]
+
+##### deny
+
+> **deny**: `string`[]
+
+***
+
 ### SearchRequest
 
 Request body for the Search Tools API.
@@ -2320,6 +2449,12 @@ Documentation URL for the tool
 
 Usage examples with sample parameters
 
+##### execution\_restrictions
+
+> **execution\_restrictions**: [`ExecutionRestrictions`](#executionrestrictions)
+
+Eligibility, policy, and execution-readiness restrictions.
+
 ##### expected\_cost?
 
 > `optional` **expected\_cost?**: `string` \| `number`
@@ -2352,9 +2487,9 @@ Human-readable display name
 
 ##### params?
 
-> `optional` **params?**: [`ToolParameter`](#toolparameter)[]
+> `optional` **params?**: [`ToolParameterContract`](#toolparametercontract)
 
-List of parameters the tool accepts
+Provider parameter contract preserved exactly as JSON.
 
 ##### protocol?
 
@@ -2419,6 +2554,18 @@ Historical execution performance statistics
 
 Unique identifier for the tool (used in call)
 
+##### verification
+
+> **verification**: [`CatalogVerification`](#catalogverification)
+
+Evidence supporting the verification state.
+
+##### verification\_status
+
+> **verification\_status**: [`VerificationStatus`](#verificationstatus)
+
+Fail-closed verification state for this catalog result.
+
 ##### why\_recommended?
 
 > `optional` **why\_recommended?**: `string`
@@ -2459,7 +2606,7 @@ Whether this parameter must be provided
 
 ##### type
 
-> **type**: `"string"` \| `"number"` \| `"boolean"` \| `"object"` \| `"array"`
+> **type**: `"string"` \| `"number"` \| `"boolean"` \| `"object"` \| `"integer"` \| `"array"`
 
 Data type of the parameter
 
@@ -2691,6 +2838,32 @@ Historical success rate (0.0 - 1.0)
 
 > `optional` **summary?**: `boolean`
 
+***
+
+### VerificationCheck
+
+#### Properties
+
+##### checked\_at?
+
+> `optional` **checked\_at?**: `string` \| `null`
+
+##### evidence\_digest?
+
+> `optional` **evidence\_digest?**: `string` \| `null`
+
+##### name
+
+> **name**: [`VerificationCheckName`](#verificationcheckname-1)
+
+##### reason?
+
+> `optional` **reason?**: `string` \| `null`
+
+##### status
+
+> **status**: `"verifying"` \| `"stale"` \| `"failed"` \| `"restricted"` \| `"missing"` \| `"passed"`
+
 ## Type Aliases
 
 ### AgentDelegationErrorCode
@@ -2727,6 +2900,14 @@ Union type for execution results (either full data or truncated).
 
 ***
 
+### JsonValue
+
+> **JsonValue** = `string` \| `number` \| `boolean` \| `null` \| [`JsonValue`](#jsonvalue)[] \| \{\[`key`: `string`\]: [`JsonValue`](#jsonvalue); \}
+
+Any JSON value preserved from a provider-owned parameter contract.
+
+***
+
 ### ProbeCheck
 
 > **ProbeCheck** = `"schema"` \| `"quote"` \| `"coverage"` \| `"sample"`
@@ -2758,6 +2939,26 @@ Exact OAuth audience/resource forwarded to credential providers.
 > `optional` **credentialScopes?**: readonly `string`[]
 
 OAuth scopes forwarded to credential providers.
+
+***
+
+### ToolParameterContract
+
+> **ToolParameterContract** = [`ToolParameter`](#toolparameter)[] \| [`JsonValue`](#jsonvalue)
+
+A legacy parameter-definition list or any provider-owned JSON contract.
+
+***
+
+### VerificationCheckName
+
+> **VerificationCheckName** = `"schema"` \| `"authentication"` \| `"description_contract"` \| `"provider_identity"` \| `"permissions"` \| `"freshness"` \| `"live_check"`
+
+***
+
+### VerificationStatus
+
+> **VerificationStatus** = `"unverified"` \| `"verifying"` \| `"verified"` \| `"stale"` \| `"failed"` \| `"restricted"`
 
 ## Functions
 

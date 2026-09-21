@@ -45,7 +45,7 @@ export interface ToolParameter {
   name: string;
 
   /** Data type of the parameter */
-  type: 'string' | 'number' | 'boolean' | 'array' | 'object';
+  type: 'string' | 'integer' | 'number' | 'boolean' | 'array' | 'object';
 
   /** Whether this parameter must be provided */
   required: boolean;
@@ -152,6 +152,67 @@ export interface ToolCapability {
   tag?: ToolCapabilityTag[];
 }
 
+/** Any JSON value preserved from a provider-owned parameter contract. */
+export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
+/** A legacy parameter-definition list or any provider-owned JSON contract. */
+export type ToolParameterContract = ToolParameter[] | JsonValue;
+
+export type VerificationStatus = 'unverified' | 'verifying' | 'verified' | 'stale' | 'failed' | 'restricted';
+
+export type VerificationCheckName =
+  | 'schema'
+  | 'authentication'
+  | 'description_contract'
+  | 'provider_identity'
+  | 'permissions'
+  | 'freshness'
+  | 'live_check';
+
+export interface VerificationCheck {
+  name: VerificationCheckName;
+  status: 'missing' | 'verifying' | 'passed' | 'stale' | 'failed' | 'restricted';
+  checked_at?: string | null;
+  evidence_digest?: string | null;
+  reason?: string | null;
+}
+
+export interface CatalogVerification {
+  status: VerificationStatus;
+  policy_version: string;
+  required_checks: string[];
+  checks: VerificationCheck[];
+  verified_at?: string | null;
+  expires_at?: string | null;
+  test_run_digest?: string | null;
+  quality_issues: string[];
+}
+
+export interface RegionRestrictions {
+  allow: string[];
+  deny: string[];
+}
+
+export interface ExecutionRestrictions {
+  callable: boolean;
+  eligibility: 'unknown' | 'not_required' | 'required' | 'restricted';
+  license: 'unknown' | 'not_required' | 'required' | 'approved' | 'restricted';
+  regions: RegionRestrictions;
+  commercial_use: 'unknown' | 'allowed' | 'conditional' | 'prohibited';
+  data_as_of?: string | null;
+  warnings: string[];
+  technical?: 'unknown' | 'ready' | 'blocked';
+  authentication?: 'unknown' | 'ready' | 'required' | 'blocked';
+  region_status?: 'unknown' | 'ready' | 'conditional' | 'blocked';
+  freshness?: 'unknown' | 'fresh' | 'stale' | 'failed';
+  price_certainty?: 'unknown' | 'estimated' | 'exact';
+  confidence?: number;
+  allowed_actions?: string[];
+  blocked_actions?: string[];
+  next_action?: string;
+  retryable?: boolean;
+}
+
 /**
  * Information about a tool returned from search results.
  * Contains everything needed to understand and execute the tool.
@@ -207,8 +268,17 @@ export interface ToolInfo {
    */
   region?: string;
 
-  /** List of parameters the tool accepts */
-  params?: ToolParameter[];
+  /** Provider parameter contract preserved exactly as JSON. */
+  params?: ToolParameterContract;
+
+  /** Fail-closed verification state for this catalog result. */
+  verification_status: VerificationStatus;
+
+  /** Evidence supporting the verification state. */
+  verification: CatalogVerification;
+
+  /** Eligibility, policy, and execution-readiness restrictions. */
+  execution_restrictions: ExecutionRestrictions;
 
   /** Usage examples with sample parameters */
   examples?: ToolExamples;
@@ -357,7 +427,7 @@ export interface ExecuteResultData {
  */
 export interface ExecuteResultTruncated {
   /** Explanation message about the truncation */
-  message: string;
+  message?: string;
 
   /**
    * URL to download the complete result file.

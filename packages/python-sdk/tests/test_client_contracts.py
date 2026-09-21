@@ -433,6 +433,7 @@ async def test_discover_contract_parses_tool_quality_and_billing() -> None:
         7,
         2.5,
         True,
+        None,
         ["opaque", 3, False],
         [{"name": "x", "type": "custom", "enum": "opaque"}],
     ],

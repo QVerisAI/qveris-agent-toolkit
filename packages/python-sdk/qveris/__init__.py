@@ -20,14 +20,17 @@ from .errors import (
     RequestMetadata,
 )
 from .types import (
+    CatalogVerification,
     CompactBillingStatement,
     CreditsLedgerItem,
     CreditsLedgerResponse,
+    ExecutionRestrictions,
     Message,
     ProbeQuoteResult,
     ProbeSchemaResult,
     ProbeSchemaViolation,
     ProbeUnknownResult,
+    RegionRestrictions,
     SearchResponse,
     StreamEvent,
     ToolCapability,
@@ -39,6 +42,9 @@ from .types import (
     ToolParameter,
     UsageEventItem,
     UsageHistoryResponse,
+    VerificationCheck,
+    VerificationCheckName,
+    VerificationStatus,
 )
 
 __all__ = [
@@ -75,6 +81,12 @@ __all__ = [
     "ToolExecutionResponse",
     "ToolProbeResponse",
     "CompactBillingStatement",
+    "CatalogVerification",
+    "VerificationCheck",
+    "VerificationCheckName",
+    "VerificationStatus",
+    "RegionRestrictions",
+    "ExecutionRestrictions",
     "UsageEventItem",
     "UsageHistoryResponse",
     "CreditsLedgerItem",
