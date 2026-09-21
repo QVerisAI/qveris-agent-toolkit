@@ -161,8 +161,8 @@ Call a discovered tool with specific parameters.
 | `params_to_tool` | object | ✓ | A dictionary of parameters to pass to the tool |
 | `session_id` | string | | Session identifier (auto-generated if omitted) |
 | `model` | string | | Model that selected and parameterized the call (maximum 128 characters) |
-| `max_response_size` | number | | Max response size in bytes (default: 20480) |
-| `respond_with` | string | | `full`, `summary`, or `fields:<JSONPath,...>`; omitted defaults to full |
+| `max_response_size` | number | | Automatic inline limit in UTF-8 bytes (default: 20480; `-1` is unlimited); explicit `full` takes precedence over a finite value |
+| `respond_with` | string | | Omit for compatibility auto-delivery; use `full` to force complete inline data, `summary`, or `fields:<JSONPath,...>` |
 
 **Example:**
 
@@ -178,7 +178,7 @@ Call a discovered tool with specific parameters.
 
 The `call` response may include compact pre-settlement `billing`. Final charge status should be checked with `usage_history` or `credits_ledger`.
 
-Projection inputs are opt-in. Paid `call` / `execute_tool` requests are always single-submit: the MCP server does not retry `429`/`503`, follow HTTP redirects, or remove a rejected projection field and resubmit. Projection errors remain errors.
+Projection inputs are opt-in. Explicit `respond_with: "full"` returns complete inline `result.data` without an overflow replacement; at the platform hard limit the call fails with `response_too_large`. Omitting `respond_with` retains the 20KB automatic overflow behavior. Paid `call` / `execute_tool` requests are always single-submit: the MCP server does not retry `429`/`503`, follow HTTP redirects, or remove a rejected projection field and resubmit. Projection errors remain errors.
 
 ### `usage_history`
 
@@ -290,7 +290,7 @@ The MCP server keeps one generated `session_id` for its process when callers omi
 
 ### Large Responses
 
-When tool output exceeds `max_response_size`, you'll receive:
+When `respond_with` is omitted and tool output exceeds `max_response_size`, you'll receive:
 
 ```json
 {

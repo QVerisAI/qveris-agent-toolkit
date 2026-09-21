@@ -87,8 +87,8 @@ Call a specific capability.
   * **parameters** -- JSON-serializable parameters for the tool.
   * **search_id** -- Search ID returned by discover(...) (recommended for traceability).
   * **session_id** -- Optional correlation id.
-  * **max_response_size** -- Optional max response size in bytes. Large responses may be truncated.
-  * **respond_with** -- Optional server-side projection (full, summary, or fields:<JSONPath,...>).
+  * **max_response_size** -- Optional auto-delivery inline limit measured in UTF-8 bytes. -1 is unlimited; explicit respond_with="full" takes precedence over a finite value.
+  * **respond_with** -- Optional server-side projection. Omit for compatibility auto-delivery; full forces complete inline data, while summary and fields:<JSONPath,...> select compact projections. Hard-limit failures use response_too_large.
   * **compatibility_mode** -- Strict mode never resubmits a paid call. The deprecated legacy mode may replay once without an unsupported optional field.
   * **timeout** -- HTTP request timeout in seconds; credential acquisition is separate.
   * **correlation_id** -- Non-sensitive reference forwarded only to the credential provider.

@@ -151,7 +151,9 @@ AI SDK 集成。该页面直接根据 TypeScript 源码重新生成，并由 CI 
 - `probe(toolId, { parameters?, checks?, liveBudget?, timeoutMs? })`
 - `call(toolId, { parameters, searchId?, sessionId?, model?, maxResponseSize?, respondWith?, timeoutMs?, compatibilityMode? })`
 
-投影参数仅在显式指定时发送。付费调用严格 single-submit：不会跟随 HTTP 重定向，`429`/`503` 和投影错误会直接返回，不会重放。已弃用的 `compatibilityMode: 'legacyOptionalFields'` 可显式允许一次删除旧服务拒绝的可选字段后重放；无效投影仍按错误返回。
+投影参数仅在显式指定时发送。省略 `respondWith` 时保留兼容的自动交付：`maxResponseSize` 默认 20KB，超限结果使用溢出信封。显式 `respondWith: 'full'` 强制返回完整内联 `result.data`，优先于有限的 `maxResponseSize`；超过平台硬限制时返回 `response_too_large`，不会截断。`respondWith: 'summary'` 的摘要形态不受 `maxResponseSize` 影响。
+
+付费调用严格 single-submit：不会跟随 HTTP 重定向，`429`/`503` 和投影错误会直接返回，不会重放。已弃用的 `compatibilityMode: 'legacyOptionalFields'` 可显式允许一次删除旧服务拒绝的可选字段后重放；无效投影仍按错误返回。
 
 `usage(...)` 和 `ledger(...)` 接受过滤对象，如 `start_date`、`end_date`、`summary`、`bucket`、`charge_outcome`、`execution_id`、`search_id`、`direction`、`entry_type`、`min_credits`、`max_credits`、`limit`、`page`、`page_size`。
 

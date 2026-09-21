@@ -162,7 +162,9 @@ Option shapes:
 - `probe(toolId, { parameters?, checks?, liveBudget?, timeoutMs? })`
 - `call(toolId, { parameters, searchId?, sessionId?, model?, maxResponseSize?, respondWith?, timeoutMs?, compatibilityMode? })`
 
-Projection options are opt-in. Paid calls are strict single-submit: HTTP redirects are not followed, and `429`/`503` and projection errors are returned without replay. The deprecated `compatibilityMode: 'legacyOptionalFields'` opt-in permits exactly one replay without an optional field rejected by an older service; invalid projections remain errors.
+Projection options are opt-in. Omitting `respondWith` keeps compatibility auto-delivery: `maxResponseSize` defaults to 20KB and oversized results use the overflow envelope. Explicit `respondWith: 'full'` forces complete inline `result.data` and takes precedence over a finite `maxResponseSize`; a platform hard-limit failure is reported as `response_too_large` instead of truncation. `respondWith: 'summary'` keeps the summary shape regardless of `maxResponseSize`.
+
+Paid calls are strict single-submit: HTTP redirects are not followed, and `429`/`503` and projection errors are returned without replay. The deprecated `compatibilityMode: 'legacyOptionalFields'` opt-in permits exactly one replay without an optional field rejected by an older service; invalid projections remain errors.
 
 `usage(...)` and `ledger(...)` take filter objects such as `start_date`, `end_date`, `summary`, `bucket`, `charge_outcome`, `execution_id`, `search_id`, `direction`, `entry_type`, `min_credits`, `max_credits`, `limit`, `page`, `page_size`.
 

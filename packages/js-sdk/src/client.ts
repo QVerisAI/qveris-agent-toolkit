@@ -155,9 +155,9 @@ export interface CallOptions {
   sessionId?: string;
   /** Model that selected and parameterized this capability call. */
   model?: string;
-  /** Max response bytes before truncation (-1 for no limit, server default 20480) */
+  /** Auto-delivery inline limit in UTF-8 bytes (-1 for unlimited, server default 20480). Explicit full takes precedence. */
   maxResponseSize?: number;
-  /** Server-side result projection. Omit for the legacy/full response. */
+  /** Server-side result projection. Omit for compatibility auto-delivery; explicit full forces complete inline data. */
   respondWith?: 'full' | 'summary' | `fields:${string}`;
   /** Per-request timeout override in milliseconds (default 120s) */
   timeoutMs?: number;

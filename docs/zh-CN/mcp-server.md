@@ -409,10 +409,12 @@ API 密钥接入步骤：
 | `params_to_tool` | object | 是 | 传递给工具的参数字典 |
 | `session_id` | string | 否 | 用于追踪的会话标识符 |
 | `model` | string | 否 | 选择能力并生成参数的模型（最多 128 个字符） |
-| `max_response_size` | number | 否 | 最大响应字节数（默认 `20480`） |
-| `respond_with` | string | 否 | `full`、`summary` 或 `fields:<JSONPath,...>`；省略时为 full |
+| `max_response_size` | number | 否 | 自动内联交付的 UTF-8 字节上限（默认 `20480`，`-1` 表示不限）；显式 `full` 优先于有限值 |
+| `respond_with` | string | 否 | 省略时采用兼容的自动交付；`full` 强制完整内联数据，也可用 `summary` 或 `fields:<JSONPath,...>` |
 
 示例：
+
+显式 `respond_with: "full"` 必须返回完整内联 `result.data`，不得以 `truncated_content` 或替代性的 `full_content_file_url` 降级。超过平台硬安全限制时调用以 `response_too_large` 失败。省略 `respond_with` 时仍保留既有的 20KB 自动溢出行为。
 
 ```json
 {

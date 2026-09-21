@@ -160,7 +160,9 @@ Key response fields:
 - **`SearchResponse`** — `search_id`, `total`, `results: ToolInfo[]` (`tool_id`, `name`, `description`, `params`, `examples.sample_parameters`, `stats.success_rate`, `stats.avg_execution_time_ms`, `expected_cost`, `why_recommended`).
 - **`ExecuteResponse`** — `execution_id`, `success`, `result`, `billing` (pre-settlement estimate; the final charge is in `usage()` / `ledger()`).
 
-Projection options are never sent unless explicitly configured. Paid calls do not retry `429`/`503` or automatically replay a rejected optional field. The deprecated `compatibilityMode: 'legacyOptionalFields'` opt-in enables exactly one projection fallback when an older service returns `422 extra_forbidden`; invalid projections remain errors.
+Projection options are never sent unless explicitly configured. Omitting `respondWith` keeps compatibility auto-delivery with a 20KB default inline limit and overflow envelope. Explicit `respondWith: 'full'` forces complete inline `result.data`, takes precedence over a finite `maxResponseSize`, and reports `response_too_large` at the platform hard limit instead of truncating. Summary delivery is independent of `maxResponseSize`.
+
+Paid calls do not retry `429`/`503` or automatically replay a rejected optional field. The deprecated `compatibilityMode: 'legacyOptionalFields'` opt-in enables exactly one projection fallback when an older service returns `422 extra_forbidden`; invalid projections remain errors.
 
 All types are exported from the package root (`import type { SearchResponse, ExecuteResponse, ToolInfo } from '@qverisai/sdk'`).
 

@@ -329,15 +329,16 @@ export interface ExecuteRequest {
   parameters: Record<string, unknown>;
 
   /**
-   * Maximum size of response data in bytes.
-   * If the tool generates data longer than this, it will be truncated
-   * and a download URL will be provided for the full content.
+   * Automatic inline limit measured in UTF-8 bytes. When `respond_with` is
+   * omitted, oversized results use the overflow envelope. Explicit `full`
+   * takes precedence over a finite value and either returns complete inline
+   * data or fails with `response_too_large` at the platform hard limit.
    * Minimum: -1 (`-1` means no limit).
    * @default 20480 (20KB)
    */
   max_response_size?: number;
 
-  /** Server-side result projection. Omit for the legacy/full response. */
+  /** Server-side result projection. Omit for compatibility auto-delivery; explicit `full` forces complete inline data. */
   respond_with?: 'full' | 'summary' | `fields:${string}`;
 }
 

@@ -1126,7 +1126,7 @@ replay once without an optional field rejected by an older service.
 
 > `optional` **maxResponseSize?**: `number`
 
-Max response bytes before truncation (-1 for no limit, server default 20480)
+Auto-delivery inline limit in UTF-8 bytes (-1 for unlimited, server default 20480). Explicit full takes precedence.
 
 ##### model?
 
@@ -1144,7 +1144,7 @@ Key-value parameters matching the tool's parameter schema
 
 > `optional` **respondWith?**: `"full"` \| `` `fields:${string}` `` \| `"summary"`
 
-Server-side result projection. Omit for the legacy/full response.
+Server-side result projection. Omit for compatibility auto-delivery; explicit full forces complete inline data.
 
 ##### searchId?
 
@@ -1480,9 +1480,10 @@ Request body for the Execute Tool API.
 
 > `optional` **max\_response\_size?**: `number`
 
-Maximum size of response data in bytes.
-If the tool generates data longer than this, it will be truncated
-and a download URL will be provided for the full content.
+Automatic inline limit measured in UTF-8 bytes. When `respond_with` is
+omitted, oversized results use the overflow envelope. Explicit `full`
+takes precedence over a finite value and either returns complete inline
+data or fails with `response_too_large` at the platform hard limit.
 Minimum: -1 (`-1` means no limit).
 
 ###### Default
@@ -1508,7 +1509,7 @@ Must match the parameter schema from the tool's definition.
 
 > `optional` **respond\_with?**: `"full"` \| `` `fields:${string}` `` \| `"summary"`
 
-Server-side result projection. Omit for the legacy/full response.
+Server-side result projection. Omit for compatibility auto-delivery; explicit `full` forces complete inline data.
 
 ##### search\_id
 

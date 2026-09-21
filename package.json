@@ -20,7 +20,7 @@
     "build": "npm --prefix packages/mcp run build && npm --prefix packages/js-sdk run build && npm --prefix packages/openclaw-qveris-plugin run build",
     "release:clients:check": "node scripts/release-client-packages.mjs check",
     "release:clients:publish": "node scripts/release-client-packages.mjs publish",
-    "test:release-clients": "node --test scripts/release-client-packages.test.mjs scripts/benchmark-release-cadence.test.mjs scripts/sdk-guide-contracts.test.mjs scripts/conditional-routing-contracts.test.mjs",
+    "test:release-clients": "node --test scripts/release-client-packages.test.mjs scripts/benchmark-release-cadence.test.mjs scripts/sdk-guide-contracts.test.mjs scripts/conditional-routing-contracts.test.mjs scripts/result-delivery-contract.test.mjs",
     "benchmark:agent-recovery": "node benchmarks/agent-recovery/src/run.mjs",
     "metrics:agent-recovery": "node benchmarks/agent-recovery/src/metrics.mjs",
     "test:agent-recovery": "node --test benchmarks/agent-recovery/test/*.test.mjs",

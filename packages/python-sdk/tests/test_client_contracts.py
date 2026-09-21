@@ -683,6 +683,36 @@ async def test_call_summary_projection_passes_through_and_parses_compact_respons
 
 
 @pytest.mark.asyncio
+async def test_call_explicit_full_with_finite_limit_maps_once() -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        assert json.loads(request.content) == {
+            "parameters": {},
+            "respond_with": "full",
+            "max_response_size": 1024,
+        }
+        return httpx.Response(
+            200, json={"execution_id": "exec-full", "success": True, "result": {"data": {"complete": True}}}
+        )
+
+    client = make_client(handler)
+    try:
+        response = await client.call(
+            "weather.forecast.v1",
+            {},
+            respond_with="full",
+            max_response_size=1024,
+        )
+    finally:
+        await client.close()
+
+    assert len(requests) == 1
+    assert response.result["data"] == {"complete": True}
+
+
+@pytest.mark.asyncio
 async def test_call_projection_retries_only_legacy_extra_field_rejection() -> None:
     payloads = []
 

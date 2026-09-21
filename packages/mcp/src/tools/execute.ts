@@ -97,15 +97,17 @@ export const executeToolSchema = {
     max_response_size: {
       type: 'number',
       description:
-        'Maximum size of response data in bytes. ' +
-        'If tool generates data longer than this, it will be truncated and a download URL provided. ' +
+        'Automatic inline limit measured in UTF-8 bytes. When respond_with is omitted, oversized results use the overflow envelope. ' +
+        'Explicit full takes precedence over a finite value and either returns complete inline data or fails with response_too_large. ' +
         'Use -1 for no limit. Default is 20480 (20KB).',
       default: 20480,
     },
     respond_with: {
       type: 'string',
       pattern: '^(full|summary|fields:.+)$',
-      description: 'Server-side result projection: "full", "summary", or "fields:<JSONPath,...>". Omit for full.',
+      description:
+        'Server-side result projection: omit for compatibility auto-delivery; use "full" to force complete inline data, ' +
+        '"summary", or "fields:<JSONPath,...>".',
     },
   },
   required: ['tool_id', 'search_id', 'params_to_tool'],

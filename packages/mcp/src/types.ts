@@ -335,9 +335,11 @@ export interface ExecuteRequest {
    * Minimum: -1 (`-1` means no limit).
    * @default 20480 (20KB)
    */
+  /** Auto-delivery inline limit in UTF-8 bytes; -1 is unlimited and explicit full takes precedence. */
   max_response_size?: number;
 
   /** Server-side result projection. Omit for the legacy/full response. */
+  /** Omit for compatibility auto-delivery; explicit full forces complete inline data. */
   respond_with?: 'full' | 'summary' | `fields:${string}`;
 }
 

@@ -417,10 +417,12 @@ The call response may include compact pre-settlement `billing`. Final charge sta
 | `params_to_tool` | object | Yes | Dictionary of parameters to pass to the tool |
 | `session_id` | string | No | Session identifier for tracking |
 | `model` | string | No | Model that selected and parameterized the call (maximum 128 characters) |
-| `max_response_size` | number | No | Max response size in bytes (default `20480`) |
-| `respond_with` | string | No | `full`, `summary`, or `fields:<JSONPath,...>`; omitted defaults to full |
+| `max_response_size` | number | No | Automatic inline limit in UTF-8 bytes (default `20480`, `-1` unlimited); explicit `full` takes precedence over a finite value |
+| `respond_with` | string | No | Omit for compatibility auto-delivery; use `full` to force complete inline data, `summary`, or `fields:<JSONPath,...>` |
 
 Example:
+
+An explicit `respond_with: "full"` must return complete inline `result.data` without `truncated_content` or a replacement `full_content_file_url`. If the platform hard safety limit is exceeded, the call fails with `response_too_large`. When `respond_with` is omitted, the historical 20KB automatic overflow behavior remains unchanged.
 
 ```json
 {
