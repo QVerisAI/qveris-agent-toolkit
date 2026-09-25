@@ -55,7 +55,7 @@ otel = [
 dev = [
     "pytest",
     "pytest-cov",
-    "ruff>=0.8.0",
+    "ruff>=0.16.8",
     "pytest-asyncio",
     "python-dotenv",
     "rich>=13.0.0",
