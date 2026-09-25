@@ -91,7 +91,7 @@ jobs:
       actions: read
       contents: read
       id-token: write
-    uses: openclaw/clawhub/.github/workflows/package-publish.yml@d3bde70e3c9373720d4d3e335f9935399ea2c008
+    uses: openclaw/clawhub/.github/workflows/package-publish.yml@0ae54008b388c9a9deb621b6a3a9e3de9d4ac60a
     with:
       package_artifact_name: qveris-openclaw-plugin-clawpack
       # Trusted Publishing derives the owner from the bound package record;
