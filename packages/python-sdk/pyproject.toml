@@ -65,7 +65,7 @@ dev = [
     "llama-index-core>=0.14.23; python_version >= '3.10'",  # for the LlamaIndex integration tests
     "pydantic-ai-slim>=2.11.0; python_version >= '3.10'",  # for the Pydantic AI integration tests
     "opentelemetry-api>=1.20.0",  # for the observability tests
-    "opentelemetry-sdk>=1.20.0",  # in-memory span exporter used by the tests
+    "opentelemetry-sdk>=1.44.0",  # in-memory span exporter used by the tests
     # API reference generation runs in the Python 3.11 docs CI job. The SDK
     # itself remains installable on Python 3.8+.
     "sphinx==8.1.3; python_version >= '3.10'",
