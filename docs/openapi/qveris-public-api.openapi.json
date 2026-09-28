@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "QVeris Public REST API",
-    "version": "2026-09-21.1",
+    "version": "2026-09-28.1",
     "summary": "External REST API for enterprise integration.",
     "description": "OpenAPI 3.1 schema for the formally released public `/api/v1` REST API surface. It covers search, provider discovery, tool metadata lookup/execution, credits, and account audit endpoints. Unreleased API families are intentionally excluded from this customer-facing schema."
   },
@@ -65,7 +65,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -85,7 +85,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -121,7 +121,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             },
@@ -204,7 +204,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -224,7 +224,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -260,7 +260,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             },
@@ -343,7 +343,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -363,7 +363,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -399,7 +399,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             },
@@ -535,7 +535,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -555,7 +555,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -589,7 +589,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -602,7 +602,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -881,7 +881,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -901,7 +901,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -927,7 +927,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -1004,7 +1004,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -1024,7 +1024,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -1121,7 +1121,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -1171,7 +1171,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -1191,7 +1191,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -1304,7 +1304,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -1324,7 +1324,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -1824,7 +1824,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -1844,7 +1844,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -1870,7 +1870,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -2203,7 +2203,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -2567,7 +2567,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -2587,7 +2587,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -2638,7 +2638,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -2658,7 +2658,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -2692,7 +2692,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -2749,7 +2749,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -2773,7 +2773,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -2797,7 +2797,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -2821,7 +2821,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -2845,7 +2845,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -2869,7 +2869,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -2893,7 +2893,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -2917,7 +2917,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -2941,7 +2941,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3126,9 +3126,7 @@
                     "freshness": "unknown",
                     "price_certainty": "unknown",
                     "data_as_of": null,
-                    "warnings": [
-                      "Region restrictions are malformed or contradictory."
-                    ],
+                    "warnings": [],
                     "confidence": 0.0,
                     "allowed_actions": [
                       "discover",
@@ -3138,7 +3136,7 @@
                     "blocked_actions": [
                       "execute"
                     ],
-                    "next_action": "inspect",
+                    "next_action": "probe",
                     "retryable": true
                   }
                 }
@@ -3150,7 +3148,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3170,7 +3168,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3194,7 +3192,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3218,7 +3216,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3242,7 +3240,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3266,7 +3264,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3290,7 +3288,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3314,7 +3312,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3348,7 +3346,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3387,7 +3385,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3610,7 +3608,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3630,7 +3628,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3710,7 +3708,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3730,7 +3728,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3750,7 +3748,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3770,7 +3768,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3807,7 +3805,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             },
@@ -3834,7 +3832,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3918,7 +3916,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3938,7 +3936,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3958,7 +3956,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3978,7 +3976,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -3998,7 +3996,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -4098,7 +4096,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -4118,7 +4116,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -4138,7 +4136,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -4158,7 +4156,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -4178,7 +4176,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -4365,7 +4363,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -4385,7 +4383,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -4405,7 +4403,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -4425,7 +4423,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -4445,7 +4443,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -4894,7 +4892,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -4914,7 +4912,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -5036,7 +5034,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -5056,7 +5054,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -5088,7 +5086,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -5144,7 +5142,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             },
@@ -5260,7 +5258,7 @@
                       },
                       "execution_restrictions": {
                         "callable": false,
-                        "technical": "unknown",
+                        "technical": "ready",
                         "authentication": "unknown",
                         "eligibility": "unknown",
                         "license": "unknown",
@@ -5273,19 +5271,18 @@
                         "freshness": "unknown",
                         "price_certainty": "estimated",
                         "data_as_of": null,
-                        "warnings": [
-                          "Region restrictions are malformed or contradictory."
-                        ],
-                        "confidence": 0.0,
+                        "warnings": [],
+                        "confidence": 0.125,
                         "allowed_actions": [
                           "discover",
                           "inspect",
-                          "probe"
+                          "probe",
+                          "confirm_budget"
                         ],
                         "blocked_actions": [
                           "execute"
                         ],
-                        "next_action": "inspect",
+                        "next_action": "confirm_budget",
                         "retryable": true
                       }
                     }
@@ -5328,7 +5325,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             },
@@ -5377,7 +5374,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             },
@@ -5429,7 +5426,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             },
@@ -5512,7 +5509,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             },
@@ -5626,7 +5623,7 @@
                       },
                       "execution_restrictions": {
                         "callable": false,
-                        "technical": "unknown",
+                        "technical": "ready",
                         "authentication": "unknown",
                         "eligibility": "unknown",
                         "license": "unknown",
@@ -5639,10 +5636,8 @@
                         "freshness": "unknown",
                         "price_certainty": "estimated",
                         "data_as_of": null,
-                        "warnings": [
-                          "Region restrictions are malformed or contradictory."
-                        ],
-                        "confidence": 0.0,
+                        "warnings": [],
+                        "confidence": 0.125,
                         "allowed_actions": [
                           "discover",
                           "inspect",
@@ -5698,7 +5693,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             },
@@ -5747,7 +5742,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             },
@@ -5780,7 +5775,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -5939,7 +5934,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -5976,7 +5971,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             },
@@ -6029,7 +6024,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             },
@@ -6083,7 +6078,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             },
@@ -6121,7 +6116,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -6161,7 +6156,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -6191,7 +6186,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -6221,7 +6216,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -6316,7 +6311,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -6353,7 +6348,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -6390,7 +6385,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -6427,7 +6422,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             },
@@ -6456,7 +6451,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -6525,10 +6520,10 @@
                     ],
                     "safe_fixes": [
                       "supply_missing_fields",
-                      "inspect"
+                      "probe"
                     ],
                     "retryable": true,
-                    "next_action": "inspect",
+                    "next_action": "probe",
                     "provider_fallback": false
                   },
                   "verification_status": "unverified",
@@ -6595,7 +6590,7 @@
                   },
                   "execution_restrictions": {
                     "callable": false,
-                    "technical": "unknown",
+                    "technical": "ready",
                     "authentication": "unknown",
                     "eligibility": "unknown",
                     "license": "unknown",
@@ -6607,19 +6602,15 @@
                     "commercial_use": "unknown",
                     "freshness": "unknown",
                     "price_certainty": "exact",
-                    "warnings": [
-                      "Region restrictions are malformed or contradictory."
-                    ],
-                    "confidence": 0.125,
+                    "warnings": [],
+                    "confidence": 0.25,
                     "allowed_actions": [
                       "discover",
                       "inspect",
                       "probe"
                     ],
-                    "blocked_actions": [
-                      "execute"
-                    ],
-                    "next_action": "inspect",
+                    "blocked_actions": [],
+                    "next_action": "probe",
                     "retryable": true
                   },
                   "contract_features": [
@@ -6660,7 +6651,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -6697,7 +6688,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             },
@@ -6746,7 +6737,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             },
@@ -6779,7 +6770,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -6803,7 +6794,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -6828,7 +6819,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -6853,7 +6844,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -6873,7 +6864,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-28.1"
                 }
               }
             }
@@ -8691,7 +8682,7 @@
             "title": "Contract Version",
             "description": "Version of the published QVeris REST API contract.",
             "examples": [
-              "2026-09-21.1"
+              "2026-09-28.1"
             ]
           },
           "registration": {
@@ -12113,7 +12104,7 @@
         "type": "object",
         "title": "PublicExecutionRestrictions",
         "additionalProperties": false,
-        "description": "Additive readiness axes and action guidance. Discovery remains available for unknown or incomplete evidence; execution stays fail-closed through blocked_actions and the legacy callable field.",
+        "description": "Additive readiness axes and action guidance. Discovery remains available for unknown or incomplete evidence. Explicit restrictions fail closed through blocked_actions; missing restriction metadata remains unknown and directs clients to Probe instead of asserting that Execute is prohibited.",
         "required": [
           "callable",
           "eligibility",
@@ -12135,19 +12126,81 @@
               ]
             },
             "then": {
-              "properties": {
-                "eligibility": {
-                  "const": "not_required"
-                },
-                "license": {
-                  "enum": [
-                    "not_required",
-                    "approved"
-                  ]
-                },
-                "commercial_use": {
-                  "const": "allowed"
-                }
+              "not": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "technical": {
+                        "const": "blocked"
+                      }
+                    },
+                    "required": [
+                      "technical"
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "authentication": {
+                        "enum": [
+                          "required",
+                          "blocked"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "authentication"
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "eligibility": {
+                        "enum": [
+                          "required",
+                          "restricted"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "eligibility"
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "license": {
+                        "enum": [
+                          "required",
+                          "restricted"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "license"
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "region_status": {
+                        "const": "blocked"
+                      }
+                    },
+                    "required": [
+                      "region_status"
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "commercial_use": {
+                        "enum": [
+                          "conditional",
+                          "prohibited"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "commercial_use"
+                    ]
+                  }
+                ]
               }
             }
           }
