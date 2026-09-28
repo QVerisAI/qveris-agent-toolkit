@@ -331,7 +331,7 @@ class PublicApiMetadata(BaseModel):
     contract_version: str = Field(
         ...,
         description='Version of the published QVeris REST API contract.',
-        examples=['2026-09-21.1'],
+        examples=['2026-09-29.1'],
         title='Contract Version',
     )
     registration: Optional[AnonymousTrialMetadata] = None
@@ -1038,7 +1038,7 @@ class PriceCertainty(Enum):
 
 class PublicExecutionRestrictions(BaseModel):
     """
-    Additive readiness axes and action guidance. Discovery remains available for unknown or incomplete evidence; execution stays fail-closed through blocked_actions and the legacy callable field.
+    Additive readiness axes and action guidance. Discovery remains available for unknown or incomplete evidence. Explicit restrictions fail closed through blocked_actions; missing restriction metadata remains unknown and directs clients to Probe instead of asserting that Execute is prohibited.
     """
 
     model_config = ConfigDict(
@@ -1110,6 +1110,9 @@ class PublicCapabilityResult(BaseModel):
     name: Optional[str] = None
     tool_name: Optional[str] = None
     description: Optional[str] = None
+    updated_at: Optional[str] = Field(
+        None, description='Catalog update timestamp when provided by the source.'
+    )
     provider_id: Optional[str] = None
     provider_name: Optional[Union[str, Dict[str, str]]] = Field(
         None, description='Provider display name as text or a locale-keyed text map.'
