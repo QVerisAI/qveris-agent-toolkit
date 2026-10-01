@@ -1,6 +1,6 @@
 # QVeris REST API 文档
 
-版本：2026-09-21.1
+版本：2026-09-29.2
 
 公开 REST API 暴露核心 Agent 路径：
 
@@ -64,7 +64,9 @@ curl -X POST https://qveris.cn/api/v1/agent/claim-verify \
 
 Discover、Inspect 和 Probe 免费。Discover 与 Inspect 可能返回 `expected_cost`、旧字段 `cost` 或 `billing_rule`；Probe 会在花费积分前校验所选参数并返回零成本报价。
 
-Discover 或 Inspect 返回的每项能力，以及每个成功的 Probe，都包含 `verification_status`、对应的 `verification` 检查证据和 `execution_restrictions`。只有 `verified` 表示完整证据仍在有效期内。Verification 是证据声明，而不是执行的必要条件；其他状态仍作为候选展示，并可在当前输入、授权、许可、地域和精确价格事实均已确定时进入可执行状态。请通过 `confidence`、各独立就绪维度、`allowed_actions`、`blocked_actions` 和 `next_action` 引导 Inspect、授权、Probe、确认预算、重试或切换 Provider。旧字段 `callable` 表示当前是否可立即执行，但不决定 Discover 或 Inspect 是否可见。
+Discover 或 Inspect 返回的每项能力，以及每个成功的 Probe，都包含 `verification_status`、对应的 `verification` 检查证据和 `execution_restrictions`。只有 `verified` 表示完整证据仍在有效期内。Verification 是证据声明，不是执行的必要条件；没有明确阻断时，候选能力可以尝试调用。资格、许可、商业用途或地域声明缺失表示未知，而非禁止；`service_regions: null` 表示没有显式地域限制。`callable: true` 表示当前目录证据不阻止尝试 Call，不保证实时授权、可用性或计费一定成功。请根据 `blocked_actions` 和 `next_action` 处理实际阻断；只有参数或报价需要预检时才使用 Probe。实时 Probe 的肯定结果可让限制信息不完整的候选进入 Call，但明确的权限、地域、许可、scope、工具可用性或预算阻断仍优先。旧字段 `callable` 不决定 Discover 或 Inspect 是否可见。
+
+旧目录结果若提供固定的 `billing_rule` 每次调用价格，即使 `price_certainty` 仍为 `estimated`，也可以直接尝试调用；目录价格并非预留报价。可变计费或 Probe 明确返回非精确报价时，仍需确认预算。
 
 默认/full Call 响应可能返回 `billing`、`cost` 等紧凑预结算字段。投影响应（`summary` 和 `fields:*`）会刻意省略计费内部详情，以保持结构精简。最终结算由调用历史和积分账本报告；客服、对账和用户账单历史应以这些端点为准。
 
@@ -449,12 +451,14 @@ Probe 是可选预检：它会在不执行能力、不消耗积分的前提下�
   "recovery": {
     "missing_fields": [],
     "safe_fixes": [],
-    "retryable": false,
+    "retryable": true,
     "next_action": "execute",
     "provider_fallback": false
   }
 }
 ```
+
+`recovery.missing_fields` 只列出缺失或无效的调用参数。目录验证证据缺口保留在 `verification.quality_issues` 中，本身不要求智能体在 Call 前再执行额外步骤。
 
 输入无效时可返回 `400`，能力不存在时返回 `404`，触发限流时返回 `429`，Probe 服务不可用或超时时返回 `502`/`504`。精确 schema 和全部响应请查看 [Probe 聚焦参考页](api-reference/probe.md)。
 
