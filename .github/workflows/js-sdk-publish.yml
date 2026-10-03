@@ -1,14 +1,21 @@
 name: Publish JS SDK to npm
 
 on:
-  workflow_dispatch: # run the test matrix on demand (publish still requires a tag)
+  workflow_dispatch: # validation only; publishing still requires a tag
+  pull_request:
+    paths:
+      - "packages/js-sdk/**"
+      - "scripts/*release*"
+      - "scripts/publish-verified-js.mjs"
+      - "docs/openapi/**"
+      - "package.json"
+      - ".github/workflows/js-sdk-publish.yml"
   push:
     tags:
       - "js-sdk-v*" # Trigger on tags like js-sdk-v0.1.0, js-sdk-v1.0.0
 
 permissions:
-  contents: write # For creating GitHub Releases
-  id-token: write # npm provenance
+  contents: read
 
 jobs:
   test:
@@ -52,8 +59,60 @@ jobs:
       - name: Build
         run: npm run build
 
-  publish:
+  artifact:
     needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22.22.3
+      - run: npm --prefix packages/js-sdk ci
+      - name: Verify isolated packed SDK and public declarations
+        run: npm run verify:release:js -- --output release-artifacts
+      - name: Save verified archive and report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: js-sdk-distributions
+          path: release-artifacts/
+          if-no-files-found: error
+          retention-days: 7
+
+  verify:
+    needs: artifact
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        node-version: [18, 20, 22, 24]
+        include:
+          - os: windows-latest
+            node-version: 22.22.3
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm --prefix packages/js-sdk ci
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: js-sdk-distributions
+          path: release-distributions
+      - name: Verify the same packed SDK on each runtime
+        run: npm run verify:release:js -- --output release-report --artifact-dir release-distributions
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: js-report-${{ matrix.os }}-${{ matrix.node-version }}
+          path: release-report/js-release-report.json
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: [artifact, verify]
+    permissions:
+      contents: write
+      id-token: write
     # Event-scoped: a workflow_dispatch (even one targeting a tag ref) runs
     # tests only; publishing requires an actual tag push.
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
@@ -89,14 +148,15 @@ jobs:
             exit 1
           fi
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Download verified distribution
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: js-sdk-distributions
+          path: release-artifacts
 
-      - name: Build
-        run: npm run build
-
-      - name: Publish to npm
-        run: npm publish --provenance --access public
+      - name: Verify artifact identity and publish
+        working-directory: .
+        run: node scripts/publish-verified-js.mjs
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

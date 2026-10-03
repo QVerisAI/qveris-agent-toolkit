@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Declare email validation support required to import the bundled generated models in a clean installation.
 - Restore Python 3.8 compatibility for client imports and request diagnostics.
 - Reject empty Probe check lists in all framework schemas and the shared workflow.
 - Expose the additive catalog `updated_at` field.

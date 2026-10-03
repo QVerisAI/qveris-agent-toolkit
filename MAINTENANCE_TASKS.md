@@ -47,3 +47,7 @@ Internal checklist, started 2026-10-03. The initial implementation on `linfangw/
 - [ ] Published Resolve, selection freshness, idempotency and execution-lookup contracts before extending recovery.
 - [ ] Local Awesome MCP upstream #14435 acceptance, Cursor submission and mcp.so ingestion. Recheck current directory runtime health separately from historical acceptance.
 - [ ] Release packages and published surfaces through existing workflows after the remaining review gates pass.
+- [ ] Validate the final release candidate with PR/manual wheel, sdist and packed
+  JS installs, archive checksums and the live acceptance report. Candidate
+  validation tooling is implemented; the versioned release and live evidence
+  remain separate gates.

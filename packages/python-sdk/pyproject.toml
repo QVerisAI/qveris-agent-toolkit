@@ -13,7 +13,7 @@ authors = [
 ]
 dependencies = [
     "httpx>=0.25.0",
-    "pydantic>=2.0.0",
+    "pydantic[email]>=2.0.0",  # Generated public models use EmailStr.
     "pydantic-settings>=2.0.0",
     "openai>=1.0.0",  # Default provider
 ]
