@@ -85,7 +85,7 @@ class QverisApiError(QverisError):
         details: Any = None,
     ) -> None:
         execution_id = _execution_id_from(details)
-        if operation == "call" and execution_id:
+        if operation in {"call", "capability_query"} and execution_id:
             recovery = _unknown_call_action(execution_id)
         elif status == 401:
             recovery = _next_action("authenticate", True)
@@ -93,11 +93,13 @@ class QverisApiError(QverisError):
             recovery = _next_action("add_credits", True)
         elif status == 403:
             recovery = _next_action("request_permission", True)
-        elif operation == "call" and (status in {0, 408, 429} or 200 <= status < 300 or status >= 500):
+        elif operation in {"call", "capability_query"} and (
+            status in {0, 408, 429} or 200 <= status < 400 or status >= 500
+        ):
             recovery = _unknown_call_action()
-        elif operation == "call" and status in {400, 422}:
+        elif operation in {"call", "capability_query"} and status in {400, 422}:
             recovery = _next_action("correct_parameters", True, "invalid_call_request")
-        elif operation == "call" and 400 <= status < 500:
+        elif operation in {"call", "capability_query"} and 400 <= status < 500:
             recovery = _next_action("review_request", True, "call_rejected")
         elif status in {0, 408, 429, 503}:
             recovery = _next_action("retry", False, "safe_read_retry")
@@ -126,7 +128,11 @@ class QverisTransportError(QverisError):
         operation: str,
         request_metadata: RequestMetadata,
     ) -> None:
-        recovery = _unknown_call_action() if operation == "call" else _next_action("retry", False, "safe_read_retry")
+        recovery = (
+            _unknown_call_action()
+            if operation in {"call", "capability_query"}
+            else _next_action("retry", False, "safe_read_retry")
+        )
         super().__init__(
             message,
             operation=operation,
@@ -172,7 +178,7 @@ class QverisContractError(QverisError):
         execution_id: Optional[str] = None,
     ) -> None:
         recovery = next_action
-        if recovery is None and operation == "call":
+        if recovery is None and operation in {"call", "capability_query"}:
             recovery = _unknown_call_action(execution_id)
         super().__init__(
             message,

@@ -21,6 +21,7 @@ from __future__ import annotations
 from typing import Any, List, Optional
 
 from ..client.api import QverisClient
+from ._workflow import PROBE_DESCRIPTION, probe_guidance
 from ._workflow import CALL_DESCRIPTION, DISCOVER_DESCRIPTION, INSPECT_DESCRIPTION, build_qveris_workflow
 
 _INSTALL_HINT = (
@@ -35,6 +36,7 @@ def get_qveris_tools(
     session_id: Optional[str] = None,
     model: Optional[str] = None,
     sub_user_id: Optional[str] = None,
+    include_probe: bool = False,
 ) -> List[Any]:
     """Return AutoGen tools for the QVeris discover/inspect/call workflow.
 
@@ -58,18 +60,20 @@ def get_qveris_tools(
     except ImportError as exc:  # pragma: no cover - exercised via install extras
         raise ImportError(_INSTALL_HINT) from exc
 
-    workflow = build_qveris_workflow(client, session_id=session_id, model=model, sub_user_id=sub_user_id)
+    workflow = build_qveris_workflow(
+        client, session_id=session_id, model=model, sub_user_id=sub_user_id, include_probe=include_probe
+    )
 
-    return [
+    tools = [
         FunctionTool(
             workflow.discover,
             name="qveris_discover",
-            description=DISCOVER_DESCRIPTION,
+            description=probe_guidance(DISCOVER_DESCRIPTION, include_probe),
         ),
         FunctionTool(
             workflow.inspect,
             name="qveris_inspect",
-            description=INSPECT_DESCRIPTION,
+            description=probe_guidance(INSPECT_DESCRIPTION, include_probe),
         ),
         FunctionTool(
             workflow.call,
@@ -77,3 +81,7 @@ def get_qveris_tools(
             description=CALL_DESCRIPTION,
         ),
     ]
+
+    if include_probe:
+        tools.append(FunctionTool(workflow.probe, name="qveris_probe", description=PROBE_DESCRIPTION))
+    return tools
