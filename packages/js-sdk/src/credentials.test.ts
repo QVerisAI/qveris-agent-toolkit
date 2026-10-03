@@ -91,7 +91,7 @@ describe('AgentDelegationCredentialProvider', () => {
       { tokenEndpoint: 'https://user:secret@qveris.ai/token' },
       { tokenEndpoint: 'https://qveris.ai/token?query=1' },
       { resource: 'ftp://api.qveris.ai/tools' },
-      { clientSecret: '<fixture-invalid-client-secret>\nvalue' },
+      { clientSecret: '<fixture-invalid-client-secret>' + '\nvalue' },
       { subjectCredentialProvider: null },
       { scopes: [] },
       { scopes: ['bad scope'] },
@@ -207,6 +207,66 @@ describe('AgentDelegationCredentialProvider', () => {
     await delegated.getCredential(CONTEXT);
 
     expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it('clear detaches an in-flight exchange and prevents its late cache write', async () => {
+    const releases: Array<() => void> = [];
+    const fetchImpl = vi.fn<typeof fetch>(async () => {
+      const index = releases.length;
+      await new Promise<void>((resolve) => releases.push(resolve));
+      return tokenResponse({ access_token: `fixture-delegation-${index}` });
+    });
+    const delegated = provider(fetchImpl);
+    const first = delegated.getCredential(CONTEXT);
+    await vi.waitFor(() => expect(releases).toHaveLength(1));
+    delegated.clear();
+    const second = delegated.getCredential(CONTEXT);
+    await vi.waitFor(() => expect(releases).toHaveLength(2));
+    releases[0]();
+    await expect(first).resolves.toBe('fixture-delegation-0');
+    // An old completion must not remove the new exchange from coalescing.
+    const third = delegated.getCredential(CONTEXT);
+    await Promise.resolve();
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    releases[1]();
+    await expect(second).resolves.toBe('fixture-delegation-1');
+    await expect(third).resolves.toBe('fixture-delegation-1');
+    expect(await delegated.getCredential(CONTEXT)).toBe('fixture-delegation-1');
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it('bounds subject caches and retains recently used subjects', async () => {
+    let subjectToken = '<fixture-subject-0>';
+    const fetchImpl = vi.fn<typeof fetch>(async () => tokenResponse());
+    const delegated = provider(fetchImpl, { getCredential: async () => subjectToken });
+    for (let index = 0; index < 128; index++) {
+      subjectToken = `<fixture-subject-${index}>`;
+      await delegated.getCredential(CONTEXT);
+    }
+    subjectToken = '<fixture-subject-0>';
+    await delegated.getCredential(CONTEXT);
+    subjectToken = '<fixture-subject-128>';
+    await delegated.getCredential(CONTEXT);
+    subjectToken = '<fixture-subject-0>';
+    await delegated.getCredential(CONTEXT);
+    expect(fetchImpl).toHaveBeenCalledTimes(129);
+    subjectToken = '<fixture-subject-1>';
+    await delegated.getCredential(CONTEXT);
+    expect(fetchImpl).toHaveBeenCalledTimes(130);
+  });
+
+  it('exchanges again after token expiry', async () => {
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    try {
+      const fetchImpl = vi.fn<typeof fetch>(async () => tokenResponse({ expires_in: 10 }));
+      const delegated = provider(fetchImpl);
+      await delegated.getCredential(CONTEXT);
+      now.mockReturnValue(1_010_000);
+      await delegated.getCredential(CONTEXT);
+      expect(fetchImpl).toHaveBeenCalledTimes(2);
+    } finally {
+      now.mockRestore();
+    }
   });
 
   it('isolates cached and in-flight exchanges by subject credential', async () => {

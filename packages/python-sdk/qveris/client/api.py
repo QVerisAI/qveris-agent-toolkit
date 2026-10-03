@@ -31,6 +31,7 @@ import re
 import time
 import warnings
 from dataclasses import dataclass
+from urllib.parse import quote
 from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Set, Tuple, Union
 
 import httpx
@@ -69,6 +70,9 @@ from ..observability import (
     start_span,
 )
 from ..types import (
+    CapabilityDetailResponse,
+    CapabilityQueryRequest,
+    CapabilityQueryResponse,
     CreditsLedgerResponse,
     SearchResponse,
     ToolExecutionResponse,
@@ -275,7 +279,7 @@ class QverisClient:
         await self._await_task_completion(cleanup_task)
 
     @staticmethod
-    async def _await_task_completion(task: asyncio.Task[None]) -> None:
+    async def _await_task_completion(task: "asyncio.Task[None]") -> None:
         """Wait for an internal cleanup task before propagating caller cancellation."""
         pending_cancellation: Optional[asyncio.CancelledError] = None
         while not task.done():
@@ -313,6 +317,7 @@ class QverisClient:
     ) -> CredentialContext:
         purpose = {
             "call": "paid_execution",
+            "capability_query": "paid_execution",
             "usage": "usage_audit",
             "ledger": "ledger_audit",
         }.get(operation, "data_read")
@@ -450,8 +455,10 @@ class QverisClient:
 
         request_timeout = timeout
         if request_timeout is None:
-            request_timeout = self.config.call_timeout if operation == "call" else self.config.read_timeout
-        retry_limit = 0 if operation == "call" else self.config.max_retries
+            request_timeout = (
+                self.config.call_timeout if operation in {"call", "capability_query"} else self.config.read_timeout
+            )
+        retry_limit = 0 if operation in {"call", "capability_query"} else self.config.max_retries
         url = self.base_url + endpoint.lstrip("/")
 
         async def perform() -> Union[httpx.Response, _SendFailure]:
@@ -602,7 +609,7 @@ class QverisClient:
             safe_text = _BEARER_PATTERN.sub("Bearer ***", value)
             safe_text = _API_KEY_PATTERN.sub("***", safe_text)
 
-            def redact_signed_url(match: re.Match[str]) -> str:
+            def redact_signed_url(match: "re.Match[str]") -> str:
                 url = match.group(0)
                 return "***" if any(marker in url.lower() for marker in _SIGNED_URL_MARKERS) else url
 
@@ -663,7 +670,7 @@ class QverisClient:
                     payload_execution_id = payload.get("execution_id")
                     if isinstance(payload_execution_id, str) and payload_execution_id.strip():
                         execution_id = payload_execution_id
-                if operation == "call" and (
+                if operation in {"call", "capability_query"} and (
                     not isinstance(payload, dict)
                     or not isinstance(payload.get("success"), bool)
                     or not isinstance(payload.get("execution_id"), str)
@@ -1152,6 +1159,69 @@ class QverisClient:
             max_response_size=max_response_size,
             model=model,
         )
+
+    async def capability_detail(
+        self,
+        capability_id: str,
+        *,
+        run_id: Optional[str] = None,
+        provider_id: Optional[str] = None,
+        timeout: Optional[float] = None,
+        correlation_id: Optional[str] = None,
+    ) -> CapabilityDetailResponse:
+        """Inspect a published CAP contract without executing it."""
+        if not isinstance(capability_id, str) or not capability_id.strip():
+            raise ValueError("capability_id must be non-empty")
+        state = _RequestState("capability_detail", time.monotonic())
+        response = await self._send(
+            "GET",
+            "capabilities/" + quote(capability_id, safe=""),
+            operation="capability_detail",
+            state=state,
+            timeout=timeout,
+            correlation_id=correlation_id,
+            params=self._query_params(run_id=run_id, provider_id=provider_id),
+        )
+        error = self._api_error_from_response(response, operation="capability_detail", state=state)
+        if error is not None:
+            raise error from None
+        result = self._decode_response_model(
+            response, CapabilityDetailResponse, operation="capability_detail", state=state
+        )
+        result._set_request_metadata(self._request_metadata(state))
+        return result
+
+    async def capability_query(
+        self,
+        request: CapabilityQueryRequest,
+        *,
+        timeout: Optional[float] = None,
+        correlation_id: Optional[str] = None,
+    ) -> CapabilityQueryResponse:
+        """Execute a paid CAP Query once; never replay redirects or retry failures."""
+        if not isinstance(request, CapabilityQueryRequest):
+            raise TypeError("request must be a CapabilityQueryRequest")
+        if request.capability_id is None and request.query is None:
+            raise ValueError("capability_id or query is required")
+        state = _RequestState("capability_query", time.monotonic())
+        response = await self._send(
+            "POST",
+            "capabilities/query",
+            operation="capability_query",
+            state=state,
+            session_id=request.session_id,
+            correlation_id=correlation_id,
+            timeout=timeout,
+            json=request.model_dump(exclude_none=True),
+        )
+        error = self._api_error_from_response(response, operation="capability_query", state=state)
+        if error is not None:
+            raise error from None
+        result = self._decode_response_model(
+            response, CapabilityQueryResponse, operation="capability_query", state=state
+        )
+        result._set_request_metadata(self._request_metadata(state))
+        return result
 
     async def usage(
         self,

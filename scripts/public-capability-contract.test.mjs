@@ -59,3 +59,19 @@ test('projected overflow models require only contract-guaranteed fields', () => 
   }
   assert.match(pythonTypes, /class ExecuteResultTruncated[\s\S]*?message: Optional\[str\] = None/);
 });
+
+test('REST region guidance names fields declared in the public capability schema', async () => {
+  const capability = spec.components.schemas.PublicCapabilityResult;
+  assert.equal(capability.properties.execution_restrictions.$ref, '#/components/schemas/PublicExecutionRestrictions');
+  const restrictions = spec.components.schemas.PublicExecutionRestrictions;
+  for (const field of ['region_status', 'regions']) {
+    assert.ok(restrictions.properties[field], `missing public restriction field: ${field}`);
+  }
+
+  for (const path of ['docs/en-US/rest-api.md', 'docs/zh-CN/rest-api.md', 'docs/cn/zh-CN/rest-api.md']) {
+    const document = await readFile(new URL(path, root), 'utf8');
+    assert.match(document, /`execution_restrictions\.region_status`/, path);
+    assert.match(document, /`execution_restrictions\.regions`/, path);
+    assert.doesNotMatch(document, /`service_regions\b/, path);
+  }
+});

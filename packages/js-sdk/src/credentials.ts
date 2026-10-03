@@ -134,6 +134,8 @@ export class AgentDelegationCredentialProvider implements CredentialProvider {
   readonly #exchangeTimeoutMs: number;
   readonly #expirySkewSeconds: number;
   readonly #cached = new Map<string, DelegationToken>();
+  #cacheGeneration = 0;
+  readonly #maxCachedTokens = 128;
   readonly #exchanges = new Map<string, Promise<DelegationToken>>();
 
   constructor(options: AgentDelegationCredentialProviderOptions) {
@@ -168,19 +170,23 @@ export class AgentDelegationCredentialProvider implements CredentialProvider {
   }
 
   async getCredential(context: CredentialContext): Promise<string> {
+    const generation = this.#cacheGeneration;
     const requiredScopes = this.#validateContext(context);
     const subjectToken = await this.#resolveSubjectToken(context);
     const cacheKey = delegationCacheKey(subjectToken, requiredScopes);
     const now = Date.now();
+    this.#pruneCache(now);
     const cached = this.#cached.get(cacheKey);
     if (cached && cached.expiresAtMs > now && isSubset(requiredScopes, cached.scope)) {
+      this.#cached.delete(cacheKey);
+      this.#cached.set(cacheKey, cached);
       return cached.accessToken;
     }
 
     let exchange = this.#exchanges.get(cacheKey);
     if (!exchange) {
       exchange = this.#exchangeToken(subjectToken, requiredScopes).finally(() => {
-        this.#exchanges.delete(cacheKey);
+        if (this.#exchanges.get(cacheKey) === exchange) this.#exchanges.delete(cacheKey);
       });
       this.#exchanges.set(cacheKey, exchange);
     }
@@ -188,13 +194,28 @@ export class AgentDelegationCredentialProvider implements CredentialProvider {
     if (!isSubset(requiredScopes, token.scope)) {
       throw new AgentDelegationError('invalid_token_response', 'Delegation token does not cover the requested scopes.');
     }
-    this.#cached.set(cacheKey, token);
+    if (generation === this.#cacheGeneration) {
+      this.#pruneCache(Date.now());
+      this.#cached.delete(cacheKey);
+      this.#cached.set(cacheKey, token);
+      while (this.#cached.size > this.#maxCachedTokens) {
+        this.#cached.delete(this.#cached.keys().next().value!);
+      }
+    }
     return token.accessToken;
   }
 
   /** Drop the in-memory token without revoking or persisting it. */
   clear(): void {
+    this.#cacheGeneration++;
     this.#cached.clear();
+    this.#exchanges.clear();
+  }
+
+  #pruneCache(now: number): void {
+    for (const [key, token] of this.#cached) {
+      if (token.expiresAtMs <= now) this.#cached.delete(key);
+    }
   }
 
   #validateContext(context: CredentialContext): ReadonlySet<string> {
