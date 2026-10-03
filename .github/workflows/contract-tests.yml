@@ -164,12 +164,13 @@ jobs:
       fail-fast: false
       matrix:
         os: ${{ fromJSON(needs.plan.outputs.os_matrix) }}
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           enable-cache: true
@@ -178,11 +179,11 @@ jobs:
         working-directory: packages/python-sdk
         run: uv lock --check
       - name: Python SDK tests with coverage (Linux)
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && matrix.python-version == '3.11'
         working-directory: packages/python-sdk
         run: uv run --frozen --extra dev pytest -q --cov=qveris --cov-fail-under=82
-      - name: Python SDK tests (Windows)
-        if: runner.os == 'Windows'
+      - name: Python SDK tests
+        if: runner.os != 'Linux' || matrix.python-version != '3.11'
         working-directory: packages/python-sdk
         run: uv run --frozen --extra dev pytest -q
 
