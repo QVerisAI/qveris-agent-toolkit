@@ -17,7 +17,7 @@ Internal checklist, started 2026-10-03. Implementation is on `linfangw/toolkit-m
 - CLI: 211 tests. MCP: 262 tests including loopback HTTP. Plugin: 130 unit tests plus 31 registry-script tests.
 - JS SDK: 187 tests; statement/line coverage above 96%, exceeding its gate.
 - The same 187 JS tests also pass on Node 18.20.8 and Node 20; the core SDK release matrix retains Node 18/20/22 and adds 24. Peer-specific consumer tests use their required runtime.
-- Python SDK: 718 passed, 2 skipped in the standard dev environment; coverage above 90%, exceeding the 82% gate. Optional CrewAI dependencies account for both skips; isolated CrewAI native integration tests: 18 passing without skips.
+- Python SDK: 719 passed, 2 skipped in the standard dev environment; coverage above 90%, exceeding the 82% gate. Optional CrewAI dependencies account for both skips; isolated CrewAI native integration tests: 18 passing without skips.
 - Repository scripts: 96 tests plus 19 validator internal cases. Agent recovery: 24 tests. Packed AI/Zod consumers: six combinations passing.
 - Package typechecks, lint, generated API docs, public-copy and locale checks pass.
 - Full local scanner v3.12.1 on a clean source copy: score 100, grade A, no findings; the unchanged minimum-score/high-severity thresholds and remote action checks pass.
@@ -28,7 +28,8 @@ Internal checklist, started 2026-10-03. Implementation is on `linfangw/toolkit-m
 ## Remaining external gates
 
 - [x] Fresh PR checks for locked Python 3.11 CrewAI, OpenClaw packed installs and full scanner. Windows SDK/core release matrices still run through scheduled/tag workflows; PR coverage includes Windows release tools.
-- [ ] Rebase/validate existing dependency/docs PRs and resolve overlapping #411/#412/#413 after the newest contract passes.
+- [x] Approve/merge independent green dependency PRs #401/#408/#414; close superseded documentation snapshots #411/#412 and retain newest #413. Integrate current main into the maintenance branch and validate its doc generator output.
+- [ ] Merge reviewed maintenance changes, then refresh/revalidate #410/#413/#415 with those source fixes. Python dependency PRs #403–#407 need matching lockfile updates; #404 also needs Python-version dependency conditions.
 - [ ] Apply reviewed issue-body drafts.
 - [ ] Registered confidential test client: live delegation success, expiry, wrong-audience and revoke/introspection. Keep credentials outside the repository.
 - [ ] Published Resolve, selection freshness, idempotency and execution-lookup contracts before extending recovery.

@@ -68,6 +68,8 @@ it('rejects empty selectors and invalid budgets before requesting credentials', 
   vi.stubGlobal('fetch', fetchImpl);
   const client = new Qveris({ apiKey: '<fixture-key>' });
   await expect(client.capabilityQuery({ query: ' ' })).rejects.toThrow(/required/);
+  await expect(client.capabilityQuery({ capability_id: 'MKT.BARS.EOD', query: ' ' })).rejects.toThrow(/non-empty/);
+  await expect(client.capabilityQuery({ capability_id: '', query: 'weather' })).rejects.toThrow(/non-empty/);
   await expect(client.capabilityQuery({ query: 'weather', max_credits: Infinity })).rejects.toThrow(/positive/);
   expect(fetchImpl).not.toHaveBeenCalled();
 });

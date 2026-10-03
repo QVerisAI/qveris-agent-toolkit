@@ -158,7 +158,10 @@ export function getQverisTools(qveris: Qveris, options: QverisAdapterOptions = {
         inputSchema: z.object({
           tool_id: z.string().min(1),
           parameters: z.record(z.string(), z.unknown()).optional(),
-          checks: z.array(z.enum(['schema', 'quote', 'coverage', 'sample'])).optional(),
+          checks: z
+            .array(z.enum(['schema', 'quote', 'coverage', 'sample']))
+            .min(1)
+            .optional(),
           live_budget: z.enum(['none', 'metadata', 'sampled']).optional(),
         }),
         execute: async ({ tool_id, parameters, checks, live_budget }) =>

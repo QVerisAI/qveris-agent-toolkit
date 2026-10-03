@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Reject empty Probe check lists in all framework schemas and the shared workflow.
 - Expose the additive catalog `updated_at` field.
 - Bound in-memory delegation token caches, evict expired credentials, and prevent exchanges started before clearing the cache from restoring old entries.
 

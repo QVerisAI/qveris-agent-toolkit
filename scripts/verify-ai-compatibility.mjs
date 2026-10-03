@@ -46,6 +46,7 @@ try {
     for (const item of Object.values(tools)) assert.ok(item.inputSchema.safeParse);
     assert.equal(tools.qveris_probe.inputSchema.safeParse({ tool_id: 'weather', checks: ['quote'] }).success, true);
     assert.equal(tools.qveris_probe.inputSchema.safeParse({ tool_id: 'weather', checks: ['invalid'] }).success, false);
+    assert.equal(tools.qveris_probe.inputSchema.safeParse({ tool_id: 'weather', checks: [] }).success, false);
     await tools.qveris_probe.execute({ tool_id: 'weather', checks: ['quote'] }, { toolCallId: 'fixture', messages: [] });
     assert.deepEqual(calls[0], ['probe', 'weather', { checks: ['quote'], subUserId: 'host-user' }]);
   `,

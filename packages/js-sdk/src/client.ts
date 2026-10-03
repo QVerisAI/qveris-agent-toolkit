@@ -443,6 +443,11 @@ export class Qveris {
     if (![request.capability_id, request.query].some((value) => typeof value === 'string' && value.trim())) {
       throw new TypeError('capability_id or query is required.');
     }
+    for (const selector of [request.capability_id, request.query]) {
+      if (selector !== undefined && (typeof selector !== 'string' || !selector.trim())) {
+        throw new TypeError('Each supplied CAP selector must be a non-empty string.');
+      }
+    }
     if (request.max_credits !== undefined && (!Number.isFinite(request.max_credits) || request.max_credits <= 0)) {
       throw new TypeError('max_credits must be finite and positive.');
     }

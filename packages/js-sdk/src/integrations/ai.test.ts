@@ -51,6 +51,7 @@ it('exposes Probe only when enabled and binds host identity outside the model sc
   expect(Object.keys(tools)).toHaveLength(4);
   if (!('qveris_probe' in tools)) throw new Error('Probe missing');
   expect(tools.qveris_probe.inputSchema.safeParse({ tool_id: 't1', checks: ['invalid'] }).success).toBe(false);
+  expect(tools.qveris_probe.inputSchema.safeParse({ tool_id: 't1', checks: [] }).success).toBe(false);
   await invoke(tools.qveris_probe, {
     tool_id: 't1',
     parameters: { city: 'London' },

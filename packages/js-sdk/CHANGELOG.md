@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Reject each invalid CAP Query selector and empty adapter Probe check lists before submitting.
 - Require AI SDK 5–7 and Zod 3.25.76 or 4 for the optional adapter; test packed consumer compatibility rather than advertising incompatible AI SDK 4.
 - Expose the additive catalog `updated_at` field.
 - Bound in-memory delegation token caches, evict expired credentials, and prevent exchanges started before clearing the cache from restoring old entries.

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Coroutine, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
+from typing_extensions import Annotated
 
 from ..client.api import QverisClient
 
@@ -76,7 +77,7 @@ class ProbeArgs(BaseModel):
     tool_id: str = Field(description="Capability tool ID.")
     parameters: Dict[str, Any] = Field(default_factory=dict, description="Candidate capability parameters.")
     checks: List[Literal["schema", "quote", "coverage", "sample"]] = Field(
-        default=["schema"], description="Checks to run without capability execution."
+        default=["schema"], min_length=1, description="Checks to run without capability execution."
     )
     live_budget: Literal["none", "metadata", "sampled"] = Field(
         default="none", description="Probe metadata budget; does not authorize execution."
@@ -181,7 +182,7 @@ def build_qveris_workflow(
     async def qveris_probe(
         tool_id: str,
         parameters: Optional[Dict[str, Any]] = None,
-        checks: Optional[List[Literal["schema", "quote", "coverage", "sample"]]] = None,
+        checks: Optional[Annotated[List[Literal["schema", "quote", "coverage", "sample"]], Field(min_length=1)]] = None,
         live_budget: Literal["none", "metadata", "sampled"] = "none",
     ) -> str:
         """Validate parameters or obtain a quote without executing a capability.
@@ -191,6 +192,8 @@ def build_qveris_workflow(
         :param checks: Non-executing checks to run.
         :param live_budget: Probe metadata budget; does not authorize execution.
         """
+        if checks is not None and not checks:
+            raise ValueError("Probe requires at least one check when checks is supplied.")
         result = await client.probe(
             tool_id,
             parameters=parameters,
