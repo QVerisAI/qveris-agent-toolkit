@@ -20,13 +20,14 @@ Internal checklist, started 2026-10-03. Implementation is on `linfangw/toolkit-m
 - Python SDK: 718 passed, 2 skipped in the standard dev environment; coverage above 90%, exceeding the 82% gate. Optional CrewAI dependencies account for both skips; isolated CrewAI native integration tests: 18 passing without skips.
 - Repository scripts: 96 tests plus 19 validator internal cases. Agent recovery: 24 tests. Packed AI/Zod consumers: six combinations passing.
 - Package typechecks, lint, generated API docs, public-copy and locale checks pass.
-- Full local scanner v3.12.1 on a clean source copy: score 100, grade A, no findings; the unchanged minimum-score/high-severity thresholds pass. Remote action verification remains pending.
+- Full local scanner v3.12.1 on a clean source copy: score 100, grade A, no findings; the unchanged minimum-score/high-severity thresholds and remote action checks pass.
+- [PR #416](https://github.com/QVerisAI/qveris-agent-toolkit/pull/416) implementation commit `7dd9691`: all executable PR checks passed, including locked Python 3.11 CrewAI, six packed peer combinations, OpenClaw packed installs/runtime checks, both scanner runs, generated-doc checks and Windows release-tool tests. Draft-only automatic review steps were skipped as configured.
 - Required region/domain scans: no new public-document leaks. Existing matches are historical changelog text or explicitly internal/China-facing documents; cross-domain scan has no matches.
 - No paid API execution or production credential was used for verification.
 
 ## Remaining external gates
 
-- [ ] Fresh GitHub Actions checks: Windows, locked Python 3.11 CrewAI, OpenClaw packed installs and full scanner. Local runtimes are Node 24.2.0/Python 3.10.9; CI verifies the configured versions.
+- [x] Fresh PR checks for locked Python 3.11 CrewAI, OpenClaw packed installs and full scanner. Windows SDK/core release matrices still run through scheduled/tag workflows; PR coverage includes Windows release tools.
 - [ ] Rebase/validate existing dependency/docs PRs and resolve overlapping #411/#412/#413 after the newest contract passes.
 - [ ] Apply reviewed issue-body drafts.
 - [ ] Registered confidential test client: live delegation success, expiry, wrong-audience and revoke/introspection. Keep credentials outside the repository.
