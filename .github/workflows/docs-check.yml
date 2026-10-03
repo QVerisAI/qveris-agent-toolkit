@@ -118,7 +118,7 @@ jobs:
         run: npm ci && npm run docs:generate
       - name: Generate Python API reference
         working-directory: packages/python-sdk
-        run: uv run --extra dev python docs-api/generate.py
+        run: uv lock --check && uv run --frozen --extra dev python docs-api/generate.py
       - name: Check generated reference drift
         run: git diff --exit-code -- docs/en-US/js-sdk-api.md docs/zh-CN/js-sdk-api.md docs/en-US/python-sdk-api.md docs/zh-CN/python-sdk-api.md
 
