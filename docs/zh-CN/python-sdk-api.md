@@ -103,6 +103,18 @@ Call a specific capability.
 
 Deprecated alias for call(...).
 
+<a id="qveris.QverisClient.capability_detail"></a>
+
+#### *async* capability_detail(capability_id: str, \*, run_id: str | None = None, provider_id: str | None = None, timeout: float | None = None, correlation_id: str | None = None) → [CapabilityDetailResponse](#qveris.CapabilityDetailResponse)
+
+Inspect a published CAP contract without executing it.
+
+<a id="qveris.QverisClient.capability_query"></a>
+
+#### *async* capability_query(request: [CapabilityQueryRequest](#qveris.CapabilityQueryRequest), \*, timeout: float | None = None, correlation_id: str | None = None) → [CapabilityQueryResponse](#qveris.CapabilityQueryResponse)
+
+Execute a paid CAP Query once; never replay redirects or retry failures.
+
 <a id="qveris.QverisClient.usage"></a>
 
 #### *async* usage(\*, start_date: str | None = None, end_date: str | None = None, summary: bool | None = True, bucket: str | None = None, event_type: str | None = None, kind: str | None = None, success: bool | None = None, charge_outcome: str | None = None, search_id: str | None = None, execution_id: str | None = None, min_credits: float | None = None, max_credits: float | None = None, limit: int | None = None, page: int | None = None, page_size: int | None = None, timeout: float | None = None, correlation_id: str | None = None) → [UsageHistoryResponse](#qveris.UsageHistoryResponse)
@@ -658,7 +670,7 @@ It takes context as an argument since that's what pydantic-core passes when call
 
 <a id="qveris.ToolInfo"></a>
 
-### *class* qveris.ToolInfo(\*, tool_name: str | None = None, cost: float | str | None = None, calls_count: str | None = None, parameters: JsonValue | None = None, input_schema: JsonValue | None = None, parameters_schema: JsonValue | None = None, query_params: JsonValue | None = None, body_params: JsonValue | None = None, requestBody: JsonValue | None = None, output_schema: JsonValue | None = None, tool_id: str, name: str | None = None, description: ~typing.Any | None = None, capability: str | None = None, cost_class: str | None = None, reliability: str | None = None, as_of_support: bool | None = None, categories: ~typing.List[str | ~qveris.types.ToolCategory] | None = None, category: str | None = None, capabilities: ~typing.List[~qveris.types.ToolCapability] | None = None, provider_id: str | None = None, provider_name: str | ~typing.Dict[str, str] | None = None, provider_description: ~typing.Any | None = None, provider_website_url: str | None = None, region: str | None = None, params: ~typing.List[~qveris.types.ToolParameter] | ~typing.Dict[str, ~typing.Any] | ~typing.List[~typing.Any] | str | int | float | bool | None = None, verification_status: ~typing.Literal['unverified', 'verifying', 'verified', 'stale', 'failed', 'restricted'] = 'unverified', verification: ~qveris.types.CatalogVerification = <factory>, execution_restrictions: ~qveris.types.ExecutionRestrictions = <factory>, examples: ~qveris.types.ToolExamples | None = None, stats: ~qveris.types.ToolStats | None = None, billing_rule: ~qveris.types.BillingRule | None = None, expected_cost: float | str | None = None, final_score: float | None = None, score: float | None = None, why_recommended: str | None = None, has_last_execution: bool | None = None, last_execution_record: ~typing.Dict[str, ~typing.Any] | None = None, docs_url: str | None = None, protocol: str | None = None, \*\*extra_data: ~typing.Any)
+### *class* qveris.ToolInfo(\*, updated_at: str | None = None, tool_name: str | None = None, cost: float | str | None = None, calls_count: str | None = None, parameters: JsonValue | None = None, input_schema: JsonValue | None = None, parameters_schema: JsonValue | None = None, query_params: JsonValue | None = None, body_params: JsonValue | None = None, requestBody: JsonValue | None = None, output_schema: JsonValue | None = None, tool_id: str, name: str | None = None, description: ~typing.Any | None = None, capability: str | None = None, cost_class: str | None = None, reliability: str | None = None, as_of_support: bool | None = None, categories: ~typing.List[str | ~qveris.types.ToolCategory] | None = None, category: str | None = None, capabilities: ~typing.List[~qveris.types.ToolCapability] | None = None, provider_id: str | None = None, provider_name: str | ~typing.Dict[str, str] | None = None, provider_description: ~typing.Any | None = None, provider_website_url: str | None = None, region: str | None = None, params: ~typing.List[~qveris.types.ToolParameter] | ~typing.Dict[str, ~typing.Any] | ~typing.List[~typing.Any] | str | int | float | bool | None = None, verification_status: ~typing.Literal['unverified', 'verifying', 'verified', 'stale', 'failed', 'restricted'] = 'unverified', verification: ~qveris.types.CatalogVerification = <factory>, execution_restrictions: ~qveris.types.ExecutionRestrictions = <factory>, examples: ~qveris.types.ToolExamples | None = None, stats: ~qveris.types.ToolStats | None = None, billing_rule: ~qveris.types.BillingRule | None = None, expected_cost: float | str | None = None, final_score: float | None = None, score: float | None = None, why_recommended: str | None = None, has_last_execution: bool | None = None, last_execution_record: ~typing.Dict[str, ~typing.Any] | None = None, docs_url: str | None = None, protocol: str | None = None, \*\*extra_data: ~typing.Any)
 
 <a id="qveris.ToolInfo.model_post_init"></a>
 
@@ -709,6 +721,48 @@ It takes context as an argument since that's what pydantic-core passes when call
 ### *class* qveris.UsageHistoryResponse(\*, items: ~typing.List[~qveris.types.UsageEventItem] = <factory>, total: int = 0, page: int = 1, page_size: int = 0, summary: ~typing.Dict[str, ~typing.Any] | None = None, \*\*extra_data: ~typing.Any)
 
 <a id="qveris.UsageHistoryResponse.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that's what pydantic-core passes when calling it.
+
+* **参数:**
+  * **self** -- The BaseModel instance.
+  * **context** -- The context.
+
+<a id="qveris.CapabilityDetailResponse"></a>
+
+### *class* qveris.CapabilityDetailResponse(\*, capability_id: str, name: str | None = None, description: str | None = None, params: List[Dict[str, Any]] | None = None, field_spec: Dict[str, Any] | None = None, contract_version: int | None = None, schema_hash: str | None = None, verification_status: Literal['unverified', 'verifying', 'verified', 'stale', 'failed', 'restricted'], verification: [CatalogVerification](#qveris.CatalogVerification), execution_restrictions: [ExecutionRestrictions](#qveris.ExecutionRestrictions), remaining_credits: float | None = None, \*\*extra_data: Any)
+
+Published CAP contract, including current verification and restrictions.
+
+<a id="qveris.CapabilityDetailResponse.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that's what pydantic-core passes when calling it.
+
+* **参数:**
+  * **self** -- The BaseModel instance.
+  * **context** -- The context.
+
+<a id="qveris.CapabilityQueryRequest"></a>
+
+### *class* qveris.CapabilityQueryRequest(\*, capability_id: str | None = None, query: str | None = None, parameters: Dict[str, Any] | None = None, params: Dict[str, Any] | None = None, session_id: str | None = None, search_id: str | None = None, run_id: str | None = None, provider_id: str | None = None, provider_ids: List[str] | None = None, max_response_size: Annotated[int | None, Ge(ge=-1)] = None, max_credits: Annotated[float | None, Gt(gt=0), \_PydanticGeneralMetadata(allow_inf_nan=False)] = None)
+
+Wire request for a paid CAP Query. Unknown request fields are rejected.
+
+<a id="qveris.CapabilityQueryResponse"></a>
+
+### *class* qveris.CapabilityQueryResponse(\*, execution_id: str, success: bool, capability_id: str | None = None, parameters: Dict[str, Any] | None = None, result: Dict[str, Any] | None = None, error_message: str | None = None, billing: Dict[str, Any] | None = None, cost: float | None = None, credits_used: float | None = None, remaining_credits: float | None = None, contract_version: int | None = None, schema_hash: str | None = None, \*\*extra_data: Any)
+
+Execution identity and contract used by a paid CAP Query.
+
+<a id="qveris.CapabilityQueryResponse.model_post_init"></a>
 
 #### model_post_init(context: Any, /) → None
 

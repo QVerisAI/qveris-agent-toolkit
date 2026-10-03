@@ -24,6 +24,7 @@ from __future__ import annotations
 from typing import Any, List, Optional
 
 from ..client.api import QverisClient
+
 from ._workflow import build_qveris_workflow
 
 _INSTALL_HINT = (
@@ -37,6 +38,7 @@ def get_qveris_tools(
     session_id: Optional[str] = None,
     model: Optional[str] = None,
     sub_user_id: Optional[str] = None,
+    include_probe: bool = False,
 ) -> List[Any]:
     """Return OpenAI Agents SDK function tools for the QVeris workflow.
 
@@ -60,12 +62,18 @@ def get_qveris_tools(
     except ImportError as exc:  # pragma: no cover - exercised via install extras
         raise ImportError(_INSTALL_HINT) from exc
 
-    workflow = build_qveris_workflow(client, session_id=session_id, model=model, sub_user_id=sub_user_id)
+    workflow = build_qveris_workflow(
+        client, session_id=session_id, model=model, sub_user_id=sub_user_id, include_probe=include_probe
+    )
 
     # strict_mode=False: these expose a free-form dict / optional params that a
     # strict JSON schema cannot represent.
-    return [
+    tools = [
         function_tool(workflow.discover),
         function_tool(workflow.inspect, strict_mode=False),
         function_tool(workflow.call, strict_mode=False),
     ]
+
+    if include_probe:
+        tools.append(function_tool(workflow.probe, strict_mode=False))
+    return tools

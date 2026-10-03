@@ -21,6 +21,9 @@ from .errors import (
 )
 from .types import (
     CatalogVerification,
+    CapabilityDetailResponse,
+    CapabilityQueryRequest,
+    CapabilityQueryResponse,
     CompactBillingStatement,
     CreditsLedgerItem,
     CreditsLedgerResponse,
@@ -83,6 +86,9 @@ __all__ = [
     "SearchResponse",
     "ToolExecutionResponse",
     "ToolProbeResponse",
+    "CapabilityDetailResponse",
+    "CapabilityQueryRequest",
+    "CapabilityQueryResponse",
     "CompactBillingStatement",
     "CatalogVerification",
     "VerificationCheck",

@@ -1,6 +1,6 @@
 # QVeris REST API Documentation
 
-Version: 2026-09-21.1
+Version: 2026-09-29.2
 
 The public REST API exposes the core agent path:
 
@@ -66,7 +66,9 @@ codes cannot be bound to an email that already belongs to a formal account.
 
 Discover, Inspect, and Probe are free. Discover and Inspect may return `expected_cost`, legacy `cost`, or `billing_rule`; Probe validates the selected parameters and returns a zero-cost quote before spending credits.
 
-Every capability returned by Discover or Inspect, and every successful Probe, includes `verification_status`, the supporting `verification` checks, and `execution_restrictions`. Only `verified` means the complete evidence is current. Verification is an evidence claim, not an execution prerequisite: other states remain discoverable and may become executable when the current input, authorization, permission, region, and exact price facts are resolved. Use `confidence`, the independent readiness axes, `allowed_actions`, `blocked_actions`, and `next_action` to inspect, authorize, probe, confirm a budget, retry, or switch providers. The legacy `callable` field describes immediate execution readiness; it does not control Discover or Inspect visibility.
+Every capability returned by Discover or Inspect, and every successful Probe, includes `verification_status`, the supporting `verification` checks, and `execution_restrictions`. Only `verified` means the complete evidence is current. Verification is an evidence claim, not an execution prerequisite: other states remain discoverable and may be attempted when no explicit blocker applies. Missing eligibility, license, commercial-use, or region declarations are unknown, not a denial. Read `execution_restrictions.region_status` and `execution_restrictions.regions` for geographic evidence. `callable: true` means the current catalog evidence does not prevent attempting Call, not that live authorization, availability, or billing is guaranteed. Use `blocked_actions` and `next_action` for actual remediation, and use Probe when parameters or a quote need preflight validation. A positive live Probe can advance an otherwise undisclosed candidate to Call; explicit permission, region, license, scope, tool-availability, or budget blockers still take precedence. The legacy `callable` field does not control Discover or Inspect visibility.
+
+A legacy result with a fixed `billing_rule` price per call may be attempted directly even when `price_certainty` remains `estimated`; the catalog price is not a reserved quote. Variable metering or an explicitly inexact Probe quote still requires budget confirmation.
 
 The default/full Call response can return compact pre-settlement fields such as `billing` and `cost`. Projection responses (`summary` and `fields:*`) intentionally omit billing internals to keep the response small. Final settlement is reported by usage audit and the credits ledger; use those endpoints for support, reconciliation, and user-facing billing history.
 
@@ -451,12 +453,14 @@ Use the exact `tool_id` selected during Discover or Inspect. Keep `live_budget` 
   "recovery": {
     "missing_fields": [],
     "safe_fixes": [],
-    "retryable": false,
+    "retryable": true,
     "next_action": "execute",
     "provider_fallback": false
   }
 }
 ```
+
+`recovery.missing_fields` lists missing or invalid call parameters only. Catalog evidence gaps remain under `verification.quality_issues` and do not, by themselves, require another agent step before Call.
 
 A probe can return `400` for invalid input, `404` for an unknown capability, `429` when rate limited, or `502`/`504` when the probe service is unavailable. See the [focused Probe reference](api-reference/probe.md) for the exact schema and all responses.
 

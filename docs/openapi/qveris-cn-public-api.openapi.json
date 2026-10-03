@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "QVeris Public REST API",
-    "version": "2026-09-21.1",
+    "version": "2026-09-29.2",
     "summary": "External REST API for enterprise integration.",
     "description": "OpenAPI 3.1 schema for the formally released public `/api/v1` REST API surface. It covers search, provider discovery, tool metadata lookup/execution, credits, and account audit endpoints. Unreleased API families are intentionally excluded from this customer-facing schema."
   },
@@ -65,7 +65,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -85,7 +85,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -121,7 +121,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             },
@@ -204,7 +204,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -224,7 +224,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -260,7 +260,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             },
@@ -343,7 +343,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -363,7 +363,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -399,7 +399,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             },
@@ -535,7 +535,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -555,7 +555,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -589,7 +589,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -602,7 +602,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -881,7 +881,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -901,7 +901,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -927,7 +927,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -1004,7 +1004,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -1024,7 +1024,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -1121,7 +1121,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -1171,7 +1171,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -1191,7 +1191,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -1304,7 +1304,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -1324,7 +1324,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -1824,7 +1824,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -1844,7 +1844,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -1870,7 +1870,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -2203,7 +2203,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -2567,7 +2567,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -2587,7 +2587,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -2638,7 +2638,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -2658,7 +2658,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -2692,7 +2692,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -2749,7 +2749,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -2773,7 +2773,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -2797,7 +2797,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -2821,7 +2821,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -2845,7 +2845,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -2869,7 +2869,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -2893,7 +2893,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -2917,7 +2917,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -2941,7 +2941,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -2979,7 +2979,7 @@
           "Capabilities"
         ],
         "summary": "Inspect a CAP contract",
-        "description": "Return the current published CAP contract. `contract_version` and `schema_hash` identify the exact contract; legacy CAP records may omit both fields. The response always discloses fail-closed verification evidence and execution restrictions.",
+        "description": "Return the current published CAP contract. `contract_version` and `schema_hash` identify the exact contract; legacy CAP records may omit both fields. The response always discloses verification evidence and execution restrictions; only explicit execution blockers deny Call.",
         "operationId": "capabilities_detail_api_v1_capabilities__capability_id__get",
         "security": [
           {
@@ -3126,9 +3126,7 @@
                     "freshness": "unknown",
                     "price_certainty": "unknown",
                     "data_as_of": null,
-                    "warnings": [
-                      "Region restrictions are malformed or contradictory."
-                    ],
+                    "warnings": [],
                     "confidence": 0.0,
                     "allowed_actions": [
                       "discover",
@@ -3138,7 +3136,7 @@
                     "blocked_actions": [
                       "execute"
                     ],
-                    "next_action": "inspect",
+                    "next_action": "probe",
                     "retryable": true
                   }
                 }
@@ -3150,7 +3148,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3170,7 +3168,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3194,7 +3192,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3218,7 +3216,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3242,7 +3240,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3266,7 +3264,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3290,7 +3288,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3314,7 +3312,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3348,7 +3346,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3387,7 +3385,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3610,7 +3608,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3630,7 +3628,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3710,7 +3708,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3730,7 +3728,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3750,7 +3748,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3770,7 +3768,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3807,7 +3805,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             },
@@ -3834,7 +3832,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3918,7 +3916,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3938,7 +3936,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3958,7 +3956,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3978,7 +3976,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -3998,7 +3996,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -4098,7 +4096,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -4118,7 +4116,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -4138,7 +4136,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -4158,7 +4156,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -4178,7 +4176,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -4365,7 +4363,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -4385,7 +4383,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -4405,7 +4403,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -4425,7 +4423,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -4445,7 +4443,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -4894,7 +4892,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -4914,7 +4912,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -5036,7 +5034,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -5056,7 +5054,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -5088,7 +5086,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -5109,7 +5107,7 @@
           "Discovery"
         ],
         "summary": "Discover capabilities",
-        "description": "Find ranked capabilities from a natural-language query. Discover is free. Results include fail-closed verification evidence and execution restrictions; clients must not treat any status other than `verified` as verified. Results may include `expected_cost` and `billing_rule` so clients can estimate a later Call.",
+        "description": "Find ranked capabilities from a natural-language query. Discover is free. Results include verification evidence and execution restrictions; clients must not treat any status other than `verified` as verified. Results may include `expected_cost` and `billing_rule` so clients can estimate a later Call.",
         "operationId": "search_api_v1_search_post",
         "responses": {
           "200": {
@@ -5144,7 +5142,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             },
@@ -5260,7 +5258,7 @@
                       },
                       "execution_restrictions": {
                         "callable": false,
-                        "technical": "unknown",
+                        "technical": "ready",
                         "authentication": "unknown",
                         "eligibility": "unknown",
                         "license": "unknown",
@@ -5273,19 +5271,18 @@
                         "freshness": "unknown",
                         "price_certainty": "estimated",
                         "data_as_of": null,
-                        "warnings": [
-                          "Region restrictions are malformed or contradictory."
-                        ],
-                        "confidence": 0.0,
+                        "warnings": [],
+                        "confidence": 0.125,
                         "allowed_actions": [
                           "discover",
                           "inspect",
-                          "probe"
+                          "probe",
+                          "confirm_budget"
                         ],
                         "blocked_actions": [
                           "execute"
                         ],
-                        "next_action": "inspect",
+                        "next_action": "confirm_budget",
                         "retryable": true
                       }
                     }
@@ -5328,7 +5325,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             },
@@ -5377,7 +5374,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             },
@@ -5429,7 +5426,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             },
@@ -5512,7 +5509,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             },
@@ -5626,7 +5623,7 @@
                       },
                       "execution_restrictions": {
                         "callable": false,
-                        "technical": "unknown",
+                        "technical": "ready",
                         "authentication": "unknown",
                         "eligibility": "unknown",
                         "license": "unknown",
@@ -5639,10 +5636,8 @@
                         "freshness": "unknown",
                         "price_certainty": "estimated",
                         "data_as_of": null,
-                        "warnings": [
-                          "Region restrictions are malformed or contradictory."
-                        ],
-                        "confidence": 0.0,
+                        "warnings": [],
+                        "confidence": 0.125,
                         "allowed_actions": [
                           "discover",
                           "inspect",
@@ -5698,7 +5693,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             },
@@ -5747,7 +5742,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             },
@@ -5780,7 +5775,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -5939,7 +5934,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -5976,7 +5971,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             },
@@ -6029,7 +6024,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             },
@@ -6083,7 +6078,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             },
@@ -6121,7 +6116,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -6161,7 +6156,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -6191,7 +6186,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -6221,7 +6216,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -6316,7 +6311,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -6353,7 +6348,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -6390,7 +6385,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -6427,7 +6422,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             },
@@ -6456,7 +6451,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -6472,7 +6467,7 @@
           "Tool Execution"
         ],
         "summary": "Probe a capability without executing it",
-        "description": "Optionally validate candidate parameters or obtain a zero-cost quote when the task needs preflight validation or a current quote. Probe is not required before Call and a quote does not reserve price or authorize execution. The M1 `schema` and `quote` checks are implemented; `coverage` and `sample` return an explicit unknown verdict. Every successful Probe includes the fail-closed verification and execution-restriction contract. Probe never executes the capability or consumes credits.",
+        "description": "Optionally validate candidate parameters or obtain a zero-cost quote when the task needs preflight validation or a current quote. Probe is not required before Call and a quote does not reserve price or authorize execution. The M1 `schema` and `quote` checks are implemented; `coverage` and `sample` return an explicit unknown verdict. Every successful Probe includes verification evidence and execution restrictions. Explicit blockers take precedence. Probe never executes the capability or consumes credits.",
         "operationId": "probe_tool_api_v1_tools_probe_post",
         "security": [
           {
@@ -6512,23 +6507,10 @@
                     "basis": "per_call"
                   },
                   "recovery": {
-                    "missing_fields": [
-                      "live_check_samples",
-                      "schema",
-                      "authentication_path",
-                      "description",
-                      "provider_id",
-                      "verified_at",
-                      "expires_at",
-                      "test_run_digest",
-                      "verification_status"
-                    ],
-                    "safe_fixes": [
-                      "supply_missing_fields",
-                      "inspect"
-                    ],
+                    "missing_fields": [],
+                    "safe_fixes": [],
                     "retryable": true,
-                    "next_action": "inspect",
+                    "next_action": "execute",
                     "provider_fallback": false
                   },
                   "verification_status": "unverified",
@@ -6594,8 +6576,8 @@
                     ]
                   },
                   "execution_restrictions": {
-                    "callable": false,
-                    "technical": "unknown",
+                    "callable": true,
+                    "technical": "ready",
                     "authentication": "unknown",
                     "eligibility": "unknown",
                     "license": "unknown",
@@ -6607,19 +6589,16 @@
                     "commercial_use": "unknown",
                     "freshness": "unknown",
                     "price_certainty": "exact",
-                    "warnings": [
-                      "Region restrictions are malformed or contradictory."
-                    ],
-                    "confidence": 0.125,
+                    "warnings": [],
+                    "confidence": 0.25,
                     "allowed_actions": [
                       "discover",
                       "inspect",
-                      "probe"
-                    ],
-                    "blocked_actions": [
+                      "probe",
                       "execute"
                     ],
-                    "next_action": "inspect",
+                    "blocked_actions": [],
+                    "next_action": "execute",
                     "retryable": true
                   },
                   "contract_features": [
@@ -6660,7 +6639,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -6697,7 +6676,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             },
@@ -6746,7 +6725,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             },
@@ -6779,7 +6758,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -6803,7 +6782,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -6828,7 +6807,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -6853,7 +6832,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -6873,7 +6852,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-09-21.1"
+                  "const": "2026-09-29.2"
                 }
               }
             }
@@ -8691,7 +8670,7 @@
             "title": "Contract Version",
             "description": "Version of the published QVeris REST API contract.",
             "examples": [
-              "2026-09-21.1"
+              "2026-09-29.2"
             ]
           },
           "registration": {
@@ -12113,7 +12092,7 @@
         "type": "object",
         "title": "PublicExecutionRestrictions",
         "additionalProperties": false,
-        "description": "Additive readiness axes and action guidance. Discovery remains available for unknown or incomplete evidence; execution stays fail-closed through blocked_actions and the legacy callable field.",
+        "description": "Additive readiness axes and action guidance. Discovery remains available for unknown or incomplete evidence. Explicit restrictions fail closed through blocked_actions. Missing provider restriction metadata is not an execution denial: a candidate with usable input and a fixed per-call catalog price may be called directly. The catalog price is an estimate, not a reserved quote; variable pricing still requires budget confirmation. Probe is optional unless preflight validation or a current quote is needed. Call remains subject to live authorization, availability, and billing checks.",
         "required": [
           "callable",
           "eligibility",
@@ -12135,19 +12114,81 @@
               ]
             },
             "then": {
-              "properties": {
-                "eligibility": {
-                  "const": "not_required"
-                },
-                "license": {
-                  "enum": [
-                    "not_required",
-                    "approved"
-                  ]
-                },
-                "commercial_use": {
-                  "const": "allowed"
-                }
+              "not": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "technical": {
+                        "const": "blocked"
+                      }
+                    },
+                    "required": [
+                      "technical"
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "authentication": {
+                        "enum": [
+                          "required",
+                          "blocked"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "authentication"
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "eligibility": {
+                        "enum": [
+                          "required",
+                          "restricted"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "eligibility"
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "license": {
+                        "enum": [
+                          "required",
+                          "restricted"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "license"
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "region_status": {
+                        "const": "blocked"
+                      }
+                    },
+                    "required": [
+                      "region_status"
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "commercial_use": {
+                        "enum": [
+                          "conditional",
+                          "prohibited"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "commercial_use"
+                    ]
+                  }
+                ]
               }
             }
           }
@@ -12348,6 +12389,10 @@
           },
           "description": {
             "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "Catalog update timestamp when provided by the source."
           },
           "provider_id": {
             "type": "string"

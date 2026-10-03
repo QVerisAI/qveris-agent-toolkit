@@ -270,6 +270,26 @@ try {
 
 > Versions `0.1.x` of the `@qverisai/sdk` npm package were an early MCP-focused SDK, since superseded by [`@qverisai/mcp`](mcp-server.md). The typed REST client documented here starts at **`0.2.0`**.
 
+## Capability contracts and optional Probe tools
+
+Capability Detail reads a published CAP contract. Capability Query executes a CAP and may consume credits. `max_credits` is a spending ceiling, not a reserved quote. Query submits once, including after HTTP errors, timeouts, redirects, or an invalid success response. For an uncertain outcome, review usage and settlement before submitting another Query. Resolve and selection-token APIs are not exposed until their public contracts are available.
+
+The adapter returns Discover, Inspect, and Call by default. Enable Probe when the agent needs parameter validation or a current schema/quote; Probe does not execute the capability or reserve its price. Probe uses the same host-controlled end-user identity as Call. The adapter example uses `@qverisai/sdk/ai`. Inspect the CAP's parameters and restrictions and construct valid current parameters before executing it; the example assumes the inspected contract supports the symbol below.
+
+```typescript
+import { getQverisTools } from '@qverisai/sdk/ai';
+
+const contract = await qveris.capabilityDetail('MKT.BARS.EOD');
+const outcome = await qveris.capabilityQuery({
+  capability_id: contract.capability_id,
+  parameters: { symbol: 'AAPL' },
+  max_credits: 10,
+});
+const tools = getQverisTools(qveris, { includeProbe: true });
+```
+
+The optional AI adapter supports AI SDK 5–7 and Zod 3.25.76 or 4. AI SDK 4 uses a different tool schema interface.
+
 ## Links
 
 - Package: [`@qverisai/sdk` on npm](https://www.npmjs.com/package/@qverisai/sdk)

@@ -28,6 +28,8 @@ const delivery = JSON.parse(readFileSync(resolve('../../contracts/result-deliver
   }>;
 };
 const models: Record<string, string> = {
+  PublicCapabilityDetailResponse: 'CapabilityDetailResponse',
+  PublicCapabilityQueryResponse: 'CapabilityQueryResponse',
   PublicExecuteToolResponse: 'ExecuteResponse',
   ValidationError: 'ValidationIssue',
   PublicCapabilityResult: 'ToolInfo',
@@ -277,9 +279,16 @@ function compatibilityDiagnostics(mutate: (source: string) => string = (source) 
   });
 }
 
-test('all declared public response fields are represented and accepted by both SDK surfaces', () => {
-  expect(compatibilityDiagnostics()).toBe('');
-});
+// Cold TypeScript programs need a bounded budget separate from ordinary unit tests.
+const COMPILER_TEST_TIMEOUT_MS = 20_000;
+
+test(
+  'all declared public response fields are represented and accepted by both SDK surfaces',
+  () => {
+    expect(compatibilityDiagnostics()).toBe('');
+  },
+  COMPILER_TEST_TIMEOUT_MS,
+);
 
 test.each([
   ['localized provider', 'provider_name?: string | Record<string, string>;', 'provider_name?: string;'],
@@ -298,19 +307,27 @@ test.each([
     'params?: {\n                [key: string]: unknown;',
     'params?: {\n                [key: string]: never;',
   ],
-])('the guard detects regression of %s', (_label, before, after) => {
-  expect(
-    compatibilityDiagnostics((source) => {
-      if (!source.includes(before)) return source;
-      return source.replaceAll(before, after);
-    }),
-  ).not.toBe('');
-});
+])(
+  'the guard detects regression of %s',
+  (_label, before, after) => {
+    expect(
+      compatibilityDiagnostics((source) => {
+        if (!source.includes(before)) return source;
+        return source.replaceAll(before, after);
+      }),
+    ).not.toBe('');
+  },
+  COMPILER_TEST_TIMEOUT_MS,
+);
 
-test('a catch-all regression is rejected by consumer compilation, not just fixture assignment', () => {
-  const diagnostics = compatibilityDiagnostics((source) =>
-    source.replace('  | ExecuteResultRawObject', '  | Record<string, unknown>'),
-  );
-  expect(diagnostics).toContain('result.summary');
-  expect(diagnostics).toContain('result.full_content_file_url');
-});
+test(
+  'a catch-all regression is rejected by consumer compilation, not just fixture assignment',
+  () => {
+    const diagnostics = compatibilityDiagnostics((source) =>
+      source.replace('  | ExecuteResultRawObject', '  | Record<string, unknown>'),
+    );
+    expect(diagnostics).toContain('result.summary');
+    expect(diagnostics).toContain('result.full_content_file_url');
+  },
+  COMPILER_TEST_TIMEOUT_MS,
+);

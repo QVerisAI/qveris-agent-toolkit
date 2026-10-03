@@ -1,16 +1,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, globSync } from 'node:fs';
 
 import { classifyContractChanges, resolveContractPlan } from './plan-contract-tests.mjs';
 
-test('PR workflow executes the shared contract guards rather than only watching their paths', () => {
+test('PR workflow executes the shared contract guards through the root script suite', () => {
   const workflow = readFileSync(new URL('../.github/workflows/contract-tests.yml', import.meta.url), 'utf8');
-  for (const guard of ['public-capability-contract', 'result-delivery-contract']) {
-    assert.match(workflow, new RegExp('run: node --test[^\\n]*scripts/' + guard + '\\.test\\.mjs'));
-  }
+  const root = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  assert.match(workflow, /run: npm run test:scripts/);
+  assert.match(root.scripts['test:scripts'], /scripts\/\*\.test\.mjs/);
 });
-
 test('a CLI-only change does not schedule unrelated SDKs', () => {
   assert.deepEqual(classifyContractChanges(['packages/cli/src/main.mjs']), {
     benchmark: false,
@@ -42,7 +41,13 @@ test('the public OpenAPI contract schedules every contract consumer', () => {
 });
 
 test('delivery profiles and either handwritten TS surface run the wire compatibility guard', () => {
-  for (const file of ['contracts/result-delivery.v1.json', 'scripts/result-delivery-contract.test.mjs', 'scripts/public-capability-contract.test.mjs', 'packages/mcp/src/types.ts', 'packages/js-sdk/src/types.ts']) {
+  for (const file of [
+    'contracts/result-delivery.v1.json',
+    'scripts/result-delivery-contract.test.mjs',
+    'scripts/public-capability-contract.test.mjs',
+    'packages/mcp/src/types.ts',
+    'packages/js-sdk/src/types.ts',
+  ]) {
     assert.equal(classifyContractChanges([file]).js, true, file);
   }
 });
@@ -137,4 +142,31 @@ test('duplicate and empty filenames do not create false-positive targets', () =>
     examples: false,
     os_matrix: ['ubuntu-latest'],
   });
+});
+
+test('package configuration changes trigger the workflow and select their consumers', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/contract-tests.yml', import.meta.url), 'utf8');
+  const patterns = [...workflow.split('  schedule:')[0].matchAll(/- "([^"\n]+)"/g)].map((match) => match[1]);
+  const covered = new Set(patterns.flatMap((pattern) => globSync(pattern)));
+  for (const [file, target] of [
+    ['packages/js-sdk/tsconfig.json', 'js'],
+    ['packages/js-sdk/vitest.config.ts', 'js'],
+    ['packages/mcp/vitest.config.ts', 'mcp'],
+    ['packages/openclaw-qveris-plugin/vitest.config.ts', 'plugin'],
+  ]) {
+    assert.ok(covered.has(file), `${file} must trigger contract tests`);
+    assert.equal(classifyContractChanges([file])[target], true);
+  }
+  for (const file of globSync('scripts/*.test.mjs')) {
+    assert.ok(covered.has(file), `${file} must trigger repository script tests`);
+  }
+  assert.match(workflow, /run: npm run test:scripts/);
+});
+
+test('the planner has no self dependency and plugin lint uses its required runtime', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/contract-tests.yml', import.meta.url), 'utf8');
+  const planJob = workflow.split('  plan:')[1].split('\n  discover-call-benchmark:')[0];
+  assert.doesNotMatch(planJob, /needs\.plan/);
+  const lintJob = workflow.split('\n  lint:')[1].split('\n  examples:')[0];
+  assert.match(lintJob, /node-version:.*needs\.plan\.outputs\.lint_plugin.*24\.16\.0/);
 });
