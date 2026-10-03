@@ -260,15 +260,20 @@ function compatibilityDiagnostics(mutate: (source: string) => string = (source) 
   };
   const host = ts.createCompilerHost(options);
   const original = host.getSourceFile.bind(host);
+  // TypeScript normalizes separators before asking the host for a source file.
+  // Canonicalize virtual and physical paths equally on Windows.
+  const canonical = (name: string) => host.getCanonicalFileName(resolve(name).replaceAll('\\', '/'));
   host.getSourceFile = (name, languageVersion, onError, shouldCreateNewSourceFile) =>
-    name === filename
+    canonical(name) === canonical(filename)
       ? ts.createSourceFile(name, imports.join('\n'), languageVersion, true)
       : [
             resolve('src/types.ts'),
             resolve('../mcp/src/types.ts'),
             resolve('src/client.ts'),
             resolve('../mcp/src/generated/openapi.d.ts'),
-          ].includes(name)
+          ]
+            .map(canonical)
+            .includes(canonical(name))
         ? ts.createSourceFile(name, mutate(readFileSync(name, 'utf8')), languageVersion, true)
         : original(name, languageVersion, onError, shouldCreateNewSourceFile);
   const diagnostics = ts.getPreEmitDiagnostics(ts.createProgram([filename], options, host));

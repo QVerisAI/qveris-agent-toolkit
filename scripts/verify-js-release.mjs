@@ -64,7 +64,7 @@ try {
   writeFileSync(
     join(temporary, 'consumer.ts'),
     `import { Qveris, type CapabilityQueryResponse, type CapabilityQueryRequest } from '@qverisai/sdk';
-const client = new Qveris({ apiKey: 'fixture-credential' });
+const client = new Qveris({ apiKey: '<fixture-key>' });
 const request: CapabilityQueryRequest = { query: 'weather', max_credits: 1 };
 const result: Promise<CapabilityQueryResponse> = client.capabilityQuery(request);
 void client.capabilityDetail('weather'); void result;

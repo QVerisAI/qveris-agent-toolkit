@@ -5,7 +5,7 @@ import { Qveris, QverisApiError, AgentDelegationCredentialProvider } from '@qver
 
 const fixtures = JSON.parse(readFileSync(new URL('./fixtures.json', import.meta.url), 'utf8'));
 assert.equal(typeof AgentDelegationCredentialProvider, 'function');
-const client = new Qveris({ apiKey: 'fixture-credential', baseUrl: 'https://qveris.ai/api/v1', maxRetries: 3 });
+const client = new Qveris({ apiKey: '<fixture-key>', baseUrl: 'https://qveris.ai/api/v1', maxRetries: 3 });
 let requests = [];
 globalThis.fetch = async (url, init) => {
   requests.push({ url, init });

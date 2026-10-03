@@ -12,7 +12,7 @@ from qveris import CapabilityQueryRequest, QverisClient, QverisConfig
 from qveris.errors import QverisApiError, QverisContractError, QverisTransportError
 from qveris.generated import openapi_models
 
-fixtures = json.loads(Path(__file__).with_name("fixtures.json").read_text())
+fixtures = json.loads(Path(__file__).with_name("fixtures.json").read_text(encoding="utf-8"))
 installed = Path(qveris.__file__).resolve()
 assert Path(sys.prefix).resolve() in installed.parents, installed
 assert installed.with_name("CHANGELOG.md").is_file()
@@ -29,7 +29,7 @@ async def main():
         fixture = "capability_detail" if request.method == "GET" else "capability_query"
         return httpx.Response(200, json=fixtures[fixture]["response"])
 
-    config = QverisConfig(api_key="fixture-credential", base_url="https://qveris.ai/api/v1", max_retries=3)
+    config = QverisConfig(api_key="<fixture-key>", base_url="https://qveris.ai/api/v1", max_retries=3)
     client = QverisClient(config, transport=httpx.MockTransport(handler))
     try:
         detail = await client.capability_detail("MKT/BARS")

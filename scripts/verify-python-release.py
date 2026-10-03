@@ -35,7 +35,7 @@ def main():
     )
     expected_version = re.search(
         r'^version = "([^"]+)"',
-        (root / "packages/python-sdk/pyproject.toml").read_text(),
+        (root / "packages/python-sdk/pyproject.toml").read_text(encoding="utf-8"),
         re.MULTILINE,
     ).group(1)
     reports = []
@@ -104,7 +104,7 @@ def main():
         "status": "passed",
         "live_service": "not_run",
     }
-    (output / "python-release-report.json").write_text(json.dumps(report, indent=2) + "\n")
+    (output / "python-release-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
 
 
