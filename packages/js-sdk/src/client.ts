@@ -28,6 +28,9 @@ import type {
   ApiError,
   ApiObservability,
   ApiOperation,
+  CapabilityDetailResponse,
+  CapabilityQueryRequest,
+  CapabilityQueryResponse,
   CreditsLedgerRequest,
   CreditsLedgerResponse,
   CreditsResponse,
@@ -413,6 +416,70 @@ export class Qveris {
     }
   }
 
+  /** Inspect a published CAP contract. This operation does not execute it. */
+  async capabilityDetail(
+    capabilityId: string,
+    options: { runId?: string; providerId?: string; timeoutMs?: number } = {},
+  ): Promise<CapabilityDetailResponse> {
+    if (!capabilityId.trim()) throw new TypeError('capabilityId must be non-empty.');
+    return this.request<CapabilityDetailResponse>(
+      'capability_detail',
+      'GET',
+      `/capabilities/${encodeURIComponent(capabilityId)}`,
+      undefined,
+      options.timeoutMs,
+      {
+        run_id: options.runId,
+        provider_id: options.providerId,
+      },
+    );
+  }
+
+  /** Execute a published CAP Query once. A budget is a ceiling, not a reserved quote. */
+  async capabilityQuery(
+    request: CapabilityQueryRequest,
+    options: { timeoutMs?: number } = {},
+  ): Promise<CapabilityQueryResponse> {
+    if (![request.capability_id, request.query].some((value) => typeof value === 'string' && value.trim())) {
+      throw new TypeError('capability_id or query is required.');
+    }
+    if (request.max_credits !== undefined && (!Number.isFinite(request.max_credits) || request.max_credits <= 0)) {
+      throw new TypeError('max_credits must be finite and positive.');
+    }
+    const result = await this.request<CapabilityQueryResponse>(
+      'capability_query',
+      'POST',
+      '/capabilities/query',
+      request,
+      options.timeoutMs ?? EXECUTE_TIMEOUT_MS,
+    );
+    if (
+      !result ||
+      typeof result.success !== 'boolean' ||
+      typeof result.execution_id !== 'string' ||
+      !result.execution_id.trim()
+    ) {
+      throw new QverisApiError({
+        status: 200,
+        message: 'Invalid CAP Query response contract',
+        ...(typeof result?.execution_id === 'string' && result.execution_id.trim()
+          ? { details: { execution_id: result.execution_id } }
+          : {}),
+        observability: {
+          source: 'qveris_api',
+          operation: 'capability_query',
+          method: 'POST',
+          endpoint: '/capabilities/query',
+          url: `${this.baseUrl}/capabilities/query`,
+          timeout_ms: options.timeoutMs ?? EXECUTE_TIMEOUT_MS,
+          http_status: 200,
+          error_type: 'invalid_response',
+        },
+      });
+    }
+    return result;
+  }
+
   /** Get current credit balance and bucket details. */
   async credits(): Promise<CreditsResponse> {
     return this.request<CreditsResponse>('credits', 'GET', '/auth/credits');
@@ -476,7 +543,7 @@ export class Qveris {
     // Retry rate-limited (429) / transient (503) responses: honor Retry-After,
     // otherwise exponential backoff with jitter, bounded by maxRetries. Each
     // attempt is a fresh fetch with its own timeout.
-    const retryLimit = operation === 'call' ? 0 : this.maxRetries;
+    const retryLimit = operation === 'call' || operation === 'capability_query' ? 0 : this.maxRetries;
     for (let attempt = 0; ; attempt++) {
       // Credential acquisition is not part of the API request timeout. Resolve
       // it for every attempt so a retry can refresh a short-lived token, and
@@ -487,7 +554,7 @@ export class Qveris {
         scopes: this.credentialScopes,
         operation,
         purpose:
-          operation === 'call'
+          operation === 'call' || operation === 'capability_query'
             ? 'paid_execution'
             : operation === 'usage_history'
               ? 'usage_audit'

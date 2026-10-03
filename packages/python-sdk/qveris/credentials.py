@@ -20,6 +20,8 @@ CredentialOperation = Literal[
     "inspect",
     "probe",
     "call",
+    "capability_detail",
+    "capability_query",
     "credits",
     "usage",
     "ledger",
@@ -154,20 +156,28 @@ class AgentDelegationCredentialProvider:
         # themselves run outside it so independent user+scope requests do not
         # block each other.
         self._lock = asyncio.Lock()
+        self._cache_generation = 0
+        self._max_cached_tokens = 128
         self._cached: Dict[Tuple[str, Tuple[str, ...]], _DelegationToken] = {}
         self._exchanges: Dict[Tuple[str, Tuple[str, ...]], asyncio.Task[_DelegationToken]] = {}
 
     async def get_credential(self, context: CredentialContext) -> str:
+        generation = self._cache_generation
         required_scopes = self._validate_context(context)
         subject_token = await self._resolve_subject_token(context)
         cache_key = _delegation_cache_key(subject_token, required_scopes)
+        self._prune_cache()
         token = self._cached.get(cache_key)
         if token is not None and token.expires_at > time.monotonic() and required_scopes.issubset(token.scopes):
+            self._cached.pop(cache_key)
+            self._cached[cache_key] = token
             return token.access_token
 
         async with self._lock:
             token = self._cached.get(cache_key)
             if token is not None and token.expires_at > time.monotonic() and required_scopes.issubset(token.scopes):
+                self._cached.pop(cache_key)
+                self._cached[cache_key] = token
                 return token.access_token
             exchange = self._exchanges.get(cache_key)
             if exchange is None:
@@ -188,13 +198,26 @@ class AgentDelegationCredentialProvider:
                 "invalid_token_response",
                 "Delegation token does not cover the requested scopes",
             )
-        self._cached[cache_key] = token
+        if generation == self._cache_generation:
+            self._prune_cache()
+            self._cached.pop(cache_key, None)
+            self._cached[cache_key] = token
+            while len(self._cached) > self._max_cached_tokens:
+                self._cached.pop(next(iter(self._cached)))
         return token.access_token
 
     def clear(self) -> None:
         """Drop the cached in-memory token without persisting or revoking it."""
 
+        self._cache_generation += 1
         self._cached.clear()
+        self._exchanges.clear()
+
+    def _prune_cache(self) -> None:
+        now = time.monotonic()
+        for key, token in list(self._cached.items()):
+            if token.expires_at <= now:
+                self._cached.pop(key, None)
 
     def _validate_context(self, context: CredentialContext) -> FrozenSet[str]:
         if context.audience != self._resource:

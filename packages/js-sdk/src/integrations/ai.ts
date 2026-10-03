@@ -26,10 +26,55 @@
  * @module @qverisai/sdk/ai
  */
 
-import { tool } from 'ai';
 import { z } from 'zod';
 
 import type { Qveris } from '../client.js';
+
+/** Stable structural tool shape shared by the supported AI SDK versions. */
+export interface QverisAdapterTool<Input, Output> {
+  description: string;
+  inputSchema: z.ZodType<Input>;
+  execute: (input: Input) => Promise<Output>;
+}
+
+function adapterTool<Input, Output>(definition: QverisAdapterTool<Input, Output>): QverisAdapterTool<Input, Output> {
+  // AI tools are structural objects. Keep emitted declarations independent of
+  // version-specific optional properties added by the framework helper.
+  return definition;
+}
+
+export interface QverisAdapterOptions {
+  sessionId?: string;
+  model?: string;
+  subUserId?: string;
+  includeProbe?: boolean;
+}
+
+export type QverisDefaultTools = {
+  qveris_discover: QverisAdapterTool<{ query: string; limit?: number }, Awaited<ReturnType<Qveris['discover']>>>;
+  qveris_inspect: QverisAdapterTool<{ tool_ids: string[]; search_id?: string }, Awaited<ReturnType<Qveris['inspect']>>>;
+  qveris_call: QverisAdapterTool<
+    { tool_id: string; params_to_tool?: Record<string, unknown>; search_id?: string; max_response_size?: number },
+    Awaited<ReturnType<Qveris['call']>>
+  >;
+};
+export type QverisProbeTools = QverisDefaultTools & {
+  qveris_probe: QverisAdapterTool<
+    {
+      tool_id: string;
+      parameters?: Record<string, unknown>;
+      checks?: Array<'schema' | 'quote' | 'coverage' | 'sample'>;
+      live_budget?: 'none' | 'metadata' | 'sampled';
+    },
+    Awaited<ReturnType<Qveris['probe']>>
+  >;
+};
+
+export function getQverisTools(
+  qveris: Qveris,
+  options: QverisAdapterOptions & { includeProbe: true },
+): QverisProbeTools;
+export function getQverisTools(qveris: Qveris, options?: QverisAdapterOptions): QverisDefaultTools;
 
 /**
  * Build Vercel AI SDK tools for the shortest-safe QVeris workflow.
@@ -39,10 +84,7 @@ import type { Qveris } from '../client.js';
  * @returns A tools object keyed by `qveris_discover` / `qveris_inspect` /
  *   `qveris_call`, ready to pass to `generateText`/`streamText`.
  */
-export function getQverisTools(
-  qveris: Qveris,
-  options: { sessionId?: string; model?: string; subUserId?: string } = {},
-) {
+export function getQverisTools(qveris: Qveris, options: QverisAdapterOptions = {}) {
   if (
     !qveris ||
     typeof qveris.discover !== 'function' ||
@@ -56,8 +98,8 @@ export function getQverisTools(
     throw new TypeError('subUserId must be a non-empty host-controlled identity.');
   }
 
-  return {
-    qveris_discover: tool({
+  const tools = {
+    qveris_discover: adapterTool({
       description:
         'Discover QVeris capabilities when task fit, data quality/freshness, provider comparison, fallback, or the user request favors QVeris. It is not a mandatory gateway. Free; returns candidates and a search_id. Provider comparison: Inspect each candidate to confirm current scope/contracts. If a budget decision requires a current Probe cost quote, do not Call until the host obtains it; this three-tool adapter does not expose Probe. This does not apply to fresh business data such as a stock quote; obtain that with Call.',
       inputSchema: z.object({
@@ -68,7 +110,7 @@ export function getQverisTools(
         qveris.discover(query, { ...(limit !== undefined && { limit }), ...(sessionId && { sessionId }) }),
     }),
 
-    qveris_inspect: tool({
+    qveris_inspect: adapterTool({
       description:
         'Optional: inspect capabilities only when selection or valid request construction depends on missing/stale contract details. Provider comparison: Inspect each candidate to confirm current scope/contracts. If a budget decision requires a current Probe cost quote, do not Call until the host obtains it; this three-tool adapter does not expose Probe. This does not apply to fresh business data such as a stock quote; obtain that with Call. Free.',
       inputSchema: z.object({
@@ -79,7 +121,7 @@ export function getQverisTools(
         qveris.inspect(tool_ids, { ...(search_id && { searchId: search_id }), ...(sessionId && { sessionId }) }),
     }),
 
-    qveris_call: tool({
+    qveris_call: adapterTool({
       description:
         'Call a selected QVeris capability with parameters. Call directly from discovery when it provides enough schema and cost information. Reuse only exact routes; rebuild current parameters and Call again for current/latest/today/time-sensitive data. May consume credits.',
       inputSchema: z.object({
@@ -99,4 +141,35 @@ export function getQverisTools(
         }),
     }),
   };
+  if (options.includeProbe) {
+    if (typeof qveris.probe !== 'function') throw new TypeError('Probe requires a client with probe().');
+    for (const item of [tools.qveris_discover, tools.qveris_inspect]) {
+      if (typeof item.description === 'string')
+        item.description = item.description.replace(
+          'do not Call until the host obtains it; this three-tool adapter does not expose Probe.',
+          'use qveris_probe to obtain it before Call.',
+        );
+    }
+    return {
+      ...tools,
+      qveris_probe: adapterTool({
+        description:
+          'Optionally validate parameters or obtain a current schema/quote without executing a capability. Free. A quote does not reserve price or authorize execution; coverage/sample may be unknown.',
+        inputSchema: z.object({
+          tool_id: z.string().min(1),
+          parameters: z.record(z.string(), z.unknown()).optional(),
+          checks: z.array(z.enum(['schema', 'quote', 'coverage', 'sample'])).optional(),
+          live_budget: z.enum(['none', 'metadata', 'sampled']).optional(),
+        }),
+        execute: async ({ tool_id, parameters, checks, live_budget }) =>
+          qveris.probe(tool_id, {
+            ...(parameters !== undefined && { parameters }),
+            ...(checks !== undefined && { checks }),
+            ...(live_budget !== undefined && { liveBudget: live_budget }),
+            ...(subUserId !== undefined && { subUserId }),
+          }),
+      }),
+    };
+  }
+  return tools;
 }

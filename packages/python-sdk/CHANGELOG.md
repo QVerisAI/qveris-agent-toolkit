@@ -6,8 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- Expose the additive catalog `updated_at` field.
+- Bound in-memory delegation token caches, evict expired credentials, and prevent exchanges started before clearing the cache from restoring old entries.
+
 ### Added
 
+- Typed Capability Detail and paid Capability Query methods for the published public API; Query is never retried or replayed automatically.
+- Opt-in Probe tools for framework adapters, preserving the default three-tool interface.
 - Public SDK exceptions now expose a stable machine-readable `next_action` recovery contract, including settlement reconciliation guidance for uncertain Call outcomes.
 
 ## [0.7.3] - 2026-09-09

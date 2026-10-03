@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
 import { getQverisTools } from './ai.js';
@@ -41,4 +41,29 @@ describe('getQverisTools (Vercel AI SDK specifics)', () => {
     });
     expect(outcome.execution_id).toBe('e1');
   });
+});
+
+it('exposes Probe only when enabled and binds host identity outside the model schema', async () => {
+  const client = new FakeQveris() as FakeQveris & { probe: ReturnType<typeof vi.fn> };
+  client.probe = vi.fn().mockResolvedValue({ schema: { valid: true }, quote: { exact: false } });
+  expect(Object.keys(getQverisTools(client as never))).toHaveLength(3);
+  const tools = getQverisTools(client as never, { includeProbe: true, subUserId: 'host-user' });
+  expect(Object.keys(tools)).toHaveLength(4);
+  if (!('qveris_probe' in tools)) throw new Error('Probe missing');
+  expect(tools.qveris_probe.inputSchema.safeParse({ tool_id: 't1', checks: ['invalid'] }).success).toBe(false);
+  await invoke(tools.qveris_probe, {
+    tool_id: 't1',
+    parameters: { city: 'London' },
+    checks: ['quote'],
+    live_budget: 'metadata',
+    sub_user_id: 'model-user',
+  });
+  expect(client.probe).toHaveBeenCalledWith('t1', {
+    parameters: { city: 'London' },
+    checks: ['quote'],
+    liveBudget: 'metadata',
+    subUserId: 'host-user',
+  });
+  expect(tools.qveris_discover.description).toContain('use qveris_probe');
+  expect(tools.qveris_discover.description).not.toContain('does not expose Probe');
 });

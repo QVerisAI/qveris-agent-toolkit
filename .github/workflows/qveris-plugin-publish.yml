@@ -24,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          node-version: 22.22.3
+          node-version: 24.16.0
           registry-url: https://registry.npmjs.org
 
       - name: Verify package version matches tag
@@ -83,7 +83,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          node-version: 22.22.3
+          node-version: 24.16.0
           registry-url: https://registry.npmjs.org
 
       - name: Load verified release version

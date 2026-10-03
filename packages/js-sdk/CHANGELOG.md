@@ -6,8 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- Require AI SDK 5–7 and Zod 3.25.76 or 4 for the optional adapter; test packed consumer compatibility rather than advertising incompatible AI SDK 4.
+- Expose the additive catalog `updated_at` field.
+- Bound in-memory delegation token caches, evict expired credentials, and prevent exchanges started before clearing the cache from restoring old entries.
+
 ### Added
 
+- Typed Capability Detail and paid Capability Query methods for the published public API; Query is never retried or replayed automatically.
+- Opt-in Probe tools for framework adapters, preserving the default three-tool interface.
 - Public API errors now expose a stable machine-readable `next_action` recovery contract without requiring callers to interpret internal contract metadata.
 
 ## [0.8.4] - 2026-09-09

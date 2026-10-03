@@ -2,7 +2,7 @@
 
 import json
 from dataclasses import dataclass
-from typing import Any, Callable, Coroutine, Dict, List, Optional
+from typing import Any, Callable, Coroutine, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -24,6 +24,21 @@ CALL_DESCRIPTION = (
     "Call a selected QVeris capability with parameters. Reuse only exact routes; rebuild current parameters and Call "
     "again for current/latest/today/time-sensitive data. May consume credits."
 )
+
+PROBE_DESCRIPTION = (
+    "Optionally validate parameters or obtain a current schema/quote without executing a capability. Free. "
+    "A quote does not reserve price or authorize execution; coverage/sample may be unknown."
+)
+
+
+def probe_guidance(description: str, include_probe: bool) -> str:
+    if include_probe:
+        return description.replace(
+            "do not Call until the host obtains it; this three-tool adapter does not expose Probe.",
+            "use qveris_probe to obtain it before Call.",
+        )
+    return description
+
 
 AsyncToolFunction = Callable[..., Coroutine[Any, Any, str]]
 
@@ -57,13 +72,25 @@ class CallArgs(BaseModel):
     )
 
 
+class ProbeArgs(BaseModel):
+    tool_id: str = Field(description="Capability tool ID.")
+    parameters: Dict[str, Any] = Field(default_factory=dict, description="Candidate capability parameters.")
+    checks: List[Literal["schema", "quote", "coverage", "sample"]] = Field(
+        default=["schema"], description="Checks to run without capability execution."
+    )
+    live_budget: Literal["none", "metadata", "sampled"] = Field(
+        default="none", description="Probe metadata budget; does not authorize execution."
+    )
+
+
 @dataclass(frozen=True)
 class QverisWorkflow:
-    """The three async functions shared by every framework adapter."""
+    """Core workflow functions and the optional Probe shared by framework adapters."""
 
     discover: AsyncToolFunction
     inspect: AsyncToolFunction
     call: AsyncToolFunction
+    probe: AsyncToolFunction
 
 
 def serialize_tool_result(result: Any) -> str:
@@ -87,8 +114,9 @@ def build_qveris_workflow(
     session_id: Optional[str] = None,
     model: Optional[str] = None,
     sub_user_id: Optional[str] = None,
+    include_probe: bool = False,
 ) -> QverisWorkflow:
-    """Bind the canonical discover/inspect/call functions to a client."""
+    """Bind the canonical workflow functions to a client."""
 
     if sub_user_id is not None and (not isinstance(sub_user_id, str) or not sub_user_id.strip()):
         raise ValueError("sub_user_id must be a non-empty host-controlled identity.")
@@ -150,4 +178,30 @@ def build_qveris_workflow(
             args["model"] = model
         return await _route("call", args)
 
-    return QverisWorkflow(discover=qveris_discover, inspect=qveris_inspect, call=qveris_call)
+    async def qveris_probe(
+        tool_id: str,
+        parameters: Optional[Dict[str, Any]] = None,
+        checks: Optional[List[Literal["schema", "quote", "coverage", "sample"]]] = None,
+        live_budget: Literal["none", "metadata", "sampled"] = "none",
+    ) -> str:
+        """Validate parameters or obtain a quote without executing a capability.
+
+        :param tool_id: Capability tool ID.
+        :param parameters: Candidate capability parameters.
+        :param checks: Non-executing checks to run.
+        :param live_budget: Probe metadata budget; does not authorize execution.
+        """
+        result = await client.probe(
+            tool_id,
+            parameters=parameters,
+            checks=checks,
+            live_budget=live_budget,
+            **({"sub_user_id": sub_user_id} if sub_user_id is not None else {}),
+            **({"correlation_id": session_id} if session_id is not None else {}),
+        )
+        return serialize_tool_result(result)
+
+    if include_probe:
+        qveris_discover.__doc__ = probe_guidance(qveris_discover.__doc__ or "", True)
+        qveris_inspect.__doc__ = probe_guidance(qveris_inspect.__doc__ or "", True)
+    return QverisWorkflow(discover=qveris_discover, inspect=qveris_inspect, call=qveris_call, probe=qveris_probe)
