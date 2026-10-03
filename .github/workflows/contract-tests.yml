@@ -412,8 +412,8 @@ jobs:
         env:
           CREWAI_STORAGE_DIR: ${{ runner.temp }}/crewai-storage
         run: |
-          uv run --frozen --extra dev --extra crewai python -c "import crewai"
-          uv run --frozen --extra dev --extra crewai pytest -q tests/test_crewai_integration.py tests/test_optional_probe.py -k crewai --junitxml=crewai-results.xml
+          uv run --frozen --extra crewai --group test python -c "import crewai; import importlib.metadata as m; print('crewai', m.version('crewai'), 'provider-sdk', m.version('openai'))"
+          uv run --frozen --extra crewai --group test pytest -q tests/test_crewai_integration.py tests/test_optional_probe.py -k crewai --junitxml=crewai-results.xml
           python - <<'PYCODE'
           import xml.etree.ElementTree as ET
           suites = ET.parse("crewai-results.xml").getroot().iter("testsuite")

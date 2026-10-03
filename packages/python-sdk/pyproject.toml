@@ -81,6 +81,19 @@ dev = [
 [project.urls]
 Changelog = "https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/packages/python-sdk/CHANGELOG.md"
 
+[dependency-groups]
+# Native adapter tests need a small runner group without the other frameworks.
+test = ["pytest", "pytest-asyncio"]
+
+[tool.uv]
+# Current CrewAI uses provider SDK 2; the Agents adapter uses provider SDK 3.
+# Resolve and test those framework environments independently instead of
+# backtracking to an older CrewAI release to satisfy the combined dev extra.
+conflicts = [
+    [{ extra = "crewai" }, { extra = "dev" }],
+    [{ extra = "crewai" }, { extra = "openai-agents" }],
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["qveris"]
 
