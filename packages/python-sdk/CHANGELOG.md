@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Restore Python 3.8 compatibility for client imports and request diagnostics.
 - Reject empty Probe check lists in all framework schemas and the shared workflow.
 - Expose the additive catalog `updated_at` field.
 - Bound in-memory delegation token caches, evict expired credentials, and prevent exchanges started before clearing the cache from restoring old entries.
@@ -17,6 +18,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Typed Capability Detail and paid Capability Query methods for the published public API; Query is never retried or replayed automatically.
 - Opt-in Probe tools for framework adapters, preserving the default three-tool interface.
 - Public SDK exceptions now expose a stable machine-readable `next_action` recovery contract, including settlement reconciliation guidance for uncertain Call outcomes.
+
+### Changed
+
+- Update adapter minimums to Pydantic AI 2.46.0, Agents SDK 0.22.3, and LangChain Core 0.3.86.
 
 ## [0.7.3] - 2026-09-09
 
