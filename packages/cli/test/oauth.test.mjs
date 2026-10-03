@@ -274,7 +274,7 @@ test("Device polling rejects a success response without a refresh token", async 
       {
         fetchImpl: async () =>
           response({
-            access_token: "<fixture-access>\nInjected: value",
+            access_token: "<fixture-access>" + "\nInjected: value",
             refresh_token: "<fixture-refresh>",
             token_type: "Bearer",
             expires_in: 3600,

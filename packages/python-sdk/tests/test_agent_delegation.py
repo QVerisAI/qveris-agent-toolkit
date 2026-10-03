@@ -327,3 +327,87 @@ async def test_delegation_errors_do_not_include_credentials_or_response_body() -
     serialized = f"{error!r} {error} {error.__dict__}"
     assert CLIENT_SECRET not in serialized
     assert SUBJECT_TOKEN not in serialized
+
+
+@pytest.mark.asyncio
+async def test_clear_detaches_exchange_and_prevents_late_cache_write() -> None:
+    started = [asyncio.Event(), asyncio.Event()]
+    release = [asyncio.Event(), asyncio.Event()]
+    requests = 0
+
+    async def handler(_request: httpx.Request) -> httpx.Response:
+        nonlocal requests
+        index = requests
+        requests += 1
+        started[index].set()
+        await release[index].wait()
+        return httpx.Response(200, json=token_payload(access_token=f"fixture-delegation-{index}"))
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        provider = build_provider(client)
+        first = asyncio.create_task(provider.get_credential(CONTEXT))
+        await asyncio.wait_for(started[0].wait(), 1)
+        provider.clear()
+        second = asyncio.create_task(provider.get_credential(CONTEXT))
+        await asyncio.wait_for(started[1].wait(), 1)
+        release[0].set()
+        assert await first == "fixture-delegation-0"
+        third = asyncio.create_task(provider.get_credential(CONTEXT))
+        await asyncio.sleep(0)
+        assert requests == 2
+        release[1].set()
+        assert await second == "fixture-delegation-1"
+        assert await third == "fixture-delegation-1"
+        assert await provider.get_credential(CONTEXT) == "fixture-delegation-1"
+        assert requests == 2
+
+
+@pytest.mark.asyncio
+async def test_cache_bounds_subjects_and_preserves_recent_use() -> None:
+    subject_token = "<fixture-subject-0>"
+    requests = 0
+
+    class RotatingSubject:
+        async def get_credential(self, _context: CredentialContext) -> str:
+            return subject_token
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        nonlocal requests
+        requests += 1
+        return httpx.Response(200, json=token_payload())
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        provider = build_provider(client, RotatingSubject())
+        for index in range(128):
+            subject_token = f"<fixture-subject-{index}>"
+            await provider.get_credential(CONTEXT)
+        for index in (0, 128, 0):
+            subject_token = f"<fixture-subject-{index}>"
+            await provider.get_credential(CONTEXT)
+        assert requests == 129
+        subject_token = "<fixture-subject-1>"
+        await provider.get_credential(CONTEXT)
+        assert requests == 130
+
+
+@pytest.mark.asyncio
+async def test_expired_subject_entries_are_evicted(monkeypatch: pytest.MonkeyPatch) -> None:
+    import qveris.credentials as credentials
+
+    now = 1000.0
+    monkeypatch.setattr(credentials.time, "monotonic", lambda: now)
+    subject_token = "<fixture-subject-old>"
+
+    class RotatingSubject:
+        async def get_credential(self, _context: CredentialContext) -> str:
+            return subject_token
+
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(lambda _: httpx.Response(200, json=token_payload(expires_in=10)))
+    ) as client:
+        provider = build_provider(client, RotatingSubject())
+        await provider.get_credential(CONTEXT)
+        now += 10
+        subject_token = "<fixture-subject-new>"
+        await provider.get_credential(CONTEXT)
+        assert len(provider._cached) == 1

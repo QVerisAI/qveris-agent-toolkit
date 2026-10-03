@@ -19,6 +19,8 @@ from pydantic import ValidationError
 ROOT = Path(__file__).resolve().parents[3]
 SCHEMAS = json.loads((ROOT / "docs/openapi/qveris-public-api.openapi.json").read_text())["components"]["schemas"]
 MODELS = {
+    "PublicCapabilityDetailResponse": types.CapabilityDetailResponse,
+    "PublicCapabilityQueryResponse": types.CapabilityQueryResponse,
     "PublicExecuteToolResponse": types.ToolExecutionResponse,
     "ValidationError": types.ValidationIssue,
     "PublicCapabilityResult": types.ToolInfo,

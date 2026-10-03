@@ -131,3 +131,16 @@ Agent
 .. autoclass:: qveris.UsageHistoryResponse
    :members:
    :exclude-members: model_config
+
+
+.. autoclass:: qveris.CapabilityDetailResponse
+   :members:
+   :exclude-members: model_config
+
+.. autoclass:: qveris.CapabilityQueryRequest
+   :members:
+   :exclude-members: model_config
+
+.. autoclass:: qveris.CapabilityQueryResponse
+   :members:
+   :exclude-members: model_config

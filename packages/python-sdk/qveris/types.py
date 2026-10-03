@@ -1,6 +1,15 @@
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field, JsonValue, PrivateAttr, ValidationError, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    JsonValue,
+    PrivateAttr,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from .errors import RequestMetadata
 
@@ -218,6 +227,7 @@ class ToolStats(QverisModel):
 
 
 class ToolInfo(QverisModel):
+    updated_at: Optional[str] = None
     tool_name: Optional[str] = None
     cost: Optional[Union[float, str]] = None
     calls_count: Optional[str] = None
@@ -528,3 +538,66 @@ class ChatResponse(QverisModel):
     tool_calls: Optional[List[Dict[str, Any]]] = None
     metrics: Optional[Dict[str, Any]] = None
     reasoning_details: Optional[Any] = None
+
+
+class CapabilityDetailResponse(QverisModel):
+    """Published CAP contract, including current verification and restrictions."""
+
+    capability_id: str
+    name: Optional[str] = None
+    description: Optional[str] = None
+    params: Optional[List[Dict[str, Any]]] = None
+    field_spec: Optional[Dict[str, Any]] = None
+    contract_version: Optional[int] = None
+    schema_hash: Optional[str] = None
+    verification_status: Literal["unverified", "verifying", "verified", "stale", "failed", "restricted"]
+    verification: CatalogVerification
+    execution_restrictions: ExecutionRestrictions
+    remaining_credits: Optional[float] = None
+
+
+class CapabilityQueryRequest(BaseModel):
+    """Wire request for a paid CAP Query. Unknown request fields are rejected."""
+
+    model_config = ConfigDict(extra="forbid")
+    capability_id: Optional[str] = None
+    query: Optional[str] = None
+    parameters: Optional[Dict[str, Any]] = None
+    params: Optional[Dict[str, Any]] = None
+    session_id: Optional[str] = None
+    search_id: Optional[str] = None
+    run_id: Optional[str] = None
+    provider_id: Optional[str] = None
+    provider_ids: Optional[List[str]] = None
+    max_response_size: Optional[int] = Field(default=None, ge=-1)
+    max_credits: Optional[float] = Field(default=None, gt=0, allow_inf_nan=False)
+
+    @model_validator(mode="after")
+    def has_selector(self):
+        if self.capability_id is None and self.query is None:
+            raise ValueError("capability_id or query is required")
+        return self
+
+    @field_validator("capability_id", "query")
+    @classmethod
+    def non_empty_selector(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and not value.strip():
+            raise ValueError("CAP selector must be non-empty")
+        return value
+
+
+class CapabilityQueryResponse(QverisModel):
+    """Execution identity and contract used by a paid CAP Query."""
+
+    execution_id: str
+    success: bool
+    capability_id: Optional[str] = None
+    parameters: Optional[Dict[str, Any]] = None
+    result: Optional[Dict[str, Any]] = None
+    error_message: Optional[str] = None
+    billing: Optional[Dict[str, Any]] = None
+    cost: Optional[float] = None
+    credits_used: Optional[float] = None
+    remaining_credits: Optional[float] = None
+    contract_version: Optional[int] = None
+    schema_hash: Optional[str] = None
