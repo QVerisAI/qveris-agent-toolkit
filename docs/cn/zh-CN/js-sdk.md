@@ -259,6 +259,26 @@ try {
 
 > `@qverisai/sdk` 的 `0.1.x` 版本是早期以 MCP 为中心的 SDK，现已被 [`@qverisai/mcp`](mcp-server.md) 取代。本文档所述的类型化 REST 客户端从 **`0.2.0`** 起。
 
+## 能力契约与可选 Probe 工具
+
+Capability Detail 读取已发布的 CAP 契约。Capability Query 执行 CAP，可能消耗积分。`max_credits` 是支出上限，不是预留报价。Query 只提交一次；HTTP 错误、超时、重定向或无效成功响应都不会触发自动重试。执行结果不确定时，先核查用量和结算，再决定是否重新提交。Resolve 和 selection token 接口需等待公开契约后才提供。
+
+适配器默认返回 Discover、Inspect、Call 三个工具。需要参数预检或当前 schema/quote 时可启用 Probe；Probe 不执行能力，也不预留价格。Probe 与 Call 使用相同的宿主控制用户身份。适配器示例使用 `@qverisai/sdk/ai`。执行前检查 CAP 参数和限制，构造当前有效参数；示例假定所检查契约支持下列 symbol 参数。
+
+```typescript
+import { getQverisTools } from '@qverisai/sdk/ai';
+
+const contract = await qveris.capabilityDetail('MKT.BARS.EOD');
+const outcome = await qveris.capabilityQuery({
+  capability_id: contract.capability_id,
+  parameters: { symbol: 'AAPL' },
+  max_credits: 10,
+});
+const tools = getQverisTools(qveris, { includeProbe: true });
+```
+
+可选 AI 适配器支持 AI SDK 5–7，以及 Zod 3.25.76 或 4；AI SDK 4 使用不同的工具 schema 接口。
+
 ## 链接
 
 - 包：[npm 上的 `@qverisai/sdk`](https://www.npmjs.com/package/@qverisai/sdk)

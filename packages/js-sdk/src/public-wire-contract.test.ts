@@ -28,6 +28,8 @@ const delivery = JSON.parse(readFileSync(resolve('../../contracts/result-deliver
   }>;
 };
 const models: Record<string, string> = {
+  PublicCapabilityDetailResponse: 'CapabilityDetailResponse',
+  PublicCapabilityQueryResponse: 'CapabilityQueryResponse',
   PublicExecuteToolResponse: 'ExecuteResponse',
   ValidationError: 'ValidationIssue',
   PublicCapabilityResult: 'ToolInfo',

@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- Expose the additive catalog `updated_at` field, matching the SDK contract surfaces.
+
 ### Added
 
 - MCP success/error payloads now include machine-readable `next_action` guidance for authentication, required parameters, billing, retries, and unknown Call settlement.

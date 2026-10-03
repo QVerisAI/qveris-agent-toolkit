@@ -407,6 +407,58 @@ final charges are reflected in usage() and ledger().
 
 `Promise`\<[`ExecuteResponse`](#executeresponse)\>
 
+##### capabilityDetail()
+
+> **capabilityDetail**(`capabilityId`, `options?`): `Promise`\<[`CapabilityDetailResponse`](#capabilitydetailresponse)\>
+
+Inspect a published CAP contract. This operation does not execute it.
+
+###### Parameters
+
+###### capabilityId
+
+`string`
+
+###### options?
+
+###### providerId?
+
+`string`
+
+###### runId?
+
+`string`
+
+###### timeoutMs?
+
+`number`
+
+###### Returns
+
+`Promise`\<[`CapabilityDetailResponse`](#capabilitydetailresponse)\>
+
+##### capabilityQuery()
+
+> **capabilityQuery**(`request`, `options?`): `Promise`\<[`CapabilityQueryResponse`](#capabilityqueryresponse)\>
+
+Execute a published CAP Query once. A budget is a ceiling, not a reserved quote.
+
+###### Parameters
+
+###### request
+
+[`CapabilityQueryRequest`](#capabilityqueryrequest)
+
+###### options?
+
+###### timeoutMs?
+
+`number`
+
+###### Returns
+
+`Promise`\<[`CapabilityQueryResponse`](#capabilityqueryresponse)\>
+
 ##### credits()
 
 > **credits**(): `Promise`\<[`CreditsResponse`](#creditsresponse)\>
@@ -1172,6 +1224,114 @@ End-user identity for provider OAuth; use the same value for Probe and Call.
 > `optional` **timeoutMs?**: `number`
 
 Per-request timeout override in milliseconds (default 120s)
+
+***
+
+### CapabilityDetailResponse
+
+Published CAP contract; version/hash may be absent on legacy records.
+
+#### Properties
+
+##### capability\_id
+
+> **capability\_id**: `string`
+
+##### contract\_version?
+
+> `optional` **contract\_version?**: `number`
+
+##### description?
+
+> `optional` **description?**: `string`
+
+##### execution\_restrictions
+
+> **execution\_restrictions**: [`ExecutionRestrictions`](#executionrestrictions)
+
+##### field\_spec?
+
+> `optional` **field\_spec?**: `Record`\<`string`, `unknown`\>
+
+##### name?
+
+> `optional` **name?**: `string`
+
+##### params?
+
+> `optional` **params?**: `Record`\<`string`, `unknown`\>[]
+
+##### remaining\_credits?
+
+> `optional` **remaining\_credits?**: `number` \| `null`
+
+##### schema\_hash?
+
+> `optional` **schema\_hash?**: `string`
+
+##### verification
+
+> **verification**: [`CatalogVerification`](#catalogverification)
+
+##### verification\_status
+
+> **verification\_status**: [`VerificationStatus`](#verificationstatus)
+
+***
+
+### CapabilityQueryResponse
+
+Execution identity and the exact contract used for a paid CAP Query.
+
+#### Properties
+
+##### billing?
+
+> `optional` **billing?**: `Record`\<`string`, `unknown`\>
+
+##### capability\_id?
+
+> `optional` **capability\_id?**: `string`
+
+##### contract\_version?
+
+> `optional` **contract\_version?**: `number`
+
+##### cost?
+
+> `optional` **cost?**: `number` \| `null`
+
+##### credits\_used?
+
+> `optional` **credits\_used?**: `number` \| `null`
+
+##### error\_message?
+
+> `optional` **error\_message?**: `string` \| `null`
+
+##### execution\_id
+
+> **execution\_id**: `string`
+
+##### parameters?
+
+> `optional` **parameters?**: `Record`\<`string`, `unknown`\>
+
+##### remaining\_credits?
+
+> `optional` **remaining\_credits?**: `number` \| `null`
+
+##### result?
+
+> `optional` **result?**: `Record`\<`string`, `unknown`\>
+
+##### schema\_hash?
+
+> `optional` **schema\_hash?**: `string`
+
+##### success
+
+> **success**: `boolean`
 
 ***
 
@@ -2285,6 +2445,68 @@ End-user identity for provider OAuth readiness checks.
 
 ***
 
+### QverisAdapterOptions
+
+#### Properties
+
+##### includeProbe?
+
+> `optional` **includeProbe?**: `boolean`
+
+##### model?
+
+> `optional` **model?**: `string`
+
+##### sessionId?
+
+> `optional` **sessionId?**: `string`
+
+##### subUserId?
+
+> `optional` **subUserId?**: `string`
+
+***
+
+### QverisAdapterTool
+
+Stable structural tool shape shared by the supported AI SDK versions.
+
+#### Type Parameters
+
+##### Input
+
+`Input`
+
+##### Output
+
+`Output`
+
+#### Properties
+
+##### description
+
+> **description**: `string`
+
+##### execute
+
+> **execute**: (`input`) => `Promise`\<`Output`\>
+
+###### Parameters
+
+###### input
+
+`Input`
+
+###### Returns
+
+`Promise`\<`Output`\>
+
+##### inputSchema
+
+> **inputSchema**: `ZodType`\<`Input`\>
+
+***
+
 ### QverisClientConfig
 
 Configuration options for the Qveris API client.
@@ -2758,6 +2980,12 @@ Unique identifier for the tool (used in call)
 
 > `optional` **tool\_name?**: `string`
 
+##### updated\_at?
+
+> `optional` **updated\_at?**: `string`
+
+Last catalog update timestamp, when available.
+
 ##### verification
 
 > **verification**: [`CatalogVerification`](#catalogverification)
@@ -3188,9 +3416,55 @@ Response from the Execute Tool API.
 
 ### ApiOperation
 
-> **ApiOperation** = `"discover"` \| `"inspect"` \| `"probe"` \| `"call"` \| `"credits"` \| `"usage_history"` \| `"credits_ledger"`
+> **ApiOperation** = `"discover"` \| `"inspect"` \| `"probe"` \| `"call"` \| `"credits"` \| `"usage_history"` \| `"credits_ledger"` \| `"capability_detail"` \| `"capability_query"`
 
 Error response from the Qveris API.
+
+***
+
+### CapabilityQueryRequest
+
+> **CapabilityQueryRequest** = \{ `capability_id`: `string`; `query?`: `string`; \} \| \{ `capability_id?`: `string`; `query`: `string`; \} & `object`
+
+Wire request for the published paid CAP Query endpoint.
+
+#### Type Declaration
+
+##### max\_credits?
+
+> `optional` **max\_credits?**: `number`
+
+##### max\_response\_size?
+
+> `optional` **max\_response\_size?**: `number`
+
+##### parameters?
+
+> `optional` **parameters?**: `Record`\<`string`, `unknown`\>
+
+##### params?
+
+> `optional` **params?**: `Record`\<`string`, `unknown`\>
+
+##### provider\_id?
+
+> `optional` **provider\_id?**: `string`
+
+##### provider\_ids?
+
+> `optional` **provider\_ids?**: `string`[]
+
+##### run\_id?
+
+> `optional` **run\_id?**: `string`
+
+##### search\_id?
+
+> `optional` **search\_id?**: `string` \| `null`
+
+##### session\_id?
+
+> `optional` **session\_id?**: `string` \| `null`
 
 ***
 
@@ -3260,6 +3534,38 @@ OAuth scopes forwarded to credential providers.
 
 ***
 
+### QverisDefaultTools
+
+> **QverisDefaultTools** = `object`
+
+#### Properties
+
+##### qveris\_call
+
+> **qveris\_call**: [`QverisAdapterTool`](#qverisadaptertool)\<\{ `max_response_size?`: `number`; `params_to_tool?`: `Record`\<`string`, `unknown`\>; `search_id?`: `string`; `tool_id`: `string`; \}, `Awaited`\<`ReturnType`\<[`Qveris`](#qveris)\[`"call"`\]\>\>\>
+
+##### qveris\_discover
+
+> **qveris\_discover**: [`QverisAdapterTool`](#qverisadaptertool)\<\{ `limit?`: `number`; `query`: `string`; \}, `Awaited`\<`ReturnType`\<[`Qveris`](#qveris)\[`"discover"`\]\>\>\>
+
+##### qveris\_inspect
+
+> **qveris\_inspect**: [`QverisAdapterTool`](#qverisadaptertool)\<\{ `search_id?`: `string`; `tool_ids`: `string`[]; \}, `Awaited`\<`ReturnType`\<[`Qveris`](#qveris)\[`"inspect"`\]\>\>\>
+
+***
+
+### QverisProbeTools
+
+> **QverisProbeTools** = [`QverisDefaultTools`](#qverisdefaulttools) & `object`
+
+#### Type Declaration
+
+##### qveris\_probe
+
+> **qveris\_probe**: [`QverisAdapterTool`](#qverisadaptertool)\<\{ `checks?`: (`"schema"` \| `"quote"` \| `"coverage"` \| `"sample"`)[]; `live_budget?`: `"none"` \| `"metadata"` \| `"sampled"`; `parameters?`: `Record`\<`string`, `unknown`\>; `tool_id`: `string`; \}, `Awaited`\<`ReturnType`\<[`Qveris`](#qveris)\[`"probe"`\]\>\>\>
+
+***
+
 ### ToolParameterContract
 
 > **ToolParameterContract** = [`ToolParameter`](#toolparameter)[] \| [`JsonValue`](#jsonvalue)
@@ -3282,49 +3588,52 @@ A legacy parameter-definition list or any provider-owned JSON contract.
 
 ### getQverisTools()
 
-> **getQverisTools**(`qveris`, `options?`): `object`
-
 Build Vercel AI SDK tools for the shortest-safe QVeris workflow.
 
-#### Parameters
+#### Param
 
-##### qveris
-
-[`Qveris`](#qveris)
+**qveris**
 
 The Qveris client to route calls through.
 
-##### options?
+#### Param
+
+**options**
 
 Host-controlled OAuth identity plus optional session and model metadata.
 
-###### model?
+#### Call Signature
 
-`string`
+> **getQverisTools**(`qveris`, `options`): [`QverisProbeTools`](#qverisprobetools)
 
-###### sessionId?
+##### Parameters
 
-`string`
+###### qveris
 
-###### subUserId?
+[`Qveris`](#qveris)
 
-`string`
+###### options
 
-#### Returns
+[`QverisAdapterOptions`](#qverisadapteroptions) & `object`
 
-`object`
+##### Returns
 
-A tools object keyed by `qveris_discover` / `qveris_inspect` /
-  `qveris_call`, ready to pass to `generateText`/`streamText`.
+[`QverisProbeTools`](#qverisprobetools)
 
-##### qveris\_call
+#### Call Signature
 
-> **qveris\_call**: `object` & `object` & `object` & `object` & `object` \| `never` \| `object` & `object` & `object` & `object` & `object` \| `never` \| `object` & `object` & `object` & `object` & `object` \| `never` \| `object` & `object` & `object` & `object` & `object` \| `never`
+> **getQverisTools**(`qveris`, `options?`): [`QverisDefaultTools`](#qverisdefaulttools)
 
-##### qveris\_discover
+##### Parameters
 
-> **qveris\_discover**: `object` & `object` & `object` & `object` & `object` \| `never` \| `object` & `object` & `object` & `object` & `object` \| `never` \| `object` & `object` & `object` & `object` & `object` \| `never` \| `object` & `object` & `object` & `object` & `object` \| `never`
+###### qveris
 
-##### qveris\_inspect
+[`Qveris`](#qveris)
 
-> **qveris\_inspect**: `never` \| `object` & `object` & `object` & `object` & `object` \| `never` \| `object` & `object` & `object` & `object` & `object` \| `never` \| `object` & `object` & `object` & `object` & `object` \| `never` \| `object` & `object` & `object` & `object` & `object`
+###### options?
+
+[`QverisAdapterOptions`](#qverisadapteroptions)
+
+##### Returns
+
+[`QverisDefaultTools`](#qverisdefaulttools)
