@@ -279,7 +279,7 @@ class QverisClient:
         await self._await_task_completion(cleanup_task)
 
     @staticmethod
-    async def _await_task_completion(task: asyncio.Task[None]) -> None:
+    async def _await_task_completion(task: "asyncio.Task[None]") -> None:
         """Wait for an internal cleanup task before propagating caller cancellation."""
         pending_cancellation: Optional[asyncio.CancelledError] = None
         while not task.done():
@@ -609,7 +609,7 @@ class QverisClient:
             safe_text = _BEARER_PATTERN.sub("Bearer ***", value)
             safe_text = _API_KEY_PATTERN.sub("***", safe_text)
 
-            def redact_signed_url(match: re.Match[str]) -> str:
+            def redact_signed_url(match: "re.Match[str]") -> str:
                 url = match.group(0)
                 return "***" if any(marker in url.lower() for marker in _SIGNED_URL_MARKERS) else url
 
