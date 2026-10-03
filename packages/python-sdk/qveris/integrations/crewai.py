@@ -35,6 +35,9 @@ from pydantic import BaseModel
 
 from ..client.api import QverisClient
 from ._workflow import (
+    PROBE_DESCRIPTION,
+    ProbeArgs,
+    probe_guidance,
     CALL_DESCRIPTION,
     DISCOVER_DESCRIPTION,
     INSPECT_DESCRIPTION,
@@ -112,6 +115,7 @@ def get_qveris_tools(
     session_id: Optional[str] = None,
     model: Optional[str] = None,
     sub_user_id: Optional[str] = None,
+    include_probe: bool = False,
 ) -> List[Any]:
     """Return CrewAI tools for the QVeris discover/inspect/call workflow.
 
@@ -135,11 +139,13 @@ def get_qveris_tools(
     except ImportError as exc:  # pragma: no cover - exercised via install extras
         raise ImportError(_INSTALL_HINT) from exc
 
-    workflow = build_qveris_workflow(client, session_id=session_id, model=model, sub_user_id=sub_user_id)
+    workflow = build_qveris_workflow(
+        client, session_id=session_id, model=model, sub_user_id=sub_user_id, include_probe=include_probe
+    )
 
     class QverisDiscoverTool(BaseTool):
         name: str = "qveris_discover"
-        description: str = DISCOVER_DESCRIPTION
+        description: str = probe_guidance(DISCOVER_DESCRIPTION, include_probe)
         args_schema: Type[BaseModel] = DiscoverArgs
 
         def _run(self, query: str, limit: int = 20) -> str:
@@ -150,7 +156,7 @@ def get_qveris_tools(
 
     class QverisInspectTool(BaseTool):
         name: str = "qveris_inspect"
-        description: str = INSPECT_DESCRIPTION
+        description: str = probe_guidance(INSPECT_DESCRIPTION, include_probe)
         args_schema: Type[BaseModel] = InspectArgs
 
         def _run(self, tool_ids: List[str], search_id: Optional[str] = None) -> str:
@@ -196,4 +202,35 @@ def get_qveris_tools(
                 )
             )
 
-    return [QverisDiscoverTool(), QverisInspectTool(), QverisCallTool()]
+    class QverisProbeTool(BaseTool):
+        name: str = "qveris_probe"
+        description: str = PROBE_DESCRIPTION
+        args_schema: Type[BaseModel] = ProbeArgs
+
+        def _run(
+            self,
+            tool_id: str,
+            parameters: Optional[Dict[str, Any]] = None,
+            checks: Optional[List[str]] = None,
+            live_budget: str = "none",
+        ) -> str:
+            return _run_sync(
+                workflow.probe(tool_id=tool_id, parameters=parameters, checks=checks, live_budget=live_budget)
+            )
+
+        async def _arun(
+            self,
+            tool_id: str,
+            parameters: Optional[Dict[str, Any]] = None,
+            checks: Optional[List[str]] = None,
+            live_budget: str = "none",
+        ) -> str:
+            return await _run_async(
+                workflow.probe(tool_id=tool_id, parameters=parameters, checks=checks, live_budget=live_budget)
+            )
+
+    tools = [QverisDiscoverTool(), QverisInspectTool(), QverisCallTool()]
+
+    if include_probe:
+        tools.append(QverisProbeTool())
+    return tools

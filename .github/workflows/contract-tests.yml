@@ -17,8 +17,7 @@ on:
       - "package-lock.json"
       - "docs/openapi/**"
       - "contracts/**"
-      - "scripts/result-delivery-contract.test.mjs"
-      - "scripts/public-capability-contract.test.mjs"
+      - "scripts/**"
       - "packages/cli/src/**"
       - "packages/cli/test/**"
       - "packages/cli/scripts/**"
@@ -42,7 +41,8 @@ on:
       - "packages/mcp/schemas/**"
       - "packages/mcp/package.json"
       - "packages/mcp/package-lock.json"
-      - "packages/mcp/tsconfig.json"
+      - "packages/*/tsconfig*.json"
+      - "packages/*/vitest.config.*"
       - "packages/openclaw-qveris-plugin/**"
       - "packages/js-sdk/examples/**"
       - "packages/js-sdk/tsconfig.examples.json"
@@ -92,12 +92,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
-      - name: Test the affected-target planner
-        run: node --test scripts/plan-contract-tests.test.mjs
-      - name: Test conditional-routing guidance contracts
-        run: node --test scripts/conditional-routing-contracts.test.mjs
-      - name: Test public capability and result-delivery contracts
-        run: node --test scripts/public-capability-contract.test.mjs scripts/result-delivery-contract.test.mjs
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22.22.3
+      - name: Test repository scripts
+        run: npm run test:scripts
       - name: Classify changed targets
         id: plan
         env:
@@ -199,7 +198,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          node-version: 20
+          node-version: 22.22.3
           cache: "npm"
           cache-dependency-path: packages/js-sdk/package-lock.json
       - name: Install dependencies
@@ -282,7 +281,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          node-version: 22.22.3
+          node-version: 24.16.0
           cache: "npm"
           cache-dependency-path: packages/openclaw-qveris-plugin/package-lock.json
       - name: Install dependencies
@@ -322,7 +321,7 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         if: needs.plan.outputs.lint_mcp == 'true' || needs.plan.outputs.lint_js == 'true' || needs.plan.outputs.lint_cli == 'true' || needs.plan.outputs.lint_plugin == 'true'
         with:
-          node-version: 22.22.3
+          node-version: ${{ needs.plan.outputs.lint_plugin == 'true' && '24.16.0' || '22.22.3' }}
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         if: needs.plan.outputs.lint_python == 'true'
         with:
@@ -363,3 +362,56 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Shellcheck CLI example scripts
         run: shellcheck packages/cli/examples/*.sh
+  ai-adapter-compatibility:
+    needs: plan
+    if: needs.plan.outputs.js == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ai: "5.0.0"
+            zod: "3.25.76"
+          - ai: "5.0.0"
+            zod: "4.0.0"
+          - ai: "6"
+            zod: "3.25.76"
+          - ai: "6"
+            zod: "4"
+          - ai: "7"
+            zod: "3.25.76"
+          - ai: "7"
+            zod: "4"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24.16.0
+      - run: npm --prefix packages/js-sdk ci
+      - run: npm run test:ai-compatibility -- "${{ matrix.ai }}" "${{ matrix.zod }}"
+
+  crewai-adapter:
+    needs: plan
+    if: needs.plan.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/python-sdk
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.11"
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: Require CrewAI extra and run its native integration tests
+        env:
+          CREWAI_STORAGE_DIR: ${{ runner.temp }}/crewai-storage
+        run: |
+          uv run --frozen --extra dev --extra crewai python -c "import crewai"
+          uv run --frozen --extra dev --extra crewai pytest -q tests/test_crewai_integration.py tests/test_optional_probe.py -k crewai --junitxml=crewai-results.xml
+          python - <<'PYCODE'
+          import xml.etree.ElementTree as ET
+          suites = ET.parse("crewai-results.xml").getroot().iter("testsuite")
+          counts = [(int(s.get("tests", "0")), int(s.get("skipped", "0"))) for s in suites]
+          assert sum(n for n, _ in counts) > 0 and sum(s for _, s in counts) == 0, counts
+          PYCODE

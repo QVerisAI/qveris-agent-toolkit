@@ -45,8 +45,8 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "c8": "^11.0.0",
-    "eslint": "^10.6.0",
+    "eslint": "^10.11.0",
     "globals": "^17.7.0",
-    "prettier": "^3.9.5"
+    "prettier": "^3.9.8"
   }
 }

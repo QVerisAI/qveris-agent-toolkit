@@ -14,6 +14,9 @@ from typing import Any, Callable, List, Optional
 
 from ..client.api import QverisClient
 from ._workflow import (
+    PROBE_DESCRIPTION,
+    ProbeArgs,
+    probe_guidance,
     CALL_DESCRIPTION,
     DISCOVER_DESCRIPTION,
     INSPECT_DESCRIPTION,
@@ -49,6 +52,7 @@ def get_qveris_tools(
     session_id: Optional[str] = None,
     model: Optional[str] = None,
     sub_user_id: Optional[str] = None,
+    include_probe: bool = False,
 ) -> List[Any]:
     """Return LlamaIndex tools for the QVeris discover/inspect/call workflow.
 
@@ -73,21 +77,23 @@ def get_qveris_tools(
     except ImportError as exc:  # pragma: no cover - exercised via install extras
         raise ImportError(_INSTALL_HINT) from exc
 
-    workflow = build_qveris_workflow(client, session_id=session_id, model=model, sub_user_id=sub_user_id)
+    workflow = build_qveris_workflow(
+        client, session_id=session_id, model=model, sub_user_id=sub_user_id, include_probe=include_probe
+    )
 
-    return [
+    tools = [
         FunctionTool.from_defaults(
             fn=_reject_sync_call(workflow.discover),
             async_fn=workflow.discover,
             name="qveris_discover",
-            description=DISCOVER_DESCRIPTION,
+            description=probe_guidance(DISCOVER_DESCRIPTION, include_probe),
             fn_schema=DiscoverArgs,
         ),
         FunctionTool.from_defaults(
             fn=_reject_sync_call(workflow.inspect),
             async_fn=workflow.inspect,
             name="qveris_inspect",
-            description=INSPECT_DESCRIPTION,
+            description=probe_guidance(INSPECT_DESCRIPTION, include_probe),
             fn_schema=InspectArgs,
         ),
         FunctionTool.from_defaults(
@@ -98,3 +104,15 @@ def get_qveris_tools(
             fn_schema=CallArgs,
         ),
     ]
+
+    if include_probe:
+        tools.append(
+            FunctionTool.from_defaults(
+                fn=_reject_sync_call(workflow.probe),
+                async_fn=workflow.probe,
+                name="qveris_probe",
+                description=PROBE_DESCRIPTION,
+                fn_schema=ProbeArgs,
+            )
+        )
+    return tools

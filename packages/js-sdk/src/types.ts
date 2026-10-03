@@ -249,6 +249,9 @@ export interface ToolInfo {
   /** Stable public service identity when the backend can prove provider equivalence. */
   service_id?: string;
 
+  /** Last catalog update timestamp, when available. */
+  updated_at?: string;
+
   /** Human-readable display name */
   name?: string;
 
@@ -829,7 +832,16 @@ export interface QverisClientConfig {
 /**
  * Error response from the Qveris API.
  */
-export type ApiOperation = 'discover' | 'inspect' | 'probe' | 'call' | 'credits' | 'usage_history' | 'credits_ledger';
+export type ApiOperation =
+  | 'discover'
+  | 'inspect'
+  | 'probe'
+  | 'call'
+  | 'credits'
+  | 'usage_history'
+  | 'credits_ledger'
+  | 'capability_detail'
+  | 'capability_query';
 export type ApiErrorType = 'http_error' | 'invalid_json' | 'invalid_response' | 'timeout' | 'network_error';
 
 export interface NextAction {
@@ -871,4 +883,50 @@ export interface ApiError {
 
   /** Stable recovery guidance; callers do not need internal contract versions or evidence digests. */
   next_action?: NextAction;
+}
+
+/** Published CAP contract; version/hash may be absent on legacy records. */
+export interface CapabilityDetailResponse {
+  capability_id: string;
+  name?: string;
+  description?: string;
+  params?: Array<Record<string, unknown>>;
+  field_spec?: Record<string, unknown>;
+  contract_version?: number;
+  schema_hash?: string;
+  verification_status: VerificationStatus;
+  verification: CatalogVerification;
+  execution_restrictions: ExecutionRestrictions;
+  remaining_credits?: number | null;
+}
+
+/** Wire request for the published paid CAP Query endpoint. */
+export type CapabilityQueryRequest = (
+  { capability_id: string; query?: string } | { query: string; capability_id?: string }
+) & {
+  parameters?: Record<string, unknown>;
+  params?: Record<string, unknown>;
+  session_id?: string | null;
+  search_id?: string | null;
+  run_id?: string;
+  provider_id?: string;
+  provider_ids?: string[];
+  max_response_size?: number;
+  max_credits?: number;
+};
+
+/** Execution identity and the exact contract used for a paid CAP Query. */
+export interface CapabilityQueryResponse {
+  execution_id: string;
+  success: boolean;
+  capability_id?: string;
+  parameters?: Record<string, unknown>;
+  result?: Record<string, unknown>;
+  error_message?: string | null;
+  billing?: Record<string, unknown>;
+  cost?: number | null;
+  credits_used?: number | null;
+  remaining_credits?: number | null;
+  contract_version?: number;
+  schema_hash?: string;
 }

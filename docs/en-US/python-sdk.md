@@ -536,6 +536,25 @@ Capability examples run `discover`/`inspect` when `QVERIS_API_KEY` is set, and o
 - Deprecated aliases remain for at least one minor release after a canonical replacement ships.
 - Breaking changes require a major version bump and migration notes.
 
+## Capability contracts and optional Probe tools
+
+Capability Detail reads a published CAP contract. Capability Query executes a CAP and may consume credits. `max_credits` is a spending ceiling, not a reserved quote. Query submits once, including after HTTP errors, timeouts, redirects, or an invalid success response. For an uncertain outcome, review usage and settlement before submitting another Query. Resolve and selection-token APIs are not exposed until their public contracts are available.
+
+The adapter returns Discover, Inspect, and Call by default. Enable Probe when the agent needs parameter validation or a current schema/quote; Probe does not execute the capability or reserve its price. Probe uses the same host-controlled end-user identity as Call. The adapter example uses LangChain; install `qveris[langchain]` first. Inspect the CAP's parameters and restrictions and construct valid current parameters before executing it; the example assumes the inspected contract supports the symbol below.
+
+```python
+from qveris import CapabilityQueryRequest
+from qveris.integrations.langchain import get_qveris_tools
+
+contract = await client.capability_detail("MKT.BARS.EOD")
+outcome = await client.capability_query(CapabilityQueryRequest(
+    capability_id=contract.capability_id,
+    parameters={"symbol": "AAPL"},
+    max_credits=10,
+))
+tools = get_qveris_tools(client, include_probe=True)
+```
+
 ## Links
 
 - Package: [`qveris` on PyPI](https://pypi.org/project/qveris/)

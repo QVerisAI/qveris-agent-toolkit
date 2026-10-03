@@ -17,5 +17,15 @@ jobs:
       - uses: hashgraph-online/ai-plugin-scanner-action@edec9ae765c5bbd01bca060359acc3d2e90bea09 # v1.2.724
         with:
           plugin_dir: "."
+          format: json
+          output: scanner-report.json
           min_score: 80
           fail_on_severity: high
+
+      - name: Preserve scanner findings even when the threshold fails
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: plugin-scanner-report
+          path: scanner-report.json
+          if-no-files-found: warn
