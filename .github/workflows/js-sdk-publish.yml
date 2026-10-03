@@ -21,11 +21,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        node-version: [18, 20, 22]
+        # Preserve the core SDK runtime matrix; peer-specific adapter consumers
+        # are tested separately with the runtime required by their AI SDK.
+        node-version: [18, 20, 22, 24]
         include:
           # Windows coverage on the LTS line only (issue #113).
           - os: windows-latest
-            node-version: 20
+            node-version: 22.22.3
 
     steps:
       - name: Checkout
@@ -67,7 +69,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          node-version: 20
+          node-version: 22.22.3
           registry-url: https://registry.npmjs.org
 
       - name: Verify package version matches tag

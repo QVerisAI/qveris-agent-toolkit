@@ -522,6 +522,25 @@ agent = Agent(llm_provider=MyProvider())
 - 规范方法替代上线后，弃用别名至少保留一个小版本。
 - 破坏性变更需要主版本号升级并附迁移说明。
 
+## 能力契约与可选 Probe 工具
+
+Capability Detail 读取已发布的 CAP 契约。Capability Query 执行 CAP，可能消耗积分。`max_credits` 是支出上限，不是预留报价。Query 只提交一次；HTTP 错误、超时、重定向或无效成功响应都不会触发自动重试。执行结果不确定时，先核查用量和结算，再决定是否重新提交。Resolve 和 selection token 接口需等待公开契约后才提供。
+
+适配器默认返回 Discover、Inspect、Call 三个工具。需要参数预检或当前 schema/quote 时可启用 Probe；Probe 不执行能力，也不预留价格。Probe 与 Call 使用相同的宿主控制用户身份。适配器示例使用 LangChain，需先安装 `qveris[langchain]`。执行前检查 CAP 参数和限制，构造当前有效参数；示例假定所检查契约支持下列 symbol 参数。
+
+```python
+from qveris import CapabilityQueryRequest
+from qveris.integrations.langchain import get_qveris_tools
+
+contract = await client.capability_detail("MKT.BARS.EOD")
+outcome = await client.capability_query(CapabilityQueryRequest(
+    capability_id=contract.capability_id,
+    parameters={"symbol": "AAPL"},
+    max_credits=10,
+))
+tools = get_qveris_tools(client, include_probe=True)
+```
+
 ## 链接
 
 - 包：[PyPI 上的 `qveris`](https://pypi.org/project/qveris/)

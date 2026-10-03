@@ -37,8 +37,8 @@ export class QverisApiError extends Error implements ApiError {
     if (error.observability !== undefined) this.observability = error.observability;
     if (error.cause !== undefined) this.cause = error.cause;
     this.next_action =
-      error.observability?.operation === 'call'
-        ? recoveryFor(error.status, 'call', error.details)
+      error.observability?.operation === 'call' || error.observability?.operation === 'capability_query'
+        ? recoveryFor(error.status, error.observability?.operation, error.details)
         : (error.next_action ?? recoveryFor(error.status, error.observability?.operation, error.details));
   }
 }
@@ -54,22 +54,22 @@ function executionIdFrom(details: unknown): string | undefined {
 }
 
 function recoveryFor(status: number, operation?: ApiObservability['operation'], details?: unknown): NextAction {
-  if (operation === 'call' && executionIdFrom(details)) {
+  if ((operation === 'call' || operation === 'capability_query') && executionIdFrom(details)) {
     return action('reconcile_settlement', false, 'call_outcome_may_be_unknown');
   }
   if (status === 401) return action('authenticate', true);
   if (status === 402) return action('add_credits', true);
   if (status === 403) return action('request_permission', true);
   if (
-    operation === 'call' &&
-    (status === 0 || status === 408 || status === 429 || (status >= 200 && status < 300) || status >= 500)
+    (operation === 'call' || operation === 'capability_query') &&
+    (status === 0 || status === 408 || status === 429 || (status >= 200 && status < 400) || status >= 500)
   ) {
     return action('review_settlement', true, 'execution_id_unavailable');
   }
-  if (operation === 'call' && (status === 400 || status === 422)) {
+  if ((operation === 'call' || operation === 'capability_query') && (status === 400 || status === 422)) {
     return action('correct_parameters', true, 'invalid_call_request');
   }
-  if (operation === 'call' && status >= 400 && status < 500) {
+  if ((operation === 'call' || operation === 'capability_query') && status >= 400 && status < 500) {
     return action('review_request', true, 'call_rejected');
   }
   if (status === 429 || status === 503 || status === 408 || status === 0) {
