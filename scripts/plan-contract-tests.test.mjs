@@ -170,3 +170,20 @@ test('the planner has no self dependency and plugin lint uses its required runti
   const lintJob = workflow.split('\n  lint:')[1].split('\n  examples:')[0];
   assert.match(lintJob, /node-version:.*needs\.plan\.outputs\.lint_plugin.*24\.16\.0/);
 });
+
+
+test('AI guide examples and their compiler select the packed JS compatibility matrix', () => {
+  for (const file of [
+    'scripts/verify-ai-compatibility.mjs',
+    'docs/en-US/js-sdk.md',
+    'docs/zh-CN/js-sdk.md',
+    'docs/cn/zh-CN/js-sdk.md',
+  ]) {
+    const plan = classifyContractChanges([file]);
+    assert.equal(plan.js, true, file);
+    assert.equal(plan.lint_js, true, file);
+    for (const target of ['benchmark', 'cli', 'python', 'mcp', 'plugin']) {
+      assert.equal(plan[target], false, `${file} must not select ${target}`);
+    }
+  }
+});
