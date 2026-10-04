@@ -27,7 +27,7 @@ Internal checklist, started 2026-10-03. The initial implementation on `linfangw/
 - The same 187 JS tests also pass on Node 18.20.8 and Node 20; the core SDK release matrix retains Node 18/20/22 and adds 24. Peer-specific consumer tests use their required runtime.
 - Python SDK: 720 passed, 2 skipped in the standard dev environment; coverage above 90%, exceeding the 82% gate. Optional CrewAI dependencies account for both skips; isolated CrewAI native integration tests: 18 passing without skips.
 - Legacy Python verification: 3.8 has 637 passing tests / 12 unsupported or optional framework skips; 3.9 has 653 / 10. Fresh CI covers 3.8, 3.9, 3.10, 3.11 and 3.12.
-- Repository scripts: 97 tests plus 19 validator internal cases. Agent recovery: 24 tests. Packed AI/Zod consumers: six combinations passing.
+- Repository scripts: 99 tests plus 19 validator internal cases. Agent recovery: 24 tests. Packed AI/Zod consumers: six combinations passing.
 - Package typechecks, lint, generated API docs, public-copy and locale checks pass.
 - Full local scanner v3.12.1 on a clean source copy: score 100, grade A, no findings; the unchanged minimum-score/high-severity thresholds and remote action checks pass.
 - [PR #416](https://github.com/QVerisAI/qveris-agent-toolkit/pull/416) implementation commit `7dd9691`: all executable PR checks passed, including locked Python 3.11 CrewAI, six packed peer combinations, OpenClaw packed installs/runtime checks, both scanner runs, generated-doc checks and Windows release-tool tests. Draft-only automatic review steps were skipped as configured.
@@ -47,7 +47,15 @@ Internal checklist, started 2026-10-03. The initial implementation on `linfangw/
 - [ ] Published Resolve, selection freshness, idempotency and execution-lookup contracts before extending recovery.
 - [ ] Local Awesome MCP upstream #14435 acceptance, Cursor submission and mcp.so ingestion. Recheck current directory runtime health separately from historical acceptance.
 - [ ] Release packages and published surfaces through existing workflows after the remaining review gates pass.
+- [x] Merge #417 release-validation tooling: PR/manual workflows test immutable npm archives, wheels and sdists across Linux/Windows; publishing consumes those verified artifacts. Final JS/Python and full contract workflows passed before merge.
 - [ ] Validate the final release candidate with PR/manual wheel, sdist and packed
   JS installs, archive checksums and the live acceptance report. Candidate
   validation tooling is implemented; the versioned release and live evidence
   remain separate gates.
+
+## SDK release preparation (2026-10-04)
+
+- [x] Prepare JS SDK 0.9.0 and Python SDK 0.8.0 manifests, matching lockfiles, dated changelogs, guide versions and upgrade notes. This candidate is based on merged #417 (`a2c0c29`). CLI/MCP/plugin versions are unchanged.
+- [ ] Re-run automated gates and clean distribution installs on the versioned candidate; record the exact commit and archive checksums in the acceptance report.
+- [ ] Confirm a total live-test credit budget, then validate Detail/Probe and at most one deliberate paid Query per SDK, with final usage/ledger reconciliation. The local API key is configured; no credential value is recorded here.
+- [ ] Merge the reviewed release preparation PR and revalidate the merged commit before creating individual SDK release tags.

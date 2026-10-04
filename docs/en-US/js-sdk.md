@@ -2,7 +2,19 @@
 
 Typed TypeScript/JavaScript SDK to discover, inspect, probe, call, and audit real-world API capabilities from your own agents and applications.
 
-`@qverisai/sdk` v0.8.4 is the latest tested release. It is a thin, typed wrapper over the QVeris REST API (`discover`, `inspect`, `probe`, `call`, `credits`, `usage`, `ledger`). It has **zero runtime dependencies** — it uses the platform `fetch` (Node.js 18+) — and mirrors the wire semantics of the [Python SDK](python-sdk.md) and the [MCP server](mcp-server.md).
+`@qverisai/sdk` v0.9.0 is the latest tested release. It is a thin, typed wrapper over the QVeris REST API (`discover`, `inspect`, `probe`, `call`, `credits`, `usage`, `ledger`). It has **zero runtime dependencies** — it uses the platform `fetch` (Node.js 18+) — and mirrors the wire semantics of the [Python SDK](python-sdk.md) and the [MCP server](mcp-server.md).
+
+## What's new in 0.9.0
+
+- Typed Capability Detail and paid Query methods expose the published capability contract. Query submits once; use `next_action` and usage/ledger records to review an uncertain outcome before submitting again.
+- Adapter Probe is available with `includeProbe: true`; the default interface still has three tools.
+- Delegation credential caches now enforce expiry and a 128-entry limit, including concurrent cache clearing.
+
+### Upgrading from 0.8.x
+
+The optional AI adapter requires AI SDK 5–7 and Zod 3.25.76 or 4. Upgrade applications using AI SDK 4 before installing the adapter. The core client has no runtime dependencies and does not require these peers.
+
+Capability Query can spend credits. Set an explicit `max_credits` ceiling when using it; a Probe quote does not reserve that price or authorize spending.
 
 ## Installation
 

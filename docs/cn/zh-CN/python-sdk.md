@@ -1,6 +1,6 @@
 # QVeris Python SDK
 
-QVeris Python SDK v0.7.3 是最新测试版本。使用异步客户端，在你自己的 Agent 和应用中发现、检查、探测、调用并审计 丰富的 API 能力。
+QVeris Python SDK v0.8.0 是最新测试版本。使用异步客户端，在你自己的 Agent 和应用中发现、检查、探测、调用并审计 丰富的 API 能力。
 
 SDK 提供两种控制粒度：
 
@@ -8,6 +8,18 @@ SDK 提供两种控制粒度：
 - **`Agent`** —— 开箱即用的 LLM 工具循环，让模型自主发现并调用能力。
 
 需要完全控制时用 client；想几行代码就跑起来一个可用助手时用 agent。
+
+## 0.8.0 新功能
+
+- 类型化的 Capability Detail 和付费 Query 方法支持已发布的能力契约。Query 只提交一次；遇到结果不确定的情况，应先根据 `next_action` 和 usage/ledger 记录核对，再决定是否重新提交。
+- 六个框架适配器均可通过 `include_probe=True` 启用 Probe 工具；默认仍提供三个工具。
+- Delegation 凭证缓存现在强制执行过期检查和 128 条容量上限，并处理并发清空缓存的情况。纯净安装包含生成模型所需的邮箱校验依赖，客户端导入也兼容 Python 3.8。
+
+### 从 0.7.x 升级
+
+适配器最低版本为 Pydantic AI 2.46.0、Agents SDK 0.22.3 和 LangChain Core 0.3.86。当前 CrewAI 与 Agents SDK 要求不同的 provider SDK 主版本，请在独立虚拟环境中安装各自的集成。可选框架仍需满足自身的 Python 版本要求。
+
+Capability Query 可能消耗 credits。使用时应显式设置 `max_credits` 上限；Probe 报价不会锁定价格，也不代表已获得支出授权。
 
 ## 安装
 
@@ -285,7 +297,7 @@ result = await client.call(
 - 捕获 `QverisError` 或其类型化子类，不再捕获 `httpx.HTTPStatusError` / 原始 transport 异常。
 - 响应元数据位于 `response.request_metadata`，不会进入 wire 序列化。
 
-Capability Resolve/Query、selection token、idempotency key 和 execution lookup 只会在对应端点及字段进入公开 OpenAPI 后提供；client 不会提前发明临时 wire 字段。
+Capability Detail 和 Query 已按公开契约提供。Resolve、selection token、idempotency key 和 execution lookup 只会在对应端点及字段进入公开 OpenAPI 后提供；client 不会提前发明临时 wire 字段。
 
 ## API 参考
 

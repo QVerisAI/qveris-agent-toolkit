@@ -1,6 +1,6 @@
 # QVeris Python SDK
 
-QVeris Python SDK v0.7.3 is the latest tested release. Use its async client to discover, inspect, probe, call, and audit real-world API capabilities from your own agents and applications.
+QVeris Python SDK v0.8.0 is the latest tested release. Use its async client to discover, inspect, probe, call, and audit real-world API capabilities from your own agents and applications.
 
 The SDK gives you two levels of control:
 
@@ -8,6 +8,18 @@ The SDK gives you two levels of control:
 - **`Agent`** — a ready-made LLM tool loop that lets a model discover and call capabilities on its own.
 
 Use the client when you want full control, or the agent when you want a working assistant in a few lines.
+
+## What's new in 0.8.0
+
+- Typed Capability Detail and paid Query methods expose the published capability contract. Query submits once; use `next_action` and usage/ledger records to review an uncertain outcome before submitting again.
+- All six framework adapters support optional Probe with `include_probe=True`; the default interface still has three tools.
+- Delegation credential caches now enforce expiry and a 128-entry limit, including concurrent cache clearing. Clean installs include the email validation dependency required by generated models, and client imports work on Python 3.8.
+
+### Upgrading from 0.7.x
+
+The adapter minimums are Pydantic AI 2.46.0, Agents SDK 0.22.3 and LangChain Core 0.3.86. Current CrewAI and Agents SDK releases require different provider SDK major versions; install their integrations in separate virtual environments. Optional frameworks also retain their own Python requirements.
+
+Capability Query can spend credits. Set an explicit `max_credits` ceiling when using it; a Probe quote does not reserve that price or authorize spending.
 
 ## Installation
 
@@ -286,7 +298,7 @@ Public failures use the `QverisError` hierarchy (`QverisApiError`, `QverisTransp
 - Catch `QverisError` or its typed subclasses instead of `httpx.HTTPStatusError` / raw transport errors.
 - Response metadata is available as `response.request_metadata` and is excluded from wire serialization.
 
-Capability Resolve/Query methods, selection tokens, idempotency keys, and execution lookup will be added only after those fields and endpoints are published in the public OpenAPI contract; the client does not invent interim wire fields.
+Capability Detail and Query are available through their published public contracts. Resolve methods, selection tokens, idempotency keys, and execution lookup will be added only after their fields and endpoints are published in the public OpenAPI contract; the client does not invent interim wire fields.
 
 ## API reference
 
