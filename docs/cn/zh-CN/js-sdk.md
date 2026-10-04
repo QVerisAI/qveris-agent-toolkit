@@ -14,7 +14,7 @@
 
 可选 AI 适配器要求 AI SDK 5–7 和 Zod 3.25.76 或 4。使用 AI SDK 4 的应用应先升级，再安装适配器。核心客户端没有运行时依赖，也不需要这些可选包。
 
-Capability Query 可能消耗 credits。使用时应显式设置 `max_credits` 上限；Probe 报价不会锁定价格，也不代表已获得支出授权。
+Capability Query 可能消耗积分。使用时应显式设置 `max_credits` 上限；Probe 报价不会锁定价格，也不代表已获得支出授权。
 
 ## 安装
 
@@ -218,7 +218,7 @@ npm install @qverisai/sdk ai zod
 ```
 
 ```typescript
-import { generateText } from 'ai';
+import { generateText, stepCountIs } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { Qveris } from '@qverisai/sdk';
 import { getQverisTools } from '@qverisai/sdk/ai';
@@ -230,7 +230,7 @@ const qveris = new Qveris({
 const { text } = await generateText({
   model: openai('gpt-4o'),
   tools: getQverisTools(qveris), // qveris_discover / qveris_inspect / qveris_call
-  maxSteps: 6,
+  stopWhen: stepCountIs(6),
   prompt: 'Find a stock quote capability and quote AAPL.',
 });
 ```

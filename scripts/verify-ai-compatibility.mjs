@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -62,6 +62,23 @@ try {
     void tools;
   `,
   );
+  // Compile the actual guide examples against every advertised AI/Zod pair.
+  // The host/provider factory is a type fixture; no model request is executed.
+  writeFileSync(join(temporary, 'guide-host.d.ts'), `
+    declare const process: { env: Record<string, string | undefined> };
+    declare module '@ai-sdk/openai' {
+      export function openai(model: string): Parameters<typeof import('ai').generateText>[0]['model'];
+    }
+  `);
+  const guideFiles = ['en-US', 'zh-CN', 'cn/zh-CN'].map((locale, index) => {
+    const source = readFileSync(join(root, 'docs', locale, 'js-sdk.md'), 'utf8');
+    const examples = [...source.matchAll(/```typescript\n([\s\S]*?)\n```/g)]
+      .map((match) => match[1]).filter((example) => example.includes('await generateText('));
+    assert.equal(examples.length, 1, `${locale} must contain one AI SDK generation example`);
+    const filename = `guide-${index}.ts`;
+    writeFileSync(join(temporary, filename), examples[0]);
+    return filename;
+  });
   execFileSync(
     process.execPath,
     [
@@ -76,6 +93,8 @@ try {
       '--target',
       'ES2022',
       'consumer.ts',
+      'guide-host.d.ts',
+      ...guideFiles,
     ],
     { cwd: temporary, stdio: 'inherit' },
   );
