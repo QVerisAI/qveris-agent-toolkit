@@ -17,7 +17,9 @@ from qveris import types
 from pydantic import ValidationError
 
 ROOT = Path(__file__).resolve().parents[3]
-SCHEMAS = json.loads((ROOT / "docs/openapi/qveris-public-api.openapi.json").read_text())["components"]["schemas"]
+SCHEMAS = json.loads((ROOT / "docs/openapi/qveris-public-api.openapi.json").read_text(encoding="utf-8"))["components"][
+    "schemas"
+]
 MODELS = {
     "PublicCapabilityDetailResponse": types.CapabilityDetailResponse,
     "PublicCapabilityQueryResponse": types.CapabilityQueryResponse,
@@ -59,7 +61,7 @@ def test_probe_recovery_is_required_and_non_nullable() -> None:
 
 @pytest.mark.parametrize(
     "case",
-    json.loads((ROOT / "contracts/result-delivery.v1.json").read_text())["summary_cases"],
+    json.loads((ROOT / "contracts/result-delivery.v1.json").read_text(encoding="utf-8"))["summary_cases"],
     ids=lambda case: case["id"],
 )
 def test_shared_summary_payloads_survive_public_parser(case: dict[str, Any]) -> None:

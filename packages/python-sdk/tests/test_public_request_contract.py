@@ -14,8 +14,10 @@ from qveris.errors import QverisApiError
 from qveris.integrations._workflow import build_qveris_workflow
 
 ROOT = Path(__file__).resolve().parents[3]
-CONTRACTS = json.loads((ROOT / "contracts/public-client-requests.v1.json").read_text())
-SCHEMAS = json.loads((ROOT / "docs/openapi/qveris-public-api.openapi.json").read_text())["components"]["schemas"]
+CONTRACTS = json.loads((ROOT / "contracts/public-client-requests.v1.json").read_text(encoding="utf-8"))
+SCHEMAS = json.loads((ROOT / "docs/openapi/qveris-public-api.openapi.json").read_text(encoding="utf-8"))["components"][
+    "schemas"
+]
 
 
 @pytest.mark.asyncio

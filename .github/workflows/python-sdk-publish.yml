@@ -1,7 +1,13 @@
 name: Publish Python SDK to PyPI
 
 on:
-  workflow_dispatch: # run the test matrix on demand (publish still requires a tag)
+  workflow_dispatch: # validation only; publishing still requires a tag
+  pull_request:
+    paths:
+      - "packages/python-sdk/**"
+      - "scripts/*release*"
+      - "docs/openapi/**"
+      - ".github/workflows/python-sdk-publish.yml"
   push:
     tags:
       - "python-sdk-v*" # Trigger on tags like python-sdk-v0.1.0, python-sdk-v1.0.0
@@ -20,7 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
         include:
           # Windows coverage on one interpreter only (issue #113).
           - os: windows-latest
@@ -45,16 +51,14 @@ jobs:
         run: uv lock --check
 
       - name: Run tests
-        run: uv run --extra dev pytest
+        run: uv run --frozen --extra dev pytest
 
       - name: Compile package and examples
-        run: uv run python -m compileall qveris examples
+        run: uv run --frozen python -m compileall qveris examples
 
   build:
     needs: test
-    # Event-scoped: a workflow_dispatch (even one targeting a tag ref) runs
-    # tests only; building release artifacts requires an actual tag push.
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    # Build candidates on PRs and manual runs too; publishing stays tag-only.
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -80,6 +84,7 @@ jobs:
           cache-dependency-glob: packages/python-sdk/uv.lock
 
       - name: Verify release metadata
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
         id: metadata
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#python-sdk-v}"
@@ -94,8 +99,10 @@ jobs:
           fi
           echo "version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Build package
-        run: uv build
+      - name: Check lockfile and build wheel plus sdist
+        run: |
+          uv lock --check
+          uv build --no-sources
 
       - name: Upload release distributions
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -103,10 +110,41 @@ jobs:
           name: python-sdk-distributions
           path: packages/python-sdk/dist/
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 7
+
+  verify:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        include:
+          - os: windows-latest
+            python-version: "3.11"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: python-sdk-distributions
+          path: release-distributions
+      - name: Verify wheel and sdist in separate clean environments
+        run: python scripts/verify-python-release.py --dist release-distributions --output release-report
+      - name: Save installation report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: python-report-${{ matrix.os }}-${{ matrix.python-version }}
+          path: release-report/
+          if-no-files-found: error
+          retention-days: 7
 
   publish:
-    needs: build
+    needs: [build, verify]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     environment:

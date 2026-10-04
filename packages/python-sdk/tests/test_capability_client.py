@@ -9,7 +9,7 @@ from qveris import CapabilityQueryRequest, QverisClient, QverisConfig
 from qveris.errors import QverisApiError, QverisContractError, QverisTransportError
 
 FIXTURES = json.loads(
-    (Path(__file__).parents[3] / "docs/openapi/qveris-public-api.projection-fixtures.json").read_text()
+    (Path(__file__).parents[3] / "docs/openapi/qveris-public-api.projection-fixtures.json").read_text(encoding="utf-8")
 )
 
 

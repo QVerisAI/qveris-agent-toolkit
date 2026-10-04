@@ -15,6 +15,8 @@ Each package releases independently via an annotated git tag; the matching GitHu
 1. **Bump the version** in the package's `package.json` / `pyproject.toml`.
 2. **Update `CHANGELOG.md`** (Keep a Changelog format): move the `## [Unreleased]` notes into a new `## [<version>] - <YYYY-MM-DD>` section, and update the compare links at the bottom. The publish workflow **fails if `CHANGELOG.md` has no `## [<version>]` section** for the tagged version.
 3. Open a PR with the bump + changelog; merge it.
+   Before tagging, complete the SDK candidate checks described below on the
+   merged commit and record its SHA in the release acceptance report.
 4. For a coordinated CLI, MCP, JavaScript SDK, and Python SDK release, check the merged metadata and publish all four tags from an up-to-date, clean `main`:
 
    ```bash
@@ -57,6 +59,55 @@ Each package releases independently via an annotated git tag; the matching GitHu
    > command above enforces one push event per tag.
 
 5. The publish workflow verifies **version == tag** and **CHANGELOG has the section**, runs the full test matrix (ubuntu + windows), publishes, and creates the GitHub Release. Python releases also require a current `uv.lock`. MCP releases verify `server.json` uses the same version and publish its metadata to the official MCP Registry with GitHub OIDC.
+
+## SDK candidate validation
+
+SDK pull requests and manual publish-workflow runs build and verify distributions
+without publishing. To validate the merged candidate, run:
+
+```bash
+gh workflow run contract-tests.yml --ref main
+gh workflow run js-sdk-publish.yml --ref main
+gh workflow run python-sdk-publish.yml --ref main
+```
+
+Check the actual head SHA of every run; if `main` advances, rerun against the
+candidate branch and confirm all evidence refers to the same commit. Manual
+dispatch, including a dispatch targeting a tag, cannot publish.
+
+The JS workflow installs the packed core SDK outside the checkout, without
+optional AI/Zod peers, compiles a consumer against its public declarations and
+checks Detail/Query fixtures, single-submit failures and recovery actions.
+The separate contract workflow tests the six packed AI/Zod combinations.
+The Python workflow builds wheel and sdist before tagging and installs each in
+a separate clean environment on Python 3.8–3.12 and Windows 3.11. It verifies
+public exports, generated models, bundled changelog, dependency consistency,
+example syntax and the same mocked paid-operation safety paths. Repository
+tests remain frozen; clean consumer installs deliberately resolve the declared
+runtime dependencies without the repository's development environment.
+
+For local installation checks after installing JS development dependencies:
+
+```bash
+npm run verify:release:js -- --output /tmp/qveris-release-js
+uv build --no-sources --directory packages/python-sdk --out-dir /tmp/qveris-release-python
+python scripts/verify-python-release.py --dist /tmp/qveris-release-python --output /tmp/qveris-release-reports
+```
+
+These commands install dependencies in temporary directories and use mock
+transports for service calls. They do not make paid service requests. JSON
+reports record the commit SHA, runtime, checks and distribution SHA-256;
+`live_service: not_run` explicitly separates installation checks from live
+acceptance. CI keeps distributions and reports for seven days. Copy
+[`maintenance/RELEASE_REPORT_TEMPLATE.md`](maintenance/RELEASE_REPORT_TEMPLATE.md)
+and complete the maintainer-run live checks with bounded credentials before
+release acceptance. Review skipped framework tests individually.
+
+Tag workflows repeat validation. The JS publish job checks the verified archive's
+commit, version and checksum, then publishes that archive without rebuilding or
+running package scripts. Python publishing waits for all wheel/sdist installation
+checks and uploads the same immutable workflow distributions. Publishing jobs
+alone receive registry credentials or identity-token permissions.
 
 ## Discover-call release cadence
 

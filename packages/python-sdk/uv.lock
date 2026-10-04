@@ -1503,6 +1503,7 @@ name = "dnspython"
 version = "2.8.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
+    "python_full_version >= '4'",
     "python_full_version == '3.13.*'",
     "python_full_version >= '3.14' and python_full_version < '4'",
     "python_full_version == '3.12.*'",
@@ -1546,11 +1547,11 @@ name = "email-validator"
 version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "dnspython", version = "2.6.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.9' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
-    { name = "dnspython", version = "2.7.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version == '3.9.*' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
-    { name = "dnspython", version = "2.8.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.10' and python_full_version < '4' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
-    { name = "idna", version = "3.11", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.10' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
-    { name = "idna", version = "3.20", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.10' and python_full_version < '4' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
+    { name = "dnspython", version = "2.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9' or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
+    { name = "dnspython", version = "2.7.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*' or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
+    { name = "dnspython", version = "2.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
+    { name = "idna", version = "3.11", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10' or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
+    { name = "idna", version = "3.20", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f5/22/900cb125c76b7aaa450ce02fd727f452243f2e91a61af068b40adba60ea9/email_validator-2.3.0.tar.gz", hash = "sha256:9fc05c37f2f6cf439ff414f8fc46d917929974a82244c20eb10231ba60c54426", size = 51238, upload-time = "2025-08-26T13:09:06.831Z" }
 wheels = [
@@ -5429,7 +5430,7 @@ wheels = [
 
 [package.optional-dependencies]
 email = [
-    { name = "email-validator", marker = "python_full_version < '3.9'" },
+    { name = "email-validator", marker = "python_full_version < '3.9' or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
 ]
 
 [[package]]
@@ -5458,7 +5459,7 @@ wheels = [
 
 [package.optional-dependencies]
 email = [
-    { name = "email-validator", marker = "python_full_version >= '3.9' and python_full_version < '4'" },
+    { name = "email-validator", marker = "python_full_version >= '3.9' or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
 ]
 
 [[package]]
@@ -6271,8 +6272,8 @@ dependencies = [
     { name = "openai", version = "2.13.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*' or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
     { name = "openai", version = "2.45.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.10' and extra == 'extra-6-qveris-crewai') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
     { name = "openai", version = "3.24.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.10' and extra != 'extra-6-qveris-crewai') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
-    { name = "pydantic", version = "2.10.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9' or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
-    { name = "pydantic", version = "2.12.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9' or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
+    { name = "pydantic", version = "2.10.6", source = { registry = "https://pypi.org/simple" }, extra = ["email"], marker = "python_full_version < '3.9' or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
+    { name = "pydantic", version = "2.12.5", source = { registry = "https://pypi.org/simple" }, extra = ["email"], marker = "python_full_version >= '3.9' or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
     { name = "pydantic-settings", version = "2.8.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9' or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
     { name = "pydantic-settings", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*' or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
     { name = "pydantic-settings", version = "2.15.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10' or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-dev') or (extra == 'extra-6-qveris-crewai' and extra == 'extra-6-qveris-openai-agents')" },
@@ -6362,7 +6363,7 @@ requires-dist = [
     { name = "opentelemetry-api", marker = "extra == 'otel'", specifier = ">=1.20.0" },
     { name = "opentelemetry-sdk", marker = "python_full_version >= '3.10' and extra == 'dev'", specifier = ">=1.45.0" },
     { name = "opentelemetry-sdk", marker = "python_full_version < '3.10' and extra == 'dev'", specifier = ">=1.20.0,<1.45.0" },
-    { name = "pydantic", specifier = ">=2.0.0" },
+    { name = "pydantic", extras = ["email"], specifier = ">=2.0.0" },
     { name = "pydantic-ai-slim", marker = "python_full_version >= '3.10' and extra == 'dev'", specifier = ">=2.46.0" },
     { name = "pydantic-ai-slim", marker = "python_full_version >= '3.10' and extra == 'pydantic-ai'", specifier = ">=2.46.0" },
     { name = "pydantic-settings", specifier = ">=2.0.0" },

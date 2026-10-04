@@ -177,23 +177,30 @@ test('process adapter classifies timeouts', async () => {
   });
 });
 
-test('process adapter force-kills a child that ignores SIGTERM', async () => {
+test('process adapter terminates a timed-out child and waits for exit', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'qveris-adapter-test-'));
   const pidPath = join(directory, 'pid');
+  const signalPath = join(directory, 'signal');
   try {
     const invoke = createProcessAdapter({
       command: process.execPath,
       args: [
         '-e',
-        "require('node:fs').writeFileSync(process.argv[1], String(process.pid)); process.on('SIGTERM', () => {}); process.stdin.resume(); setInterval(() => {}, 1000)",
+        "const fs = require('node:fs'); process.on('SIGTERM', () => fs.writeFileSync(process.argv[2], 'received')); fs.writeFileSync(process.argv[1], String(process.pid)); process.stdin.resume(); setInterval(() => {}, 1000)",
         pidPath,
+        signalPath,
       ],
-      timeoutMs: 50,
+      // Include bounded startup time on Windows and loaded CI workers. The
+      // separate timeout-classification test still exercises the 25ms path.
+      timeoutMs: 1_000,
       forceKillAfterMs: 20,
     });
     await assert.rejects(invoke({ stage: 'select' }), /timed out/);
     const pid = Number(await readFile(pidPath, 'utf8'));
     assert.equal(await waitForProcessExit(pid), true);
+    // Windows terminates unconditionally on SIGTERM. On POSIX, observing the
+    // handler proves that the child survived SIGTERM and required SIGKILL.
+    if (process.platform !== 'win32') assert.equal(await readFile(signalPath, 'utf8'), 'received');
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
