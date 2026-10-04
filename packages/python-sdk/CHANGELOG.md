@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-04
+
 ### Fixed
 
 - Declare email validation support required to import the bundled generated models in a clean installation.
@@ -23,6 +25,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Changed
 
 - Update adapter minimums to Pydantic AI 2.46.0, Agents SDK 0.22.3, and LangChain Core 0.3.86.
+
+### Upgrade notes
+
+- Enable the new adapter Probe tool with `include_probe=True`; existing applications keep their three-tool interface by default.
+- Install CrewAI and the Agents adapter in separate environments when using their current releases; their provider SDK major requirements differ. For repository native CrewAI tests, use the `crewai` extra with the `test` group instead of the `dev` extra.
+- Capability Query can spend credits and is never retried automatically. `max_credits` is a ceiling, not a reserved quote; review usage and settlement after an uncertain outcome.
 
 ## [0.7.3] - 2026-09-09
 
@@ -133,7 +141,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Generated OpenAPI contract models with drift CI. ([#48])
 - `Agent` runtime: LLM tool loop over the QVeris workflow with streaming events.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.3...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.8.0...HEAD
+[0.8.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.3...python-sdk-v0.8.0
 [0.7.3]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.2...python-sdk-v0.7.3
 [0.7.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.1...python-sdk-v0.7.2
 [0.7.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.0...python-sdk-v0.7.1

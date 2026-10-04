@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-04
+
 ### Fixed
 
 - Reject each invalid CAP Query selector and empty adapter Probe check lists before submitting.
@@ -18,6 +20,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Typed Capability Detail and paid Capability Query methods for the published public API; Query is never retried or replayed automatically.
 - Opt-in Probe tools for framework adapters, preserving the default three-tool interface.
 - Public API errors now expose a stable machine-readable `next_action` recovery contract without requiring callers to interpret internal contract metadata.
+
+### Upgrade notes
+
+- The optional AI adapter supports AI SDK 5–7 and Zod 3.25.76 or 4. Update AI SDK 4 applications before using this adapter; the core SDK remains independent of these peers.
+- Enable the new adapter Probe tool with `includeProbe: true`; existing applications keep their three-tool interface by default.
+- Capability Query can spend credits and is never retried automatically. `max_credits` is a ceiling, not a reserved quote; review usage and settlement after an uncertain outcome.
 
 ## [0.8.4] - 2026-09-09
 
@@ -100,7 +108,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - `0.1.x` under this npm name was an early MCP-focused SDK, superseded by `@qverisai/mcp`.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.4...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.9.0...HEAD
+[0.9.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.4...js-sdk-v0.9.0
 [0.8.4]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.3...js-sdk-v0.8.4
 [0.8.3]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.2...js-sdk-v0.8.3
 [0.8.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.1...js-sdk-v0.8.2

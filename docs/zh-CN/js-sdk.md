@@ -2,7 +2,19 @@
 
 类型化的 TypeScript/JavaScript SDK，让你在自己的智能体和应用中发现、检查、探测、调用并审计 丰富的 API 能力。
 
-`@qverisai/sdk` v0.8.4 是最新测试版本。它是对 QVeris REST API（`discover`、`inspect`、`probe`、`call`、`credits`、`usage`、`ledger`）的轻量类型化封装，**零运行时依赖**——使用平台原生 `fetch`（Node.js 18+）——并与 [Python SDK](python-sdk.md) 和 [MCP 服务器](mcp-server.md) 保持一致的通信语义。
+`@qverisai/sdk` v0.9.0 是最新测试版本。它是对 QVeris REST API（`discover`、`inspect`、`probe`、`call`、`credits`、`usage`、`ledger`）的轻量类型化封装，**零运行时依赖**——使用平台原生 `fetch`（Node.js 18+）——并与 [Python SDK](python-sdk.md) 和 [MCP 服务器](mcp-server.md) 保持一致的通信语义。
+
+## 0.9.0 新功能
+
+- 类型化的 Capability Detail 和付费 Query 方法支持已发布的能力契约。Query 只提交一次；遇到结果不确定的情况，应先根据 `next_action` 和 usage/ledger 记录核对，再决定是否重新提交。
+- 通过 `includeProbe: true` 启用适配器 Probe 工具；默认仍提供三个工具。
+- Delegation 凭证缓存现在强制执行过期检查和 128 条容量上限，并处理并发清空缓存的情况。
+
+### 从 0.8.x 升级
+
+可选 AI 适配器要求 AI SDK 5–7 和 Zod 3.25.76 或 4。使用 AI SDK 4 的应用应先升级，再安装适配器。核心客户端没有运行时依赖，也不需要这些可选包。
+
+Capability Query 可能消耗 credits。使用时应显式设置 `max_credits` 上限；Probe 报价不会锁定价格，也不代表已获得支出授权。
 
 ## 安装
 
