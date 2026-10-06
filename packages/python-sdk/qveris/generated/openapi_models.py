@@ -331,7 +331,7 @@ class PublicApiMetadata(BaseModel):
     contract_version: str = Field(
         ...,
         description='Version of the published QVeris REST API contract.',
-        examples=['2026-09-29.2'],
+        examples=['2026-10-03.1'],
         title='Contract Version',
     )
     registration: Optional[AnonymousTrialMetadata] = None
@@ -747,6 +747,10 @@ class PublicProbeSchemaViolation(BaseModel):
         extra='forbid',
     )
     param: Optional[str] = None
+    required_any_of: Optional[List[str]] = Field(
+        None,
+        description='For one_of_required violations, supply any one non-empty parameter from this group.',
+    )
     type: str
     message: str
 
@@ -802,6 +806,10 @@ class PublicProbeRecoveryAdvice(BaseModel):
         extra='forbid',
     )
     missing_fields: List[str]
+    missing_field_groups: List[List[str]] = Field(
+        ...,
+        description='Each group requires any one non-empty parameter, not every member.',
+    )
     safe_fixes: List[str]
     retryable: bool
     next_action: NextAction

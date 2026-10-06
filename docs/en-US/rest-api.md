@@ -1,6 +1,6 @@
 # QVeris REST API Documentation
 
-Version: 2026-09-29.2
+Version: 2026-10-03.1
 
 The public REST API exposes the core agent path:
 
@@ -66,7 +66,7 @@ codes cannot be bound to an email that already belongs to a formal account.
 
 Discover, Inspect, and Probe are free. Discover and Inspect may return `expected_cost`, legacy `cost`, or `billing_rule`; Probe validates the selected parameters and returns a zero-cost quote before spending credits.
 
-Every capability returned by Discover or Inspect, and every successful Probe, includes `verification_status`, the supporting `verification` checks, and `execution_restrictions`. Only `verified` means the complete evidence is current. Verification is an evidence claim, not an execution prerequisite: other states remain discoverable and may be attempted when no explicit blocker applies. Missing eligibility, license, commercial-use, or region declarations are unknown, not a denial. Read `execution_restrictions.region_status` and `execution_restrictions.regions` for geographic evidence. `callable: true` means the current catalog evidence does not prevent attempting Call, not that live authorization, availability, or billing is guaranteed. Use `blocked_actions` and `next_action` for actual remediation, and use Probe when parameters or a quote need preflight validation. A positive live Probe can advance an otherwise undisclosed candidate to Call; explicit permission, region, license, scope, tool-availability, or budget blockers still take precedence. The legacy `callable` field does not control Discover or Inspect visibility.
+Every capability returned by Discover or Inspect, and every successful Probe, includes `verification_status`, the supporting `verification` checks, and `execution_restrictions`. Only `verified` means the complete evidence is current. Verification is an evidence claim, not an execution prerequisite: other states remain discoverable and may be attempted when no explicit blocker applies. Missing eligibility, license, commercial-use, or region declarations are unknown, not a denial; `service_regions: null` declares no explicit regional restriction. `callable: true` means the current catalog evidence does not prevent attempting Call, not that live authorization, availability, or billing is guaranteed. Use `blocked_actions` and `next_action` for actual remediation, and use Probe when parameters or a quote need preflight validation. A positive live Probe can advance an otherwise undisclosed candidate to Call; explicit permission, region, license, scope, tool-availability, or budget blockers still take precedence. The legacy `callable` field does not control Discover or Inspect visibility.
 
 A legacy result with a fixed `billing_rule` price per call may be attempted directly even when `price_certainty` remains `estimated`; the catalog price is not a reserved quote. Variable metering or an explicitly inexact Probe quote still requires budget confirmation.
 
@@ -452,6 +452,7 @@ Use the exact `tool_id` selected during Discover or Inspect. Keep `live_budget` 
   },
   "recovery": {
     "missing_fields": [],
+    "missing_field_groups": [],
     "safe_fixes": [],
     "retryable": true,
     "next_action": "execute",
@@ -460,7 +461,11 @@ Use the exact `tool_id` selected during Discover or Inspect. Keep `live_budget` 
 }
 ```
 
-`recovery.missing_fields` lists missing or invalid call parameters only. Catalog evidence gaps remain under `verification.quality_issues` and do not, by themselves, require another agent step before Call.
+`recovery.missing_fields` lists only absent required call parameters (`missing_required`). Type, enum, and format violations do not add already supplied fields to this list. When parameter repair is the next step, `recovery.safe_fixes` includes `correct_parameters` and `probe`.
+
+For a `one_of_required` violation, `schema.violations[].required_any_of` supplies the alternatives and `recovery.missing_field_groups` lists each unsatisfied group; provide any one non-empty parameter per group, not every member. For example, `missing_field_groups: [["symbol", "cik"]]` means supply either `symbol` or `cik`, then Probe again. Older responses without structured alternatives retain generic correction guidance.
+
+Catalog evidence gaps remain under `verification.quality_issues` and do not, by themselves, require another agent step before Call.
 
 A probe can return `400` for invalid input, `404` for an unknown capability, `429` when rate limited, or `502`/`504` when the probe service is unavailable. See the [focused Probe reference](api-reference/probe.md) for the exact schema and all responses.
 
