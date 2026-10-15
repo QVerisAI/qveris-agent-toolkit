@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "qveris": {
+      "type": "http",
+      "url": "https://mcp.qveris.ai/mcp"
+    }
+  }
+}

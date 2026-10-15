@@ -1,0 +1,10 @@
+{
+  "name": "qveris-professional-data",
+  "version": "1.0.0",
+  "description": "Find, inspect, and retrieve current professional data from supported providers through QVeris, with visible source, availability, and usage-cost information.",
+  "author": {
+    "name": "QVeris AI",
+    "url": "https://qveris.ai"
+  },
+  "license": "MIT"
+}
