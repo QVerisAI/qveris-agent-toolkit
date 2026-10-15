@@ -64,7 +64,7 @@ curl -X POST https://qveris.ai/api/v1/agent/claim-verify \
 
 Discover、Inspect 和 Probe 免费。Discover 与 Inspect 可能返回 `expected_cost`、旧字段 `cost` 或 `billing_rule`；Probe 会在花费积分前校验所选参数并返回零成本报价。
 
-Discover 或 Inspect 返回的每项能力，以及每个成功的 Probe，都包含 `verification_status`、对应的 `verification` 检查证据和 `execution_restrictions`。只有 `verified` 表示完整证据仍在有效期内。Verification 是证据声明，不是执行的必要条件；没有明确阻断时，候选能力可以尝试调用。资格、许可、商业用途或地域声明缺失表示未知，而非禁止；`service_regions: null` 表示没有显式地域限制。`callable: true` 表示当前目录证据不阻止尝试 Call，不保证实时授权、可用性或计费一定成功。请根据 `blocked_actions` 和 `next_action` 处理实际阻断；只有参数或报价需要预检时才使用 Probe。实时 Probe 的肯定结果可让限制信息不完整的候选进入 Call，但明确的权限、地域、许可、scope、工具可用性或预算阻断仍优先。旧字段 `callable` 不决定 Discover 或 Inspect 是否可见。
+Discover 或 Inspect 返回的每项能力，以及每个成功的 Probe，都包含 `verification_status`、对应的 `verification` 检查证据和 `execution_restrictions`。只有 `verified` 表示完整证据仍在有效期内。Verification 是证据声明，不是执行的必要条件；没有明确阻断时，候选能力可以尝试调用。资格、许可、商业用途或地域声明缺失表示未知，而非禁止。地域证据请读取 `execution_restrictions.region_status` 和 `execution_restrictions.regions`。`callable: true` 表示当前目录证据不阻止尝试 Call，不保证实时授权、可用性或计费一定成功。请根据 `blocked_actions` 和 `next_action` 处理实际阻断；只有参数或报价需要预检时才使用 Probe。实时 Probe 的肯定结果可让限制信息不完整的候选进入 Call，但明确的权限、地域、许可、scope、工具可用性或预算阻断仍优先。旧字段 `callable` 不决定 Discover 或 Inspect 是否可见。
 
 旧目录结果若提供固定的 `billing_rule` 每次调用价格，即使 `price_certainty` 仍为 `estimated`，也可以直接尝试调用；目录价格并非预留报价。可变计费或 Probe 明确返回非精确报价时，仍需确认预算。
 

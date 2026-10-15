@@ -638,6 +638,7 @@ export interface ProbeRequest {
 
 export interface ProbeSchemaViolation {
   param?: string | null;
+  required_any_of?: string[] | null;
   type: string;
   message: string;
 }
@@ -663,6 +664,8 @@ export interface ProbeUnknownResult {
 
 export interface ProbeRecoveryAdvice {
   missing_fields: string[];
+  /** Older Probe responses may omit alternative parameter groups. */
+  missing_field_groups?: string[][];
   safe_fixes: string[];
   retryable: boolean;
   next_action: 'execute' | 'inspect' | 'probe' | 'authorize' | 'confirm_budget' | 'switch_provider' | 'retry';
