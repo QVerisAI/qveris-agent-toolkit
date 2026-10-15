@@ -20,6 +20,12 @@ const PLANNER_FILES = new Set([
   'scripts/plan-contract-tests.mjs',
   'scripts/plan-contract-tests.test.mjs',
 ]);
+const JS_GUIDE_INPUTS = new Set([
+  'scripts/verify-ai-compatibility.mjs',
+  'docs/en-US/js-sdk.md',
+  'docs/zh-CN/js-sdk.md',
+  'docs/cn/zh-CN/js-sdk.md',
+]);
 const SHARED_LINT_FILES = new Set(['.prettierrc.json', '.prettierignore']);
 const LINT_PACKAGE_NAMES = {
   cli: 'cli',
@@ -49,6 +55,8 @@ export function classifyContractChanges(files, { full = false } = {}) {
     ) {
       OPENAPI_TARGETS.forEach((target) => selected.add(target));
     }
+    if (JS_GUIDE_INPUTS.has(file)) selected.add('js');
+
     // The JS suite compiles both handwritten TS surfaces against the wire.
     if (file === 'packages/mcp/src/types.ts') selected.add('js');
 

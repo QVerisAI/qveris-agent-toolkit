@@ -19,7 +19,7 @@ SDK 提供两种控制粒度：
 
 适配器最低版本为 Pydantic AI 2.46.0、Agents SDK 0.22.3 和 LangChain Core 0.3.86。当前 CrewAI 与 Agents SDK 要求不同的 provider SDK 主版本，请在独立虚拟环境中安装各自的集成。可选框架仍需满足自身的 Python 版本要求。
 
-Capability Query 可能消耗 credits。使用时应显式设置 `max_credits` 上限；Probe 报价不会锁定价格，也不代表已获得支出授权。
+Capability Query 可能消耗积分。使用时应显式设置 `max_credits` 上限；Probe 报价不会锁定价格，也不代表已获得支出授权。
 
 ## 安装
 
