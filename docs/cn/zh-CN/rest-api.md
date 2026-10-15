@@ -1,6 +1,6 @@
 # QVeris REST API 文档
 
-版本：2026-09-29.2
+版本：2026-10-03.1
 
 公开 REST API 暴露核心 Agent 路径：
 
@@ -450,6 +450,7 @@ Probe 是可选预检：它会在不执行能力、不消耗积分的前提下�
   },
   "recovery": {
     "missing_fields": [],
+    "missing_field_groups": [],
     "safe_fixes": [],
     "retryable": true,
     "next_action": "execute",
@@ -458,7 +459,11 @@ Probe 是可选预检：它会在不执行能力、不消耗积分的前提下�
 }
 ```
 
-`recovery.missing_fields` 只列出缺失或无效的调用参数。目录验证证据缺口保留在 `verification.quality_issues` 中，本身不要求智能体在 Call 前再执行额外步骤。
+`recovery.missing_fields` 只列出缺失的必填调用参数（`missing_required`）。类型、枚举或格式错误不会将已提供的字段列为缺失。当下一步需要修复参数时，`recovery.safe_fixes` 会包含 `correct_parameters` 和 `probe`，引导修正后重新 Probe。
+
+对于 `one_of_required` 违规，`schema.violations[].required_any_of` 提供候选字段，`recovery.missing_field_groups` 列出尚未满足的参数组；每组任选一个非空参数即可，无需提供全部成员。例如，`missing_field_groups: [["symbol", "cik"]]` 表示提供 `symbol` 或 `cik` 后重新 Probe。未提供结构化候选字段的旧响应仍保留通用修正指引。
+
+目录验证证据缺口保留在 `verification.quality_issues` 中，本身不要求智能体在 Call 前再执行额外步骤。
 
 输入无效时可返回 `400`，能力不存在时返回 `404`，触发限流时返回 `429`，Probe 服务不可用或超时时返回 `502`/`504`。精确 schema 和全部响应请查看 [Probe 聚焦参考页](api-reference/probe.md)。
 

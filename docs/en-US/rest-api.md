@@ -1,6 +1,6 @@
 # QVeris REST API Documentation
 
-Version: 2026-09-29.2
+Version: 2026-10-03.1
 
 The public REST API exposes the core agent path:
 
@@ -452,6 +452,7 @@ Use the exact `tool_id` selected during Discover or Inspect. Keep `live_budget` 
   },
   "recovery": {
     "missing_fields": [],
+    "missing_field_groups": [],
     "safe_fixes": [],
     "retryable": true,
     "next_action": "execute",
@@ -460,7 +461,11 @@ Use the exact `tool_id` selected during Discover or Inspect. Keep `live_budget` 
 }
 ```
 
-`recovery.missing_fields` lists missing or invalid call parameters only. Catalog evidence gaps remain under `verification.quality_issues` and do not, by themselves, require another agent step before Call.
+`recovery.missing_fields` lists only absent required call parameters (`missing_required`). Type, enum, and format violations do not add already supplied fields to this list. When parameter repair is the next step, `recovery.safe_fixes` includes `correct_parameters` and `probe`.
+
+For a `one_of_required` violation, `schema.violations[].required_any_of` supplies the alternatives and `recovery.missing_field_groups` lists each unsatisfied group; provide any one non-empty parameter per group, not every member. For example, `missing_field_groups: [["symbol", "cik"]]` means supply either `symbol` or `cik`, then Probe again. Older responses without structured alternatives retain generic correction guidance.
+
+Catalog evidence gaps remain under `verification.quality_issues` and do not, by themselves, require another agent step before Call.
 
 A probe can return `400` for invalid input, `404` for an unknown capability, `429` when rate limited, or `502`/`504` when the probe service is unavailable. See the [focused Probe reference](api-reference/probe.md) for the exact schema and all responses.
 

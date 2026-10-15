@@ -352,6 +352,7 @@ class ToolExecutionResponse(QverisModel):
 
 class ProbeSchemaViolation(QverisModel):
     param: Optional[str] = None
+    required_any_of: Optional[List[str]] = None
     type: str
     message: str
 
@@ -377,6 +378,7 @@ class ProbeUnknownResult(QverisModel):
 
 class ProbeRecoveryAdvice(QverisModel):
     missing_fields: List[str]
+    missing_field_groups: List[List[str]] = Field(default_factory=list)
     safe_fixes: List[str]
     retryable: bool
     next_action: Literal["execute", "inspect", "probe", "authorize", "confirm_budget", "switch_provider", "retry"]
