@@ -230,7 +230,7 @@ npm install @qverisai/sdk ai zod
 ```
 
 ```typescript
-import { generateText } from 'ai';
+import { generateText, stepCountIs } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { Qveris } from '@qverisai/sdk';
 import { getQverisTools } from '@qverisai/sdk/ai';
@@ -239,7 +239,7 @@ const qveris = new Qveris({ apiKey: process.env.QVERIS_API_KEY! });
 const { text } = await generateText({
   model: openai('gpt-4o'),
   tools: getQverisTools(qveris), // qveris_discover / qveris_inspect / qveris_call
-  maxSteps: 6,
+  stopWhen: stepCountIs(6),
   prompt: 'Find a stock quote capability and quote AAPL.',
 });
 ```
