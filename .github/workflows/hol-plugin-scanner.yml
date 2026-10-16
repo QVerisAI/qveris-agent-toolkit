@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: hashgraph-online/ai-plugin-scanner-action@06a615ac53b269cdfe745f6165e6527fdf9378cf # v1.2.769
+      - uses: hashgraph-online/ai-plugin-scanner-action@d777b580805f6fadb19a03f84daf0974c53c6d38 # v1.2.786
         with:
           plugin_dir: "."
           format: json
@@ -24,7 +24,7 @@ jobs:
 
       - name: Preserve scanner findings even when the threshold fails
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: plugin-scanner-report
           path: scanner-report.json
