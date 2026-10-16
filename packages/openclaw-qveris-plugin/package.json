@@ -38,11 +38,11 @@
     "prepack": "npm run build",
     "test:integration": "node scripts/run-integration-tests.mjs",
     "test:registry-release": "node --test scripts/check-openclaw-registry-release.node-test.mjs",
-    "test": "vitest run && npm run test:registry-release",
+    "test": "vitest run && npm run test:registry-release && node --test scripts/npm-pack-result.node-test.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . && prettier --check \"src/**/*.ts\" \"index.ts\" \"scripts/**/*.mjs\"",
     "lint:fix": "eslint . --fix && prettier --write \"src/**/*.ts\" \"index.ts\" \"scripts/**/*.mjs\"",
-    "test:coverage": "vitest run --coverage && npm run test:registry-release"
+    "test:coverage": "vitest run --coverage && npm run test:registry-release && node --test scripts/npm-pack-result.node-test.mjs"
   },
   "dependencies": {
     "@sinclair/typebox": "0.34.52"

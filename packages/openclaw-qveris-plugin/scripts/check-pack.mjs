@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { isDeepStrictEqual } from "node:util";
+import { parseNpmPackResult } from "./npm-pack-result.mjs";
 
 const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
 const pluginManifest = JSON.parse(readFileSync("openclaw.plugin.json", "utf8"));
@@ -211,7 +212,7 @@ const raw = execFileSync("npm", ["pack", "--dry-run", "--json", "--ignore-script
   shell,
 });
 
-const [pack] = JSON.parse(raw);
+const pack = parseNpmPackResult(raw, packageJson.name);
 const files = pack.files.map((entry) => entry.path.replace(/^package\//, "")).sort();
 
 const missingRequired = [...requiredFiles].filter((file) => !files.includes(file));
