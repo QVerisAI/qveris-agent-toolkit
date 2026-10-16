@@ -3,6 +3,7 @@ import { mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseNpmPackResult } from "./npm-pack-result.mjs";
 
 const packageRoot = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 const packageJson = readJson(path.join(packageRoot, "package.json"));
@@ -117,7 +118,7 @@ function createPackageTarball(destination) {
   if (result.status !== 0) {
     fail(`npm pack failed (${result.status ?? "signal"}):\n${formatProcessOutput(result)}`);
   }
-  const [packed] = JSON.parse(result.stdout);
+  const packed = parseNpmPackResult(result.stdout, packageJson.name);
   if (!packed?.filename) {
     fail(`npm pack did not report a filename:\n${result.stdout}`);
   }
