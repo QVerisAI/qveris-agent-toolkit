@@ -180,7 +180,7 @@ jobs:
           git config user.email "qveris-docs-sync@users.noreply.github.com"
           git checkout -b "${BRANCH}"
           git add -A
-          git commit -m "docs: sync toolkit-owned docs from qveris-agent-toolkit@${SHORT_SHA}"
+          git commit -m "chore(docs): sync toolkit-owned docs from qveris-agent-toolkit@${SHORT_SHA}"
           git push --force origin "${BRANCH}"
 
           BODY="$(cat <<EOF
@@ -198,6 +198,6 @@ jobs:
               --repo "${WEBSITE_REPO}" \
               --base "${WEBSITE_BASE}" \
               --head "${BRANCH}" \
-              --title "docs: sync toolkit-owned docs (qveris-agent-toolkit@${SHORT_SHA})" \
+              --title "chore(docs): sync toolkit-owned docs (qveris-agent-toolkit@${SHORT_SHA})" \
               --body "${BODY}"
           fi
