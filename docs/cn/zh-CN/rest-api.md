@@ -1,6 +1,6 @@
 # QVeris REST API 文档
 
-版本：2026-10-03.1
+版本：2026-10-15.1
 
 公开 REST API 暴露核心 Agent 路径：
 
@@ -649,7 +649,7 @@ POST /tools/execute?tool_id={tool_id}
 GET /tools/executions/by-idempotency-key?key={original_idempotency_key}
 ```
 
-付费 Call 的 HTTP 响应丢失后，请使用原始 `Idempotency-Key` 查询这个只读端点。该端点不会授权新的 provider 执行。如果所选结算路径无法提供持久恢复能力，原始 Call 会在 provider 请求发出前返回 `409 idempotency_key_unsupported`。响应使用标准 API envelope；`data.status` 为 `pending`、`completed` 或 `unavailable`。`completed` 时，`data.response` 包含可恢复的原始 Call 响应；`unavailable` 表示已确认该执行存在，但无法安全重建完整结果，例如长结果的短期下载链接已经失效。
+Call 的 HTTP 响应丢失后，请使用原始 `Idempotency-Key` 查询这个只读端点。付费和零价 Call 都保留执行记录，不依赖积分的结算方式。该端点不会授权新的 provider 执行。响应使用标准 API envelope；`data.status` 为 `pending`、`completed` 或 `unavailable`。`completed` 时，`data.response` 包含可恢复的原始 Call 响应；`pending` 可能表示 Provider 结果或结算仍未知，应保留原始键并先完成对账；`unavailable` 表示已确认该执行存在，但无法安全重建完整结果，例如长结果的短期下载链接已经失效。已确认的零价执行标记为 `not_charged`，不要求存在扣款账本条目。
 
 ## 长响应
 
