@@ -1,6 +1,6 @@
 # QVeris REST API Documentation
 
-Version: 2026-10-03.1
+Version: 2026-10-15.1
 
 The public REST API exposes the core agent path:
 
@@ -651,7 +651,7 @@ When contacting support, include `execution_id`, `search_id`, `session_id`, `too
 GET /tools/executions/by-idempotency-key?key={original_idempotency_key}
 ```
 
-When a paid Call loses its HTTP response, query this read-only endpoint with the original `Idempotency-Key`. It never authorizes another provider execution. If the selected settlement path cannot provide durable recovery, the original Call is rejected with `409 idempotency_key_unsupported` before provider dispatch. The response uses the standard API envelope; `data.status` is `pending`, `completed`, or `unavailable`. A completed response contains the original recoverable Call in `data.response`. `unavailable` means the execution is known but its full result cannot be reproduced safely, for example after a short-lived overflow download URL expired.
+When a Call loses its HTTP response, query this read-only endpoint with the original `Idempotency-Key`. Paid and zero-cost Calls retain an execution record independently of how credits are settled. This endpoint never authorizes another provider execution. The response uses the standard API envelope; `data.status` is `pending`, `completed`, or `unavailable`. A completed response contains the original recoverable Call in `data.response`. `pending` can mean the Provider outcome or settlement is still unknown; keep the original key and reconcile before any further action. `unavailable` means the execution is known but its full result cannot be reproduced safely, for example after a short-lived overflow download URL expired. A confirmed zero-cost execution reports `not_charged` and does not require a debit ledger entry.
 
 ## Long tool responses
 

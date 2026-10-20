@@ -331,7 +331,7 @@ class PublicApiMetadata(BaseModel):
     contract_version: str = Field(
         ...,
         description='Version of the published QVeris REST API contract.',
-        examples=['2026-10-03.1'],
+        examples=['2026-10-15.1'],
         title='Contract Version',
     )
     registration: Optional[AnonymousTrialMetadata] = None
