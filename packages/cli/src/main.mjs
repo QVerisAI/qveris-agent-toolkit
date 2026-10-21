@@ -66,6 +66,11 @@ export async function main(argv) {
         await runCall(rest[0], flags);
         break;
       }
+      case "reconcile-call": {
+        const { runReconcileCall } = await import("./commands/reconcile-call.mjs");
+        await runReconcileCall(flags);
+        break;
+      }
       case "probe": {
         if (rest.length === 0) {
           console.error("  Usage: qveris probe <tool_id|index> [--params <json>] [--checks schema,quote]");
@@ -187,6 +192,7 @@ const VALUE_FLAGS = {
   params: "params",
   "max-size": "maxSize",
   "respond-with": "respondWith",
+  "idempotency-key": "idempotencyKey",
   model: "model",
   checks: "checks",
   "live-budget": "liveBudget",
@@ -465,6 +471,7 @@ function printUsage(flags = {}) {
     ${cyan("inspect")}  <tool_id|index>     View tool details, parameters, and stats
     ${cyan("probe")}    <tool_id|index>     Validate parameters and quote without execution
     ${cyan("call")}     <tool_id|index>     Execute a capability
+    ${cyan("reconcile-call")}                Read the original Call by its idempotency key
 
   ${bold("Account:")}
     ${cyan("auth")}      login|status|logout  OAuth Device Flow session
@@ -497,6 +504,8 @@ function printUsage(flags = {}) {
     --view <routing|full>  Discover response projection
     --lang <zh|en>         Discover response language
     --respond-with <mode>  Call projection: full | summary | fields:<JSONPath,...>
+    --idempotency-key <key>
+                           Reconcile the original Call; use the same key for retry lookup
     --model <model>        Model that selected and parameterized the Call
     --context <json|@file|->
                            Refresh copied v1 context and validate as needed before Call
