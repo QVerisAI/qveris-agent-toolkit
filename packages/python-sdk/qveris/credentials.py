@@ -20,6 +20,7 @@ CredentialOperation = Literal[
     "inspect",
     "probe",
     "call",
+    "call_reconciliation",
     "capability_detail",
     "capability_query",
     "credits",
