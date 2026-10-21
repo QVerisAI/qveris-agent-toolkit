@@ -60,6 +60,7 @@ import { z } from 'zod/v4';
 import { createRequire } from 'node:module';
 
 const SERVER_NAME = 'qveris';
+const DEFAULT_MAX_TOOL_INPUT_ELEMENTS = 10_000;
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
 export const SERVER_VERSION: string = pkg.version;
@@ -162,7 +163,7 @@ const CALL_TOOL_DESCRIPTION =
  */
 export interface QverisServerOptions {
   includeDeprecatedAliases?: boolean;
-  /** Largest combined number of array elements and object keys accepted in one tool call. */
+  /** Largest combined number of array elements and object keys accepted in one tool call (default: 10,000). */
   maxToolInputElements?: number;
 }
 
@@ -638,7 +639,7 @@ export function createQverisServer(
         tools: {},
         resources: {},
       },
-      maxToolInputElements: options.maxToolInputElements,
+      maxToolInputElements: options.maxToolInputElements ?? DEFAULT_MAX_TOOL_INPUT_ELEMENTS,
     },
   );
   const server = mcpServer.server;

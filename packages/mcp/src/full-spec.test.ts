@@ -70,6 +70,20 @@ async function connect(
 }
 
 describe('output schemas + structured content', () => {
+  it('applies the finite input cap when no embedding options are supplied', async () => {
+    const qveris = fakeQverisClient();
+    const c = await connect({ client: qveris });
+    const arguments_ = Object.fromEntries(Array.from({ length: 10_001 }, (_, index) => [`field_${index}`, index]));
+
+    const result = await c.callTool({ name: 'discover', arguments: arguments_ });
+    expect(result.isError).toBe(true);
+    expect(result.content).toContainEqual(
+      expect.objectContaining({ text: expect.stringContaining('maximum of 10000 elements') }),
+    );
+    expect(qveris.calls).toEqual([]);
+    await c.close();
+  });
+
   it('rejects tool arguments over the configured element cap before executing them', async () => {
     const qveris = fakeQverisClient();
     const c = await connect({ client: qveris, maxToolInputElements: 2 });
