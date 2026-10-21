@@ -625,6 +625,24 @@ export interface ExecuteResponse {
   created_at?: string;
 }
 
+/** Read-only status of a Call submitted with an Idempotency-Key. */
+export interface ToolExecutionReconciliationData {
+  status: 'pending' | 'completed' | 'unavailable';
+  execution_id: string;
+  execution_state: string;
+  provider_request_dispatched: boolean;
+  provider_execution_id?: string | null;
+  charge_event_id?: string | null;
+  settlement_state: string;
+  amount_credits?: number | null;
+  settlement_batch_id?: string | null;
+  ledger_entry_id?: string | null;
+  retry_disposition: 'terminal' | 'reconcile_first';
+  response?: ExecuteResponse | null;
+  response_http_status?: number | null;
+  result_unavailable_reason?: string | null;
+}
+
 export type ProbeCheck = 'schema' | 'quote' | 'coverage' | 'sample';
 export type ProbeLiveBudget = 'none' | 'metadata' | 'sampled';
 
@@ -840,6 +858,7 @@ export type ApiOperation =
   | 'inspect'
   | 'probe'
   | 'call'
+  | 'call_reconciliation'
   | 'credits'
   | 'usage_history'
   | 'credits_ledger'
