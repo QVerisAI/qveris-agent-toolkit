@@ -454,6 +454,47 @@ describe('QverisClient', () => {
       vi.restoreAllMocks();
     });
 
+    it('sends a host-provided idempotency key on the single Call request', async () => {
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ execution_id: 'exec-123', success: true }),
+      });
+
+      await client.executeTool('weather-tool', { parameters: {} }, { idempotencyKey: 'host-key-123' });
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock.mock.calls[0][1]).toEqual(
+        expect.objectContaining({ headers: expect.objectContaining({ 'Idempotency-Key': 'host-key-123' }) }),
+      );
+    });
+
+    it('reconciles a Call by the original key using a read-only GET', async () => {
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          status: 'success',
+          data: {
+            status: 'completed',
+            execution_id: 'exec-123',
+            execution_state: 'completed',
+            provider_request_dispatched: true,
+            settlement_state: 'settled',
+            retry_disposition: 'terminal',
+            response: { execution_id: 'exec-123', success: true },
+          },
+        }),
+      });
+
+      const result = await client.reconcileToolExecution('host-key-123');
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock.mock.calls[0][0]).toBe(
+        'https://qveris.ai/api/v1/tools/executions/by-idempotency-key?key=host-key-123',
+      );
+      expect(fetchMock.mock.calls[0][1]).toEqual(expect.objectContaining({ method: 'GET' }));
+      expect(result).toMatchObject({ status: 'completed', execution_id: 'exec-123' });
+    });
+
     it('should make POST request to /tools/execute endpoint with tool_id', async () => {
       const mockResponse = {
         execution_id: 'exec-123',
