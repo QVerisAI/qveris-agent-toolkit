@@ -682,6 +682,7 @@ async function executeCall({
       maxResponseSize: maxSize,
       respondWith: flags.respondWith,
       model: flags.model,
+      idempotencyKey: flags.idempotencyKey,
       timeoutMs,
     });
 
