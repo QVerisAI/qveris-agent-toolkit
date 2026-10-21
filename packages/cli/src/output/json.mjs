@@ -18,6 +18,8 @@ export function outputJsonError(error, exitCode = 1) {
   obj.fallback_available = error.fallbackAvailable ?? false;
   if (error.candidates !== undefined) obj.candidates = error.candidates;
   if (error.parameterErrors !== undefined) obj.parameter_errors = error.parameterErrors;
+  if (error.idempotencyKey !== undefined) obj.idempotency_key = error.idempotencyKey;
+  if (error.recovery !== undefined) obj.recovery = error.recovery;
   obj.exit_code = exitCode;
   process.stderr.write(JSON.stringify(obj) + "\n");
 }

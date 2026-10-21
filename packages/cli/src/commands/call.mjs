@@ -135,6 +135,8 @@ export async function runCall(idOrIndex, flags) {
         max_response_size: maxSize,
         ...(flags.respondWith !== undefined && { respond_with: flags.respondWith }),
         ...(flags.model !== undefined && { model: flags.model }),
+        ...(flags.requireZeroQuote && { require_zero_quote: true }),
+        ...(flags.idempotencyKey !== undefined && { transport: { idempotency_key: flags.idempotencyKey } }),
       });
     } else {
       console.log(`\n  ${bold("Dry run")} -- would send:\n`);
@@ -247,7 +249,7 @@ function returnedCallRecovery(result) {
   const executionId = executionIdFrom(result);
   const validSuccess = result?.success === true && executionId;
   if (validSuccess) return null;
-  const action = executionId ? "reconcile_settlement" : "review_settlement";
+  const action = executionId ? "reconcile_settlement" : result?.idempotency_key ? "lookup_execution" : "review_settlement";
   return {
     code: result?.success === false ? "PROVIDER_FAILURE" : "API_ERROR",
     retryable: false,
@@ -255,13 +257,16 @@ function returnedCallRecovery(result) {
     missing_fields: [],
     fallback_available: false,
     candidates: [],
+    ...(result?.recovery !== undefined && { lookup: result.recovery }),
     next_action: buildNextAction(action, {
       requiresUser: !executionId,
       reason: executionId
         ? result?.success === false
           ? "call_failed_after_submission"
           : "invalid_call_response"
-        : "execution_id_unavailable",
+        : result?.idempotency_key
+          ? "call_outcome_may_be_unknown"
+          : "execution_id_unavailable",
     }),
   };
 }
@@ -644,6 +649,7 @@ async function executeCall({
         max_response_size: maxSize,
         ...(flags.respondWith !== undefined && { respond_with: flags.respondWith }),
         ...(flags.model !== undefined && { model: flags.model }),
+        ...(flags.idempotencyKey !== undefined && { transport: { idempotency_key: flags.idempotencyKey } }),
         ...(contextMeta && { context_handoff: contextMeta }),
       });
     } else {
@@ -672,6 +678,32 @@ async function executeCall({
   const spinner = flags.json ? { stop() {} } : createSpinner("Calling tool...");
 
   try {
+    if (flags.requireZeroQuote) {
+      const quote = await probeTool({
+        apiKey,
+        credentialProvider,
+        baseUrl,
+        toolId,
+        parameters,
+        checks: ["schema", "quote"],
+        liveBudget: "none",
+        timeoutMs,
+      });
+      if (
+        quote?.executable !== true ||
+        !quote?.execution_constraints_supported?.includes("require_zero_quote_v1") ||
+        quote?.schema?.valid !== true ||
+        quote?.quote?.exact !== true ||
+        quote.quote.currency !== "credits" ||
+        typeof quote?.quote?.estimate_credits !== "number" ||
+        quote.quote.estimate_credits !== 0
+      ) {
+        throw new CliError(
+          "API_ERROR",
+          "Zero-quote Call blocked: executable schema, require_zero_quote_v1 support, and exact zero-credit quote were not confirmed.",
+        );
+      }
+    }
     const result = await callTool({
       apiKey,
       credentialProvider,
@@ -682,6 +714,8 @@ async function executeCall({
       maxResponseSize: maxSize,
       respondWith: flags.respondWith,
       model: flags.model,
+      requireZeroQuote: flags.requireZeroQuote === true,
+      idempotencyKey: flags.idempotencyKey,
       timeoutMs,
     });
 
@@ -698,6 +732,10 @@ async function executeCall({
     } else {
       console.log(formatCallResult(result));
       if (recovery) console.error(`  Action: ${recovery.action}`);
+      if (result?.idempotency_key) {
+        console.error(`  Recovery key: ${result.idempotency_key}`);
+        console.error(`  Run: qveris execution lookup ${result.idempotency_key}`);
+      }
     }
 
     if (recovery) process.exitCode = process.exitCode || 1;
@@ -719,6 +757,13 @@ async function executeCall({
   } catch (err) {
     spinner.stop();
     const executionId = executionIdFrom(err?.responseData);
+    if (err?.idempotencyKey) {
+      err.action = "lookup_execution";
+      err.nextAction = buildNextAction("lookup_execution", {
+        requiresUser: true,
+        reason: err.status === 409 ? "idempotency_key_conflict" : "call_outcome_may_be_unknown",
+      });
+    }
     if (executionId) {
       const settlement = await reconcileSettlement({
         apiKey,
@@ -741,6 +786,7 @@ async function executeCall({
           success: false,
           status,
           execution_id: executionId,
+          ...(err.idempotencyKey && { idempotency_key: err.idempotencyKey }),
           ...(contextMeta && { context_handoff: contextMeta }),
           settlement,
           next_action: nextAction,
@@ -763,7 +809,7 @@ async function executeCall({
       });
     }
     const rejectedCall = err?.code === "API_ERROR" && err?.status >= 400 && err.status < 500 && err.status !== 408;
-    if (rejectedCall) {
+    if (rejectedCall && !(err.status === 409 && err.idempotencyKey)) {
       const validationFailure = err.status === 400 || err.status === 422;
       const action = validationFailure ? "correct_parameters" : "review_request";
       err.retryable = false;
@@ -776,11 +822,16 @@ async function executeCall({
       throw decorateFailure(err);
     }
     err.retryable = false;
-    err.action = "review_settlement";
+    const recoveryAction = err.idempotencyKey ? "lookup_execution" : "review_settlement";
+    err.action = recoveryAction;
     err.fallbackAvailable = false;
-    err.nextAction = buildNextAction("review_settlement", {
+    err.nextAction = buildNextAction(recoveryAction, {
       requiresUser: true,
-      reason: "execution_id_unavailable",
+      reason: err.idempotencyKey
+        ? err.status === 409
+          ? "idempotency_key_conflict"
+          : "call_outcome_may_be_unknown"
+        : "execution_id_unavailable",
     });
     throw decorateFailure(err);
   }

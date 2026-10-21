@@ -7,6 +7,7 @@ import {
   discoverTools,
   getCredits,
   getCreditsLedger,
+  getExecutionByIdempotencyKey,
   getUsageHistory,
   inspectToolsByIds,
   probeTool,
@@ -47,7 +48,9 @@ test("API client maps discover, inspect, probe, call, credits, usage, and ledger
         body: options.body ? JSON.parse(options.body) : undefined,
         authorization: options.headers.Authorization,
       });
-      return jsonResponse({ ok: true, path: url.pathname });
+      return url.pathname.endsWith("/tools/execute")
+        ? jsonResponse({ execution_id: "exec-1", ok: true })
+        : jsonResponse({ ok: true, path: url.pathname });
     },
     async () => {
       await discoverTools({
@@ -247,6 +250,132 @@ test("API client normalizes numeric-string balances without resubmitting a paid 
 
   assert.equal(result.remaining_credits, 992.5);
   assert.equal(requests, 1);
+});
+
+test("guarded CLI Call sends a top-level zero-quote requirement and recovers by the same idempotency key", async () => {
+  const requests = [];
+  const recoveredCall = { execution_id: "exec-recovered", success: true, result: { data: { city: "London" } } };
+  const result = await withMockFetch(
+    (url, options) => {
+      requests.push({ method: options.method, url: url.toString(), headers: options.headers, body: options.body });
+      if (options.method === "POST") return jsonResponse({ message: "gateway timeout" }, { status: 503 });
+      return jsonResponse({ status: "success", data: { status: "completed", response: recoveredCall } });
+    },
+    () => callTool({
+      apiKey: "sk-test",
+      baseUrl: "https://unit.test/api/v1",
+      toolId: "weather-tool",
+      discoveryId: "search-1",
+      parameters: { city: "London" },
+      requireZeroQuote: true,
+      idempotencyKey: "stable-call-key",
+    }),
+  );
+
+  assert.deepEqual(result, recoveredCall);
+  assert.equal(requests.length, 2);
+  assert.equal(requests[0].method, "POST");
+  assert.equal(requests[0].headers["Idempotency-Key"], "stable-call-key");
+  assert.deepEqual(JSON.parse(requests[0].body), {
+    search_id: "search-1",
+    parameters: { city: "London" },
+    max_response_size: 102400,
+    require_zero_quote: true,
+  });
+  assert.equal(requests[1].method, "GET");
+  assert.equal(requests[1].url, "https://unit.test/api/v1/tools/executions/by-idempotency-key?key=stable-call-key");
+});
+
+test("uncertain CLI Call never resubmits when lookup is pending", async () => {
+  const requests = [];
+  await assert.rejects(
+    withMockFetch(
+      (url, options) => {
+        requests.push({ method: options.method, url: url.toString() });
+        if (options.method === "POST") return jsonResponse({ message: "gateway timeout" }, { status: 503 });
+        return jsonResponse({ status: "success", data: { status: "pending" } });
+      },
+      () => callTool({
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        toolId: "weather-tool",
+        discoveryId: "search-1",
+        parameters: {},
+        idempotencyKey: "pending-call-key",
+      }),
+    ),
+    (error) => error.status === 503 && error.recovery.status === "pending" && error.idempotencyKey === "pending-call-key",
+  );
+  assert.deepEqual(requests.map((request) => request.method), ["POST", "GET"]);
+});
+
+test("CLI Call exposes the key on HTTP 409 and does not auto-lookup or resubmit", async () => {
+  const requests = [];
+  await assert.rejects(
+    withMockFetch(
+      (url, options) => {
+        requests.push({ method: options.method, url: url.toString(), headers: options.headers });
+        return jsonResponse({ message: "idempotency key conflicts with an earlier request" }, { status: 409 });
+      },
+      () => callTool({
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        toolId: "weather-tool",
+        discoveryId: "search-1",
+        parameters: { city: "Paris" },
+        idempotencyKey: "reused-key",
+      }),
+    ),
+    (error) => error.status === 409 && error.idempotencyKey === "reused-key",
+  );
+  assert.equal(requests.length, 1);
+  assert.deepEqual(requests.map(({ method }) => method), ["POST"]);
+});
+
+test("CLI retains the key and checks it when the Execute response is malformed", async () => {
+  const requests = [];
+  await assert.rejects(
+    withMockFetch(
+      (url, options) => {
+        requests.push({ method: options.method, url: url.toString(), headers: options.headers });
+        if (options.method === "POST") return new Response("{invalid json", { status: 200 });
+        return jsonResponse({ status: "success", data: { status: "pending" } });
+      },
+      () => callTool({
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        toolId: "weather-tool",
+        discoveryId: "search-1",
+        parameters: {},
+        idempotencyKey: "malformed-response-key",
+      }),
+    ),
+    (error) =>
+      error.status === 200 &&
+      error.idempotencyKey === "malformed-response-key" &&
+      error.recovery.status === "pending",
+  );
+  assert.deepEqual(requests.map(({ method }) => method), ["POST", "GET"]);
+});
+
+test("CLI idempotency lookup is a read-only GET using the exact key", async () => {
+  const requests = [];
+  const result = await withMockFetch(
+    (url, options) => {
+      requests.push({ method: options.method, url: url.toString() });
+      return jsonResponse({ status: "success", data: { status: "pending" } });
+    },
+    () => getExecutionByIdempotencyKey({
+      apiKey: "sk-test",
+      baseUrl: "https://unit.test/api/v1",
+      key: "retained-key",
+    }),
+  );
+  assert.deepEqual(result.data, { status: "pending" });
+  assert.deepEqual(requests, [{
+    method: "GET",
+    url: "https://unit.test/api/v1/tools/executions/by-idempotency-key?key=retained-key",
+  }]);
 });
 
 test("API client does not downgrade invalid projections", async () => {
@@ -460,7 +589,9 @@ test("QVERIS_BASE_URL controls every API call and normalizes trailing slashes", 
       await withMockFetch(
         (url) => {
           paths.push(url.toString());
-          return jsonResponse({ ok: true });
+          return url.pathname.endsWith("/tools/execute")
+            ? jsonResponse({ execution_id: "exec-1", ok: true })
+            : jsonResponse({ ok: true });
         },
         async () => {
           await discoverTools({ apiKey: "sk-test", query: "weather" });

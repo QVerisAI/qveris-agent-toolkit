@@ -52,16 +52,24 @@ describe('call (execute_tool)', () => {
       expect(executeToolSchema.properties.respond_with.description).toContain('compatibility auto-delivery');
       expect(executeToolSchema.properties.max_response_size.description).toContain('UTF-8 bytes');
     });
+
+    it('should expose the server-enforced zero-quote option', () => {
+      expect(executeToolSchema.properties.require_zero_quote.type).toBe('boolean');
+      expect(executeToolSchema.required).not.toContain('require_zero_quote');
+    });
   });
 
   describe('executeExecuteTool', () => {
     let mockClient: QverisClient;
     let executeToolMock: ReturnType<typeof vi.fn>;
+    let probeToolMock: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
       executeToolMock = vi.fn();
+      probeToolMock = vi.fn();
       mockClient = {
         executeTool: executeToolMock,
+        probeTool: probeToolMock,
       } as unknown as QverisClient;
     });
 
@@ -326,6 +334,91 @@ describe('call (execute_tool)', () => {
           'session',
         ),
       ).rejects.toEqual(error);
+    });
+
+    it('probes exact zero and sends the top-level server guard before a guarded call', async () => {
+      probeToolMock.mockResolvedValueOnce({
+        executable: true,
+        execution_constraints_supported: ['require_zero_quote_v1'],
+        schema: { valid: true },
+        quote: { exact: true, estimate_credits: 0, currency: 'credits' },
+      });
+      executeToolMock.mockResolvedValueOnce({ execution_id: 'exec-zero', success: true });
+
+      await executeExecuteTool(
+        mockClient,
+        { tool_id: 'tool-1', search_id: 'search-1', params_to_tool: { city: 'London' }, require_zero_quote: true },
+        'session-1',
+      );
+
+      expect(probeToolMock).toHaveBeenCalledWith('tool-1', {
+        parameters: { city: 'London' },
+        checks: ['schema', 'quote'],
+        live_budget: 'none',
+      });
+      expect(executeToolMock).toHaveBeenCalledWith('tool-1', {
+        search_id: 'search-1',
+        session_id: 'session-1',
+        parameters: { city: 'London' },
+        max_response_size: undefined,
+        require_zero_quote: true,
+      });
+    });
+
+    it('passes the MCP idempotency key as transport metadata, outside params_to_tool', async () => {
+      executeToolMock.mockResolvedValueOnce({ execution_id: 'exec-1', success: true });
+      await executeExecuteTool(
+        mockClient,
+        {
+          tool_id: 'tool-1',
+          search_id: 'search-1',
+          params_to_tool: { city: 'London' },
+          idempotency_key: 'stable-key',
+        },
+        'session-1',
+      );
+
+      expect(executeToolMock).toHaveBeenCalledWith(
+        'tool-1',
+        expect.not.objectContaining({ idempotency_key: expect.anything() }),
+        { idempotencyKey: 'stable-key' },
+      );
+    });
+
+    it('fails closed before execute when the quote is positive or inexact', async () => {
+      probeToolMock.mockResolvedValueOnce({
+        executable: true,
+        execution_constraints_supported: ['require_zero_quote_v1'],
+        schema: { valid: true },
+        quote: { exact: false, estimate_credits: 0, currency: 'credits' },
+      });
+
+      await expect(
+        executeExecuteTool(
+          mockClient,
+          { tool_id: 'tool-1', search_id: 'search-1', params_to_tool: {}, require_zero_quote: true },
+          'session-1',
+        ),
+      ).rejects.toThrow(/exact zero-credit quote/);
+      expect(executeToolMock).not.toHaveBeenCalled();
+    });
+
+    it('fails closed when Probe does not advertise the server zero-quote contract', async () => {
+      probeToolMock.mockResolvedValueOnce({
+        executable: true,
+        execution_constraints_supported: [],
+        schema: { valid: true },
+        quote: { exact: true, estimate_credits: 0, currency: 'credits' },
+      });
+
+      await expect(
+        executeExecuteTool(
+          mockClient,
+          { tool_id: 'tool-1', search_id: 'search-1', params_to_tool: {}, require_zero_quote: true },
+          'session-1',
+        ),
+      ).rejects.toThrow(/exact zero-credit quote/);
+      expect(executeToolMock).not.toHaveBeenCalled();
     });
   });
 });

@@ -163,6 +163,8 @@ Call a discovered tool with specific parameters.
 | `model` | string | | Model that selected and parameterized the call (maximum 128 characters) |
 | `max_response_size` | number | | Automatic inline limit in UTF-8 bytes (default: 20480; `-1` is unlimited); explicit `full` takes precedence over a finite value |
 | `respond_with` | string | | Omit for compatibility auto-delivery; use `full` to force complete inline data, `summary`, or `fields:<JSONPath,...>` |
+| `require_zero_quote` | boolean | | Probe schema and exact quote, then require server-side zero-credit admission |
+| `idempotency_key` | string | | Stable transport key for outcome lookup; not included in `params_to_tool` |
 
 **Example:**
 
@@ -172,9 +174,17 @@ Call a discovered tool with specific parameters.
   "search_id": "abcd1234-ab12-ab12-ab12-abcdef123456",
   "params_to_tool": {"city": "London", "units": "metric"},
   "model": "router-model-v1",
-  "respond_with": "summary"
+  "respond_with": "summary",
+  "require_zero_quote": true,
+  "idempotency_key": "stable-call-key"
 }
 ```
+
+When `require_zero_quote` is true, the server probes first and blocks the Call unless the capability is executable, advertises `require_zero_quote_v1`, the current schema is valid, and the exact quote is zero. The execute body carries this flag at the top level, outside `params_to_tool`. `idempotency_key` is transport metadata. Each Call gets a key; uncertain outcomes return that key for reuse with the read-only `lookup_execution` tool. HTTP 409 conflicts skip automatic lookup, and the client never automatically resubmits Execute.
+
+### `lookup_execution`
+
+Read-only query for the outcome associated with a prior Call. It takes `idempotency_key` and never submits Execute.
 
 The `call` response may include compact pre-settlement `billing`. Final charge status should be checked with `usage_history` or `credits_ledger`.
 
@@ -328,7 +338,7 @@ npx -y @qverisai/mcp
 
 - The endpoint is `POST/GET/DELETE {path}` (default `/mcp`); `GET /health` returns an unauthenticated liveness probe.
 - **Inbound auth:** set `QVERIS_MCP_HTTP_AUTH_TOKEN` to require `Authorization: Bearer <token>` on the MCP endpoint. The server **refuses to start** when binding a non-loopback host without a token, unless you set `QVERIS_MCP_HTTP_ALLOW_UNAUTHENTICATED=true` to delegate auth to an external proxy/gateway. Your `QVERIS_API_KEY` is the server's *outbound* credential to QVeris — it is **not** an inbound check, so anyone reaching an unauthenticated endpoint would spend your credits.
-- **Embedding API:** the package root exports `startHttpServer`, `resolveTransportConfig`, `QverisClient`, and the session-auth types. An independently operated service can set `requireSessionBearer` on its resolved transport config and provide an asynchronous session factory. The transport requires a bearer, passes it only to that factory, stores only a credential fingerprint for session binding, and rejects credential changes. A hosted embedding can call `createQverisServer(client, sessionId, { includeDeprecatedAliases: false })` to advertise only the six canonical tools; deprecated aliases remain callable for cached legacy clients. The embedding service owns validation, client construction, rate limits, deployment, and operations.
+- **Embedding API:** the package root exports `startHttpServer`, `resolveTransportConfig`, `QverisClient`, and the session-auth types. An independently operated service can set `requireSessionBearer` on its resolved transport config and provide an asynchronous session factory. The transport requires a bearer, passes it only to that factory, stores only a credential fingerprint for session binding, and rejects credential changes. A hosted embedding can call `createQverisServer(client, sessionId, { includeDeprecatedAliases: false })` to advertise only the seven canonical tools; deprecated aliases remain callable for cached legacy clients. The embedding service owns validation, client construction, rate limits, deployment, and operations.
 - DNS-rebinding protection is **on by default** (localhost + the bound host/port are allow-listed). When exposing the server publicly, add your public host via `QVERIS_MCP_ALLOWED_HOSTS`.
 - Requests are capped at 4 MiB by default (`QVERIS_MCP_MAX_BODY_BYTES`), and idle sessions are evicted after 5 minutes (`QVERIS_MCP_SESSION_TIMEOUT_MS`).
 - **Discovery:** registries and crawlers can learn about the server without connecting:

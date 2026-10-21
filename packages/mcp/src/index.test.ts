@@ -13,6 +13,7 @@ import {
 } from './index.js';
 import type { QverisClient } from './api/client.js';
 import { creditsLedgerSchema } from './tools/credits-ledger.js';
+import { lookupExecutionSchema } from './tools/lookup-execution.js';
 import { executeToolSchema } from './tools/execute.js';
 import { TOOL_OUTPUT_SCHEMAS } from './output-schemas.js';
 import { probeToolSchema } from './tools/probe.js';
@@ -95,6 +96,7 @@ describe('MCP public tool interface', () => {
       'inspect',
       'probe',
       'call',
+      'lookup_execution',
       'usage_history',
       'credits_ledger',
       'search_tools',
@@ -106,6 +108,7 @@ describe('MCP public tool interface', () => {
     expect(byName.get('inspect')?.inputSchema).toBe(getToolsByIdsSchema);
     expect(byName.get('probe')?.inputSchema).toBe(probeToolSchema);
     expect(byName.get('call')?.inputSchema).toBe(executeToolSchema);
+    expect(byName.get('lookup_execution')?.inputSchema).toBe(lookupExecutionSchema);
     expect(byName.get('usage_history')?.inputSchema).toBe(usageHistorySchema);
     expect(byName.get('credits_ledger')?.inputSchema).toBe(creditsLedgerSchema);
 
@@ -127,6 +130,7 @@ describe('MCP public tool interface', () => {
       'inspect',
       'probe',
       'call',
+      'lookup_execution',
       'usage_history',
       'credits_ledger',
     ]);
@@ -158,7 +162,7 @@ describe('MCP public tool interface', () => {
 
   it('declares complete, conservative annotations for every tool', () => {
     const byName = new Map(listQverisMcpTools().map((tool) => [tool.name, tool]));
-    const canonicalTools = ['discover', 'inspect', 'probe', 'call', 'usage_history', 'credits_ledger'] as const;
+    const canonicalTools = ['discover', 'inspect', 'probe', 'call', 'lookup_execution', 'usage_history', 'credits_ledger'] as const;
     const aliases = {
       search_tools: 'discover',
       get_tools_by_ids: 'inspect',
@@ -194,6 +198,13 @@ describe('MCP public tool interface', () => {
         idempotentHint: false,
         openWorldHint: true,
       },
+      lookup_execution: {
+        title: 'Look up a QVeris Call by idempotency key',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
       usage_history: {
         title: 'Query QVeris usage history',
         readOnlyHint: true,
@@ -225,6 +236,7 @@ describe('MCP public tool interface', () => {
       getToolsByIds: vi.fn().mockResolvedValue({ results: [{ tool_id: 'weather.tool.v1' }] }),
       probeTool: vi.fn().mockResolvedValue({ schema: { valid: true } }),
       executeTool: vi.fn().mockResolvedValue({ execution_id: 'exec-1', success: true }),
+      getExecutionByIdempotencyKey: vi.fn().mockResolvedValue({ status: 'pending' }),
       getUsageHistory: vi.fn(),
       getCreditsLedger: vi.fn(),
     } as unknown as QverisClient;
@@ -261,12 +273,18 @@ describe('MCP public tool interface', () => {
       parameters: { city: 'London' },
       checks: ['schema', 'quote'],
     });
+    const lookup = await executeQverisMcpTool(client, 'session-1', 'lookup_execution', {
+      idempotency_key: 'retained-key',
+    });
 
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('Deprecated'));
     expect(payload(discover).search_id).toBe('search-1');
     expect(payload(inspect).results[0].tool_id).toBe('weather.tool.v1');
     expect(payload(call).execution_id).toBe('exec-1');
     expect(payload(probe).schema.valid).toBe(true);
+    expect(payload(lookup)).toEqual({ status: 'pending' });
+    expect(client.getExecutionByIdempotencyKey).toHaveBeenCalledWith('retained-key');
+    expect(client.executeTool).toHaveBeenCalledTimes(1);
 
     expect(client.searchTools).toHaveBeenCalledWith({
       query: 'weather',
@@ -339,6 +357,7 @@ describe('MCP public tool interface', () => {
       'inspect',
       'probe',
       'call',
+      'lookup_execution',
       'usage_history',
       'credits_ledger',
     ]);

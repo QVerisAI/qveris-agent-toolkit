@@ -59,6 +59,12 @@ export interface ExecuteToolInput {
 
   /** Server-side result projection. Omit for the legacy/full response. */
   respond_with?: 'full' | 'summary' | `fields:${string}`;
+
+  /** Probe and require the server-side exact quote to be zero before Call. */
+  require_zero_quote?: boolean;
+
+  /** Stable transport key to reuse for a manual lookup or replay of this same Call. */
+  idempotency_key?: string;
 }
 
 /**
@@ -117,6 +123,17 @@ export const executeToolSchema = {
         'Server-side result projection: omit for compatibility auto-delivery; use "full" to force complete inline data, ' +
         '"summary", or "fields:<JSONPath,...>".',
     },
+    require_zero_quote: {
+      type: 'boolean',
+      description:
+        'When true, Probe schema and exact quote first, then require the server to reject the Call unless the current quote is exactly zero.',
+    },
+    idempotency_key: {
+      type: 'string',
+      minLength: 1,
+      description:
+        'Optional stable request key. Reuse it with lookup_execution to recover an uncertain outcome; it is transport metadata, not a tool parameter.',
+    },
   },
   required: ['tool_id', 'search_id', 'params_to_tool'],
 };
@@ -139,6 +156,12 @@ export async function executeExecuteTool(
     throw new Error('params_to_tool must be a JSON object.');
   }
   if (
+    input.idempotency_key !== undefined &&
+    (typeof input.idempotency_key !== 'string' || input.idempotency_key.trim().length === 0)
+  ) {
+    throw new Error('idempotency_key must be a non-empty string.');
+  }
+  if (
     input.max_response_size !== undefined &&
     input.max_response_size !== -1 &&
     (!Number.isInteger(input.max_response_size) || input.max_response_size <= 0)
@@ -146,7 +169,28 @@ export async function executeExecuteTool(
     throw new Error('max_response_size must be -1 or a positive integer.');
   }
 
-  const response = await client.executeTool(input.tool_id, {
+  if (input.require_zero_quote === true) {
+    const probe = await client.probeTool(input.tool_id, {
+      parameters: input.params_to_tool,
+      checks: ['schema', 'quote'],
+      live_budget: 'none',
+    });
+    if (
+      probe.executable !== true ||
+      !probe.execution_constraints_supported?.includes('require_zero_quote_v1') ||
+      probe.schema?.valid !== true ||
+      probe.quote?.exact !== true ||
+      probe.quote.currency !== 'credits' ||
+      typeof probe.quote.estimate_credits !== 'number' ||
+      probe.quote.estimate_credits !== 0
+    ) {
+      throw new Error(
+        'Zero-quote Call blocked: executable schema, require_zero_quote_v1 support, and exact zero-credit quote were not confirmed.',
+      );
+    }
+  }
+
+  const request = {
     search_id: input.search_id,
     session_id: input.session_id ?? defaultSessionId,
     ...(input.model !== undefined && { model: input.model }),
@@ -154,7 +198,11 @@ export async function executeExecuteTool(
     ...(input.sub_user_id !== undefined && { sub_user_id: input.sub_user_id }),
     max_response_size: input.max_response_size,
     ...(input.respond_with !== undefined && { respond_with: input.respond_with }),
-  });
+    ...(input.require_zero_quote === true && { require_zero_quote: true }),
+  };
+  const response = input.idempotency_key
+    ? await client.executeTool(input.tool_id, request, { idempotencyKey: input.idempotency_key })
+    : await client.executeTool(input.tool_id, request);
 
   return normalizeCreditBalanceResponse(response);
 }

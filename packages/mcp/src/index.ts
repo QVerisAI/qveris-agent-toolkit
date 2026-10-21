@@ -49,6 +49,11 @@ import { probeToolSchema, executeProbeTool, type ProbeToolInput } from './tools/
 import { getToolsByIdsSchema, executeGetToolsByIds, type GetToolsByIdsInput } from './tools/get-by-ids.js';
 import { usageHistorySchema, executeUsageHistory, type UsageHistoryInput } from './tools/usage-history.js';
 import { creditsLedgerSchema, executeCreditsLedger, type CreditsLedgerInput } from './tools/credits-ledger.js';
+import {
+  executeLookupExecution,
+  lookupExecutionSchema,
+  type LookupExecutionInput,
+} from './tools/lookup-execution.js';
 import type { ApiError, NextAction } from './types.js';
 import { TOOL_OUTPUT_SCHEMAS } from './output-schemas.js';
 import { z } from 'zod/v4';
@@ -117,6 +122,13 @@ export const QVERIS_MCP_TOOL_ANNOTATIONS = {
     idempotentHint: true,
     openWorldHint: false,
   },
+  lookup_execution: {
+    title: 'Look up a QVeris Call by idempotency key',
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
 } as const satisfies Record<string, CompleteToolAnnotations>;
 
 /** Discovery metadata (Server Card + Catalog) derived from package.json. */
@@ -149,7 +161,8 @@ const CALL_TOOL_DESCRIPTION =
   'Call a specific remote tool with provided parameters. ' +
   'The tool_id and search_id must come from a previous discover call. ' +
   'Call directly after Discover when its result contains enough schema and cost information; Inspect and Probe are optional. ' +
-  'Pass parameters to the tool through params_to_tool. ' +
+  'Pass parameters to the tool through params_to_tool. Set require_zero_quote=true to require a current exact zero-credit quote before the server dispatches the Call. ' +
+  'For uncertain outcomes, retain idempotency_key and use lookup_execution; lookup never submits a new Call. ' +
   'Reuse only exact routes; rebuild current parameters and Call again for current/latest/today/time-sensitive data. ' +
   'The response may include pre-settlement billing; use usage_history or credits_ledger for final charge status.';
 
@@ -206,6 +219,14 @@ export function listQverisMcpTools(options: QverisServerOptions = {}) {
       inputSchema: executeToolSchema,
       outputSchema: TOOL_OUTPUT_SCHEMAS.call,
       annotations: QVERIS_MCP_TOOL_ANNOTATIONS.call,
+    },
+    {
+      name: 'lookup_execution',
+      description:
+        'Read-only lookup for a prior Call by its exact idempotency key. It never submits or retries a Call.',
+      inputSchema: lookupExecutionSchema,
+      outputSchema: TOOL_OUTPUT_SCHEMAS.lookup_execution,
+      annotations: QVERIS_MCP_TOOL_ANNOTATIONS.lookup_execution,
     },
     {
       name: 'usage_history',
@@ -486,6 +507,15 @@ export async function executeQverisMcpTool(
       };
     }
 
+    if (name === 'lookup_execution') {
+      const input = (args ?? {}) as unknown as LookupExecutionInput;
+      const result = await executeLookupExecution(client, input);
+      return {
+        content: [{ type: 'text', text: JSON.stringify(result) }],
+        structuredContent: result as unknown as Record<string, unknown>,
+      };
+    }
+
     if (name === 'probe') {
       const input = (args ?? {}) as unknown as ProbeToolInput;
       if (!input.tool_id || typeof input.tool_id !== 'string') {
@@ -546,7 +576,7 @@ export async function executeQverisMcpTool(
           type: 'text',
           text: JSON.stringify({
             error: `Unknown tool: ${rawName}`,
-            available_tools: ['discover', 'inspect', 'probe', 'call', 'usage_history', 'credits_ledger'],
+            available_tools: ['discover', 'inspect', 'probe', 'call', 'lookup_execution', 'usage_history', 'credits_ledger'],
             next_action: requiredAction('select_supported_tool'),
           }),
         },
@@ -565,8 +595,12 @@ export async function executeQverisMcpTool(
               status: error.status,
               ...(error.details !== undefined && { details: error.details }),
               ...(error.cause && { cause: error.cause }),
+              ...(error.idempotency_key && { idempotency_key: error.idempotency_key }),
+              ...(error.recovery !== undefined && { recovery: error.recovery }),
               next_action:
-                name === 'call'
+                name === 'call' && error.idempotency_key
+                  ? requiredAction('lookup_execution')
+                  : name === 'call'
                   ? recoveryFor(error.status, name, error.details)
                   : (error.next_action ?? recoveryFor(error.status, name, error.details)),
               observability: compactObject({
@@ -581,12 +615,27 @@ export async function executeQverisMcpTool(
     }
 
     // Handle other errors (including fetch network errors).
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : error && typeof error === 'object' && 'message' in error
+          ? String(error.message)
+          : 'Unknown error occurred';
     const errorCause = error instanceof Error && error.cause instanceof Error ? error.cause.message : undefined;
+    const recovery =
+      error && typeof error === 'object' && 'recovery' in error
+        ? (error as { recovery?: unknown }).recovery
+        : undefined;
+    const idempotencyKey =
+      error && typeof error === 'object' && 'idempotency_key' in error
+        ? (error as { idempotency_key?: unknown }).idempotency_key
+        : undefined;
     const nextAction =
-      name === 'call'
-        ? { action: 'review_settlement', requires_user: true, reason: 'execution_id_unavailable' as const }
-        : { action: 'review_and_retry', requires_user: true };
+      name === 'call' && typeof idempotencyKey === 'string'
+        ? { action: 'lookup_execution', requires_user: true }
+        : name === 'call'
+          ? { action: 'review_settlement', requires_user: true, reason: 'execution_id_unavailable' as const }
+          : { action: 'review_and_retry', requires_user: true };
 
     return {
       content: [
@@ -600,6 +649,8 @@ export async function executeQverisMcpTool(
               automatic: false,
               missing_fields: [],
             },
+            ...(recovery !== undefined ? { recovery } : {}),
+            ...(typeof idempotencyKey === 'string' && { idempotency_key: idempotencyKey }),
           }),
         },
       ],

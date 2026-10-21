@@ -65,6 +65,16 @@ const auditResponseSchema = {
   additionalProperties: true,
 } as const;
 
+const executionLookupSchema = {
+  type: 'object',
+  properties: {
+    status: { type: 'string' },
+    execution_id: { type: 'string' },
+    response: { type: 'object', additionalProperties: true },
+  },
+  additionalProperties: true,
+} as const;
+
 /** outputSchema per canonical tool name (deprecated aliases share them). */
 export const TOOL_OUTPUT_SCHEMAS: Record<string, object> = {
   discover: searchResponseSchema,
@@ -73,4 +83,5 @@ export const TOOL_OUTPUT_SCHEMAS: Record<string, object> = {
   call: executeResponseSchema,
   usage_history: auditResponseSchema,
   credits_ledger: auditResponseSchema,
+  lookup_execution: executionLookupSchema,
 };

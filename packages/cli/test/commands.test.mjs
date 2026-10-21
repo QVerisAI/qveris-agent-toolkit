@@ -10,6 +10,7 @@ import { runConfig } from "../src/commands/config.mjs";
 import { runCredits } from "../src/commands/credits.mjs";
 import { runDiscover } from "../src/commands/discover.mjs";
 import { runDoctor } from "../src/commands/doctor.mjs";
+import { runExecutionLookup } from "../src/commands/execution.mjs";
 import { runHistory } from "../src/commands/history.mjs";
 import { runInspect } from "../src/commands/inspect.mjs";
 import { runLedger } from "../src/commands/ledger.mjs";
@@ -82,6 +83,7 @@ function withMockFetch(handler, fn) {
     const request = {
       url: new URL(url),
       method: options.method,
+      headers: options.headers,
       body: options.body ? JSON.parse(options.body) : undefined,
     };
     requests.push(request);
@@ -202,6 +204,161 @@ test("call dry-run validates resolved tool, params, and max size without network
         });
       },
     );
+  });
+});
+
+test("zero-quote CLI Call probes exact zero and fails closed before execute otherwise", async () => {
+  await withTempConfig(async () => {
+    const requests = [];
+    await withMockFetch(
+      (request) => {
+        requests.push(request);
+        if (request.url.pathname.endsWith("/tools/probe")) {
+          return response({
+            executable: true,
+            execution_constraints_supported: ["require_zero_quote_v1"],
+            schema: { valid: true },
+            quote: { exact: true, estimate_credits: 0, currency: "credits" },
+          });
+        }
+        if (request.url.pathname.endsWith("/tools/execute")) {
+          assert.equal(request.body.require_zero_quote, true);
+          return response({ execution_id: "exec-zero", success: true, result: { data: {} } });
+        }
+        throw new Error(`unexpected path ${request.url.pathname}`);
+      },
+      async () => {
+        const result = await captureOutput(() => runCall("tool-1", {
+          apiKey: "sk-test",
+          baseUrl: "https://unit.test/api/v1",
+          discoveryId: "search-1",
+          params: '{"city":"London"}',
+          requireZeroQuote: true,
+          json: true,
+          timeout: "1",
+        }));
+        assert.equal(jsonFromStdout(result.stdout).execution_id, "exec-zero");
+      },
+    );
+    assert.deepEqual(requests.map((request) => request.url.pathname.split("/").pop()), ["probe", "execute"]);
+
+    let executed = false;
+    await withMockFetch(
+      (request) => {
+        if (request.url.pathname.endsWith("/tools/probe")) {
+          return response({
+            executable: true,
+            execution_constraints_supported: ["require_zero_quote_v1"],
+            schema: { valid: true },
+            quote: { exact: true, estimate_credits: 2, currency: "credits" },
+          });
+        }
+        if (request.url.pathname.endsWith("/tools/execute")) executed = true;
+        return response({});
+      },
+      async () => {
+        await assert.rejects(runCall("tool-1", {
+          apiKey: "sk-test",
+          baseUrl: "https://unit.test/api/v1",
+          discoveryId: "search-1",
+          params: "{}",
+          requireZeroQuote: true,
+          json: true,
+          timeout: "1",
+        }), /exact zero-credit quote/);
+      },
+    );
+    assert.equal(executed, false);
+
+    let unsupportedExecuted = false;
+    await withMockFetch(
+      (request) => {
+        if (request.url.pathname.endsWith("/tools/probe")) {
+          return response({
+            executable: true,
+            execution_constraints_supported: [],
+            schema: { valid: true },
+            quote: { exact: true, estimate_credits: 0, currency: "credits" },
+          });
+        }
+        if (request.url.pathname.endsWith("/tools/execute")) unsupportedExecuted = true;
+        return response({});
+      },
+      async () => {
+        await assert.rejects(runCall("tool-1", {
+          apiKey: "sk-test",
+          baseUrl: "https://unit.test/api/v1",
+          discoveryId: "search-1",
+          params: "{}",
+          requireZeroQuote: true,
+          json: true,
+          timeout: "1",
+        }), /exact zero-credit quote/);
+      },
+    );
+    assert.equal(unsupportedExecuted, false);
+  });
+});
+
+test("execution lookup command performs a single read-only GET", async () => {
+  await withMockFetch(
+    (request) => {
+      assert.equal(request.method, "GET");
+      assert.equal(request.url.pathname, "/api/v1/tools/executions/by-idempotency-key");
+      assert.equal(request.url.searchParams.get("key"), "retained-key");
+      return response({ status: "pending" });
+    },
+    async () => {
+      const output = await captureOutput(() => runExecutionLookup("retained-key", {
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        json: true,
+      }));
+      assert.deepEqual(jsonFromStdout(output.stdout), { status: "pending" });
+    },
+  );
+});
+
+test("CLI accepts a stable idempotency key and exposes execution lookup routing", async () => {
+  await withTempConfig(async () => {
+    const requests = [];
+    await withMockFetch(
+      (request) => {
+        requests.push(request);
+        if (request.url.pathname.endsWith("/tools/execute")) {
+          assert.equal(request.headers["Idempotency-Key"], "stable-key");
+          const body = request.body;
+          assert.equal(body.idempotency_key, undefined);
+          assert.deepEqual(body.parameters, { city: "London" });
+          return response({ execution_id: "exec-1", success: true, result: { data: {} } });
+        }
+        if (request.url.pathname.endsWith("/tools/executions/by-idempotency-key")) {
+          assert.equal(request.method, "GET");
+          assert.equal(request.url.searchParams.get("key"), "stable-key");
+          return response({ status: "completed", execution_id: "exec-1" });
+        }
+        throw new Error(`unexpected path ${url.pathname}`);
+      },
+      async () => {
+        await captureOutput(() => main([
+          "node", "qveris", "call", "tool-1",
+          "--api-key", "sk-test",
+          "--base-url", "https://unit.test/api/v1",
+          "--discovery-id", "search-1",
+          "--params", '{"city":"London"}',
+          "--idempotency-key", "stable-key",
+          "--json",
+        ]));
+        const lookup = await captureOutput(() => main([
+          "node", "qveris", "execution", "lookup", "stable-key",
+          "--api-key", "sk-test",
+          "--base-url", "https://unit.test/api/v1",
+          "--json",
+        ]));
+        assert.deepEqual(jsonFromStdout(lookup.stdout), { status: "completed", execution_id: "exec-1" });
+      },
+    );
+    assert.deepEqual(requests.map(({ method }) => method), ["POST", "GET"]);
   });
 });
 
