@@ -298,7 +298,7 @@ Public failures use the `QverisError` hierarchy (`QverisApiError`, `QverisTransp
 - Catch `QverisError` or its typed subclasses instead of `httpx.HTTPStatusError` / raw transport errors.
 - Response metadata is available as `response.request_metadata` and is excluded from wire serialization.
 
-Capability Detail and Query are available through their published public contracts. Resolve methods, selection tokens, idempotency keys, and execution lookup will be added only after their fields and endpoints are published in the public OpenAPI contract; the client does not invent interim wire fields.
+Capability Detail and Query are available through their published public contracts. Paid Calls accept a caller-persisted `idempotency_key`; after an uncertain response, use `reconcile_call()` with that original key. The lookup is read-only, and the SDK never resubmits the Call automatically.
 
 ## API reference
 
