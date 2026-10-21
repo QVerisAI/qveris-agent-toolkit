@@ -14,6 +14,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - MCP success/error payloads now include machine-readable `next_action` guidance for authentication, required parameters, billing, retries, and unknown Call settlement.
 
+## [0.14.6] - 2026-10-21
+
+### Fixed
+
+- Bound the number of nested tool-input elements before argument schema validation in hosted MCP servers, and expose the limit through `createQverisServer` options.
+- Upgrade the MCP TypeScript SDK to the patched 1.32 line.
+
 ## [0.14.5] - 2026-09-10
 
 ### Changed

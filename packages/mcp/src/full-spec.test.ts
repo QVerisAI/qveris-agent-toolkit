@@ -48,10 +48,12 @@ async function connect(
     client?: QverisClient;
     elicitHandler?: (msg: string) => Promise<boolean>;
     includeDeprecatedAliases?: boolean;
+    maxToolInputElements?: number;
   } = {},
 ) {
   const server = createQverisServer(opts.client, 'session-1', {
     includeDeprecatedAliases: opts.includeDeprecatedAliases,
+    maxToolInputElements: opts.maxToolInputElements,
   });
   const capabilities = opts.elicitHandler ? { elicitation: { form: {} } } : {};
   const mcpClient = new Client({ name: 'full-spec-test', version: '0.0.0' }, { capabilities });
@@ -68,6 +70,22 @@ async function connect(
 }
 
 describe('output schemas + structured content', () => {
+  it('rejects tool arguments over the configured element cap before executing them', async () => {
+    const qveris = fakeQverisClient();
+    const c = await connect({ client: qveris, maxToolInputElements: 2 });
+
+    const result = await c.callTool({
+      name: 'discover',
+      arguments: { query: 'weather', filters: { category: 'travel' } },
+    });
+    expect(result.isError).toBe(true);
+    expect(result.content).toContainEqual(
+      expect.objectContaining({ text: expect.stringContaining('maximum of 2 elements') }),
+    );
+    expect(qveris.calls).toEqual([]);
+    await c.close();
+  });
+
   it('declares outputSchema on canonical tools and reuses it for deprecated aliases', async () => {
     const c = await connect();
     const { tools } = await c.listTools();
