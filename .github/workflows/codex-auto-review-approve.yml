@@ -25,7 +25,7 @@ jobs:
       - name: Ask Codex to review this PR
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
-          github-token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          github-token: ${{ secrets.QVERIS_REVIEW_BOT_TOKEN }}
           script: |
             const eventPr = context.payload.pull_request;
             const pr = await github.rest.pulls.get({
@@ -65,7 +65,7 @@ jobs:
   approve-after-nonblocking-codex-review:
     # Filter before runner allocation. The approval created below emits another
     # pull_request_review event, and unrelated human/bot reviews must stay no-op.
-    # Fork pull_request_review events cannot access REPO_ACCESS_TOKEN and have a
+    # Fork pull_request_review events cannot access the review token and have a
     # read-only GITHUB_TOKEN. Leave approval to a maintainer or the trusted
     # issue_comment clean-summary path for those PRs.
     if: >-
@@ -82,7 +82,7 @@ jobs:
         env:
           CODEX_REVIEW_AUTHOR_PATTERN: ${{ vars.CODEX_REVIEW_AUTHOR_PATTERN }}
         with:
-          github-token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          github-token: ${{ secrets.QVERIS_REVIEW_BOT_TOKEN }}
           script: |
             const review = context.payload.review;
             const pr = context.payload.pull_request;
@@ -164,7 +164,7 @@ jobs:
         env:
           CODEX_COMMENT_AUTHOR_PATTERN: ${{ vars.CODEX_COMMENT_AUTHOR_PATTERN }}
         with:
-          github-token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          github-token: ${{ secrets.QVERIS_REVIEW_BOT_TOKEN }}
           script: |
             const comment = context.payload.comment;
             const issue = context.payload.issue;
