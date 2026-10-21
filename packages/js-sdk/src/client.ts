@@ -35,6 +35,7 @@ import type {
   CreditsLedgerResponse,
   CreditsResponse,
   ExecuteResponse,
+  ToolExecutionReconciliationData,
   ProbeCheck,
   ProbeLiveBudget,
   ProbeResponse,
@@ -160,6 +161,8 @@ export interface CallOptions {
   sessionId?: string;
   /** Model that selected and parameterized this capability call. */
   model?: string;
+  /** Caller-generated key for reconciling this exact Call after an uncertain response. */
+  idempotencyKey?: string;
   /** Auto-delivery inline limit in UTF-8 bytes (-1 for unlimited, server default 20480). Explicit full takes precedence. */
   maxResponseSize?: number;
   /** Server-side result projection. Omit for compatibility auto-delivery; explicit full forces complete inline data. */
@@ -370,6 +373,12 @@ export class Qveris {
     };
     const timeoutMs = options.timeoutMs ?? EXECUTE_TIMEOUT_MS;
     const compatibilityMode = options.compatibilityMode ?? 'strict';
+    if (options.idempotencyKey !== undefined && !options.idempotencyKey.trim()) {
+      throw new Error('idempotencyKey must not be empty');
+    }
+    if (options.idempotencyKey !== undefined && compatibilityMode !== 'strict') {
+      throw new Error('idempotencyKey requires strict compatibility mode to prevent resubmission');
+    }
     const validateResponse = (result: ExecuteResponse): ExecuteResponse => {
       const executionId =
         typeof result?.execution_id === 'string' && result.execution_id.trim() ? result.execution_id : null;
@@ -405,7 +414,17 @@ export class Qveris {
       });
     };
     try {
-      return validateResponse(await this.request<ExecuteResponse>('call', 'POST', endpoint, body, timeoutMs));
+      return validateResponse(
+        await this.request<ExecuteResponse>(
+          'call',
+          'POST',
+          endpoint,
+          body,
+          timeoutMs,
+          undefined,
+          options.idempotencyKey === undefined ? undefined : { 'Idempotency-Key': options.idempotencyKey },
+        ),
+      );
     } catch (error) {
       if (compatibilityMode !== 'legacyOptionalFields') throw error;
       const unsupported = unsupportedOptionalFields(error, new Set(['respond_with']));
@@ -414,6 +433,24 @@ export class Qveris {
       delete body.respond_with;
       return validateResponse(await this.request<ExecuteResponse>('call', 'POST', endpoint, body, timeoutMs));
     }
+  }
+
+  /** Read-only lookup for the original Call identified by its idempotency key. */
+  async reconcileCall(
+    idempotencyKey: string,
+    options: { timeoutMs?: number } = {},
+  ): Promise<ToolExecutionReconciliationData> {
+    if (!idempotencyKey.trim()) throw new Error('idempotencyKey must not be empty');
+    return this.request<ToolExecutionReconciliationData>(
+      'call_reconciliation',
+      'GET',
+      '/tools/executions/by-idempotency-key',
+      undefined,
+      options.timeoutMs,
+      { key: idempotencyKey },
+      undefined,
+      ['key'],
+    );
   }
 
   /** Inspect a published CAP contract. This operation does not execute it. */
@@ -524,6 +561,8 @@ export class Qveris {
     body?: unknown,
     timeoutMs?: number,
     query?: Record<string, unknown>,
+    headers?: Record<string, string>,
+    sensitiveQueryKeys: readonly string[] = [],
   ): Promise<T> {
     const url = new URL(`${this.baseUrl}${endpoint}`);
     if (query) {
@@ -534,13 +573,21 @@ export class Qveris {
       }
     }
     const resolvedTimeoutMs = timeoutMs ?? this.defaultTimeoutMs;
-    const queryParams = Object.fromEntries(url.searchParams.entries());
+    const queryParams = Object.fromEntries(
+      [...url.searchParams.entries()].map(([key, value]) => [
+        key,
+        sensitiveQueryKeys.includes(key) ? '[REDACTED]' : value,
+      ]),
+    );
+    const observableUrl = new URL(url);
+    for (const key of sensitiveQueryKeys)
+      if (observableUrl.searchParams.has(key)) observableUrl.searchParams.set(key, '[REDACTED]');
     const requestContext: ApiObservability = {
       source: 'qveris_api',
       operation,
       method,
       endpoint,
-      url: url.toString(),
+      url: observableUrl.toString(),
       ...(Object.keys(queryParams).length > 0 && { query_params: queryParams }),
       timeout_ms: resolvedTimeoutMs,
     };
@@ -583,6 +630,7 @@ export class Qveris {
           headers: {
             Authorization: `Bearer ${credential}`,
             'Content-Type': 'application/json',
+            ...headers,
           },
           body: body ? JSON.stringify(body) : undefined,
           signal: controller.signal,
