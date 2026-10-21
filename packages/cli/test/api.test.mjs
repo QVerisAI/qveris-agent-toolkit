@@ -10,6 +10,7 @@ import {
   getUsageHistory,
   inspectToolsByIds,
   probeTool,
+  reconcileToolExecution,
   unwrapApiResponse,
 } from "../src/client/api.mjs";
 import { CliError } from "../src/errors/handler.mjs";
@@ -154,6 +155,50 @@ test("API client maps discover, inspect, probe, call, credits, usage, and ledger
       authorization: "Bearer sk-test",
     },
   ]);
+});
+
+test("Call idempotency key is sent once and reconciliation uses the original key read-only", async () => {
+  const requests = [];
+  await withMockFetch(
+    (url, options) => {
+      requests.push({ url, options });
+      return jsonResponse({
+        status: "success",
+        message: "ok",
+        data: {
+          status: "completed",
+          execution_id: "exec-1",
+          execution_state: "completed",
+          provider_request_dispatched: true,
+          settlement_state: "settled",
+          retry_disposition: "terminal",
+          response: { execution_id: "exec-1", success: true },
+        },
+      });
+    },
+    async () => {
+      await callTool({
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        toolId: "tool-1",
+        discoveryId: "search-1",
+        parameters: {},
+        idempotencyKey: "key-123",
+      });
+      await reconcileToolExecution({
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        idempotencyKey: "key-123",
+      });
+    },
+  );
+
+  assert.equal(requests.length, 2);
+  assert.equal(requests[0].options.headers["Idempotency-Key"], "key-123");
+  assert.equal(requests[0].options.method, "POST");
+  assert.equal(requests[1].options.method, "GET");
+  assert.equal(requests[1].url.pathname, "/api/v1/tools/executions/by-idempotency-key");
+  assert.equal(requests[1].url.searchParams.get("key"), "key-123");
 });
 
 test("API client preserves read projection fallback but never resubmits a paid call", async () => {
