@@ -76,6 +76,7 @@ from ..types import (
     CreditsLedgerResponse,
     SearchResponse,
     ToolExecutionResponse,
+    ToolExecutionReconciliationData,
     ToolProbeResponse,
     UsageHistoryResponse,
 )
@@ -86,6 +87,8 @@ _SENSITIVE_KEYS = frozenset(
     {
         "authorization",
         "proxy-authorization",
+        "idempotency-key",
+        "idempotency_key",
         "api_key",
         "apikey",
         "x-api-key",
@@ -1033,6 +1036,7 @@ class QverisClient:
         correlation_id: Optional[str] = None,
         model: Optional[str] = None,
         sub_user_id: Optional[str] = None,
+        idempotency_key: Optional[str] = None,
     ) -> ToolExecutionResponse:
         """
         Call a specific capability.
@@ -1081,6 +1085,8 @@ class QverisClient:
 
         if compatibility_mode not in {"strict", "legacy_optional_fields"}:
             raise ValueError("compatibility_mode must be 'strict' or 'legacy_optional_fields'")
+        if idempotency_key is not None and (not idempotency_key.strip() or compatibility_mode != "strict"):
+            raise ValueError("idempotency_key must be non-empty and requires strict compatibility mode")
         if compatibility_mode == "legacy_optional_fields":
             warnings.warn(
                 "legacy_optional_fields may resubmit a paid call; prefer strict mode",
@@ -1114,6 +1120,7 @@ class QverisClient:
                 correlation_id=correlation_id,
                 timeout=timeout,
                 params={"tool_id": tool_id},
+                headers={"Idempotency-Key": idempotency_key} if idempotency_key is not None else {},
             )
 
             self._debug(f"[Qveris API] Response status: {response.status_code}")
@@ -1141,6 +1148,38 @@ class QverisClient:
             )
             return result
 
+    async def reconcile_call(
+        self,
+        idempotency_key: str,
+        *,
+        timeout: Optional[float] = None,
+        correlation_id: Optional[str] = None,
+    ) -> ToolExecutionReconciliationData:
+        """Read-only lookup of the original Call; never submits provider work."""
+        if not isinstance(idempotency_key, str) or not idempotency_key.strip():
+            raise ValueError("idempotency_key must be non-empty")
+        state = _RequestState("call_reconciliation", time.monotonic())
+        response = await self._send(
+            "GET",
+            "tools/executions/by-idempotency-key",
+            operation="call_reconciliation",
+            state=state,
+            timeout=timeout,
+            correlation_id=correlation_id,
+            params={"key": idempotency_key},
+        )
+        error = self._api_error_from_response(response, operation="call_reconciliation", state=state)
+        if error is not None:
+            raise error from None
+        result = self._decode_response_model(
+            response,
+            ToolExecutionReconciliationData,
+            operation="call_reconciliation",
+            state=state,
+        )
+        result._set_request_metadata(self._request_metadata(state))
+        return result
+
     async def execute_tool(
         self,
         tool_id: str,
@@ -1149,6 +1188,7 @@ class QverisClient:
         session_id: Optional[str] = None,
         max_response_size: Optional[int] = None,
         model: Optional[str] = None,
+        idempotency_key: Optional[str] = None,
     ) -> ToolExecutionResponse:
         """Deprecated alias for `call(...)`."""
         return await self.call(
@@ -1158,6 +1198,7 @@ class QverisClient:
             session_id=session_id,
             max_response_size=max_response_size,
             model=model,
+            idempotency_key=idempotency_key,
         )
 
     async def capability_detail(
