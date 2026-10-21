@@ -45,6 +45,7 @@ async function requestJson(
     // otherwise exponential backoff with jitter, bounded by maxRetries.
     maxRetries = resolveMaxRetries(process.env.QVERIS_MAX_RETRIES),
     allowAuthReplay = true,
+    headers: extraHeaders = {},
   },
 ) {
   const url = new URL(baseUrl.replace(/\/+$/, "") + path);
@@ -72,6 +73,7 @@ async function requestJson(
         headers: {
           Authorization: `Bearer ${credential}`,
           "Content-Type": "application/json",
+          ...extraHeaders,
         },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         signal: controller.signal,
@@ -278,8 +280,12 @@ export async function callTool({
   maxResponseSize = 102400,
   respondWith,
   model,
+  idempotencyKey,
   timeoutMs = 120000,
 }) {
+  if (idempotencyKey !== undefined && (typeof idempotencyKey !== "string" || !idempotencyKey.trim())) {
+    throw new CliError("API_ERROR", "--idempotency-key must be non-empty");
+  }
   const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
   return requestJson("/tools/execute", {
     credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
@@ -295,6 +301,28 @@ export async function callTool({
     timeoutMs,
     maxRetries: 0,
     allowAuthReplay: false,
+    headers: idempotencyKey === undefined ? {} : { "Idempotency-Key": idempotencyKey },
+  });
+}
+
+export async function reconcileToolExecution({
+  apiKey,
+  credentialProvider,
+  baseUrl: baseUrlFlag,
+  idempotencyKey,
+  timeoutMs = 30000,
+}) {
+  if (typeof idempotencyKey !== "string" || !idempotencyKey.trim()) {
+    throw new CliError("API_ERROR", "--idempotency-key must be non-empty");
+  }
+  const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
+  return requestJson("/tools/executions/by-idempotency-key", {
+    method: "GET",
+    credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
+    baseUrl,
+    query: { key: idempotencyKey },
+    timeoutMs,
+    // A lookup is read-only. It may use normal transient read retries.
   });
 }
 
