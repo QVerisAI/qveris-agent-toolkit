@@ -289,7 +289,7 @@ result = await client.call(
 - 捕获 `QverisError` 或其类型化子类，不再捕获 `httpx.HTTPStatusError` / 原始 transport 异常。
 - 响应元数据位于 `response.request_metadata`，不会进入 wire 序列化。
 
-Capability Detail 和 Query 已按公开契约提供。Resolve、selection token、idempotency key 和 execution lookup 只会在对应端点及字段进入公开 OpenAPI 后提供；client 不会提前发明临时 wire 字段。
+Capability Detail 和 Query 已按公开契约提供。付费 Call 支持调用方持久化的 `idempotency_key`；结果不确定时，使用原始 key 调用 `reconcile_call()`。该查询只读，SDK 不会自动重新提交 Call。
 
 ## API 参考
 
