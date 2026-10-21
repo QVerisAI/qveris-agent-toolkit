@@ -396,6 +396,54 @@ describe('Qveris client', () => {
     expect(response.billing?.charge_lines?.[0].component_key).toBe('request');
   });
 
+  it('sends the caller idempotency key once and performs a redacted read-only reconciliation', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ execution_id: 'exec-idempotent', success: true }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          status: 'success',
+          message: 'ok',
+          data: {
+            status: 'completed',
+            execution_id: 'exec-idempotent',
+            execution_state: 'completed',
+            provider_request_dispatched: true,
+            settlement_state: 'settled',
+            retry_disposition: 'terminal',
+            response: { execution_id: 'exec-idempotent', success: true },
+          },
+        }),
+      );
+    globalThis.fetch = fetchMock;
+    const client = new Qveris({ apiKey: API_KEY, maxRetries: 0 });
+    await client.call('weather.forecast.v1', { parameters: {}, idempotencyKey: 'key-123' });
+    const data = await client.reconcileCall('key-123');
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0][1].headers['Idempotency-Key']).toBe('key-123');
+    expect(fetchMock.mock.calls[1][0]).toBe('https://qveris.ai/api/v1/tools/executions/by-idempotency-key?key=key-123');
+    expect(fetchMock.mock.calls[1][1].method).toBe('GET');
+    expect(data.status).toBe('completed');
+    expect(data.execution_id).toBe('exec-idempotent');
+  });
+
+  it('redacts reconciliation keys from error observability and rejects legacy paid-call replay', async () => {
+    globalThis.fetch = mockFetch({ message: 'not found' }, 404);
+    const client = new Qveris({ apiKey: API_KEY, maxRetries: 0 });
+    await expect(client.reconcileCall('secret-key-456')).rejects.toMatchObject({
+      observability: { url: 'https://qveris.ai/api/v1/tools/executions/by-idempotency-key?key=%5BREDACTED%5D' },
+    });
+    await expect(
+      client.call('tool', {
+        parameters: {},
+        idempotencyKey: 'key-123',
+        compatibilityMode: 'legacyOptionalFields',
+      }),
+    ).rejects.toThrow(/requires strict compatibility mode/);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
   it('normalizes a numeric-string balance without resubmitting the paid call', async () => {
     const fetchMock = mockFetch({
       execution_id: 'exec-balance',
