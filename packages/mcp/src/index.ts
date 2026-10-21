@@ -25,9 +25,9 @@
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
-  CallToolRequestSchema,
   ListResourcesRequestSchema,
   ListResourceTemplatesRequestSchema,
   ListToolsRequestSchema,
@@ -51,6 +51,7 @@ import { usageHistorySchema, executeUsageHistory, type UsageHistoryInput } from 
 import { creditsLedgerSchema, executeCreditsLedger, type CreditsLedgerInput } from './tools/credits-ledger.js';
 import type { ApiError, NextAction } from './types.js';
 import { TOOL_OUTPUT_SCHEMAS } from './output-schemas.js';
+import { z } from 'zod/v4';
 
 // ============================================================================
 // Server Configuration
@@ -59,6 +60,7 @@ import { TOOL_OUTPUT_SCHEMAS } from './output-schemas.js';
 import { createRequire } from 'node:module';
 
 const SERVER_NAME = 'qveris';
+const DEFAULT_MAX_TOOL_INPUT_ELEMENTS = 10_000;
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
 export const SERVER_VERSION: string = pkg.version;
@@ -161,6 +163,8 @@ const CALL_TOOL_DESCRIPTION =
  */
 export interface QverisServerOptions {
   includeDeprecatedAliases?: boolean;
+  /** Largest combined number of array elements and object keys accepted in one tool call (default: 10,000). */
+  maxToolInputElements?: number;
 }
 
 /**
@@ -625,7 +629,7 @@ export function createQverisServer(
   defaultSessionId: string,
   options: QverisServerOptions = {},
 ): Server {
-  const server = new Server(
+  const mcpServer = new McpServer(
     {
       name: SERVER_NAME,
       version: SERVER_VERSION,
@@ -635,8 +639,18 @@ export function createQverisServer(
         tools: {},
         resources: {},
       },
+      maxToolInputElements: options.maxToolInputElements ?? DEFAULT_MAX_TOOL_INPUT_ELEMENTS,
     },
   );
+  const server = mcpServer.server;
+
+  // McpServer applies the element-count guard before validating tool arguments.
+  // Register aliases too, since stale clients may still invoke names hidden from discovery.
+  for (const { name, description } of listQverisMcpTools()) {
+    mcpServer.registerTool(name, { description, inputSchema: z.object({}).catchall(z.unknown()) }, async (args) =>
+      executeQverisMcpTool(client, defaultSessionId, name, args, undefined, confirmCall),
+    );
+  }
 
   // Hosted embeddings may suppress deprecated names from discovery while
   // retaining server-side alias resolution for already-configured clients.
@@ -667,11 +681,6 @@ export function createQverisServer(
     : undefined;
 
   // Routes tool execution to the appropriate handler; deprecated aliases warn.
-  server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
-    const { name, arguments: args } = request.params;
-    return executeQverisMcpTool(client, defaultSessionId, name, args, undefined, confirmCall);
-  });
-
   // --- Resources: the Server Card plus per-capability metadata docs ---------
 
   server.setRequestHandler(ListResourcesRequestSchema, async () => ({
