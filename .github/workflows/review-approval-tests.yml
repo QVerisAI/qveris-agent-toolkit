@@ -5,6 +5,7 @@ on:
     paths:
       - .github/workflows/review-auto-approve.yml
       - .github/workflows/review-approval-tests.yml
+      - .github/workflows/review-approval-receipt.yml
       - scripts/auto-approve-review.cjs
       - scripts/auto-approve-review.test.mjs
 
