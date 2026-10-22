@@ -322,3 +322,23 @@ test("website staging holds published docs between releases and advances on new 
     await fs.rm(root, { recursive: true, force: true })
   }
 })
+
+test("MCP Call projection and response details stay outside execution lookup in every locale", async () => {
+  for (const locale of ["en-US", "zh-CN", "cn/zh-CN"]) {
+    const relPath = `docs/${locale}/mcp-server.md`
+    const source = await fs.readFile(path.join(REPOSITORY_ROOT, relPath), "utf8")
+    const callStart = source.indexOf('### 4. `call`')
+    const lookupStart = source.indexOf('### 5. `lookup_execution`')
+    const usageStart = source.indexOf('### 6. `usage_history`')
+    assert.ok(callStart >= 0 && callStart < lookupStart && lookupStart < usageStart, relPath)
+    const call = source.slice(callStart, lookupStart)
+    const lookup = source.slice(lookupStart, usageStart)
+    assert.match(call, /single-submit/, relPath)
+    assert.match(call, /- `result\.data`/, relPath)
+    assert.match(call, /- `billing` \/ `pre_settlement_bill`/, relPath)
+    assert.match(call, /Typical successful response fields:|典型成功响应字段：/, relPath)
+    assert.match(lookup, /`idempotency_key`/, relPath)
+    assert.match(lookup, /`pending`.*`completed`.*`unavailable`/, relPath)
+    assert.doesNotMatch(lookup, /single-submit|Typical successful response fields:|典型成功响应字段：|- `result\.data`|- `billing`/, relPath)
+  }
+})
