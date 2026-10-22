@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import policy from './auto-approve-review.cjs';
 
 const sha = '697f879ff94b3dc5fbf01fa1d28946e94d2b36e5';
@@ -86,7 +87,11 @@ function fixture({
     repo: { owner: 'QVerisAI', repo: 'qveris-agent-toolkit' },
     payload: { repository: { default_branch: 'main' }, inputs: { pull_number: '440' } },
   };
-  return { writes, run: () => policy.reconcileApproval({ github, appGithub, context, appSlug: 'qveris-review-bot' }) };
+  return {
+    writes,
+    context,
+    run: () => policy.reconcileApproval({ github, appGithub, context, appSlug: 'qveris-review-bot' }),
+  };
 }
 
 test('approves a trusted clean receipt for the current head using a separate App', async () => {
@@ -252,4 +257,73 @@ test('does not approve closed, draft, other-base, or App-authored PRs', async ()
     assert.equal((await f.run()).result, 'withheld');
     assert.deepEqual(f.writes, []);
   }
+});
+
+const notification = (overrides = {}) => ({
+  event: 'pull_request_review',
+  conclusion: 'success',
+  path: '.github/workflows/review-approval-receipt.yml',
+  display_title: 'Review approval for PR #440',
+  pull_requests: [],
+  ...overrides,
+});
+
+test('a secret-free fork notification reconciles using current facts on the trusted workflow', async () => {
+  const f = fixture();
+  f.context.eventName = 'workflow_run';
+  delete f.context.payload.inputs;
+  f.context.payload.workflow_run = notification();
+  assert.equal((await f.run()).result, 'approved');
+  assert.equal(f.writes[0].pull_number, 440);
+});
+
+test('notification PR metadata must agree with its constrained run title', () => {
+  assert.equal(
+    policy.pullNumberFromContext({
+      eventName: 'workflow_run',
+      payload: {
+        workflow_run: notification({ pull_requests: [{ number: 440 }] }),
+      },
+    }),
+    440,
+  );
+  assert.throws(
+    () =>
+      policy.pullNumberFromContext({
+        eventName: 'workflow_run',
+        payload: {
+          workflow_run: notification({ pull_requests: [{ number: 437 }] }),
+        },
+      }),
+    /metadata does not match/,
+  );
+});
+
+test('wrong workflow sources and unconstrained notification targets are rejected', () => {
+  for (const overrides of [
+    { event: 'push' },
+    { conclusion: 'failure' },
+    { path: '.github/workflows/untrusted.yml' },
+    { display_title: 'PR #440; run commands' },
+  ]) {
+    assert.throws(() =>
+      policy.pullNumberFromContext({
+        eventName: 'workflow_run',
+        payload: {
+          workflow_run: notification(overrides),
+        },
+      }),
+    );
+  }
+});
+
+test('all human review transitions notify a secret-capable receiver without checking out fork code', () => {
+  const receipt = readFileSync(new URL('../.github/workflows/review-approval-receipt.yml', import.meta.url), 'utf8');
+  const receiver = readFileSync(new URL('../.github/workflows/review-auto-approve.yml', import.meta.url), 'utf8');
+  assert.match(receipt, /pull_request_review:\s*\n\s*types: \[submitted, edited, dismissed\]/);
+  assert.match(receipt, /permissions: \{\}/);
+  assert.doesNotMatch(receipt, /\$\{\{\s*secrets\.|checkout@|create-github-app-token|\bif:/);
+  assert.match(receiver, /workflow_run:\s*\n\s*workflows: \[Review approval receipt\]/);
+  assert.doesNotMatch(receiver, /^  pull_request_review:/m);
+  assert.match(receiver, /ref: \$\{\{ github.event.repository.default_branch \}\}/);
 });
