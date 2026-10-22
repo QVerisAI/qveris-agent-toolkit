@@ -15,6 +15,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -26,7 +30,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ${{ github.event_name == 'pull_request' && fromJSON('["3.8","3.12"]') || fromJSON('["3.8","3.9","3.10","3.11","3.12"]') }}
         include:
           # Windows coverage on one interpreter only (issue #113).
           - os: windows-latest
@@ -118,7 +122,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ${{ github.event_name == 'pull_request' && fromJSON('["3.8","3.12"]') || fromJSON('["3.8","3.9","3.10","3.11","3.12"]') }}
         include:
           - os: windows-latest
             python-version: "3.11"
@@ -201,9 +205,18 @@ jobs:
           fi
           printf '\nSee [README](packages/python-sdk/README.md) for usage.\n' >> "$NOTES"
 
+      - name: Create release bot token
+        id: release-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
+          token: ${{ steps.release-token.outputs.token }}
           name: "QVeris Python SDK v${{ env.VERSION }}"
           body_path: ${{ runner.temp }}/release-notes.md
           generate_release_notes: true

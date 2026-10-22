@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { getSiteUrl, resolveBaseUrl } from "../config/endpoint.mjs";
 import { CliError } from "../errors/handler.mjs";
 import { getCredential, resolveCredentialProvider } from "./auth.mjs";
@@ -45,7 +46,7 @@ async function requestJson(
     // otherwise exponential backoff with jitter, bounded by maxRetries.
     maxRetries = resolveMaxRetries(process.env.QVERIS_MAX_RETRIES),
     allowAuthReplay = true,
-    headers: extraHeaders = {},
+    requestHeaders = {},
   },
 ) {
   const url = new URL(baseUrl.replace(/\/+$/, "") + path);
@@ -73,7 +74,7 @@ async function requestJson(
         headers: {
           Authorization: `Bearer ${credential}`,
           "Content-Type": "application/json",
-          ...extraHeaders,
+          ...requestHeaders,
         },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         signal: controller.signal,
@@ -146,7 +147,9 @@ async function requestJson(
         try {
           return normalizeCreditBalanceResponse(await response.json());
         } catch {
-          throw new CliError("API_ERROR", "Invalid JSON response from API");
+          const error = new CliError("API_ERROR", "Invalid JSON response from API");
+          error.status = response.status;
+          throw error;
         }
       }
     } catch (err) {
@@ -280,29 +283,127 @@ export async function callTool({
   maxResponseSize = 102400,
   respondWith,
   model,
-  idempotencyKey,
+  requireZeroQuote = false,
+  idempotencyKey = randomUUID(),
   timeoutMs = 120000,
 }) {
   if (idempotencyKey !== undefined && (typeof idempotencyKey !== "string" || !idempotencyKey.trim())) {
     throw new CliError("API_ERROR", "--idempotency-key must be non-empty");
   }
   const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
-  return requestJson("/tools/execute", {
+  const credential = resolveCredentialProvider({ apiKey, credentialProvider });
+  const recoveryRequest = () =>
+    getExecutionByIdempotencyKey({
+      apiKey,
+      credentialProvider,
+      baseUrl,
+      key: idempotencyKey,
+      timeoutMs: Math.min(timeoutMs, 30000),
+      maxRetries: 0,
+    });
+  try {
+    const response = await requestJson("/tools/execute", {
+      credentialProvider: credential,
+      baseUrl,
+      query: { tool_id: toolId },
+      body: {
+        search_id: discoveryId,
+        parameters,
+        max_response_size: maxResponseSize,
+        ...(respondWith !== undefined && { respond_with: respondWith }),
+        ...(model !== undefined && { model }),
+        ...(requireZeroQuote && { require_zero_quote: true }),
+      },
+      requestHeaders: { "Idempotency-Key": idempotencyKey },
+      timeoutMs,
+      maxRetries: 0,
+      allowAuthReplay: false,
+    });
+    if (!executionIdFrom(response)) {
+      let recovery;
+      try {
+        recovery = unwrapApiResponse(await recoveryRequest());
+        if (
+          recovery?.status === "completed" &&
+          recovery.response &&
+          typeof recovery.response === "object" &&
+          typeof recovery.response.success === "boolean" &&
+          executionIdFrom(recovery.response)
+        ) {
+          return normalizeCreditBalanceResponse(recovery.response);
+        }
+      } catch {
+        // The key is returned to the caller for a later explicit lookup.
+      }
+      return {
+        ...(response && typeof response === "object" && !Array.isArray(response)
+          ? response
+          : { response_data: response }),
+        idempotency_key: idempotencyKey,
+        ...(recovery && typeof recovery === "object" && { recovery }),
+      };
+    }
+    return response;
+  } catch (error) {
+    const uncertain = isUncertainCallError(error);
+    if (error && typeof error === "object" && (uncertain || error.status === 200 || error.status === 409)) {
+      error.idempotencyKey = idempotencyKey;
+    }
+    if (!uncertain) throw error;
+    try {
+      const recovery = unwrapApiResponse(await recoveryRequest());
+      if (
+        recovery?.status === "completed" &&
+        recovery.response &&
+        typeof recovery.response === "object" &&
+        !Array.isArray(recovery.response) &&
+        typeof recovery.response.success === "boolean" &&
+        executionIdFrom(recovery.response)
+      ) {
+        return normalizeCreditBalanceResponse(recovery.response);
+      }
+      if (recovery && typeof recovery === "object") error.recovery = recovery;
+    } catch {
+      // The recovery request is read-only. Never issue a second execute POST.
+    }
+    throw error;
+  }
+}
+
+export async function getExecutionByIdempotencyKey({
+  apiKey,
+  credentialProvider,
+  baseUrl: baseUrlFlag,
+  key,
+  timeoutMs = 30000,
+  maxRetries,
+}) {
+  const baseUrl = typeof baseUrlFlag === "string" ? baseUrlFlag : getBaseUrl(baseUrlFlag, false);
+  return requestJson("/tools/executions/by-idempotency-key", {
+    method: "GET",
+    query: { key },
     credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
     baseUrl,
-    query: { tool_id: toolId },
-    body: {
-      search_id: discoveryId,
-      parameters,
-      max_response_size: maxResponseSize,
-      ...(respondWith !== undefined && { respond_with: respondWith }),
-      ...(model !== undefined && { model }),
-    },
     timeoutMs,
-    maxRetries: 0,
-    allowAuthReplay: false,
-    headers: idempotencyKey === undefined ? {} : { "Idempotency-Key": idempotencyKey },
+    maxRetries,
   });
+}
+
+function isUncertainCallError(error) {
+  return (
+    error?.status === 0 ||
+    error?.status === 200 ||
+    error?.status === 408 ||
+    error?.status >= 500 ||
+    error?.code === "NET_TIMEOUT" ||
+    error instanceof TypeError
+  );
+}
+
+function executionIdFrom(value) {
+  if (typeof value?.execution_id === "string" && value.execution_id.trim()) return value.execution_id;
+  if (typeof value?.data?.execution_id === "string" && value.data.execution_id.trim()) return value.data.execution_id;
+  return null;
 }
 
 export async function reconcileToolExecution({

@@ -992,6 +992,12 @@ Lower-level transport or runtime cause when available.
 
 Original error details if available
 
+##### idempotency\_key?
+
+> `optional` **idempotency\_key?**: `string`
+
+Stable key that can be reused with lookup_execution after an uncertain Call.
+
 ##### message
 
 > **message**: `string`
@@ -1009,6 +1015,12 @@ Stable recovery guidance; callers do not need internal contract versions or evid
 > `optional` **observability?**: [`ApiObservability`](#apiobservability)
 
 Request metadata for diagnosing API/provider/tool-chain failures.
+
+##### recovery?
+
+> `optional` **recovery?**: [`ExecutionLookupResponse`](#executionlookupresponse)
+
+Last read-only idempotency lookup response, when available.
 
 ##### status
 
@@ -1358,6 +1370,38 @@ Execution identity and the exact contract used for a paid CAP Query.
 ##### success
 
 > **success**: `boolean`
+
+***
+
+### CatalogCapability
+
+Evaluated directory relationship attached to an inspected tool.
+
+#### 属性
+
+##### capability\_id
+
+> **capability\_id**: `string`
+
+##### name
+
+> **name**: [`CatalogCapabilityName`](#catalogcapabilityname-1)
+
+***
+
+### CatalogCapabilityName
+
+Localized display names for a catalog capability relationship.
+
+#### 属性
+
+##### en
+
+> **en**: `string`
+
+##### zh
+
+> **zh**: `string`
 
 ***
 
@@ -1762,6 +1806,12 @@ Model that selected and parameterized this capability call.
 Key-value pairs of parameters to pass to the tool.
 Must match the parameter schema from the tool's definition.
 
+##### require\_zero\_quote?
+
+> `optional` **require\_zero\_quote?**: `boolean`
+
+Require the server to admit this call only when its current exact quote is zero.
+
 ##### respond\_with?
 
 > `optional` **respond\_with?**: `"full"` \| `` `fields:${string}` `` \| `"summary"`
@@ -2097,6 +2147,42 @@ Useful for previewing the data structure.
 
 ***
 
+### ExecuteTransportOptions
+
+Headers and other transport metadata for a single execute request.
+
+#### 属性
+
+##### idempotencyKey?
+
+> `optional` **idempotencyKey?**: `string`
+
+Stable key used to recover this call if its response is lost.
+
+***
+
+### ExecutionLookupResponse
+
+#### 可索引
+
+> \[`key`: `string`\]: `unknown`
+
+#### 属性
+
+##### execution\_id?
+
+> `optional` **execution\_id?**: `string`
+
+##### response?
+
+> `optional` **response?**: [`ExecuteResponse`](#executeresponse) \| `null`
+
+##### status?
+
+> `optional` **status?**: `string`
+
+***
+
 ### ExecutionRestrictions
 
 #### 属性
@@ -2384,6 +2470,12 @@ End-user identity for provider OAuth readiness checks.
 ##### executable?
 
 > `optional` **executable?**: `boolean`
+
+##### execution\_constraints\_supported?
+
+> `optional` **execution\_constraints\_supported?**: `string`[]
+
+Server-advertised execute constraints supported by this endpoint.
 
 ##### execution\_restrictions
 
@@ -2904,6 +2996,18 @@ Standardized capability descriptors with coverage tags
 > `optional` **capability?**: `string`
 
 Compact capability label returned by the routing projection.
+
+##### catalog\_capabilities?
+
+> `optional` **catalog\_capabilities?**: [`CatalogCapability`](#catalogcapability)[]
+
+Evaluated directory relationships. Omitted with an unavailable warning when lookup fails.
+
+##### catalog\_capabilities\_warning?
+
+> `optional` **catalog\_capabilities\_warning?**: `"unavailable"`
+
+Present when directory relationships could not be resolved.
 
 ##### categories?
 

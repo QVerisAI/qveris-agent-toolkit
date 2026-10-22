@@ -1,69 +1,40 @@
-# Proposed issue-body updates
+# Applied issue audit — 2026-10-21
 
-Internal review draft, checked 2026-10-03. These changes have not been posted. Preserve original goals/non-goals when replacing the status sections below. Keep issues open while external acceptance remains incomplete.
+This replaces the unposted 2026-10-03 draft. The issue bodies and dispositions below have now been applied. Source evidence was checked against toolkit main `d060e00` and the deployed public OpenAPI `2026-10-15.1`. Implementation, published artifacts, historical directory acceptance and fresh live-service acceptance remain separate claims.
 
-## #200 — Status audit and Phase 2
+## Completed cleanup
 
-Phase 0 已由 #226 / #231 完成，Phase 1 已由 #227 / #250 完成。Phase 2 的 JS/Python `AgentDelegationCredentialProvider` 已在 #294 合并（2026-08-10），客户端实现不再受缺少公开交换契约阻塞。
+- [#200](https://github.com/QVerisAI/qveris-agent-toolkit/issues/200): closed as not planned because remaining tracking was consolidated into #228. API Key, Device Flow and Delegation client implementation is shipped; this closure does not assert live Delegation acceptance.
+- [#65](https://github.com/QVerisAI/qveris-agent-toolkit/issues/65): archived as not planned. Its remaining speculative fields are absent from the public contract; closing does not claim they were implemented.
 
-Phase 2 已实现受众/scope 绑定、约束收窄、短期不可刷新凭证、内存缓存、并发交换合并与凭证安全错误。付费 Call 和 CAP Query 保持单次提交，不因 401、限流、重定向或网络异常自动重放。维护分支进一步补充缓存容量、过期清理与 `clear()` 并发保护，合并后记录对应 PR。
+## Active work, in priority order
 
-- [x] JS/Python delegation 客户端与确定性成功/失败 fixtures（#294）。
-- [x] audience/scope/约束收窄、内存保存、不可刷新与付费单次提交。
-- [x] `AgentDelegationCredentialProvider`。
-- [ ] 已登记 confidential test client 的真实部署验收。
-- [ ] 可选 Workload provider（另行评估，保持原范围）。
+### #228 — Registered-client live Delegation acceptance
 
-真实验收仍需已登记 confidential test client，覆盖成功、过期、错误 audience 与 revoke/introspection。单元测试不能代替真实 Resource Server 验证；parent issue 及总体验收“Agent 只获得短期最小权限 token”保持打开。
+[Issue](https://github.com/QVerisAI/qveris-agent-toolkit/issues/228) now tracks only real-service acceptance. #294 delivered the providers and #416 hardened bounded cache/expiry/clear concurrency; JS 0.9.0 and Python 0.8.0 include those improvements.
 
-Evidence: [merged #294](https://github.com/QVerisAI/qveris-agent-toolkit/pull/294).
+The remaining gate is a registered confidential test client and authorized test context, then success, actual narrowing enforcement, expiry, wrong audience and revoke/introspection. Synthetic fixtures do not establish Resource Server enforcement. Credentials must remain in secure storage; an API key cannot substitute for a confidential client. No new live exchange or paid execution was performed in this audit. The issue is labeled blocked for missing test-client context, not an unpublished protocol.
 
-## #228 — Replace blocked introduction and split acceptance
+### #368 — Finish directory acceptance and refresh notes
 
-Parent: #200。Agent Delegation 客户端已通过 #294 合并。当前跟进范围为已登记 confidential test client 的真实部署验收与维护回归。
+[Issue](https://github.com/QVerisAI/qveris-agent-toolkit/issues/368) now records seven historically accepted targets: Gemini Gallery, Glama, Remote Awesome MCP, Smithery, mcpservers.org, Awesome AI Plugins and TensorBlock.
 
-客户端边界：RFC 8693 交换、endpoint/audience/scope 校验、约束收窄、短期不可刷新凭证、内存保存、subject/scopes 缓存分区与并发交换、响应流大小限制和凭证安全错误。付费操作不自动重试或回退到 API Key。
+Remaining: Cursor Marketplace acceptance/clean install; local Awesome MCP [#14435](https://github.com/punkpeye/awesome-mcp-servers/pull/14435), still open on 2026-10-21; and mcp.so ingestion/install evidence. The final automatic-versus-manual refresh notes are also required. Upstream remote MCP #184, AI Plugins #266 and TensorBlock #2276 remain merged. Smithery's public listing is visible; other historical runtime acceptance is explicitly not revalidated. Do not treat search-engine absence as proof that a directory entry does not exist.
 
-- [x] JS/Python provider 实现、导出、文档与确定性失败回归（#294）。
-- [x] endpoint/audience/scope、有效期、响应大小与约束扩大拒绝测试。
-- [x] token/client secret 不持久化，错误输出不包含凭证。
-- [x] API Key 和 Device Flow provider 回归。
-- [ ] 已登记 confidential test client：真实成功交换与资源调用。
-- [ ] 真实过期与错误 audience 拒绝。
-- [ ] revoke/introspection 或等价失效策略验收。
-- [ ] 记录环境、日期与不含凭证的结果后关闭 issue。
+### #293 — Future Capability contracts only
 
-Do not treat synthetic fixtures as proof of live Resource Server enforcement. Preserve existing non-goals.
+[Issue](https://github.com/QVerisAI/qveris-agent-toolkit/issues/293) now separates shipped typed Detail/Query from future Resolve/selection/freshness and Query recovery prerequisites. It remains blocked and is lowered from P1 to P2 until those contracts are published. #416/#418 implemented and prepared the available endpoints and single-submit behavior; package publication and SDK release tags remain outstanding.
 
-## #293 — Replace obsolete startup status
+Ordinary Call idempotency must not be extrapolated to Capability Query. Current OpenAPI has neither a Resolve path nor Query idempotency/lookup semantics.
 
-Public OpenAPI `2026-09-21.1` 已发布 `GET /capabilities/{capability_id}` 与 `POST /capabilities/query` 及 projection fixtures。维护分支已实现 JS/Python typed Detail/Query，仍需合并与发布；请求、模型与付费单次提交测试以公开契约为依据。
+### #436 — Published ordinary Call recovery
 
-Resolve、selection token/expiry/freshness、幂等键与精确 execution lookup/reconciliation 尚无完整公开契约，继续 blocked。Query 的 `max_credits` 是预算上限，不是保留报价；未知结果不能自动重放。
+[Issue](https://github.com/QVerisAI/qveris-agent-toolkit/issues/436) is the concrete P1 follow-up for optional `Idempotency-Key` on `/tools/execute` and read-only `/tools/executions/by-idempotency-key` lookup. It requires SDK/CLI/MCP alignment, typed results, deterministic failure fixtures and documentation while preserving paid single-submit. This cleanup creates the implementation task; it does not implement that feature.
 
-- [x] Published Detail/Query paths and current projection fixtures.
-- [ ] Merge/release maintenance branch Detail/Query clients.
-- [ ] Publish Resolve constraints and deterministic selection/quote semantics.
-- [ ] Publish selection token, expiry, contract/schema binding and freshness errors.
-- [ ] Publish idempotency and exact execution lookup/reconciliation.
-- [ ] Provide current/N-1 acceptance fixtures for future Resolve/selection behavior.
-- [ ] After merge, record implemented transport/contract matrix; retain future Resolve/selection acceptance rows unchecked.
+### #164 — Triggers/webhooks stay blocked
 
-CLI/MCP Capability entry points remain outside this completed scope until consistent typed execution/recovery is possible. Preserve the original non-goals and #273 link.
+[Issue](https://github.com/QVerisAI/qveris-agent-toolkit/issues/164) records a fresh contract check. No trigger/subscription/webhook lifecycle or delivery/signature contract is public. Do not implement guessed endpoints, event schemas, forwarding behavior or CLI commands.
 
-## #368 — Dated acceptance checklist
+## Verification and scope
 
-Evidence is historical unless explicitly rechecked 2026-10-03. Accepted submission does not imply fresh runtime health verification.
-
-- [x] Gemini Gallery: [acceptance, 2026-09-10](https://github.com/QVerisAI/qveris-agent-toolkit/issues/368#issuecomment-5615591720), public Gallery URL and tagged manifest validation.
-- [ ] Cursor Marketplace: source preparation complete; submission/acceptance evidence required.
-- [x] Glama: [health acceptance, 2026-09-14](https://github.com/QVerisAI/qveris-agent-toolkit/issues/368#issuecomment-5661792968), [TDQS A (4.2/5), 2026-09-15](https://github.com/QVerisAI/qveris-agent-toolkit/issues/368#issuecomment-5674518915). Live health not revalidated this run.
-- [ ] Local Awesome MCP: [#14435](https://github.com/punkpeye/awesome-mcp-servers/pull/14435) OPEN, rechecked 2026-10-03.
-- [x] Remote Awesome MCP: [#184](https://github.com/punkpeye/awesome-remote-mcp-servers/pull/184) merged 2026-09-15; state rechecked 2026-10-03.
-- [x] Smithery: [hosted listing acceptance, 2026-09-14](https://github.com/QVerisAI/qveris-agent-toolkit/issues/368#issuecomment-5662986753); current runtime verification remains separate.
-- [x] mcpservers.org: [searchable listing acceptance, 2026-09-14](https://github.com/QVerisAI/qveris-agent-toolkit/issues/368#issuecomment-5662216502).
-- [x] AI plugins: [#266](https://github.com/hashgraph-online/awesome-ai-plugins/pull/266) merged 2026-09-14; state rechecked 2026-10-03.
-- [x] TensorBlock: [#2276](https://github.com/TensorBlock/awesome-mcp-servers/pull/2276) merged 2026-09-10; state rechecked 2026-10-03. [Install acceptance record](https://github.com/QVerisAI/qveris-agent-toolkit/issues/368#issuecomment-5615504328).
-- [ ] mcp.so: submitted; public ingestion/install verification pending.
-
-Preserve original acceptance criteria and “Already covered”. Keep release-version/install freshness checks separate from historical submissions.
+The original six issue bodies, discussion evidence, merged implementation/release PRs and external directory PR states were reviewed. Two old umbrellas are closed, four original issues remain open, and one focused implementation issue was created. No external maintainer message, marketplace publication, runtime deployment, credential change or paid request was performed.

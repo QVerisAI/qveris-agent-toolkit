@@ -1,6 +1,6 @@
 # QVeris REST API Documentation
 
-Version: 2026-10-15.1
+Version: 2026-10-20.1
 
 The public REST API exposes the core agent path:
 
@@ -324,6 +324,8 @@ POST /tools/by-ids
 ```
 
 Inspect returns the same capability result shape as Discover, usually with more complete parameters and examples.
+
+Inspect may also return `catalog_capabilities`, the evaluated directory relationships for a tool, with `capability_id` and localized `name` (`en` / `zh`). This is separate from the existing skill descriptors in `capabilities`. An empty array confirms no directory relationships. If lookup fails, the field is omitted and `catalog_capabilities_warning` is `unavailable`; do not treat that as an empty mapping. For relationship enrichment, the `tool_ids` array length must be at most `100`; Inspect still accepts longer arrays but reports relationships as unavailable.
 
 ### Request
 

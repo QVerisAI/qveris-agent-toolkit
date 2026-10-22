@@ -195,6 +195,8 @@ qveris call <tool_id|index> [flags]
 | `--model <name>` | Model that selected and parameterized the call | — |
 | `--max-size <bytes>` | Response size limit (-1 = unlimited) | 4KB (TTY) / 20KB (pipe) |
 | `--respond-with <mode>` | `full`, `summary`, or `fields:<JSONPath,...>` | full |
+| `--require-zero-quote` | Probe the current schema and quote; submit only with the server's exact zero-credit guard | false |
+| `--idempotency-key <key>` | Reuse a stable key for one Call; use `qveris execution lookup <key>` to check an uncertain outcome | generated |
 | `--dry-run` | Preview request without executing | false |
 | `--codegen <lang>` | Generate code snippet after call | — |
 | `--json` | Output raw JSON | false |
@@ -222,7 +224,12 @@ qveris call 1 --params '{"city": "London"}' --respond-with summary
 
 # Select fields rooted at result.data
 qveris call 1 --params '{"city": "London"}' --respond-with 'fields:$.temperature,$.humidity'
+
+# Probe first and require the server to enforce an exact zero-credit quote
+qveris call 1 --params '{"city": "London"}' --require-zero-quote
 ```
+
+`--require-zero-quote` stops before Call unless Probe confirms the capability is executable, advertises `require_zero_quote_v1`, has a valid schema, and returns an exact quote of `0` credits. The Call also sends the top-level `require_zero_quote` contract flag. Calls carry an idempotency key, and uncertain responses get one read-only lookup with the same key. If lookup is still pending/unavailable or fails, preserve the printed key and run `qveris execution lookup <key>`. HTTP 409 conflicts are surfaced without automatic lookup so a previous result cannot be mistaken for this request. The CLI never resubmits the Call automatically.
 
 Projection flags are opt-in. Paid calls are strict single-submit: the CLI does not retry `429`/`503`, follow HTTP redirects, refresh OAuth after `401` and replay, or remove a rejected projection field and resubmit. Projection rejections and invalid projections remain `422` errors. `QVERIS_MAX_RETRIES` continues to apply to read and audit commands only.
 

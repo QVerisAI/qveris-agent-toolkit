@@ -818,7 +818,13 @@ test("unknown settlement triggers one bounded usage and ledger reconciliation", 
       assert.equal(process.exitCode, 1);
       assert.deepEqual(
         requests.map((request) => request.url.pathname),
-        ["/api/v1/search", "/api/v1/tools/execute", "/api/v1/auth/usage/history/v2", "/api/v1/auth/credits/ledger"],
+        [
+          "/api/v1/search",
+          "/api/v1/tools/execute",
+          "/api/v1/tools/executions/by-idempotency-key",
+          "/api/v1/auth/usage/history/v2",
+          "/api/v1/auth/credits/ledger",
+        ],
       );
     },
   );
@@ -857,7 +863,12 @@ test("ordinary calls with an execution ID reconcile instead of recommending repl
       assert.equal(process.exitCode, 1);
       assert.deepEqual(
         requests.map((request) => request.url.pathname),
-        ["/api/v1/tools/execute", "/api/v1/auth/usage/history/v2", "/api/v1/auth/credits/ledger"],
+        [
+          "/api/v1/tools/execute",
+          "/api/v1/tools/executions/by-idempotency-key",
+          "/api/v1/auth/usage/history/v2",
+          "/api/v1/auth/credits/ledger",
+        ],
       );
     },
   );
@@ -911,15 +922,26 @@ for (const uncertainFailure of [
             error instanceof CliError &&
             error.code === uncertainFailure.errorCode &&
             error.retryable === false &&
-            error.action === "review_settlement" &&
+            error.action ===
+              (["timeout", "request timeout", "server error"].includes(uncertainFailure.name)
+                ? "lookup_execution"
+                : "review_settlement") &&
             error.fallbackAvailable === false &&
-            error.nextAction?.action === "review_settlement" &&
+            error.nextAction?.action ===
+              (["timeout", "request timeout", "server error"].includes(uncertainFailure.name)
+                ? "lookup_execution"
+                : "review_settlement") &&
             error.nextAction?.requires_user === true &&
-            error.nextAction?.reason === "execution_id_unavailable",
+            error.nextAction?.reason ===
+              (["timeout", "request timeout", "server error"].includes(uncertainFailure.name)
+                ? "call_outcome_may_be_unknown"
+                : "execution_id_unavailable"),
         );
         assert.deepEqual(
           requests.map((request) => request.url.pathname),
-          ["/api/v1/search", "/api/v1/tools/execute"],
+          ["timeout", "request timeout", "server error"].includes(uncertainFailure.name)
+            ? ["/api/v1/search", "/api/v1/tools/execute", "/api/v1/tools/executions/by-idempotency-key"]
+            : ["/api/v1/search", "/api/v1/tools/execute"],
         );
       },
     );
@@ -968,18 +990,20 @@ test("a failed Call response without an execution ID cannot select a fallback", 
         const result = JSON.parse(output);
         assert.equal(result.success, false);
         assert.equal(result.recovery.retryable, false);
-        assert.equal(result.recovery.action, "review_settlement");
+        assert.equal(result.recovery.action, "lookup_execution");
         assert.equal(result.recovery.fallback_available, false);
         assert.deepEqual(result.recovery.candidates, []);
         assert.deepEqual(result.next_action, {
-          action: "review_settlement",
+          action: "lookup_execution",
           automatic: false,
           requires_user: true,
           missing_fields: [],
-          reason: "execution_id_unavailable",
+          reason: "call_outcome_may_be_unknown",
         });
         assert.equal(process.exitCode, 1);
         assert.equal(requests.filter((request) => request.url.pathname.endsWith("/tools/execute")).length, 1);
+        assert.equal(typeof result.idempotency_key, "string");
+        assert.equal(result.recovery.action, "lookup_execution");
       },
     );
   } finally {
@@ -1007,8 +1031,9 @@ test("a malformed successful Call response fails closed", async () => {
         );
         const result = JSON.parse(output);
         assert.equal(result.recovery.code, "API_ERROR");
-        assert.equal(result.next_action.action, "review_settlement");
+        assert.equal(result.next_action.action, "lookup_execution");
         assert.equal(result.next_action.requires_user, true);
+        assert.equal(typeof result.idempotency_key, "string");
         assert.equal(process.exitCode, 1);
       },
     );
@@ -1085,7 +1110,12 @@ test("human output preserves settlement recovery for HTTP 408 with an execution 
       );
       assert.deepEqual(
         requests.map((request) => request.url.pathname),
-        ["/api/v1/tools/execute", "/api/v1/auth/usage/history/v2", "/api/v1/auth/credits/ledger"],
+        [
+          "/api/v1/tools/execute",
+          "/api/v1/tools/executions/by-idempotency-key",
+          "/api/v1/auth/usage/history/v2",
+          "/api/v1/auth/credits/ledger",
+        ],
       );
     },
   );

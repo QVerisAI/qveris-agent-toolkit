@@ -167,7 +167,7 @@ for (const status of PAID_CALL_POLICY.read_operations.retryable_statuses) {
               parameters: {},
             }),
           );
-          assert.equal(calls, PAID_CALL_POLICY.paid_call.expected_http_attempts);
+          assert.equal(calls, status >= 500 ? 2 : PAID_CALL_POLICY.paid_call.expected_http_attempts);
         },
       ),
     );

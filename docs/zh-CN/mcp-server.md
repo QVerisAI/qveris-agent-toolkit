@@ -4,7 +4,7 @@
 
 `@qverisai/mcp` 是面向 ChatGPT（Codex）、Cursor、Claude Desktop、Cherry Studio、GitHub Copilot、Cline、Roo Code、Kiro、Qoder、CodeBuddy、WorkBuddy 及其他编程智能体等 MCP 兼容客户端的官方 QVeris MCP 服务器。
 
-`@qverisai/mcp` v0.14.6 是最新测试版本，通过六个规范 MCP 工具为智能体提供 QVeris 访问能力：
+`@qverisai/mcp` v0.14.6 是最新测试版本，通过七个规范 MCP 工具为智能体提供 QVeris 访问能力：
 
 - `discover` — 用自然语言发现能力
 - `inspect` — 获取工具详情（参数、成功率、示例）
@@ -12,6 +12,7 @@
 - `call` — 执行工具并传入参数
 - `usage_history` — 上下文安全的调用审计摘要 / 精确查询 / 文件导出
 - `credits_ledger` — 上下文安全的最终积分账本摘要 / 精确查询 / 文件导出
+- `lookup_execution` — 使用 Call 幂等键只读查询执行结果
 
 进行 Provider 比较时，如果需要确认当前范围或完整契约，必须逐一 Inspect；Discover 摘要不等于确认。比较需要当前报价时，必须逐一 Probe。复用只能保留精确路由，不能保留业务参数或结果：参数必须来自当前请求；当前、最新、今天或其他时效性数据必须执行新的 Call。
 
@@ -43,6 +44,7 @@
 | **调用** | `call` | `POST /tools/execute` |
 | **调用审计** | `usage_history` | `GET /auth/usage/history/v2` |
 | **积分账本** | `credits_ledger` | `GET /auth/credits/ledger` |
+| **Call 恢复** | `lookup_execution` | `GET /tools/executions/by-idempotency-key` |
 
 > **注意：** 旧工具名称（`search_tools`、`get_tools_by_ids`、`execute_tool`）仍作为弃用别名支持。
 
@@ -413,6 +415,7 @@ API 密钥接入步骤：
 | `model` | string | 否 | 选择能力并生成参数的模型（最多 128 个字符） |
 | `max_response_size` | number | 否 | 自动内联交付的 UTF-8 字节上限（默认 `20480`，`-1` 表示不限）；显式 `full` 优先于有限值 |
 | `respond_with` | string | 否 | 省略时采用兼容的自动交付；`full` 强制完整内联数据，也可用 `summary` 或 `fields:<JSONPath,...>` |
+| `require_zero_quote` | boolean | 否 | 先 Probe schema 和精确报价，再要求服务端仅接受零积分执行 |
 
 示例：
 
@@ -426,9 +429,22 @@ API 密钥接入步骤：
   "search_id": "YOUR_SEARCH_ID",
   "params_to_tool": {"city": "北京", "units": "metric"},
   "model": "router-model-v1",
-  "respond_with": "summary"
+  "respond_with": "summary",
+  "require_zero_quote": true
 }
 ```
+
+`require_zero_quote` 为 true 时，MCP server 会先 Probe 当前参数；只有能力可执行、声明支持 `require_zero_quote_v1`、schema 有效且精确报价等于零才继续。Execute 请求在顶层发送该字段。幂等 key 由宿主/客户端控制，不属于模型可见的 `call` 参数。客户端会生成 key，并在结果不确定时返回它，供 `lookup_execution` 查询。lookup 只接受该客户端实例签发或可信宿主代码显式绑定的 key。客户端仅在内存中保留最近 1,024 个 key；进程重启后，宿主必须从自己保存的数据调用 `QverisClient.bindExecutionKey(key)` 绑定原 key，才能继续查询。客户端绝不自动再次提交 Call。HTTP 409 冲突不会触发自动查询；请显式调用 `lookup_execution`，避免把之前的结果误认为本次请求。
+
+### 5. `lookup_execution`
+
+只读查询此前 Call 的执行结果，不会提交或重试 Execute。
+
+| 参数 | 类型 | 必填 | 说明 |
+|-----|------|------|------|
+| `idempotency_key` | string | 是 | 不确定的 Call 返回的精确 key，或可信宿主代码恢复后绑定的 key |
+
+响应可能是 `pending`、`completed`、`failed` 或 `unavailable`。需要时使用同一个 key 再次查询；`completed` 会在可用时包含原 Call 响应。
 
 投影参数仅在显式指定时发送。付费 `call` / `execute_tool` 请求严格 single-submit：MCP server 不会重试 `429`/`503`，不会跟随 HTTP 重定向，也不会删除被拒绝的投影字段后再次提交。投影错误仍按错误返回；`QVERIS_MAX_RETRIES` 仅用于读和审计工具。
 
@@ -443,7 +459,7 @@ API 密钥接入步骤：
 
 ---
 
-### 5. `usage_history`
+### 6. `usage_history`
 
 当用户询问某次调用是否成功、失败或扣费时使用。默认 `summary` 模式，不会把全量历史塞进上下文。
 
@@ -463,7 +479,7 @@ API 密钥接入步骤：
 { "mode": "search", "execution_id": "EXECUTION_ID" }
 ```
 
-### 6. `credits_ledger`
+### 7. `credits_ledger`
 
 当用户询问余额为何变化时使用。默认 `summary` 模式。
 

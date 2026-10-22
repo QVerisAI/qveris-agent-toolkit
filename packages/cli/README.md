@@ -261,6 +261,9 @@ qveris call 1 --params '{"symbol": "AAPL"}' --model router-model-v1
 # Select fields rooted at result.data
 qveris call 1 --params '{"symbol": "AAPL"}' --respond-with 'fields:$.price,$.currency'
 
+# Require a current exact zero-credit quote and server-side enforcement
+qveris call 1 --params '{"symbol": "AAPL"}' --require-zero-quote
+
 # Generate code snippet after call
 qveris call 1 --params '{"symbol": "AAPL"}' --codegen curl
 qveris call 1 --params '{"symbol": "AAPL"}' --codegen python
@@ -268,6 +271,8 @@ qveris call 1 --params '{"symbol": "AAPL"}' --codegen js
 ```
 
 Projection flags are opt-in. A paid call is always single-submit: the CLI does not retry `429`/`503`, follow HTTP redirects, replay after OAuth refresh on `401`, or remove a rejected projection field and resubmit. Projection rejections and invalid projections remain `422` errors.
+
+`--require-zero-quote` probes schema and quote before Call and proceeds only when the capability is executable, advertises `require_zero_quote_v1`, the schema is valid, and the quote is exact zero. The execute request includes the top-level `require_zero_quote` contract flag. Calls carry an idempotency key; use `--idempotency-key <key>` to supply a reusable one, or run `qveris execution lookup <key>` for a read-only lookup. On uncertain outcomes, the CLI performs at most one automatic GET and prints the key for continued recovery; it never automatically resubmits Execute. HTTP 409 conflicts do not trigger lookup because the key may belong to another request.
 
 #### Response Truncation
 

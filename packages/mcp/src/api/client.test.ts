@@ -529,6 +529,142 @@ describe('QverisClient', () => {
       expect(result).toEqual(mockResponse);
     });
 
+    it('sends the zero-quote contract and recovers a lost response with the same key without another POST', async () => {
+      const recovered = { execution_id: 'exec-recovered', success: true, result: { data: { ok: true } } };
+      fetchMock
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 503,
+          statusText: 'Unavailable',
+          headers: new Headers(),
+          json: async () => ({ message: 'unavailable' }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ status: 'success', data: { status: 'completed', response: recovered } }),
+        });
+
+      const result = await client.executeTool(
+        'weather-tool',
+        { search_id: 'search-123', parameters: { city: 'London' }, require_zero_quote: true },
+        { idempotencyKey: 'stable-key' },
+      );
+
+      expect(result).toEqual(recovered);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock.mock.calls[0][1]).toMatchObject({
+        method: 'POST',
+        headers: expect.objectContaining({ 'Idempotency-Key': 'stable-key' }),
+        body: JSON.stringify({
+          search_id: 'search-123',
+          parameters: { city: 'London' },
+          require_zero_quote: true,
+        }),
+      });
+      expect(fetchMock.mock.calls[1][0]).toBe(
+        'https://qveris.ai/api/v1/tools/executions/by-idempotency-key?key=stable-key',
+      );
+      expect(fetchMock.mock.calls[1][1].method).toBe('GET');
+    });
+
+    it('surfaces idempotency conflicts without looking up an old result or resubmitting', async () => {
+      fetchMock.mockResolvedValueOnce({
+        ok: false,
+        status: 409,
+        statusText: 'Conflict',
+        headers: new Headers(),
+        json: async () => ({ message: 'key belongs to a different request' }),
+      });
+
+      await expect(
+        client.executeTool(
+          'weather-tool',
+          { search_id: 'search-123', parameters: { city: 'Paris' } },
+          { idempotencyKey: 'reused-key' },
+        ),
+      ).rejects.toMatchObject({ status: 409, idempotency_key: 'reused-key' });
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock.mock.calls[0][1]).toMatchObject({
+        method: 'POST',
+        headers: expect.objectContaining({ 'Idempotency-Key': 'reused-key' }),
+      });
+    });
+
+    it('provides a direct read-only lookup method for a retained idempotency key', async () => {
+      client.bindExecutionKey('retained-key');
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ status: 'success', data: { status: 'pending' } }),
+      });
+
+      const result = await client.getExecutionByIdempotencyKey('retained-key');
+
+      expect(result).toEqual({ status: 'success', data: { status: 'pending' } });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock.mock.calls[0][0]).toBe(
+        'https://qveris.ai/api/v1/tools/executions/by-idempotency-key?key=retained-key',
+      );
+      expect(fetchMock.mock.calls[0][1].method).toBe('GET');
+    });
+
+    it('isolates lookup keys to the issuing client unless the host explicitly binds them', async () => {
+      const issuingClient = client;
+      issuingClient.bindExecutionKey('credential-scoped-key');
+      const otherClient = new QverisClient({ apiKey: '<other-fixture-api-key>' });
+      await expect(otherClient.getExecutionByIdempotencyKey('credential-scoped-key')).rejects.toThrow(
+        /not issued or bound by this QverisClient instance/,
+      );
+      expect(fetchMock).not.toHaveBeenCalled();
+
+      otherClient.bindExecutionKey('credential-scoped-key');
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ status: 'success', data: { status: 'pending' } }),
+      });
+      await otherClient.getExecutionByIdempotencyKey('credential-scoped-key');
+      expect(fetchMock).toHaveBeenCalledOnce();
+    });
+
+    it('rejects blank keys and bounds retained issuance history', () => {
+      expect(() => client.bindExecutionKey('  ')).toThrow(/non-empty/);
+      for (let index = 0; index < 1025; index += 1) client.bindExecutionKey(`issued-${index}`);
+      expect(client.hasIssuedExecutionKey('issued-0')).toBe(false);
+      expect(client.hasIssuedExecutionKey('issued-1024')).toBe(true);
+    });
+
+    it('returns the exact key when the automatic read-only lookup is still pending', async () => {
+      fetchMock
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 503,
+          statusText: 'Unavailable',
+          headers: new Headers(),
+          json: async () => ({ message: 'unavailable' }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ status: 'success', data: { status: 'pending' } }),
+        });
+
+      await expect(
+        client.executeTool(
+          'weather-tool',
+          { search_id: 'search-123', parameters: { city: 'London' } },
+          { idempotencyKey: 'pending-key' },
+        ),
+      ).rejects.toMatchObject({
+        status: 503,
+        idempotency_key: 'pending-key',
+        recovery: { status: 'pending' },
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
+        'https://qveris.ai/api/v1/tools/execute?tool_id=weather-tool',
+        'https://qveris.ai/api/v1/tools/executions/by-idempotency-key?key=pending-key',
+      ]);
+    });
+
     it('should pass summary projection', async () => {
       fetchMock.mockResolvedValueOnce({
         ok: true,
@@ -634,9 +770,10 @@ describe('QverisClient', () => {
         }),
       ).rejects.toMatchObject({
         status: 200,
+        idempotency_key: expect.any(String),
         observability: { operation: 'call', error_type: 'invalid_response' },
       });
-      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
     it('should add settlement guidance to a failed Call response with an execution ID', async () => {
@@ -682,7 +819,9 @@ describe('QverisClient', () => {
           }),
         ).rejects.toMatchObject({ status });
 
-        expect(fetchMock).toHaveBeenCalledTimes(PAID_CALL_POLICY.paid_call.expected_http_attempts);
+        expect(fetchMock).toHaveBeenCalledTimes(
+          status === 408 || status >= 500 ? 2 : PAID_CALL_POLICY.paid_call.expected_http_attempts,
+        );
       },
     );
 
@@ -698,7 +837,7 @@ describe('QverisClient', () => {
         }),
       ).rejects.toMatchObject({ status: 408 });
 
-      expect(fetchMock).toHaveBeenCalledTimes(PAID_CALL_POLICY.paid_call.expected_http_attempts);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
     it('should URL-encode tool_id', async () => {

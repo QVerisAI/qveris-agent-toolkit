@@ -162,6 +162,17 @@ export async function main(argv) {
         await runHistory(flags);
         break;
       }
+      case "execution": {
+        const subcommand = rest[0];
+        if (subcommand !== "lookup" || !rest[1]) {
+          console.error("  Usage: qveris execution lookup <idempotency-key>");
+          process.exitCode = 2;
+          return;
+        }
+        const { runExecutionLookup } = await import("./commands/execution.mjs");
+        await runExecutionLookup(rest[1], flags);
+        break;
+      }
       case "completions": {
         const { runCompletions } = await import("./commands/completions.mjs");
         await runCompletions(rest[0]);
@@ -298,6 +309,9 @@ function extractGlobalFlags(args) {
         break;
       case "--dry-run":
         flags.dryRun = true;
+        break;
+      case "--require-zero-quote":
+        flags.requireZeroQuote = true;
         break;
       case "--write":
         flags.write = true;
@@ -484,6 +498,7 @@ function printUsage(flags = {}) {
     ${cyan("credits")}                      Show credit balance
     ${cyan("usage")}                        Summarize or search usage audit history
     ${cyan("ledger")}                       Summarize or search credit ledger entries
+    ${cyan("execution")} lookup <key>       Read-only Call outcome lookup
 
   ${bold("Configuration:")}
     ${cyan("config")}   set|get|list|reset  Manage CLI settings
@@ -507,8 +522,8 @@ function printUsage(flags = {}) {
     --view <routing|full>  Discover response projection
     --lang <zh|en>         Discover response language
     --respond-with <mode>  Call projection: full | summary | fields:<JSONPath,...>
-    --idempotency-key <key>
-                           Reconcile the original Call; use the same key for retry lookup
+    --require-zero-quote   Probe schema and exact quote; execute only at zero credits
+    --idempotency-key <key> Reuse a Call key for recovery or conflict resolution
     --model <model>        Model that selected and parameterized the Call
     --context <json|@file|->
                            Refresh copied v1 context and validate as needed before Call
@@ -549,6 +564,8 @@ function printUsage(flags = {}) {
     qveris inspect 1
     qveris probe 1 --params '{"city": "London"}' --checks schema,quote
     qveris call 1 --params '{"city": "London"}'
+    qveris call 1 --params '{"city": "London"}' --idempotency-key <stable-key>
+    qveris execution lookup <idempotency-key>
     qveris call --context @context.json --params '{"city": "London"}'
     qveris call 1 --params '{"city": "London"}' --respond-with summary
     qveris call 1 --params @params.json --codegen curl
