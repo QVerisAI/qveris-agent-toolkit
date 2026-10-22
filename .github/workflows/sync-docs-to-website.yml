@@ -59,6 +59,9 @@ on:
       - "scripts/website-release-tags.test.mjs"
       - "scripts/sync-website-client-versions.mjs"
       - "scripts/sync-website-client-versions.test.mjs"
+      - "agent/GUIDELINES.md"
+      - "agent/llms.txt"
+      - "agent/llms-full.txt"
   workflow_dispatch:
 
 permissions:

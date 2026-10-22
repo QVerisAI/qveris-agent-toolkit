@@ -57,6 +57,8 @@
 - `qveris interactive` — REPL mode for discover/inspect/call loop
 - `qveris probe` — validate parameters and obtain a quote without execution or credits
 - `--json` flag for structured agent output, `--dry-run` to preview a request without executing
+- `qveris execution lookup <key>` reads an uncertain Call outcome without resubmitting; preserve the original idempotency key
+- `qveris call --require-zero-quote` validates schema and an exact zero-credit quote before guarded execution
 - `qveris call --model <name>` records which model selected and parameterized a capability call
 - `--codegen curl|js|python` to generate code snippets from successful calls
 - Session index shortcuts: `qveris inspect 1`, `qveris call 2` (references last discover results)
@@ -71,6 +73,7 @@
 - `call` — execute a capability with parameters; response may include pre-settlement billing
 - `usage_history` — summarize/search/export request-level charge outcomes
 - `credits_ledger` — summarize/search/export final credit balance movements
+- `lookup_execution` — read-only lookup of an uncertain Call using its idempotency key
 - Deprecated aliases still supported: search_tools → discover, get_tools_by_ids → inspect, execute_tool → call
 - Auto-generates session ID (UUID v4) per server instance
 - API keys do not select endpoints; use QVERIS_BASE_URL for an explicit override

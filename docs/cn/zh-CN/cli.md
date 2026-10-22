@@ -197,6 +197,8 @@ qveris call <tool_id|index> [flags]
 | `--model <name>` | 选择能力并生成参数的模型 | — |
 | `--max-size <bytes>` | 响应大小限制（-1 = 无限制） | 4KB (TTY) / 20KB (管道) |
 | `--respond-with <mode>` | `full`、`summary` 或 `fields:<JSONPath,...>` | full |
+| `--require-zero-quote` | 先 Probe 当前 schema 和报价；仅携带服务端精确零积分 guard 时提交 | false |
+| `--idempotency-key <key>` | 为一次 Call 复用稳定键；结果不确定时运行 `qveris execution lookup <key>` 查询 | 自动生成 |
 | `--dry-run` | 预览请求，不实际执行 | false |
 | `--codegen <lang>` | 调用后生成代码片段 | — |
 | `--json` | 输出原始 JSON | false |
@@ -224,9 +226,14 @@ qveris call 1 --params '{"city": "London"}' --respond-with summary
 
 # 选择以 result.data 为根的字段
 qveris call 1 --params '{"city": "London"}' --respond-with 'fields:$.temperature,$.humidity'
+
+# 先 Probe，再要求服务端强制精确零积分报价
+qveris call 1 --params '{"city": "London"}' --require-zero-quote
 ```
 
-投影参数仅在显式指定时发送。如果旧服务明确把投影字段判定为未知字段，CLI 只移除该字段并重试一次；无效投影仍按 `422` 错误返回。
+`--require-zero-quote` 只有在 Probe 确认能力可执行、声明支持 `require_zero_quote_v1`、schema 有效且精确报价为 `0` 积分时才继续。Call 会在顶层发送 `require_zero_quote` 合同字段。每个 Call 都带幂等键；结果不确定时最多先做一次只读查询。如果结果仍为 pending/unavailable 或查询失败，请保留输出的 key 并运行 `qveris execution lookup <key>`。HTTP 409 冲突不会触发自动查询，避免把之前的结果误认为本次请求。CLI 不会自动重新提交 Call。
+
+投影参数仅在显式指定时发送。付费调用严格 single-submit：CLI 不会重试 `429`/`503`，不会跟随 HTTP 重定向，不会在 `401` 后刷新 OAuth 并重放，也不会删除被拒绝的投影字段后再次提交。投影拒绝和无效投影都按 `422` 错误返回。`QVERIS_MAX_RETRIES` 仅继续用于读和审计命令。
 
 #### 复制的服务/任务上下文
 

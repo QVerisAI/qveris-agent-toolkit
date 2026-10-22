@@ -64,6 +64,7 @@ test("website client versions respect MCP approval instead of advancing on a tag
     git(toolkit, "config", "user.name", "Test")
     git(toolkit, "config", "user.email", "test@example.com")
     await write(toolkit, "README.md", "toolkit\n")
+    await write(toolkit, "docs/en-US/mcp-server.md", "- `discover` — Find capabilities\n- `call` — Execute a capability\n- `lookup_execution` — Read-only outcome lookup\n")
     git(toolkit, "add", ".")
     git(toolkit, "commit", "-m", "fixture")
     for (const tag of [
@@ -119,12 +120,20 @@ test("website client versions respect MCP approval instead of advancing on a tag
       "CLI `@qverisai/cli` v1.0.0\nMCP Server `@qverisai/mcp` v2.0.0\n",
     )
 
+    await write(website, "src/lib/aeo-content.ts", 'export const summary = "discover / inspect / probe / call / usage_history / credits_ledger 六个工具";\n')
+    await fs.appendFile(path.join(website, "content/llms-full.txt"), "six canonical agent-facing tools\n| MCP Tool | Description | Cost |\n|----------|-------------|------|\n| `call` | Existing call | Billing rule |\n\n")
+    await fs.appendFile(path.join(website, "content/guidelines.md"), "Canonical names (`discover`, `inspect`, `probe`, `call`, `usage_history`, `credits_ledger`).\n")
+
     const result = spawnSync(
       process.execPath,
       [SCRIPT, "--toolkit-dir", toolkit, "--website-dir", website, "--source-commit", SOURCE_COMMIT],
       { encoding: "utf8" },
     )
     assert.equal(result.status, 0, result.stderr)
+    assert.match(await fs.readFile(path.join(website, "src/lib/aeo-content.ts"), "utf8"), /lookup_execution 三个工具/)
+    assert.match(await fs.readFile(path.join(website, "content/llms-full.txt"), "utf8"), /three canonical agent-facing tools/)
+    assert.match(await fs.readFile(path.join(website, "content/llms-full.txt"), "utf8"), /\| `lookup_execution` \|/)
+    assert.match(await fs.readFile(path.join(website, "content/guidelines.md"), "utf8"), /`lookup_execution`/)
 
     const registry = JSON.parse(await fs.readFile(path.join(website, "content/tool-versions.json"), "utf8"))
     assert.deepEqual(
@@ -170,7 +179,7 @@ test("website client versions respect MCP approval instead of advancing on a tag
     }
     const publicPaths = [
       "content/tool-versions.json", "content/llms.txt", "content/llms-full.txt",
-      "content/setup.md", "content/guidelines.md", "docs/.source-manifest.json",
+      "content/setup.md", "content/guidelines.md", "docs/.source-manifest.json", "src/lib/aeo-content.ts",
     ]
     const before = await Promise.all(publicPaths.map((file) => fs.readFile(path.join(website, file), "utf8")))
     await approveMcp(website, "2.3.6") // An approved version still needs a real tag.
@@ -201,6 +210,7 @@ test("website version sync fails closed when a required public reference is miss
     git(toolkit, "config", "user.name", "Test")
     git(toolkit, "config", "user.email", "test@example.com")
     await write(toolkit, "README.md", "toolkit\n")
+    await write(toolkit, "docs/en-US/mcp-server.md", "- `discover` — Find capabilities\n- `call` — Execute a capability\n- `lookup_execution` — Read-only outcome lookup\n")
     git(toolkit, "add", ".")
     git(toolkit, "commit", "-m", "fixture")
     for (const tag of ["cli-v1.2.3", "mcp-v2.3.4", "js-sdk-v3.4.5", "python-sdk-v4.5.6"]) {
@@ -235,5 +245,65 @@ test("website version sync fails closed when a required public reference is miss
     )
   } finally {
     await fs.rm(root, { recursive: true, force: true })
+  }
+})
+
+test("canonical MCP summaries update inventories without changing routing sequences", async () => {
+  const { canonicalMcpTools, syncMcpToolSummary } = await import("./sync-website-client-versions.mjs")
+  const guide = await fs.readFile(new URL("../docs/en-US/mcp-server.md", import.meta.url), "utf8")
+  const tools = canonicalMcpTools(guide)
+  const names = tools.map(({ name }) => name)
+  const oldNames = names.filter((name) => name !== "lookup_execution")
+  const summary = [
+    "MCP exposes six canonical agent-facing tools:",
+    "| MCP Tool | Description | Cost |",
+    "|----------|-------------|------|",
+    ...oldNames.map((name) => `| \`${name}\` | Existing ${name} description | Existing cost |`),
+    "",
+    `Use canonical names (${oldNames.map((name) => `\`${name}\``).join(", ")}).`,
+    "Routing: `discover`, `inspect`, `call`.",
+    "Routing: discover / inspect / call.",
+    `Tools: ${oldNames.join(" / ")} 六个工具。`,
+    "| Credits ledger | `GET /auth/credits/ledger` | `credits_ledger` | `qveris ledger` |",
+    "",
+  ].join("\n")
+  const synced = syncMcpToolSummary(summary, tools)
+  assert.match(synced, /seven canonical agent-facing tools/)
+  assert.match(synced, /lookup_execution.*七个工具/)
+  assert.match(synced, /\| `lookup_execution` \| Read-only/)
+  assert.match(synced, /\| Call recovery \| `GET \/tools\/executions\/by-idempotency-key/)
+  for (const name of oldNames) assert.ok(synced.includes(`Existing ${name} description | Existing cost`))
+  assert.ok(synced.includes(`Use canonical names (${names.map((name) => `\`${name}\``).join(", ")}).`))
+  assert.ok(synced.includes("Routing: `discover`, `inspect`, `call`."))
+  assert.ok(synced.includes("Routing: discover / inspect / call."))
+  assert.equal(syncMcpToolSummary(synced, tools), synced)
+  assert.throws(() => canonicalMcpTools("no inventory"), /unique canonical tool inventory/)
+  assert.throws(() => canonicalMcpTools("- `call` — Call\n- `call` — Duplicate"), /unique canonical/)
+})
+
+test("all localized MCP guides and agent summaries cover the published recovery contract", async () => {
+  const { canonicalMcpTools } = await import("./sync-website-client-versions.mjs")
+  const root = new URL("../", import.meta.url)
+  const guide = await fs.readFile(new URL("docs/en-US/mcp-server.md", root), "utf8")
+  const names = canonicalMcpTools(guide).map(({ name }) => name).sort()
+  for (const locale of ["en-US", "zh-CN", "cn/zh-CN"]) {
+    const mcp = await fs.readFile(new URL(`docs/${locale}/mcp-server.md`, root), "utf8")
+    assert.deepEqual(canonicalMcpTools(mcp).map(({ name }) => name).sort(), names, locale)
+    assert.match(mcp, /require_zero_quote_v1/)
+    assert.match(mcp, /QverisClient\.bindExecutionKey/)
+    assert.match(mcp, /single-submit/)
+    assert.doesNotMatch(mcp, /移除对应可选字段并重试一次/)
+    const cli = await fs.readFile(new URL(`docs/${locale}/cli.md`, root), "utf8")
+    assert.match(cli, /\| `--require-zero-quote` \|/)
+    assert.match(cli, /\| `--idempotency-key <key>` \|/)
+    assert.match(cli, /qveris execution lookup <key>/)
+    assert.match(cli, /single-submit/)
+    assert.doesNotMatch(cli, /只移除该字段并重试一次/)
+  }
+  for (const file of ["agent/llms.txt", "agent/llms-full.txt", "agent/GUIDELINES.md"]) {
+    const source = await fs.readFile(new URL(file, root), "utf8")
+    assert.match(source, /lookup_execution/)
+    if (file !== "agent/GUIDELINES.md") assert.match(source, /require.zero.quote/)
+    assert.match(source, /qveris execution lookup <key>/)
   }
 })
