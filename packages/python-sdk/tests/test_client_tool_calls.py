@@ -6,6 +6,7 @@ import pytest
 
 from qveris.client.api import QverisClient
 from qveris.config import QverisConfig
+from qveris.errors import QverisApiError
 
 
 def make_client(handler: Callable[[httpx.Request], httpx.Response]) -> QverisClient:
@@ -65,6 +66,137 @@ async def test_call_idempotency_key_and_read_only_reconciliation():
     assert "key=key-123" in requests[1]["url"]
     assert reconciled.status == "completed"
     assert reconciled.response["execution_id"] == "exec-1"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status", ["pending", "unavailable"])
+async def test_reconciliation_null_response_is_read_only_without_polling(status):
+    requests = []
+    data = {
+        "status": status,
+        "execution_id": "exec-retained",
+        "execution_state": "running" if status == "pending" else "completed",
+        "provider_request_dispatched": True,
+        "settlement_state": "pending",
+        "retry_disposition": "reconcile_first",
+        "response": None,
+    }
+
+    def handler(request):
+        requests.append(
+            {"method": request.method, "url": request.url, "headers": dict(request.headers), "content": request.content}
+        )
+        return httpx.Response(200, json={"status": "success", "data": data})
+
+    client = make_client(handler)
+    key = "original key+/=?"
+    try:
+        result = await client.reconcile_call(key)
+    finally:
+        await client.close()
+
+    assert result.status == status
+    assert result.response is None
+    assert result.execution_id == data["execution_id"]
+    assert result.settlement_state == data["settlement_state"]
+    assert len(requests) == 1
+    assert requests[0]["method"] == "GET"
+    assert requests[0]["url"].params["key"] == key
+    assert requests[0]["headers"]["authorization"] == "Bearer sk-test"
+    assert requests[0]["content"] == b""
+
+
+@pytest.mark.asyncio
+async def test_conflicting_call_is_not_replayed_and_explicit_lookup_uses_original_key():
+    requests = []
+
+    def handler(request):
+        requests.append(
+            {"method": request.method, "url": request.url, "headers": dict(request.headers), "content": request.content}
+        )
+        if request.method == "POST":
+            return httpx.Response(409, json={"message": "idempotency key conflict"})
+        return httpx.Response(
+            200,
+            json={
+                "status": "success",
+                "data": {
+                    "status": "completed",
+                    "execution_id": "exec-original",
+                    "execution_state": "completed",
+                    "provider_request_dispatched": True,
+                    "settlement_state": "settled",
+                    "retry_disposition": "terminal",
+                    "response": {"success": True, "execution_id": "exec-original"},
+                },
+            },
+        )
+
+    client = make_client(handler)
+    key = "original-conflict-key"
+    try:
+        with pytest.raises(QverisApiError) as error:
+            await client.call("tool", {}, idempotency_key=key)
+        assert error.value.status == 409
+        assert len(requests) == 1
+        assert requests[0]["method"] == "POST"
+        assert requests[0]["headers"]["idempotency-key"] == key
+
+        result = await client.reconcile_call(key)
+        assert result.execution_id == "exec-original"
+        assert result.response["execution_id"] == "exec-original"
+        assert len(requests) == 2
+        assert requests[1]["method"] == "GET"
+        assert requests[1]["url"].params["key"] == key
+    finally:
+        await client.close()
+
+
+@pytest.mark.asyncio
+async def test_reconciliation_same_key_uses_each_clients_credentials_and_execution_identity():
+    requests = []
+
+    def handler(request):
+        requests.append(
+            {"method": request.method, "url": request.url, "headers": dict(request.headers), "content": request.content}
+        )
+        account = "a" if request.headers["Authorization"] == "Bearer account-a" else "b"
+        return httpx.Response(
+            200,
+            json={
+                "status": "success",
+                "data": {
+                    "status": "completed",
+                    "execution_id": f"exec-{account}",
+                    "execution_state": "completed",
+                    "provider_request_dispatched": True,
+                    "settlement_state": "settled",
+                    "ledger_entry_id": f"ledger-{account}",
+                    "retry_disposition": "terminal",
+                    "response": {"success": True, "execution_id": f"exec-{account}"},
+                },
+            },
+        )
+
+    clients = []
+    key = "same-caller-key"
+    try:
+        for account in ["a", "b"]:
+            client = QverisClient(QverisConfig(api_key=f"account-{account}", base_url="https://qveris.ai/api/v1"))
+            await client.client.aclose()
+            client.client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+            clients.append(client)
+            result = await client.reconcile_call(key)
+            assert result.execution_id == f"exec-{account}"
+            assert result.ledger_entry_id == f"ledger-{account}"
+        assert len(requests) == 2
+        for request, account in zip(requests, ["a", "b"]):
+            assert request["method"] == "GET"
+            assert request["url"].params["key"] == key
+            assert request["headers"]["authorization"] == f"Bearer account-{account}"
+    finally:
+        for client in clients:
+            await client.close()
 
 
 @pytest.mark.asyncio

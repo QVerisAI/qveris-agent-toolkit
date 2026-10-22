@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Add Call idempotency keys and read-only recovery with `qveris execution lookup <key>` and `qveris reconcile-call --idempotency-key <key>`. Add `--require-zero-quote` for guarded execution after an exact zero-credit Probe; submitted Calls are never automatically replayed. ([#436])
+
 - Added `qveris call --context <json|@file|->` as a tolerant-input, strict-execution consumer for copied v1 service/task contexts. It rejects sensitive or executable content, refreshes expired snapshots, ignores ordinary future fields with structured warnings, supports capability negotiation, and runs Inspect, Probe, or quote gates only when current execution policy requires them.
 
 ### Changed
