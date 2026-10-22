@@ -444,6 +444,98 @@ describe('Qveris client', () => {
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 
+  it.each(['pending', 'unavailable'] as const)(
+    'returns a %s lookup with a null response without submitting or polling',
+    async (status) => {
+      const data = {
+        status,
+        execution_id: 'exec-retained',
+        execution_state: status === 'pending' ? 'running' : 'completed',
+        provider_request_dispatched: true,
+        settlement_state: 'pending',
+        retry_disposition: 'reconcile_first',
+        response: null,
+      };
+      const fetchMock = mockFetch({ status: 'success', data });
+      globalThis.fetch = fetchMock;
+      const client = new Qveris({ apiKey: API_KEY, maxRetries: 3 });
+      const key = 'original key+/=?';
+
+      expect(await client.reconcileCall(key)).toEqual(data);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [url, request] = fetchMock.mock.calls[0];
+      expect(new URL(url).searchParams.get('key')).toBe(key);
+      expect(request).toMatchObject({ method: 'GET', headers: { Authorization: `Bearer ${API_KEY}` } });
+      expect(request.body).toBeUndefined();
+    },
+  );
+
+  it('does not replay or automatically look up a conflicting Call; explicit lookup retains the original key', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ message: 'idempotency key conflict' }, 409))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          status: 'success',
+          data: {
+            status: 'completed',
+            execution_id: 'exec-original',
+            execution_state: 'completed',
+            provider_request_dispatched: true,
+            settlement_state: 'settled',
+            retry_disposition: 'terminal',
+            response: { success: true, execution_id: 'exec-original' },
+          },
+        }),
+      );
+    globalThis.fetch = fetchMock;
+    const client = new Qveris({ apiKey: API_KEY, maxRetries: 3 });
+    const key = 'original-conflict-key';
+
+    await expect(client.call('tool', { parameters: {}, idempotencyKey: key })).rejects.toMatchObject({ status: 409 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', headers: { 'Idempotency-Key': key } });
+
+    const recovered = await client.reconcileCall(key);
+    expect(recovered.execution_id).toBe('exec-original');
+    expect(recovered.response?.execution_id).toBe('exec-original');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1][1].method).toBe('GET');
+    expect(new URL(fetchMock.mock.calls[1][0]).searchParams.get('key')).toBe(key);
+  });
+
+  it('uses each client credential for the same lookup key without sharing an execution result', async () => {
+    const fetchMock = vi.fn().mockImplementation(async (_url, request) => {
+      const account = request.headers.Authorization === 'Bearer <fixture-account-a>' ? 'a' : 'b';
+      return jsonResponse({
+        status: 'success',
+        data: {
+          status: 'completed',
+          execution_id: `exec-${account}`,
+          execution_state: 'completed',
+          provider_request_dispatched: true,
+          settlement_state: 'settled',
+          ledger_entry_id: `ledger-${account}`,
+          retry_disposition: 'terminal',
+          response: { success: true, execution_id: `exec-${account}` },
+        },
+      });
+    });
+    globalThis.fetch = fetchMock;
+    const first = new Qveris({ apiKey: '<fixture-account-a>' });
+    const second = new Qveris({ apiKey: '<fixture-account-b>' });
+    const key = 'same-caller-key';
+
+    expect(await first.reconcileCall(key)).toMatchObject({ execution_id: 'exec-a', ledger_entry_id: 'ledger-a' });
+    expect(await second.reconcileCall(key)).toMatchObject({ execution_id: 'exec-b', ledger_entry_id: 'ledger-b' });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    for (const [index, token] of ['<fixture-account-a>', '<fixture-account-b>'].entries()) {
+      const [url, request] = fetchMock.mock.calls[index];
+      expect(new URL(url).searchParams.get('key')).toBe(key);
+      expect(request).toMatchObject({ method: 'GET', headers: { Authorization: `Bearer ${token}` } });
+    }
+  });
+
   it('normalizes a numeric-string balance without resubmitting the paid call', async () => {
     const fetchMock = mockFetch({
       execution_id: 'exec-balance',

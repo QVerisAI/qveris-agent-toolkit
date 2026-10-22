@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Support caller-supplied `idempotency_key` on Calls and typed read-only `reconcile_call(key)` lookup for the original execution and settlement state. Keyed Calls require strict compatibility mode and remain single-submit. ([#436])
+
 - Expose typed Probe one-of alternatives (`required_any_of`) and unsatisfied parameter groups (`missing_field_groups`), while retaining compatibility with older responses.
 
 ## [0.8.0] - 2026-10-04

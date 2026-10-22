@@ -12,6 +12,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Add host-controlled Call idempotency keys, read-only `lookup_execution`, and host-side `reconcileToolExecution(key)`. Add `require_zero_quote` for guarded execution after an exact zero-credit Probe; submitted Calls remain single-submit. ([#436])
+
 - Expose typed Probe one-of alternatives (`required_any_of`) and unsatisfied parameter groups (`missing_field_groups`), while retaining compatibility with older responses.
 
 - MCP success/error payloads now include machine-readable `next_action` guidance for authentication, required parameters, billing, retries, and unknown Call settlement.
