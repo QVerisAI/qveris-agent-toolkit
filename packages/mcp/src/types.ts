@@ -158,9 +158,7 @@ export interface ToolCategory {
   description?: string;
 }
 
-/**
- * Coverage tag attached to a capability (e.g. market coverage).
- */
+/** Localized display names for a catalog capability relationship. */
 export interface CatalogCapabilityName {
   en: string;
   zh: string;
@@ -172,6 +170,9 @@ export interface CatalogCapability {
   name: CatalogCapabilityName;
 }
 
+/**
+ * Coverage tag attached to a capability (e.g. market coverage).
+ */
 export interface ToolCapabilityTag {
   id?: string;
   name?: string;
