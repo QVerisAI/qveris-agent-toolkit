@@ -330,7 +330,7 @@ Configuration for LLM behavior used by Agent.
 
 <a id="qveris.ProbeRecoveryAdvice"></a>
 
-### *class* qveris.ProbeRecoveryAdvice(\*, missing_fields: List[str], safe_fixes: List[str], retryable: bool, next_action: Literal['execute', 'inspect', 'probe', 'authorize', 'confirm_budget', 'switch_provider', 'retry'], provider_fallback: bool, \*\*extra_data: Any)
+### *class* qveris.ProbeRecoveryAdvice(\*, missing_fields: ~typing.List[str], missing_field_groups: ~typing.List[~typing.List[str]] = <factory>, safe_fixes: ~typing.List[str], retryable: bool, next_action: ~typing.Literal['execute', 'inspect', 'probe', 'authorize', 'confirm_budget', 'switch_provider', 'retry'], provider_fallback: bool, \*\*extra_data: ~typing.Any)
 
 <a id="qveris.ProbeRecoveryAdvice.model_post_init"></a>
 
@@ -490,7 +490,7 @@ It takes context as an argument since that’s what pydantic-core passes when ca
 
 <a id="qveris.ProbeSchemaViolation"></a>
 
-### *class* qveris.ProbeSchemaViolation(\*, param: str | None = None, type: str, message: str, \*\*extra_data: Any)
+### *class* qveris.ProbeSchemaViolation(\*, param: str | None = None, required_any_of: List[str] | None = None, type: str, message: str, \*\*extra_data: Any)
 
 <a id="qveris.ProbeSchemaViolation.model_post_init"></a>
 
