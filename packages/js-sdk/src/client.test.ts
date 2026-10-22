@@ -506,7 +506,7 @@ describe('Qveris client', () => {
 
   it('uses each client credential for the same lookup key without sharing an execution result', async () => {
     const fetchMock = vi.fn().mockImplementation(async (_url, request) => {
-      const account = request.headers.Authorization === 'Bearer account-a' ? 'a' : 'b';
+      const account = request.headers.Authorization === 'Bearer <fixture-account-a>' ? 'a' : 'b';
       return jsonResponse({
         status: 'success',
         data: {
@@ -522,14 +522,14 @@ describe('Qveris client', () => {
       });
     });
     globalThis.fetch = fetchMock;
-    const first = new Qveris({ apiKey: 'account-a' });
-    const second = new Qveris({ apiKey: 'account-b' });
+    const first = new Qveris({ apiKey: '<fixture-account-a>' });
+    const second = new Qveris({ apiKey: '<fixture-account-b>' });
     const key = 'same-caller-key';
 
     expect(await first.reconcileCall(key)).toMatchObject({ execution_id: 'exec-a', ledger_entry_id: 'ledger-a' });
     expect(await second.reconcileCall(key)).toMatchObject({ execution_id: 'exec-b', ledger_entry_id: 'ledger-b' });
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    for (const [index, token] of ['account-a', 'account-b'].entries()) {
+    for (const [index, token] of ['<fixture-account-a>', '<fixture-account-b>'].entries()) {
       const [url, request] = fetchMock.mock.calls[index];
       expect(new URL(url).searchParams.get('key')).toBe(key);
       expect(request).toMatchObject({ method: 'GET', headers: { Authorization: `Bearer ${token}` } });
