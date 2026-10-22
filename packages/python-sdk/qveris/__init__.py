@@ -92,6 +92,8 @@ __all__ = [
     "CapabilityQueryRequest",
     "CapabilityQueryResponse",
     "CompactBillingStatement",
+    "CatalogCapability",
+    "CatalogCapabilityName",
     "CatalogVerification",
     "VerificationCheck",
     "VerificationCheckName",
