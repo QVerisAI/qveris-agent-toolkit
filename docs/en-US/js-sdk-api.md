@@ -2319,6 +2319,12 @@ Per-request timeout override in milliseconds.
 
 #### Properties
 
+##### missing\_field\_groups?
+
+> `optional` **missing\_field\_groups?**: `string`[][]
+
+Older Probe responses may omit alternative parameter groups.
+
 ##### missing\_fields
 
 > **missing\_fields**: `string`[]
@@ -2452,6 +2458,10 @@ End-user identity for provider OAuth readiness checks.
 ##### param?
 
 > `optional` **param?**: `string` \| `null`
+
+##### required\_any\_of?
+
+> `optional` **required\_any\_of?**: `string`[] \| `null`
 
 ##### type
 
