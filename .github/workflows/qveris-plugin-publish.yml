@@ -102,9 +102,18 @@ jobs:
       - name: Verify published npm artifact with OpenClaw
         run: npm run check:runtime:registry -- --expected-git-head "$GITHUB_SHA"
 
+      - name: Create release bot token
+        id: release-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
+          token: ${{ steps.release-token.outputs.token }}
           name: "QVeris OpenClaw Plugin v${{ env.VERSION }}"
           body: |
             ## Install
