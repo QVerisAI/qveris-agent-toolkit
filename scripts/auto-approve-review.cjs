@@ -54,11 +54,37 @@ async function hasUnresolvedFindings(github, repo, number) {
   return false;
 }
 
+function pullNumberFromContext(context) {
+  let value;
+  if (context.eventName === 'workflow_run') {
+    const run = context.payload.workflow_run;
+    if (
+      run?.event !== 'pull_request_review' ||
+      run.conclusion !== 'success' ||
+      run.path !== '.github/workflows/review-approval-receipt.yml'
+    ) {
+      throw new Error('Unexpected review notification workflow.');
+    }
+    // GitHub can omit pull_requests for fork workflow runs. The notification's
+    // constrained run title carries only a target number, never an approval verdict.
+    const match = run.display_title?.match(/^Review approval for PR #([1-9][0-9]*)$/);
+    if (!match) throw new Error('Review notification has no valid PR number.');
+    value = match[1];
+    if ((run.pull_requests || []).some((pr) => pr.number !== Number(value))) {
+      throw new Error('Review notification PR metadata does not match.');
+    }
+  } else {
+    value =
+      context.payload.pull_request?.number || context.payload.issue?.number || context.payload.inputs?.pull_number;
+  }
+  value = Number(value);
+  if (!Number.isSafeInteger(value) || value <= 0) throw new Error('A valid pull request number is required.');
+  return value;
+}
+
 async function reconcileApproval({ github, appGithub, context, appSlug }) {
   if (!/^[a-z0-9-]+$/i.test(appSlug || '')) throw new Error('Missing review App identity.');
-  const number = Number(
-    context.payload.pull_request?.number || context.payload.issue?.number || context.payload.inputs?.pull_number,
-  );
+  const number = pullNumberFromContext(context);
   if (!Number.isSafeInteger(number) || number <= 0) throw new Error('A valid pull request number is required.');
   const repo = context.repo;
   const params = { ...repo, pull_number: number };
@@ -152,4 +178,4 @@ async function reconcileApproval({ github, appGithub, context, appSlug }) {
   return { number, sha, result: 'approved', url: approval.html_url };
 }
 
-module.exports = { isTrustedReceipt, receiptForHead, reconcileApproval };
+module.exports = { isTrustedReceipt, receiptForHead, pullNumberFromContext, reconcileApproval };
