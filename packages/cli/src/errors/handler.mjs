@@ -22,6 +22,10 @@ export function handleError(err, jsonMode = false) {
     const hint = err.hint || ERROR_CODES[err.code]?.hint;
     if (hint) console.error(`     ${dim(hint)}`);
     if (err.action) console.error(`     ${dim(`Action: ${err.action}`)}`);
+    if (err.idempotencyKey) {
+      console.error(`     ${dim(`Recovery key: ${err.idempotencyKey}`)}`);
+      console.error(`     ${dim(`Run: qveris execution lookup ${err.idempotencyKey}`)}`);
+    }
   }
 
   process.exitCode = exitCode;

@@ -169,7 +169,9 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
     const { client } = await connectClient();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
-    expect(names).toEqual(expect.arrayContaining(['discover', 'inspect', 'call', 'usage_history', 'credits_ledger']));
+    expect(names).toEqual(
+      expect.arrayContaining(['discover', 'inspect', 'call', 'lookup_execution', 'usage_history', 'credits_ledger']),
+    );
     await client.close();
   });
 

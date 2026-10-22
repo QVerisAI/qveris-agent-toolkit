@@ -4,7 +4,7 @@
 
 `@qverisai/mcp` is the official QVeris MCP server for MCP-compatible clients such as ChatGPT (Codex), Cursor, Claude Desktop, Cherry Studio, GitHub Copilot, Cline, Roo Code, Kiro, Qoder, CodeBuddy, WorkBuddy, and other coding agents.
 
-`@qverisai/mcp` v0.14.6 is the latest tested release. It gives agents access to QVeris through six canonical MCP tools:
+`@qverisai/mcp` v0.14.6 is the latest tested release. It gives agents access to QVeris through seven canonical MCP tools:
 
 - `discover` — Find capabilities by natural language
 - `inspect` — Get detailed tool info (params, success rate, examples)
@@ -12,6 +12,7 @@
 - `call` — Execute a tool with parameters
 - `usage_history` — Context-safe usage audit summary/search/export
 - `credits_ledger` — Context-safe final credit ledger summary/search/export
+- `lookup_execution` — Read-only outcome lookup using a Call idempotency key
 
 For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
 
@@ -43,6 +44,7 @@ Both surfaces map to the same QVeris protocol:
 | **Call** | `call` | `POST /tools/execute` |
 | **Usage audit** | `usage_history` | `GET /auth/usage/history/v2` |
 | **Credits ledger** | `credits_ledger` | `GET /auth/credits/ledger` |
+| **Call recovery** | `lookup_execution` | `GET /tools/executions/by-idempotency-key` |
 
 > **Note:** The old tool names (`search_tools`, `get_tools_by_ids`, `execute_tool`) are still supported as deprecated aliases.
 
@@ -421,6 +423,7 @@ The call response may include compact pre-settlement `billing`. Final charge sta
 | `model` | string | No | Model that selected and parameterized the call (maximum 128 characters) |
 | `max_response_size` | number | No | Automatic inline limit in UTF-8 bytes (default `20480`, `-1` unlimited); explicit `full` takes precedence over a finite value |
 | `respond_with` | string | No | Omit for compatibility auto-delivery; use `full` to force complete inline data, `summary`, or `fields:<JSONPath,...>` |
+| `require_zero_quote` | boolean | No | Probe schema and exact quote first, then require server-side zero-credit admission |
 
 Example:
 
@@ -434,9 +437,22 @@ Summary mode preserves at least one usable payload: a `summary` object, lossless
   "search_id": "YOUR_SEARCH_ID",
   "params_to_tool": {"city": "London", "units": "metric"},
   "model": "router-model-v1",
-  "respond_with": "summary"
+  "respond_with": "summary",
+  "require_zero_quote": true
 }
 ```
+
+When `require_zero_quote` is true, the MCP server probes the current parameters and blocks the Call unless the capability is executable, advertises `require_zero_quote_v1`, the schema is valid, and the quote is exact and equal to zero. It sends the flag at the top level of the execute request. Idempotency keys are host/client-controlled transport metadata and are not accepted in model-facing `call` arguments. The client generates a key and returns it with uncertain outcomes so it can be reused with `lookup_execution`. Lookup accepts only keys issued by that client instance or explicitly bound by trusted host code. The client retains a bounded in-memory set of 1,024 recent keys; after a process restart, the host must restore its own saved key with `QverisClient.bindExecutionKey(key)` under the same authorization context before lookup. It never automatically submits a second Call. HTTP 409 conflicts skip automatic lookup; use `lookup_execution` explicitly to avoid confusing a previous result with this request.
+
+### 5. `lookup_execution`
+
+Read-only lookup for the outcome associated with an earlier Call. It never submits or retries Execute.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `idempotency_key` | string | Yes | Exact key returned by the client for an uncertain Call, or a key restored by trusted host code |
+
+The response may report `pending`, `completed`, `failed`, or `unavailable`. Query again with the same key when needed; `completed` includes the original Call response when available.
 
 Projection inputs are opt-in. Paid `call` / `execute_tool` requests are strict single-submit: the MCP server does not retry `429`/`503`, follow HTTP redirects, or remove a rejected projection field and resubmit. Projection errors remain errors; `QVERIS_MAX_RETRIES` applies only to read and audit tools.
 
@@ -451,7 +467,7 @@ Typical successful response fields:
 
 ---
 
-### 5. `usage_history`
+### 6. `usage_history`
 
 Use this tool when the user asks whether a call succeeded, failed, or charged credits. It defaults to `summary` mode and does not dump full history into context.
 
@@ -475,7 +491,7 @@ Examples:
 { "mode": "search", "execution_id": "EXECUTION_ID" }
 ```
 
-### 6. `credits_ledger`
+### 7. `credits_ledger`
 
 Use this tool when the user asks why their balance changed. It defaults to `summary` mode.
 

@@ -13,6 +13,7 @@ import type {
   GetToolsByIdsRequest,
   ExecuteRequest,
   ExecuteResponse,
+  ExecutionLookupResponse,
   ProbeRequest,
   ProbeResponse,
   CreditsResponse,
@@ -25,7 +26,9 @@ import type {
   ApiError,
   ApiObservability,
   ApiOperation,
+  ExecuteTransportOptions,
 } from '../types.js';
+import { randomUUID } from 'node:crypto';
 import {
   computeRetryDelayMs,
   DEFAULT_BASE_DELAY_MS,
@@ -37,6 +40,7 @@ import {
 import { normalizeCreditBalanceResponse } from './credit-balance.js';
 
 const DEFAULT_BASE_URL = 'https://qveris.ai/api/v1';
+const MAX_ISSUED_EXECUTION_KEYS = 1024;
 
 /**
  * Resolve the base URL for the QVeris API.
@@ -107,6 +111,7 @@ export class QverisClient {
   private readonly defaultTimeoutMs: number;
   private readonly maxRetries: number;
   private rateLimitRetries = 0;
+  private readonly issuedExecutionKeys = new Set<string>();
 
   constructor(config: QverisClientConfig) {
     if (!config.apiKey) {
@@ -128,6 +133,28 @@ export class QverisClient {
     return this.rateLimitRetries;
   }
 
+  /** Bind a previously issued Call key restored by host-controlled persistence. */
+  bindExecutionKey(idempotencyKey: string): void {
+    this.rememberExecutionKey(idempotencyKey);
+  }
+
+  /** Whether this client issued or the host explicitly bound a Call key. */
+  hasIssuedExecutionKey(idempotencyKey: string): boolean {
+    return this.issuedExecutionKeys.has(idempotencyKey);
+  }
+
+  private rememberExecutionKey(idempotencyKey: string): void {
+    if (typeof idempotencyKey !== 'string' || idempotencyKey.trim().length === 0) {
+      throw new Error('idempotency key must be a non-empty string.');
+    }
+    this.issuedExecutionKeys.delete(idempotencyKey);
+    this.issuedExecutionKeys.add(idempotencyKey);
+    if (this.issuedExecutionKeys.size > MAX_ISSUED_EXECUTION_KEYS) {
+      const oldest = this.issuedExecutionKeys.values().next().value as string | undefined;
+      if (oldest !== undefined) this.issuedExecutionKeys.delete(oldest);
+    }
+  }
+
   /** Sleep for `ms` (a seam so tests can stub out the wait). */
   private async sleep(ms: number): Promise<void> {
     if (ms <= 0) return;
@@ -144,6 +171,7 @@ export class QverisClient {
     body?: unknown,
     timeoutMs?: number,
     query?: Record<string, unknown>,
+    requestHeaders?: Record<string, string>,
   ): Promise<T> {
     const url = new URL(`${this.baseUrl}${endpoint}`);
     if (query) {
@@ -181,6 +209,7 @@ export class QverisClient {
           headers: {
             Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
+            ...requestHeaders,
           },
           body: body ? JSON.stringify(body) : undefined,
           signal: controller.signal,
@@ -321,41 +350,97 @@ export class QverisClient {
    * This is the Call action; the response may include pre-settlement billing.
    * Uses a longer timeout (120s) by default.
    */
-  async executeTool(toolId: string, request: ExecuteRequest): Promise<ExecuteResponse> {
+  async executeTool(
+    toolId: string,
+    request: ExecuteRequest,
+    options: ExecuteTransportOptions = {},
+  ): Promise<ExecuteResponse> {
     const endpoint = `/tools/execute?tool_id=${encodeURIComponent(toolId)}`;
-    const result = await this.request<ExecuteResponse>('call', 'POST', endpoint, request, EXECUTE_TIMEOUT_MS);
-    const executionId = executionIdFrom(result) ?? null;
-    if (typeof result?.success === 'boolean' && executionId) {
-      if (result.success === false) {
-        return {
-          ...result,
-          next_action: {
-            action: 'reconcile_settlement',
-            automatic: false,
-            requires_user: false,
-            missing_fields: [],
-            reason: 'call_failed_after_submission',
-          },
-        };
-      }
-      return result;
-    }
-    const error: ApiError = {
-      status: 200,
-      message: 'Call response did not match the expected contract',
-      ...(executionId && { details: { execution_id: executionId } }),
-      observability: {
-        source: 'qveris_api',
-        operation: 'call',
-        method: 'POST',
+    const idempotencyKey = options.idempotencyKey ?? randomUUID();
+    this.rememberExecutionKey(idempotencyKey);
+    try {
+      const result = await this.request<ExecuteResponse>(
+        'call',
+        'POST',
         endpoint,
-        url: `${this.baseUrl}${endpoint}`,
-        timeout_ms: EXECUTE_TIMEOUT_MS,
-        http_status: 200,
-        error_type: 'invalid_response',
-      },
-    };
-    throw error;
+        request,
+        EXECUTE_TIMEOUT_MS,
+        undefined,
+        { 'Idempotency-Key': idempotencyKey },
+      );
+      const executionId = executionIdFrom(result) ?? null;
+      if (typeof result?.success === 'boolean' && executionId) {
+        if (result.success === false) {
+          return {
+            ...result,
+            next_action: {
+              action: 'reconcile_settlement',
+              automatic: false,
+              requires_user: false,
+              missing_fields: [],
+              reason: 'call_failed_after_submission',
+            },
+          };
+        }
+        return result;
+      }
+      const malformed: ApiError = {
+        status: 200,
+        message: 'Call response did not match the expected contract',
+        ...(executionId && { details: { execution_id: executionId } }),
+        observability: {
+          source: 'qveris_api',
+          operation: 'call',
+          method: 'POST',
+          endpoint,
+          url: `${this.baseUrl}${endpoint}`,
+          timeout_ms: EXECUTE_TIMEOUT_MS,
+          http_status: 200,
+          error_type: 'invalid_response',
+        },
+      };
+      throw malformed;
+    } catch (error) {
+      const uncertain = isUncertainCallError(error);
+      const status =
+        error && typeof error === 'object' && 'status' in error ? (error as { status?: unknown }).status : undefined;
+      if (error && typeof error === 'object' && (uncertain || status === 200 || status === 409)) {
+        (error as ApiError & { idempotency_key?: string }).idempotency_key = idempotencyKey;
+      }
+      if (!uncertain) throw error;
+      let recoveryData: ExecutionLookupResponse | undefined;
+      try {
+        const recovered = await this.getExecutionByIdempotencyKey(idempotencyKey);
+        const data = unwrapApiEnvelopeData(recovered) as ExecutionLookupResponse | undefined;
+        if (data?.status === 'completed' && data.response && typeof data.response === 'object') {
+          const response = normalizeCreditBalanceResponse(data.response) as ExecuteResponse;
+          if (typeof response.success === 'boolean' && executionIdFrom(response)) return response;
+        }
+        recoveryData = data;
+      } catch {
+        // Recovery is read-only. Never submit a second execute request with a new key.
+      }
+      if (error && typeof error === 'object') {
+        const recoverable = error as ApiError & { recovery?: unknown; idempotency_key?: string };
+        if (recoveryData) recoverable.recovery = recoveryData;
+      }
+      throw error;
+    }
+  }
+
+  /** Read-only recovery for an execute request whose response may have been lost. */
+  async getExecutionByIdempotencyKey(idempotencyKey: string): Promise<unknown> {
+    if (!this.hasIssuedExecutionKey(idempotencyKey)) {
+      throw new Error('Execution lookup key was not issued or bound by this QverisClient instance.');
+    }
+    return this.request<unknown>(
+      'call',
+      'GET',
+      '/tools/executions/by-idempotency-key',
+      undefined,
+      this.defaultTimeoutMs,
+      { key: idempotencyKey },
+    );
   }
 
   /**
@@ -479,4 +564,16 @@ function getErrorCause(error: unknown): string | undefined {
   if (cause instanceof Error) return cause.message;
   if (typeof cause === 'string' && cause) return cause;
   return undefined;
+}
+
+function isUncertainCallError(error: unknown): boolean {
+  if (!error || typeof error !== 'object' || !('status' in error)) return false;
+  const status = (error as { status?: unknown }).status;
+  return status === 0 || status === 200 || status === 408 || (typeof status === 'number' && status >= 500);
+}
+
+function unwrapApiEnvelopeData(value: unknown): unknown {
+  if (!value || typeof value !== 'object') return undefined;
+  const record = value as { status?: unknown; data?: unknown };
+  return typeof record.status === 'string' && 'data' in record ? record.data : value;
 }
