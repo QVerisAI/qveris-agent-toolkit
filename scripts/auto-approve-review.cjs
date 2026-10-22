@@ -114,7 +114,6 @@ async function reconcileApproval({ github, appGithub, context, appSlug }) {
           receipts.push({ clean: false, timestamp: Date.parse(review.submitted_at), id: review.id });
         }
       }
-      receipts.sort((a, b) => b.timestamp - a.timestamp || Number(a.clean) - Number(b.clean) || b.id - a.id);
       const effectiveReviews = new Map();
       for (const review of reviews) {
         if (['APPROVED', 'CHANGES_REQUESTED'].includes(review.state)) {
@@ -129,6 +128,22 @@ async function reconcileApproval({ github, appGithub, context, appSlug }) {
       );
       const stateJson = summary?.body.match(/<!-- codex-review-state:v1 (.*?) -->/)?.[1];
       const state = stateJson ? JSON.parse(stateJson).code_review : null;
+      // Automatic clean reviews can update only the structured summary, without
+      // posting a separate receipt. A summary must never supersede a suggestions
+      // review on this same head: unrelated summary edits can have a newer date.
+      const hasSuggestionsReview = reviews.some(
+        (review) => review.user?.id === REVIEWER_ID && review.commit_id === sha && review.state !== 'DISMISSED',
+      );
+      if (
+        !hasSuggestionsReview &&
+        state?.commit_sha === sha &&
+        state.status === 'completed' &&
+        state.has_any_findings === false &&
+        state.has_unresolved_findings === false
+      ) {
+        receipts.push({ clean: true, timestamp: Date.parse(summary.updated_at || summary.created_at), id: summary.id });
+      }
+      receipts.sort((a, b) => b.timestamp - a.timestamp || Number(a.clean) - Number(b.clean) || b.id - a.id);
       if (!receipts.length || !receipts[0].clean) reason = 'No latest trusted clean review for the current head';
       else if (state?.commit_sha === sha && (state.status !== 'completed' || state.has_unresolved_findings !== false)) {
         reason = 'Current-head review is incomplete or has unresolved findings';
