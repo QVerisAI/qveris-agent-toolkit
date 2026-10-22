@@ -289,14 +289,15 @@ export async function callTool({
 }) {
   const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
   const credential = resolveCredentialProvider({ apiKey, credentialProvider });
-  const recoveryRequest = () => getExecutionByIdempotencyKey({
-    apiKey,
-    credentialProvider,
-    baseUrl,
-    key: idempotencyKey,
-    timeoutMs: Math.min(timeoutMs, 30000),
-    maxRetries: 0,
-  });
+  const recoveryRequest = () =>
+    getExecutionByIdempotencyKey({
+      apiKey,
+      credentialProvider,
+      baseUrl,
+      key: idempotencyKey,
+      timeoutMs: Math.min(timeoutMs, 30000),
+      maxRetries: 0,
+    });
   try {
     const response = await requestJson("/tools/execute", {
       credentialProvider: credential,
@@ -348,7 +349,14 @@ export async function callTool({
     if (!uncertain) throw error;
     try {
       const recovery = unwrapApiResponse(await recoveryRequest());
-      if (recovery?.status === "completed" && recovery.response && typeof recovery.response === "object") {
+      if (
+        recovery?.status === "completed" &&
+        recovery.response &&
+        typeof recovery.response === "object" &&
+        !Array.isArray(recovery.response) &&
+        typeof recovery.response.success === "boolean" &&
+        executionIdFrom(recovery.response)
+      ) {
         return normalizeCreditBalanceResponse(recovery.response);
       }
       if (recovery && typeof recovery === "object") error.recovery = recovery;

@@ -49,11 +49,7 @@ import { probeToolSchema, executeProbeTool, type ProbeToolInput } from './tools/
 import { getToolsByIdsSchema, executeGetToolsByIds, type GetToolsByIdsInput } from './tools/get-by-ids.js';
 import { usageHistorySchema, executeUsageHistory, type UsageHistoryInput } from './tools/usage-history.js';
 import { creditsLedgerSchema, executeCreditsLedger, type CreditsLedgerInput } from './tools/credits-ledger.js';
-import {
-  executeLookupExecution,
-  lookupExecutionSchema,
-  type LookupExecutionInput,
-} from './tools/lookup-execution.js';
+import { executeLookupExecution, lookupExecutionSchema, type LookupExecutionInput } from './tools/lookup-execution.js';
 import type { ApiError, NextAction } from './types.js';
 import { TOOL_OUTPUT_SCHEMAS } from './output-schemas.js';
 import { z } from 'zod/v4';
@@ -162,7 +158,7 @@ const CALL_TOOL_DESCRIPTION =
   'The tool_id and search_id must come from a previous discover call. ' +
   'Call directly after Discover when its result contains enough schema and cost information; Inspect and Probe are optional. ' +
   'Pass parameters to the tool through params_to_tool. Set require_zero_quote=true to require a current exact zero-credit quote before the server dispatches the Call. ' +
-  'For uncertain outcomes, retain idempotency_key and use lookup_execution; lookup never submits a new Call. ' +
+  'For uncertain outcomes, use the returned idempotency_key with lookup_execution; keys are issued by the host client and lookup never submits a new Call. ' +
   'Reuse only exact routes; rebuild current parameters and Call again for current/latest/today/time-sensitive data. ' +
   'The response may include pre-settlement billing; use usage_history or credits_ledger for final charge status.';
 
@@ -576,7 +572,15 @@ export async function executeQverisMcpTool(
           type: 'text',
           text: JSON.stringify({
             error: `Unknown tool: ${rawName}`,
-            available_tools: ['discover', 'inspect', 'probe', 'call', 'lookup_execution', 'usage_history', 'credits_ledger'],
+            available_tools: [
+              'discover',
+              'inspect',
+              'probe',
+              'call',
+              'lookup_execution',
+              'usage_history',
+              'credits_ledger',
+            ],
             next_action: requiredAction('select_supported_tool'),
           }),
         },
@@ -601,8 +605,8 @@ export async function executeQverisMcpTool(
                 name === 'call' && error.idempotency_key
                   ? requiredAction('lookup_execution')
                   : name === 'call'
-                  ? recoveryFor(error.status, name, error.details)
-                  : (error.next_action ?? recoveryFor(error.status, name, error.details)),
+                    ? recoveryFor(error.status, name, error.details)
+                    : (error.next_action ?? recoveryFor(error.status, name, error.details)),
               observability: compactObject({
                 ...mcpObservability,
                 api: error.observability,

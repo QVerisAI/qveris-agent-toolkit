@@ -551,6 +551,7 @@ describe('QverisClient', () => {
     });
 
     it('provides a direct read-only lookup method for a retained idempotency key', async () => {
+      client.bindExecutionKey('retained-key');
       fetchMock.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ status: 'success', data: { status: 'pending' } }),
@@ -564,6 +565,31 @@ describe('QverisClient', () => {
         'https://qveris.ai/api/v1/tools/executions/by-idempotency-key?key=retained-key',
       );
       expect(fetchMock.mock.calls[0][1].method).toBe('GET');
+    });
+
+    it('isolates lookup keys to the issuing client unless the host explicitly binds them', async () => {
+      const issuingClient = client;
+      issuingClient.bindExecutionKey('credential-scoped-key');
+      const otherClient = new QverisClient({ apiKey: '<other-fixture-api-key>' });
+      await expect(otherClient.getExecutionByIdempotencyKey('credential-scoped-key')).rejects.toThrow(
+        /not issued or bound by this QverisClient instance/,
+      );
+      expect(fetchMock).not.toHaveBeenCalled();
+
+      otherClient.bindExecutionKey('credential-scoped-key');
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ status: 'success', data: { status: 'pending' } }),
+      });
+      await otherClient.getExecutionByIdempotencyKey('credential-scoped-key');
+      expect(fetchMock).toHaveBeenCalledOnce();
+    });
+
+    it('rejects blank keys and bounds retained issuance history', () => {
+      expect(() => client.bindExecutionKey('  ')).toThrow(/non-empty/);
+      for (let index = 0; index < 1025; index += 1) client.bindExecutionKey(`issued-${index}`);
+      expect(client.hasIssuedExecutionKey('issued-0')).toBe(false);
+      expect(client.hasIssuedExecutionKey('issued-1024')).toBe(true);
     });
 
     it('returns the exact key when the automatic read-only lookup is still pending', async () => {

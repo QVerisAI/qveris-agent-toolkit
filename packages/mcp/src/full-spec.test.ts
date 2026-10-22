@@ -103,7 +103,15 @@ describe('output schemas + structured content', () => {
   it('declares outputSchema on canonical tools and reuses it for deprecated aliases', async () => {
     const c = await connect();
     const { tools } = await c.listTools();
-    for (const name of ['discover', 'inspect', 'probe', 'call', 'lookup_execution', 'usage_history', 'credits_ledger']) {
+    for (const name of [
+      'discover',
+      'inspect',
+      'probe',
+      'call',
+      'lookup_execution',
+      'usage_history',
+      'credits_ledger',
+    ]) {
       const tool = tools.find((t) => t.name === name);
       expect(tool?.outputSchema, `${name} outputSchema`).toBeDefined();
       expect((tool?.outputSchema as { additionalProperties?: boolean }).additionalProperties).toBe(true);

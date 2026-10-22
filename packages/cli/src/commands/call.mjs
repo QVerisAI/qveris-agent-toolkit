@@ -249,7 +249,11 @@ function returnedCallRecovery(result) {
   const executionId = executionIdFrom(result);
   const validSuccess = result?.success === true && executionId;
   if (validSuccess) return null;
-  const action = executionId ? "reconcile_settlement" : result?.idempotency_key ? "lookup_execution" : "review_settlement";
+  const action = executionId
+    ? "reconcile_settlement"
+    : result?.idempotency_key
+      ? "lookup_execution"
+      : "review_settlement";
   return {
     code: result?.success === false ? "PROVIDER_FAILURE" : "API_ERROR",
     retryable: false,
@@ -756,7 +760,6 @@ async function executeCall({
     }
   } catch (err) {
     spinner.stop();
-    const executionId = executionIdFrom(err?.responseData);
     if (err?.idempotencyKey) {
       err.action = "lookup_execution";
       err.nextAction = buildNextAction("lookup_execution", {
@@ -764,6 +767,13 @@ async function executeCall({
         reason: err.status === 409 ? "idempotency_key_conflict" : "call_outcome_may_be_unknown",
       });
     }
+    if (err?.status === 409 && err?.idempotencyKey) {
+      err.retryable = false;
+      err.action = "lookup_execution";
+      err.fallbackAvailable = false;
+      throw decorateFailure(err, { fallbackAvailable: false });
+    }
+    const executionId = executionIdFrom(err?.responseData);
     if (executionId) {
       const settlement = await reconcileSettlement({
         apiKey,

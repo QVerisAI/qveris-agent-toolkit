@@ -228,19 +228,24 @@ test("zero-quote CLI Call probes exact zero and fails closed before execute othe
         throw new Error(`unexpected path ${request.url.pathname}`);
       },
       async () => {
-        const result = await captureOutput(() => runCall("tool-1", {
-          apiKey: "sk-test",
-          baseUrl: "https://unit.test/api/v1",
-          discoveryId: "search-1",
-          params: '{"city":"London"}',
-          requireZeroQuote: true,
-          json: true,
-          timeout: "1",
-        }));
+        const result = await captureOutput(() =>
+          runCall("tool-1", {
+            apiKey: "sk-test",
+            baseUrl: "https://unit.test/api/v1",
+            discoveryId: "search-1",
+            params: '{"city":"London"}',
+            requireZeroQuote: true,
+            json: true,
+            timeout: "1",
+          }),
+        );
         assert.equal(jsonFromStdout(result.stdout).execution_id, "exec-zero");
       },
     );
-    assert.deepEqual(requests.map((request) => request.url.pathname.split("/").pop()), ["probe", "execute"]);
+    assert.deepEqual(
+      requests.map((request) => request.url.pathname.split("/").pop()),
+      ["probe", "execute"],
+    );
 
     let executed = false;
     await withMockFetch(
@@ -257,15 +262,18 @@ test("zero-quote CLI Call probes exact zero and fails closed before execute othe
         return response({});
       },
       async () => {
-        await assert.rejects(runCall("tool-1", {
-          apiKey: "sk-test",
-          baseUrl: "https://unit.test/api/v1",
-          discoveryId: "search-1",
-          params: "{}",
-          requireZeroQuote: true,
-          json: true,
-          timeout: "1",
-        }), /exact zero-credit quote/);
+        await assert.rejects(
+          runCall("tool-1", {
+            apiKey: "sk-test",
+            baseUrl: "https://unit.test/api/v1",
+            discoveryId: "search-1",
+            params: "{}",
+            requireZeroQuote: true,
+            json: true,
+            timeout: "1",
+          }),
+          /exact zero-credit quote/,
+        );
       },
     );
     assert.equal(executed, false);
@@ -285,18 +293,78 @@ test("zero-quote CLI Call probes exact zero and fails closed before execute othe
         return response({});
       },
       async () => {
-        await assert.rejects(runCall("tool-1", {
-          apiKey: "sk-test",
-          baseUrl: "https://unit.test/api/v1",
-          discoveryId: "search-1",
-          params: "{}",
-          requireZeroQuote: true,
-          json: true,
-          timeout: "1",
-        }), /exact zero-credit quote/);
+        await assert.rejects(
+          runCall("tool-1", {
+            apiKey: "sk-test",
+            baseUrl: "https://unit.test/api/v1",
+            discoveryId: "search-1",
+            params: "{}",
+            requireZeroQuote: true,
+            json: true,
+            timeout: "1",
+          }),
+          /exact zero-credit quote/,
+        );
       },
     );
     assert.equal(unsupportedExecuted, false);
+  });
+});
+
+test("HTTP 409 with an execution_id stays a key conflict and never reconciles an older result", async () => {
+  await withTempConfig(async () => {
+    await withMockFetch(
+      (request) => {
+        assert.equal(request.method, "POST");
+        assert.equal(request.url.pathname, "/api/v1/tools/execute");
+        return new Response(
+          JSON.stringify({
+            message: "Idempotency-Key conflicts with an earlier request",
+            execution_id: "exec-from-earlier-request",
+          }),
+          {
+            status: 409,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      },
+      async (requests) => {
+        const previousExitCode = process.exitCode;
+        let output;
+        try {
+          output = await captureOutput(() =>
+            main([
+              "node",
+              "qveris",
+              "call",
+              "tool-1",
+              "--api-key",
+              "sk-test",
+              "--base-url",
+              "https://unit.test/api/v1",
+              "--discovery-id",
+              "search-1",
+              "--params",
+              "{}",
+              "--idempotency-key",
+              "conflicting-key",
+              "--json",
+            ]),
+          );
+        } finally {
+          process.exitCode = previousExitCode;
+        }
+        const error = JSON.parse(output.stderr);
+        assert.equal(error.status, 409);
+        assert.equal(error.idempotency_key, "conflicting-key");
+        assert.equal(error.action, "lookup_execution");
+        assert.equal(error.next_action.reason, "idempotency_key_conflict");
+        assert.equal(error.success, undefined);
+        assert.equal(error.responseData, undefined);
+        assert.equal(requests.length, 1);
+        assert.equal(requests[0].headers["Idempotency-Key"], "conflicting-key");
+      },
+    );
   });
 });
 
@@ -309,11 +377,13 @@ test("execution lookup command performs a single read-only GET", async () => {
       return response({ status: "pending" });
     },
     async () => {
-      const output = await captureOutput(() => runExecutionLookup("retained-key", {
-        apiKey: "sk-test",
-        baseUrl: "https://unit.test/api/v1",
-        json: true,
-      }));
+      const output = await captureOutput(() =>
+        runExecutionLookup("retained-key", {
+          apiKey: "sk-test",
+          baseUrl: "https://unit.test/api/v1",
+          json: true,
+        }),
+      );
       assert.deepEqual(jsonFromStdout(output.stdout), { status: "pending" });
     },
   );
@@ -337,28 +407,49 @@ test("CLI accepts a stable idempotency key and exposes execution lookup routing"
           assert.equal(request.url.searchParams.get("key"), "stable-key");
           return response({ status: "completed", execution_id: "exec-1" });
         }
-        throw new Error(`unexpected path ${url.pathname}`);
+        throw new Error(`unexpected path ${request.url.pathname}`);
       },
       async () => {
-        await captureOutput(() => main([
-          "node", "qveris", "call", "tool-1",
-          "--api-key", "sk-test",
-          "--base-url", "https://unit.test/api/v1",
-          "--discovery-id", "search-1",
-          "--params", '{"city":"London"}',
-          "--idempotency-key", "stable-key",
-          "--json",
-        ]));
-        const lookup = await captureOutput(() => main([
-          "node", "qveris", "execution", "lookup", "stable-key",
-          "--api-key", "sk-test",
-          "--base-url", "https://unit.test/api/v1",
-          "--json",
-        ]));
+        await captureOutput(() =>
+          main([
+            "node",
+            "qveris",
+            "call",
+            "tool-1",
+            "--api-key",
+            "sk-test",
+            "--base-url",
+            "https://unit.test/api/v1",
+            "--discovery-id",
+            "search-1",
+            "--params",
+            '{"city":"London"}',
+            "--idempotency-key",
+            "stable-key",
+            "--json",
+          ]),
+        );
+        const lookup = await captureOutput(() =>
+          main([
+            "node",
+            "qveris",
+            "execution",
+            "lookup",
+            "stable-key",
+            "--api-key",
+            "sk-test",
+            "--base-url",
+            "https://unit.test/api/v1",
+            "--json",
+          ]),
+        );
         assert.deepEqual(jsonFromStdout(lookup.stdout), { status: "completed", execution_id: "exec-1" });
       },
     );
-    assert.deepEqual(requests.map(({ method }) => method), ["POST", "GET"]);
+    assert.deepEqual(
+      requests.map(({ method }) => method),
+      ["POST", "GET"],
+    );
   });
 });
 

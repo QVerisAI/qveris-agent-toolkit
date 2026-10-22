@@ -40,6 +40,7 @@ import {
 import { normalizeCreditBalanceResponse } from './credit-balance.js';
 
 const DEFAULT_BASE_URL = 'https://qveris.ai/api/v1';
+const MAX_ISSUED_EXECUTION_KEYS = 1024;
 
 /**
  * Resolve the base URL for the QVeris API.
@@ -110,6 +111,7 @@ export class QverisClient {
   private readonly defaultTimeoutMs: number;
   private readonly maxRetries: number;
   private rateLimitRetries = 0;
+  private readonly issuedExecutionKeys = new Set<string>();
 
   constructor(config: QverisClientConfig) {
     if (!config.apiKey) {
@@ -129,6 +131,28 @@ export class QverisClient {
    */
   get rateLimitRetryCount(): number {
     return this.rateLimitRetries;
+  }
+
+  /** Bind a previously issued Call key restored by host-controlled persistence. */
+  bindExecutionKey(idempotencyKey: string): void {
+    this.rememberExecutionKey(idempotencyKey);
+  }
+
+  /** Whether this client issued or the host explicitly bound a Call key. */
+  hasIssuedExecutionKey(idempotencyKey: string): boolean {
+    return this.issuedExecutionKeys.has(idempotencyKey);
+  }
+
+  private rememberExecutionKey(idempotencyKey: string): void {
+    if (typeof idempotencyKey !== 'string' || idempotencyKey.trim().length === 0) {
+      throw new Error('idempotency key must be a non-empty string.');
+    }
+    this.issuedExecutionKeys.delete(idempotencyKey);
+    this.issuedExecutionKeys.add(idempotencyKey);
+    if (this.issuedExecutionKeys.size > MAX_ISSUED_EXECUTION_KEYS) {
+      const oldest = this.issuedExecutionKeys.values().next().value as string | undefined;
+      if (oldest !== undefined) this.issuedExecutionKeys.delete(oldest);
+    }
   }
 
   /** Sleep for `ms` (a seam so tests can stub out the wait). */
@@ -333,9 +357,15 @@ export class QverisClient {
   ): Promise<ExecuteResponse> {
     const endpoint = `/tools/execute?tool_id=${encodeURIComponent(toolId)}`;
     const idempotencyKey = options.idempotencyKey ?? randomUUID();
+    this.rememberExecutionKey(idempotencyKey);
     try {
       const result = await this.request<ExecuteResponse>(
-        'call', 'POST', endpoint, request, EXECUTE_TIMEOUT_MS, undefined,
+        'call',
+        'POST',
+        endpoint,
+        request,
+        EXECUTE_TIMEOUT_MS,
+        undefined,
         { 'Idempotency-Key': idempotencyKey },
       );
       const executionId = executionIdFrom(result) ?? null;
@@ -372,9 +402,8 @@ export class QverisClient {
       throw malformed;
     } catch (error) {
       const uncertain = isUncertainCallError(error);
-      const status = error && typeof error === 'object' && 'status' in error
-        ? (error as { status?: unknown }).status
-        : undefined;
+      const status =
+        error && typeof error === 'object' && 'status' in error ? (error as { status?: unknown }).status : undefined;
       if (error && typeof error === 'object' && (uncertain || status === 200 || status === 409)) {
         (error as ApiError & { idempotency_key?: string }).idempotency_key = idempotencyKey;
       }
@@ -401,9 +430,16 @@ export class QverisClient {
 
   /** Read-only recovery for an execute request whose response may have been lost. */
   async getExecutionByIdempotencyKey(idempotencyKey: string): Promise<unknown> {
+    if (!this.hasIssuedExecutionKey(idempotencyKey)) {
+      throw new Error('Execution lookup key was not issued or bound by this QverisClient instance.');
+    }
     return this.request<unknown>(
-      'call', 'GET', '/tools/executions/by-idempotency-key', undefined,
-      this.defaultTimeoutMs, { key: idempotencyKey },
+      'call',
+      'GET',
+      '/tools/executions/by-idempotency-key',
+      undefined,
+      this.defaultTimeoutMs,
+      { key: idempotencyKey },
     );
   }
 

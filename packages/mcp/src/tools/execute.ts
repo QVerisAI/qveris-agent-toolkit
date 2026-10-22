@@ -62,9 +62,6 @@ export interface ExecuteToolInput {
 
   /** Probe and require the server-side exact quote to be zero before Call. */
   require_zero_quote?: boolean;
-
-  /** Stable transport key to reuse for a manual lookup or replay of this same Call. */
-  idempotency_key?: string;
 }
 
 /**
@@ -128,12 +125,6 @@ export const executeToolSchema = {
       description:
         'When true, Probe schema and exact quote first, then require the server to reject the Call unless the current quote is exactly zero.',
     },
-    idempotency_key: {
-      type: 'string',
-      minLength: 1,
-      description:
-        'Optional stable request key. Reuse it with lookup_execution to recover an uncertain outcome; it is transport metadata, not a tool parameter.',
-    },
   },
   required: ['tool_id', 'search_id', 'params_to_tool'],
 };
@@ -155,11 +146,8 @@ export async function executeExecuteTool(
   if (!isParamsObject(input.params_to_tool)) {
     throw new Error('params_to_tool must be a JSON object.');
   }
-  if (
-    input.idempotency_key !== undefined &&
-    (typeof input.idempotency_key !== 'string' || input.idempotency_key.trim().length === 0)
-  ) {
-    throw new Error('idempotency_key must be a non-empty string.');
+  if ('idempotency_key' in (input as unknown as Record<string, unknown>)) {
+    throw new Error('idempotency_key is host-controlled transport metadata and is not accepted in call arguments.');
   }
   if (
     input.max_response_size !== undefined &&
@@ -200,9 +188,7 @@ export async function executeExecuteTool(
     ...(input.respond_with !== undefined && { respond_with: input.respond_with }),
     ...(input.require_zero_quote === true && { require_zero_quote: true }),
   };
-  const response = input.idempotency_key
-    ? await client.executeTool(input.tool_id, request, { idempotencyKey: input.idempotency_key })
-    : await client.executeTool(input.tool_id, request);
+  const response = await client.executeTool(input.tool_id, request);
 
   return normalizeCreditBalanceResponse(response);
 }

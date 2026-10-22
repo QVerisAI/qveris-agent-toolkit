@@ -424,7 +424,6 @@ The call response may include compact pre-settlement `billing`. Final charge sta
 | `max_response_size` | number | No | Automatic inline limit in UTF-8 bytes (default `20480`, `-1` unlimited); explicit `full` takes precedence over a finite value |
 | `respond_with` | string | No | Omit for compatibility auto-delivery; use `full` to force complete inline data, `summary`, or `fields:<JSONPath,...>` |
 | `require_zero_quote` | boolean | No | Probe schema and exact quote first, then require server-side zero-credit admission |
-| `idempotency_key` | string | No | Stable request key; retain it for outcome lookup, separate from `params_to_tool` |
 
 Example:
 
@@ -439,12 +438,11 @@ Summary mode preserves at least one usable payload: a `summary` object, lossless
   "params_to_tool": {"city": "London", "units": "metric"},
   "model": "router-model-v1",
   "respond_with": "summary",
-  "require_zero_quote": true,
-  "idempotency_key": "stable-call-key"
+  "require_zero_quote": true
 }
 ```
 
-When `require_zero_quote` is true, the MCP server probes the current parameters and blocks the Call unless the capability is executable, advertises `require_zero_quote_v1`, the schema is valid, and the quote is exact and equal to zero. It sends the flag at the top level of the execute request. `idempotency_key` is transport metadata, not a tool parameter. The client generates a key if omitted and returns it with uncertain outcomes so it can be reused with `lookup_execution`. It never automatically submits a second Call. HTTP 409 conflicts skip automatic lookup; use `lookup_execution` explicitly to avoid confusing a previous result with this request.
+When `require_zero_quote` is true, the MCP server probes the current parameters and blocks the Call unless the capability is executable, advertises `require_zero_quote_v1`, the schema is valid, and the quote is exact and equal to zero. It sends the flag at the top level of the execute request. Idempotency keys are host/client-controlled transport metadata and are not accepted in model-facing `call` arguments. The client generates a key and returns it with uncertain outcomes so it can be reused with `lookup_execution`. Lookup accepts only keys issued by that client instance or explicitly bound by trusted host code. The client retains a bounded in-memory set of 1,024 recent keys; after a process restart, the host must restore its own saved key with `QverisClient.bindExecutionKey(key)` under the same authorization context before lookup. It never automatically submits a second Call. HTTP 409 conflicts skip automatic lookup; use `lookup_execution` explicitly to avoid confusing a previous result with this request.
 
 ### 5. `lookup_execution`
 
@@ -452,7 +450,7 @@ Read-only lookup for the outcome associated with an earlier Call. It never submi
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `idempotency_key` | string | Yes | Exact key supplied to the original Call, including the key returned in an uncertain Call error |
+| `idempotency_key` | string | Yes | Exact key returned by the client for an uncertain Call, or a key restored by trusted host code |
 
 The response may report `pending`, `completed`, `failed`, or `unavailable`. Query again with the same key when needed; `completed` includes the original Call response when available.
 

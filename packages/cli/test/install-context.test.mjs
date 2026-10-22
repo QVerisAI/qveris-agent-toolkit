@@ -818,7 +818,13 @@ test("unknown settlement triggers one bounded usage and ledger reconciliation", 
       assert.equal(process.exitCode, 1);
       assert.deepEqual(
         requests.map((request) => request.url.pathname),
-        ["/api/v1/search", "/api/v1/tools/execute", "/api/v1/tools/executions/by-idempotency-key", "/api/v1/auth/usage/history/v2", "/api/v1/auth/credits/ledger"],
+        [
+          "/api/v1/search",
+          "/api/v1/tools/execute",
+          "/api/v1/tools/executions/by-idempotency-key",
+          "/api/v1/auth/usage/history/v2",
+          "/api/v1/auth/credits/ledger",
+        ],
       );
     },
   );
@@ -857,7 +863,12 @@ test("ordinary calls with an execution ID reconcile instead of recommending repl
       assert.equal(process.exitCode, 1);
       assert.deepEqual(
         requests.map((request) => request.url.pathname),
-        ["/api/v1/tools/execute", "/api/v1/tools/executions/by-idempotency-key", "/api/v1/auth/usage/history/v2", "/api/v1/auth/credits/ledger"],
+        [
+          "/api/v1/tools/execute",
+          "/api/v1/tools/executions/by-idempotency-key",
+          "/api/v1/auth/usage/history/v2",
+          "/api/v1/auth/credits/ledger",
+        ],
       );
     },
   );
@@ -911,11 +922,20 @@ for (const uncertainFailure of [
             error instanceof CliError &&
             error.code === uncertainFailure.errorCode &&
             error.retryable === false &&
-            error.action === (["timeout", "request timeout", "server error"].includes(uncertainFailure.name) ? "lookup_execution" : "review_settlement") &&
+            error.action ===
+              (["timeout", "request timeout", "server error"].includes(uncertainFailure.name)
+                ? "lookup_execution"
+                : "review_settlement") &&
             error.fallbackAvailable === false &&
-            error.nextAction?.action === (["timeout", "request timeout", "server error"].includes(uncertainFailure.name) ? "lookup_execution" : "review_settlement") &&
+            error.nextAction?.action ===
+              (["timeout", "request timeout", "server error"].includes(uncertainFailure.name)
+                ? "lookup_execution"
+                : "review_settlement") &&
             error.nextAction?.requires_user === true &&
-            error.nextAction?.reason === (["timeout", "request timeout", "server error"].includes(uncertainFailure.name) ? "call_outcome_may_be_unknown" : "execution_id_unavailable"),
+            error.nextAction?.reason ===
+              (["timeout", "request timeout", "server error"].includes(uncertainFailure.name)
+                ? "call_outcome_may_be_unknown"
+                : "execution_id_unavailable"),
         );
         assert.deepEqual(
           requests.map((request) => request.url.pathname),
@@ -1090,7 +1110,12 @@ test("human output preserves settlement recovery for HTTP 408 with an execution 
       );
       assert.deepEqual(
         requests.map((request) => request.url.pathname),
-        ["/api/v1/tools/execute", "/api/v1/tools/executions/by-idempotency-key", "/api/v1/auth/usage/history/v2", "/api/v1/auth/credits/ledger"],
+        [
+          "/api/v1/tools/execute",
+          "/api/v1/tools/executions/by-idempotency-key",
+          "/api/v1/auth/usage/history/v2",
+          "/api/v1/auth/credits/ledger",
+        ],
       );
     },
   );

@@ -261,15 +261,16 @@ test("guarded CLI Call sends a top-level zero-quote requirement and recovers by 
       if (options.method === "POST") return jsonResponse({ message: "gateway timeout" }, { status: 503 });
       return jsonResponse({ status: "success", data: { status: "completed", response: recoveredCall } });
     },
-    () => callTool({
-      apiKey: "sk-test",
-      baseUrl: "https://unit.test/api/v1",
-      toolId: "weather-tool",
-      discoveryId: "search-1",
-      parameters: { city: "London" },
-      requireZeroQuote: true,
-      idempotencyKey: "stable-call-key",
-    }),
+    () =>
+      callTool({
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        toolId: "weather-tool",
+        discoveryId: "search-1",
+        parameters: { city: "London" },
+        requireZeroQuote: true,
+        idempotencyKey: "stable-call-key",
+      }),
   );
 
   assert.deepEqual(result, recoveredCall);
@@ -295,18 +296,57 @@ test("uncertain CLI Call never resubmits when lookup is pending", async () => {
         if (options.method === "POST") return jsonResponse({ message: "gateway timeout" }, { status: 503 });
         return jsonResponse({ status: "success", data: { status: "pending" } });
       },
-      () => callTool({
-        apiKey: "sk-test",
-        baseUrl: "https://unit.test/api/v1",
-        toolId: "weather-tool",
-        discoveryId: "search-1",
-        parameters: {},
-        idempotencyKey: "pending-call-key",
-      }),
+      () =>
+        callTool({
+          apiKey: "sk-test",
+          baseUrl: "https://unit.test/api/v1",
+          toolId: "weather-tool",
+          discoveryId: "search-1",
+          parameters: {},
+          idempotencyKey: "pending-call-key",
+        }),
     ),
-    (error) => error.status === 503 && error.recovery.status === "pending" && error.idempotencyKey === "pending-call-key",
+    (error) =>
+      error.status === 503 && error.recovery.status === "pending" && error.idempotencyKey === "pending-call-key",
   );
-  assert.deepEqual(requests.map((request) => request.method), ["POST", "GET"]);
+  assert.deepEqual(
+    requests.map((request) => request.method),
+    ["POST", "GET"],
+  );
+});
+
+test("CLI does not treat a malformed completed recovery as a successful Call", async () => {
+  const requests = [];
+  await assert.rejects(
+    withMockFetch(
+      (url, options) => {
+        requests.push({ method: options.method, url: url.toString() });
+        if (options.method === "POST") return jsonResponse({ message: "gateway timeout" }, { status: 503 });
+        return jsonResponse({
+          status: "success",
+          data: { status: "completed", response: { success: true, result: { data: { ok: true } } } },
+        });
+      },
+      () =>
+        callTool({
+          apiKey: "sk-test",
+          baseUrl: "https://unit.test/api/v1",
+          toolId: "weather-tool",
+          discoveryId: "search-1",
+          parameters: {},
+          idempotencyKey: "malformed-recovery-key",
+        }),
+    ),
+    (error) =>
+      error.status === 503 &&
+      error.idempotencyKey === "malformed-recovery-key" &&
+      error.recovery.status === "completed" &&
+      error.recovery.response.success === true,
+  );
+  assert.deepEqual(
+    requests.map(({ method }) => method),
+    ["POST", "GET"],
+  );
 });
 
 test("CLI Call exposes the key on HTTP 409 and does not auto-lookup or resubmit", async () => {
@@ -317,19 +357,23 @@ test("CLI Call exposes the key on HTTP 409 and does not auto-lookup or resubmit"
         requests.push({ method: options.method, url: url.toString(), headers: options.headers });
         return jsonResponse({ message: "idempotency key conflicts with an earlier request" }, { status: 409 });
       },
-      () => callTool({
-        apiKey: "sk-test",
-        baseUrl: "https://unit.test/api/v1",
-        toolId: "weather-tool",
-        discoveryId: "search-1",
-        parameters: { city: "Paris" },
-        idempotencyKey: "reused-key",
-      }),
+      () =>
+        callTool({
+          apiKey: "sk-test",
+          baseUrl: "https://unit.test/api/v1",
+          toolId: "weather-tool",
+          discoveryId: "search-1",
+          parameters: { city: "Paris" },
+          idempotencyKey: "reused-key",
+        }),
     ),
     (error) => error.status === 409 && error.idempotencyKey === "reused-key",
   );
   assert.equal(requests.length, 1);
-  assert.deepEqual(requests.map(({ method }) => method), ["POST"]);
+  assert.deepEqual(
+    requests.map(({ method }) => method),
+    ["POST"],
+  );
 });
 
 test("CLI retains the key and checks it when the Execute response is malformed", async () => {
@@ -341,21 +385,23 @@ test("CLI retains the key and checks it when the Execute response is malformed",
         if (options.method === "POST") return new Response("{invalid json", { status: 200 });
         return jsonResponse({ status: "success", data: { status: "pending" } });
       },
-      () => callTool({
-        apiKey: "sk-test",
-        baseUrl: "https://unit.test/api/v1",
-        toolId: "weather-tool",
-        discoveryId: "search-1",
-        parameters: {},
-        idempotencyKey: "malformed-response-key",
-      }),
+      () =>
+        callTool({
+          apiKey: "sk-test",
+          baseUrl: "https://unit.test/api/v1",
+          toolId: "weather-tool",
+          discoveryId: "search-1",
+          parameters: {},
+          idempotencyKey: "malformed-response-key",
+        }),
     ),
     (error) =>
-      error.status === 200 &&
-      error.idempotencyKey === "malformed-response-key" &&
-      error.recovery.status === "pending",
+      error.status === 200 && error.idempotencyKey === "malformed-response-key" && error.recovery.status === "pending",
   );
-  assert.deepEqual(requests.map(({ method }) => method), ["POST", "GET"]);
+  assert.deepEqual(
+    requests.map(({ method }) => method),
+    ["POST", "GET"],
+  );
 });
 
 test("CLI idempotency lookup is a read-only GET using the exact key", async () => {
@@ -365,17 +411,20 @@ test("CLI idempotency lookup is a read-only GET using the exact key", async () =
       requests.push({ method: options.method, url: url.toString() });
       return jsonResponse({ status: "success", data: { status: "pending" } });
     },
-    () => getExecutionByIdempotencyKey({
-      apiKey: "sk-test",
-      baseUrl: "https://unit.test/api/v1",
-      key: "retained-key",
-    }),
+    () =>
+      getExecutionByIdempotencyKey({
+        apiKey: "sk-test",
+        baseUrl: "https://unit.test/api/v1",
+        key: "retained-key",
+      }),
   );
   assert.deepEqual(result.data, { status: "pending" });
-  assert.deepEqual(requests, [{
-    method: "GET",
-    url: "https://unit.test/api/v1/tools/executions/by-idempotency-key?key=retained-key",
-  }]);
+  assert.deepEqual(requests, [
+    {
+      method: "GET",
+      url: "https://unit.test/api/v1/tools/executions/by-idempotency-key?key=retained-key",
+    },
+  ]);
 });
 
 test("API client does not downgrade invalid projections", async () => {

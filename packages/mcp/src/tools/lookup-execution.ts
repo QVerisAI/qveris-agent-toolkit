@@ -25,6 +25,9 @@ export async function executeLookupExecution(
   if (typeof input.idempotency_key !== 'string' || input.idempotency_key.trim().length === 0) {
     throw new Error('idempotency_key must be a non-empty string.');
   }
+  if (!client.hasIssuedExecutionKey(input.idempotency_key)) {
+    throw new Error('Execution lookup key was not issued or bound by this QverisClient instance.');
+  }
   const response = await client.getExecutionByIdempotencyKey(input.idempotency_key);
   if (response && typeof response === 'object') {
     const envelope = response as { status?: unknown; data?: unknown };

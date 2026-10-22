@@ -162,7 +162,15 @@ describe('MCP public tool interface', () => {
 
   it('declares complete, conservative annotations for every tool', () => {
     const byName = new Map(listQverisMcpTools().map((tool) => [tool.name, tool]));
-    const canonicalTools = ['discover', 'inspect', 'probe', 'call', 'lookup_execution', 'usage_history', 'credits_ledger'] as const;
+    const canonicalTools = [
+      'discover',
+      'inspect',
+      'probe',
+      'call',
+      'lookup_execution',
+      'usage_history',
+      'credits_ledger',
+    ] as const;
     const aliases = {
       search_tools: 'discover',
       get_tools_by_ids: 'inspect',
@@ -237,6 +245,7 @@ describe('MCP public tool interface', () => {
       probeTool: vi.fn().mockResolvedValue({ schema: { valid: true } }),
       executeTool: vi.fn().mockResolvedValue({ execution_id: 'exec-1', success: true }),
       getExecutionByIdempotencyKey: vi.fn().mockResolvedValue({ status: 'pending' }),
+      hasIssuedExecutionKey: vi.fn(() => true),
       getUsageHistory: vi.fn(),
       getCreditsLedger: vi.fn(),
     } as unknown as QverisClient;

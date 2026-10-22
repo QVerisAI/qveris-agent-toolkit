@@ -164,7 +164,6 @@ Call a discovered tool with specific parameters.
 | `max_response_size` | number | | Automatic inline limit in UTF-8 bytes (default: 20480; `-1` is unlimited); explicit `full` takes precedence over a finite value |
 | `respond_with` | string | | Omit for compatibility auto-delivery; use `full` to force complete inline data, `summary`, or `fields:<JSONPath,...>` |
 | `require_zero_quote` | boolean | | Probe schema and exact quote, then require server-side zero-credit admission |
-| `idempotency_key` | string | | Stable transport key for outcome lookup; not included in `params_to_tool` |
 
 **Example:**
 
@@ -175,12 +174,11 @@ Call a discovered tool with specific parameters.
   "params_to_tool": {"city": "London", "units": "metric"},
   "model": "router-model-v1",
   "respond_with": "summary",
-  "require_zero_quote": true,
-  "idempotency_key": "stable-call-key"
+  "require_zero_quote": true
 }
 ```
 
-When `require_zero_quote` is true, the server probes first and blocks the Call unless the capability is executable, advertises `require_zero_quote_v1`, the current schema is valid, and the exact quote is zero. The execute body carries this flag at the top level, outside `params_to_tool`. `idempotency_key` is transport metadata. Each Call gets a key; uncertain outcomes return that key for reuse with the read-only `lookup_execution` tool. HTTP 409 conflicts skip automatic lookup, and the client never automatically resubmits Execute.
+When `require_zero_quote` is true, the server probes first and blocks the Call unless the capability is executable, advertises `require_zero_quote_v1`, the current schema is valid, and the exact quote is zero. The execute body carries this flag at the top level, outside `params_to_tool`. Idempotency keys are host/client-controlled transport metadata, not model-facing `call` arguments. Each Call gets a client-issued key; uncertain outcomes return that key for the read-only `lookup_execution` tool. Lookup accepts only keys issued by that client instance or explicitly bound by trusted host code. The client keeps a bounded in-memory set of 1,024 recent keys. After restart, host persistence must restore the original key with `QverisClient.bindExecutionKey(key)` and must retain the same authorization context. HTTP 409 conflicts skip automatic lookup, and the client never automatically resubmits Execute.
 
 ### `lookup_execution`
 

@@ -5,6 +5,7 @@ export function outputJson(data) {
 export function outputJsonError(error, exitCode = 1) {
   const obj = { error: error.message || String(error) };
   if (error.code) obj.code = error.code;
+  if (Number.isInteger(error.status) && error.status >= 100 && error.status <= 599) obj.status = error.status;
   if (error.hint) obj.hint = error.hint;
   obj.retryable = error.retryable ?? false;
   obj.action = error.action ?? "review_and_retry";

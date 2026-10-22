@@ -416,7 +416,6 @@ API 密钥接入步骤：
 | `max_response_size` | number | 否 | 自动内联交付的 UTF-8 字节上限（默认 `20480`，`-1` 表示不限）；显式 `full` 优先于有限值 |
 | `respond_with` | string | 否 | 省略时采用兼容的自动交付；`full` 强制完整内联数据，也可用 `summary` 或 `fields:<JSONPath,...>` |
 | `require_zero_quote` | boolean | 否 | 先 Probe schema 和精确报价，再要求服务端仅接受零积分执行 |
-| `idempotency_key` | string | 否 | 稳定请求键，可用于之后查询结果；与 `params_to_tool` 分离 |
 
 示例：
 
@@ -431,12 +430,11 @@ API 密钥接入步骤：
   "params_to_tool": {"city": "北京", "units": "metric"},
   "model": "router-model-v1",
   "respond_with": "summary",
-  "require_zero_quote": true,
-  "idempotency_key": "stable-call-key"
+  "require_zero_quote": true
 }
 ```
 
-`require_zero_quote` 为 true 时，MCP server 会先 Probe 当前参数；只有能力可执行、声明支持 `require_zero_quote_v1`、schema 有效且精确报价等于零才继续。Execute 请求在顶层发送该字段。`idempotency_key` 是传输元数据，不是工具参数；省略时客户端会生成 key，结果不确定时会返回该 key，供 `lookup_execution` 继续查询。客户端绝不自动再次提交 Call。HTTP 409 冲突不会触发自动查询；请显式调用 `lookup_execution`，避免把之前的结果误认为本次请求。
+`require_zero_quote` 为 true 时，MCP server 会先 Probe 当前参数；只有能力可执行、声明支持 `require_zero_quote_v1`、schema 有效且精确报价等于零才继续。Execute 请求在顶层发送该字段。幂等 key 由宿主/客户端控制，不属于模型可见的 `call` 参数。客户端会生成 key，并在结果不确定时返回它，供 `lookup_execution` 查询。lookup 只接受该客户端实例签发或可信宿主代码显式绑定的 key。客户端仅在内存中保留最近 1,024 个 key；进程重启后，宿主必须从自己保存的数据调用 `QverisClient.bindExecutionKey(key)` 绑定原 key，才能继续查询。客户端绝不自动再次提交 Call。HTTP 409 冲突不会触发自动查询；请显式调用 `lookup_execution`，避免把之前的结果误认为本次请求。
 
 ### 5. `lookup_execution`
 
@@ -444,7 +442,7 @@ API 密钥接入步骤：
 
 | 参数 | 类型 | 必填 | 说明 |
 |-----|------|------|------|
-| `idempotency_key` | string | 是 | 原 Call 使用的精确 key，包括不确定错误中返回的 key |
+| `idempotency_key` | string | 是 | 不确定的 Call 返回的精确 key，或可信宿主代码恢复后绑定的 key |
 
 响应可能是 `pending`、`completed`、`failed` 或 `unavailable`。需要时使用同一个 key 再次查询；`completed` 会在可用时包含原 Call 响应。
 

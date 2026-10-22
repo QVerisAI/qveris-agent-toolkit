@@ -458,7 +458,6 @@ export interface ExecuteRequest {
 
   /** Require the server to admit this call only when its current exact quote is zero. */
   require_zero_quote?: boolean;
-
 }
 
 /** Headers and other transport metadata for a single execute request. */

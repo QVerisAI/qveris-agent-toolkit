@@ -365,24 +365,22 @@ describe('call (execute_tool)', () => {
       });
     });
 
-    it('passes the MCP idempotency key as transport metadata, outside params_to_tool', async () => {
+    it('keeps idempotency keys out of model-facing call schema and rejects explicit injection', async () => {
+      expect(executeToolSchema.properties).not.toHaveProperty('idempotency_key');
       executeToolMock.mockResolvedValueOnce({ execution_id: 'exec-1', success: true });
-      await executeExecuteTool(
-        mockClient,
-        {
-          tool_id: 'tool-1',
-          search_id: 'search-1',
-          params_to_tool: { city: 'London' },
-          idempotency_key: 'stable-key',
-        },
-        'session-1',
-      );
-
-      expect(executeToolMock).toHaveBeenCalledWith(
-        'tool-1',
-        expect.not.objectContaining({ idempotency_key: expect.anything() }),
-        { idempotencyKey: 'stable-key' },
-      );
+      await expect(
+        executeExecuteTool(
+          mockClient,
+          {
+            tool_id: 'tool-1',
+            search_id: 'search-1',
+            params_to_tool: { city: 'London' },
+            idempotency_key: 'model-chosen-key',
+          } as never,
+          'session-1',
+        ),
+      ).rejects.toThrow(/host-controlled transport metadata/);
+      expect(executeToolMock).not.toHaveBeenCalled();
     });
 
     it('fails closed before execute when the quote is positive or inexact', async () => {
