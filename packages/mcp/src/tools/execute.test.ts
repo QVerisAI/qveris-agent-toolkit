@@ -347,11 +347,18 @@ describe('call (execute_tool)', () => {
 
       await executeExecuteTool(
         mockClient,
-        { tool_id: 'tool-1', search_id: 'search-1', params_to_tool: { city: 'London' }, require_zero_quote: true },
+        {
+          tool_id: 'tool-1',
+          search_id: 'search-1',
+          params_to_tool: { city: 'London' },
+          sub_user_id: 'oauth-user-123',
+          require_zero_quote: true,
+        },
         'session-1',
       );
 
       expect(probeToolMock).toHaveBeenCalledWith('tool-1', {
+        sub_user_id: 'oauth-user-123',
         parameters: { city: 'London' },
         checks: ['schema', 'quote'],
         live_budget: 'none',
@@ -359,7 +366,37 @@ describe('call (execute_tool)', () => {
       expect(executeToolMock).toHaveBeenCalledWith('tool-1', {
         search_id: 'search-1',
         session_id: 'session-1',
+        sub_user_id: 'oauth-user-123',
         parameters: { city: 'London' },
+        max_response_size: undefined,
+        require_zero_quote: true,
+      });
+    });
+
+    it('omits sub_user_id from both Probe and Execute when none was supplied', async () => {
+      probeToolMock.mockResolvedValueOnce({
+        executable: true,
+        execution_constraints_supported: ['require_zero_quote_v1'],
+        schema: { valid: true },
+        quote: { exact: true, estimate_credits: 0, currency: 'credits' },
+      });
+      executeToolMock.mockResolvedValueOnce({ execution_id: 'exec-zero-default-user', success: true });
+
+      await executeExecuteTool(
+        mockClient,
+        { tool_id: 'tool-1', search_id: 'search-1', params_to_tool: {}, require_zero_quote: true },
+        'session-1',
+      );
+
+      expect(probeToolMock).toHaveBeenCalledWith('tool-1', {
+        parameters: {},
+        checks: ['schema', 'quote'],
+        live_budget: 'none',
+      });
+      expect(executeToolMock).toHaveBeenCalledWith('tool-1', {
+        search_id: 'search-1',
+        session_id: 'session-1',
+        parameters: {},
         max_response_size: undefined,
         require_zero_quote: true,
       });

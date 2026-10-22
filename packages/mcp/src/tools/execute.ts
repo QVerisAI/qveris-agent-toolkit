@@ -159,6 +159,7 @@ export async function executeExecuteTool(
 
   if (input.require_zero_quote === true) {
     const probe = await client.probeTool(input.tool_id, {
+      ...(input.sub_user_id !== undefined && { sub_user_id: input.sub_user_id }),
       parameters: input.params_to_tool,
       checks: ['schema', 'quote'],
       live_budget: 'none',
