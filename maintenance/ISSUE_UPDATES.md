@@ -23,7 +23,7 @@ Remaining: Cursor Marketplace acceptance/clean install; local Awesome MCP [#1443
 
 ### #293 — Future Capability contracts only
 
-[Issue](https://github.com/QVerisAI/qveris-agent-toolkit/issues/293) now separates shipped typed Detail/Query from future Resolve/selection/freshness and Query recovery prerequisites. It remains blocked and is lowered from P1 to P2 until those contracts are published. #416/#418 delivered and released the available endpoints and single-submit behavior.
+[Issue](https://github.com/QVerisAI/qveris-agent-toolkit/issues/293) now separates shipped typed Detail/Query from future Resolve/selection/freshness and Query recovery prerequisites. It remains blocked and is lowered from P1 to P2 until those contracts are published. #416/#418 implemented and prepared the available endpoints and single-submit behavior; package publication and SDK release tags remain outstanding.
 
 Ordinary Call idempotency must not be extrapolated to Capability Query. Current OpenAPI has neither a Resolve path nor Query idempotency/lookup semantics.
 
