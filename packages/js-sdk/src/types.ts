@@ -455,6 +455,22 @@ export interface ExecuteRequest {
 
   /** Server-side result projection. Omit for compatibility auto-delivery; explicit `full` forces complete inline data. */
   respond_with?: 'full' | 'summary' | `fields:${string}`;
+
+  /** Require the server to admit this call only when its current exact quote is zero. */
+  require_zero_quote?: boolean;
+}
+
+/** Headers and other transport metadata for a single execute request. */
+export interface ExecuteTransportOptions {
+  /** Stable key used to recover this call if its response is lost. */
+  idempotencyKey?: string;
+}
+
+export interface ExecutionLookupResponse {
+  status?: 'pending' | 'completed' | 'failed' | 'unavailable' | string;
+  response?: ExecuteResponse;
+  execution_id?: string;
+  [key: string]: unknown;
 }
 
 /**
@@ -689,6 +705,8 @@ export interface ProbeResponse {
     | 'delegation_budget_not_supported'
     | 'oauth2_signin_required';
   contract_features?: string[];
+  /** Server-advertised execute constraints supported by this endpoint. */
+  execution_constraints_supported?: string[];
   schema?: ProbeSchemaResult;
   quote?: ProbeQuoteResult;
   coverage?: ProbeUnknownResult;
@@ -886,6 +904,12 @@ export interface ApiError {
 
   /** Stable recovery guidance; callers do not need internal contract versions or evidence digests. */
   next_action?: NextAction;
+
+  /** Stable key that can be reused with lookup_execution after an uncertain Call. */
+  idempotency_key?: string;
+
+  /** Last read-only idempotency lookup response, when available. */
+  recovery?: ExecutionLookupResponse;
 }
 
 /** Published CAP contract; version/hash may be absent on legacy records. */
