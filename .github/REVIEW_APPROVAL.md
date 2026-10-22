@@ -11,9 +11,14 @@ receipt for the current PR head.
 - Set Actions variable `REVIEW_APP_ID` to its App ID.
 - Set Actions secret `REVIEW_APP_PRIVATE_KEY` from the App's existing secure key
   storage. Never put private keys in PRs, comments, logs, or ordinary variables.
-- The App needs Pull requests write permission. The workflow requests a token
-  scoped to this repository with only Pull requests write permission, then revokes
-  it at the end of the job. It uses the default token only for read operations.
+- The App needs Pull requests write permission to submit reviews. For this
+  repository\'s required-review rule to count its approvals, the installation also
+  needs Contents write permission; PR-only approvals are recorded but leave
+  `REVIEW_REQUIRED`. Approve this permission separately and keep installation
+  access restricted to explicitly authorized repositories.
+- The workflow still requests a token scoped to this repository with only Pull
+  requests write permission, then revokes it at the end of the job. It uses the
+  default token only for read operations and does not request content writes.
 - A private App owned by another organization cannot be installed here. Use an
   organization-owned review App, or obtain explicit authorization to make the
   existing App installable outside its owner before installing it here.
@@ -55,7 +60,9 @@ gh workflow run review-auto-approve.yml --repo QVerisAI/qveris-agent-toolkit --r
 
 Inspect the workflow job summary and the PR's review list. Success means an
 `APPROVED` review by the configured App on the current head, rather than merely a
-clean review comment. Repeating reconciliation on the same head is idempotent.
+clean review comment. Also confirm that the repository reports an approved review
+decision; a recorded review alone can be insufficient under required-review
+rules. Repeating reconciliation on the same head is idempotent.
 
 Run policy regression tests without network calls or credentials:
 
