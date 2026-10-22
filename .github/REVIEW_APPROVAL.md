@@ -53,9 +53,10 @@ also reconciled directly from trusted events.
 
 After configuration changes or missed notifications, reconcile an existing PR:
 
+Set `PR_NUMBER` to the existing PR number, then run:
+
 ```bash
-gh workflow run review-auto-approve.yml --repo QVerisAI/qveris-agent-toolkit --ref main -f pull_number=437
-gh workflow run review-auto-approve.yml --repo QVerisAI/qveris-agent-toolkit --ref main -f pull_number=440
+gh workflow run review-auto-approve.yml --repo QVerisAI/qveris-agent-toolkit --ref main -f pull_number="$PR_NUMBER"
 ```
 
 Inspect the workflow job summary and the PR's review list. Success means an
@@ -69,3 +70,18 @@ Run policy regression tests without network calls or credentials:
 ```bash
 node --test scripts/auto-approve-review.test.mjs
 ```
+
+## Thread state changes and full reconciliation
+
+GitHub Actions does not directly support the review-thread resolution webhook.
+An hourly default-branch sweep re-reads all open PRs, including thread state, and
+withdraws or restores this App's approvals using the same policy. Scheduled runs
+can be delayed by GitHub. For immediate verification after resolving or reopening
+a thread, dispatch the workflow without a PR number:
+
+```bash
+gh workflow run review-auto-approve.yml --repo QVerisAI/qveris-agent-toolkit --ref main
+```
+
+One PR verification failure is reported and does not skip the remaining PRs.
+Normal review receipts still reconcile immediately through their event handlers.

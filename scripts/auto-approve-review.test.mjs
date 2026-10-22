@@ -174,7 +174,7 @@ test('unresolved findings on later thread pages prevent approval', async () => {
     pages: [
       { nodes: [], pageInfo: { hasNextPage: true, endCursor: 'next' } },
       {
-        nodes: [{ isResolved: false, comments: { nodes: [{ author: { login: reviewer.login } }] } }],
+        nodes: [{ isResolved: false, comments: { nodes: [{ author: { __typename: 'Bot', databaseId: reviewer.id, login: 'chatgpt-codex-connector' } }] } }],
         pageInfo: { hasNextPage: false },
       },
     ],
@@ -363,4 +363,48 @@ test('all human review transitions notify a secret-capable receiver without chec
   assert.doesNotMatch(receiver, /^  pull_request_review:/m);
   assert.match(receiver, /ref: \$\{\{ github.event.repository.default_branch \}\}/);
   assert.match(receiver, /pull_request_target:\s*\n\s*types: \[[^\]]*\bedited\b/);
+});
+
+test('repository sweeps paginate open PRs and continue after one verification failure', async () => {
+  const list = () => {};
+  const seen = [];
+  const github = {
+    rest: { pulls: { list,
+      get: async ({pull_number, owner, repo}) => {
+        assert.equal(owner, 'QVerisAI');
+        assert.equal(repo, 'qveris-agent-toolkit');
+        seen.push(pull_number);
+        if (pull_number === 1) throw new Error('Temporary read failure');
+        return {data: {state: 'open', draft: true, base: {ref: 'main'}, head: {sha}, user: {login: 'author'}}};
+      }, listReviews: () => {} } },
+    paginate: async (method, params) => {
+      if (method === list) {
+        assert.equal(params.state, 'open');
+        assert.equal(params.per_page, 100);
+        return [{number: 1}, {number: 2}];
+      }
+      return [];
+    },
+  };
+  const context = Object.assign(Object.create({
+    get repo() { return {owner: 'QVerisAI', repo: 'qveris-agent-toolkit'}; },
+  }), {payload: fixture().context.payload});
+  const results = await policy.reconcileRepository({github, appGithub: {},
+    appSlug: 'qverisai-review-bot', context});
+  assert.deepEqual(seen, [1, 2]);
+  assert.deepEqual(results.map(x => x.result), ['failed', 'withheld']);
+  const workflow = readFileSync(new URL('../.github/workflows/review-auto-approve.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /schedule:\s*\n\s*- cron:/);
+  assert.match(workflow, /reconcileRepository/);
+});
+
+// Captured GraphQL identity shape differs from the REST review identity.
+test('unresolved GraphQL bot findings withdraw approval by stable numeric identity', async () => {
+  for (const login of ['chatgpt-codex-connector', reviewer.login]) {
+    const f = fixture({ reviews: [appApproval()], threads: [{isResolved: false,
+      comments: {nodes: [{author: {__typename: 'Bot', databaseId: reviewer.id, login}}]},
+    }] });
+    assert.equal((await f.run()).result, 'withheld');
+    assert.deepEqual(f.writes.map(x => x.type), ['dismiss']);
+  }
 });

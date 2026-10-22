@@ -1,6 +1,5 @@
 const REVIEWER_ID = 199175422;
 const REVIEW_APP_ID = 1144995;
-const REVIEWER_LOGIN = 'chatgpt-codex-connector[bot]';
 
 function isTrustedReceipt(item) {
   return (
@@ -34,7 +33,7 @@ async function hasUnresolvedFindings(github, repo, number) {
       repository(owner: $owner, name: $repo) {
         pullRequest(number: $number) {
           reviewThreads(first: 100, after: $cursor) {
-            nodes { isResolved comments(first: 1) { nodes { author { login } } } }
+            nodes { isResolved comments(first: 1) { nodes { author { __typename login ... on Bot { databaseId } } } } }
             pageInfo { hasNextPage endCursor }
           }
         }
@@ -45,7 +44,10 @@ async function hasUnresolvedFindings(github, repo, number) {
     const threads = data.repository?.pullRequest?.reviewThreads;
     if (!threads) throw new Error('Unable to read review threads; approval withheld.');
     if (
-      threads.nodes.some((thread) => !thread.isResolved && thread.comments.nodes[0]?.author?.login === REVIEWER_LOGIN)
+      threads.nodes.some((thread) => {
+        const author = thread.comments.nodes[0]?.author;
+        return !thread.isResolved && author?.__typename === 'Bot' && author.databaseId === REVIEWER_ID;
+      })
     )
       return true;
     cursor = threads.pageInfo.hasNextPage ? threads.pageInfo.endCursor : null;
@@ -193,4 +195,26 @@ async function reconcileApproval({ github, appGithub, context, appSlug }) {
   return { number, sha, result: 'approved', url: approval.html_url };
 }
 
-module.exports = { isTrustedReceipt, receiptForHead, pullNumberFromContext, reconcileApproval };
+
+async function reconcileRepository(options) {
+  const { github, context } = options;
+  const pulls = await github.paginate(github.rest.pulls.list, {
+    ...context.repo, state: 'open', per_page: 100,
+  });
+  const results = [];
+  for (const pr of pulls) {
+    try {
+      results.push(await reconcileApproval({ ...options, context: {
+        ...context, repo: context.repo, eventName: 'workflow_dispatch', payload: {
+          repository: context.payload.repository,
+          inputs: { pull_number: String(pr.number) },
+        },
+      } }));
+    } catch (error) {
+      results.push({ number: pr.number, result: 'failed', reason: error.message });
+    }
+  }
+  return results;
+}
+
+module.exports = { reconcileRepository, isTrustedReceipt, receiptForHead, pullNumberFromContext, reconcileApproval };
