@@ -2,6 +2,7 @@ import { mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'n
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import Ajv2020 from 'ajv/dist/2020.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -56,6 +57,26 @@ describe('MCP API client initialization', () => {
 });
 
 describe('MCP public tool interface', () => {
+  it('accepts pending and unavailable lookup results with response: null', async () => {
+    const validate = new Ajv2020.default({ strict: false }).compile(TOOL_OUTPUT_SCHEMAS.lookup_execution);
+    for (const response of [
+      { status: 'pending', response: null },
+      { status: 'unavailable', response: null },
+    ]) {
+      const client = {
+        hasIssuedExecutionKey: vi.fn(() => true),
+        getExecutionByIdempotencyKey: vi.fn().mockResolvedValue(response),
+      } as unknown as QverisClient;
+      const result = await executeQverisMcpTool(client, 'session-1', 'lookup_execution', {
+        idempotency_key: 'retained-key',
+      });
+
+      expect(result.structuredContent).toEqual(response);
+      expect(payload(result)).toEqual(response);
+      expect(validate(result.structuredContent)).toBe(true);
+    }
+  });
+
   it('detects the process entrypoint when npm launches the bin through a symlink', () => {
     // Canonicalize: on macOS tmpdir() sits behind the /var -> /private/var
     // symlink, but Node always reports canonical paths in import.meta.url,

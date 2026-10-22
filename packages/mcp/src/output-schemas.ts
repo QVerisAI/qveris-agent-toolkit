@@ -70,7 +70,9 @@ const executionLookupSchema = {
   properties: {
     status: { type: 'string' },
     execution_id: { type: 'string' },
-    response: { type: 'object', additionalProperties: true },
+    response: {
+      anyOf: [{ type: 'object', additionalProperties: true }, { type: 'null' }],
+    },
   },
   additionalProperties: true,
 } as const;

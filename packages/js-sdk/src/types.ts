@@ -468,7 +468,7 @@ export interface ExecuteTransportOptions {
 
 export interface ExecutionLookupResponse {
   status?: 'pending' | 'completed' | 'failed' | 'unavailable' | string;
-  response?: ExecuteResponse;
+  response?: ExecuteResponse | null;
   execution_id?: string;
   [key: string]: unknown;
 }
