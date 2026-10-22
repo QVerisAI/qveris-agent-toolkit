@@ -365,6 +365,9 @@ function extractGlobalFlags(args) {
       case "--respond-with":
         flags.respondWith = takeNext(args, i++, arg);
         break;
+      case "--idempotency-key":
+        flags.idempotencyKey = takeNext(args, i++, arg);
+        break;
       case "--model":
         flags.model = takeNext(args, i++, arg);
         break;
