@@ -214,7 +214,7 @@ Full CLI docs: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/packag
 
 ### MCP Server Quick Start
 
-The MCP server (`@qverisai/mcp` v0.14.6) exposes six canonical agent-facing tools via the Model Context Protocol:
+The MCP server (`@qverisai/mcp` v0.14.6) exposes seven canonical agent-facing tools via the Model Context Protocol:
 
 | MCP Tool | Description | Cost |
 |----------|-------------|------|
@@ -224,6 +224,9 @@ The MCP server (`@qverisai/mcp` v0.14.6) exposes six canonical agent-facing tool
 | `call` | Execute a tool with parameters; response may include pre-settlement billing | Billing rule |
 | `usage_history` | Summarize/search/export request-level charge outcomes | Free |
 | `credits_ledger` | Summarize/search/export final credit balance movements | Free |
+| `lookup_execution` | Read the outcome of an uncertain Call using its idempotency key without resubmitting | Free |
+
+Call requests are single-submit: do not retry a submitted Call or remove rejected projection fields and resubmit. Preserve the returned idempotency key and use `lookup_execution` (CLI: `qveris execution lookup <key>`) when the outcome is uncertain. HTTP 409 conflicts require an explicit lookup. `require_zero_quote` (CLI: `--require-zero-quote`) validates the current schema and exact zero-credit quote, then sends a server-side zero-quote guard. Lookup keys must be issued by the current MCP client or explicitly bound by trusted host code after restart.
 
 > **Backward compatibility:** The old tool names `search_tools`, `get_tools_by_ids`, and `execute_tool` are still supported as deprecated aliases with stderr warnings. Use the new names going forward.
 
@@ -421,6 +424,7 @@ Full reference: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/
 - `call` — Execute a capability with parameters; response may include pre-settlement billing
 - `usage_history` — Summarize/search/export request-level charge outcomes
 - `credits_ledger` — Summarize/search/export final credit balance movements
+- `lookup_execution` — Read-only outcome lookup using a Call idempotency key
 
 > Deprecated aliases still supported: `search_tools` → `discover`, `get_tools_by_ids` → `inspect`, `execute_tool` → `call`
 

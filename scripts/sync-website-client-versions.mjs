@@ -3,6 +3,7 @@
 import fs from "node:fs/promises"
 import path from "node:path"
 import process from "node:process"
+import { pathToFileURL } from "node:url"
 
 import { websiteReleaseTag } from "./website-release-tags.mjs"
 
@@ -120,6 +121,50 @@ function replaceVersionReferences(content, surface, versions) {
   return lines.join("\n")
 }
 
+// Read only the introductory inventory, excluding deprecated aliases and examples.
+export function canonicalMcpTools(guide) {
+  const intro = guide.split("\n---")[0]
+  const tools = [...intro.matchAll(/^- `([a-z_]+)` — (.+)$/gm)]
+    .map(([, name, description]) => ({ name, description }))
+  if (tools.length === 0 || new Set(tools.map(({ name }) => name)).size !== tools.length) {
+    throw new Error("MCP guide must contain a unique canonical tool inventory")
+  }
+  return tools
+}
+
+export function syncMcpToolSummary(content, tools) {
+  const names = tools.map(({ name }) => name)
+  const englishCount = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"][names.length] ?? String(names.length)
+  const chineseCount = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"][names.length] ?? String(names.length)
+  let updated = content
+    .replace(/\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten) canonical(?= (?:agent-facing )?(?:MCP )?tools)/g, `${englishCount} canonical`)
+    .replace(/`discover`(?:,\s*`[a-z_]+`)+/g, (list) =>
+      list.includes("`credits_ledger`") ? names.map((name) => `\`${name}\``).join(", ") : list)
+    .replace(/\bdiscover(?:\s*\/\s*[a-z_]+)+(?:\s*[一二三四五六七八九十\d]+个工具)?/g, (list) => {
+      if (!/\bcredits_ledger\b/.test(list)) return list
+      return names.join(" / ") + (list.endsWith("个工具") ? ` ${chineseCount}个工具` : "")
+    })
+
+  const lines = updated.split("\n")
+  const tableStart = lines.findIndex((line) => /^\|\s*MCP Tool\s*\|/.test(line))
+  if (tableStart >= 0) {
+    let end = tableStart + 2
+    while (lines[end]?.startsWith("|")) end += 1
+    const rows = new Map(lines.slice(tableStart + 2, end).map((line) => [line.match(/^\|\s*`([^`]+)`/)?.[1], line]))
+    lines.splice(tableStart + 2, end - tableStart - 2, ...tools.map(({ name, description }) =>
+      rows.get(name) ?? `| \`${name}\` | ${description} | ${name === "lookup_execution" ? "Free" : "See tool contract"} |`))
+  }
+  updated = lines.join("\n")
+  if (names.includes("lookup_execution")) {
+    // Compact bullet inventories and protocol mappings are independent of the table.
+    updated = updated.replace(/(^- `credits_ledger`[^\n]*\n)(?!- `lookup_execution`)/gm,
+      "$1- `lookup_execution` — Read-only outcome lookup using a Call idempotency key\n")
+    updated = updated.replace(/(^\| Credits ledger \|[^\n]*\n)(?!\| Call recovery \|)/gm,
+      "$1| Call recovery | `GET /tools/executions/by-idempotency-key?key=...` | `lookup_execution` | `qveris execution lookup <key>` |\n")
+  }
+  return updated
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2))
   const toolkitDir = path.resolve(args.toolkitDir)
@@ -163,6 +208,18 @@ async function main() {
     updates.set(target, replaceVersionReferences(content, surface, versions))
   }
 
+  const tools = canonicalMcpTools(await fs.readFile(path.join(toolkitDir, "docs/en-US/mcp-server.md"), "utf8"))
+  for (const surface of VERSION_SURFACES) {
+    const target = path.join(websiteDir, surface.path)
+    updates.set(target, syncMcpToolSummary(updates.get(target), tools))
+  }
+  const aeoPath = path.join(websiteDir, "src/lib/aeo-content.ts")
+  try {
+    updates.set(aeoPath, syncMcpToolSummary(await fs.readFile(aeoPath, "utf8"), tools))
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error
+  }
+
   for (const [target, content] of updates) {
     await fs.writeFile(target, content)
   }
@@ -174,7 +231,9 @@ async function main() {
   )
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error)
-  process.exit(1)
-})
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.message : error)
+    process.exit(1)
+  })
+}
