@@ -7,7 +7,7 @@ on:
     workflows: [Review approval receipt]
     types: [completed]
   pull_request_target:
-    types: [synchronize, reopened, ready_for_review, converted_to_draft, closed]
+    types: [synchronize, reopened, ready_for_review, converted_to_draft, edited, closed]
   workflow_dispatch:
     inputs:
       pull_number:
