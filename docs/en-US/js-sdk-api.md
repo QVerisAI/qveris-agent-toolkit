@@ -547,6 +547,28 @@ executing the capability.
 
 `Promise`\<[`ProbeResponse`](#proberesponse)\>
 
+##### reconcileCall()
+
+> **reconcileCall**(`idempotencyKey`, `options?`): `Promise`\<[`ToolExecutionReconciliationData`](#toolexecutionreconciliationdata)\>
+
+Read-only lookup for the original Call identified by its idempotency key.
+
+###### Parameters
+
+###### idempotencyKey
+
+`string`
+
+###### options?
+
+###### timeoutMs?
+
+`number`
+
+###### Returns
+
+`Promise`\<[`ToolExecutionReconciliationData`](#toolexecutionreconciliationdata)\>
+
 ##### usage()
 
 > **usage**(`filters?`): `Promise`\<[`UsageEventsResponse`](#usageeventsresponse)\>
@@ -1176,6 +1198,12 @@ replay once without an optional field rejected by an older service.
 ```ts
 'strict'
 ```
+
+##### idempotencyKey?
+
+> `optional` **idempotencyKey?**: `string`
+
+Caller-generated key for reconciling this exact Call after an uncertain response.
 
 ##### maxResponseSize?
 
@@ -2291,12 +2319,6 @@ Per-request timeout override in milliseconds.
 
 #### Properties
 
-##### missing\_field\_groups?
-
-> `optional` **missing\_field\_groups?**: `string`[][]
-
-Older Probe responses may omit alternative parameter groups.
-
 ##### missing\_fields
 
 > **missing\_fields**: `string`[]
@@ -2430,10 +2452,6 @@ End-user identity for provider OAuth readiness checks.
 ##### param?
 
 > `optional` **param?**: `string` \| `null`
-
-##### required\_any\_of?
-
-> `optional` **required\_any\_of?**: `string`[] \| `null`
 
 ##### type
 
@@ -2773,6 +2791,70 @@ Example usage for a tool, showing sample parameters.
 > `optional` **sample\_parameters?**: `Record`\<`string`, `unknown`\>
 
 Sample parameter values demonstrating typical usage
+
+***
+
+### ToolExecutionReconciliationData
+
+Read-only status of a Call submitted with an Idempotency-Key.
+
+#### Properties
+
+##### amount\_credits?
+
+> `optional` **amount\_credits?**: `number` \| `null`
+
+##### charge\_event\_id?
+
+> `optional` **charge\_event\_id?**: `string` \| `null`
+
+##### execution\_id
+
+> **execution\_id**: `string`
+
+##### execution\_state
+
+> **execution\_state**: `string`
+
+##### ledger\_entry\_id?
+
+> `optional` **ledger\_entry\_id?**: `string` \| `null`
+
+##### provider\_execution\_id?
+
+> `optional` **provider\_execution\_id?**: `string` \| `null`
+
+##### provider\_request\_dispatched
+
+> **provider\_request\_dispatched**: `boolean`
+
+##### response?
+
+> `optional` **response?**: [`ExecuteResponse`](#executeresponse) \| `null`
+
+##### response\_http\_status?
+
+> `optional` **response\_http\_status?**: `number` \| `null`
+
+##### result\_unavailable\_reason?
+
+> `optional` **result\_unavailable\_reason?**: `string` \| `null`
+
+##### retry\_disposition
+
+> **retry\_disposition**: `"terminal"` \| `"reconcile_first"`
+
+##### settlement\_batch\_id?
+
+> `optional` **settlement\_batch\_id?**: `string` \| `null`
+
+##### settlement\_state
+
+> **settlement\_state**: `string`
+
+##### status
+
+> **status**: `"unavailable"` \| `"pending"` \| `"completed"`
 
 ***
 
@@ -3426,7 +3508,7 @@ Response from the Execute Tool API.
 
 ### ApiOperation
 
-> **ApiOperation** = `"discover"` \| `"inspect"` \| `"probe"` \| `"call"` \| `"credits"` \| `"usage_history"` \| `"credits_ledger"` \| `"capability_detail"` \| `"capability_query"`
+> **ApiOperation** = `"discover"` \| `"inspect"` \| `"probe"` \| `"call"` \| `"call_reconciliation"` \| `"credits"` \| `"usage_history"` \| `"credits_ledger"` \| `"capability_detail"` \| `"capability_query"`
 
 Error response from the Qveris API.
 
