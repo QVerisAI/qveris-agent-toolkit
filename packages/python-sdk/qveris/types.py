@@ -226,6 +226,16 @@ class ToolStats(QverisModel):
     cost: Optional[float] = None
 
 
+class CatalogCapabilityName(QverisModel):
+    en: str
+    zh: str
+
+
+class CatalogCapability(QverisModel):
+    capability_id: str
+    name: CatalogCapabilityName
+
+
 class ToolInfo(QverisModel):
     updated_at: Optional[str] = None
     tool_name: Optional[str] = None
