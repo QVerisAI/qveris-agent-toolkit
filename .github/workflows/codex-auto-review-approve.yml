@@ -21,11 +21,16 @@ jobs:
       group: codex-review-request-${{ github.repository }}-${{ github.event.pull_request.number }}
       cancel-in-progress: true
     runs-on: ubuntu-latest
+    # Native automatic review is configured in the account settings. Keep the
+    # legacy request/approval bridge optional when no separate token is set.
+    env:
+      REPO_ACCESS_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
     steps:
       - name: Ask Codex to review this PR
+        if: env.REPO_ACCESS_TOKEN != ''
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
-          github-token: ${{ secrets.QVERIS_REVIEW_BOT_TOKEN }}
+          github-token: ${{ secrets.REPO_ACCESS_TOKEN }}
           script: |
             const eventPr = context.payload.pull_request;
             const pr = await github.rest.pulls.get({
@@ -65,7 +70,7 @@ jobs:
   approve-after-nonblocking-codex-review:
     # Filter before runner allocation. The approval created below emits another
     # pull_request_review event, and unrelated human/bot reviews must stay no-op.
-    # Fork pull_request_review events cannot access the review token and have a
+    # Fork pull_request_review events cannot access REPO_ACCESS_TOKEN and have a
     # read-only GITHUB_TOKEN. Leave approval to a maintainer or the trusted
     # issue_comment clean-summary path for those PRs.
     if: >-
@@ -76,13 +81,18 @@ jobs:
       (contains(github.event.review.user.login, 'codex') ||
        vars.CODEX_REVIEW_AUTHOR_PATTERN != '')
     runs-on: ubuntu-latest
+    # Native automatic review is configured in the account settings. Keep the
+    # legacy request/approval bridge optional when no separate token is set.
+    env:
+      REPO_ACCESS_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
     steps:
       - name: Approve when Codex reports no blocking issues
+        if: env.REPO_ACCESS_TOKEN != ''
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
           CODEX_REVIEW_AUTHOR_PATTERN: ${{ vars.CODEX_REVIEW_AUTHOR_PATTERN }}
         with:
-          github-token: ${{ secrets.QVERIS_REVIEW_BOT_TOKEN }}
+          github-token: ${{ secrets.REPO_ACCESS_TOKEN }}
           script: |
             const review = context.payload.review;
             const pr = context.payload.pull_request;
@@ -158,13 +168,18 @@ jobs:
        contains(github.event.comment.performed_via_github_app.slug, 'codex') ||
        vars.CODEX_COMMENT_AUTHOR_PATTERN != '')
     runs-on: ubuntu-latest
+    # Native automatic review is configured in the account settings. Keep the
+    # legacy request/approval bridge optional when no separate token is set.
+    env:
+      REPO_ACCESS_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
     steps:
       - name: Approve when Codex leaves a clean summary comment
+        if: env.REPO_ACCESS_TOKEN != ''
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
           CODEX_COMMENT_AUTHOR_PATTERN: ${{ vars.CODEX_COMMENT_AUTHOR_PATTERN }}
         with:
-          github-token: ${{ secrets.QVERIS_REVIEW_BOT_TOKEN }}
+          github-token: ${{ secrets.REPO_ACCESS_TOKEN }}
           script: |
             const comment = context.payload.comment;
             const issue = context.payload.issue;
@@ -234,3 +249,4 @@ jobs:
               event: "APPROVE",
               body: "Codex left a clean summary comment for the current head commit. Auto-approving this PR; developers should still review any follow-up comments before merge.",
             });
+
