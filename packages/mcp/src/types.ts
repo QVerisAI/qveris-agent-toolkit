@@ -161,6 +161,17 @@ export interface ToolCategory {
 /**
  * Coverage tag attached to a capability (e.g. market coverage).
  */
+export interface CatalogCapabilityName {
+  en: string;
+  zh: string;
+}
+
+/** Evaluated directory relationship attached to an inspected tool. */
+export interface CatalogCapability {
+  capability_id: string;
+  name: CatalogCapabilityName;
+}
+
 export interface ToolCapabilityTag {
   id?: string;
   name?: string;
