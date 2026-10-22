@@ -82,6 +82,7 @@ function withMockFetch(handler, fn) {
     const request = {
       url: new URL(url),
       method: options.method,
+      headers: options.headers,
       body: options.body ? JSON.parse(options.body) : undefined,
     };
     requests.push(request);
@@ -484,4 +485,56 @@ test("completions and main cover shell metadata and top-level routing errors", a
   } finally {
     process.exitCode = previousExitCode;
   }
+});
+
+test("main accepts separate idempotency-key values for Call and reconciliation", async () => {
+  await withTempConfig(async () => {
+    await withMockFetch(
+      (request) => {
+        if (request.url.pathname.endsWith("/tools/execute")) {
+          return response({ execution_id: "exec-cli", success: true, result: { ok: true } });
+        }
+        if (request.url.pathname.endsWith("/tools/executions/by-idempotency-key")) {
+          return response({ status: "completed", execution_id: "exec-cli", response: { success: true } });
+        }
+        throw new Error(`unexpected network call ${request.url}`);
+      },
+      async (requests) => {
+        await captureOutput(() =>
+          main([
+            "node",
+            "qveris",
+            "call",
+            "tool.direct.v1",
+            "--api-key",
+            "sk-test",
+            "--base-url",
+            "https://unit.test/api/v1",
+            "--params",
+            "{}",
+            "--idempotency-key",
+            "call-key-1",
+            "--json",
+          ]),
+        );
+        assert.equal(requests[0].headers["Idempotency-Key"], "call-key-1");
+
+        await captureOutput(() =>
+          main([
+            "node",
+            "qveris",
+            "reconcile-call",
+            "--api-key",
+            "sk-test",
+            "--base-url",
+            "https://unit.test/api/v1",
+            "--idempotency-key",
+            "call-key-1",
+            "--json",
+          ]),
+        );
+        assert.equal(requests[1].url.searchParams.get("key"), "call-key-1");
+      },
+    );
+  });
 });
