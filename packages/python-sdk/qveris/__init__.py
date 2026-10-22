@@ -20,6 +20,8 @@ from .errors import (
     RequestMetadata,
 )
 from .types import (
+    CatalogCapability,
+    CatalogCapabilityName,
     CatalogVerification,
     CapabilityDetailResponse,
     CapabilityQueryRequest,
