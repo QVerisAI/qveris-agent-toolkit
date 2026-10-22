@@ -29,6 +29,11 @@ newer than suggestions reviews on that head. Incomplete review state, unresolved
 automated findings, and active change requests prevent approval. Only approvals
 owned by the configured review App are withdrawn when the facts change.
 
+Automatic reviews that only update the trusted structured summary also qualify
+when that summary reports completion with no findings on the exact current head.
+This fallback never overrides a suggestions review on the same head; a new clean
+receipt is required to supersede such a review.
+
 The privileged workflow checks out logic from the default branch and never runs
 code from the PR branch. Changes to the approval policy therefore take effect
 after merge, following an independent review.
