@@ -444,16 +444,6 @@ Summary mode preserves at least one usable payload: a `summary` object, lossless
 
 When `require_zero_quote` is true, the MCP server probes the current parameters and blocks the Call unless the capability is executable, advertises `require_zero_quote_v1`, the schema is valid, and the quote is exact and equal to zero. It sends the flag at the top level of the execute request. Idempotency keys are host/client-controlled transport metadata and are not accepted in model-facing `call` arguments. The client generates a key and returns it with uncertain outcomes so it can be reused with `lookup_execution`. Lookup accepts only keys issued by that client instance or explicitly bound by trusted host code. The client retains a bounded in-memory set of 1,024 recent keys; after a process restart, the host must restore its own saved key with `QverisClient.bindExecutionKey(key)` under the same authorization context before lookup. It never automatically submits a second Call. HTTP 409 conflicts skip automatic lookup; use `lookup_execution` explicitly to avoid confusing a previous result with this request.
 
-### 5. `lookup_execution`
-
-Read-only lookup for the outcome associated with an earlier Call. It never submits or retries Execute.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `idempotency_key` | string | Yes | Exact key returned by the client for an uncertain Call, or a key restored by trusted host code |
-
-The response may report `pending`, `completed`, `failed`, or `unavailable`. Query again with the same key when needed; `completed` includes the original Call response when available.
-
 Projection inputs are opt-in. Paid `call` / `execute_tool` requests are strict single-submit: the MCP server does not retry `429`/`503`, follow HTTP redirects, or remove a rejected projection field and resubmit. Projection errors remain errors; `QVERIS_MAX_RETRIES` applies only to read and audit tools.
 
 Typical successful response fields:
@@ -464,6 +454,18 @@ Typical successful response fields:
 - `result.data`, or compact summary fields when requested
 - `elapsed_time_ms` or `execution_time`
 - `billing` / `pre_settlement_bill` when available
+
+---
+
+### 5. `lookup_execution`
+
+Read-only lookup for the outcome associated with an earlier Call. It never submits or retries Execute.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `idempotency_key` | string | Yes | Exact key returned by the client for an uncertain Call, or a key restored by trusted host code |
+
+The response may report `pending`, `completed`, `failed`, or `unavailable`. Query again with the same key when needed; `completed` includes the original Call response when available.
 
 ---
 

@@ -436,16 +436,6 @@ API 密钥接入步骤：
 
 `require_zero_quote` 为 true 时，MCP server 会先 Probe 当前参数；只有能力可执行、声明支持 `require_zero_quote_v1`、schema 有效且精确报价等于零才继续。Execute 请求在顶层发送该字段。幂等 key 由宿主/客户端控制，不属于模型可见的 `call` 参数。客户端会生成 key，并在结果不确定时返回它，供 `lookup_execution` 查询。lookup 只接受该客户端实例签发或可信宿主代码显式绑定的 key。客户端仅在内存中保留最近 1,024 个 key；进程重启后，宿主必须从自己保存的数据调用 `QverisClient.bindExecutionKey(key)` 绑定原 key，才能继续查询。客户端绝不自动再次提交 Call。HTTP 409 冲突不会触发自动查询；请显式调用 `lookup_execution`，避免把之前的结果误认为本次请求。
 
-### 5. `lookup_execution`
-
-只读查询此前 Call 的执行结果，不会提交或重试 Execute。
-
-| 参数 | 类型 | 必填 | 说明 |
-|-----|------|------|------|
-| `idempotency_key` | string | 是 | 不确定的 Call 返回的精确 key，或可信宿主代码恢复后绑定的 key |
-
-响应可能是 `pending`、`completed`、`failed` 或 `unavailable`。需要时使用同一个 key 再次查询；`completed` 会在可用时包含原 Call 响应。
-
 投影参数仅在显式指定时发送。付费 `call` / `execute_tool` 请求严格 single-submit：MCP server 不会重试 `429`/`503`，不会跟随 HTTP 重定向，也不会删除被拒绝的投影字段后再次提交。投影错误仍按错误返回；`QVERIS_MAX_RETRIES` 仅用于读和审计工具。
 
 典型成功响应字段：
@@ -456,6 +446,18 @@ API 密钥接入步骤：
 - `result.data`，或显式请求的精简摘要字段
 - `elapsed_time_ms` 或 `execution_time`
 - `billing` / `pre_settlement_bill`（如可用）
+
+---
+
+### 5. `lookup_execution`
+
+只读查询此前 Call 的执行结果，不会提交或重试 Execute。
+
+| 参数 | 类型 | 必填 | 说明 |
+|-----|------|------|------|
+| `idempotency_key` | string | 是 | 不确定的 Call 返回的精确 key，或可信宿主代码恢复后绑定的 key |
+
+响应可能是 `pending`、`completed`、`failed` 或 `unavailable`。需要时使用同一个 key 再次查询；`completed` 会在可用时包含原 Call 响应。
 
 ---
 
