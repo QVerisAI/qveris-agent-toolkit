@@ -258,6 +258,8 @@ class ToolInfo(QverisModel):
     categories: Optional[List[Union[str, ToolCategory]]] = None
     category: Optional[str] = None
     capabilities: Optional[List[ToolCapability]] = None
+    catalog_capabilities: Optional[List[CatalogCapability]] = None
+    catalog_capabilities_warning: Optional[Literal["unavailable"]] = None
     provider_id: Optional[str] = None
     provider_name: Optional[Union[str, Dict[str, str]]] = None
     provider_description: Optional[Any] = None
