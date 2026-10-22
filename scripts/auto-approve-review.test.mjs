@@ -240,6 +240,15 @@ test('replaces its older-head approval with a current-head approval', async () =
   );
 });
 
+test('retargeting an approved PR away from the default branch withdraws its approval', async () => {
+  const f = fixture({ pr: { base: { ref: 'release' } }, reviews: [appApproval()] });
+  assert.equal((await f.run()).result, 'withheld');
+  assert.deepEqual(
+    f.writes.map((x) => x.type),
+    ['dismiss'],
+  );
+});
+
 test('withholds approval if head moves before submission', async () => {
   const f = fixture({ liveHeads: [sha, oldSha] });
   assert.equal((await f.run()).result, 'withheld');
@@ -353,4 +362,5 @@ test('all human review transitions notify a secret-capable receiver without chec
   assert.match(receiver, /workflow_run:\s*\n\s*workflows: \[Review approval receipt\]/);
   assert.doesNotMatch(receiver, /^  pull_request_review:/m);
   assert.match(receiver, /ref: \$\{\{ github.event.repository.default_branch \}\}/);
+  assert.match(receiver, /pull_request_target:\s*\n\s*types: \[[^\]]*\bedited\b/);
 });
