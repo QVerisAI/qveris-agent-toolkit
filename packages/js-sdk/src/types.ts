@@ -276,6 +276,12 @@ export interface ToolInfo {
   /** Standardized capability descriptors with coverage tags */
   capabilities?: ToolCapability[];
 
+  /** Evaluated directory relationships. Omitted with an unavailable warning when lookup fails. */
+  catalog_capabilities?: CatalogCapability[];
+
+  /** Present when directory relationships could not be resolved. */
+  catalog_capabilities_warning?: "unavailable";
+
   /** Provider identifier */
   provider_id?: string;
 
