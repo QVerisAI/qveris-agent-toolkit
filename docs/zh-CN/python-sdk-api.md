@@ -78,7 +78,7 @@ Validate parameters without execution; use the same sub_user_id as Call for prov
 
 <a id="qveris.QverisClient.call"></a>
 
-#### *async* call(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, respond_with: str | None = None, compatibility_mode: Literal['strict', 'legacy_optional_fields'] = 'strict', timeout: float | None = None, correlation_id: str | None = None, model: str | None = None, sub_user_id: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
+#### *async* call(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, respond_with: str | None = None, compatibility_mode: Literal['strict', 'legacy_optional_fields'] = 'strict', timeout: float | None = None, correlation_id: str | None = None, model: str | None = None, sub_user_id: str | None = None, idempotency_key: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
 
 Call a specific capability.
 
@@ -97,9 +97,15 @@ Call a specific capability.
 * **返回:**
   ToolExecutionResponse with success, result, and metadata.
 
+<a id="qveris.QverisClient.reconcile_call"></a>
+
+#### *async* reconcile_call(idempotency_key: str, \*, timeout: float | None = None, correlation_id: str | None = None) → ToolExecutionReconciliationData
+
+Read-only lookup of the original Call; never submits provider work.
+
 <a id="qveris.QverisClient.execute_tool"></a>
 
-#### *async* execute_tool(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, model: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
+#### *async* execute_tool(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, model: str | None = None, idempotency_key: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
 
 Deprecated alias for call(...).
 
@@ -356,7 +362,7 @@ It takes context as an argument since that's what pydantic-core passes when call
 
 <a id="qveris.ProbeRecoveryAdvice"></a>
 
-### *class* qveris.ProbeRecoveryAdvice(\*, missing_fields: ~typing.List[str], missing_field_groups: ~typing.List[~typing.List[str]] = <factory>, safe_fixes: ~typing.List[str], retryable: bool, next_action: ~typing.Literal['execute', 'inspect', 'probe', 'authorize', 'confirm_budget', 'switch_provider', 'retry'], provider_fallback: bool, \*\*extra_data: ~typing.Any)
+### *class* qveris.ProbeRecoveryAdvice(\*, missing_fields: List[str], safe_fixes: List[str], retryable: bool, next_action: Literal['execute', 'inspect', 'probe', 'authorize', 'confirm_budget', 'switch_provider', 'retry'], provider_fallback: bool, \*\*extra_data: Any)
 
 <a id="qveris.ProbeRecoveryAdvice.model_post_init"></a>
 
@@ -484,7 +490,7 @@ It takes context as an argument since that's what pydantic-core passes when call
 
 <a id="qveris.ProbeSchemaViolation"></a>
 
-### *class* qveris.ProbeSchemaViolation(\*, param: str | None = None, required_any_of: List[str] | None = None, type: str, message: str, \*\*extra_data: Any)
+### *class* qveris.ProbeSchemaViolation(\*, param: str | None = None, type: str, message: str, \*\*extra_data: Any)
 
 <a id="qveris.ProbeSchemaViolation.model_post_init"></a>
 
