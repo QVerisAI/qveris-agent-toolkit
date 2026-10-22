@@ -142,6 +142,33 @@ test('an incomplete current-head summary prevents approval', async () => {
   assert.deepEqual(f.writes, []);
 });
 
+test('a completed trusted clean summary supports automatic reviews without a separate receipt', async () => {
+  const state = {
+    code_review: { commit_sha: sha, status: 'completed', has_any_findings: false, has_unresolved_findings: false },
+  };
+  const summary = clean({
+    body: `<!-- codex-pull-request-review-summary -->\n<!-- codex-review-state:v1 ${JSON.stringify(state)} -->`,
+  });
+  const f = fixture({ comments: [summary] });
+  assert.equal((await f.run()).result, 'approved');
+});
+
+test('an unrelated summary edit cannot override a suggestions review on the same head', async () => {
+  const state = {
+    code_review: { commit_sha: sha, status: 'completed', has_any_findings: false, has_unresolved_findings: false },
+  };
+  const summary = clean({
+    updated_at: '2026-10-22T06:30:00Z',
+    body: `<!-- codex-pull-request-review-summary -->\n<!-- codex-review-state:v1 ${JSON.stringify(state)} -->`,
+  });
+  const f = fixture({
+    comments: [summary],
+    reviews: [{ id: 20, user: reviewer, state: 'COMMENTED', commit_id: sha, submitted_at: '2026-10-22T06:28:00Z' }],
+  });
+  assert.equal((await f.run()).result, 'withheld');
+  assert.deepEqual(f.writes, []);
+});
+
 test('unresolved findings on later thread pages prevent approval', async () => {
   const f = fixture({
     pages: [
