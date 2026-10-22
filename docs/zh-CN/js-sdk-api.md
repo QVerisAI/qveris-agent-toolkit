@@ -1353,7 +1353,7 @@ Evaluated directory relationship attached to an inspected tool.
 
 Localized display names for a catalog capability relationship.
 
-#### Properties
+#### 属性
 
 ##### en
 
