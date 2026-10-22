@@ -1,0 +1,29 @@
+name: Verify release bot
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Create repository-scoped release token
+        id: release-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+      - name: Verify repository and release access without publishing
+        env:
+          GH_TOKEN: ${{ steps.release-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY" --jq '.full_name'
+          gh api "repos/$GITHUB_REPOSITORY/releases?per_page=1" --jq 'length'
+          echo 'Release bot authentication verified; no tags or releases were created.'
