@@ -3,8 +3,9 @@ name: Review auto approval
 on:
   issue_comment:
     types: [created, edited, deleted]
-  pull_request_review:
-    types: [submitted, edited, dismissed]
+  workflow_run:
+    workflows: [Review approval receipt]
+    types: [completed]
   pull_request_target:
     types: [synchronize, reopened, ready_for_review, converted_to_draft, closed]
   workflow_dispatch:
@@ -18,7 +19,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: review-approval-${{ github.repository }}-${{ github.event.issue.number || github.event.pull_request.number || inputs.pull_number }}
+  group: >-
+    review-approval-${{ github.repository }}-${{ github.event.workflow_run.display_title || format('Review approval for PR #{0}', github.event.issue.number || github.event.pull_request.number || inputs.pull_number) }}
   cancel-in-progress: false
 
 jobs:
@@ -28,10 +30,9 @@ jobs:
        github.event.issue.pull_request &&
        github.event.comment.user.id == 199175422 &&
        github.event.comment.performed_via_github_app.id == 1144995) ||
-      (github.event_name == 'pull_request_review' &&
-       (github.event.review.user.id == 199175422 ||
-        github.event.review.state == 'changes_requested' ||
-        github.event.action == 'dismissed')) ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.event == 'pull_request_review' &&
+       github.event.workflow_run.conclusion == 'success') ||
       github.event_name == 'pull_request_target' ||
       (github.event_name == 'workflow_dispatch' &&
        github.ref == format('refs/heads/{0}', github.event.repository.default_branch))
