@@ -292,7 +292,7 @@ export interface ToolInfo {
   catalog_capabilities?: CatalogCapability[];
 
   /** Present when directory relationships could not be resolved. */
-  catalog_capabilities_warning?: "unavailable";
+  catalog_capabilities_warning?: 'unavailable';
 
   /** Provider identifier */
   provider_id?: string;
