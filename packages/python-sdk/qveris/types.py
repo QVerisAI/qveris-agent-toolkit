@@ -362,6 +362,25 @@ class ToolExecutionResponse(QverisModel):
     created_at: Optional[str] = None
 
 
+class ToolExecutionReconciliationData(QverisModel):
+    """Read-only durable state for a Call identified by its original key."""
+
+    status: Literal["pending", "completed", "unavailable"]
+    execution_id: str
+    execution_state: str
+    provider_request_dispatched: bool
+    provider_execution_id: Optional[str] = None
+    charge_event_id: Optional[str] = None
+    settlement_state: str
+    amount_credits: Optional[float] = None
+    settlement_batch_id: Optional[str] = None
+    ledger_entry_id: Optional[str] = None
+    retry_disposition: Literal["terminal", "reconcile_first"]
+    response: Optional[Dict[str, Any]] = Field(default=None, repr=False)
+    response_http_status: Optional[int] = None
+    result_unavailable_reason: Optional[str] = None
+
+
 class ProbeSchemaViolation(QverisModel):
     param: Optional[str] = None
     required_any_of: Optional[List[str]] = None

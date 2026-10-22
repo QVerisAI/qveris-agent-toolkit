@@ -13,6 +13,7 @@ import type {
   GetToolsByIdsRequest,
   ExecuteRequest,
   ExecuteResponse,
+  ToolExecutionReconciliationData,
   ExecutionLookupResponse,
   ProbeRequest,
   ProbeResponse,
@@ -171,7 +172,8 @@ export class QverisClient {
     body?: unknown,
     timeoutMs?: number,
     query?: Record<string, unknown>,
-    requestHeaders?: Record<string, string>,
+    headers: Record<string, string> = {},
+    sensitiveQueryKeys: readonly string[] = [],
   ): Promise<T> {
     const url = new URL(`${this.baseUrl}${endpoint}`);
     if (query) {
@@ -182,13 +184,21 @@ export class QverisClient {
       }
     }
     const resolvedTimeoutMs = timeoutMs ?? this.defaultTimeoutMs;
-    const queryParams = Object.fromEntries(url.searchParams.entries());
+    const queryParams = Object.fromEntries(
+      [...url.searchParams.entries()].map(([key, value]) => [
+        key,
+        sensitiveQueryKeys.includes(key) ? '[REDACTED]' : value,
+      ]),
+    );
+    const observableUrl = new URL(url);
+    for (const key of sensitiveQueryKeys)
+      if (observableUrl.searchParams.has(key)) observableUrl.searchParams.set(key, '[REDACTED]');
     const requestContext: ApiObservability = {
       source: 'qveris_api',
       operation,
       method,
       endpoint,
-      url: url.toString(),
+      url: observableUrl.toString(),
       ...(Object.keys(queryParams).length > 0 && { query_params: queryParams }),
       timeout_ms: resolvedTimeoutMs,
     };
@@ -209,7 +219,7 @@ export class QverisClient {
           headers: {
             Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
-            ...requestHeaders,
+            ...headers,
           },
           body: body ? JSON.stringify(body) : undefined,
           signal: controller.signal,
@@ -440,7 +450,31 @@ export class QverisClient {
       undefined,
       this.defaultTimeoutMs,
       { key: idempotencyKey },
+      {},
+      ['key'],
     );
+  }
+
+  /** Read-only host API; deliberately not exposed as an MCP model argument. */
+  async reconcileToolExecution(idempotencyKey: string): Promise<ToolExecutionReconciliationData> {
+    if (!idempotencyKey.trim()) throw new Error('idempotencyKey must not be empty');
+    const response = await this.request<ApiEnvelope<ToolExecutionReconciliationData> | ToolExecutionReconciliationData>(
+      'call_reconciliation',
+      'GET',
+      '/tools/executions/by-idempotency-key',
+      undefined,
+      undefined,
+      { key: idempotencyKey },
+      {},
+      ['key'],
+    );
+    if ('status' in response && 'data' in response) {
+      if (response.status !== 'success' || response.data == null) {
+        throw new Error(response.message || 'Call reconciliation failed');
+      }
+      return response.data;
+    }
+    return response;
   }
 
   /**

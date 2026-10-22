@@ -21,6 +21,7 @@ const CLI_OPERATIONS = [
   ["/tools/by-ids", "post"],
   ["/tools/probe", "post"],
   ["/tools/execute", "post"],
+  ["/tools/executions/by-idempotency-key", "get"],
   ["/auth/credits", "get"],
   ["/auth/usage/history/v2", "get"],
   ["/auth/credits/ledger", "get"],

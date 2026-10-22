@@ -653,6 +653,26 @@ GET /tools/executions/by-idempotency-key?key={original_idempotency_key}
 
 Call 的 HTTP 响应丢失后，请使用原始 `Idempotency-Key` 查询这个只读端点。付费和零价 Call 都保留执行记录，不依赖积分的结算方式。该端点不会授权新的 provider 执行。响应使用标准 API envelope；`data.status` 为 `pending`、`completed` 或 `unavailable`。`completed` 时，`data.response` 包含可恢复的原始 Call 响应；`pending` 可能表示 Provider 结果或结算仍未知，应保留原始键并先完成对账；`unavailable` 表示已确认该执行存在，但无法安全重建完整结果，例如长结果的短期下载链接已经失效。已确认的零价执行标记为 `not_charged`，不要求存在扣款账本条目。
 
+每个逻辑 Call 都应在提交前持久化一个唯一 key；恢复时只重用该 Call 的原始 key。SDK 和 CLI 接受调用方提供的 key，恢复查询不会提交新的 Call：
+
+```ts
+const result = await client.call(toolId, { parameters, idempotencyKey });
+// 传输结果不确定时，使用已持久化的原始 key：
+const recovery = await client.reconcileCall(idempotencyKey);
+```
+
+```python
+result = await client.call(tool_id, parameters, idempotency_key=idempotency_key)
+recovery = await client.reconcile_call(idempotency_key)
+```
+
+```sh
+qveris call <tool-id> --idempotency-key "$CALL_KEY" --params '{"city":"London"}'
+qveris reconcile-call --idempotency-key "$CALL_KEY"
+```
+
+如果查询状态为 `pending` 或 `unavailable`，不要生成新 key 或自动重新提交。请将 key 作为敏感关联数据保存在宿主应用的持久化状态中，避免放入模型生成的参数和日志。
+
 ## 长响应
 
 省略 `respond_with` 或使用 `fields:...` 投影时，payload 超过有效 `max_response_size` 后，`result` 可能用下方超限字段替代 `data`。显式 `respond_with: "full"` 的成功响应绝不会使用此结构。

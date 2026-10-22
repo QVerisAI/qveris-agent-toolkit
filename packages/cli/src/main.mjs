@@ -66,6 +66,11 @@ export async function main(argv) {
         await runCall(rest[0], flags);
         break;
       }
+      case "reconcile-call": {
+        const { runReconcileCall } = await import("./commands/reconcile-call.mjs");
+        await runReconcileCall(flags);
+        break;
+      }
       case "probe": {
         if (rest.length === 0) {
           console.error("  Usage: qveris probe <tool_id|index> [--params <json>] [--checks schema,quote]");
@@ -483,6 +488,7 @@ function printUsage(flags = {}) {
     ${cyan("inspect")}  <tool_id|index>     View tool details, parameters, and stats
     ${cyan("probe")}    <tool_id|index>     Validate parameters and quote without execution
     ${cyan("call")}     <tool_id|index>     Execute a capability
+    ${cyan("reconcile-call")}                Read the original Call by its idempotency key
 
   ${bold("Account:")}
     ${cyan("auth")}      login|status|logout  OAuth Device Flow session

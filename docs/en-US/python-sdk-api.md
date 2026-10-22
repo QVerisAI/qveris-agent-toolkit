@@ -78,7 +78,7 @@ Validate parameters without execution; use the same sub_user_id as Call for prov
 
 <a id="qveris.QverisClient.call"></a>
 
-#### *async* call(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, respond_with: str | None = None, compatibility_mode: Literal['strict', 'legacy_optional_fields'] = 'strict', timeout: float | None = None, correlation_id: str | None = None, model: str | None = None, sub_user_id: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
+#### *async* call(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, respond_with: str | None = None, compatibility_mode: Literal['strict', 'legacy_optional_fields'] = 'strict', timeout: float | None = None, correlation_id: str | None = None, model: str | None = None, sub_user_id: str | None = None, idempotency_key: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
 
 Call a specific capability.
 
@@ -97,9 +97,15 @@ Call a specific capability.
 * **Returns:**
   ToolExecutionResponse with success, result, and metadata.
 
+<a id="qveris.QverisClient.reconcile_call"></a>
+
+#### *async* reconcile_call(idempotency_key: str, \*, timeout: float | None = None, correlation_id: str | None = None) → ToolExecutionReconciliationData
+
+Read-only lookup of the original Call; never submits provider work.
+
 <a id="qveris.QverisClient.execute_tool"></a>
 
-#### *async* execute_tool(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, model: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
+#### *async* execute_tool(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, model: str | None = None, idempotency_key: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
 
 Deprecated alias for call(…).
 

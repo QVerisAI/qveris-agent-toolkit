@@ -20,6 +20,54 @@ def make_client(handler: Callable[[httpx.Request], httpx.Response]) -> QverisCli
 
 
 @pytest.mark.asyncio
+async def test_call_idempotency_key_and_read_only_reconciliation():
+    requests = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(
+            {
+                "method": request.method,
+                "url": str(request.url),
+                "idempotency_key": request.headers.get("Idempotency-Key"),
+            }
+        )
+        if request.method == "POST":
+            return httpx.Response(200, json={"execution_id": "exec-1", "success": True})
+        return httpx.Response(
+            200,
+            json={
+                "status": "success",
+                "message": "ok",
+                "data": {
+                    "status": "completed",
+                    "execution_id": "exec-1",
+                    "execution_state": "completed",
+                    "provider_request_dispatched": True,
+                    "settlement_state": "settled",
+                    "retry_disposition": "terminal",
+                    "response": {"execution_id": "exec-1", "success": True},
+                },
+            },
+        )
+
+    client = make_client(handler)
+    try:
+        result = await client.call("tool-1", {}, idempotency_key="key-123")
+        reconciled = await client.reconcile_call("key-123")
+    finally:
+        await client.close()
+
+    assert result.execution_id == "exec-1"
+    assert requests[0]["idempotency_key"] == "key-123"
+    assert requests[0]["method"] == "POST"
+    assert requests[1]["method"] == "GET"
+    assert "/tools/executions/by-idempotency-key" in requests[1]["url"]
+    assert "key=key-123" in requests[1]["url"]
+    assert reconciled.status == "completed"
+    assert reconciled.response["execution_id"] == "exec-1"
+
+
+@pytest.mark.asyncio
 async def test_handle_tool_call_routes_canonical_and_legacy_builtin_tools() -> None:
     seen_requests = []
 

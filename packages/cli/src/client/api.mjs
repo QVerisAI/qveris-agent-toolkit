@@ -287,6 +287,9 @@ export async function callTool({
   idempotencyKey = randomUUID(),
   timeoutMs = 120000,
 }) {
+  if (idempotencyKey !== undefined && (typeof idempotencyKey !== "string" || !idempotencyKey.trim())) {
+    throw new CliError("API_ERROR", "--idempotency-key must be non-empty");
+  }
   const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
   const credential = resolveCredentialProvider({ apiKey, credentialProvider });
   const recoveryRequest = () =>
@@ -401,6 +404,27 @@ function executionIdFrom(value) {
   if (typeof value?.execution_id === "string" && value.execution_id.trim()) return value.execution_id;
   if (typeof value?.data?.execution_id === "string" && value.data.execution_id.trim()) return value.data.execution_id;
   return null;
+}
+
+export async function reconcileToolExecution({
+  apiKey,
+  credentialProvider,
+  baseUrl: baseUrlFlag,
+  idempotencyKey,
+  timeoutMs = 30000,
+}) {
+  if (typeof idempotencyKey !== "string" || !idempotencyKey.trim()) {
+    throw new CliError("API_ERROR", "--idempotency-key must be non-empty");
+  }
+  const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
+  return requestJson("/tools/executions/by-idempotency-key", {
+    method: "GET",
+    credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
+    baseUrl,
+    query: { key: idempotencyKey },
+    timeoutMs,
+    // A lookup is read-only. It may use normal transient read retries.
+  });
 }
 
 export async function getCredits({ apiKey, credentialProvider, baseUrl: baseUrlFlag, timeoutMs = 30000 }) {
