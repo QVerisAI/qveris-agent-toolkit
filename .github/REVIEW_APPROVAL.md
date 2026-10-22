@@ -33,6 +33,14 @@ The privileged workflow checks out logic from the default branch and never runs
 code from the PR branch. Changes to the approval policy therefore take effect
 after merge, following an independent review.
 
+Review submissions, edits, and dismissals (including human approvals that clear
+earlier change requests) first run a secret-free notification workflow. Its
+completion invokes the default-branch approval workflow, which can access App
+credentials even for fork PRs. The notification carries only a numeric PR target;
+the receiver re-reads all approval evidence instead of trusting a verdict, code,
+or artifact from the notification. Edited clean comments and PR head changes are
+also reconciled directly from trusted events.
+
 After configuration changes or missed notifications, reconcile an existing PR:
 
 ```bash
