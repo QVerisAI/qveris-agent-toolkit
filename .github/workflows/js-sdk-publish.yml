@@ -17,6 +17,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -30,7 +34,7 @@ jobs:
         os: [ubuntu-latest]
         # Preserve the core SDK runtime matrix; peer-specific adapter consumers
         # are tested separately with the runtime required by their AI SDK.
-        node-version: [18, 20, 22, 24]
+        node-version: ${{ github.event_name == 'pull_request' && fromJSON('[18,24]') || fromJSON('[18,20,22,24]') }}
         include:
           # Windows coverage on the LTS line only (issue #113).
           - os: windows-latest
@@ -84,7 +88,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        node-version: [18, 20, 22, 24]
+        node-version: ${{ github.event_name == 'pull_request' && fromJSON('[18,24]') || fromJSON('[18,20,22,24]') }}
         include:
           - os: windows-latest
             node-version: 22.22.3
