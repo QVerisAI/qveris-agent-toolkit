@@ -20,6 +20,8 @@ from .errors import (
     RequestMetadata,
 )
 from .types import (
+    CatalogCapability,
+    CatalogCapabilityName,
     CatalogVerification,
     CapabilityDetailResponse,
     CapabilityQueryRequest,
@@ -90,6 +92,8 @@ __all__ = [
     "CapabilityQueryRequest",
     "CapabilityQueryResponse",
     "CompactBillingStatement",
+    "CatalogCapability",
+    "CatalogCapabilityName",
     "CatalogVerification",
     "VerificationCheck",
     "VerificationCheckName",

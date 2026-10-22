@@ -331,7 +331,7 @@ class PublicApiMetadata(BaseModel):
     contract_version: str = Field(
         ...,
         description='Version of the published QVeris REST API contract.',
-        examples=['2026-10-15.1'],
+        examples=['2026-10-20.1'],
         title='Contract Version',
     )
     registration: Optional[AnonymousTrialMetadata] = None
@@ -1110,6 +1110,32 @@ class PublicToolCapability(BaseModel):
     tag: Optional[List[PublicCapabilityTag]] = None
 
 
+class Name1(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    en: str
+    zh: str
+
+
+class CatalogCapability(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    capability_id: constr(
+        pattern=r'^[^/\\\x00-\x1f\x7f]+$', min_length=1, max_length=256
+    )
+    name: Name1
+
+
+class CatalogCapabilitiesWarning(Enum):
+    """
+    Directory relationships could not be resolved. Do not interpret missing relationships as a confirmed empty result.
+    """
+
+    unavailable = 'unavailable'
+
+
 class PublicCapabilityResult(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -1133,6 +1159,15 @@ class PublicCapabilityResult(BaseModel):
     )
     capabilities: Optional[List[PublicToolCapability]] = Field(
         None, description='Standardized capability descriptors with coverage tags.'
+    )
+    catalog_capabilities: Optional[List[CatalogCapability]] = Field(
+        None,
+        description='Evaluated directory relationships returned by Inspect, using the same visibility and coverage rules as capability coverage. Empty means no relationships; omitted means unavailable. Independent of skill capability descriptors.',
+        max_length=2000,
+    )
+    catalog_capabilities_warning: Optional[CatalogCapabilitiesWarning] = Field(
+        None,
+        description='Directory relationships could not be resolved. Do not interpret missing relationships as a confirmed empty result.',
     )
     region: Optional[str] = None
     score: Optional[float] = None

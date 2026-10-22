@@ -1333,6 +1333,38 @@ Execution identity and the exact contract used for a paid CAP Query.
 
 ***
 
+### CatalogCapability
+
+Evaluated directory relationship attached to an inspected tool.
+
+#### 属性
+
+##### capability\_id
+
+> **capability\_id**: `string`
+
+##### name
+
+> **name**: [`CatalogCapabilityName`](#catalogcapabilityname-1)
+
+***
+
+### CatalogCapabilityName
+
+Localized display names for a catalog capability relationship.
+
+#### 属性
+
+##### en
+
+> **en**: `string`
+
+##### zh
+
+> **zh**: `string`
+
+***
+
 ### CatalogVerification
 
 #### 属性
@@ -2812,6 +2844,18 @@ Standardized capability descriptors with coverage tags
 > `optional` **capability?**: `string`
 
 Compact capability label returned by the routing projection.
+
+##### catalog\_capabilities?
+
+> `optional` **catalog\_capabilities?**: [`CatalogCapability`](#catalogcapability)[]
+
+Evaluated directory relationships. Omitted with an unavailable warning when lookup fails.
+
+##### catalog\_capabilities\_warning?
+
+> `optional` **catalog\_capabilities\_warning?**: `"unavailable"`
+
+Present when directory relationships could not be resolved.
 
 ##### categories?
 

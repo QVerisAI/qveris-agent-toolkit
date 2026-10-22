@@ -158,6 +158,18 @@ export interface ToolCategory {
   description?: string;
 }
 
+/** Localized display names for a catalog capability relationship. */
+export interface CatalogCapabilityName {
+  en: string;
+  zh: string;
+}
+
+/** Evaluated directory relationship attached to an inspected tool. */
+export interface CatalogCapability {
+  capability_id: string;
+  name: CatalogCapabilityName;
+}
+
 /**
  * Coverage tag attached to a capability (e.g. market coverage).
  */
@@ -275,6 +287,12 @@ export interface ToolInfo {
 
   /** Standardized capability descriptors with coverage tags */
   capabilities?: ToolCapability[];
+
+  /** Evaluated directory relationships. Omitted with an unavailable warning when lookup fails. */
+  catalog_capabilities?: CatalogCapability[];
+
+  /** Present when directory relationships could not be resolved. */
+  catalog_capabilities_warning?: 'unavailable';
 
   /** Provider identifier */
   provider_id?: string;

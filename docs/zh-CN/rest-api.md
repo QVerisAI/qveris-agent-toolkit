@@ -1,6 +1,6 @@
 # QVeris REST API 文档
 
-版本：2026-10-15.1
+版本：2026-10-20.1
 
 公开 REST API 暴露核心 Agent 路径：
 
@@ -322,6 +322,8 @@ POST /tools/by-ids
 ```
 
 Inspect 返回与 Discover 相同的能力结果结构，通常包含更完整的参数和示例。
+
+Inspect 还可能返回 `catalog_capabilities`，表示工具经评估确认的目录关系，包含 `capability_id` 和本地化名称 `name`（`en` / `zh`）。该字段与既有 `capabilities` 中的技能描述含义不同。空数组表示已确认没有目录关系；查询失败时省略该字段，并返回 `catalog_capabilities_warning: "unavailable"`，不能将其视为空映射。关系补充要求 `tool_ids` 数组长度不超过 `100`；Inspect 仍接受更长的数组，但会将关系标记为暂不可用。
 
 ### 请求
 
