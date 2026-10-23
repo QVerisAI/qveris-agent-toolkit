@@ -3630,7 +3630,7 @@ Error response from the Qveris API.
 
 ### CapabilityQueryRequest
 
-> **CapabilityQueryRequest** = \{ `capability_id`: `string`; `query?`: `string`; \} \| \{ `capability_id?`: `string`; `query`: `string`; \} & `object`
+> **CapabilityQueryRequest** = (\{ `capability_id`: `string`; `query?`: `string`; \} \| \{ `capability_id?`: `string`; `query`: `string`; \}) & `object`
 
 Wire request for the published paid CAP Query endpoint.
 
@@ -3690,7 +3690,7 @@ Union type for execution results (either full data or truncated).
 
 ### ExecuteResultSummary
 
-> **ExecuteResultSummary** = [`ExecuteResultSummaryBase`](#executeresultsummarybase) & \{ `summary`: `NonNullable`\<[`ExecuteResultSummaryBase`](#executeresultsummarybase)\[`"summary"`\]\>; \} \| \{ `data`: `unknown`; \} \| \{ `full_content_file_url`: `string`; `truncated_content`: `string`; \}
+> **ExecuteResultSummary** = [`ExecuteResultSummaryBase`](#executeresultsummarybase) & (\{ `summary`: `NonNullable`\<[`ExecuteResultSummaryBase`](#executeresultsummarybase)\[`"summary"`\]\>; \} \| \{ `data`: `unknown`; \} \| \{ `full_content_file_url`: `string`; `truncated_content`: `string`; \})
 
 Summary mode preserves at least one usable payload: statistics, lossless data,
 or a preview with its download URL. These payloads may coexist. Check success
@@ -3720,7 +3720,7 @@ Any JSON value preserved from a provider-owned parameter contract.
 
 ### QverisClientOptions
 
-> **QverisClientOptions** = `Omit`\<[`QverisClientConfig`](#qverisclientconfig), `"apiKey"`\> & `object` & \{ `apiKey`: `string`; `credentialProvider?`: `never`; \} \| \{ `apiKey?`: `never`; `credentialProvider`: [`CredentialProvider`](#credentialprovider); \}
+> **QverisClientOptions** = `Omit`\<[`QverisClientConfig`](#qverisclientconfig), `"apiKey"`\> & `object` & (\{ `apiKey`: `string`; `credentialProvider?`: `never`; \} \| \{ `apiKey?`: `never`; `credentialProvider`: [`CredentialProvider`](#credentialprovider); \})
 
 Configuration accepted by the QVeris REST client.
 
