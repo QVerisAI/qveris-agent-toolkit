@@ -161,6 +161,27 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
     return { client, transport };
   }
 
+  it('closes servers whose initialize request is rejected before session creation', async () => {
+    let closed = 0;
+    await startServer({}, undefined, (id) => {
+      const server = createQverisServer(undefined, id);
+      server.onclose = () => {
+        closed += 1;
+      };
+      return server;
+    });
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const response = await fetch(`http://127.0.0.1:${running!.port}/mcp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(initializeBody),
+      });
+      expect(response.status).toBe(406);
+      await response.text();
+      await vi.waitFor(() => expect(closed).toBe(attempt + 1));
+    }
+  });
+
   for (const json of ['true', 'false']) {
     it(`accepts billing consent responses while rejecting new work during drain (json=${json})`, async () => {
       vi.stubEnv('QVERIS_MCP_CONFIRM_CALLS', 'true');

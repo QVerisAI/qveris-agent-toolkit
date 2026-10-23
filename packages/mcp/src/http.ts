@@ -595,7 +595,13 @@ export async function startHttpServer(
             release(sessionId);
           }
         } else {
-          await transport.handleRequest(req, res, body);
+          try {
+            await transport.handleRequest(req, res, body);
+          } finally {
+            // SDK validation can reject initialize without issuing a session
+            // or closing its transport. Such servers cannot enter idle sweep.
+            if (!transport.sessionId) await transport.close();
+          }
         }
         return;
       }
