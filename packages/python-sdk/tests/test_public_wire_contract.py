@@ -24,6 +24,7 @@ MODELS = {
     "PublicCapabilityDetailResponse": types.CapabilityDetailResponse,
     "PublicCapabilityQueryResponse": types.CapabilityQueryResponse,
     "PublicExecuteToolResponse": types.ToolExecutionResponse,
+    "PublicZeroQuoteSettlementReview": types.ZeroQuoteSettlementReview,
     "ValidationError": types.ValidationIssue,
     "PublicCapabilityResult": types.ToolInfo,
     "PublicSearchResponse": types.SearchResponse,
@@ -79,6 +80,8 @@ def test_shared_summary_payloads_survive_public_parser(case: dict[str, Any]) -> 
 def samples(schema: dict[str, Any]) -> list[Any]:
     if "$ref" in schema:
         return samples(SCHEMAS[schema["$ref"].split("/")[-1]])
+    if "const" in schema:
+        return [schema["const"]]
     if "enum" in schema:
         return schema["enum"]
     if "anyOf" in schema:
@@ -139,3 +142,15 @@ def test_localized_provider_survives_discover_and_inspect(provider: Any) -> None
         payload["results"] = [tool]
         response = types.SearchResponse.model_validate(payload)
         assert response.results[0].provider_name == provider
+
+
+def test_settlement_review_preserves_no_retry_and_manual_review_contract():
+    payload = samples(SCHEMAS["PublicZeroQuoteSettlementReview"])[0]
+    response = types.ToolExecutionResponse.model_validate(
+        {"execution_id": "exec-review", "success": True, "settlement_review": payload}
+    )
+    assert isinstance(response.settlement_review, types.ZeroQuoteSettlementReview)
+    assert response.settlement_review.retryable is False
+    assert response.settlement_review.next_action == "manual_settlement_review"
+    with pytest.raises(ValidationError):
+        types.ZeroQuoteSettlementReview.model_validate({**payload, "retryable": True})

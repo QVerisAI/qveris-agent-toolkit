@@ -142,3 +142,40 @@ test.each(['call', 'probe'] as const)(
     }
   },
 );
+
+test.each([undefined, false, true])(
+  'Call forwards the explicit zero-quote guard without preflight or replay: %s',
+  async (requireZeroQuote) => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ execution_id: 'exec-guard', success: true }), { status: 200 }));
+    vi.stubGlobal('fetch', fetch);
+    await new Qveris({ apiKey: '<fixture-key>' }).call('tool-fixture', { parameters: {}, requireZeroQuote });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    const [url, init] = fetch.mock.calls[0];
+    expect(new URL(url).pathname).toBe('/api/v1/tools/execute');
+    const body = JSON.parse(init.body);
+    expect(Object.hasOwn(body, 'require_zero_quote')).toBe(requireZeroQuote !== undefined);
+    expect(body.require_zero_quote).toBe(requireZeroQuote);
+  },
+);
+
+test('a rejected zero-quote guard remains a single submission and cannot use legacy replay', async () => {
+  const fetch = vi.fn().mockImplementation(() =>
+    Promise.resolve(
+      new Response(JSON.stringify({ detail: [{ type: 'extra_forbidden', loc: ['body', 'require_zero_quote'] }] }), {
+        status: 422,
+      }),
+    ),
+  );
+  vi.stubGlobal('fetch', fetch);
+  const client = new Qveris({ apiKey: '<fixture-key>', maxRetries: 3 });
+  await expect(client.call('tool-fixture', { parameters: {}, requireZeroQuote: true })).rejects.toMatchObject({
+    status: 422,
+  });
+  expect(fetch).toHaveBeenCalledTimes(1);
+  await expect(
+    client.call('tool-fixture', { parameters: {}, requireZeroQuote: true, compatibilityMode: 'legacyOptionalFields' }),
+  ).rejects.toThrow(/requires strict compatibility mode/);
+  expect(fetch).toHaveBeenCalledTimes(1);
+});

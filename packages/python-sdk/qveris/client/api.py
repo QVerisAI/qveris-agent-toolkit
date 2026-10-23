@@ -1037,6 +1037,7 @@ class QverisClient:
         model: Optional[str] = None,
         sub_user_id: Optional[str] = None,
         idempotency_key: Optional[str] = None,
+        require_zero_quote: Optional[bool] = None,
     ) -> ToolExecutionResponse:
         """
         Call a specific capability.
@@ -1051,6 +1052,7 @@ class QverisClient:
             respond_with: Optional server-side projection. Omit for compatibility auto-delivery;
                 `full` forces complete inline data, while `summary` and `fields:<JSONPath,...>`
                 select compact projections. Hard-limit failures use `response_too_large`.
+            require_zero_quote: Optional server-side zero-credit admission guard; omitted by default.
             compatibility_mode: Strict mode never resubmits a paid call. The deprecated
                 legacy mode may replay once without an unsupported optional field.
             timeout: HTTP request timeout in seconds; credential acquisition is separate.
@@ -1078,6 +1080,9 @@ class QverisClient:
         if respond_with is not None:
             payload["respond_with"] = respond_with
 
+        if require_zero_quote is not None:
+            payload["require_zero_quote"] = require_zero_quote
+
         if model is not None:
             payload["model"] = model
         if sub_user_id is not None:
@@ -1087,6 +1092,8 @@ class QverisClient:
             raise ValueError("compatibility_mode must be 'strict' or 'legacy_optional_fields'")
         if idempotency_key is not None and (not idempotency_key.strip() or compatibility_mode != "strict"):
             raise ValueError("idempotency_key must be non-empty and requires strict compatibility mode")
+        if require_zero_quote is True and compatibility_mode != "strict":
+            raise ValueError("require_zero_quote requires strict compatibility mode to prevent resubmission")
         if compatibility_mode == "legacy_optional_fields":
             warnings.warn(
                 "legacy_optional_fields may resubmit a paid call; prefer strict mode",
@@ -1189,6 +1196,7 @@ class QverisClient:
         max_response_size: Optional[int] = None,
         model: Optional[str] = None,
         idempotency_key: Optional[str] = None,
+        require_zero_quote: Optional[bool] = None,
     ) -> ToolExecutionResponse:
         """Deprecated alias for `call(...)`."""
         return await self.call(
@@ -1199,6 +1207,7 @@ class QverisClient:
             max_response_size=max_response_size,
             model=model,
             idempotency_key=idempotency_key,
+            require_zero_quote=require_zero_quote,
         )
 
     async def capability_detail(

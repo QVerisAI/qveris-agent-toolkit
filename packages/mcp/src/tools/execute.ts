@@ -187,7 +187,7 @@ export async function executeExecuteTool(
     ...(input.sub_user_id !== undefined && { sub_user_id: input.sub_user_id }),
     max_response_size: input.max_response_size,
     ...(input.respond_with !== undefined && { respond_with: input.respond_with }),
-    ...(input.require_zero_quote === true && { require_zero_quote: true }),
+    ...(input.require_zero_quote !== undefined && { require_zero_quote: input.require_zero_quote }),
   };
   const response = await client.executeTool(input.tool_id, request);
 

@@ -106,9 +106,8 @@ test.each(['call', 'probe'] as const)(
   async (operation) => {
     const contract = contracts[operation];
     const schema = operation === 'call' ? executeToolSchema : probeToolSchema;
-    const transportOnly = operation === 'call' ? ['require_zero_quote'] : [];
     expect(Object.keys(schema.properties).sort()).toEqual(
-      ['tool_id', ...Object.keys(contract.body).map((key) => contract.mcp[key] ?? key), ...transportOnly].sort(),
+      ['tool_id', ...Object.keys(contract.body).map((key) => contract.mcp[key] ?? key)].sort(),
     );
     for (const identity of [undefined, 'tenant-user-fixture', '用户/tenant-A']) {
       const body = { ...contract.body };

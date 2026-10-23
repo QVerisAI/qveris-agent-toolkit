@@ -119,3 +119,49 @@ async def test_identity_rejection_never_falls_back(compatibility_mode: str) -> N
     finally:
         await client.close()
     assert len(attempts) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("guard", [None, False, True])
+async def test_explicit_zero_quote_guard_is_single_submit_without_preflight(guard):
+    requests = []
+
+    def handler(request):
+        requests.append(json.loads(request.content))
+        assert request.method == "POST"
+        assert request.url.path.endswith("/tools/execute")
+        return httpx.Response(200, json={"execution_id": "exec-guard", "success": True})
+
+    client = QverisClient(QverisConfig(api_key="sk-fixture"))
+    client.client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    try:
+        await client.call("tool-fixture", {}, require_zero_quote=guard)
+    finally:
+        await client.close()
+    assert len(requests) == 1
+    assert ("require_zero_quote" in requests[0]) == (guard is not None)
+    assert requests[0].get("require_zero_quote") is guard
+
+
+@pytest.mark.asyncio
+async def test_rejected_zero_quote_guard_does_not_replay_or_allow_legacy_mode():
+    attempts = []
+
+    def handler(request):
+        attempts.append(json.loads(request.content))
+        return httpx.Response(
+            422, json={"detail": [{"type": "extra_forbidden", "loc": ["body", "require_zero_quote"]}]}
+        )
+
+    client = QverisClient(QverisConfig(api_key="sk-fixture"))
+    client.client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    try:
+        with pytest.raises(QverisApiError) as error:
+            await client.call("tool-fixture", {}, require_zero_quote=True)
+        assert error.value.status == 422
+        assert len(attempts) == 1
+        with pytest.raises(ValueError, match="requires strict compatibility mode"):
+            await client.call("tool-fixture", {}, require_zero_quote=True, compatibility_mode="legacy_optional_fields")
+        assert len(attempts) == 1
+    finally:
+        await client.close()

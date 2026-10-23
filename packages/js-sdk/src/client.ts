@@ -167,6 +167,8 @@ export interface CallOptions {
   maxResponseSize?: number;
   /** Server-side result projection. Omit for compatibility auto-delivery; explicit full forces complete inline data. */
   respondWith?: 'full' | 'summary' | `fields:${string}`;
+  /** Optional server-side zero-credit admission guard. Omitted by default. */
+  requireZeroQuote?: boolean;
   /** Per-request timeout override in milliseconds (default 120s) */
   timeoutMs?: number;
   /**
@@ -370,6 +372,7 @@ export class Qveris {
         max_response_size: options.maxResponseSize,
       }),
       ...(options.respondWith !== undefined && { respond_with: options.respondWith }),
+      ...(options.requireZeroQuote !== undefined && { require_zero_quote: options.requireZeroQuote }),
     };
     const timeoutMs = options.timeoutMs ?? EXECUTE_TIMEOUT_MS;
     const compatibilityMode = options.compatibilityMode ?? 'strict';
@@ -378,6 +381,9 @@ export class Qveris {
     }
     if (options.idempotencyKey !== undefined && compatibilityMode !== 'strict') {
       throw new Error('idempotencyKey requires strict compatibility mode to prevent resubmission');
+    }
+    if (options.requireZeroQuote === true && compatibilityMode !== 'strict') {
+      throw new Error('requireZeroQuote requires strict compatibility mode to prevent resubmission');
     }
     const validateResponse = (result: ExecuteResponse): ExecuteResponse => {
       const executionId =
