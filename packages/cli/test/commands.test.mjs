@@ -785,3 +785,56 @@ test("main accepts separate idempotency-key values for Call and reconciliation",
     );
   });
 });
+
+test("successful execution with a settlement review requires manual action without replay", async () => {
+  const previousExitCode = process.exitCode;
+  const review = {
+    execution_status: "executed",
+    settlement_status: "review_required",
+    reason_code: "settlement.zero_quote_actual_positive",
+    quoted_amount_credits: "0",
+    reported_actual_amount_credits: "1",
+    user_charge_amount_credits: "0",
+    settlement_owner: "billing",
+    retryable: false,
+    next_action: "manual_settlement_review",
+  };
+  try {
+    process.exitCode = undefined;
+    await withTempConfig(async () => {
+      await withMockFetch(
+        (request) => {
+          assert.equal(request.method, "POST");
+          assert.ok(request.url.pathname.endsWith("/tools/execute"));
+          return response({
+            execution_id: "exec-review",
+            success: true,
+            result: { data: { ok: true } },
+            settlement_review: review,
+          });
+        },
+        async (requests) => {
+          const output = await captureOutput(() =>
+            runCall("tool-fixture", { apiKey: "<fixture-key>", discoveryId: "search-1", params: "{}", json: true }),
+          );
+          const data = jsonFromStdout(output.stdout);
+          assert.equal(data.success, true);
+          assert.equal(data.execution_id, "exec-review");
+          assert.deepEqual(data.settlement_review, review);
+          assert.deepEqual(data.next_action, {
+            action: "manual_settlement_review",
+            automatic: false,
+            requires_user: true,
+            missing_fields: [],
+            reason: review.reason_code,
+          });
+          assert.equal(data.recovery.retryable, false);
+          assert.equal(requests.length, 1);
+          assert.equal(process.exitCode, 1);
+        },
+      );
+    });
+  } finally {
+    process.exitCode = previousExitCode;
+  }
+});

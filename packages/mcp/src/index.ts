@@ -472,21 +472,30 @@ export async function executeQverisMcpTool(
       const result = await executeExecuteTool(client, input, defaultSessionId);
       const executionId =
         typeof result.execution_id === 'string' && result.execution_id.trim() ? result.execution_id : null;
-      const validSuccess = result.success === true && executionId;
-      const action = validSuccess ? 'none' : executionId ? 'reconcile_settlement' : 'review_settlement';
+      const needsSettlementReview = result.settlement_review != null;
+      const validSuccess = result.success === true && executionId && !needsSettlementReview;
+      const action = needsSettlementReview
+        ? 'manual_settlement_review'
+        : validSuccess
+          ? 'none'
+          : executionId
+            ? 'reconcile_settlement'
+            : 'review_settlement';
       const resultWithAction = {
         ...result,
         next_action: {
           action,
           automatic: false,
-          requires_user: !validSuccess && !executionId,
+          requires_user: needsSettlementReview || (!validSuccess && !executionId),
           missing_fields: [],
           ...(!validSuccess && {
-            reason: executionId
-              ? result.success === false
-                ? 'call_failed_after_submission'
-                : 'invalid_call_response'
-              : 'execution_id_unavailable',
+            reason: needsSettlementReview
+              ? (result.settlement_review?.reason_code ?? 'settlement_review_required')
+              : executionId
+                ? result.success === false
+                  ? 'call_failed_after_submission'
+                  : 'invalid_call_response'
+                : 'execution_id_unavailable',
           }),
         } satisfies NextAction,
       };
