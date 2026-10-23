@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-10-23
+
 ### Fixed
 
 - Finish accepted HTTP tool operations before shutting down sessions, including operations whose clients disconnected; stop accepting new requests as shutdown begins.
@@ -209,7 +211,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Handle empty/non-JSON success responses gracefully; `params_to_tool` documented as an object.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.4...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.15.0...HEAD
+[0.15.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.6...mcp-v0.15.0
 [0.14.4]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.3...mcp-v0.14.4
 [0.14.3]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.2...mcp-v0.14.3
 [0.14.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/mcp-v0.14.1...mcp-v0.14.2

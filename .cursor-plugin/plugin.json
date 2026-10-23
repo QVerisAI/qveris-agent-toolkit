@@ -1,6 +1,6 @@
 {
   "name": "qveris",
-  "version": "0.14.6",
+  "version": "0.15.0",
   "description": "Discover, inspect, validate, and call real-world API capabilities from Cursor through the hosted QVeris MCP, with usage and credit auditing.",
   "author": {
     "name": "QVeris AI",
