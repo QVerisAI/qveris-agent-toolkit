@@ -587,6 +587,54 @@ describe('MCP public tool interface', () => {
     });
   });
 
+  it.each(['call', 'execute_tool'])(
+    'requires manual settlement review after provider success through %s',
+    async (name) => {
+      const settlementReview = {
+        execution_status: 'executed',
+        settlement_status: 'review_required',
+        reason_code: 'settlement.zero_quote_actual_positive',
+        quoted_amount_credits: '0',
+        reported_actual_amount_credits: '1',
+        user_charge_amount_credits: '0',
+        settlement_owner: 'billing',
+        retryable: false,
+        next_action: 'manual_settlement_review',
+      };
+      const client = {
+        executeTool: vi.fn().mockResolvedValue({
+          execution_id: 'exec-review',
+          success: true,
+          result: { data: { ok: true } },
+          settlement_review: settlementReview,
+        }),
+        getUsageHistory: vi.fn(),
+        getCreditsLedger: vi.fn(),
+      } as unknown as QverisClient;
+      const result = await executeQverisMcpTool(client, 'session-1', name, {
+        tool_id: 'tool-fixture',
+        search_id: 'search-1',
+        params_to_tool: {},
+      });
+      const data = payload(result);
+      expect(result.isError).toBe(true);
+      expect(data.success).toBe(true);
+      expect(data.execution_id).toBe('exec-review');
+      expect(data.settlement_review).toEqual(settlementReview);
+      expect(data.next_action).toEqual({
+        action: 'manual_settlement_review',
+        automatic: false,
+        requires_user: true,
+        missing_fields: [],
+        reason: settlementReview.reason_code,
+      });
+      expect(result.structuredContent).toEqual(data);
+      expect(client.executeTool).toHaveBeenCalledOnce();
+      expect(client.getUsageHistory).not.toHaveBeenCalled();
+      expect(client.getCreditsLedger).not.toHaveBeenCalled();
+    },
+  );
+
   it('fails closed when a Call throws an unstructured error', async () => {
     const client = {
       searchTools: vi.fn(),

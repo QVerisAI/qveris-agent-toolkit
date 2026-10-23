@@ -343,7 +343,22 @@ class ValidationIssue(QverisModel):
     ctx: Optional[Dict[str, JsonValue]] = None
 
 
+class ZeroQuoteSettlementReview(QverisModel):
+    """Manual review after a zero-quote execution reports a positive actual amount."""
+
+    execution_status: Literal["executed"]
+    settlement_status: Literal["review_required"]
+    reason_code: Literal["settlement.zero_quote_actual_positive"]
+    quoted_amount_credits: str
+    reported_actual_amount_credits: str
+    user_charge_amount_credits: str
+    settlement_owner: Literal["legacy", "billing", "website_usage"]
+    retryable: Literal[False]
+    next_action: Literal["manual_settlement_review"]
+
+
 class ToolExecutionResponse(QverisModel):
+    settlement_review: Optional[ZeroQuoteSettlementReview] = None
     details: Optional[List[ValidationIssue]] = None
     execution_id: str
     success: bool
@@ -436,6 +451,7 @@ class ToolProbeResponse(QverisModel):
         ]
     ] = None
     contract_features: Optional[List[str]] = None
+    execution_constraints_supported: Optional[List[str]] = None
     schema_: Optional[ProbeSchemaResult] = Field(default=None, alias="schema")
     quote: Optional[ProbeQuoteResult] = None
     coverage: Optional[ProbeUnknownResult] = None

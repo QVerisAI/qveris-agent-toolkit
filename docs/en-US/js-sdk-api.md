@@ -1235,6 +1235,12 @@ Model that selected and parameterized this capability call.
 
 Key-value parameters matching the tool's parameter schema
 
+##### requireZeroQuote?
+
+> `optional` **requireZeroQuote?**: `boolean`
+
+Optional server-side zero-credit admission guard. Omitted by default.
+
 ##### respondWith?
 
 > `optional` **respondWith?**: `"full"` \| `` `fields:${string}` `` \| `"summary"`
@@ -1928,6 +1934,12 @@ User's remaining credits after this execution
 
 The execution result.
 Contains either `data` (if within size limit) or truncation info.
+
+##### settlement\_review?
+
+> `optional` **settlement\_review?**: [`ZeroQuoteSettlementReview`](#zeroquotesettlementreview) \| `null`
+
+Settlement review state returned by the server, when applicable.
 
 ##### success
 
@@ -3605,6 +3617,50 @@ Response from the Execute Tool API.
 ##### status
 
 > **status**: `"stale"` \| `"verifying"` \| `"failed"` \| `"restricted"` \| `"missing"` \| `"passed"`
+
+***
+
+### ZeroQuoteSettlementReview
+
+Manual review required after an admitted zero-quote execution reports a positive actual amount.
+
+#### Properties
+
+##### execution\_status
+
+> **execution\_status**: `"executed"`
+
+##### next\_action
+
+> **next\_action**: `"manual_settlement_review"`
+
+##### quoted\_amount\_credits
+
+> **quoted\_amount\_credits**: `string`
+
+##### reason\_code
+
+> **reason\_code**: `"settlement.zero_quote_actual_positive"`
+
+##### reported\_actual\_amount\_credits
+
+> **reported\_actual\_amount\_credits**: `string`
+
+##### retryable
+
+> **retryable**: `false`
+
+##### settlement\_owner
+
+> **settlement\_owner**: `"legacy"` \| `"billing"` \| `"website_usage"`
+
+##### settlement\_status
+
+> **settlement\_status**: `"review_required"`
+
+##### user\_charge\_amount\_credits
+
+> **user\_charge\_amount\_credits**: `string`
 
 ## Type Aliases
 

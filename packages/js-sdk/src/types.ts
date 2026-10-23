@@ -605,7 +605,22 @@ export interface ValidationIssue {
   ctx?: Record<string, JsonValue>;
 }
 
+/** Manual review required after an admitted zero-quote execution reports a positive actual amount. */
+export interface ZeroQuoteSettlementReview {
+  execution_status: 'executed';
+  settlement_status: 'review_required';
+  reason_code: 'settlement.zero_quote_actual_positive';
+  quoted_amount_credits: string;
+  reported_actual_amount_credits: string;
+  user_charge_amount_credits: string;
+  settlement_owner: 'legacy' | 'billing' | 'website_usage';
+  retryable: false;
+  next_action: 'manual_settlement_review';
+}
+
 export interface ExecuteResponse {
+  /** Settlement review state returned by the server, when applicable. */
+  settlement_review?: ZeroQuoteSettlementReview | null;
   details?: ValidationIssue[];
   /** Unique identifier for this execution record */
   execution_id: string;

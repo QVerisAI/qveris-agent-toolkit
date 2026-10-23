@@ -4,6 +4,7 @@ import ts from 'typescript';
 import { expect, test } from 'vitest';
 
 interface Schema {
+  const?: unknown;
   $ref?: string;
   type?: string | string[];
   enum?: unknown[];
@@ -31,6 +32,7 @@ const models: Record<string, string> = {
   PublicCapabilityDetailResponse: 'CapabilityDetailResponse',
   PublicCapabilityQueryResponse: 'CapabilityQueryResponse',
   PublicExecuteToolResponse: 'ExecuteResponse',
+  PublicZeroQuoteSettlementReview: 'ZeroQuoteSettlementReview',
   ValidationError: 'ValidationIssue',
   PublicCapabilityResult: 'ToolInfo',
   PublicSearchResponse: 'SearchResponse',
@@ -71,6 +73,7 @@ function wire(schema: Schema): string {
     if (name === 'PublicExecuteResult') return wireDelivery(schemas[name]);
     return wire(schemas[name]);
   }
+  if ('const' in schema) return JSON.stringify(schema.const) as string;
   if (schema.enum) return schema.enum.map((value) => JSON.stringify(value)).join(' | ');
   if (schema.anyOf) return schema.anyOf.map(wire).join(' | ');
   if (Array.isArray(schema.type)) return schema.type.map((type) => wire({ ...schema, type })).join(' | ');

@@ -8,9 +8,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Report successful Calls with pending settlement review as manual review required, preserving execution results without replaying the Call.
+
 - Expose the additive catalog `updated_at` field, matching the SDK contract surfaces.
 
 ### Added
+
+- Expose typed zero-quote settlement review details and preserve an explicitly supplied false zero-quote guard in the Call request.
 
 - Add host-controlled Call idempotency keys, read-only `lookup_execution`, and host-side `reconcileToolExecution(key)`. Add `require_zero_quote` for guarded execution after an exact zero-credit Probe; submitted Calls remain single-submit. ([#436])
 

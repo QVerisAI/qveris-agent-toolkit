@@ -78,7 +78,7 @@ Validate parameters without execution; use the same sub_user_id as Call for prov
 
 <a id="qveris.QverisClient.call"></a>
 
-#### *async* call(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, respond_with: str | None = None, compatibility_mode: Literal['strict', 'legacy_optional_fields'] = 'strict', timeout: float | None = None, correlation_id: str | None = None, model: str | None = None, sub_user_id: str | None = None, idempotency_key: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
+#### *async* call(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, respond_with: str | None = None, compatibility_mode: Literal['strict', 'legacy_optional_fields'] = 'strict', timeout: float | None = None, correlation_id: str | None = None, model: str | None = None, sub_user_id: str | None = None, idempotency_key: str | None = None, require_zero_quote: bool | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
 
 Call a specific capability.
 
@@ -89,6 +89,7 @@ Call a specific capability.
   * **session_id** – Optional correlation id.
   * **max_response_size** – Optional auto-delivery inline limit measured in UTF-8 bytes. -1 is unlimited; explicit respond_with=”full” takes precedence over a finite value.
   * **respond_with** – Optional server-side projection. Omit for compatibility auto-delivery; full forces complete inline data, while summary and fields:<JSONPath,…> select compact projections. Hard-limit failures use response_too_large.
+  * **require_zero_quote** – Optional server-side zero-credit admission guard; omitted by default.
   * **compatibility_mode** – Strict mode never resubmits a paid call. The deprecated legacy mode may replay once without an unsupported optional field.
   * **timeout** – HTTP request timeout in seconds; credential acquisition is separate.
   * **correlation_id** – Non-sensitive reference forwarded only to the credential provider.
@@ -105,7 +106,7 @@ Read-only lookup of the original Call; never submits provider work.
 
 <a id="qveris.QverisClient.execute_tool"></a>
 
-#### *async* execute_tool(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, model: str | None = None, idempotency_key: str | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
+#### *async* execute_tool(tool_id: str, parameters: Dict[str, Any], search_id: str | None = None, session_id: str | None = None, max_response_size: int | None = None, model: str | None = None, idempotency_key: str | None = None, require_zero_quote: bool | None = None) → [ToolExecutionResponse](#qveris.ToolExecutionResponse)
 
 Deprecated alias for call(…).
 
@@ -554,7 +555,7 @@ It takes context as an argument since that’s what pydantic-core passes when ca
 
 <a id="qveris.ToolProbeResponse"></a>
 
-### *class* qveris.ToolProbeResponse(\*, verification_status: ~typing.Literal['unverified', 'verifying', 'verified', 'stale', 'failed', 'restricted'] = 'unverified', verification: ~qveris.types.CatalogVerification = <factory>, execution_restrictions: ~qveris.types.ExecutionRestrictions = <factory>, recovery: ~qveris.types.ProbeRecoveryAdvice, exists: bool | None = None, executable: bool | None = None, status: int | None = None, reason: ~typing.Literal['tool_unavailable', 'tool_disabled', 'realtime_unavailable', 'region_restricted', 'insufficient_scope', 'delegation_budget_not_supported', 'oauth2_signin_required'] | None = None, contract_features: ~typing.List[str] | None = None, schema: ~qveris.types.ProbeSchemaResult | None = None, quote: ~qveris.types.ProbeQuoteResult | None = None, coverage: ~qveris.types.ProbeUnknownResult | None = None, sample: ~qveris.types.ProbeUnknownResult | None = None, \*\*extra_data: ~typing.Any)
+### *class* qveris.ToolProbeResponse(\*, verification_status: ~typing.Literal['unverified', 'verifying', 'verified', 'stale', 'failed', 'restricted'] = 'unverified', verification: ~qveris.types.CatalogVerification = <factory>, execution_restrictions: ~qveris.types.ExecutionRestrictions = <factory>, recovery: ~qveris.types.ProbeRecoveryAdvice, exists: bool | None = None, executable: bool | None = None, status: int | None = None, reason: ~typing.Literal['tool_unavailable', 'tool_disabled', 'realtime_unavailable', 'region_restricted', 'insufficient_scope', 'delegation_budget_not_supported', 'oauth2_signin_required'] | None = None, contract_features: ~typing.List[str] | None = None, execution_constraints_supported: ~typing.List[str] | None = None, schema: ~qveris.types.ProbeSchemaResult | None = None, quote: ~qveris.types.ProbeQuoteResult | None = None, coverage: ~qveris.types.ProbeUnknownResult | None = None, sample: ~qveris.types.ProbeUnknownResult | None = None, \*\*extra_data: ~typing.Any)
 
 <a id="qveris.ToolProbeResponse.model_post_init"></a>
 
@@ -658,9 +659,27 @@ It takes context as an argument since that’s what pydantic-core passes when ca
   * **self** – The BaseModel instance.
   * **context** – The context.
 
+<a id="qveris.ZeroQuoteSettlementReview"></a>
+
+### *class* qveris.ZeroQuoteSettlementReview(\*, execution_status: Literal['executed'], settlement_status: Literal['review_required'], reason_code: Literal['settlement.zero_quote_actual_positive'], quoted_amount_credits: str, reported_actual_amount_credits: str, user_charge_amount_credits: str, settlement_owner: Literal['legacy', 'billing', 'website_usage'], retryable: Literal[False], next_action: Literal['manual_settlement_review'], \*\*extra_data: Any)
+
+Manual review after a zero-quote execution reports a positive actual amount.
+
+<a id="qveris.ZeroQuoteSettlementReview.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
 <a id="qveris.ToolExecutionResponse"></a>
 
-### *class* qveris.ToolExecutionResponse(\*, details: List[[ValidationIssue](#qveris.ValidationIssue)] | None = None, execution_id: str, success: bool, next_action: Dict[str, Any] | None = None, result: Any | None = None, error_code: str | None = None, error_message: str | None = None, elapsed_time_ms: float | None = None, execution_time: float | None = None, tool_id: str | None = None, parameters: Dict[str, Any] | None = None, cost: float | None = None, billing: [CompactBillingStatement](#qveris.CompactBillingStatement) | None = None, pre_settlement_bill: Dict[str, Any] | None = None, remaining_credits: float | None = None, created_at: str | None = None, \*\*extra_data: Any)
+### *class* qveris.ToolExecutionResponse(\*, settlement_review: [ZeroQuoteSettlementReview](#qveris.ZeroQuoteSettlementReview) | None = None, details: List[[ValidationIssue](#qveris.ValidationIssue)] | None = None, execution_id: str, success: bool, next_action: Dict[str, Any] | None = None, result: Any | None = None, error_code: str | None = None, error_message: str | None = None, elapsed_time_ms: float | None = None, execution_time: float | None = None, tool_id: str | None = None, parameters: Dict[str, Any] | None = None, cost: float | None = None, billing: [CompactBillingStatement](#qveris.CompactBillingStatement) | None = None, pre_settlement_bill: Dict[str, Any] | None = None, remaining_credits: float | None = None, created_at: str | None = None, \*\*extra_data: Any)
 
 <a id="qveris.ToolExecutionResponse.model_post_init"></a>
 

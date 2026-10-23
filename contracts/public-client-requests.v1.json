@@ -3,13 +3,16 @@
     "schema": "PublicExecuteToolRequest",
     "query_fields": ["tool_id"],
     "body": {
-      "parameters": {"city": "London"},
+      "parameters": {
+        "city": "London"
+      },
       "search_id": "discovery-request-fixture",
       "session_id": "session-request-fixture",
       "sub_user_id": "tenant-user-fixture",
       "model": "model-fixture",
       "max_response_size": 1024,
-      "respond_with": "fields:$.rows"
+      "respond_with": "fields:$.rows",
+      "require_zero_quote": false
     },
     "javascript": {
       "parameters": "parameters",
@@ -18,15 +21,20 @@
       "sub_user_id": "subUserId",
       "model": "model",
       "max_response_size": "maxResponseSize",
-      "respond_with": "respondWith"
+      "respond_with": "respondWith",
+      "require_zero_quote": "requireZeroQuote"
     },
-    "mcp": {"parameters": "params_to_tool"}
+    "mcp": {
+      "parameters": "params_to_tool"
+    }
   },
   "probe": {
     "schema": "PublicToolProbeRequest",
     "query_fields": [],
     "body": {
-      "parameters": {"city": "London"},
+      "parameters": {
+        "city": "London"
+      },
       "checks": ["schema", "quote"],
       "live_budget": "metadata",
       "sub_user_id": "tenant-user-fixture"

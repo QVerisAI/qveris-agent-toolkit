@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Expose typed zero-quote settlement review details and preserve the explicit zero-quote Call guard. Guarded SDK Calls require strict single-submit compatibility; no automatic preflight or retry is added.
+
 - Support caller-supplied `idempotencyKey` on Calls and typed read-only `reconcileCall(key)` lookup for the original execution and settlement state. Keyed Calls require strict compatibility mode and remain single-submit. ([#436])
 
 - Expose typed Probe one-of alternatives (`required_any_of`) and unsatisfied parameter groups (`missing_field_groups`), while retaining compatibility with older responses.

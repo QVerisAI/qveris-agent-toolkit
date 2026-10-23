@@ -331,7 +331,7 @@ class PublicApiMetadata(BaseModel):
     contract_version: str = Field(
         ...,
         description='Version of the published QVeris REST API contract.',
-        examples=['2026-10-20.1'],
+        examples=['2026-10-21.2'],
         title='Contract Version',
     )
     registration: Optional[AnonymousTrialMetadata] = None
@@ -826,6 +826,10 @@ class Reason(Enum):
     oauth2_signin_required = 'oauth2_signin_required'
 
 
+class ExecutionConstraintsSupportedEnum(Enum):
+    require_zero_quote_v1 = 'require_zero_quote_v1'
+
+
 class PublicExecuteToolRequest(BaseModel):
     tool_id: Optional[str] = Field(
         None,
@@ -851,6 +855,10 @@ class PublicExecuteToolRequest(BaseModel):
     parameters: Dict[str, Any] = Field(
         ...,
         description='Capability-specific parameters validated by the selected tool schema.',
+    )
+    require_zero_quote: Optional[bool] = Field(
+        False,
+        description="When true, execute only if a fresh server-side quote is exact and zero credits. Positive, dynamic, or unavailable quotes are rejected before provider dispatch. A positive actual amount after execution is not charged to the user and is returned with an executed, non-retryable settlement-review status. This is a zero-quote admission constraint; it does not guarantee that the provider's actual cost is zero.",
     )
     max_response_size: Optional[Union[int, conint(ge=1)]] = Field(
         20480,
@@ -1324,6 +1332,27 @@ class PublicCompactBillingStatement(BaseModel):
     charge_event_id: Optional[str] = None
 
 
+class SettlementOwner(Enum):
+    legacy = 'legacy'
+    billing = 'billing'
+    website_usage = 'website_usage'
+
+
+class PublicZeroQuoteSettlementReview(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    execution_status: Literal['executed']
+    settlement_status: Literal['review_required']
+    reason_code: Literal['settlement.zero_quote_actual_positive']
+    quoted_amount_credits: str
+    reported_actual_amount_credits: str
+    user_charge_amount_credits: str
+    settlement_owner: SettlementOwner
+    retryable: Literal[False]
+    next_action: Literal['manual_settlement_review']
+
+
 class PublicExecuteToolResponse(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -1333,7 +1362,10 @@ class PublicExecuteToolResponse(BaseModel):
         ...,
         description='Capability result. Projected responses use the documented object shape; default/full responses may contain any JSON value.',
     )
-    success: bool
+    success: bool = Field(
+        ...,
+        description='Reports whether provider execution succeeded. When settlement_review is present, clients must keep the request in manual review instead of marking the task complete or retrying it.',
+    )
     error_code: Optional[str] = Field(
         None,
         description='Stable machine-readable failure code, including `response_too_large` when explicit full exceeds the platform hard safety limit.',
@@ -1342,6 +1374,10 @@ class PublicExecuteToolResponse(BaseModel):
     execution_time: Optional[float] = None
     elapsed_time_ms: Optional[float] = None
     billing: Optional[PublicCompactBillingStatement] = None
+    settlement_review: Optional[PublicZeroQuoteSettlementReview] = Field(
+        None,
+        description='Present when a zero-quote admitted execution reports a positive actual amount and requires manual settlement review.',
+    )
     cost: Optional[float] = None
     remaining_credits: Optional[float] = None
     details: Optional[List[ValidationError]] = Field(
@@ -1599,6 +1635,9 @@ class PublicToolProbeResponse(BaseModel):
     verification_status: VerificationStatus
     verification: PublicCatalogVerification
     execution_restrictions: PublicExecutionRestrictions
+    execution_constraints_supported: Optional[
+        List[ExecutionConstraintsSupportedEnum]
+    ] = None
     contract_features: Optional[List[str]] = None
 
 

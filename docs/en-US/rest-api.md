@@ -1,6 +1,6 @@
 # QVeris REST API Documentation
 
-Version: 2026-10-20.1
+Version: 2026-10-21.2
 
 The public REST API exposes the core agent path:
 
@@ -654,26 +654,6 @@ GET /tools/executions/by-idempotency-key?key={original_idempotency_key}
 ```
 
 When a Call loses its HTTP response, query this read-only endpoint with the original `Idempotency-Key`. Paid and zero-cost Calls retain an execution record independently of how credits are settled. This endpoint never authorizes another provider execution. The response uses the standard API envelope; `data.status` is `pending`, `completed`, or `unavailable`. A completed response contains the original recoverable Call in `data.response`. `pending` can mean the Provider outcome or settlement is still unknown; keep the original key and reconcile before any further action. `unavailable` means the execution is known but its full result cannot be reproduced safely, for example after a short-lived overflow download URL expired. A confirmed zero-cost execution reports `not_charged` and does not require a debit ledger entry.
-
-Persist a unique key for each logical Call before submitting it, and reuse only that same key to recover that Call. SDKs and the CLI accept caller-supplied keys; recovery never submits another Call:
-
-```ts
-const result = await client.call(toolId, { parameters, idempotencyKey });
-// After an uncertain transport failure, use the persisted original key:
-const recovery = await client.reconcileCall(idempotencyKey);
-```
-
-```python
-result = await client.call(tool_id, parameters, idempotency_key=idempotency_key)
-recovery = await client.reconcile_call(idempotency_key)
-```
-
-```sh
-qveris call <tool-id> --idempotency-key "$CALL_KEY" --params '{"city":"London"}'
-qveris reconcile-call --idempotency-key "$CALL_KEY"
-```
-
-Do not generate a replacement key or automatically resubmit when the lookup is `pending` or `unavailable`. Treat keys as sensitive correlation data: keep them in the host application’s durable state and out of model-generated arguments and logs.
 
 ## Long tool responses
 

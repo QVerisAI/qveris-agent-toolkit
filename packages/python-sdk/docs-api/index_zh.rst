@@ -112,6 +112,10 @@ Agent
    :members:
    :exclude-members: model_config
 
+.. autoclass:: qveris.ZeroQuoteSettlementReview
+   :members:
+   :exclude-members: model_config
+
 .. autoclass:: qveris.ToolExecutionResponse
    :members:
    :exclude-members: model_config

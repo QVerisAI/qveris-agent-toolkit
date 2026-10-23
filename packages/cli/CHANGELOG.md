@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- Report successful Calls with pending settlement review as manual review required, preserving execution results without replaying the Call.
+
+
 ### Added
 
 - Add Call idempotency keys and read-only recovery with `qveris execution lookup <key>` and `qveris reconcile-call --idempotency-key <key>`. Add `--require-zero-quote` for guarded execution after an exact zero-credit Probe; submitted Calls are never automatically replayed. ([#436])

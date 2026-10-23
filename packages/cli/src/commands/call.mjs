@@ -247,6 +247,20 @@ function executionIdFrom(value) {
 
 function returnedCallRecovery(result) {
   const executionId = executionIdFrom(result);
+  if (result?.settlement_review != null) {
+    return {
+      code: "SETTLEMENT_REVIEW_REQUIRED",
+      retryable: false,
+      action: "manual_settlement_review",
+      missing_fields: [],
+      fallback_available: false,
+      candidates: [],
+      next_action: buildNextAction("manual_settlement_review", {
+        requiresUser: true,
+        reason: result.settlement_review.reason_code ?? "settlement_review_required",
+      }),
+    };
+  }
   const validSuccess = result?.success === true && executionId;
   if (validSuccess) return null;
   const action = executionId
