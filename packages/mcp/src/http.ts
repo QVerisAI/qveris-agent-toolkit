@@ -25,7 +25,11 @@ import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { waitForOperations } from './operation-lifecycle.js';
 
-import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
+import {
+  isInitializeRequest,
+  isJSONRPCResultResponse,
+  isJSONRPCErrorResponse,
+} from '@modelcontextprotocol/sdk/types.js';
 
 import {
   buildCatalog,
@@ -418,12 +422,12 @@ export async function startHttpServer(
 
   const handler = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     try {
-      if (draining) {
+      const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
+      if (draining && (url.pathname !== config.path || req.method !== 'POST')) {
         req.resume();
         writeJson(res, 503, jsonRpcError(null, -32002, 'Server is draining'), { Connection: 'close' });
         return;
       }
-      const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
 
       // Lightweight, unauthenticated health check for load balancers.
       if (req.method === 'GET' && url.pathname === '/health') {
@@ -532,6 +536,20 @@ export async function startHttpServer(
           throw err;
         }
 
+        // Accepted calls can still need a client response (billing consent).
+        // Keep authentication/session binding above and reject all new work,
+        // including mixed batches, while allowing only protocol responses.
+        if (
+          draining &&
+          (!existing ||
+            !body ||
+            typeof body !== 'object' ||
+            'method' in body ||
+            (!isJSONRPCResultResponse(body) && !isJSONRPCErrorResponse(body)))
+        ) {
+          writeJson(res, 503, jsonRpcError(null, -32002, 'Server is draining'), { Connection: 'close' });
+          return;
+        }
         let transport = existing;
         if (!transport) {
           if (sessionId !== undefined) {
@@ -661,12 +679,13 @@ export async function startHttpServer(
     if (closing) return closing;
     draining = true;
     clearInterval(sweep);
-    // Stop the listener before waiting, but retain active HTTP/SSE sockets.
-    const listenerClosed = new Promise<void>((resolve) => httpServer.close(() => resolve()));
-    httpServer.closeIdleConnections?.();
+    // Retain the listener for authenticated protocol responses needed by
+    // accepted operations; the handler rejects new calls and health checks.
     closing = (async () => {
       while (requests.size) await Promise.allSettled([...requests]);
       await Promise.all([...servers].map(waitForOperations));
+      const listenerClosed = new Promise<void>((resolve) => httpServer.close(() => resolve()));
+      httpServer.closeIdleConnections?.();
       for (const transport of transports.values()) await transport.close();
       transports.clear();
       sessionCredentialFingerprints.clear();

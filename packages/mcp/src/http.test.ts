@@ -1,6 +1,7 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { afterEach, describe, expect, it } from 'vitest';
+import { ElicitRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createQverisServer } from './index.js';
 import {
@@ -111,6 +112,7 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
   afterEach(async () => {
     await running?.close();
     running = undefined;
+    vi.unstubAllEnvs();
   });
 
   const CARD_INFO = {
@@ -160,6 +162,66 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
   }
 
   for (const json of ['true', 'false']) {
+    it(`accepts billing consent responses while rejecting new work during drain (json=${json})`, async () => {
+      vi.stubEnv('QVERIS_MCP_CONFIRM_CALLS', 'true');
+      let consent!: () => void;
+      let prompted!: () => void;
+      const consentWait = new Promise<void>((resolve) => {
+        consent = resolve;
+      });
+      const promptWait = new Promise<void>((resolve) => {
+        prompted = resolve;
+      });
+      let calls = 0;
+      const qveris = {
+        async executeTool() {
+          calls += 1;
+          return { success: true, execution_id: 'consent-fixture', result: {} };
+        },
+      } as unknown as QverisClient;
+      await startServer({ QVERIS_MCP_HTTP_JSON: json }, undefined, (id) => createQverisServer(qveris, id), true);
+      const transport = new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${running!.port}/mcp`), {
+        requestInit: { headers: { Authorization: 'Bearer consent-fixture' } },
+      });
+      const client = new Client(
+        { name: 'consent-test', version: '1' },
+        { capabilities: { elicitation: { form: {} } } },
+      );
+      client.setRequestHandler(ElicitRequestSchema, async () => {
+        prompted();
+        await consentWait;
+        return { action: 'accept', content: { confirm: true } };
+      });
+      await client.connect(transport);
+      const call = client.callTool({
+        name: 'call',
+        arguments: { tool_id: 'fixture', search_id: 'fixture', params_to_tool: {} },
+      });
+      await promptWait;
+      const closing = running!.close();
+      try {
+        expect(calls).toBe(0);
+        await expect(client.listTools()).rejects.toThrow();
+        const mixed = await fetch(`http://127.0.0.1:${running!.port}/mcp`, {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer consent-fixture',
+            'Content-Type': 'application/json',
+            'mcp-session-id': transport.sessionId!,
+          },
+          body: JSON.stringify({ jsonrpc: '2.0', id: 99, method: 'tools/list', result: {} }),
+        });
+        expect(mixed.status).toBe(503);
+      } finally {
+        consent();
+      }
+      const result = await call;
+      expect(result.isError).not.toBe(true);
+      expect(calls).toBe(1);
+      await closing;
+      await client.close();
+    });
+
     for (const disconnect of [false, true]) {
       it(`drains an active tool before close (json=${json}, disconnected=${disconnect})`, async () => {
         let release!: () => void;
@@ -195,14 +257,15 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
         const closing = running!.close().then(() => {
           closed = true;
         });
-        expect(running!.httpServer.listening).toBe(false);
-        await expect(fetch(`http://127.0.0.1:${running!.port}/health`)).rejects.toThrow();
+        expect((await fetch(`http://127.0.0.1:${running!.port}/health`)).status).toBe(503);
+        await expect(client.listTools()).rejects.toThrow();
         await new Promise((resolve) => setTimeout(resolve, 20));
         expect(operationDone).toBe(false);
         expect(closed).toBe(false);
         release();
         const result = await outcome;
         await closing;
+        expect(running!.httpServer.listening).toBe(false);
         expect(operationDone).toBe(true);
         if (!disconnect) {
           expect(result).toHaveProperty('value');
