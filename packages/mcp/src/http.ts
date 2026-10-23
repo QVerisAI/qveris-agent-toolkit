@@ -23,7 +23,13 @@ import type { AddressInfo } from 'node:net';
 
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
+import { waitForOperations } from './operation-lifecycle.js';
+
+import {
+  isInitializeRequest,
+  isJSONRPCResultResponse,
+  isJSONRPCErrorResponse,
+} from '@modelcontextprotocol/sdk/types.js';
 
 import {
   buildCatalog,
@@ -284,7 +290,8 @@ export interface RunningHttpServer {
   httpServer: HttpServer;
   /** The port actually bound (useful when config.port is 0). */
   port: number;
-  /** Close all sessions and stop the HTTP server. */
+  /** Stop admission, finish accepted requests/operations, then close sessions.
+   * The embedder owns the shutdown deadline; this never force-cancels a Call. */
   close: () => Promise<void>;
 }
 
@@ -345,6 +352,9 @@ export async function startHttpServer(
   const lastSeen = new Map<string, number>();
   const inflight = new Map<string, number>(); // requests currently being handled per session
   let boundPort = config.port;
+  let draining = false;
+  const servers = new Set<Server>();
+  const requests = new Set<Promise<void>>();
 
   // In-flight guards keep the idle sweep from evicting a session that has an
   // active request or a live (long-lived) SSE stream. A session is only
@@ -388,16 +398,19 @@ export async function startHttpServer(
         logger(`[qveris] MCP session initialized: ${sessionId}\n`);
       },
     });
+    let server: Server | undefined;
     transport.onclose = () => {
+      const closingServer = server;
+      if (closingServer) void waitForOperations(closingServer).then(() => servers.delete(closingServer));
       const sessionId = transport.sessionId;
       if (sessionId && transports.get(sessionId) === transport) {
         evict(sessionId);
         logger(`[qveris] MCP session closed: ${sessionId}\n`);
       }
     };
-    let server: Server | undefined;
     try {
       server = await makeServer(randomUUID(), auth);
+      servers.add(server);
       await server.connect(transport);
       return transport;
     } catch (error) {
@@ -410,6 +423,11 @@ export async function startHttpServer(
   const handler = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     try {
       const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
+      if (draining && (url.pathname !== config.path || req.method !== 'POST')) {
+        req.resume();
+        writeJson(res, 503, jsonRpcError(null, -32002, 'Server is draining'), { Connection: 'close' });
+        return;
+      }
 
       // Lightweight, unauthenticated health check for load balancers.
       if (req.method === 'GET' && url.pathname === '/health') {
@@ -518,6 +536,20 @@ export async function startHttpServer(
           throw err;
         }
 
+        // Accepted calls can still need a client response (billing consent).
+        // Keep authentication/session binding above and reject all new work,
+        // including mixed batches, while allowing only protocol responses.
+        if (
+          draining &&
+          (!existing ||
+            !body ||
+            typeof body !== 'object' ||
+            'method' in body ||
+            (!isJSONRPCResultResponse(body) && !isJSONRPCErrorResponse(body)))
+        ) {
+          writeJson(res, 503, jsonRpcError(null, -32002, 'Server is draining'), { Connection: 'close' });
+          return;
+        }
         let transport = existing;
         if (!transport) {
           if (sessionId !== undefined) {
@@ -563,7 +595,13 @@ export async function startHttpServer(
             release(sessionId);
           }
         } else {
-          await transport.handleRequest(req, res, body);
+          try {
+            await transport.handleRequest(req, res, body);
+          } finally {
+            // SDK validation can reject initialize without issuing a session
+            // or closing its transport. Such servers cannot enter idle sweep.
+            if (!transport.sessionId) await transport.close();
+          }
         }
         return;
       }
@@ -597,7 +635,15 @@ export async function startHttpServer(
   };
 
   const httpServer = createServer((req, res) => {
-    void handler(req, res);
+    const pending = handler(req, res);
+    // Standalone GET SSE is closed only after accepted operations finish.
+    if (req.method !== 'GET') {
+      requests.add(pending);
+      void pending.then(
+        () => requests.delete(pending),
+        () => requests.delete(pending),
+      );
+    }
   });
 
   await new Promise<void>((resolve, reject) => {
@@ -634,21 +680,26 @@ export async function startHttpServer(
 
   logger(`[qveris] Qveris MCP Server started (streamable-http) on http://${config.host}:${boundPort}${config.path}\n`);
 
-  const close = async (): Promise<void> => {
+  let closing: Promise<void> | undefined;
+  const close = (): Promise<void> => {
+    if (closing) return closing;
+    draining = true;
     clearInterval(sweep);
-    for (const transport of transports.values()) {
-      await transport.close().catch(() => undefined);
-    }
-    transports.clear();
-    sessionCredentialFingerprints.clear();
-    lastSeen.clear();
-    inflight.clear();
-    await new Promise<void>((resolve) => {
-      httpServer.close(() => resolve());
-      // Don't wait out idle keep-alive sockets (clients pool connections and
-      // hold them open for seconds); force them closed so shutdown is prompt.
-      httpServer.closeAllConnections?.();
-    });
+    // Retain the listener for authenticated protocol responses needed by
+    // accepted operations; the handler rejects new calls and health checks.
+    closing = (async () => {
+      while (requests.size) await Promise.allSettled([...requests]);
+      await Promise.all([...servers].map(waitForOperations));
+      const listenerClosed = new Promise<void>((resolve) => httpServer.close(() => resolve()));
+      httpServer.closeIdleConnections?.();
+      for (const transport of transports.values()) await transport.close();
+      transports.clear();
+      sessionCredentialFingerprints.clear();
+      lastSeen.clear();
+      inflight.clear();
+      await listenerClosed;
+    })();
+    return closing;
   };
 
   return { httpServer, port: boundPort, close };

@@ -36,6 +36,7 @@ import {
   type CallToolResult,
   type ToolAnnotations,
 } from '@modelcontextprotocol/sdk/types.js';
+import { trackOperation } from './operation-lifecycle.js';
 import { resolveTransportConfig, startHttpServer } from './http.js';
 import { buildServerCard, type ServerCardInfo } from './server-card.js';
 import { realpathSync } from 'node:fs';
@@ -712,7 +713,7 @@ export function createQverisServer(
   // Register aliases too, since stale clients may still invoke names hidden from discovery.
   for (const { name, description } of listQverisMcpTools()) {
     mcpServer.registerTool(name, { description, inputSchema: z.object({}).catchall(z.unknown()) }, async (args) =>
-      executeQverisMcpTool(client, defaultSessionId, name, args, undefined, confirmCall),
+      trackOperation(server, () => executeQverisMcpTool(client, defaultSessionId, name, args, undefined, confirmCall)),
     );
   }
 
@@ -784,7 +785,7 @@ export function createQverisServer(
       if (!client) {
         throw new Error('QVERIS_API_KEY is not set; capability metadata requires an API key.');
       }
-      const detail = await client.getToolsByIds({ tool_ids: [toolId] });
+      const detail = await trackOperation(server, () => client.getToolsByIds({ tool_ids: [toolId] }));
       return {
         contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(detail) }],
       };
