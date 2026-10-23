@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Finish accepted HTTP tool operations before shutting down sessions, including operations whose clients disconnected; stop accepting new requests as shutdown begins.
+
 - Report successful Calls with pending settlement review as manual review required, preserving execution results without replaying the Call.
 
 - Expose the additive catalog `updated_at` field, matching the SDK contract surfaces.

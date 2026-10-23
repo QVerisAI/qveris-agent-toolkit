@@ -159,6 +159,60 @@ describe('startHttpServer (end-to-end over Streamable HTTP)', () => {
     return { client, transport };
   }
 
+  for (const json of ['true', 'false']) {
+    for (const disconnect of [false, true]) {
+      it(`drains an active tool before close (json=${json}, disconnected=${disconnect})`, async () => {
+        let release!: () => void;
+        let started!: () => void;
+        const blocked = new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        const executing = new Promise<void>((resolve) => {
+          started = resolve;
+        });
+        let operationDone = false;
+        const qveris = {
+          async searchTools() {
+            started();
+            await blocked;
+            operationDone = true;
+            return { search_id: 'drain-fixture', total: 0, results: [] };
+          },
+        } as unknown as QverisClient;
+        await startServer({ QVERIS_MCP_HTTP_JSON: json }, undefined, (sessionId) =>
+          createQverisServer(qveris, sessionId),
+        );
+        const { client } = await connectClient();
+        const call = client.callTool({ name: 'discover', arguments: { query: 'drain fixture' } });
+        // Attach rejection handling before intentionally disconnecting.
+        const outcome = call.then(
+          (value) => ({ value }),
+          (error: unknown) => ({ error }),
+        );
+        await executing;
+        if (disconnect) await client.close();
+        let closed = false;
+        const closing = running!.close().then(() => {
+          closed = true;
+        });
+        expect(running!.httpServer.listening).toBe(false);
+        await expect(fetch(`http://127.0.0.1:${running!.port}/health`)).rejects.toThrow();
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        expect(operationDone).toBe(false);
+        expect(closed).toBe(false);
+        release();
+        const result = await outcome;
+        await closing;
+        expect(operationDone).toBe(true);
+        if (!disconnect) {
+          expect(result).toHaveProperty('value');
+          await client.close();
+        }
+        await running!.close();
+      });
+    }
+  }
+
   it('completes the initialize handshake and assigns a session id', async () => {
     const { client, transport } = await connectClient();
     expect(transport.sessionId).toBeTruthy();
