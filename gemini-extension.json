@@ -1,6 +1,6 @@
 {
   "name": "qveris",
-  "version": "0.14.6",
+  "version": "0.15.0",
   "description": "Bring professional data and tools to Gemini CLI: find services, review supported scope, call them, and audit usage with QVeris.",
   "mcpServers": {
     "qveris": {
