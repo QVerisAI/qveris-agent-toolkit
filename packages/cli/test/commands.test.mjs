@@ -86,7 +86,12 @@ function withMockFetch(handler, fn) {
       url: new URL(url),
       method: options.method,
       headers: options.headers,
-      body: options.body ? JSON.parse(options.body) : undefined,
+      body:
+        options.body instanceof URLSearchParams
+          ? Object.fromEntries(options.body)
+          : options.body
+            ? JSON.parse(options.body)
+            : undefined,
     };
     requests.push(request);
     return handler(request);
@@ -1009,6 +1014,75 @@ test("OAuth whoami uses the stored endpoint and transient diagnostics retain the
       else process.env.QVERIS_DISABLE_KEYRING = previousKeyring;
       if (previousRetries === undefined) delete process.env.QVERIS_MAX_RETRIES;
       else process.env.QVERIS_MAX_RETRIES = previousRetries;
+    }
+  });
+});
+
+test("expired and challenged OAuth sessions preserve refresh failure classification without replay", async () => {
+  await withTempConfig(async () => {
+    const previousExit = process.exitCode;
+    const previousKeyring = process.env.QVERIS_DISABLE_KEYRING;
+    process.env.QVERIS_DISABLE_KEYRING = "1";
+    const secret = { access_token: "<fixture-refresh-access>", refresh_token: "<fixture-refresh-secret>" };
+    try {
+      for (const expired of [true, false]) {
+        await saveOAuthSession(
+          {
+            issuer: "https://unit.test",
+            api_base_url: "https://unit.test/api/v1",
+            token_endpoint: "https://unit.test/oauth/token",
+            resource: "https://unit.test/tools",
+            scope: "tools.search offline_access",
+            expires_at: Date.now() + (expired ? -1000 : 3600000),
+          },
+          secret,
+          { allowUnencryptedStorage: true },
+        );
+        for (const [failure, code, exitCode] of [
+          [429, "RATE_LIMITED", 75],
+          [503, "SERVICE_UNAVAILABLE", 75],
+          [400, "AUTH_OAUTH_FAILED", 77],
+          ["network", "NET_CONNECTION", 75],
+          ["timeout", "NET_TIMEOUT", 75],
+        ]) {
+          await withMockFetch(
+            (request) => {
+              if (request.url.pathname.endsWith("/search")) return new Response("{}", { status: 401 });
+              assert.equal(request.url.pathname, "/oauth/token");
+              if (failure === "network") throw new TypeError(secret.refresh_token);
+              if (failure === "timeout") throw new DOMException(secret.refresh_token, "AbortError");
+              return new Response(
+                failure === 400 ? JSON.stringify({ error: "invalid_grant" }) : "<html>gateway failure</html>",
+                { status: failure },
+              );
+            },
+            async (requests) => {
+              for (const command of ["whoami", "status", "doctor"]) {
+                const offset = requests.length;
+                const result = await captureOutput(() =>
+                  command === "whoami"
+                    ? runWhoami({ json: true })
+                    : command === "doctor"
+                      ? runDoctor({ json: true })
+                      : runAuth("status", { json: true }),
+                );
+                const output = JSON.parse(command === "whoami" ? result.stderr : result.stdout);
+                const diagnostic = command === "doctor" ? output.checks.find((c) => c.status === "fail") : output;
+                assert.equal(diagnostic.code, code);
+                assert.equal(process.exitCode, exitCode);
+                assert.equal(requests.slice(offset).filter((r) => r.url.pathname === "/oauth/token").length, 1);
+                assert.doesNotMatch(result.stdout + result.stderr, /fixture-refresh|gateway failure/);
+                assert.deepEqual(await loadOAuthSessionSecret(), secret);
+              }
+            },
+          );
+        }
+      }
+    } finally {
+      await deleteOAuthSession();
+      process.exitCode = previousExit;
+      if (previousKeyring === undefined) delete process.env.QVERIS_DISABLE_KEYRING;
+      else process.env.QVERIS_DISABLE_KEYRING = previousKeyring;
     }
   });
 });
