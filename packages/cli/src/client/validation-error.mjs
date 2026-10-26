@@ -7,7 +7,7 @@ import { getSiteUrl } from "../config/endpoint.mjs";
 export function validationError(error, context = {}) {
   let code = error?.code;
   if (error?.status >= 500) code = "SERVICE_UNAVAILABLE";
-  else if (error?.name === "AbortError") code = "NET_TIMEOUT";
+  else if (error?.status === 408 || error?.name === "AbortError") code = "NET_TIMEOUT";
   else if (error instanceof TypeError || error?.code === "ECONNRESET" || error?.code === "ENOTFOUND") {
     code = "NET_CONNECTION";
   }

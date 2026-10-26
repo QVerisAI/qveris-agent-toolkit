@@ -850,6 +850,7 @@ for (const [failure, code, exitCode] of [
   [401, "AUTH_INVALID_KEY", 77],
   [403, "PERMISSION_DENIED", 77],
   [402, "CREDITS_INSUFFICIENT", 77],
+  [408, "NET_TIMEOUT", 75],
   [429, "RATE_LIMITED", 75],
   [500, "SERVICE_UNAVAILABLE", 75],
   [503, "SERVICE_UNAVAILABLE", 75],
@@ -982,6 +983,7 @@ test("OAuth whoami uses the stored endpoint and transient diagnostics retain the
       );
       for (const [failure, code, exitCode] of [
         [403, "PERMISSION_DENIED", 77],
+        [408, "NET_TIMEOUT", 75],
         [429, "RATE_LIMITED", 75],
         [503, "SERVICE_UNAVAILABLE", 75],
         ["network", "NET_CONNECTION", 75],
@@ -1039,6 +1041,7 @@ test("expired and challenged OAuth sessions preserve refresh failure classificat
           { allowUnencryptedStorage: true },
         );
         for (const [failure, code, exitCode] of [
+          [408, "NET_TIMEOUT", 75],
           [429, "RATE_LIMITED", 75],
           [503, "SERVICE_UNAVAILABLE", 75],
           [400, "AUTH_OAUTH_FAILED", 77],
