@@ -492,7 +492,7 @@ function printUsage(flags = {}) {
 
   ${bold("Account:")}
     ${cyan("auth")}      login|status|logout  OAuth Device Flow session
-    ${cyan("login")}                        Authenticate with QVeris
+    ${cyan("login")}                        Paste and validate an API key
     ${cyan("logout")}                       Remove stored API key
     ${cyan("whoami")}                       Show current auth status
     ${cyan("credits")}                      Show credit balance

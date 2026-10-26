@@ -4,14 +4,14 @@ import { bold, green, red, yellow, dim } from "../output/colors.mjs";
 const ICON = { ok: green("✓"), warn: yellow("!"), fail: red("✘") };
 
 export async function runDoctor(flags) {
-  const { checks, ok, contractVersion } = await runPreflight({
+  const { checks, ok, contractVersion, exitCode } = await runPreflight({
     apiKeyFlag: flags.apiKey,
     baseUrlFlag: flags.baseUrl,
   });
 
   if (flags.json) {
     console.log(JSON.stringify({ ok, contract_version: contractVersion, checks }, null, 2));
-    if (!ok) process.exitCode = 1;
+    if (!ok) process.exitCode = exitCode || 1;
     return;
   }
 
@@ -31,6 +31,6 @@ export async function runDoctor(flags) {
     }
   } else {
     console.log(`  ${red("Some checks failed.")} Fix the items above and re-run ${bold("qveris doctor")}.\n`);
-    process.exitCode = 1;
+    process.exitCode = exitCode || 1;
   }
 }
