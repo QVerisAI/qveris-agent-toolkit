@@ -1,7 +1,7 @@
 import {
   createAuthorizationContextCredentialProvider,
-  resolveApiKey,
   resolveAuthorizationContextId,
+  resolveDiscoveryAccess,
 } from "../client/auth.mjs";
 import { discoverTools, resolveApiBaseUrl } from "../client/api.mjs";
 import { writeSession } from "../session/session.mjs";
@@ -10,14 +10,21 @@ import { outputJson } from "../output/json.mjs";
 import { createSpinner } from "../output/spinner.mjs";
 
 export async function runDiscover(query, flags) {
-  const apiKey = resolveApiKey(flags.apiKey);
+  const access = resolveDiscoveryAccess({
+    publicReadOnly: flags.publicReadOnly,
+    apiKey: flags.apiKey,
+    operation: "discover",
+  });
+  const { apiKey, publicReadOnly } = access;
   const { baseUrl: resolvedBaseUrl } = resolveApiBaseUrl({
     baseUrlFlag: flags.baseUrl,
-    preferOAuth: apiKey === undefined,
+    preferOAuth: !publicReadOnly && apiKey === undefined,
   });
-  const authorizationContext = await resolveAuthorizationContextId({ apiKey });
-  const credentialProvider = createAuthorizationContextCredentialProvider({ apiKey, authorizationContext });
-  const limit = parseInt(flags.limit, 10) || 5;
+  const authorizationContext = access.authorizationContext ?? (await resolveAuthorizationContextId({ apiKey }));
+  const credentialProvider = publicReadOnly
+    ? undefined
+    : createAuthorizationContextCredentialProvider({ apiKey, authorizationContext });
+  const limit = publicReadOnly && flags.limit !== undefined ? Number(flags.limit) : parseInt(flags.limit, 10) || 5;
   const timeoutMs = (parseInt(flags.timeout, 10) || 30) * 1000;
 
   const spinner = flags.json ? { stop() {} } : createSpinner("Discovering capabilities...");
@@ -25,6 +32,7 @@ export async function runDiscover(query, flags) {
   try {
     const result = await discoverTools({
       apiKey,
+      publicReadOnly,
       credentialProvider,
       baseUrl: resolvedBaseUrl,
       query,
@@ -43,6 +51,7 @@ export async function runDiscover(query, flags) {
       query,
       baseUrl: resolvedBaseUrl,
       authorizationContext,
+      ...(publicReadOnly && { publicReadOnly: true }),
       results: tools.map((t, i) => ({
         index: i + 1,
         tool_id: t.tool_id,

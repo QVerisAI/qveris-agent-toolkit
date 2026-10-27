@@ -15,6 +15,8 @@ import {
 
 import { getOAuthSessionMetadata } from "../auth/storage.mjs";
 import { normalizeCreditBalanceResponse } from "./credit-balance.mjs";
+import { resolveAccessMode } from "./access-mode.mjs";
+import { isPublicDiscoveryContext, validatePublicBody, validatePublicResponse } from "./public-discovery.mjs";
 
 export function resolveApiBaseUrl({ baseUrlFlag, preferOAuth = false } = {}) {
   if (preferOAuth && baseUrlFlag === undefined && typeof process.env.QVERIS_BASE_URL !== "string") {
@@ -49,8 +51,15 @@ async function requestJson(
     maxRetries = resolveMaxRetries(process.env.QVERIS_MAX_RETRIES),
     allowAuthReplay = true,
     requestHeaders = {},
+    publicReadOnly = false,
   },
 ) {
+  resolveAccessMode({
+    publicReadOnly,
+    hasCredentials: credentialProvider !== undefined,
+    headers: requestHeaders,
+    operation: path === "/search" ? "discover" : path === "/tools/by-ids" ? "inspect" : path,
+  });
   const url = new URL(baseUrl.replace(/\/+$/, "") + path);
   for (const [key, value] of Object.entries(query)) {
     if (value !== undefined && value !== null) {
@@ -62,10 +71,12 @@ async function requestJson(
   for (let attempt = 0; ; attempt++) {
     // Credential acquisition is outside the API request timeout and happens
     // on every attempt so retries can refresh short-lived tokens.
-    const credential = await getCredential(credentialProvider, {
-      resource: baseUrl,
-      scopes: [],
-    });
+    const credential = publicReadOnly
+      ? undefined
+      : await getCredential(credentialProvider, {
+          resource: baseUrl,
+          scopes: [],
+        });
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
     let retryDelayMs;
@@ -74,20 +85,23 @@ async function requestJson(
       const response = await fetch(url.toString(), {
         method,
         headers: {
-          Authorization: `Bearer ${credential}`,
+          ...(publicReadOnly
+            ? { "X-Qveris-Access-Mode": "public-readonly" }
+            : { Authorization: `Bearer ${credential}` }),
           "Content-Type": "application/json",
           ...requestHeaders,
         },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         signal: controller.signal,
         redirect: "error",
+        ...(publicReadOnly ? { credentials: "omit", cache: "no-store" } : {}),
       });
 
       if (
         allowAuthReplay &&
         response.status === 401 &&
         !authRetried &&
-        typeof credentialProvider.refreshCredential === "function"
+        typeof credentialProvider?.refreshCredential === "function"
       ) {
         authRetried = true;
         await response.body?.cancel?.().catch(() => {});
@@ -112,7 +126,12 @@ async function requestJson(
         } catch {
           /* not JSON */
         }
-        if (status === 401 && credentialProvider.authType === "oauth") {
+        if (status === 401 && publicReadOnly) {
+          const err = new CliError("PUBLIC_DISCOVERY_UNAVAILABLE");
+          err.status = status;
+          throw err;
+        }
+        if (status === 401 && credentialProvider?.authType === "oauth") {
           const err = new CliError("AUTH_OAUTH_FAILED", errorDetail);
           err.status = status;
           if (jsonBody) err.responseData = jsonBody;
@@ -221,8 +240,24 @@ export async function discoverTools({
   view,
   lang,
   timeoutMs = 30000,
+  publicReadOnly = false,
 }) {
-  const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
+  resolveAccessMode({
+    publicReadOnly,
+    hasCredentials: apiKey !== undefined || credentialProvider !== undefined,
+    operation: "discover",
+  });
+  const baseUrl = getBaseUrl(baseUrlFlag, !publicReadOnly && apiKey === undefined && credentialProvider === undefined);
+  const body = { query, limit, ...(view !== undefined && { view }), ...(lang !== undefined && { lang }) };
+  if (publicReadOnly)
+    return validatePublicResponse(
+      await requestJson("/search", {
+        publicReadOnly,
+        baseUrl,
+        body: validatePublicBody(body, "discover"),
+        timeoutMs,
+      }),
+    );
   return requestWithOptionalFieldFallback(
     "/search",
     {
@@ -247,10 +282,26 @@ export async function inspectToolsByIds({
   toolIds,
   discoveryId,
   timeoutMs = 30000,
+  publicReadOnly = false,
 }) {
-  const baseUrl = getBaseUrl(baseUrlFlag, apiKey === undefined && credentialProvider === undefined);
+  resolveAccessMode({
+    publicReadOnly,
+    hasCredentials: apiKey !== undefined || credentialProvider !== undefined,
+    operation: "inspect",
+  });
+  const baseUrl = getBaseUrl(baseUrlFlag, !publicReadOnly && apiKey === undefined && credentialProvider === undefined);
   const body = { tool_ids: toolIds };
   if (discoveryId) body.search_id = discoveryId;
+  if (publicReadOnly)
+    return validatePublicResponse(
+      await requestJson("/tools/by-ids", {
+        publicReadOnly,
+        baseUrl,
+        body: validatePublicBody(body, "inspect"),
+        timeoutMs,
+      }),
+    );
+  if (isPublicDiscoveryContext(discoveryId)) throw new CliError("AUTH_PUBLIC_CONTEXT");
   return requestJson("/tools/by-ids", {
     credentialProvider: resolveCredentialProvider({ apiKey, credentialProvider }),
     baseUrl,
@@ -293,6 +344,7 @@ export async function callTool({
   idempotencyKey = randomUUID(),
   timeoutMs = 120000,
 }) {
+  if (isPublicDiscoveryContext(discoveryId)) throw new CliError("AUTH_PUBLIC_CONTEXT");
   if (idempotencyKey !== undefined && (typeof idempotencyKey !== "string" || !idempotencyKey.trim())) {
     throw new CliError("API_ERROR", "--idempotency-key must be non-empty");
   }

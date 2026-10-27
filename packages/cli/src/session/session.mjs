@@ -39,11 +39,12 @@ export function readSessionForContext({ baseUrl, authorizationContext }) {
 }
 
 export function resolveToolId(idOrIndex, { session = readSession() } = {}) {
-  if (!/^\d+$/.test(idOrIndex)) return { toolId: idOrIndex, fromSession: false };
+  const numeric = /^\d+$/.test(idOrIndex);
+  if (!numeric && !session?.upgradedFromPublic) return { toolId: idOrIndex, fromSession: false };
 
   if (!session || !session.results) return { toolId: idOrIndex, fromSession: false };
 
-  const index = parseInt(idOrIndex, 10) - 1;
+  const index = numeric ? parseInt(idOrIndex, 10) - 1 : session.results.findIndex((item) => item.tool_id === idOrIndex);
   if (index < 0 || index >= session.results.length) {
     return { toolId: idOrIndex, fromSession: false };
   }
@@ -51,8 +52,10 @@ export function resolveToolId(idOrIndex, { session = readSession() } = {}) {
   return {
     toolId: session.results[index].tool_id,
     name: session.results[index].name,
-    discoveryId: session.discoveryId,
+    discoveryId: session.upgradedFromPublic ? session.results[index].discoveryId : session.discoveryId,
     fromSession: true,
+    ...(session.upgradedFromPublic &&
+      session.results[index].authenticated !== true && { requiresAuthentication: true }),
   };
 }
 

@@ -7,6 +7,26 @@ export const EX_NOPERM = 77;
 export const EX_CONFIG = 78;
 
 export const ERROR_CODES = {
+  AUTH_PUBLIC_CONTEXT: {
+    message: "A public discovery context cannot authorize this operation",
+    hint: "Log in, Inspect the selected tool without a public discovery ID, and review a fresh quote before Call",
+    exit: EX_NOPERM,
+  },
+  PUBLIC_DISCOVERY_UNAVAILABLE: {
+    message: "The endpoint requires authentication for discovery",
+    hint: "Use a compatible endpoint or log in; no anonymous fallback or trial registration was attempted",
+    exit: EX_UNAVAILABLE,
+  },
+  AUTH_PUBLIC_CREDENTIAL_CONFLICT: {
+    message: "Public read-only mode cannot be combined with configured credentials",
+    hint: "Use the configured login, or an isolated CLI configuration without credentials for public discovery",
+    exit: EX_CONFIG,
+  },
+  AUTH_PUBLIC_OPERATION_DENIED: {
+    message: "Public read-only mode only supports Discover and Inspect",
+    hint: "Log in and refresh discovery before probing or calling a capability",
+    exit: EX_NOPERM,
+  },
   TRIAL_CREDENTIAL_EXISTS: {
     message: "Existing credentials were preserved; trial registration was not sent",
     hint: "Use the configured login, or a separate CLI configuration for an explicit trial",

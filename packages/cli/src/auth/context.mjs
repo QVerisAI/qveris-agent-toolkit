@@ -30,6 +30,12 @@ export function authorizationContextForApiKey(apiKey) {
   return `${CONTEXT_PREFIX}:api-key:${digest([apiKey])}`;
 }
 
+export function authorizationContextForPublicDiscovery() {
+  // This local cache label is deliberately distinct from every credential
+  // context. It grants no authority after login or for a capability call.
+  return `${CONTEXT_PREFIX}:public-discovery`;
+}
+
 export function authorizationContextIdForOAuth(metadata, secret) {
   return validStoredId(metadata?.authorization_context_id)
     ? metadata.authorization_context_id
