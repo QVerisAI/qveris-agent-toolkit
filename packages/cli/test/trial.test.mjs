@@ -17,6 +17,8 @@ import { getConfigPath, readConfig, writeConfig } from "../src/config/store.mjs"
 import { main } from "../src/main.mjs";
 
 const base = "https://trial.example.test/api/v1";
+const existingKey = randomUUID();
+const concurrentKey = randomUUID();
 const issued = {
   api_key: randomUUID(),
   claim_code: randomUUID(),
@@ -169,8 +171,8 @@ test("actual dispatch issues once, preserves non-50 terms, uses stored credentia
     assert.equal(exported.api_key, issued.api_key);
     assert.equal(exported.claim_code, issued.claim_code);
     await assert.rejects(provider.getCredential({ resource: `${base}/other` }), /endpoint/);
-    writeConfig({ ...readConfig(), api_key: "existing-key" });
-    assert.equal(resolveApiKey(), "existing-key");
+    writeConfig({ ...readConfig(), api_key: existingKey });
+    assert.equal(resolveApiKey(), existingKey);
     assert.equal(discovery, 2);
   }));
 
@@ -197,7 +199,7 @@ test("existing key, environment key, OAuth, or missing secure storage stop regis
       return reply();
     };
     for (const config of [
-      { api_key: "existing" },
+      { api_key: existingKey },
       { oauth_session: { storage: "config", issuer: "https://fixture.test" } },
     ]) {
       writeConfig(config);
@@ -205,11 +207,11 @@ test("existing key, environment key, OAuth, or missing secure storage stop regis
       assert.deepEqual(readConfig(), config);
     }
     writeConfig({});
-    process.env.QVERIS_API_KEY = "environment-key";
+    process.env.QVERIS_API_KEY = randomUUID();
     assert.equal((await register()).exit, 78);
     delete process.env.QVERIS_API_KEY;
     assert.equal((await cli("auth", "trial", "--json", "--base-url", base)).exit, 78);
-    assert.equal((await register("--api-key=flag-key")).exit, 78);
+    assert.equal((await register(`--api-key=${randomUUID()}`)).exit, 78);
     assert.equal(requests, 0);
   }));
 
@@ -256,13 +258,13 @@ test("explicit rejected registration can be retried; invalid local input never s
 test("concurrent regular login is preserved and prevents trial activation", () =>
   isolated(async () => {
     globalThis.fetch = async () => {
-      writeConfig({ ...readConfig(), api_key: "concurrent-login" });
+      writeConfig({ ...readConfig(), api_key: concurrentKey });
       return reply();
     };
     const result = await register();
     assert.equal(result.exit, 0, result.stderr);
     assert.equal(JSON.parse(result.stdout).active, false);
-    assert.equal(resolveApiKey(), "concurrent-login");
+    assert.equal(resolveApiKey(), concurrentKey);
     assert.equal(JSON.parse((await cli("auth", "trial", "--export")).stdout).api_key, issued.api_key);
   }));
 
@@ -279,7 +281,7 @@ test("Keyring success survives metadata failure and supports export before local
     assert.equal(exported.registration.recovery_pending, true);
     assert.equal(exported.registration.active, false);
     f.fail(false);
-    f.setConfig({ ...f.config(), api_key: "concurrent-login" });
+    f.setConfig({ ...f.config(), api_key: concurrentKey });
     const recovered = await f.store.recoverTrialRegistration();
     assert.equal(recovered.operation_id, registration.operation_id);
     assert.equal(recovered.active, false);
