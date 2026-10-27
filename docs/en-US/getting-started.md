@@ -16,6 +16,24 @@ For provider comparison, Inspect every candidate when current scope or a complet
 
 ---
 
+## Choose how to authenticate
+
+- **Browser trial:** choose **Try in browser** in a tool page’s workbench; when the page displays trial controls, start explicitly and review the tool, inputs and quote before confirming one Call. No API key is returned to the browser. The [authentication and trial guide](/auth.md) explains recovery and claim.
+
+- **OAuth:** use `qveris auth login`, or add the Hosted MCP endpoint in a client that supports OAuth discovery. Complete browser authorization without copying an API key.
+- **Existing API key:** keep using it. Set `QVERIS_API_KEY` privately for REST/SDK/CLI, or use `qveris login` for masked key entry. This command requires a key; it is different from `qveris auth login`.
+- **Agent without credentials:** explicitly register an anonymous trial using the existing Agent API. Registration issues credentials; it is not unauthenticated Discover or Call. See [Authentication and trial lifecycle](/auth.md) for one-time secrets, limits, expiry, and current claim restrictions.
+
+Discover is free but still requires authentication. Never paste keys or claim codes into prompts, URLs, shared configuration, logs, or source control.
+
+## Browser result, recovery and claim
+
+A tool result may still be awaiting settlement. After a timeout or lost response, recover the original operation through the page; stopping the wait does not undo execution. Do not automatically replay a Call or create another trial. A quote is not a price lock, and any displayed tolerance is not extra granted credit.
+
+When browser claim controls are available, verify a new account or continue with the receiving existing account, signing in if needed. Claim preserves the remaining original grant and its expiry, revokes old trial keys, and requires explicit formal identity continuation. Available formal-account credits automatically repay confirmed debt; insufficient credits leave the rest outstanding without blocking claim. Pending/unknown execution must first be reconciled. Read the receipt's repayment and remaining account debt, then refresh identity and permissions. Refresh an old discovery context with Discover; for an already selected tool, recheck inputs, permissions and the quote. Reuse a valid formal-account session; sign in only if needed. The Agent API uses separate credentials and claim rules.
+
+Open [Saved trials](/account?page=saved-trials) in Account for receipts and original execution/search history summaries, up to 10 records per page. Use the verified receiving account; trial cookies and local claim references are not required. Source history stays separate from the ordinary usage list. Original provider response bodies are not shown.
+
 ## Quick start
 
 There are several ways to use QVeris. Pick the one that fits your workflow.
