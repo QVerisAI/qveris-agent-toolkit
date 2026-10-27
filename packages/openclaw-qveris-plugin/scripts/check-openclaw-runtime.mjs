@@ -77,7 +77,9 @@ try {
   const errorDiagnostics = [...(inspection.diagnostics ?? [])].filter((diagnostic) => diagnostic.level === "error");
 
   assertEqual(inspection.plugin?.id, manifest.id, "runtime plugin id");
-  assertEqual(inspection.plugin?.status, "loaded", "runtime plugin status");
+  if (inspection.plugin?.status !== "loaded") {
+    fail(`OpenClaw runtime registration failed:\n${JSON.stringify({ plugin: inspection.plugin, diagnostics: inspection.diagnostics }, null, 2)}`);
+  }
   assertEqual(inspection.plugin?.version, packageJson.version, "runtime plugin version");
   assertArrayEqual(registeredToolNames, expected, "registered tool names");
   assertArrayEqual(registrationGroupNames, expected, "runtime registration-group names");
