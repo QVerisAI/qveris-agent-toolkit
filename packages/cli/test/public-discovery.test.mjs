@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -85,10 +86,11 @@ test("public mode rejects configured keys and OAuth before HTTP while default mi
         (error) => error.code === "AUTH_PUBLIC_CREDENTIAL_CONFLICT",
       );
     }
-    process.env.QVERIS_API_KEY = "bad-environment-key";
+    // Generate a disposable fixture value; no credential is embedded in source.
+    process.env.QVERIS_API_KEY = randomUUID();
     await assert.rejects(runDiscover("weather", flags), (error) => error.code === "AUTH_PUBLIC_CREDENTIAL_CONFLICT");
     delete process.env.QVERIS_API_KEY;
-    writeConfig({ api_key: "bad-config-key" });
+    writeConfig({ api_key: randomUUID() });
     await assert.rejects(runDiscover("weather", flags), (error) => error.code === "AUTH_PUBLIC_CREDENTIAL_CONFLICT");
     writeConfig({ oauth_session: { issuer: "https://unit.test", expires_at: 1, storage: "session" } });
     getOAuthSessionMetadata({ fresh: true });
@@ -182,7 +184,8 @@ test("login refreshes a public selection by authenticated Inspect, then validate
       throw new Error("Unexpected request");
     };
     await runDiscover("weather", flags);
-    process.env.QVERIS_API_KEY = "synthetic-login-key";
+    const fixtureKey = randomUUID();
+    process.env.QVERIS_API_KEY = fixtureKey;
     const authenticated = { baseUrl, json: true, params: '{"city":"London"}' };
     await assert.rejects(runCall("1", authenticated), (error) => error.code === "AUTH_PUBLIC_CONTEXT");
     assert.equal(requests.length, 1);
@@ -201,9 +204,9 @@ test("login refreshes a public selection by authenticated Inspect, then validate
     );
     assert.equal(requests.at(-1).body.search_id, "authenticated-search");
     assert.deepEqual(requests.at(-1).body.parameters, { city: "London" });
-    for (const { headers } of requests.slice(1)) assert.equal(headers.Authorization, "Bearer synthetic-login-key");
+    for (const { headers } of requests.slice(1)) assert.equal(headers.Authorization, `Bearer ${fixtureKey}`);
     await assert.rejects(
-      callTool({ apiKey: "synthetic-login-key", baseUrl, toolId: "a", discoveryId: publicId, parameters: {} }),
+      callTool({ apiKey: fixtureKey, baseUrl, toolId: "a", discoveryId: publicId, parameters: {} }),
       (error) => error.code === "AUTH_PUBLIC_CONTEXT",
     );
   }));
