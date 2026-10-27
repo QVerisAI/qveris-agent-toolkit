@@ -75,7 +75,7 @@ export async function runInspect(idsOrIndexes, flags) {
   }
 
   if (!discoveryId) discoveryId = getSessionDiscoveryId({ session });
-  if (upgrading) discoveryId = null;
+  if (upgrading || session?.upgradedFromPublic) discoveryId = null;
 
   const spinner = flags.json ? { stop() {} } : createSpinner("Inspecting tools...");
 
@@ -92,19 +92,30 @@ export async function runInspect(idsOrIndexes, flags) {
 
     spinner.stop();
 
-    if (upgrading) {
+    if (upgrading || session?.upgradedFromPublic) {
       if (!result.search_id || result.search_id.startsWith("pub_")) throw new CliError("AUTH_PUBLIC_CONTEXT");
+      const inspected = new Map(
+        (result.results ?? []).filter((tool) => toolIds.includes(tool.tool_id)).map((tool) => [tool.tool_id, tool]),
+      );
       writeSession({
         baseUrl,
         authorizationContext,
         discoveryId: result.search_id,
         upgradedFromPublic: true,
         query: session.query,
-        results: (result.results ?? []).map((tool, index) => ({
-          index: index + 1,
-          tool_id: tool.tool_id,
-          name: tool.name,
-        })),
+        // Preserve the original position-to-tool mapping. A subset or reordered
+        // Inspect response must never renumber the user's public selections.
+        results: session.results.map((selection) => {
+          const current = inspected.get(selection.tool_id);
+          if (!toolIds.includes(selection.tool_id))
+            return { ...selection, authenticated: !upgrading && selection.authenticated === true };
+          return {
+            ...selection,
+            authenticated: Boolean(current),
+            discoveryId: current ? result.search_id : null,
+            ...(current?.name !== undefined && { name: current.name }),
+          };
+        }),
       });
     }
 

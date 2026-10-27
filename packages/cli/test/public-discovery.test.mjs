@@ -9,6 +9,7 @@ import { discoverTools, inspectToolsByIds, callTool } from "../src/client/api.mj
 import { runDiscover } from "../src/commands/discover.mjs";
 import { runInspect } from "../src/commands/inspect.mjs";
 import { runCall } from "../src/commands/call.mjs";
+import { runProbe } from "../src/commands/probe.mjs";
 import { main } from "../src/main.mjs";
 import { readSession } from "../src/session/session.mjs";
 import { writeConfig } from "../src/config/store.mjs";
@@ -154,11 +155,72 @@ test("malformed public contracts and authentication failures do not become disco
       (error) => error.code === "PUBLIC_DISCOVERY_UNAVAILABLE",
     );
     await assert.rejects(
-      discoverTools({ baseUrl, apiKey: "bad-synthetic", query: "weather" }),
+      discoverTools({ baseUrl, apiKey: randomUUID(), query: "weather" }),
       (error) => error.code === "AUTH_INVALID_KEY",
     );
     assert.equal(calls, 2);
   }));
+
+for (const order of [["2", "1"], ["2"]]) {
+  test(`authenticated Inspect ${order.join(" ")} preserves original public indices and only verifies requested tools`, async () =>
+    fixture(async () => {
+      const tools = [tool, { ...tool, tool_id: "tool-b", name: "Synthetic second tool" }];
+      const executions = [];
+      let requests = 0;
+      globalThis.fetch = async (url, options) => {
+        requests++;
+        const endpoint = new URL(url);
+        const body = JSON.parse(options.body);
+        if (endpoint.pathname.endsWith("/search")) return response({ ...publicResult(), results: tools });
+        if (endpoint.pathname.endsWith("/tools/by-ids")) {
+          assert.notEqual(body.search_id, publicId);
+          // Deliberately return catalog order, independent of requested order.
+          return response({
+            search_id: `auth-${body.tool_ids.join("-")}`,
+            results: tools.filter((item) => body.tool_ids.includes(item.tool_id)),
+          });
+        }
+        if (endpoint.pathname.endsWith("/tools/probe"))
+          return response({
+            executable: true,
+            schema: { valid: true },
+            quote: { currency: "credits", exact: true, estimate_credits: 1 },
+          });
+        if (endpoint.pathname.endsWith("/tools/execute")) {
+          executions.push({ toolId: endpoint.searchParams.get("tool_id"), body });
+          return response({ execution_id: `execution-${executions.length}`, success: true });
+        }
+        throw new Error("Unexpected request");
+      };
+      await runDiscover("weather", flags);
+      process.env.QVERIS_API_KEY = randomUUID();
+      const authenticated = { baseUrl, json: true, params: '{"city":"London"}' };
+      await runInspect(order, authenticated);
+      assert.deepEqual(
+        readSession().results.map((item) => item.tool_id),
+        ["tool-a", "tool-b"],
+      );
+      assert.equal(readSession().results[1].authenticated, true);
+      if (order.length === 1) {
+        const before = requests;
+        for (const value of ["1", "tool-a"])
+          await assert.rejects(runCall(value, authenticated), (error) => error.code === "AUTH_PUBLIC_CONTEXT");
+        await assert.rejects(runProbe("1", authenticated), (error) => error.code === "AUTH_PUBLIC_CONTEXT");
+        assert.equal(requests, before);
+      }
+      await runCall("2", authenticated);
+      assert.equal(executions.at(-1).toolId, "tool-b");
+      assert.deepEqual(executions.at(-1).body.parameters, { city: "London" });
+      const secondContext = executions.at(-1).body.search_id;
+      // A later subset upgrades A without renumbering or losing B's own context.
+      await runInspect(["1"], authenticated);
+      await runCall("1", authenticated);
+      assert.equal(executions.at(-1).toolId, "tool-a");
+      await runCall("2", authenticated);
+      assert.equal(executions.at(-1).toolId, "tool-b");
+      assert.equal(executions.at(-1).body.search_id, secondContext);
+    }));
+}
 
 test("login refreshes a public selection by authenticated Inspect, then validates current input/quote before explicit Call", async () =>
   fixture(async () => {

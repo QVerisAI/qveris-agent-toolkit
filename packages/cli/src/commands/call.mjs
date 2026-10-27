@@ -114,6 +114,7 @@ export async function runCall(idOrIndex, flags) {
   }
 
   const resolved = resolveToolId(idOrIndex, { session });
+  if (resolved.requiresAuthentication) throw new CliError("AUTH_PUBLIC_CONTEXT");
   if (numericIndex && !resolved.fromSession) {
     throw new CliError("SESSION_EXPIRED", "No matching discovery index. Run 'qveris discover' first.");
   }
