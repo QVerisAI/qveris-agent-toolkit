@@ -63,6 +63,7 @@ QVeris 提供多种使用方式，选择最适合你的即可。
 
 ```bash
 npm install -g @qverisai/cli
+export QVERIS_BASE_URL="https://qveris.cn/api/v1"
 qveris auth login
 qveris discover "天气预报 API" --json
 ```
