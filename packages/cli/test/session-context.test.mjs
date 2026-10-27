@@ -7,6 +7,7 @@ import test from "node:test";
 import {
   authorizationContextForApiKey,
   authorizationContextForOAuth,
+  authorizationContextForPublicDiscovery,
   deriveLegacyOAuthAuthorizationContextId,
 } from "../src/auth/context.mjs";
 import { readSessionForContext, writeSession } from "../src/session/session.mjs";
@@ -74,6 +75,28 @@ test("stored discovery sessions require exact endpoint and authorization context
         baseUrl: "https://b.test/api/v1",
         authorizationContext: "v1:api-key:account-a",
       }).status,
+      "context_mismatch",
+    );
+
+    const publicContext = authorizationContextForPublicDiscovery();
+    // Login must not reuse a public selection; switching back must not reuse
+    // an authenticated selection either, even on the same endpoint.
+    assert.equal(
+      readSessionForContext({ baseUrl: "https://a.test/api/v1", authorizationContext: publicContext }).status,
+      "context_mismatch",
+    );
+    writeSession({
+      discoveryId: "public-search",
+      baseUrl: "https://a.test/api/v1",
+      authorizationContext: publicContext,
+      results: [{ tool_id: "public.weather" }],
+    });
+    assert.equal(
+      readSessionForContext({ baseUrl: "https://a.test/api/v1", authorizationContext: publicContext }).status,
+      "match",
+    );
+    assert.equal(
+      readSessionForContext({ baseUrl: "https://a.test/api/v1", authorizationContext: "v1:api-key:account-a" }).status,
       "context_mismatch",
     );
     assert.equal(
