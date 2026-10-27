@@ -193,6 +193,7 @@ const SHORT_BOOLS = { j: "json", v: "verbose", V: "version", h: "help" };
 
 // --key=value long flag mapping (flag name -> flags property)
 const VALUE_FLAGS = {
+  "agent-name": "agentName",
   "api-key": "apiKey",
   "base-url": "baseUrl",
   timeout: "timeout",
@@ -343,6 +344,12 @@ function extractGlobalFlags(args) {
       case "--no-browser":
         flags.noBrowser = true;
         break;
+      case "--export":
+        flags.export = true;
+        break;
+      case "--agent-name":
+        flags.agentName = takeNext(args, i++, arg);
+        break;
       case "--allow-unencrypted-storage":
         flags.allowUnencryptedStorage = true;
         break;
@@ -491,7 +498,7 @@ function printUsage(flags = {}) {
     ${cyan("reconcile-call")}                Read the original Call by its idempotency key
 
   ${bold("Account:")}
-    ${cyan("auth")}      login|status|logout  OAuth Device Flow session
+    ${cyan("auth")}      login|status|logout|trial  Manage credentials; trial explicitly creates an Agent account
     ${cyan("login")}                        Paste and validate an API key
     ${cyan("logout")}                       Remove stored API key
     ${cyan("whoami")}                       Show current auth status
@@ -517,7 +524,9 @@ function printUsage(flags = {}) {
     --scope <scopes>       OAuth scopes for auth login (must include offline_access)
     --resource <url>       OAuth resource for auth login
     --allow-unencrypted-storage
-                           Persist OAuth tokens in the user-only config file when no keyring is available
+                           Persist credentials unencrypted in the user-only config file when no keyring is available
+    --agent-name <name>    Optional name for explicit auth trial registration
+    --export               Explicitly output trial key and claim code (auth trial only)
     --timeout <seconds>    Request timeout
     --view <routing|full>  Discover response projection
     --lang <zh|en>         Discover response language

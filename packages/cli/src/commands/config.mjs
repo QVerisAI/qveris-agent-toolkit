@@ -1,3 +1,4 @@
+import { hasStoredTrialCredential, removeTrialCredential } from "../auth/trial-storage.mjs";
 import { getConfigPath, getConfigValue, setConfigValue, writeConfig } from "../config/store.mjs";
 import { resolveAll } from "../config/resolve.mjs";
 import { resolveApiBaseUrl } from "../client/api.mjs";
@@ -88,7 +89,7 @@ function configList(flags) {
 
   const { baseUrl, source: endpointSource } = resolveApiBaseUrl({
     baseUrlFlag: flags.baseUrl,
-    preferOAuth: !all.api_key?.value && hasOAuthSession(),
+    preferOAuth: !all.api_key?.value && (hasOAuthSession() || hasStoredTrialCredential()),
   });
 
   if (flags.json) {
@@ -131,6 +132,7 @@ async function configReset() {
       );
     }
     await deleteOAuthSession();
+    await removeTrialCredential();
     writeConfig({});
   });
   if (cleanupWarning) throw cleanupWarning;

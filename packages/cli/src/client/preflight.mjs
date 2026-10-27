@@ -1,3 +1,4 @@
+import { hasStoredTrialCredential } from "../auth/trial-storage.mjs";
 import { resolve } from "../config/resolve.mjs";
 import { getSiteUrl } from "../config/endpoint.mjs";
 import { getOAuthSessionMetadata } from "../auth/storage.mjs";
@@ -54,7 +55,7 @@ function endpointRecoveryHint(code, baseUrl) {
 async function defaultProbe({ apiKey, baseUrl, authType }) {
   // "test" matches the probe query login/whoami use to validate a key.
   return discoverTools({
-    ...(authType === "oauth" ? {} : { apiKey }),
+    ...(authType !== "api_key" ? {} : { apiKey }),
     baseUrl,
     query: "test",
     limit: 1,
@@ -74,16 +75,18 @@ export function localPreflight({ apiKeyFlag, baseUrlFlag, nodeVersion = process.
   let authType = "api_key";
   if (!apiKey || typeof apiKey !== "string" || !apiKey.trim()) {
     const oauthSession = !apiKey ? getOAuthSessionMetadata() : null;
-    if (!oauthSession) {
+    if (!oauthSession && !(apiKey === undefined && hasStoredTrialCredential())) {
       checks.push(check("api_key", "fail", ERROR_CODES.AUTH_MISSING_KEY.message, ERROR_CODES.AUTH_MISSING_KEY.hint));
       return { checks, ok: false, apiKey: null, authType: null, baseUrl: null };
     }
-    authType = "oauth";
+    authType = oauthSession ? "oauth" : "trial";
     checks.push(
       check(
-        "oauth",
+        authType,
         "ok",
-        `OAuth Device Flow session configured (via oauth session; ${oauthSession.storage || "unknown"} storage)`,
+        oauthSession
+          ? `OAuth Device Flow session configured (via oauth session; ${oauthSession.storage || "unknown"} storage)`
+          : "Legacy Agent trial credential configured (via trial registration)",
       ),
     );
   } else {
@@ -92,7 +95,7 @@ export function localPreflight({ apiKeyFlag, baseUrlFlag, nodeVersion = process.
 
   let endpoint;
   try {
-    endpoint = resolveApiBaseUrl({ baseUrlFlag, preferOAuth: authType === "oauth" });
+    endpoint = resolveApiBaseUrl({ baseUrlFlag, preferOAuth: authType !== "api_key" });
   } catch (err) {
     checks.push(check("endpoint", "fail", err.message, err.hint));
     return { checks, ok: false, apiKey, authType, baseUrl: null };

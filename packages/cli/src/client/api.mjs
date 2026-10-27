@@ -1,3 +1,4 @@
+import { getTrialRegistration, hasStoredTrialCredential } from "../auth/trial-storage.mjs";
 import { randomUUID } from "node:crypto";
 import { getSiteUrl, resolveBaseUrl } from "../config/endpoint.mjs";
 import { CliError } from "../errors/handler.mjs";
@@ -25,6 +26,7 @@ export function resolveApiBaseUrl({ baseUrlFlag, preferOAuth = false } = {}) {
       }
       return { baseUrl, source: "oauth session" };
     }
+    if (hasStoredTrialCredential()) return { baseUrl: getTrialRegistration().base_url, source: "trial registration" };
   }
   return resolveBaseUrl({ baseUrlFlag });
 }
