@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -17,8 +18,8 @@ import { main } from "../src/main.mjs";
 
 const base = "https://trial.example.test/api/v1";
 const issued = {
-  api_key: "fixture-issued-key",
-  claim_code: "fixture-claim-code",
+  api_key: randomUUID(),
+  claim_code: randomUUID(),
   agent_id: "agent-fixture",
   trial_credits: 75.125,
   expires_at: "2099-12-31T00:00:00Z",

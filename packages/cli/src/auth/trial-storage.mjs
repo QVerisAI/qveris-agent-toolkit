@@ -5,7 +5,7 @@ import { CliError } from "../errors/handler.mjs";
 import { hasOAuthSession, withOAuthRefreshLock } from "./storage.mjs";
 
 const JOURNAL = "trial_registration";
-const SECRET = "trial_registration_secret";
+const SECRET_CONFIG_KEY = "trial_registration_secret";
 
 async function keyringEntry(operationId) {
   if (process.env.QVERIS_DISABLE_KEYRING === "1") return null;
@@ -23,7 +23,7 @@ export function validSecret(value) {
     value.length > 0 &&
     value.length <= 16384 &&
     value === value.trim() &&
-    !Array.from(value).some((character) => character.charCodeAt(0) <= 32 || character.charCodeAt(0) === 127)
+    !Array.from(value).some((character) => character.charCodeAt(0) <= 32 || character.charCodeAt(0) > 126)
   );
 }
 
@@ -145,7 +145,7 @@ export function createTrialStorage({
       record =
         registration.storage === "keyring"
           ? JSON.parse((await entryFor(registration.operation_id))?.getPassword() || "null")
-          : read()[SECRET];
+          : read()[SECRET_CONFIG_KEY];
     } catch {
       throw new CliError("TRIAL_STORAGE_FAILED");
     }
@@ -193,7 +193,11 @@ export function createTrialStorage({
         }
       }
       const metadata = issuedMetadata(current, data, config);
-      write({ ...config, [JOURNAL]: metadata, ...(current.storage === "config" ? { [SECRET]: record } : {}) });
+      write({
+        ...config,
+        [JOURNAL]: metadata,
+        ...(current.storage === "config" ? { [SECRET_CONFIG_KEY]: record } : {}),
+      });
       return metadata;
     });
   }
@@ -263,7 +267,7 @@ export function createTrialStorage({
         throw new CliError("TRIAL_STORAGE_FAILED");
       }
     }
-    delete config[SECRET];
+    delete config[SECRET_CONFIG_KEY];
     write({ ...config, [JOURNAL]: { ...registration, state: "logged_out", active: false } });
   }
 
