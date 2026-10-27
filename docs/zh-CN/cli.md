@@ -52,6 +52,22 @@ Call 是独立的成本决策：选择当前结果，按契约构造真实参数
 
 ---
 
+## 显式公开只读发现
+
+需要 CLI **0.12.0 或更高版本**；使用前确认对应版本已在软件包仓库发布。上方默认 OAuth／API 密钥命令仍用于认证操作。
+
+使用独立的无凭据环境与 CLI 配置。`--public-read-only` 会拒绝已配置的密钥、OAuth 会话或试用凭据，不会悄悄丢弃身份；错误密钥不会降级为公开访问。
+
+```bash
+qveris discover "网页搜索" --public-read-only --limit 1 --json --base-url https://qveris.ai/api/v1
+# Discover 返回结果后，检查其中第一个选择：
+qveris inspect 1 --public-read-only --json --base-url https://qveris.ai/api/v1
+```
+
+仅允许 Discover 和 Inspect。公开读取不创建账号、密钥、试用积分或执行授权，使用 `pub_` 上下文，不含账号价格或余额。不得混入身份／会话证明。遇到 401，应报告认证要求；遇到 429，遵循 Retry-After 与有界读取重试策略，不得轮换身份或注册试用绕过限制。
+
+继续 Call 时明确完成认证，保留已选工具与输入意图，执行认证 Inspect，不携带旧公开 search_id。登录后 Inspect 原公开会话中的结果序号时，CLI 会刷新该选择。核对新契约、权限及必要报价，明确确认成本后再 Call；不要求仅为认证升级而额外 Discover。公开输入限制与错误见 [REST 指南](/docs/rest-api)。
+
 ## 命令
 
 ### `qveris init`

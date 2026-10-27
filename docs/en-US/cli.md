@@ -52,6 +52,22 @@ Call is a separate cost decision: choose a current result, build real parameters
 
 ---
 
+## Explicit public read-only discovery
+
+Requires CLI **0.12.0 or later**; verify that the version is available from the package registry before using these examples. The default OAuth/API-key commands above remain authenticated.
+
+Use a separate credential-free environment and CLI profile. `--public-read-only` rejects a configured key, OAuth session or trial credential instead of silently dropping it; an invalid key never falls back to public access.
+
+```bash
+qveris discover "web search" --public-read-only --limit 1 --json --base-url https://qveris.ai/api/v1
+# If Discover returned a result, inspect its first selection:
+qveris inspect 1 --public-read-only --json --base-url https://qveris.ai/api/v1
+```
+
+Only Discover and Inspect are allowed. Public reads create no account, key, trial credits or execution authority; results use a `pub_` context and exclude account-specific prices/balances. Do not combine this mode with identity/session proofs. On 401, report the authentication requirement; on 429, honor Retry-After and the bounded read retry policy. Never switch identities or register a trial to evade a limit.
+
+To continue with Call, deliberately authenticate, preserve the selected tool/input intent, and run authenticated Inspect without the old public search_id. The CLI refreshes a selected public-session index when inspecting after login. Review the fresh contract, permissions and any necessary quote, then explicitly approve cost before Call. No extra Discover is mandatory solely for authentication upgrade. The [REST guide](/docs/rest-api) defines public input limits and errors.
+
 ## Commands
 
 ### `qveris init`
