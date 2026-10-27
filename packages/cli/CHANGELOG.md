@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-27
+
 ### Fixed
 
 - Classify login, identity, OAuth status, and doctor validation failures without blaming valid credentials for permission, credit, rate-limit, timeout, network, or service failures. Preserve JSON diagnostics, HTTP status, credential source, and established error exit codes.
@@ -148,7 +150,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial release: `discover` / `inspect` / `call` from the terminal against the QVeris API.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.3...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.12.0...HEAD
+[0.12.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.3...cli-v0.12.0
 [0.11.3]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.2...cli-v0.11.3
 [0.11.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.1...cli-v0.11.2
 [0.11.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.0...cli-v0.11.1
