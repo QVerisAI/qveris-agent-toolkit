@@ -311,7 +311,11 @@ test("expiry and logout prevent further use and never create a replacement accou
     writeConfig({ ...readConfig(), trial_registration: { ...registration, expires_at: "2000-01-01T00:00:00Z" } });
     const { resolveCredentialProvider } = await import("../src/client/auth.mjs");
     await assert.rejects(resolveCredentialProvider().getCredential({ resource: base }), { code: "TRIAL_EXPIRED" });
-    assert.equal((await cli("auth", "logout", "--json")).exit, 0);
+    const logout = await cli("auth", "logout", "--json");
+    assert.equal(logout.exit, 0);
+    assert.equal(JSON.parse(logout.stdout).revoked, false);
+    assert.equal(JSON.parse(logout.stdout).oauth_revoked, null);
+    assert.equal(JSON.parse(logout.stdout).trial_revocation, "not_attempted");
     assert.equal(readConfig().trial_registration_secret, undefined);
     assert.equal(getTrialRegistration().state, "logged_out");
     assert.equal((await register()).exit, 75);
@@ -386,6 +390,7 @@ test("recovery binds saved response to the original operation and endpoint", () 
         ...f.config(),
         trial_registration: { ...f.config().trial_registration, ...changed, state: "unknown" },
       });
+      await assert.rejects(f.store.persistTrialCredential(registration, issued), { code: "TRIAL_STORAGE_FAILED" });
       await assert.rejects(f.store.recoverTrialRegistration(), { code: "TRIAL_STORAGE_FAILED" });
       await assert.rejects(f.store.exportTrialCredential(), { code: "TRIAL_STORAGE_FAILED" });
     }

@@ -211,9 +211,11 @@ async function authLogout(flags) {
   let revokeError = null;
   let localError = null;
   let lockAcquired = false;
+  let trialRegistration = null;
   try {
     await withOAuthRefreshLock(async () => {
       lockAcquired = true;
+      trialRegistration = getTrialRegistration();
       metadata = getOAuthSessionMetadata({ fresh: true });
       secret = await loadOAuthSessionSecret(metadata, { fresh: true });
       try {
@@ -232,11 +234,18 @@ async function authLogout(flags) {
     localError ||= error;
   }
   const remoteRevoked = lockAcquired && (!metadata || Boolean(secret && !revokeError));
-  const result = { authenticated: false, local_credentials_removed: !localError, revoked: remoteRevoked };
+  const result = {
+    authenticated: false,
+    local_credentials_removed: !localError,
+    revoked: trialRegistration ? false : remoteRevoked,
+    ...(trialRegistration ? { oauth_revoked: metadata ? remoteRevoked : null, trial_revocation: "not_attempted" } : {}),
+  };
   if (flags.json) console.log(JSON.stringify(result, null, 2));
   else {
     if (localError) console.error(`  ${red("!")} Local credentials could not be completely removed.`);
     else console.log(`  ${green("✓")} Local credentials removed.`);
+    if (trialRegistration && !localError)
+      console.log("  Trial credentials were removed locally; the trial key was not revoked remotely.");
     if (revokeError) {
       console.error(
         localError

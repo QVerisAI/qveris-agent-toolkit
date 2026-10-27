@@ -165,7 +165,12 @@ export function createTrialStorage({
     return lock(async () => {
       const config = read();
       const current = getTrialRegistration();
-      if (current?.operation_id !== registration.operation_id || !["pending", "unknown"].includes(current.state))
+      if (
+        current?.operation_id !== registration.operation_id ||
+        current.base_url !== registration.base_url ||
+        current.storage !== registration.storage ||
+        !["pending", "unknown"].includes(current.state)
+      )
         throw new CliError("TRIAL_STORAGE_FAILED");
       // Save the entire response first: metadata can then be reconstructed after
       // a crash between Keyring success and the config's atomic rename.
