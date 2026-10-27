@@ -30,6 +30,7 @@ import json
 import re
 import time
 import warnings
+from http.cookiejar import CookieJar
 from dataclasses import dataclass
 from urllib.parse import quote
 from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Set, Tuple, Union
@@ -81,6 +82,8 @@ from ..types import (
     UsageHistoryResponse,
 )
 from .retry import RetryPolicy
+from .access_mode import assert_operation_access, resolve_access_mode
+from .public_discovery import StatelessCookiePolicy, is_public_context, validate_public_body, validate_public_response
 
 
 _SENSITIVE_KEYS = frozenset(
@@ -205,12 +208,25 @@ class QverisClient:
         http_client: Optional[httpx.AsyncClient] = None,
         transport: Optional[httpx.AsyncBaseTransport] = None,
         limits: Optional[httpx.Limits] = None,
+        public_read_only: bool = False,
     ):
         self.config = config or QverisConfig()
         self.debug_callback = debug_callback
+        self._access_mode = resolve_access_mode(
+            public_read_only, self.config.api_key is not None or credential_provider is not None
+        )
+        if public_read_only and http_client is not None:
+            resolve_access_mode(
+                True,
+                headers=http_client.headers,
+                has_session_proof=bool(http_client.cookies) or http_client.auth is not None,
+            )
+            raise ValueError("Public read-only mode requires an independent HTTP client; use transport for injection")
         if credential_provider is not None and self.config.api_key:
             raise ValueError("Configure either api_key or credential_provider, not both")
-        if credential_provider is not None:
+        if public_read_only:
+            self.credential_provider = None
+        elif credential_provider is not None:
             if not callable(getattr(credential_provider, "get_credential", None)):
                 raise TypeError("credential_provider must implement get_credential")
             self.credential_provider = credential_provider
@@ -221,6 +237,8 @@ class QverisClient:
         self.headers = {
             "Content-Type": "application/json",
         }
+        if public_read_only:
+            self.headers["X-Qveris-Access-Mode"] = "public-readonly"
         if http_client is not None and (transport is not None or limits is not None):
             raise ValueError("http_client cannot be combined with transport or limits")
 
@@ -236,6 +254,7 @@ class QverisClient:
             timeout=self.config.read_timeout,
             transport=transport,
             limits=limits or httpx.Limits(),
+            **({"cookies": CookieJar(policy=StatelessCookiePolicy())} if public_read_only else {}),
         )
         self._retry = RetryPolicy(max_retries=self.config.max_retries)
         self._lifecycle_lock = asyncio.Lock()
@@ -452,6 +471,14 @@ class QverisClient:
     ) -> httpx.Response:
         """Send a request with operation-specific retry and a safe error boundary."""
         request_headers = dict(kwargs.pop("headers", {}))
+        assert_operation_access(self._access_mode, operation)
+        if self._access_mode == "public-read-only":
+            resolve_access_mode(
+                True,
+                self.config.api_key is not None or self.credential_provider is not None,
+                headers={**self.client.headers, **self.headers, **request_headers},
+                has_session_proof=bool(self.client.cookies) or self.client.auth is not None,
+            )
 
         def on_attempt() -> None:
             state.http_attempts += 1
@@ -469,6 +496,21 @@ class QverisClient:
 
             async def prepare_attempt() -> Dict[str, Any]:
                 nonlocal credential
+                if self._access_mode == "public-read-only":
+                    try:
+                        resolve_access_mode(
+                            True,
+                            self.config.api_key is not None or self.credential_provider is not None,
+                            headers={**self.client.headers, **self.headers, **request_headers},
+                            has_session_proof=bool(self.client.cookies) or self.client.auth is not None,
+                        )
+                    except ValueError:
+                        raise CredentialResolutionError(
+                            "Public read-only mode cannot be combined with credentials"
+                        ) from None
+                    # The owned client's explicit stateless CookieJar policy
+                    # neither stores Set-Cookie nor returns ambient cookies.
+                    return {"headers": {**self.headers, **request_headers}, "auth": None}
                 credential = await resolve_credential(
                     self.credential_provider,
                     self._credential_context(
@@ -563,7 +605,7 @@ class QverisClient:
             **kwargs,
         )
         unsupported = _unsupported_optional_fields(response, allowed_fields)
-        if not unsupported or not allow_fallback:
+        if not unsupported or not allow_fallback or self._access_mode == "public-read-only":
             return response
         state.compatibility_replays += 1
         fallback_payload = {key: value for key, value in payload.items() if key not in unsupported}
@@ -669,6 +711,8 @@ class QverisClient:
                         execution_id = envelope_execution_id
             try:
                 payload = self._unwrap_envelope(data, operation=operation, state=state)
+                if self._access_mode == "public-read-only":
+                    validate_public_response(payload)
                 if execution_id is None and isinstance(payload, dict):
                     payload_execution_id = payload.get("execution_id")
                     if isinstance(payload_execution_id, str) and payload_execution_id.strip():
@@ -862,6 +906,10 @@ class QverisClient:
             payload["view"] = view
         if lang is not None:
             payload["lang"] = lang
+        if self._access_mode == "public-read-only":
+            if session_id is not None:
+                payload["session_id"] = session_id
+            payload = validate_public_body(payload, "discover")
 
         state = _RequestState("discover", time.monotonic())
         with start_span(
@@ -911,6 +959,7 @@ class QverisClient:
         session_id: Optional[str] = None,
         timeout: Optional[float] = None,
         correlation_id: Optional[str] = None,
+        view: Optional[Literal["routing", "full"]] = None,
     ) -> SearchResponse:
         """
         Inspect one or more capabilities by tool ID.
@@ -924,8 +973,12 @@ class QverisClient:
             `SearchResponse` with full tool details for the requested IDs.
         """
         ids = [tool_ids] if isinstance(tool_ids, str) else list(tool_ids or [])
+        if self._access_mode != "public-read-only" and is_public_context(search_id):
+            raise ValueError(
+                "Public context cannot authorize authenticated actions; Inspect the selected IDs without it and review a fresh quote before Call"
+            )
         state = _RequestState("inspect", time.monotonic())
-        if not ids:
+        if not ids and self._access_mode != "public-read-only":
             await self._ensure_open(state)
             result = SearchResponse(search_id=search_id, total=0, results=[])
             result._set_request_metadata(self._request_metadata(state))
@@ -937,6 +990,15 @@ class QverisClient:
             payload["search_id"] = search_id
         if session_id:
             payload["session_id"] = session_id
+
+        if self._access_mode == "public-read-only":
+            if session_id is not None:
+                payload["session_id"] = session_id
+            if search_id is not None:
+                payload["search_id"] = search_id
+            if view is not None:
+                payload["view"] = view
+            payload = validate_public_body(payload, "inspect")
 
         with start_span(
             "qveris.inspect",
@@ -1063,6 +1125,10 @@ class QverisClient:
         Returns:
             `ToolExecutionResponse` with `success`, `result`, and metadata.
         """
+        if is_public_context(search_id):
+            raise ValueError(
+                "Public context cannot authorize Call. Refresh authenticated Inspect, inputs and quote first"
+            )
         url = self._url_for("POST", "tools/execute", params={"tool_id": tool_id})
         payload: Dict[str, Any] = {
             "parameters": parameters,

@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Add `PublicDiscoveryClient` and explicit `public_read_only=True` construction for credential-free Discover/Inspect. Reject mixed credentials, use a stateless cookie policy, and require fresh authenticated context before calling a previously selected public tool.
+
+### Added
+
 - Expose typed zero-quote settlement review details and preserve the explicit zero-quote Call guard. Guarded SDK Calls require strict single-submit compatibility; no automatic preflight or retry is added.
 
 - Support caller-supplied `idempotency_key` on Calls and typed read-only `reconcile_call(key)` lookup for the original execution and settlement state. Keyed Calls require strict compatibility mode and remain single-submit. ([#436])

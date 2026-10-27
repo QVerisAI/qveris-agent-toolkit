@@ -16,7 +16,17 @@
  */
 
 export { Qveris } from './client.js';
-export type { DiscoverOptions, InspectOptions, ProbeOptions, CallOptions, QverisClientOptions } from './client.js';
+export type {
+  DiscoverOptions,
+  InspectOptions,
+  ProbeOptions,
+  CallOptions,
+  QverisClientOptions,
+  PublicDiscoveryClient,
+  PublicDiscoveryClientOptions,
+  PublicDiscoverOptions,
+  PublicInspectOptions,
+} from './client.js';
 export { AgentDelegationCredentialProvider, AgentDelegationError, ApiKeyCredentialProvider } from './credentials.js';
 export type {
   AgentDelegationConstraints,
@@ -28,3 +38,5 @@ export type {
 } from './credentials.js';
 export { QverisApiError } from './errors.js';
 export * from './types.js';
+
+export type { PublicSearchResponse, PublicDiscoveryContext, PublicToolInfo } from './public-discovery.js';
