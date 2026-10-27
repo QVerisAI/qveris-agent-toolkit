@@ -63,8 +63,10 @@
 ### 🧑‍💻 我已经装了 OpenClaw / Cursor / Claude Code
 
 > 复制下面这句话发给你的 Agent，30 秒完成接入：
-> `Install QVeris skill following https://qveris.ai/skill/instruct.md and use QVERIS_API_KEY=你的key`
+> `Install QVeris skill following https://qveris.ai/skill/instruct.md. Do not request or include credentials in this chat.`
 > → [获取 API Key](https://qveris.ai/account?page=api-keys)（注册验证后一次性获得 1,000 体验积分）
+
+通过客户端密钥存储或本地环境私密配置 `QVERIS_API_KEY`；支持时使用浏览器 OAuth 授权。不要在安装提示词或聊天中提供密钥。
 
 ### ⚙️ 我是开发者，要通过 CLI / MCP / API / SDK 集成
 
@@ -121,7 +123,7 @@
 把下面这句话发给你的 Agent：
 
 ```
-Install QVeris skill following https://qveris.ai/skill/instruct.md and use QVERIS_API_KEY=你的key
+Install QVeris skill following https://qveris.ai/skill/instruct.md. Do not request or include credentials in this chat.
 ```
 
 Agent 会自动下载 [OpenClaw 官方技能](skills/openclaw/qveris-official/SKILL.md) 并完成安装。

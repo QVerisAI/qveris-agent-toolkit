@@ -59,6 +59,8 @@ Both surfaces map to the same QVeris protocol:
 
 ---
 
+For an existing key, keep the Bearer fallback below. An Agent without credentials can explicitly use [anonymous Agent registration](/auth.md), then configure its issued key. This issues a trial identity; the default Hosted MCP endpoint still requires OAuth or a key. Start with a Discover-only request and confirm inputs and cost separately before Call. Never put credentials into an installation prompt.
+
 ## Quick Start
 
 ### Hosted MCP (recommended)

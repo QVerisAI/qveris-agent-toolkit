@@ -49,6 +49,8 @@ Discover 免费；默认 CLI／SDK 和认证 MCP 接入仍需认证。不要把�
 
 在账户中打开[已保存试用](/account?page=saved-trials)，查看回执和原试用的执行／搜索历史摘要，每页最多 10 条。使用经过验证的接收账号即可，无需试用 cookie 或本地认领恢复记录。原历史独立保留，不会自动并入普通用量列表；不展示原始供应商响应正文。
 
+Call 结果未知时，保留原始执行 ID 和可用的幂等键，先通过[执行结果查询](/docs/api-reference/reconcile-call)核对结果，再考虑是否需要再次调用；超时或未找到记录并不能证明原调用未执行。
+
 ## 快速开始
 
 QVeris 提供多种使用方式，选择最适合你的即可。
@@ -60,7 +62,9 @@ QVeris 提供多种使用方式，选择最适合你的即可。
 **安装**
 
 ```bash
-curl -fsSL https://qveris.cn/cli/install | bash
+npm install -g @qverisai/cli
+qveris auth login
+qveris discover "天气预报 API" --json
 ```
 
 也可通过 npm 安装（`npm install -g @qverisai/cli`）或免安装运行（`npx @qverisai/cli`）。
@@ -549,7 +553,7 @@ console.log(data);
 
 ### 在 AI Agent 中安装 QVeris
 
-如果你正在配置 AI 编程助手或桌面端 Agent（Cursor、GitHub Copilot、Cline、Roo Code、Continue、Kiro、Junie、Augment、Zed、Google Antigravity、Qoder、CodeBuddy、WorkBuddy、OpenCode、TRAE 等），可以将 [Agent 安装指南](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/SETUP.md) 连同你的 API 密钥一起提供给 Agent。它会自动检测运行环境，并完成可用 MCP 服务器和技能定义的配置。
+如果你正在配置 AI 编程助手或桌面端 Agent（Cursor、GitHub Copilot、Cline、Roo Code、Continue、Kiro、Junie、Augment、Zed、Google Antigravity、Qoder、CodeBuddy、WorkBuddy、OpenCode、TRAE 等），可以将 [Agent 安装指南](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/SETUP.md) 提供给 Agent，但不要附带任何凭据。它会自动检测运行环境，并完成可用 MCP 服务器和技能定义的配置。客户端支持时，在浏览器中完成 OAuth 授权；否则通过客户端密钥存储或本地环境私密配置 `QVERIS_API_KEY`。不要将 API 密钥或认领码粘贴到安装提示词或聊天中。
 
 支持 MCP 的桌面端客户端包括：Cursor、GitHub Copilot、Cherry Studio、Cline、Roo Code、Continue、Kiro、Junie、Augment、Zed、Google Antigravity、Qoder、CodeBuddy、WorkBuddy、OpenCode、TRAE、Windsurf 和 VS Code。
 

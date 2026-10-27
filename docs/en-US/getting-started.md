@@ -49,6 +49,8 @@ When browser claim controls are available, verify a new account or continue with
 
 Open [Saved trials](/account?page=saved-trials) in Account for receipts and original execution/search history summaries, up to 10 records per page. Use the verified receiving account; trial cookies and local claim references are not required. Source history stays separate from the ordinary usage list. Original provider response bodies are not shown.
 
+For an unknown Call outcome, preserve the original execution ID and idempotency key when available. Use [execution lookup](/docs/api-reference/reconcile-call) before considering another Call; a timeout or not-found lookup does not prove that execution did not occur.
+
 ## Quick start
 
 There are several ways to use QVeris. Pick the one that fits your workflow.
@@ -60,7 +62,9 @@ Discover, inspect, and call capabilities directly from your terminal.
 **Install**
 
 ```bash
-curl -fsSL https://qveris.ai/cli/install | bash
+npm install -g @qverisai/cli
+qveris auth login
+qveris discover "weather forecast API" --json
 ```
 
 Also available via npm (`npm install -g @qverisai/cli`) or without installing (`npx @qverisai/cli`).
@@ -539,7 +543,7 @@ console.log(data);
 
 ### Set up QVeris in your AI Agent
 
-If you are configuring an AI coding agent or desktop agent (ChatGPT (Codex), Claude Code, Cursor, GitHub Copilot, Cline, Roo Code, Continue, Kiro, Junie, Augment, Zed, Google Antigravity, Qoder, CodeBuddy, WorkBuddy, OpenCode, TRAE, and others), you can give the [Agent Setup Guide](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/SETUP.md) to your agent along with your API key. It will auto-detect the environment and configure the available MCP server and skill definition.
+If you are configuring an AI coding agent or desktop agent (ChatGPT (Codex), Claude Code, Cursor, GitHub Copilot, Cline, Roo Code, Continue, Kiro, Junie, Augment, Zed, Google Antigravity, Qoder, CodeBuddy, WorkBuddy, OpenCode, TRAE, and others), you can give the [Agent Setup Guide](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/SETUP.md) to your agent without credentials. It will auto-detect the environment and configure the available MCP server and skill definition. Complete OAuth authorization in your browser when supported; otherwise configure `QVERIS_API_KEY` privately in the client’s secret store or local environment. Never paste API keys or claim codes into installation prompts or chat.
 
 Supported MCP desktop clients include ChatGPT (Codex), Claude Desktop, Cursor, GitHub Copilot, Cherry Studio, Cline, Roo Code, Continue, Kiro, Junie, Augment, Zed, Google Antigravity, Qoder, CodeBuddy, WorkBuddy, OpenCode, TRAE, Windsurf, and VS Code.
 

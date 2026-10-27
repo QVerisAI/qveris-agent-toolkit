@@ -151,7 +151,7 @@ test("website staging holds published docs between releases and advances on new 
     await write(
       toolkit,
       "docs/en-US/getting-started.md",
-      "[Global hosted MCP](https://qveris.ai/hosted-mcp)\n[China hosted MCP](https://qveris.cn/hosted-mcp)\n",
+      "[Global hosted MCP](https://qveris.ai/hosted-mcp)\n[China hosted MCP](https://qveris.cn/hosted-mcp)\n```bash\nnpm install -g @qverisai/cli@0.9.0\nqveris auth login\nqveris discover \"weather forecast API\" --json\n```\n",
     )
     await write(
       toolkit,
@@ -215,7 +215,7 @@ test("website staging holds published docs between releases and advances on new 
 
     assert.equal(
       await fs.readFile(path.join(output, "docs/en-US/getting-started.md"), "utf8"),
-      "[Global hosted MCP](/hosted-mcp)\n[China hosted MCP](/hosted-mcp)\n",
+      "[Global hosted MCP](/hosted-mcp)\n[China hosted MCP](/hosted-mcp)\n```bash\nnpm install -g @qverisai/cli@0.8.0\nqveris auth login\nqveris discover \"weather forecast API\" --json\n```\n",
     )
     assert.equal(
       await fs.readFile(path.join(output, "docs/en-US/cli.md"), "utf8"),
