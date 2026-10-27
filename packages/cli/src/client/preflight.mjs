@@ -3,6 +3,8 @@ import { getSiteUrl } from "../config/endpoint.mjs";
 import { getOAuthSessionMetadata } from "../auth/storage.mjs";
 import { normalizeCreditBalance } from "./credit-balance.mjs";
 import { discoverTools, resolveApiBaseUrl } from "./api.mjs";
+import { VERSION } from "../config/defaults.mjs";
+import { validationError } from "./validation-error.mjs";
 import { ERROR_CODES } from "../errors/codes.mjs";
 
 /**
@@ -77,7 +79,13 @@ export function localPreflight({ apiKeyFlag, baseUrlFlag, nodeVersion = process.
       return { checks, ok: false, apiKey: null, authType: null, baseUrl: null };
     }
     authType = "oauth";
-    checks.push(check("oauth", "ok", "OAuth session configured"));
+    checks.push(
+      check(
+        "oauth",
+        "ok",
+        `OAuth Device Flow session configured (via oauth session; ${oauthSession.storage || "unknown"} storage)`,
+      ),
+    );
   } else {
     checks.push(check("api_key", "ok", `API key configured (${maskKey(apiKey)} via ${source})`));
   }
@@ -109,7 +117,7 @@ export async function runPreflight({
   probe = defaultProbe,
 } = {}) {
   const local = localPreflight({ apiKeyFlag, baseUrlFlag, nodeVersion });
-  const checks = [...local.checks];
+  const checks = [check("cli", "ok", `QVeris CLI ${VERSION}`), ...local.checks];
 
   // Without a key or with a failing local check we cannot probe safely.
   if (!local.authType || local.checks.some((c) => c.status === "fail")) {
@@ -120,14 +128,20 @@ export async function runPreflight({
   try {
     response = await probe({ apiKey: local.apiKey, authType: local.authType, baseUrl: local.baseUrl });
   } catch (err) {
+    const diagnostic = validationError(err, { endpoint: local.baseUrl });
     // A diagnostic must never crash: anything (even a non-Error) can be thrown.
     const hint =
       endpointRecoveryHint(err?.code, local.baseUrl) ||
       err?.hint ||
       (err?.code ? ERROR_CODES[err.code]?.hint : null) ||
       null;
-    checks.push(check(codeToName(err?.code), "fail", err?.message || String(err), hint));
-    return { checks, ok: false, contractVersion: CLI_CONTRACT_VERSION };
+    checks.push({
+      ...check(codeToName(diagnostic.code), "fail", diagnostic.message, hint || diagnostic.hint),
+      code: diagnostic.code,
+      ...(diagnostic.status && { http_status: diagnostic.status }),
+      retryable: diagnostic.retryable,
+    });
+    return { checks, ok: false, contractVersion: CLI_CONTRACT_VERSION, exitCode: diagnostic.exitCode };
   }
 
   checks.push(check("connectivity", "ok", "API reachable — free discover probe, no credits used"));

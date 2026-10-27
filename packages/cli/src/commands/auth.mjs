@@ -1,6 +1,7 @@
 import { createOAuthAuthorizationContextId } from "../auth/context.mjs";
 import { resolveBaseUrl } from "../config/endpoint.mjs";
 import { discoverTools } from "../client/api.mjs";
+import { validationError } from "../client/validation-error.mjs";
 import { CliError } from "../errors/handler.mjs";
 import { bold, cyan, dim, green, red } from "../output/colors.mjs";
 import { openUrl } from "../utils/open-url.mjs";
@@ -149,15 +150,28 @@ async function authStatus(flags) {
       timeoutMs: 10000,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "OAuth session validation failed";
-    const result = { authenticated: false, type: "oauth", error: message };
+    const diagnostic = validationError(error, {
+      type: "oauth",
+      source: "oauth session",
+      endpoint: metadata.api_base_url,
+    });
+    const result = {
+      authenticated: false,
+      type: "oauth",
+      error: diagnostic.message,
+      code: diagnostic.code,
+      status: diagnostic.status,
+      retryable: diagnostic.retryable,
+      hint: diagnostic.hint,
+      credential: diagnostic.credentialContext,
+      exit_code: diagnostic.exitCode,
+    };
     if (flags.json) console.log(JSON.stringify(result, null, 2));
     else {
-      console.log(`  ${red("!")} OAuth session is invalid or expired.`);
-      console.log(`  Error: ${message}`);
-      console.log(`  Run ${cyan("qveris auth login")} to log in again.`);
+      console.log(`  ${red("!")} OAuth session validation failed: ${diagnostic.message}`);
+      if (diagnostic.hint) console.log(`  ${diagnostic.hint}`);
     }
-    process.exitCode = 1;
+    process.exitCode = diagnostic.exitCode;
     return;
   }
   const result = {

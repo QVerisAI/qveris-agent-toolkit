@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
+import { saveOAuthSession, deleteOAuthSession, loadOAuthSessionSecret } from "../src/auth/storage.mjs";
+import { runAuth } from "../src/commands/auth.mjs";
 import { runCall } from "../src/commands/call.mjs";
 import { runCompletions } from "../src/commands/completions.mjs";
 import { runConfig } from "../src/commands/config.mjs";
@@ -84,7 +86,12 @@ function withMockFetch(handler, fn) {
       url: new URL(url),
       method: options.method,
       headers: options.headers,
-      body: options.body ? JSON.parse(options.body) : undefined,
+      body:
+        options.body instanceof URLSearchParams
+          ? Object.fromEntries(options.body)
+          : options.body
+            ? JSON.parse(options.body)
+            : undefined,
     };
     requests.push(request);
     return handler(request);
@@ -837,4 +844,248 @@ test("successful execution with a settlement review requires manual action witho
   } finally {
     process.exitCode = previousExitCode;
   }
+});
+
+for (const [failure, code, exitCode] of [
+  [401, "AUTH_INVALID_KEY", 77],
+  [403, "PERMISSION_DENIED", 77],
+  [402, "CREDITS_INSUFFICIENT", 77],
+  [408, "NET_TIMEOUT", 75],
+  [429, "RATE_LIMITED", 75],
+  [500, "SERVICE_UNAVAILABLE", 75],
+  [503, "SERVICE_UNAVAILABLE", 75],
+  ["network", "NET_CONNECTION", 75],
+  ["timeout", "NET_TIMEOUT", 75],
+]) {
+  test(`auth validation classifies ${failure}, preserves stored key, and emits secret-free JSON`, async () => {
+    await withTempConfig(async () => {
+      const previousExit = process.exitCode;
+      const previousRetries = process.env.QVERIS_MAX_RETRIES;
+      process.env.QVERIS_MAX_RETRIES = "0";
+      const oldKey = "<fixture-existing-credential>";
+      const candidate = "<fixture-candidate-credential>";
+      setConfigValue("api_key", oldKey);
+      try {
+        await withMockFetch(
+          () => {
+            if (failure === "network") throw new TypeError(candidate);
+            if (failure === "timeout") throw new DOMException(candidate, "AbortError");
+            return new Response(JSON.stringify({ message: candidate }), { status: failure });
+          },
+          async () => {
+            for (const command of ["login", "whoami", "doctor"]) {
+              process.exitCode = undefined;
+              const args = ["node", "qveris", command, "--json", "--base-url", "https://qveris.cn/api/v1"];
+              if (command === "login") args.push("--token", candidate);
+              const result = await captureOutput(() => main(args));
+              assert.equal(process.exitCode, exitCode);
+              assert.doesNotMatch(result.stdout + result.stderr, new RegExp(candidate));
+              assert.doesNotMatch(result.stdout + result.stderr, new RegExp(oldKey));
+              if (command === "doctor") {
+                const diagnostic = JSON.parse(result.stdout).checks.find((check) => check.status === "fail");
+                assert.equal(diagnostic.code, code);
+                assert.equal(diagnostic.http_status, typeof failure === "number" ? failure : undefined);
+              } else {
+                assert.equal(result.stdout, "");
+                const diagnostic = JSON.parse(result.stderr);
+                assert.equal(diagnostic.code, code);
+                assert.equal(diagnostic.status, typeof failure === "number" ? failure : undefined);
+                assert.equal(diagnostic.credential.source, command === "login" ? "flag (--token)" : "config");
+                assert.equal(diagnostic.credential.endpoint, "https://qveris.cn/api/v1");
+              }
+            }
+            assert.equal(JSON.parse(readFileSync(getConfigPath(), "utf8")).api_key, oldKey);
+          },
+        );
+      } finally {
+        process.exitCode = previousExit;
+        if (previousRetries === undefined) delete process.env.QVERIS_MAX_RETRIES;
+        else process.env.QVERIS_MAX_RETRIES = previousRetries;
+      }
+    });
+  });
+}
+
+test("login JSON is a single secret-free result and whoami reports credential precedence", async () => {
+  await withTempConfig(async () => {
+    await withMockFetch(
+      () => response({ search_id: "s", results: [], remaining_credits: 0 }),
+      async (requests) => {
+        const login = await captureOutput(() => runLogin({ token: "short", json: true }));
+        assert.equal(login.stderr, "");
+        assert.deepEqual(JSON.parse(login.stdout), {
+          authenticated: true,
+          type: "api_key",
+          source: "flag (--token)",
+          endpoint: "https://qveris.ai/api/v1",
+          endpoint_source: "default",
+          saved_to: "config",
+        });
+        process.env.QVERIS_API_KEY = "<fixture-env-key>";
+        const whoami = await captureOutput(() => runWhoami({ apiKey: "<fixture-flag-key>", json: true }));
+        assert.equal(JSON.parse(whoami.stdout).source, "flag");
+        assert.equal(requests.at(-1).headers.Authorization, "Bearer <fixture-flag-key>");
+        const env = await captureOutput(() => runWhoami({ json: true }));
+        assert.equal(JSON.parse(env.stdout).source, "env (QVERIS_API_KEY)");
+        assert.equal(requests.at(-1).headers.Authorization, "Bearer <fixture-env-key>");
+      },
+    );
+  });
+});
+
+test("missing credentials recommend only delivered authentication commands", async () => {
+  await withTempConfig(async () => {
+    const previousExit = process.exitCode;
+    try {
+      const result = await captureOutput(() => main(["node", "qveris", "whoami", "--json"]));
+      const error = JSON.parse(result.stderr);
+      assert.equal(error.code, "AUTH_MISSING_KEY");
+      assert.equal(process.exitCode, 78);
+      assert.match(error.hint, /auth login.*OAuth Device Flow/);
+      assert.match(error.hint, /qveris login.*paste an API key/);
+      assert.doesNotMatch(error.hint, /auth trial/);
+    } finally {
+      process.exitCode = previousExit;
+    }
+  });
+});
+
+test("OAuth whoami uses the stored endpoint and transient diagnostics retain the session", async () => {
+  await withTempConfig(async () => {
+    const previousExit = process.exitCode;
+    const previousKeyring = process.env.QVERIS_DISABLE_KEYRING;
+    const previousRetries = process.env.QVERIS_MAX_RETRIES;
+    process.env.QVERIS_DISABLE_KEYRING = "1";
+    process.env.QVERIS_MAX_RETRIES = "0";
+    const secret = { access_token: "<fixture-oauth-access>", refresh_token: "<fixture-oauth-refresh>" };
+    try {
+      await saveOAuthSession(
+        {
+          issuer: "https://unit.test",
+          api_base_url: "https://unit.test/api/v1",
+          resource: "https://unit.test/tools",
+          scope: "tools.search offline_access",
+          expires_at: Date.now() + 3600000,
+        },
+        secret,
+        { allowUnencryptedStorage: true },
+      );
+      await withMockFetch(
+        () => response({ search_id: "oauth-search", results: [] }),
+        async (requests) => {
+          const identity = await captureOutput(() => runWhoami({ json: true }));
+          assert.equal(JSON.parse(identity.stdout).type, "oauth");
+          assert.equal(JSON.parse(identity.stdout).source, "oauth session");
+          assert.equal(JSON.parse(identity.stdout).endpoint_source, "oauth session");
+          assert.equal(requests[0].url.origin, "https://unit.test");
+          assert.equal(requests[0].headers.Authorization, `Bearer ${secret.access_token}`);
+        },
+      );
+      for (const [failure, code, exitCode] of [
+        [403, "PERMISSION_DENIED", 77],
+        [408, "NET_TIMEOUT", 75],
+        [429, "RATE_LIMITED", 75],
+        [503, "SERVICE_UNAVAILABLE", 75],
+        ["network", "NET_CONNECTION", 75],
+        ["timeout", "NET_TIMEOUT", 75],
+      ]) {
+        await withMockFetch(
+          () => {
+            if (failure === "network") throw new TypeError(secret.access_token);
+            if (failure === "timeout") throw new DOMException(secret.access_token, "AbortError");
+            return new Response(JSON.stringify({ message: secret.access_token }), { status: failure });
+          },
+          async () => {
+            for (const command of ["whoami", "status"]) {
+              const result = await captureOutput(() =>
+                command === "whoami" ? runWhoami({ json: true }) : runAuth("status", { json: true }),
+              );
+              const diagnostic = JSON.parse(command === "whoami" ? result.stderr : result.stdout);
+              assert.equal(diagnostic.code, code);
+              assert.equal(process.exitCode, exitCode);
+              assert.doesNotMatch(result.stdout + result.stderr, /fixture-oauth/);
+              assert.deepEqual(await loadOAuthSessionSecret(), secret);
+            }
+          },
+        );
+      }
+    } finally {
+      await deleteOAuthSession();
+      process.exitCode = previousExit;
+      if (previousKeyring === undefined) delete process.env.QVERIS_DISABLE_KEYRING;
+      else process.env.QVERIS_DISABLE_KEYRING = previousKeyring;
+      if (previousRetries === undefined) delete process.env.QVERIS_MAX_RETRIES;
+      else process.env.QVERIS_MAX_RETRIES = previousRetries;
+    }
+  });
+});
+
+test("expired and challenged OAuth sessions preserve refresh failure classification without replay", async () => {
+  await withTempConfig(async () => {
+    const previousExit = process.exitCode;
+    const previousKeyring = process.env.QVERIS_DISABLE_KEYRING;
+    process.env.QVERIS_DISABLE_KEYRING = "1";
+    const secret = { access_token: "<fixture-refresh-access>", refresh_token: "<fixture-refresh-secret>" };
+    try {
+      for (const expired of [true, false]) {
+        await saveOAuthSession(
+          {
+            issuer: "https://unit.test",
+            api_base_url: "https://unit.test/api/v1",
+            token_endpoint: "https://unit.test/oauth/token",
+            resource: "https://unit.test/tools",
+            scope: "tools.search offline_access",
+            expires_at: Date.now() + (expired ? -1000 : 3600000),
+          },
+          secret,
+          { allowUnencryptedStorage: true },
+        );
+        for (const [failure, code, exitCode] of [
+          [408, "NET_TIMEOUT", 75],
+          [429, "RATE_LIMITED", 75],
+          [503, "SERVICE_UNAVAILABLE", 75],
+          [400, "AUTH_OAUTH_FAILED", 77],
+          ["network", "NET_CONNECTION", 75],
+          ["timeout", "NET_TIMEOUT", 75],
+        ]) {
+          await withMockFetch(
+            (request) => {
+              if (request.url.pathname.endsWith("/search")) return new Response("{}", { status: 401 });
+              assert.equal(request.url.pathname, "/oauth/token");
+              if (failure === "network") throw new TypeError(secret.refresh_token);
+              if (failure === "timeout") throw new DOMException(secret.refresh_token, "AbortError");
+              return new Response(
+                failure === 400 ? JSON.stringify({ error: "invalid_grant" }) : "<html>gateway failure</html>",
+                { status: failure },
+              );
+            },
+            async (requests) => {
+              for (const command of ["whoami", "status", "doctor"]) {
+                const offset = requests.length;
+                const result = await captureOutput(() =>
+                  command === "whoami"
+                    ? runWhoami({ json: true })
+                    : command === "doctor"
+                      ? runDoctor({ json: true })
+                      : runAuth("status", { json: true }),
+                );
+                const output = JSON.parse(command === "whoami" ? result.stderr : result.stdout);
+                const diagnostic = command === "doctor" ? output.checks.find((c) => c.status === "fail") : output;
+                assert.equal(diagnostic.code, code);
+                assert.equal(process.exitCode, exitCode);
+                assert.equal(requests.slice(offset).filter((r) => r.url.pathname === "/oauth/token").length, 1);
+                assert.doesNotMatch(result.stdout + result.stderr, /fixture-refresh|gateway failure/);
+                assert.deepEqual(await loadOAuthSessionSecret(), secret);
+              }
+            },
+          );
+        }
+      }
+    } finally {
+      await deleteOAuthSession();
+      process.exitCode = previousExit;
+      if (previousKeyring === undefined) delete process.env.QVERIS_DISABLE_KEYRING;
+      else process.env.QVERIS_DISABLE_KEYRING = previousKeyring;
+    }
+  });
 });

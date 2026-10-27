@@ -112,24 +112,28 @@ async function requestJson(
         }
         if (status === 401 && credentialProvider.authType === "oauth") {
           const err = new CliError("AUTH_OAUTH_FAILED", errorDetail);
+          err.status = status;
           if (jsonBody) err.responseData = jsonBody;
           throw err;
         }
         if (status === 403) {
           const err = new CliError("PERMISSION_DENIED", errorDetail || "The current credential lacks permission");
           err.hint = `Confirm access for the configured account at ${getSiteUrl(baseUrl)}/account`;
+          err.status = status;
           if (jsonBody) err.responseData = jsonBody;
           throw err;
         }
         if (status === 401) {
           const err = new CliError("AUTH_INVALID_KEY", errorDetail);
           err.hint = `Check your key at ${getSiteUrl(baseUrl)}/account`;
+          err.status = status;
           if (jsonBody) err.responseData = jsonBody;
           throw err;
         }
         if (status === 402) {
           const err = new CliError("CREDITS_INSUFFICIENT", errorDetail);
           err.hint = `Purchase credits at ${getSiteUrl(baseUrl)}/pricing`;
+          err.status = status;
           if (jsonBody) err.responseData = jsonBody;
           throw err;
         }

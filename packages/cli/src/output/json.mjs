@@ -21,6 +21,7 @@ export function outputJsonError(error, exitCode = 1) {
   if (error.parameterErrors !== undefined) obj.parameter_errors = error.parameterErrors;
   if (error.idempotencyKey !== undefined) obj.idempotency_key = error.idempotencyKey;
   if (error.recovery !== undefined) obj.recovery = error.recovery;
+  if (error.credentialContext) obj.credential = error.credentialContext;
   obj.exit_code = exitCode;
   process.stderr.write(JSON.stringify(obj) + "\n");
 }

@@ -8,6 +8,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Classify login, identity, OAuth status, and doctor validation failures without blaming valid credentials for permission, credit, rate-limit, timeout, network, or service failures. Preserve JSON diagnostics, HTTP status, credential source, and established error exit codes.
+- Clarify API key paste login versus OAuth Device Flow and report the active credential source and CLI version in diagnostics.
+
 - Report successful Calls with pending settlement review as manual review required, preserving execution results without replaying the Call.
 
 

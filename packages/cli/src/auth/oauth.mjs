@@ -147,9 +147,21 @@ async function timedFetch(
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetchImpl(url, { ...options, signal: controller.signal });
+    const status = response.status;
+    // Preserve transient failures before parsing: gateways may return HTML.
+    // Refresh requests are never replayed automatically here.
+    if (status === 429 || status === 408 || status >= 500) {
+      await response.body?.cancel?.().catch(() => {});
+      const error = new CliError(
+        status === 429 ? "RATE_LIMITED" : status === 408 ? "NET_TIMEOUT" : "SERVICE_UNAVAILABLE",
+      );
+      error.status = status;
+      throw error;
+    }
     return await consumeResponse(response);
   } catch (error) {
     if (error?.name === "AbortError") throw new CliError("NET_TIMEOUT", "OAuth request timed out");
+    if (error instanceof TypeError) throw new CliError("NET_CONNECTION");
     throw error;
   } finally {
     clearTimeout(timeout);
@@ -355,7 +367,11 @@ export async function refreshOAuthSession(metadata, secret, fetchImpl = fetch) {
     { grant_type: "refresh_token", client_id: OAUTH_CLIENT_ID, refresh_token: secret.refresh_token },
     fetchImpl,
   );
-  if (!response.ok) throw oauthError(payload.error || "refresh_failed", payload.error_description);
+  if (!response.ok) {
+    const error = oauthError(payload.error || "refresh_failed", payload.error_description);
+    error.status = response.status;
+    throw error;
+  }
   const tokens = validateTokenResponse(payload);
   // QVeris advertises refresh-token rotation as part of its public OAuth contract.
   // Rejecting a non-rotating response prevents reuse of a superseded credential.

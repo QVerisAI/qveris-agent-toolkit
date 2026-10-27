@@ -1,10 +1,14 @@
 import { createInterface } from "node:readline";
 import { resolve } from "../config/resolve.mjs";
 import { setConfigValue, deleteConfigValue } from "../config/store.mjs";
-import { discoverTools } from "../client/api.mjs";
+import { discoverTools, resolveApiBaseUrl } from "../client/api.mjs";
+import { resolveApiKey } from "../client/auth.mjs";
+import { CliError, handleError } from "../errors/handler.mjs";
+import { validationError } from "../client/validation-error.mjs";
+import { outputJson } from "../output/json.mjs";
 import { VERSION } from "../config/defaults.mjs";
 import { resolveBaseUrl, getSiteUrl } from "../config/endpoint.mjs";
-import { bold, green, red, dim, cyan } from "../output/colors.mjs";
+import { bold, green, dim, cyan } from "../output/colors.mjs";
 import { printLoginBanner } from "../output/banner.mjs";
 import { openUrl } from "../utils/open-url.mjs";
 import { withOAuthRefreshLock } from "../auth/storage.mjs";
@@ -94,7 +98,7 @@ function prompt(question) {
 
 export async function runLogin(flags) {
   if (flags.token) {
-    await validateAndSave(flags.token, flags.baseUrl);
+    await validateAndSave(flags.token, flags);
     return;
   }
 
@@ -104,7 +108,10 @@ export async function runLogin(flags) {
 
   const { baseUrl } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
   const accountUrl = `${getSiteUrl(baseUrl)}/account?page=api-keys`;
-  console.log(`\n  Get your API key at: ${cyan(accountUrl)}\n`);
+  if (!flags.json)
+    console.error(
+      `\n  API key login: paste and validate an existing key. For OAuth Device Flow, run qveris auth login.\n  Get your API key at: ${cyan(accountUrl)}\n`,
+    );
 
   if (!flags.noBrowser) {
     openUrl(accountUrl);
@@ -112,44 +119,44 @@ export async function runLogin(flags) {
 
   let key;
   try {
-    key = await prompt("  Paste your API key: ");
+    key = await prompt(flags.json ? "" : "  Paste your API key: ");
   } catch {
     // Ctrl+C during prompt
     return;
   }
   if (!key) {
-    console.error(`  ${red("\u2718")} No key provided.`);
-    process.exitCode = 1;
+    handleError(new CliError("AUTH_MISSING_KEY"), flags.json);
     return;
   }
 
-  await validateAndSave(key, flags.baseUrl);
+  await validateAndSave(key, flags);
 }
 
-async function validateAndSave(key, baseUrlFlag) {
-  process.stderr.write(`  Validating key...`);
-
-  const { baseUrl, source } = resolveBaseUrl({ baseUrlFlag });
-
+async function validateAndSave(key, flags) {
+  const { baseUrl, source } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
+  const credentialSource = flags.token ? "flag (--token)" : "prompt";
+  const context = { type: "api_key", source: credentialSource, endpoint: baseUrl, endpoint_source: source };
+  if (!flags.json) process.stderr.write(`  Validating API key...`);
   try {
     await discoverTools({ apiKey: key, baseUrl, query: "test", limit: 1, timeoutMs: 10000 });
-  } catch {
-    console.error(`\r\x1b[K`);
-    console.error(`  ${red("\u2718")} Invalid API key. Please check and try again.`);
-    process.exitCode = 1;
+  } catch (error) {
+    if (!flags.json) process.stderr.write("\r\x1b[K");
+    handleError(validationError(error, context), flags.json);
     return;
   }
-  try {
-    await withOAuthRefreshLock(async () => setConfigValue("api_key", key));
-  } catch (error) {
-    console.error(`\r\x1b[K`);
-    throw error;
+  if (!flags.json) process.stderr.write("\r\x1b[K");
+  await withOAuthRefreshLock(async () => setConfigValue("api_key", key));
+  if (flags.json) {
+    outputJson({ authenticated: true, ...context, saved_to: "config" });
+    return;
   }
-  const masked = key.slice(0, 6) + "..." + key.slice(-4);
-  console.error(`\r\x1b[K`);
-  console.log(`  ${green("\u2713")} Authenticated as ${bold(masked)}`);
+  console.log(`  ${green("✓")} Authenticated as ${bold(maskKey(key))} (API key)`);
   console.log(`  ${dim("Endpoint:")} ${baseUrl} ${dim(`(${source})`)}`);
-  console.log(`  ${dim("Key saved to config.")}`);
+  console.log(`  ${dim("Key saved to config. Explicit --api-key and QVERIS_API_KEY take precedence.")}`);
+}
+
+function maskKey(key) {
+  return key.length > 10 ? `${key.slice(0, 6)}...${key.slice(-4)}` : "***";
 }
 
 export async function runLogout() {
@@ -158,30 +165,31 @@ export async function runLogout() {
 }
 
 export async function runWhoami(flags) {
-  const { value: key, source } = resolve("api_key", flags.apiKey);
-
-  if (!key) {
-    console.log(`\n  Not authenticated. Run ${cyan("qveris login")} to set your API key.`);
-    process.exitCode = 1;
-    return;
-  }
-
-  const masked = key.slice(0, 6) + "..." + key.slice(-4);
-  const { baseUrl, source: endpointSource } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
-
-  process.stderr.write(`  Validating...`);
-
+  const { source } = resolve("api_key", flags.apiKey);
+  const key = resolveApiKey(flags.apiKey);
+  const type = key === undefined ? "oauth" : "api_key";
+  const { baseUrl, source: endpointSource } = resolveApiBaseUrl({
+    baseUrlFlag: flags.baseUrl,
+    preferOAuth: type === "oauth",
+  });
+  const context = {
+    type,
+    source: type === "oauth" ? "oauth session" : source,
+    endpoint: baseUrl,
+    endpoint_source: endpointSource,
+  };
+  if (!flags.json) process.stderr.write("  Validating...");
   try {
     await discoverTools({ apiKey: key, baseUrl, query: "test", limit: 1, timeoutMs: 10000 });
-    process.stderr.write("\r\x1b[K");
-    console.log(`\n  ${green("\u2713")} Authenticated`);
-    console.log(`  Key:    ${bold(masked)}`);
-    console.log(`  Source: ${dim(source)}`);
-    console.log(`  Endpoint: ${baseUrl} ${dim(`(${endpointSource})`)}`);
-  } catch {
-    console.error(`\r\x1b[K`);
-    console.log(`\n  ${red("\u2718")} Key ${masked} is ${red("invalid")}`);
-    console.log(`  Source: ${dim(source)}`);
-    process.exitCode = 1;
+  } catch (error) {
+    if (!flags.json) process.stderr.write("\r\x1b[K");
+    handleError(validationError(error, context), flags.json);
+    return;
   }
+  if (flags.json) return outputJson({ authenticated: true, ...context });
+  process.stderr.write("\r\x1b[K");
+  console.log(`\n  ${green("✓")} Authenticated (${type === "oauth" ? "OAuth Device Flow" : "API key"})`);
+  if (key !== undefined) console.log(`  Key:    ${bold(maskKey(key))}`);
+  console.log(`  Source: ${dim(context.source)}`);
+  console.log(`  Endpoint: ${baseUrl} ${dim(`(${endpointSource})`)}`);
 }

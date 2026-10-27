@@ -214,8 +214,10 @@ test("runPreflight: a non-CliError probe rejection degrades gracefully (no crash
   assert.equal(ok, false);
   const fail = checks.find((x) => x.status === "fail");
   assert.equal(fail.name, "connectivity");
-  assert.equal(fail.detail, "socket hang up");
-  assert.equal(fail.hint, null);
+  assert.equal(fail.detail, "Could not connect to the API");
+  assert.equal(fail.code, "NET_CONNECTION");
+  assert.equal(fail.retryable, true);
+  assert.ok(fail.hint);
 });
 
 test("runPreflight: an unsupported Node version short-circuits before probing", async () => {

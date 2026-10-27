@@ -8,8 +8,8 @@ export const EX_CONFIG = 78;
 
 export const ERROR_CODES = {
   AUTH_MISSING_KEY: {
-    message: "No API key configured",
-    hint: "Run 'qveris auth login', 'qveris login', or set QVERIS_API_KEY",
+    message: "No API key or OAuth session configured",
+    hint: "Run 'qveris auth login' for OAuth Device Flow, 'qveris login' to paste an API key, or set QVERIS_API_KEY",
     exit: EX_CONFIG,
   },
   NODE_UNSUPPORTED: {
@@ -40,6 +40,16 @@ export const ERROR_CODES = {
   NET_TIMEOUT: {
     message: "Request timed out",
     hint: "Check connectivity or increase --timeout",
+    exit: EX_TEMPFAIL,
+  },
+  NET_CONNECTION: {
+    message: "Could not connect to the API",
+    hint: "Check the endpoint, network, proxy, and TLS configuration; retry validation when connectivity is restored",
+    exit: EX_TEMPFAIL,
+  },
+  SERVICE_UNAVAILABLE: {
+    message: "The API service is temporarily unavailable",
+    hint: "Retry validation later; this does not establish that your credential is invalid",
     exit: EX_TEMPFAIL,
   },
   API_ERROR: {

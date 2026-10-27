@@ -1454,7 +1454,8 @@ test("Auth status reports validation failures without throwing", async () => {
     await runAuth("status", { json: true });
     assert.equal(process.exitCode, 1);
     assert.match(lines.join("\n"), /"authenticated": false/);
-    assert.match(lines.join("\n"), /network unavailable/);
+    assert.match(lines.join("\n"), /"code": "API_ERROR"/);
+    assert.doesNotMatch(lines.join("\n"), /network unavailable/);
   } finally {
     console.log = previousLog;
     globalThis.fetch = previousFetch;
