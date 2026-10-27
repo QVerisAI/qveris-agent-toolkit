@@ -13,7 +13,9 @@ import {
   resolveApiBaseUrl,
   unwrapApiResponse,
 } from "../client/api.mjs";
-import { resolveToolId, getSessionDiscoveryId, readSessionForContext } from "../session/session.mjs";
+import { resolveToolId, getSessionDiscoveryId, readSessionForContext, readSession } from "../session/session.mjs";
+import { authorizationContextForPublicDiscovery } from "../auth/context.mjs";
+import { isPublicDiscoveryContext } from "../client/public-discovery.mjs";
 import { resolveParams } from "../utils/params.mjs";
 import { formatCallResult } from "../output/formatter.mjs";
 import { outputJson } from "../output/json.mjs";
@@ -100,6 +102,9 @@ export async function runCall(idOrIndex, flags) {
     credentialProvider = createAuthorizationContextCredentialProvider({ apiKey, authorizationContext });
     const resolvedSession = readSessionForContext({ baseUrl, authorizationContext });
     if (resolvedSession.status === "context_mismatch") {
+      if (readSession()?.authorizationContext === authorizationContextForPublicDiscovery()) {
+        throw new CliError("AUTH_PUBLIC_CONTEXT");
+      }
       throw new CliError(
         "SESSION_EXPIRED",
         "Stored discovery belongs to another API endpoint or authorization context. Run 'qveris discover' again.",
@@ -119,6 +124,7 @@ export async function runCall(idOrIndex, flags) {
     discoveryId = resolved.discoveryId;
   }
   if (!discoveryId) discoveryId = getSessionDiscoveryId({ session });
+  if (isPublicDiscoveryContext(discoveryId)) throw new CliError("AUTH_PUBLIC_CONTEXT");
   if (!discoveryId && /^\d+$/.test(idOrIndex)) {
     throw new CliError("SESSION_EXPIRED", "No discovery ID. Run 'qveris discover' first or pass --discovery-id.");
   }
@@ -166,6 +172,7 @@ export async function runCall(idOrIndex, flags) {
     maxSize,
     timeoutMs,
     flags,
+    publicUpgrade: session?.upgradedFromPublic === true,
   });
 }
 
@@ -656,6 +663,7 @@ async function executeCall({
   timeoutMs,
   flags,
   contextMeta,
+  publicUpgrade = false,
 }) {
   if (flags.dryRun) {
     if (flags.json) {
@@ -696,6 +704,38 @@ async function executeCall({
   const spinner = flags.json ? { stop() {} } : createSpinner("Calling tool...");
 
   try {
+    if (publicUpgrade) {
+      // The explicit Call command confirms the user's current tool/input intent.
+      // Re-read authorization/schema and quote; no public metadata authorizes it.
+      const inspection = await inspectToolsByIds({
+        apiKey,
+        credentialProvider,
+        baseUrl,
+        toolIds: [toolId],
+        discoveryId,
+        timeoutMs,
+      });
+      const selected = normalizeToolList(inspection)?.find((tool) => tool.tool_id === toolId);
+      if (!selected)
+        throw new CliError("AUTH_PUBLIC_CONTEXT", "Authenticated Inspect did not confirm the selected tool");
+      assertExecutionPolicy(selected, flags);
+      const preview = await probeTool({
+        apiKey,
+        credentialProvider,
+        baseUrl,
+        toolId,
+        parameters,
+        checks: ["schema", "quote"],
+        liveBudget: "none",
+        timeoutMs,
+      });
+      if (preview.executable !== true || preview.schema?.valid !== true || !validateQuote(preview.quote).valid) {
+        throw new CliError(
+          "CONTEXT_QUOTE_REQUIRED",
+          "Review a fresh executable schema and quote before calling an upgraded selection",
+        );
+      }
+    }
     if (flags.requireZeroQuote) {
       const quote = await probeTool({
         apiKey,

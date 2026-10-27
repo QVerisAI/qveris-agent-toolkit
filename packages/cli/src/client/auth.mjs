@@ -8,6 +8,20 @@ import { CliError } from "../errors/handler.mjs";
 import { createStoredOAuthCredentialProvider } from "../auth/oauth.mjs";
 import { authorizationContextForApiKey, authorizationContextForOAuth } from "../auth/context.mjs";
 import { getOAuthSessionMetadata, hasOAuthSession, loadOAuthSessionSecret } from "../auth/storage.mjs";
+import { authorizationContextForPublicDiscovery } from "../auth/context.mjs";
+import { resolveAccessMode } from "./access-mode.mjs";
+
+export function resolveDiscoveryAccess({ publicReadOnly = false, apiKey, operation } = {}) {
+  if (!publicReadOnly) return { publicReadOnly: false, apiKey: resolveApiKey(apiKey) };
+  const configured = resolve("api_key", apiKey).value;
+  resolveAccessMode({
+    publicReadOnly,
+    operation,
+    hasCredentials:
+      (configured !== undefined && configured !== null) || hasOAuthSession() || hasStoredTrialCredential(),
+  });
+  return { publicReadOnly: true, authorizationContext: authorizationContextForPublicDiscovery() };
+}
 
 const PLACEHOLDER_PATTERNS = [/^your[_-]?(qveris)?[_-]?api[_-]?key/i, /^sk-1_xxx/, /^sk-1_$/, /^YOUR_/];
 
