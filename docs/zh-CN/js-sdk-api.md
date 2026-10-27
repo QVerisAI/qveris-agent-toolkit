@@ -594,11 +594,27 @@ An explicit baseUrl override takes priority over QVERIS_BASE_URL.
 
 ###### overrides?
 
-`Omit`\<[`QverisClientOptions`](#qverisclientoptions), `"apiKey"` \| `"credentialProvider"`\>
+`Omit`\<[`QverisClientOptions`](#qverisclientoptions), `"apiKey"` \| `"publicReadOnly"` \| `"credentialProvider"`\>
 
 ###### 返回
 
 [`Qveris`](#qveris)
+
+##### publicReadOnly()
+
+> `static` **publicReadOnly**(`options?`): [`PublicDiscoveryClient`](#publicdiscoveryclient)
+
+Explicit, credential-free Discover/Inspect; never creates an account.
+
+###### 参数
+
+###### options?
+
+[`PublicDiscoveryClientOptions`](#publicdiscoveryclientoptions) = `{}`
+
+###### 返回
+
+[`PublicDiscoveryClient`](#publicdiscoveryclient)
 
 ***
 
@@ -2319,6 +2335,12 @@ Session identifier for tracking
 
 Per-request timeout override in milliseconds
 
+##### view?
+
+> `optional` **view?**: `"routing"` \| `"full"`
+
+Public read-only projection; omitted for normal authenticated Inspect.
+
 ***
 
 ### NextAction
@@ -2582,6 +2604,68 @@ Server-advertised execute constraints supported by this endpoint.
 ##### verdict
 
 > **verdict**: `"unknown"`
+
+***
+
+### PublicDiscoveryClient
+
+Restricted public surface; sign-in requires a new authenticated client.
+
+#### 方法
+
+##### discover()
+
+> **discover**(`query`, `options?`): `Promise`\<[`PublicSearchResponse`](#publicsearchresponse)\>
+
+###### 参数
+
+###### query
+
+`string`
+
+###### options?
+
+[`PublicDiscoverOptions`](#publicdiscoveroptions)
+
+###### 返回
+
+`Promise`\<[`PublicSearchResponse`](#publicsearchresponse)\>
+
+##### inspect()
+
+> **inspect**(`toolIds`, `options?`): `Promise`\<[`PublicSearchResponse`](#publicsearchresponse)\>
+
+###### 参数
+
+###### toolIds
+
+`string` \| `string`[]
+
+###### options?
+
+[`PublicInspectOptions`](#publicinspectoptions)
+
+###### 返回
+
+`Promise`\<[`PublicSearchResponse`](#publicsearchresponse)\>
+
+***
+
+### PublicInspectOptions
+
+#### 属性
+
+##### searchId?
+
+> `optional` **searchId?**: `` `pub_${string}` ``
+
+##### timeoutMs?
+
+> `optional` **timeoutMs?**: `number`
+
+##### view?
+
+> `optional` **view?**: `"routing"` \| `"full"`
 
 ***
 
@@ -3772,9 +3856,67 @@ Any JSON value preserved from a provider-owned parameter contract.
 
 ***
 
+### PublicDiscoverOptions
+
+> **PublicDiscoverOptions** = `Omit`\<[`DiscoverOptions`](#discoveroptions), `"sessionId"` \| `"lang"`\>
+
+***
+
+### PublicDiscoveryClientOptions
+
+> **PublicDiscoveryClientOptions** = `Omit`\<[`QverisClientConfig`](#qverisclientconfig), `"apiKey"`\> & `object`
+
+#### 类型声明
+
+##### apiKey?
+
+> `optional` **apiKey?**: `never`
+
+##### credentialProvider?
+
+> `optional` **credentialProvider?**: `never`
+
+***
+
+### PublicDiscoveryContext
+
+> **PublicDiscoveryContext** = `` `pub_${string}` ``
+
+Correlation only; never valid as Probe or Call authorization.
+
+***
+
+### PublicSearchResponse
+
+> **PublicSearchResponse** = `Omit`\<[`SearchResponse`](#searchresponse), `"search_id"` \| `"results"` \| `"remaining_credits"`\> & `object`
+
+Public catalog projection: missing pricing and balance do not mean free.
+
+#### 类型声明
+
+##### contract\_features
+
+> **contract\_features**: `string`[]
+
+##### results
+
+> **results**: [`PublicToolInfo`](#publictoolinfo)[]
+
+##### search\_id
+
+> **search\_id**: [`PublicDiscoveryContext`](#publicdiscoverycontext)
+
+***
+
+### PublicToolInfo
+
+> **PublicToolInfo** = `Pick`\<[`ToolInfo`](#toolinfo), `"tool_id"` \| `"name"` \| `"tool_name"` \| `"description"` \| `"provider_id"` \| `"provider_name"` \| `"provider_description"` \| `"category"` \| `"region"` \| `"params"` \| `"parameters"` \| `"input_schema"` \| `"parameters_schema"` \| `"query_params"` \| `"body_params"` \| `"requestBody"` \| `"output_schema"` \| `"updated_at"` \| `"verification_status"` \| `"verification"` \| `"execution_restrictions"` \| `"capability"` \| `"reliability"` \| `"as_of_support"`\>
+
+***
+
 ### QverisClientOptions
 
-> **QverisClientOptions** = `Omit`\<[`QverisClientConfig`](#qverisclientconfig), `"apiKey"`\> & `object` & (\{ `apiKey`: `string`; `credentialProvider?`: `never`; \} \| \{ `apiKey?`: `never`; `credentialProvider`: [`CredentialProvider`](#credentialprovider); \})
+> **QverisClientOptions** = `Omit`\<[`QverisClientConfig`](#qverisclientconfig), `"apiKey"`\> & `object` & (\{ `apiKey`: `string`; `credentialProvider?`: `never`; `publicReadOnly?`: `false`; \} \| \{ `apiKey?`: `never`; `credentialProvider`: [`CredentialProvider`](#credentialprovider); `publicReadOnly?`: `false`; \} \| \{ `apiKey?`: `never`; `credentialProvider?`: `never`; `publicReadOnly`: `true`; \})
 
 Configuration accepted by the QVeris REST client.
 

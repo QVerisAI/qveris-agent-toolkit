@@ -1,4 +1,5 @@
 from .api import QverisClient
+from .public_discovery import PublicDiscoveryClient, PublicSearchResponse
 from ..credentials import (
     AgentDelegationConstraints,
     AgentDelegationCredentialProvider,
@@ -19,6 +20,8 @@ from .tools import (
 
 __all__ = [
     "QverisClient",
+    "PublicDiscoveryClient",
+    "PublicSearchResponse",
     "CredentialContext",
     "CredentialProvider",
     "ApiKeyCredentialProvider",

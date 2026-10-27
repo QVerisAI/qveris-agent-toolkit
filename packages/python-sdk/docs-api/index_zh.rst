@@ -9,6 +9,9 @@ Python SDK API 参考
 .. autoclass:: qveris.QverisClient
    :members:
 
+.. autoclass:: qveris.PublicDiscoveryClient
+   :members:
+
 Agent
 -----
 
@@ -93,6 +96,10 @@ Agent
    :exclude-members: model_config
 
 .. autoclass:: qveris.SearchResponse
+   :members:
+   :exclude-members: model_config
+
+.. autoclass:: qveris.PublicSearchResponse
    :members:
    :exclude-members: model_config
 

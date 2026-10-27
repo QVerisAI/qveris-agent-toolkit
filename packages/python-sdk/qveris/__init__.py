@@ -1,6 +1,7 @@
 from .agent.budget import BudgetTracker
 from .agent.core import Agent
 from .client.api import QverisClient
+from .client.public_discovery import PublicDiscoveryClient, PublicSearchResponse
 from .config import QverisConfig, AgentConfig
 from .credentials import (
     AgentDelegationConstraints,
@@ -60,6 +61,8 @@ __all__ = [
     "Agent",
     "BudgetTracker",
     "QverisClient",
+    "PublicDiscoveryClient",
+    "PublicSearchResponse",
     "QverisConfig",
     "CredentialContext",
     "CredentialProvider",
