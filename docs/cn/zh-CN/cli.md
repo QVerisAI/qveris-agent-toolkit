@@ -39,26 +39,17 @@ npx @qverisai/cli discover "天气 API"
 
 ## 快速开始
 
+使用 OAuth Device Flow，无需复制密钥。如果已配置 `QVERIS_API_KEY`，可跳过登录。
+
 ```bash
 export QVERIS_BASE_URL="https://qveris.cn/api/v1"
-
-# 引导式首次调用
-qveris init
-
-# 手动流程
-# 1. 认证（保存到 ~/.config/qveris/config.json）
-qveris login
-
-# 2. 发现工具
-qveris discover "天气预报 API"
-
-# 3. 按当前契约确认结果 1 接受这些字段后调用
-qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
-
-# 可选：契约详情或当前报价有必要时再检查
-qveris inspect 1
-qveris probe 1 --params '{"wfo": "LWX", "x": 90, "y": 90}' --checks schema,quote
+qveris auth login
+qveris discover "天气预报 API" --json
 ```
+
+首个示例仅发现能力。`qveris login` 仍是 API 密钥路径，通过掩码输入接收密钥，与 OAuth 登录不同。没有凭据的 Agent 可显式调用已有匿名注册 API，见[认证与试用生命周期](/auth.md)。不要在诊断或发现过程中自动注册试用。
+
+Call 是独立的成本决策：选择当前结果，按契约构造真实参数并阅读计费规则。契约缺失时 Inspect，需要参数校验或当前报价时 Probe。提交付费 Call 前请阅读[快速开始](getting-started.md)。`qveris init` 是可选的引导式 Call 流程。
 
 ---
 

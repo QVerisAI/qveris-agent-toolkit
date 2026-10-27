@@ -22,9 +22,24 @@ For provider comparison, Inspect every candidate when current scope or a complet
 
 - **OAuth:** use `qveris auth login`, or add the Hosted MCP endpoint in a client that supports OAuth discovery. Complete browser authorization without copying an API key.
 - **Existing API key:** keep using it. Set `QVERIS_API_KEY` privately for REST/SDK/CLI, or use `qveris login` for masked key entry. This command requires a key; it is different from `qveris auth login`.
+- **Public read-only REST:** explicitly use `X-Qveris-Access-Mode: public-readonly` in a separate uncredentialed REST client for Discover/Inspect only. It creates no trial or credits and cannot authorize Call. Do not combine it with Authorization or cookies; browser HTTP uses `credentials: "omit"`. A bad key never falls back to public access. See the [REST guide](/docs/rest-api) for limits, 401/429 guidance and authenticated upgrade. This does not add a mode to the installed CLI/SDK versions.
 - **Agent without credentials:** explicitly register an anonymous trial using the existing Agent API. Registration issues credentials; it is not unauthenticated Discover or Call. See [Authentication and trial lifecycle](/auth.md) for one-time secrets, limits, expiry, and current claim restrictions.
 
-Discover is free but still requires authentication. Never paste keys or claim codes into prompts, URLs, shared configuration, logs, or source control.
+Discover is free; the default CLI/SDK and authenticated MCP paths still require authentication. Never paste keys or claim codes into prompts, URLs, shared configuration, logs, or source control.
+
+## Access modes and authentication upgrade
+
+| Client or entry | Public read-only access | To continue with Call |
+| --- | --- | --- |
+| REST | Explicit public-readonly header; Discover/Inspect only, without credentials or cookies. | Authenticate; refresh the selected tool with Inspect, permissions and any necessary quote. |
+| Hosted MCP | Separate read-only endpoint from the [MCP guide](/docs/mcp-server); only discover/inspect, no session. | Use the default OAuth or valid-key connection explicitly. |
+| Local MCP 0.15.0 | Listing tool schemas without a key is not a successful Discover/Inspect request. | Configure a valid key as described in the [MCP guide](/docs/mcp-server). |
+| Published CLI 0.11.3 | Keep the authenticated examples below; use REST or Hosted MCP for explicit public reads. | Existing OAuth or API-key flow. |
+| Published QVeris SDKs: TypeScript 0.9.0 / Python 0.8.0 | Keep the authenticated client examples; no new public-mode constructor is implied by these versions. | Existing key or supported credential provider. |
+
+A supplied invalid key never falls back to public access. Do not combine a public connection with credentials/cookies. On 401, authenticate for the intended operation; on 429, follow Retry-After and bounded retry guidance, without creating an identity or rotating credentials to evade limits. See the [REST guide](/docs/rest-api) for exact limits and errors.
+
+Public access creates no account, key, trial credits or provider execution. Preserve the selected tool/input intent when upgrading, but omit the public search_id from authenticated Inspect. Use the fresh authenticated result and any necessary quote before explicit cost approval. An already selected tool does not require another natural-language Discover solely to upgrade authentication.
 
 ## Browser result, recovery and claim
 
@@ -50,13 +65,13 @@ curl -fsSL https://qveris.ai/cli/install | bash
 
 Also available via npm (`npm install -g @qverisai/cli`) or without installing (`npx @qverisai/cli`).
 
-**Quick start**
+**First success: Discover only**
+
+Use OAuth without copying a key. If QVERIS_API_KEY is already configured, skip OAuth login.
 
 ```bash
-qveris login                              # Authenticate
-qveris discover "weather forecast"        # Find capabilities
-qveris inspect 1                          # View details
-qveris call 1 --params '{"wfo":"LWX","x":90,"y":90}'  # Execute
+qveris auth login
+qveris discover "weather forecast API" --json
 ```
 
 The CLI also supports interactive mode (`qveris interactive`), code generation (`--codegen curl|python|js`), and shell completions. For the full reference, see [CLI documentation](cli.md).
@@ -79,19 +94,18 @@ If your client supports **Model Context Protocol (MCP)** and remote Streamable H
 - `inspect` (Inspect)
 - `call` (Call)
 
-For the full MCP reference, see [MCP Server documentation](mcp-server.md) or the [Hosted MCP guide](https://qveris.ai/hosted-mcp).
+For the full MCP reference, see [MCP Server documentation](mcp-server.md) or the [Hosted MCP guide](/hosted-mcp).
 
 #### Hosted MCP configuration (preferred)
+
+For clients with OAuth discovery, add the URL below and complete browser authorization. If OAuth is unsupported, use the valid-key fallback in the [MCP guide](/docs/mcp-server).
 
 ```json
 {
   "mcpServers": {
     "qveris": {
       "type": "http",
-      "url": "https://mcp.qveris.ai/mcp",
-      "headers": {
-        "Authorization": "Bearer your-api-key-here"
-      }
+      "url": "https://mcp.qveris.ai/mcp"
     }
   }
 }
@@ -138,10 +152,29 @@ For the full guide (client, agent, typed models, integration patterns), see [Pyt
 Set environment variables:
 
 - `QVERIS_API_KEY` (create one in [Dashboard / API Keys](/account?page=api-keys))
-- `OPENAI_API_KEY` (or your OpenAI-compatible provider key)
-- `OPENAI_BASE_URL` (optional; for OpenAI-compatible providers)
 
 Typed client workflow:
+
+Start with one Discover using only your QVeris credential:
+
+```python
+import asyncio
+from qveris import QverisClient, QverisConfig
+
+async def main():
+    client = QverisClient(QverisConfig(base_url="https://qveris.ai/api/v1"))
+    try:
+        discovered = await client.discover("weather forecast API", limit=5)
+        print(discovered.search_id)
+        for candidate in discovered.results:
+            print(candidate.tool_id)
+    finally:
+        await client.close()
+
+asyncio.run(main())
+```
+
+Optional Call example: review real inputs, permissions and cost before running it.
 
 ```python
 import asyncio
@@ -211,6 +244,11 @@ async def main():
 asyncio.run(main())
 ```
 
+Optional model-driven flow; configure the model provider only for this example:
+
+- `OPENAI_API_KEY` (or your OpenAI-compatible provider key)
+- `OPENAI_BASE_URL` (optional; for OpenAI-compatible providers)
+
 Minimal streaming example:
 
 ```python
@@ -239,6 +277,18 @@ npm install @qverisai/sdk
 ```
 
 It is a zero-dependency typed client (native `fetch`, Node.js 18+). For the full guide (config, API reference, typed responses, error handling), see [TypeScript SDK](js-sdk.md).
+
+Start with one Discover using only your QVeris credential:
+
+```typescript
+import { Qveris } from "@qverisai/sdk";
+
+const qveris = Qveris.fromEnv({ baseUrl: "https://qveris.ai/api/v1" });
+const discovered = await qveris.discover("weather forecast API", { limit: 5 });
+console.log(discovered.search_id, discovered.results.map(tool => tool.tool_id));
+```
+
+Optional Call example: review real inputs, permissions and cost before running it.
 
 ```typescript
 import { Qveris } from '@qverisai/sdk';

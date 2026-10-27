@@ -134,3 +134,37 @@ test("China SDK guides keep the China endpoint boundary", () => {
     );
   }
 });
+
+test("published onboarding starts with one authenticated Discover before optional Call examples", () => {
+  for (const path of GETTING_STARTED_GUIDES) {
+    const guide = read(path).replaceAll("\r\n", "\n");
+    const python = guide.match(/```python\n([\s\S]*?)```/)?.[1];
+    const typescript = guide.match(/```typescript\n([\s\S]*?)```/)?.[1];
+    assert.ok(python?.includes("QverisConfig(base_url="), `${path}: use the released authenticated client`);
+    assert.ok(python?.includes("await client.discover("), `${path}: first Python request is Discover`);
+    assert.doesNotMatch(python, /\.call\(|\bAgent\(|OPENAI_API_KEY/);
+    assert.ok(typescript?.includes("Qveris.fromEnv("), `${path}: use the released credential path`);
+    assert.ok(typescript?.includes("await qveris.discover("), `${path}: first TypeScript request is Discover`);
+    assert.doesNotMatch(typescript, /\.call\(/);
+    const hosted = JSON.parse(guide.match(/```json\n([\s\S]*?)```/)?.[1]);
+    assert.ok(hosted.mcpServers.qveris.url.endsWith("/mcp"), `${path}: default OAuth endpoint`);
+    assert.equal(hosted.mcpServers.qveris.headers, undefined, `${path}: do not require pasted secrets for OAuth`);
+    assert.ok(guide.includes("public-readonly"), `${path}: explicit public REST is separate`);
+    assert.ok(guide.includes("0.11.3") && guide.includes("0.9.0") && guide.includes("0.8.0"));
+    assert.doesNotMatch(guide, /qveris auth trial|--public-readonly|--readonly|--read-only/);
+    assert.ok(!guide.includes(path.includes("/cn/") ? "qveris.ai" : "qveris.cn"), `${path}: own site only`);
+  }
+});
+
+
+test("canonical CLI quickstarts keep OAuth-first Discover separate from guided Call", () => {
+  for (const locale of ["en-US", "zh-CN", "cn/zh-CN"]) {
+    const guide = read(`docs/${locale}/cli.md`).replaceAll("\r\n", "\n");
+    const title = locale === "en-US" ? "## Quick Start" : "## 快速开始";
+    const quickstart = guide.slice(guide.indexOf(title)).split("\n---")[0];
+    const shell = quickstart.match(/```bash\n([\s\S]*?)```/)?.[1];
+    assert.ok(shell?.includes("qveris auth login"));
+    assert.ok(shell?.includes("qveris discover") && shell.includes("--json"));
+    assert.doesNotMatch(shell, /qveris (?:call|init|auth trial)|--public-readonly|--readonly|--read-only/);
+  }
+});
