@@ -50,7 +50,7 @@ Both surfaces map to the same QVeris protocol:
 
 ---
 
-## Requirements
+## Requirements for authenticated access
 
 - An MCP-compatible client
 - A QVeris account for browser sign-in when using Hosted MCP with OAuth discovery
@@ -79,6 +79,24 @@ For clients with MCP OAuth discovery, add the endpoint below and complete browse
 ```
 
 If your remote client does not support OAuth discovery, use the [Hosted MCP API-key fallback](#hosted-mcp-details). See the [Hosted MCP page](https://qveris.ai/hosted-mcp) for a copy-ready endpoint and client-specific guidance. Use the local stdio setup below only when your client does not support remote Streamable HTTP.
+
+### Explicit public read-only Hosted MCP
+
+Use the separate read-only endpoint only for public discovery and inspection:
+
+```text
+https://mcp.qveris.ai/mcp/readonly
+```
+
+The default authenticated endpoint remains `https://mcp.qveris.ai/mcp`, with OAuth discovery and the existing valid-key fallback. Choosing the separate endpoint is explicit; authentication failure never redirects or falls back to read-only access. This hosted mode does not add a new option to the published local `@qverisai/mcp` package.
+
+Only canonical `discover` and `inspect` are listed and callable. Probe, Call, usage/history, ledger, execution lookup, deprecated aliases and resource access are unavailable on this endpoint. Inputs use the [public read-only REST contract](/docs/rest-api): restricted public data, no account-specific price or balance, and no identity or trial grant.
+
+Configure a separate uncredentialed remote connection. Authorization, Cookie, session/receipt proofs, query strings and any `Mcp-Session-Id` are rejected; do not silently remove credentials from an existing authenticated connection. This endpoint allocates no persistent MCP session, and an authenticated session cannot be moved here. It accepts bounded JSON POST requests, not GET/SSE or DELETE; use a client whose HTTP behavior has been verified for this mode. A client being able to list local tool schemas is not evidence that it can invoke public tools.
+
+Requests are limited to 8192 bytes, serialized responses to 512 KiB, and total request lifetime to 15 seconds. Read limits may be shared by clients behind a proxy or common egress; they are not a personal allowance. On `429`, honor the returned retry guidance with bounded retries. Report rejected credentials or `401` and connect the intended authenticated identity instead of downgrading. No paid operation is retried or submitted by this mode.
+
+To proceed to Call, explicitly use the authenticated connection, preserve the selected tool/input intent, refresh Inspect, permissions and any necessary quote, then confirm cost. Public discovery context never authorizes Probe/Call. An already selected tool does not require another Discover solely for authentication upgrade.
 
 ### Local stdio fallback
 

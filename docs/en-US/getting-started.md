@@ -22,9 +22,10 @@ For provider comparison, Inspect every candidate when current scope or a complet
 
 - **OAuth:** use `qveris auth login`, or add the Hosted MCP endpoint in a client that supports OAuth discovery. Complete browser authorization without copying an API key.
 - **Existing API key:** keep using it. Set `QVERIS_API_KEY` privately for REST/SDK/CLI, or use `qveris login` for masked key entry. This command requires a key; it is different from `qveris auth login`.
+- **Public read-only REST:** explicitly use `X-Qveris-Access-Mode: public-readonly` in a separate uncredentialed REST client for Discover/Inspect only. It creates no trial or credits and cannot authorize Call. Do not combine it with Authorization or cookies; browser HTTP uses `credentials: "omit"`. A bad key never falls back to public access. See the [REST guide](/docs/rest-api) for limits, 401/429 guidance and authenticated upgrade. This does not add a mode to the installed CLI/SDK versions.
 - **Agent without credentials:** explicitly register an anonymous trial using the existing Agent API. Registration issues credentials; it is not unauthenticated Discover or Call. See [Authentication and trial lifecycle](/auth.md) for one-time secrets, limits, expiry, and current claim restrictions.
 
-Discover is free but still requires authentication. Never paste keys or claim codes into prompts, URLs, shared configuration, logs, or source control.
+Discover is free; the default CLI/SDK and authenticated MCP paths still require authentication. Never paste keys or claim codes into prompts, URLs, shared configuration, logs, or source control.
 
 ## Browser result, recovery and claim
 

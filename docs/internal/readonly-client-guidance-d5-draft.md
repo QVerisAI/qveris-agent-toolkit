@@ -29,3 +29,7 @@ The detailed per-path inventory, artifact hashes, client/error matrix and machin
 ## S5 REST coordination update
 
 The producer froze existing POST `/search` and `/tools/by-ids` with explicit `X-Qveris-Access-Mode: public-readonly`, restricted public DTO and no credentials/cookies. The Website REST/auth/LLM draft is being prepared from that contract. This does not define a CLI flag, SDK factory or Hosted MCP path. C4 must reject conflicts with configured credentials instead of silently omitting them. Authentication upgrade can refresh Inspect and necessary quote for the selected tool; no extra Discover is mandatory solely for upgrading. Keep public context out of execution authority. Wait for actual published C4 identities before changing current client install examples.
+
+## Canonical draft now includes frozen REST and S6 target
+
+Added only targeted hunks to the three Getting Started sources and three MCP guide sources. The matching hunks are copied to Website; full-file parity is not claimed. S6 targets a separate `/mcp/readonly` stateless POST endpoint on the current Hosted MCP origin, only canonical Discover/Inspect, with credential/session conflict rejection. Default OAuth remains unchanged. No CLI/SDK mode is advertised at current package versions. Producer transport tests and W per-client installation acceptance remain pending, so this PR remains draft.
