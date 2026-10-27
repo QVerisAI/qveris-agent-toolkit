@@ -22,7 +22,7 @@ For provider comparison, Inspect every candidate when current scope or a complet
 
 - **OAuth:** use `qveris auth login`, or add the Hosted MCP endpoint in a client that supports OAuth discovery. Complete browser authorization without copying an API key.
 - **Existing API key:** keep using it. Set `QVERIS_API_KEY` privately for REST/SDK/CLI, or use `qveris login` for masked key entry. This command requires a key; it is different from `qveris auth login`.
-- **Public read-only REST:** explicitly use `X-Qveris-Access-Mode: public-readonly` in a separate uncredentialed REST client for Discover/Inspect only. It creates no trial or credits and cannot authorize Call. Do not combine it with Authorization or cookies; browser HTTP uses `credentials: "omit"`. A bad key never falls back to public access. See the [REST guide](/docs/rest-api) for limits, 401/429 guidance and authenticated upgrade. This does not add a mode to the installed CLI/SDK versions.
+- **Public read-only REST:** explicitly use `X-Qveris-Access-Mode: public-readonly` in a separate uncredentialed REST client for Discover/Inspect only. It creates no trial or credits and cannot authorize Call. Do not combine it with Authorization or cookies; browser HTTP uses `credentials: "omit"`. A bad key never falls back to public access. See the [REST guide](/docs/rest-api) for limits, 401/429 guidance and authenticated upgrade. For explicit public clients, use the supported releases in the CLI/SDK guides below.
 - **Agent without credentials:** explicitly register an anonymous trial using the existing Agent API. Registration issues credentials; it is not unauthenticated Discover or Call. See [Authentication and trial lifecycle](/auth.md) for one-time secrets, limits, expiry, and current claim restrictions.
 
 Discover is free; the default CLI/SDK and authenticated MCP paths still require authentication. Never paste keys or claim codes into prompts, URLs, shared configuration, logs, or source control.
@@ -34,8 +34,8 @@ Discover is free; the default CLI/SDK and authenticated MCP paths still require 
 | REST | Explicit public-readonly header; Discover/Inspect only, without credentials or cookies. | Authenticate; refresh the selected tool with Inspect, permissions and any necessary quote. |
 | Hosted MCP | Separate read-only endpoint from the [MCP guide](/docs/mcp-server); only discover/inspect, no session. | Use the default OAuth or valid-key connection explicitly. |
 | Local MCP 0.15.0 | Listing tool schemas without a key is not a successful Discover/Inspect request. | Configure a valid key as described in the [MCP guide](/docs/mcp-server). |
-| Published CLI 0.11.3 | Keep the authenticated examples below; use REST or Hosted MCP for explicit public reads. | Existing OAuth or API-key flow. |
-| Published QVeris SDKs: TypeScript 0.9.0 / Python 0.8.0 | Keep the authenticated client examples; no new public-mode constructor is implied by these versions. | Existing key or supported credential provider. |
+| Published CLI 0.12.0 | Explicit `--public-read-only` Discover/Inspect in a separate credential-free profile; see the [CLI guide](/docs/cli). | Deliberately use OAuth or an API key, then refresh the selected tool with authenticated Inspect. |
+| Published QVeris SDKs: TypeScript 0.10.0 / Python 0.9.0 | Separate `Qveris.publicReadOnly()` or `PublicDiscoveryClient`; see the [TypeScript guide](/docs/js-sdk) and [Python guide](/docs/python-sdk). | Construct a new authenticated client and refresh Inspect without the old public context. |
 
 A supplied invalid key never falls back to public access. Do not combine a public connection with credentials/cookies. On 401, authenticate for the intended operation; on 429, follow Retry-After and bounded retry guidance, without creating an identity or rotating credentials to evade limits. See the [REST guide](/docs/rest-api) for exact limits and errors.
 

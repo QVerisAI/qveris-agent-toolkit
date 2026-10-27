@@ -150,7 +150,14 @@ test("published onboarding starts with one authenticated Discover before optiona
     assert.ok(hosted.mcpServers.qveris.url.endsWith("/mcp"), `${path}: default OAuth endpoint`);
     assert.equal(hosted.mcpServers.qveris.headers, undefined, `${path}: do not require pasted secrets for OAuth`);
     assert.ok(guide.includes("public-readonly"), `${path}: explicit public REST is separate`);
-    assert.ok(guide.includes("0.11.3") && guide.includes("0.9.0") && guide.includes("0.8.0"));
+    const versions = [
+      JSON.parse(read("packages/cli/package.json")).version,
+      JSON.parse(read("packages/js-sdk/package.json")).version,
+      read("packages/python-sdk/pyproject.toml").match(/^version\s*=\s*"([^"]+)"/m)?.[1],
+    ];
+    assert.ok(versions.every(version => typeof version === "string" && guide.includes(version)));
+    assert.ok(guide.includes("Qveris.publicReadOnly()") && guide.includes("PublicDiscoveryClient"));
+    assert.ok(guide.includes("--public-read-only"));
     assert.doesNotMatch(guide, /qveris auth trial|--public-readonly|--readonly|--read-only/);
     assert.ok(!guide.includes(path.includes("/cn/") ? "qveris.ai" : "qveris.cn"), `${path}: own site only`);
   }
