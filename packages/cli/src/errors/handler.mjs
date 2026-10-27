@@ -9,6 +9,7 @@ export class CliError extends Error {
     this.code = code;
     this.hint = template.hint;
     this.exitCode = template.exit;
+    if (template.action) this.action = template.action;
   }
 }
 

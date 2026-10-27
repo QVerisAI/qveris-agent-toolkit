@@ -1,3 +1,4 @@
+import { hasOAuthSession } from "../auth/storage.mjs";
 import {
   createAuthorizationContextCredentialProvider,
   resolveApiKey,
@@ -40,9 +41,16 @@ export async function runInit(queryArg, flags) {
   });
   const authorizationContext = await resolveAuthorizationContextId({ apiKey });
   const credentialProvider = createAuthorizationContextCredentialProvider({ apiKey, authorizationContext });
-  record(steps, "auth", "ok", apiKey === undefined ? "OAuth session resolved" : "API key resolved", {
-    source: apiKey === undefined ? "oauth session" : resolve("api_key", flags.apiKey || flags.token).source,
-    ...(apiKey === undefined ? { type: "oauth" } : { type: "api_key", key: maskKey(apiKey) }),
+  record(steps, "auth", "ok", apiKey === undefined ? "Stored credential resolved" : "API key resolved", {
+    source:
+      apiKey === undefined
+        ? hasOAuthSession()
+          ? "oauth session"
+          : "trial registration"
+        : resolve("api_key", flags.apiKey || flags.token).source,
+    ...(apiKey === undefined
+      ? { type: hasOAuthSession() ? "oauth" : "trial" }
+      : { type: "api_key", key: maskKey(apiKey) }),
     base_url: baseUrl,
     endpoint_source: endpointSource,
   });

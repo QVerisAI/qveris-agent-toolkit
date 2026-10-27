@@ -7,6 +7,33 @@ export const EX_NOPERM = 77;
 export const EX_CONFIG = 78;
 
 export const ERROR_CODES = {
+  TRIAL_CREDENTIAL_EXISTS: {
+    message: "Existing credentials were preserved; trial registration was not sent",
+    hint: "Use the configured login, or a separate CLI configuration for an explicit trial",
+    exit: EX_CONFIG,
+  },
+  TRIAL_STORAGE_REQUIRED: {
+    message: "A persistent credential store is required before trial registration",
+    hint: "Enable the OS credential store or explicitly pass --allow-unencrypted-storage",
+    exit: EX_CONFIG,
+  },
+  TRIAL_STORAGE_FAILED: {
+    action: "recover_registration",
+    message: "Trial credential storage could not be completed",
+    hint: "Preserve the config and OS credential store. Rerun auth trial for local recovery, or auth trial --export to rescue a saved response. Do not register again",
+    exit: EX_CONFIG,
+  },
+  TRIAL_ISSUANCE_UNKNOWN: {
+    action: "recover_registration",
+    message: "The original trial registration outcome is unresolved; no replacement request will be sent",
+    hint: "Preserve the registration journal. Rerun auth trial for local recovery or --export for a saved response; otherwise contact support with the operation ID",
+    exit: EX_TEMPFAIL,
+  },
+  TRIAL_EXPIRED: {
+    message: "The stored trial credential has expired",
+    hint: "Use the claim guidance or log in with an existing account; no replacement account is created automatically",
+    exit: EX_NOPERM,
+  },
   AUTH_MISSING_KEY: {
     message: "No API key or OAuth session configured",
     hint: "Run 'qveris auth login' for OAuth Device Flow, 'qveris login' to paste an API key, or set QVERIS_API_KEY",

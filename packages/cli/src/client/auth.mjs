@@ -1,3 +1,8 @@
+import {
+  hasStoredTrialCredential,
+  loadTrialSecret,
+  createStoredTrialCredentialProvider,
+} from "../auth/trial-storage.mjs";
 import { resolve } from "../config/resolve.mjs";
 import { CliError } from "../errors/handler.mjs";
 import { createStoredOAuthCredentialProvider } from "../auth/oauth.mjs";
@@ -10,7 +15,7 @@ export function resolveApiKey(flagValue) {
   const { value } = resolve("api_key", flagValue);
 
   if (value === undefined || value === null || (typeof value === "string" && !value.trim())) {
-    if (hasOAuthSession()) return undefined;
+    if (hasOAuthSession() || hasStoredTrialCredential()) return undefined;
     throw new CliError("AUTH_MISSING_KEY");
   }
   if (typeof value !== "string") {
@@ -32,6 +37,8 @@ export async function resolveAuthorizationContextId({ apiKey } = {}) {
     throw new CliError("AUTH_MISSING_KEY");
   }
 
+  if (!hasOAuthSession() && hasStoredTrialCredential())
+    return authorizationContextForApiKey((await loadTrialSecret()).api_key);
   const metadata = getOAuthSessionMetadata();
   const secret = await loadOAuthSessionSecret(metadata);
   const context = authorizationContextForOAuth(metadata, secret);
@@ -43,14 +50,14 @@ export async function resolveAuthorizationContextId({ apiKey } = {}) {
 
 export function createAuthorizationContextCredentialProvider({ apiKey, authorizationContext }) {
   if (apiKey !== undefined) return undefined;
-  const provider = createStoredOAuthCredentialProvider();
+  const provider = resolveCredentialProvider();
 
   async function assertCurrentContext() {
     const current = await resolveAuthorizationContextId({ apiKey: undefined });
     if (current !== authorizationContext) {
       throw new CliError(
         "AUTH_OAUTH_FAILED",
-        "OAuth authorization context changed before the request was sent; retry discovery with the current login.",
+        "Stored authorization context changed before the request was sent; retry discovery with the current login.",
       );
     }
   }
@@ -62,11 +69,15 @@ export function createAuthorizationContextCredentialProvider({ apiKey, authoriza
       await assertCurrentContext();
       return credential;
     },
-    async refreshCredential() {
-      const credential = await provider.refreshCredential();
-      await assertCurrentContext();
-      return credential;
-    },
+    ...(typeof provider.refreshCredential === "function"
+      ? {
+          async refreshCredential() {
+            const credential = await provider.refreshCredential();
+            await assertCurrentContext();
+            return credential;
+          },
+        }
+      : {}),
   };
 }
 
@@ -101,6 +112,7 @@ export function resolveCredentialProvider({ apiKey, credentialProvider } = {}) {
   if (apiKey === undefined && hasOAuthSession()) {
     return createStoredOAuthCredentialProvider();
   }
+  if (apiKey === undefined && hasStoredTrialCredential()) return createStoredTrialCredentialProvider();
   return createApiKeyCredentialProvider(apiKey);
 }
 

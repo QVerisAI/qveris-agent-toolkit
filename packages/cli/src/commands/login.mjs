@@ -1,3 +1,4 @@
+import { removeTrialCredential } from "../auth/trial-storage.mjs";
 import { createInterface } from "node:readline";
 import { resolve } from "../config/resolve.mjs";
 import { setConfigValue, deleteConfigValue } from "../config/store.mjs";
@@ -11,7 +12,7 @@ import { resolveBaseUrl, getSiteUrl } from "../config/endpoint.mjs";
 import { bold, green, dim, cyan } from "../output/colors.mjs";
 import { printLoginBanner } from "../output/banner.mjs";
 import { openUrl } from "../utils/open-url.mjs";
-import { withOAuthRefreshLock } from "../auth/storage.mjs";
+import { hasOAuthSession, withOAuthRefreshLock } from "../auth/storage.mjs";
 
 /**
  * Masked input prompt using raw mode.
@@ -160,21 +161,24 @@ function maskKey(key) {
 }
 
 export async function runLogout() {
-  await withOAuthRefreshLock(async () => deleteConfigValue("api_key"));
-  console.log(`  ${green("\u2713")} API key removed from config.`);
+  await withOAuthRefreshLock(async () => {
+    await removeTrialCredential();
+    deleteConfigValue("api_key");
+  });
+  console.log(`  ${green("\u2713")} API key removed from config; any stored trial credential was cleared.`);
 }
 
 export async function runWhoami(flags) {
   const { source } = resolve("api_key", flags.apiKey);
   const key = resolveApiKey(flags.apiKey);
-  const type = key === undefined ? "oauth" : "api_key";
+  const type = key === undefined ? (hasOAuthSession() ? "oauth" : "trial") : "api_key";
   const { baseUrl, source: endpointSource } = resolveApiBaseUrl({
     baseUrlFlag: flags.baseUrl,
-    preferOAuth: type === "oauth",
+    preferOAuth: key === undefined,
   });
   const context = {
     type,
-    source: type === "oauth" ? "oauth session" : source,
+    source: type === "oauth" ? "oauth session" : type === "trial" ? "trial registration" : source,
     endpoint: baseUrl,
     endpoint_source: endpointSource,
   };

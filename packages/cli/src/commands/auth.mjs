@@ -1,3 +1,5 @@
+import { getTrialRegistration, removeTrialCredential } from "../auth/trial-storage.mjs";
+import { publicTrial } from "./trial.mjs";
 import { createOAuthAuthorizationContextId } from "../auth/context.mjs";
 import { resolveBaseUrl } from "../config/endpoint.mjs";
 import { discoverTools } from "../client/api.mjs";
@@ -24,10 +26,11 @@ import {
 } from "../auth/storage.mjs";
 
 export async function runAuth(subcommand, flags) {
+  if (subcommand === "trial") return (await import("./trial.mjs")).runTrial(flags);
   if (subcommand === "login") return authLogin(flags);
   if (subcommand === "status") return authStatus(flags);
   if (subcommand === "logout") return authLogout(flags);
-  console.error("  Usage: qveris auth <login|status|logout>");
+  console.error("  Usage: qveris auth <login|status|logout|trial>");
   process.exitCode = 2;
 }
 
@@ -133,6 +136,17 @@ async function authLogin(flags) {
 async function authStatus(flags) {
   const metadata = getOAuthSessionMetadata();
   const secret = await loadOAuthSessionSecret(metadata);
+  if (!metadata && getTrialRegistration()) {
+    const result = {
+      authenticated: false,
+      validation: "not_checked",
+      type: "trial",
+      ...publicTrial(getTrialRegistration()),
+    };
+    if (flags.json) console.log(JSON.stringify(result, null, 2));
+    else console.log(`  Trial registration: ${result.state}. Run qveris whoami to validate access.`);
+    return;
+  }
   if (!metadata || !secret) {
     const result = { authenticated: false, type: "oauth" };
     if (flags.json) console.log(JSON.stringify(result, null, 2));
@@ -209,6 +223,7 @@ async function authLogout(flags) {
       }
       try {
         await deleteOAuthSession();
+        await removeTrialCredential();
       } catch (error) {
         localError = error;
       }
@@ -220,8 +235,8 @@ async function authLogout(flags) {
   const result = { authenticated: false, local_credentials_removed: !localError, revoked: remoteRevoked };
   if (flags.json) console.log(JSON.stringify(result, null, 2));
   else {
-    if (localError) console.error(`  ${red("!")} Local OAuth credentials could not be completely removed.`);
-    else console.log(`  ${green("✓")} Local OAuth credentials removed.`);
+    if (localError) console.error(`  ${red("!")} Local credentials could not be completely removed.`);
+    else console.log(`  ${green("✓")} Local credentials removed.`);
     if (revokeError) {
       console.error(
         localError
