@@ -10,6 +10,9 @@ Client
 .. autoclass:: qveris.QverisClient
    :members:
 
+.. autoclass:: qveris.PublicDiscoveryClient
+   :members:
+
 Agent
 -----
 
@@ -94,6 +97,10 @@ Response models
    :exclude-members: model_config
 
 .. autoclass:: qveris.SearchResponse
+   :members:
+   :exclude-members: model_config
+
+.. autoclass:: qveris.PublicSearchResponse
    :members:
    :exclude-members: model_config
 

@@ -86,7 +86,7 @@ class PublicDiscoveryClient:
     """Explicit credential-free Discover/Inspect. Authenticate with a new client.
 
     Re-inspect selected IDs and review current inputs and a fresh quote before
-    explicitly calling through that authenticated client. Never reuse pub_ IDs.
+    explicitly calling through that authenticated client. Never reuse ``pub_`` IDs.
     Use ``transport`` for injection; borrowed HTTP clients may retain identity.
     """
 
