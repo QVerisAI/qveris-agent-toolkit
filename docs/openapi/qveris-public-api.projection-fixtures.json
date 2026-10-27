@@ -1,5 +1,5 @@
 {
-  "contract_version": "2026-10-21.2",
+  "contract_version": "2026-10-26.1",
   "result_delivery_contract": {
     "contract_id": "qveris.result-delivery",
     "contract_version": "1.0.0",
