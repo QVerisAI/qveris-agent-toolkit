@@ -78,7 +78,7 @@
 }
 ```
 
-如果远程客户端不支持 OAuth 自动发现，请使用[托管 MCP 详细说明](#托管-mcp-详细说明)中的 API 密钥备用方案。可前往[托管 MCP 页面](https://qveris.cn/hosted-mcp)复制端点并查看各客户端的配置说明。只有当客户端不支持远程 Streamable HTTP 时，才使用下方本地 stdio 备用方案。
+如果远程客户端不支持 OAuth 自动发现，请使用[托管 MCP 详细说明](#托管-mcp-详细说明)中的 API 密钥备用方案。可前往[托管 MCP 页面](/hosted-mcp)复制端点并查看各客户端的配置说明。只有当客户端不支持远程 Streamable HTTP 时，才使用下方本地 stdio 备用方案。
 
 ### 显式公开只读托管 MCP
 
@@ -92,11 +92,11 @@ https://mcp.qveris.cn/mcp/readonly
 
 此端点只列出并允许调用规范名称 `discover` 和 `inspect`，不支持 Probe、Call、用量／历史、账本、执行查询、旧别名或资源访问。输入遵循[公开只读 REST 契约](/docs/rest-api)，仅返回受限公开数据，不含账号价格或余额，不创建身份或试用赠送。
 
-请配置独立的无凭据远程连接。Authorization、Cookie、会话／回执证明、查询字符串和任何 `Mcp-Session-Id` 都会被拒绝；不得悄悄移除已有认证连接的凭据。此端点不分配持久 MCP 会话，不能迁入认证会话。只接受有界 JSON POST，不支持 GET/SSE 或 DELETE；应使用已验证适配该模式 HTTP 行为的客户端。本地工具 schema 可列出，不等于支持公开工具调用。
+请配置独立的无凭据远程连接。请求携带 Origin 时必须被明确允许；不带 Origin 的原生客户端不依赖浏览器来源配置。Authorization、Cookie、会话／回执证明、查询字符串和任何 `Mcp-Session-Id` 都会被拒绝；不得悄悄移除已有认证连接的凭据。此端点不分配持久 MCP 会话，不能迁入认证会话。只接受有界 JSON POST，不支持 GET/SSE 或 DELETE；应使用已验证适配该模式 HTTP 行为的客户端。本地工具 schema 可列出，不等于支持公开工具调用。
 
 请求正文最多 8192 字节，序列化响应最多 512 KiB，单次请求总时限 15 秒。代理或共用出口后的客户端可能共享读取限制，这不是个人额度。遇到 `429` 时，遵循实际返回的重试指引并限制重试次数。凭据被拒绝或遇到 `401` 时，应报告错误并连接目标认证身份，不得降级；本模式不会提交或重试付费操作。
 
-继续 Call 前明确使用认证连接，保留已选工具与输入意图，刷新 Inspect、权限及必要报价，再确认成本。公开 discovery context 不能授权 Probe/Call。已选定工具时，不要求仅为升级认证而额外 Discover。
+继续 Call 前明确使用认证连接，保留已选工具与输入意图，刷新 Inspect、权限及必要报价，再确认成本。公开 discovery context 不能授权 Probe/Call；认证 Inspect 不应携带旧公开 search_id，应使用新的认证结果。已选定工具时，不要求仅为升级认证而额外 Discover。
 
 ### 本地 stdio 备用方案
 

@@ -39,24 +39,16 @@ npx @qverisai/cli discover "weather API"
 
 ## Quick Start
 
+Use OAuth Device Flow without copying a key. If `QVERIS_API_KEY` is already configured, skip login.
+
 ```bash
-# Guided first call
-qveris init
-
-# Manual flow
-# 1. Authenticate (saves key to ~/.config/qveris/config.json)
-qveris login
-
-# 2. Discover tools
-qveris discover "weather forecast API"
-
-# 3. After selecting result 1 because its contract matches these exact fields
-qveris call 1 --params '{"wfo": "LWX", "x": 90, "y": 90}'
-
-# Optional checks when contract details or a current quote are needed
-qveris inspect 1
-qveris probe 1 --params '{"wfo": "LWX", "x": 90, "y": 90}' --checks schema,quote
+qveris auth login
+qveris discover "weather forecast API" --json
 ```
+
+This first example only discovers capabilities. `qveris login` remains the API-key path and prompts for masked key input; it is different from OAuth login. For an Agent without credentials, explicitly use the existing anonymous registration API described in [Authentication and trial lifecycle](/auth.md). Do not register a trial during diagnostics or discovery.
+
+Call is a separate cost decision: choose a current result, build real parameters from its contract, and review its billing rule. Inspect missing contract detail and Probe when validation or a current quote is needed. See [Getting started](getting-started.md) before submitting a paid Call. `qveris init` is an optional guided Call workflow.
 
 ---
 

@@ -33,3 +33,13 @@ The producer froze existing POST `/search` and `/tools/by-ids` with explicit `X-
 ## Canonical draft now includes frozen REST and S6 target
 
 Added only targeted hunks to the three Getting Started sources and three MCP guide sources. The matching hunks are copied to Website; full-file parity is not claimed. S6 targets a separate `/mcp/readonly` stateless POST endpoint on the current Hosted MCP origin, only canonical Discover/Inspect, with credential/session conflict rejection. Default OAuth remains unchanged. No CLI/SDK mode is advertised at current package versions. Producer transport tests and W per-client installation acceptance remain pending, so this PR remains draft.
+
+## Current client baseline and source reconciliation preparation
+
+The independent documentation branch now includes accepted Toolkit main `449a3957cb55b1ec2a9dba7dcaeda79e2e3b6872` (CLI #463 and SDK #464). Those are source deliveries, not publication. Current public installation examples still use CLI 0.11.3, MCP 0.15.0, TypeScript SDK 0.9.0 and Python SDK 0.8.0; no unpublished client syntax or release binding is added.
+
+Targeted canonical edits restore the accepted OAuth/Discover-only CLI quickstarts, put the released one-Discover SDK examples before optional paid/model-driven examples, and keep the optional advanced validation flows intact. Model-provider credentials are scoped to the optional model-driven example. Default Hosted MCP setup uses URL-only OAuth configuration; key/stdio fallbacks remain separate. A small cross-client/error/upgrade matrix distinguishes real public REST/Hosted access from current published local clients, including omission of public search_id on authenticated Inspect. Only the selected CLI/MCP/Getting Started families are reconciled; generated SDK references and unrelated drift are not imported or rewritten.
+
+S6 actual source `ad4d547676b05e692dd01644f2c3d0556f25d76a` supports the supplied endpoint and standard protocol progress metadata, with 156 service tests and real frozen-S5/SDK fixture acceptance; current source delivery is not availability. Origin-bearing public clients must be explicitly allowed; empty lists allow native clients without Origin. The producer's newer schema fix remains owned by S5 and its final acceptance, not relabeled from the frozen archive.
+
+This remains a draft until S6 is accepted and merged. Website D5 branch is deliberately unchanged while W6 integration is pending; matching source hunks will be carried after W6 merges and one final Website synchronization. No target branch or shared plan is advanced by this preparation.

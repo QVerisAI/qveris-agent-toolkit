@@ -27,6 +27,20 @@ QVeris 支持多种集成方式。默认路径是发现 → 调用；仅当选�
 
 Discover 免费；默认 CLI／SDK 和认证 MCP 接入仍需认证。不要把密钥或认领码放入提示词、URL、共享配置、日志或代码仓库。
 
+## 接入模式与认证升级
+
+| 客户端或入口 | 公开只读接入 | 继续 Call |
+| --- | --- | --- |
+| REST | 显式 public-readonly 请求头，仅 Discover/Inspect，不携带凭据或 cookie。 | 完成认证；Inspect 已选工具，重新核对权限与必要报价。 |
+| 托管 MCP | 使用 [MCP 指南](/docs/mcp-server)中的独立只读端点，仅 discover/inspect，不分配会话。 | 明确使用默认 OAuth 或有效密钥连接。 |
+| 本地 MCP 0.15.0 | 无密钥时可列出工具 schema，不代表 Discover/Inspect 请求成功。 | 按 [MCP 指南](/docs/mcp-server)配置有效密钥。 |
+| 已发布 CLI 0.11.3 | 使用下方认证示例；公开只读请求使用 REST 或托管 MCP。 | 已有 OAuth 或 API 密钥流程。 |
+| 已发布 QVeris SDK：TypeScript 0.9.0／Python 0.8.0 | 使用认证客户端示例；这些版本不代表提供了新的公开模式构造方式。 | 已有密钥或受支持的凭据提供器。 |
+
+错误密钥不会降级为公开访问；公开连接不得混用凭据或 cookie。遇到 401，应为目标操作完成认证；遇到 429，遵循 Retry-After 与有界重试指引，不得创建身份或轮换凭据绕过限制。确切限制与错误见 [REST 指南](/docs/rest-api)。
+
+公开接入不创建账号、密钥、试用积分或供应商执行。升级时保留已选工具与输入意图，但不要把公开 search_id 带入认证 Inspect；使用其新的认证结果与必要报价，再明确确认成本。已经选定工具时，不要求仅为升级认证而额外自然语言 Discover。
+
 ## 浏览器结果、恢复与认领
 
 工具返回结果后仍可能等待结算。超时或响应丢失时，通过页面恢复原操作；停止等待不等于撤销执行。不要自动重放 Call 或另建试用。报价不锁价，页面显示的容忍范围也不是额外赠送积分。
@@ -51,13 +65,13 @@ curl -fsSL https://qveris.ai/cli/install | bash
 
 也可通过 npm 安装（`npm install -g @qverisai/cli`）或免安装运行（`npx @qverisai/cli`）。
 
-**快速上手**
+**首次成功：仅 Discover**
+
+使用 OAuth，无需复制密钥；如果已经配置 QVERIS_API_KEY，可跳过 OAuth 登录。
 
 ```bash
-qveris login                              # 登录认证
-qveris discover "天气预报"                # 发现能力
-qveris inspect 1                          # 查看详情
-qveris call 1 --params '{"wfo":"LWX","x":90,"y":90}'  # 调用执行
+qveris auth login
+qveris discover "天气预报 API" --json
 ```
 
 CLI 还支持交互模式（`qveris interactive`）、代码生成（`--codegen curl|python|js`）和 Shell 自动补全。完整参考见 [CLI 文档](cli.md)。
@@ -80,19 +94,18 @@ qveris call --context @context.json --params @params.json
 - `inspect`（检查）
 - `call`（调用）
 
-完整 MCP 参考文档见 [MCP 服务器文档](mcp-server.md) 或[托管 MCP 指南](https://qveris.ai/hosted-mcp)。
+完整 MCP 参考文档见 [MCP 服务器文档](mcp-server.md) 或[托管 MCP 指南](/hosted-mcp)。
 
 #### 托管 MCP 配置（首选）
+
+支持 OAuth 自动发现的客户端可添加下方 URL，按提示完成浏览器授权；不支持 OAuth 时，使用 [MCP 指南](/docs/mcp-server)中的有效密钥备用方案。
 
 ```json
 {
   "mcpServers": {
     "qveris": {
       "type": "http",
-      "url": "https://mcp.qveris.ai/mcp",
-      "headers": {
-        "Authorization": "Bearer your-api-key-here"
-      }
+      "url": "https://mcp.qveris.ai/mcp"
     }
   }
 }
@@ -139,10 +152,29 @@ pip install qveris
 设置环境变量：
 
 - `QVERIS_API_KEY`（在[控制台/API密钥](/account?page=api-keys)中创建）
-- `OPENAI_API_KEY`（或你的 OpenAI 兼容服务商密钥）
-- `OPENAI_BASE_URL`（可选；用于 OpenAI 兼容服务商）
 
 Typed client 工作流：
+
+先仅使用 QVeris 凭据完成一次 Discover：
+
+```python
+import asyncio
+from qveris import QverisClient, QverisConfig
+
+async def main():
+    client = QverisClient(QverisConfig(base_url="https://qveris.ai/api/v1"))
+    try:
+        discovered = await client.discover("天气预报 API", limit=5)
+        print(discovered.search_id)
+        for candidate in discovered.results:
+            print(candidate.tool_id)
+    finally:
+        await client.close()
+
+asyncio.run(main())
+```
+
+以下是可选 Call 示例；运行前请核对真实输入、权限与成本。
 
 ```python
 import asyncio
@@ -212,6 +244,11 @@ async def main():
 asyncio.run(main())
 ```
 
+可选的模型驱动流程；仅此示例需要另外配置模型服务：
+
+- `OPENAI_API_KEY`（或你的 OpenAI 兼容服务商密钥）
+- `OPENAI_BASE_URL`（可选；用于 OpenAI 兼容服务商）
+
 最小流式示例：
 
 ```python
@@ -240,6 +277,18 @@ npm install @qverisai/sdk
 ```
 
 这是一个零依赖的类型化客户端（原生 `fetch`，Node.js 18+）。完整指南（配置、API 参考、类型化响应、错误处理）见 [TypeScript SDK](js-sdk.md)。
+
+先仅使用 QVeris 凭据完成一次 Discover：
+
+```typescript
+import { Qveris } from "@qverisai/sdk";
+
+const qveris = Qveris.fromEnv({ baseUrl: "https://qveris.ai/api/v1" });
+const discovered = await qveris.discover("天气预报 API", { limit: 5 });
+console.log(discovered.search_id, discovered.results.map(tool => tool.tool_id));
+```
+
+以下是可选 Call 示例；运行前请核对真实输入、权限与成本。
 
 ```typescript
 import { Qveris } from '@qverisai/sdk';
