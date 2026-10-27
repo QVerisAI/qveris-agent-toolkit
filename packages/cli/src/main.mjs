@@ -3,6 +3,7 @@ import { handleError } from "./errors/handler.mjs";
 import { VERSION } from "./config/defaults.mjs";
 import { bold, dim, cyan } from "./output/colors.mjs";
 import { printWelcomeBanner } from "./output/banner.mjs";
+import { resolveAccessMode } from "./client/access-mode.mjs";
 
 export async function main(argv) {
   const rawArgs = argv.slice(2);
@@ -32,6 +33,7 @@ export async function main(argv) {
   }
 
   try {
+    if (flags.publicReadOnly) resolveAccessMode({ publicReadOnly: true, operation: command });
     switch (command) {
       case "discover": {
         const query = rest.join(" ");
@@ -311,6 +313,9 @@ function extractGlobalFlags(args) {
       case "--dry-run":
         flags.dryRun = true;
         break;
+      case "--public-read-only":
+        flags.publicReadOnly = true;
+        break;
       case "--require-zero-quote":
         flags.requireZeroQuote = true;
         break;
@@ -520,6 +525,7 @@ function printUsage(flags = {}) {
   ${bold("Global Flags:")}
     --json, -j             Output raw JSON
     --api-key <key>        Override API key
+    --public-read-only    Explicit credential-free Discover/Inspect only
     --base-url <url>       Override API base URL
     --scope <scopes>       OAuth scopes for auth login (must include offline_access)
     --resource <url>       OAuth resource for auth login

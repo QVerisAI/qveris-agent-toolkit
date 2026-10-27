@@ -10,7 +10,7 @@ This reference is generated from the public Python objects and docstrings. See t
 
 <a id="qveris.QverisClient"></a>
 
-### *class* qveris.QverisClient(config: [QverisConfig](#qveris.QverisConfig) | None = None, debug_callback: Callable[[str], None] | None = None, \*, credential_provider: CredentialProvider | None = None, http_client: AsyncClient | None = None, transport: AsyncBaseTransport | None = None, limits: Limits | None = None)
+### *class* qveris.QverisClient(config: [QverisConfig](#qveris.QverisConfig) | None = None, debug_callback: Callable[[str], None] | None = None, \*, credential_provider: CredentialProvider | None = None, http_client: AsyncClient | None = None, transport: AsyncBaseTransport | None = None, limits: Limits | None = None, public_read_only: bool = False)
 
 Async client for Qveris API.
 
@@ -53,7 +53,7 @@ Deprecated alias for discover(…).
 
 <a id="qveris.QverisClient.inspect"></a>
 
-#### *async* inspect(tool_ids: Iterable[str] | str, search_id: str | None = None, session_id: str | None = None, timeout: float | None = None, correlation_id: str | None = None) → [SearchResponse](#qveris.SearchResponse)
+#### *async* inspect(tool_ids: Iterable[str] | str, search_id: str | None = None, session_id: str | None = None, timeout: float | None = None, correlation_id: str | None = None, view: Literal['routing', 'full'] | None = None) → [SearchResponse](#qveris.SearchResponse)
 
 Inspect one or more capabilities by tool ID.
 
@@ -160,6 +160,14 @@ Handle a built-in Qveris tool call from an LLM response.
 
 - params_to_tool may be either a dict (canonical) or a JSON string (legacy).
 - If func_name is not a Qveris built-in, (None, False, False) is returned so that callers can route to their own tool handlers.
+
+<a id="qveris.PublicDiscoveryClient"></a>
+
+### *class* qveris.PublicDiscoveryClient(config: [QverisConfig](#qveris.QverisConfig) | None = None, \*, transport: AsyncBaseTransport | None = None)
+
+Explicit credential-free Discover/Inspect. Authenticate with a new client.
+
+Re-inspect selected IDs and review current inputs and a fresh quote before explicitly calling through that authenticated client. Never reuse `pub_` IDs. Use `transport` for injection; borrowed HTTP clients may retain identity.
 
 <a id="agent"></a>
 
@@ -574,6 +582,24 @@ It takes context as an argument since that’s what pydantic-core passes when ca
 ### *class* qveris.SearchResponse(\*, error_message: str | None = None, contract_warnings: ~typing.List[str] | None = None, contract_features: ~typing.List[str] | None = None, query: str | None = None, search_id: str | None = None, total: int | None = None, results: ~typing.List[~qveris.types.ToolInfo] = <factory>, stats: ~qveris.types.SearchStats | None = None, remaining_credits: float | None = None, elapsed_time_ms: float | None = None, \*\*extra_data: ~typing.Any)
 
 <a id="qveris.SearchResponse.model_post_init"></a>
+
+#### model_post_init(context: Any, /) → None
+
+This function is meant to behave like a BaseModel method to initialise private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** – The BaseModel instance.
+  * **context** – The context.
+
+<a id="qveris.PublicSearchResponse"></a>
+
+### *class* qveris.PublicSearchResponse(\*, search_id: str, contract_features: List[str], results: List[[ToolInfo](#qveris.ToolInfo)], error_message: str | None = None, contract_warnings: List[str] | None = None, query: str | None = None, total: int | None = None, stats: SearchStats | None = None, elapsed_time_ms: float | None = None, \*\*extra_data: Any)
+
+Catalog information only; missing price/balance never implies free use.
+
+<a id="qveris.PublicSearchResponse.model_post_init"></a>
 
 #### model_post_init(context: Any, /) → None
 

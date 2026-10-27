@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Add explicit public read-only discovery with `Qveris.publicReadOnly()` and typed `publicReadOnly: true` construction. Reject mixed credentials, omit cookies, keep public contexts out of authenticated calls, and expose a catalog-only result and method surface.
+
+### Added
+
 - Expose typed zero-quote settlement review details and preserve the explicit zero-quote Call guard. Guarded SDK Calls require strict single-submit compatibility; no automatic preflight or retry is added.
 
 - Support caller-supplied `idempotencyKey` on Calls and typed read-only `reconcileCall(key)` lookup for the original execution and settlement state. Keyed Calls require strict compatibility mode and remain single-submit. ([#436])

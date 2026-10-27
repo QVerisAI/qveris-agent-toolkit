@@ -23,6 +23,10 @@ import {
   RETRYABLE_STATUS,
 } from './retry.js';
 import { normalizeCreditBalanceResponse } from './credit-balance.js';
+import { assertOperationAccess, resolveAccessMode } from './access-mode.js';
+import type { ClientAccessMode } from './access-mode.js';
+import { isPublicDiscoveryContext, isPublicResponse, validatePublicBody } from './public-discovery.js';
+import type { PublicSearchResponse, PublicDiscoveryContext } from './public-discovery.js';
 import type {
   ApiEnvelope,
   ApiError,
@@ -55,14 +59,33 @@ export type QverisClientOptions = Omit<QverisClientConfig, 'apiKey'> & {
     | {
         /** API authentication token. Mutually exclusive with credentialProvider. */
         apiKey: string;
+        publicReadOnly?: false;
         credentialProvider?: never;
       }
     | {
         apiKey?: never;
         /** Async-capable credential source. Mutually exclusive with apiKey. */
         credentialProvider: CredentialProvider;
+        publicReadOnly?: false;
       }
+    | { publicReadOnly: true; apiKey?: never; credentialProvider?: never }
   );
+
+export type PublicDiscoveryClientOptions = Omit<QverisClientConfig, 'apiKey'> & {
+  apiKey?: never;
+  credentialProvider?: never;
+};
+export type PublicDiscoverOptions = Omit<DiscoverOptions, 'sessionId' | 'lang'>;
+export interface PublicInspectOptions {
+  searchId?: PublicDiscoveryContext;
+  view?: 'routing' | 'full';
+  timeoutMs?: number;
+}
+/** Restricted public surface; sign-in requires a new authenticated client. */
+export interface PublicDiscoveryClient {
+  discover(query: string, options?: PublicDiscoverOptions): Promise<PublicSearchResponse>;
+  inspect(toolIds: string | string[], options?: PublicInspectOptions): Promise<PublicSearchResponse>;
+}
 
 const DEFAULT_BASE_URL = 'https://qveris.ai/api/v1';
 
@@ -147,6 +170,8 @@ export interface InspectOptions {
   sessionId?: string;
   /** Per-request timeout override in milliseconds */
   timeoutMs?: number;
+  /** Public read-only projection; omitted for normal authenticated Inspect. */
+  view?: 'routing' | 'full';
 }
 
 /** Options for {@link Qveris.call}. */
@@ -236,7 +261,8 @@ export interface ProbeOptions {
  * ```
  */
 export class Qveris {
-  private readonly credentialProvider: CredentialProvider;
+  private readonly credentialProvider?: CredentialProvider;
+  private readonly accessMode: ClientAccessMode;
   private readonly baseUrl: string;
   private readonly defaultTimeoutMs: number;
   private readonly maxRetries: number;
@@ -245,10 +271,16 @@ export class Qveris {
   private rateLimitRetries = 0;
 
   constructor(config: QverisClientOptions) {
+    this.accessMode = resolveAccessMode(
+      config.publicReadOnly,
+      config.apiKey !== undefined || config.credentialProvider !== undefined,
+    );
     if (config.apiKey !== undefined && config.credentialProvider !== undefined) {
       throw new Error('Configure either apiKey or credentialProvider, not both.');
     }
-    if (config.credentialProvider !== undefined) {
+    if (this.accessMode === 'public-read-only') {
+      this.credentialProvider = undefined;
+    } else if (config.credentialProvider !== undefined) {
       if (typeof config.credentialProvider?.getCredential !== 'function') {
         throw new Error('QVeris credentialProvider must implement getCredential().');
       }
@@ -263,6 +295,17 @@ export class Qveris {
     this.maxRetries = resolveMaxRetries(config.maxRetries);
     this.credentialAudience = config.credentialAudience;
     this.credentialScopes = Object.freeze([...(config.credentialScopes ?? [])]);
+  }
+
+  /** Explicit, credential-free Discover/Inspect; never creates an account. */
+  static publicReadOnly(options: PublicDiscoveryClientOptions = {}): PublicDiscoveryClient {
+    const client = new Qveris({ ...options, publicReadOnly: true });
+    return Object.freeze({
+      discover: async (query: string, options?: PublicDiscoverOptions) =>
+        (await client.discover(query, options)) as PublicSearchResponse,
+      inspect: async (toolIds: string | string[], options?: PublicInspectOptions) =>
+        (await client.inspect(toolIds, options)) as PublicSearchResponse,
+    });
   }
 
   /**
@@ -284,7 +327,7 @@ export class Qveris {
    * Create a client from the QVERIS_API_KEY environment variable.
    * An explicit baseUrl override takes priority over QVERIS_BASE_URL.
    */
-  static fromEnv(overrides?: Omit<QverisClientOptions, 'apiKey' | 'credentialProvider'>): Qveris {
+  static fromEnv(overrides?: Omit<QverisClientOptions, 'apiKey' | 'credentialProvider' | 'publicReadOnly'>): Qveris {
     const apiKey = process.env.QVERIS_API_KEY;
     if (!apiKey) {
       throw new Error(
@@ -305,6 +348,15 @@ export class Qveris {
       ...(options.view !== undefined && { view: options.view }),
       ...(options.lang !== undefined && { lang: options.lang }),
     };
+    if (this.accessMode === 'public-read-only') {
+      return this.request<SearchResponse>(
+        'discover',
+        'POST',
+        '/search',
+        validatePublicBody(body, 'discover'),
+        options.timeoutMs,
+      );
+    }
     try {
       return await this.request<SearchResponse>('discover', 'POST', '/search', body, options.timeoutMs);
     } catch (error) {
@@ -321,6 +373,28 @@ export class Qveris {
    */
   async inspect(toolIds: string | string[], options: InspectOptions = {}): Promise<SearchResponse> {
     const ids = typeof toolIds === 'string' ? [toolIds] : toolIds;
+    if (this.accessMode !== 'public-read-only' && isPublicDiscoveryContext(options.searchId)) {
+      throw new Error(
+        'Public context cannot authorize authenticated actions. Inspect the selected IDs without it and obtain a fresh quote before Call.',
+      );
+    }
+    if (this.accessMode === 'public-read-only') {
+      return this.request<SearchResponse>(
+        'inspect',
+        'POST',
+        '/tools/by-ids',
+        validatePublicBody(
+          {
+            tool_ids: ids,
+            ...(options.searchId !== undefined && { search_id: options.searchId }),
+            ...(options.sessionId !== undefined && { session_id: options.sessionId }),
+            ...(options.view !== undefined && { view: options.view }),
+          },
+          'inspect',
+        ),
+        options.timeoutMs,
+      );
+    }
     if (ids.length === 0) {
       return { search_id: options.searchId ?? '', total: 0, results: [] };
     }
@@ -361,6 +435,8 @@ export class Qveris {
    * final charges are reflected in usage() and ledger().
    */
   async call(toolId: string, options: CallOptions): Promise<ExecuteResponse> {
+    if (isPublicDiscoveryContext(options.searchId))
+      throw new Error('Public context cannot authorize Call. Refresh authenticated Inspect, inputs and quote first.');
     const endpoint = `/tools/execute?tool_id=${encodeURIComponent(toolId)}`;
     const body: Record<string, unknown> = {
       parameters: options.parameters,
@@ -570,6 +646,7 @@ export class Qveris {
     headers?: Record<string, string>,
     sensitiveQueryKeys: readonly string[] = [],
   ): Promise<T> {
+    assertOperationAccess(this.accessMode, operation);
     const url = new URL(`${this.baseUrl}${endpoint}`);
     if (query) {
       for (const [key, value] of Object.entries(query)) {
@@ -606,26 +683,29 @@ export class Qveris {
       // Credential acquisition is not part of the API request timeout. Resolve
       // it for every attempt so a retry can refresh a short-lived token, and
       // let provider failures retain their authentication-specific error.
-      const credential = await resolveCredential(this.credentialProvider, {
-        resource: this.baseUrl,
-        ...(this.credentialAudience !== undefined && { audience: this.credentialAudience }),
-        scopes: this.credentialScopes,
-        operation,
-        purpose:
-          operation === 'call' || operation === 'capability_query'
-            ? 'paid_execution'
-            : operation === 'usage_history'
-              ? 'usage_audit'
-              : operation === 'credits_ledger'
-                ? 'ledger_audit'
-                : 'data_read',
-        ...(body &&
-        typeof body === 'object' &&
-        !Array.isArray(body) &&
-        typeof (body as Record<string, unknown>).session_id === 'string'
-          ? { sessionId: (body as Record<string, unknown>).session_id as string }
-          : {}),
-      });
+      const credential =
+        this.accessMode === 'public-read-only'
+          ? undefined
+          : await resolveCredential(this.credentialProvider!, {
+              resource: this.baseUrl,
+              ...(this.credentialAudience !== undefined && { audience: this.credentialAudience }),
+              scopes: this.credentialScopes,
+              operation,
+              purpose:
+                operation === 'call' || operation === 'capability_query'
+                  ? 'paid_execution'
+                  : operation === 'usage_history'
+                    ? 'usage_audit'
+                    : operation === 'credits_ledger'
+                      ? 'ledger_audit'
+                      : 'data_read',
+              ...(body &&
+              typeof body === 'object' &&
+              !Array.isArray(body) &&
+              typeof (body as Record<string, unknown>).session_id === 'string'
+                ? { sessionId: (body as Record<string, unknown>).session_id as string }
+                : {}),
+            });
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), resolvedTimeoutMs);
       // eslint-disable-next-line no-useless-assignment -- TS definite-assignment needs the init across try/finally
@@ -634,13 +714,16 @@ export class Qveris {
         const response = await fetch(url.toString(), {
           method,
           headers: {
-            Authorization: `Bearer ${credential}`,
+            ...(this.accessMode === 'public-read-only'
+              ? { 'X-Qveris-Access-Mode': 'public-readonly' }
+              : { Authorization: `Bearer ${credential}` }),
             'Content-Type': 'application/json',
             ...headers,
           },
           body: body ? JSON.stringify(body) : undefined,
           signal: controller.signal,
           redirect: 'error',
+          ...(this.accessMode === 'public-read-only' ? ({ credentials: 'omit', cache: 'no-store' } as const) : {}),
         });
 
         if (RETRYABLE_STATUS.has(response.status) && attempt < retryLimit) {
@@ -700,9 +783,22 @@ export class Qveris {
             });
           }
 
-          return normalizeCreditBalanceResponse(
+          const result = normalizeCreditBalanceResponse(
             this.unwrapEnvelope<T>(payload, requestContext, response.status, extractRequestId(response)),
           );
+          if (this.accessMode === 'public-read-only' && !isPublicResponse(result)) {
+            throw new QverisApiError({
+              status: response.status,
+              message: 'Endpoint did not return the public-readonly-v1 discovery contract',
+              observability: withErrorContext(
+                requestContext,
+                'invalid_response',
+                response.status,
+                extractRequestId(response),
+              ),
+            });
+          }
+          return result;
         }
       } catch (err: unknown) {
         if (err instanceof QverisApiError) {
