@@ -68,6 +68,19 @@ Only Discover and Inspect are allowed. Public reads create no account, key, tria
 
 To continue with Call, deliberately authenticate, preserve the selected tool/input intent, and run authenticated Inspect without the old public search_id. The CLI refreshes a selected public-session index when inspecting after login. Review the fresh contract, permissions and any necessary quote, then explicitly approve cost before Call. No extra Discover is mandatory solely for authentication upgrade. The [REST guide](/docs/rest-api) defines public input limits and errors.
 
+## Explicit anonymous trial
+
+If you want a trial credential for terminal calls, create it deliberately:
+
+```bash
+qveris auth trial
+qveris auth status
+```
+
+The command stores the one-time key and claim proof securely when supported, and reports the actual granted credits and expiry. It preserves an existing key/OAuth identity. On a trusted host without an OS credential store, explicitly choose `--allow-unencrypted-storage` only after reviewing its user-only-file storage warning. `--export` deliberately reveals stored secrets; never paste that output into a prompt, shared log or issue.
+
+This is the existing Agent trial, separate from the browser trial and its budget/claim policy; it does not promise the browser's strict credit cap. See the [authentication and claim guide](/auth.md). A pending/unknown registration must be recovered from its stored state, not resubmitted as a fresh identity. Discover, doctor and public read-only mode never create a trial automatically. To try through the website instead, [start in the browser](/discover?trial=1).
+
 ## Commands
 
 ### `qveris init`

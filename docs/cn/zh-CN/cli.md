@@ -69,6 +69,19 @@ qveris inspect 1 --public-read-only --json --base-url https://qveris.cn/api/v1
 
 继续 Call 时明确完成认证，保留已选工具与输入意图，执行认证 Inspect，不携带旧公开 search_id。登录后 Inspect 原公开会话中的结果序号时，CLI 会刷新该选择。核对新契约、权限及必要报价，明确确认成本后再 Call；不要求仅为认证升级而额外 Discover。公开输入限制与错误见 [REST 指南](/docs/rest-api)。
 
+## 主动创建匿名试用
+
+需要用于终端调用的试用凭据时，明确执行：
+
+```bash
+qveris auth trial
+qveris auth status
+```
+
+命令在支持的环境中安全保存一次性 Key 与认领证明，并显示实际授予额度和期限；不会覆盖已有 Key/OAuth 身份。没有系统凭据存储的可信主机，须先了解用户专属文件存储风险，再主动选择 `--allow-unencrypted-storage`。`--export` 会明确导出已保存的秘密，不要把输出放进提示词、共享日志或 issue。
+
+这是既有 Agent 试用，与浏览器试用及其预算/认领策略分开，不承诺浏览器的严格积分上界；请参阅[认证与认领指南](/auth.md)。签发结果待确认时，先恢复已保存状态，不要重新创建身份。Discover、doctor、公开只读模式不会自动创建试用。也可[直接在浏览器开始试用](/discover?trial=1)。
+
 ## 命令
 
 ### `qveris init`

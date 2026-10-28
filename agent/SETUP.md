@@ -16,6 +16,10 @@ For provider comparison, Inspect every candidate when current scope or a complet
 
 Prefer browser OAuth where supported. For local stdio or Bearer fallback, the user must configure the secret privately through the client's secret store, local environment, or masked interactive input. `YOUR_QVERIS_API_KEY` below is a placeholder for the user to replace privately, not a value for the agent to request or fill from chat. Leave secret fields for the user to complete and verify only authentication status; do not report credential contents.
 
+## Choose access before authentication
+
+Without credentials, start with explicit public Discover/Inspect in a separate credential-free profile (`qveris discover "weather forecast API" --public-read-only --limit 1 --json`), or [try a supported tool in the browser](https://qveris.ai/discover?trial=1). Neither browsing nor public discovery registers an account. To create a terminal Agent trial, run `qveris auth trial` explicitly and follow its actual grant, expiry and secure-storage guidance; its policy is separate from the browser trial. Keep claim proofs out of chat. OAuth and existing-key instructions below are for authenticated operations; a failed doctor authentication check does not block public-only discovery.
+
 ## 1. Prerequisites Check
 
 Before configuring QVeris, ensure the runtime environment is ready.
