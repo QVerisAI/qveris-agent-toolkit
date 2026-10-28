@@ -15,12 +15,13 @@ for (const locale of ["en-US", "zh-CN", "cn/zh-CN"]) {
     assert.match(text, /\]\(\/docs\/api-reference\/reconcile-call\)/)
     const shell = text.match(/```bash\r?\n([\s\S]*?)```/)?.[1]
     assert.match(shell, /npm install -g @qverisai\/cli/)
-    assert.match(shell, /qveris auth login/)
+    assert.match(shell, /--public-read-only/)
+    assert.doesNotMatch(shell, /qveris auth trial|qveris auth login/)
     assert.match(shell, /qveris discover/)
     assert.doesNotMatch(shell, /qveris call|QVERIS_API_KEY=/)
     if (locale === "cn/zh-CN") {
-      const endpoint = shell.indexOf('export QVERIS_BASE_URL="https://qveris.cn/api/v1"')
-      assert.ok(endpoint >= 0 && endpoint < shell.indexOf("qveris auth login"))
+      assert.match(shell, /--base-url https:\/\/qveris\.cn\/api\/v1/)
+      assert.doesNotMatch(shell, /qveris\.ai/)
     }
 
   })

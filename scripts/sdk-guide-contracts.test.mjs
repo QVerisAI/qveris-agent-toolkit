@@ -197,7 +197,7 @@ test("explicit public client guides preserve restricted identity and upgrade bou
       assert.match(section, en ? /without.*old public search/i : /不携带.*旧公开 search/);
       assert.doesNotMatch(section, /QVERIS_REGION|SITE_REGION|qveris auth trial/);
       if (family === "cli") {
-        assert.ok(section.includes("0.12.0") && section.includes("--public-read-only"));
+        assert.ok(section.includes(JSON.parse(read("packages/cli/package.json")).version) && section.includes("--public-read-only"));
         assert.match(section, en ? /OAuth session or trial credential/ : /OAuth 会话或试用凭据/);
       } else if (family === "js-sdk") {
         assert.ok(section.includes("0.10.0") && section.includes("Qveris.publicReadOnly("));

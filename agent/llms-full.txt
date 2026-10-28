@@ -129,7 +129,7 @@ QVeris supports six integration methods:
 
 ### QVeris CLI — Token-Efficient Agent Tool Use (Recommended)
 
-The CLI (`@qverisai/cli` v0.12.0) lets shell-capable agents access QVeris capabilities. CLI runs as a subprocess without preloading the catalog. Instructions, commands, and results still consume context tokens; QVeris MCP also uses a small set of routing tools. No mandatory runtime dependencies; optional OS credential storage uses `@napi-rs/keyring`.
+The CLI (`@qverisai/cli` v0.12.1) lets shell-capable agents access QVeris capabilities. CLI runs as a subprocess without preloading the catalog. Instructions, commands, and results still consume context tokens; QVeris MCP also uses a small set of routing tools. No mandatory runtime dependencies; optional OS credential storage uses `@napi-rs/keyring`.
 
 ```bash
 # Install
@@ -563,7 +563,7 @@ As models improve, they can make better decisions about when existing tools suff
 
 ### SDK & Tools
 
-- **CLI (npm):** https://www.npmjs.com/package/@qverisai/cli — `npm install -g @qverisai/cli` (v0.12.0)
+- **CLI (npm):** https://www.npmjs.com/package/@qverisai/cli — `npm install -g @qverisai/cli` (v0.12.1)
 - **MCP Server (npm):** https://www.npmjs.com/package/@qverisai/mcp — `npx @qverisai/mcp` (v0.15.0)
 - **JavaScript SDK:** https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/js-sdk (v0.10.0)
 - **Python SDK:** https://github.com/QVerisAI/qveris-agent-toolkit/tree/main/packages/python-sdk (v0.9.0)
@@ -659,7 +659,7 @@ Generate a new UUID for each user session, and reuse it throughout that session.
 ## Version Information
 
 - **llms-full.txt Version:** 1.2.0
-- **CLI Version:** 0.12.0
+- **CLI Version:** 0.12.1
 - **MCP Server Version:** 0.15.0
 - **JavaScript SDK Version:** 0.10.0
 - **Python SDK Version:** 0.9.0
