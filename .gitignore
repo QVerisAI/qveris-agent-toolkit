@@ -2,4 +2,3 @@
 .cursor/
 node_modules/
 /.claude/
-/AGENTS.md

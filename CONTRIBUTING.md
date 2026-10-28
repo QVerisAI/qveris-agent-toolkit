@@ -2,6 +2,8 @@
 
 Thanks for your interest in the QVeris Agent Toolkit! This monorepo hosts five independently released packages plus agent-facing assets.
 
+Coding agents should start with [AGENTS.md](AGENTS.md) for repository commands, integration entry points, and execution safety rules.
+
 ## Layout
 
 | Path | What | Stack / tests |

@@ -6,6 +6,8 @@ name: Docs checks
 on:
   pull_request:
     paths:
+      - "AGENTS.md"
+      - "CLAUDE.md"
       - "README*.md"
       - "agent/**"
       - "skills/**"
@@ -51,6 +53,8 @@ on:
     branches:
       - main
     paths:
+      - "AGENTS.md"
+      - "CLAUDE.md"
       - "README*.md"
       - "agent/**"
       - "skills/**"
