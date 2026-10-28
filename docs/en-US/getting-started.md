@@ -6,8 +6,10 @@ In a credential-free terminal/profile, install the CLI and run one read-only dis
 
 ```bash
 npm install -g @qverisai/cli
-qveris discover "weather forecast API" --public-read-only --limit 1 --json --base-url https://qveris.ai/api/v1
+qveris discover "weather" --public-read-only --limit 1 --json --base-url https://qveris.ai/api/v1
 ```
+
+Public read-only discovery searches published catalog keywords. Start with a short keyword such as `weather`; an empty result means no matching published candidate, not an authentication failure.
 
 To try a supported tool in the browser, [start an anonymous trial](/discover?trial=1), check the allowance and expiry, then explicitly activate and confirm its quote. For a terminal trial, run `qveris auth trial` explicitly; see the [CLI guide](/docs/cli) for one-time credentials, secure storage and claim. Discovery never creates a trial automatically.
 
@@ -171,7 +173,7 @@ import asyncio
 from qveris import PublicDiscoveryClient, QverisConfig
 async def main():
     async with PublicDiscoveryClient(QverisConfig(base_url="https://qveris.ai/api/v1")) as client:
-        print(await client.discover("weather forecast API", limit=1))
+        print(await client.discover("weather", limit=1))
 asyncio.run(main())
 ```
 

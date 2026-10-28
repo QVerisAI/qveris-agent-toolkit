@@ -77,3 +77,13 @@ test("first-time terminal trial instructions stay on the Chinese site", async ()
   const cli = await fs.readFile(new URL("docs/cn/zh-CN/cli.md", root), "utf8");
   assert.match(cli, /export QVERIS_BASE_URL="https:\/\/qveris\.cn\/api\/v1"\nqveris auth trial\nqveris auth status/);
 });
+
+
+test("public first-result examples use the verified catalog keyword in each locale", async () => {
+  for (const locale of ["en-US", "zh-CN", "cn/zh-CN"]) {
+    const text = await fs.readFile(new URL(`docs/${locale}/getting-started.md`, root), "utf8");
+    const shell = text.split("```bash")[1].split("```")[0];
+    assert.match(shell, /qveris discover "weather" --public-read-only/);
+    assert.match(text, /print\(await client\.discover\("weather", limit=1\)\)/);
+  }
+});

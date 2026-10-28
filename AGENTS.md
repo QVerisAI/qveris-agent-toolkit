@@ -93,7 +93,7 @@ qveris discover "weather forecast API" --limit 3 --json
 The published CLI also supports explicit public read-only Discover and Inspect. Use a separate credential-free environment and profile:
 
 ```bash
-qveris discover "weather forecast API" --public-read-only --limit 3 --json
+qveris discover "weather" --public-read-only --limit 3 --json
 qveris inspect 1 --public-read-only --json
 ```
 
