@@ -1090,3 +1090,31 @@ test("expired and challenged OAuth sessions preserve refresh failure classificat
     }
   });
 });
+
+test("doctor offers explicit access choices without registering an identity or making HTTP requests", async () => {
+  await withTempConfig(async () => {
+    const previousFetch = globalThis.fetch;
+    const previousExit = process.exitCode;
+    let requests = 0;
+    globalThis.fetch = async () => {
+      requests += 1;
+      throw new Error("Missing-credential doctor must stay offline");
+    };
+    try {
+      const human = await captureOutput(() => main(["node", "qveris", "doctor"]));
+      assert.match(human.stdout, /auth trial/);
+      assert.match(human.stdout, /--public-read-only/);
+      const machine = await captureOutput(() => main(["node", "qveris", "doctor", "--json"]));
+      const report = JSON.parse(machine.stdout);
+      assert.equal(report.ok, false);
+      const missing = report.checks.find((item) => item.name === "api_key");
+      assert.equal(missing.status, "fail");
+      assert.match(missing.hint, /auth trial/);
+      assert.equal(requests, 0);
+      assert.throws(() => readFileSync(getConfigPath()), { code: "ENOENT" });
+    } finally {
+      globalThis.fetch = previousFetch;
+      process.exitCode = previousExit;
+    }
+  });
+});
