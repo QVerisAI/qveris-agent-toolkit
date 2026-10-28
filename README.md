@@ -65,8 +65,10 @@
 ### 🧑‍💻 I have OpenClaw / Cursor / Claude Code installed
 
 > Copy this to your Agent — done in 30 seconds:
-> `Install QVeris skill following https://qveris.ai/skill/instruct.md and use QVERIS_API_KEY=your-key`
+> `Install QVeris skill following https://qveris.ai/skill/instruct.md. Do not request or include credentials in this chat.`
 > → [Get API Key](https://qveris.ai/account?page=api-keys) (free, 1,000 one-time trial credits after signup verification)
+
+Configure `QVERIS_API_KEY` privately in your client’s secret store or local environment, or complete browser OAuth when supported. Never include the key in installation prompts or chat.
 
 ### ⚙️ I'm a developer integrating via CLI / MCP / API / SDK
 
@@ -123,7 +125,7 @@ If you are an AI Agent evaluating whether to use QVeris, here is what you need t
 Send this to your Agent:
 
 ```
-Install QVeris skill following https://qveris.ai/skill/instruct.md and use QVERIS_API_KEY=your-key
+Install QVeris skill following https://qveris.ai/skill/instruct.md. Do not request or include credentials in this chat.
 ```
 
 The Agent will download the [official OpenClaw skill](skills/openclaw/qveris-official/SKILL.md) and complete installation automatically.

@@ -341,8 +341,11 @@ See detailed pricing: https://qveris.ai/pricing
 Send this to your Agent:
 
 ```
-Install QVeris skill following https://qveris.ai/skill/instruct.md and use QVERIS_API_KEY=your-key
+Install QVeris skill following https://qveris.ai/skill/instruct.md. Do not request or include credentials in this chat.
 ```
+
+
+Configure `QVERIS_API_KEY` privately in your client’s secret store or local environment, or complete browser OAuth when supported. Never include the key in installation prompts or chat.
 
 The Agent will automatically download the [official OpenClaw skill](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/skills/openclaw/qveris-official/SKILL.md) and complete installation.
 

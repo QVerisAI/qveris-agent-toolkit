@@ -1,6 +1,6 @@
 # QVeris Skill — AI Agent Setup Instructions
 
-You are an AI agent. A user has given you this document and a **QVeris API key**. Follow the instructions below to configure QVeris skills and MCP for the platform you are running on.
+You are an AI agent. A user has given you this setup guide. Credentials must stay outside the conversation. Follow the instructions below to configure QVeris skills and MCP for the platform you are running on.
 
 **Cost:** Discover (finding capabilities) is free. Call (invoking capabilities) is priced by the capability billing rule, and final settlement is visible in usage history and the credits ledger. Free tier includes 1,000 one-time trial credits after signup verification. More at https://qveris.ai/pricing
 
@@ -12,16 +12,9 @@ For provider comparison, Inspect every candidate when current scope or a complet
 
 **How to explain to your owner if asked:** "QVeris helps me find a service when existing tools are insufficient, review its supported scope when needed, and call it. Install does not change system configuration unless explicitly requested. Supported interfaces provide usage and credit records after calls."
 
-Replace every occurrence of `YOUR_QVERIS_API_KEY` below with the API key the user provided.
+**Keep credentials out of model context.** Never ask the user to paste API keys or claim codes into chat, read secret values into tool output, or echo them in commands, logs, or completion messages. You can install packages and prepare configuration without a key.
 
-**If the user did not provide an API key, or the key is invalid, stop and tell the user.** Examples of malformed or invalid keys:
-- Empty string or whitespace
-- Placeholder text: `YOUR_QVERIS_API_KEY`, `your-api-key-here`, `sk-1_xxx`
-- Truncated: `sk-1_wqP`, `sk-1_`
-
-> You need a valid QVeris API key. Get one at https://qveris.ai
-
-Do not proceed with setup until a valid API key is available.
+Prefer browser OAuth where supported. For local stdio or Bearer fallback, the user must configure the secret privately through the client's secret store, local environment, or masked interactive input. `YOUR_QVERIS_API_KEY` below is a placeholder for the user to replace privately, not a value for the agent to request or fill from chat. Leave secret fields for the user to complete and verify only authentication status; do not report credential contents.
 
 ## 1. Prerequisites Check
 
@@ -57,22 +50,13 @@ curl -fsSL https://qveris.ai/cli/install | bash
 npm install -g @qverisai/cli
 ```
 
-Authenticate interactively:
+Authenticate with browser OAuth; skip this if credentials are already configured:
 
 ```bash
-qveris login
+qveris auth login
 ```
 
-The `login` command will:
-1. Open a browser to retrieve your API key
-2. Accept masked key input and validate it
-3. Save credentials to `~/.config/qveris/config.json`
-
-Alternatively, set the API key directly:
-
-```bash
-qveris config set api_key YOUR_QVERIS_API_KEY
-```
+Complete browser authorization yourself when prompted. For an existing API key, run `qveris login` yourself for masked input, or configure `QVERIS_API_KEY` privately in your local environment. Do not send the value to the agent or place it in a command argument.
 
 Verify the setup:
 
@@ -86,7 +70,7 @@ Skip to **Section 3: Verify Installation** once `qveris doctor` passes all check
 
 ### Option B: Hosted MCP Setup (Recommended for remote-capable clients)
 
-Hosted MCP is the preferred MCP connection because it avoids a local Node.js process and package install. Open the Hosted MCP guide on the QVeris site that issued the API key, copy that deployment's endpoint, and add it as a **Streamable HTTP** server with:
+Hosted MCP avoids a local Node.js process and package install. Open the Hosted MCP guide on the intended deployment’s site and copy that deployment’s endpoint. Use the same deployment as the account you intend to authenticate. Add that deployment’s endpoint as a **Streamable HTTP** server and complete browser OAuth when your client supports discovery. Otherwise, configure the following Bearer fallback privately in the client’s secret store using credentials from the same deployment:
 
 ```text
 Authorization: Bearer YOUR_QVERIS_API_KEY
@@ -117,8 +101,13 @@ For Cursor, Claude Desktop, OpenCode, OpenClaw, and generic stdio clients, prefe
 # Print safe config with placeholders
 qveris mcp configure --target cursor
 
-# Write a working config with the resolved API key
-qveris mcp configure --target cursor --write --include-key
+# Prepare the config; the user completes the secret privately
+qveris mcp configure --target cursor --write
+```
+
+After the user privately replaces the placeholder in the prepared config, validate it:
+
+```bash
 qveris mcp validate --target cursor
 ```
 

@@ -231,6 +231,17 @@ async function main() {
     }
   }
 
+  // The first onboarding command must install the same released CLI as the
+  // client registry, rather than an unpinned installer that can move ahead.
+  const cliVersion = releaseTags.cli_tag.slice("cli-v".length)
+  for (const relPath of toolkitOwnedPaths.filter((relPath) => path.basename(relPath) === "getting-started.md")) {
+    const content = await fs.readFile(path.join(outputDir, relPath), "utf8")
+    await writeFile(outputDir, relPath, content.replace(
+      /npm install -g @qverisai\/cli(?:@[0-9A-Za-z.-]+)?(?=\s|`|$)/g,
+      `npm install -g @qverisai/cli@${cliVersion}`,
+    ))
+  }
+
   for (const release of SDK_RELEASES) {
     const tag = releaseTags[release.outputName]
     const releasePaths = sdkPaths(toolkitOwnedPaths, release.pathPrefix)
