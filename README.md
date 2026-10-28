@@ -53,6 +53,10 @@
 
 ---
 
+## No account or API key yet?
+
+[Try a supported tool in your browser](https://qveris.ai/discover?trial=1): explicitly activate the trial, review its actual allowance and expiry, and confirm each quote. Save it to an account later. For terminal use, run `qveris auth trial` explicitly; see the [CLI trial guide](docs/en-US/cli.md#explicit-anonymous-trial) for secure credentials and the separate Agent trial policy. For a first result with no account, use `qveris discover "weather forecast API" --public-read-only --limit 1 --json` in a credential-free profile. Public discovery creates no trial or paid execution. For authenticated access, prefer browser OAuth where supported; keep an existing API key private. See [repository Agent guidance](AGENTS.md).
+
 ## Quick Start
 
 ### 🤖 I'm an Agent

@@ -99,7 +99,7 @@ qveris inspect 1 --public-read-only --json
 
 Public access creates no account, key, credits, or execution authority. Do not combine it with credentials or cookies; an invalid key never falls back to public access. Public contexts cannot authorize Call. When upgrading, use an authenticated client, refresh the selected capability with Inspect, and omit the old public `search_id`; a fresh natural-language Discover is not required merely to change authentication.
 
-Anonymous registration is a separate, explicit Agent API operation, not a diagnostic fallback. Do not register a trial during setup checks or discovery, or create another identity to evade a limit. If a task calls for a trial, follow the intended deployment's authentication and trial lifecycle documentation, store one-time secrets privately, and use the returned limits and expiry. Browser and Agent API claim flows have distinct contracts: follow the current receipt and refresh identity/permissions; do not promise that an old trial key survives claim.
+Anonymous registration is a separate, explicit Agent API operation, not a diagnostic fallback. Do not register a trial during setup checks or discovery, or create another identity to evade a limit. If a task calls for a terminal trial, explicitly run `qveris auth trial` after selecting the intended endpoint; see the [CLI trial guide](docs/en-US/cli.md). Follow the intended deployment's authentication and trial lifecycle documentation, store one-time secrets privately, and use the returned limits and expiry. Browser and Agent API claim flows have distinct contracts: follow the current receipt and refresh identity/permissions; do not promise that an old trial key survives claim.
 
 ### Selection, execution, and recovery
 

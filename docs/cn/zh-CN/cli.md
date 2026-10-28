@@ -4,7 +4,7 @@ QVeris 能力路由网络的官方命令行工具。直接在终端或 Agent 框
 
 进行 Provider 比较时，如果需要确认当前范围或完整契约，必须逐一 Inspect；Discover 摘要不等于确认。比较需要当前报价时，必须逐一 Probe。复用只能保留精确路由，不能保留业务参数或结果：参数必须来自当前请求；当前、最新、今天或其他时效性数据必须执行新的 Call。
 
-`@qverisai/cli` v0.12.0 是最新测试版本，包含 OAuth Device Flow 会话、零成本参数校验与报价、可选的发现和调用投影及 Call 模型归因，同时保持 API Key 兼容。
+`@qverisai/cli` v0.12.1 是最新测试版本，包含 OAuth Device Flow 会话、零成本参数校验与报价、可选的发现和调用投影及 Call 模型归因，同时保持 API Key 兼容。
 
 **为什么用 CLI？** CLI 通过子进程提供结构化输出和按需发现，无需预加载整个能力目录。使用说明、命令和结果仍会消耗上下文 token；QVeris MCP 同样使用少量路由工具。
 
@@ -55,7 +55,7 @@ Call 是独立的成本决策：选择当前结果，按契约构造真实参数
 
 ## 显式公开只读发现
 
-需要 CLI **0.12.0 或更高版本**；使用前确认对应版本已在软件包仓库发布。上方默认 OAuth／API 密钥命令仍用于认证操作。
+需要 CLI **0.12.1 或更高版本**；使用前确认对应版本已在软件包仓库发布。上方默认 OAuth／API 密钥命令仍用于认证操作。
 
 使用独立的无凭据环境与 CLI 配置。`--public-read-only` 会拒绝已配置的密钥、OAuth 会话或试用凭据，不会悄悄丢弃身份；错误密钥不会降级为公开访问。
 
@@ -68,6 +68,20 @@ qveris inspect 1 --public-read-only --json --base-url https://qveris.cn/api/v1
 仅允许 Discover 和 Inspect。公开读取不创建账号、密钥、试用积分或执行授权，使用 `pub_` 上下文，不含账号价格或余额。不得混入身份／会话证明。遇到 401，应报告认证要求；遇到 429，遵循 Retry-After 与有界读取重试策略，不得轮换身份或注册试用绕过限制。
 
 继续 Call 时明确完成认证，保留已选工具与输入意图，执行认证 Inspect，不携带旧公开 search_id。登录后 Inspect 原公开会话中的结果序号时，CLI 会刷新该选择。核对新契约、权限及必要报价，明确确认成本后再 Call；不要求仅为认证升级而额外 Discover。公开输入限制与错误见 [REST 指南](/docs/rest-api)。
+
+## 主动创建匿名试用
+
+需要用于终端调用的试用凭据时，明确执行：
+
+```bash
+export QVERIS_BASE_URL="https://qveris.cn/api/v1"
+qveris auth trial
+qveris auth status
+```
+
+命令在支持的环境中安全保存一次性 Key 与认领证明，并显示实际授予额度和期限；不会覆盖已有 Key/OAuth 身份。没有系统凭据存储的可信主机，须先了解用户专属文件存储风险，再主动选择 `--allow-unencrypted-storage`。`--export` 会明确导出已保存的秘密，不要把输出放进提示词、共享日志或 issue。
+
+这是既有 Agent 试用，与浏览器试用及其预算/认领策略分开，不承诺浏览器的严格积分上界；请参阅[认证与认领指南](/auth.md)。签发结果待确认时，先恢复已保存状态，不要重新创建身份。Discover、doctor、公开只读模式不会自动创建试用。也可[直接在浏览器开始试用](/discover?trial=1)。
 
 ## 命令
 

@@ -51,6 +51,10 @@
 
 ---
 
+## 还没有账户或 API Key？
+
+[先在浏览器试用支持的工具](https://qveris.ai/discover?trial=1)：主动激活，核对实际额度与期限，再逐次确认报价；之后可保存到账户。终端试用需明确运行 `qveris auth trial`，安全凭据与独立 Agent 试用策略见 [CLI 试用指南](docs/zh-CN/cli.md#主动创建匿名试用)。仅想先获得发现结果，可在无凭据独立配置运行 `qveris discover "天气预报 API" --public-read-only --limit 1 --json`。公开发现不会创建试用或执行付费调用。认证接入优先使用受支持的浏览器 OAuth；已有 Key 请私密配置。另见[仓库 Agent 指引](AGENTS.md)。
+
 ## 快速开始
 
 ### 🤖 我是 Agent

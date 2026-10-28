@@ -1,5 +1,16 @@
 # QVeris 文档
 
+## 第一次获得结果：无需账户或 Key
+
+在未配置凭据的终端/独立配置中，安装 CLI 并执行一次只读发现。不需要外部模型 Key、试用账户或付费调用。已有凭据请使用下方认证路径；公开模式会拒绝携带凭据，不会静默丢弃身份。
+
+```bash
+npm install -g @qverisai/cli
+qveris discover "天气预报 API" --public-read-only --limit 1 --json --base-url https://qveris.cn/api/v1
+```
+
+也可[在浏览器开始匿名试用](/discover?trial=1)：核对额度与期限后主动激活，再确认工具报价。终端试用需主动运行 `qveris auth trial --base-url https://qveris.cn/api/v1`；一次性凭据、安全保存及认领见 [CLI 指南](/docs/cli)。发现操作不会自动创建试用。
+
 ## 什么是 QVeris
 
 **QVeris** 是**面向智能体的能力路由网络**。它让你的 Agent 能够：
@@ -34,7 +45,7 @@ Discover 免费；默认 CLI／SDK 和认证 MCP 接入仍需认证。不要把�
 | REST | 显式 public-readonly 请求头，仅 Discover/Inspect，不携带凭据或 cookie。 | 完成认证；Inspect 已选工具，重新核对权限与必要报价。 |
 | 托管 MCP | 使用 [MCP 指南](/docs/mcp-server)中的独立只读端点，仅 discover/inspect，不分配会话。 | 明确使用默认 OAuth 或有效密钥连接。 |
 | 本地 MCP 0.15.0 | 无密钥时可列出工具 schema，不代表 Discover/Inspect 请求成功。 | 按 [MCP 指南](/docs/mcp-server)配置有效密钥。 |
-| 已发布 CLI 0.12.0 | 在独立无凭据配置中显式使用 `--public-read-only` Discover/Inspect，见 [CLI 指南](/docs/cli)。 | 明确使用 OAuth 或 API 密钥，再认证 Inspect 已选工具。 |
+| CLI 0.12.1 | 在独立无凭据配置中显式使用 `--public-read-only` Discover/Inspect，见 [CLI 指南](/docs/cli)。 | 明确使用 OAuth 或 API 密钥，再认证 Inspect 已选工具。 |
 | 已发布 QVeris SDK：TypeScript 0.10.0／Python 0.9.0 | 独立使用 `Qveris.publicReadOnly()` 或 `PublicDiscoveryClient`，见 [TypeScript 指南](/docs/js-sdk)和 [Python 指南](/docs/python-sdk)。 | 创建新的认证客户端，Inspect 时不携带旧公开上下文。 |
 
 错误密钥不会降级为公开访问；公开连接不得混用凭据或 cookie。遇到 401，应为目标操作完成认证；遇到 429，遵循 Retry-After 与有界重试指引，不得创建身份或轮换凭据绕过限制。确切限制与错误见 [REST 指南](/docs/rest-api)。
@@ -156,123 +167,18 @@ pip install qveris
 
 完整指南（client、agent、类型化模型、集成方式）见 [Python SDK](python-sdk.md)。
 
-设置环境变量：
-
-- `QVERIS_API_KEY`（在[控制台/API密钥](/account?page=api-keys)中创建）
-- `QVERIS_BASE_URL=https://qveris.cn/api/v1`
-
-Typed client 工作流：
-
-先仅使用 QVeris 凭据完成一次 Discover：
+使用独立公开只读客户端完成一次免凭据 Discover；已有凭据请保留在其独立配置中。
 
 ```python
 import asyncio
-from qveris import QverisClient, QverisConfig
-
+from qveris import PublicDiscoveryClient, QverisConfig
 async def main():
-    client = QverisClient(QverisConfig(base_url="https://qveris.cn/api/v1"))
-    try:
-        discovered = await client.discover("天气预报 API", limit=5)
-        print(discovered.search_id)
-        for candidate in discovered.results:
-            print(candidate.tool_id)
-    finally:
-        await client.close()
-
+    async with PublicDiscoveryClient(QverisConfig(base_url="https://qveris.cn/api/v1")) as client:
+        print(await client.discover("天气预报 API", limit=1))
 asyncio.run(main())
 ```
 
-以下是可选 Call 示例；运行前请核对真实输入、权限与成本。
-
-```python
-import asyncio
-import math
-from qveris import QverisClient
-
-def matches_type(kind, value):
-    return {
-        "string": lambda: isinstance(value, str),
-        "integer": lambda: isinstance(value, int) and not isinstance(value, bool),
-        "number": lambda: isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value),
-        "boolean": lambda: isinstance(value, bool),
-        "array": lambda: isinstance(value, list),
-        "object": lambda: isinstance(value, dict),
-    }.get(kind, lambda: False)()
-
-def supports_request(candidate, params):
-    if candidate.params is None:
-        return False
-    definitions = {p.name: p for p in candidate.params}
-    if len(definitions) != len(candidate.params):
-        return False
-    return all(not p.required or p.name in params for p in candidate.params) and all(
-        (p := definitions.get(name)) is not None and matches_type(p.type, value)
-        and (p.enum is None or any(allowed == value and
-             isinstance(allowed, bool) == isinstance(value, bool) for allowed in p.enum))
-        for name, value in params.items()
-    )
-
-async def main():
-    client = QverisClient()
-    try:
-        discovered = await client.discover("weather forecast API", limit=5)
-        params = {"city": "北京"}
-        selected = next(
-            (
-                candidate
-                for candidate in discovered.results
-                if supports_request(candidate, params)
-            ),
-            None,
-        )
-        if selected is None:
-            inspected = await client.inspect(
-                [candidate.tool_id for candidate in discovered.results[:3]],
-                search_id=discovered.search_id,
-            )
-            selected = next(
-                (
-                    candidate
-                    for candidate in inspected.results
-                    if supports_request(candidate, params)
-                ),
-                None,
-            )
-        if selected is None:
-            raise RuntimeError("没有候选能力提供兼容的当前参数契约")
-        result = await client.call(
-            selected.tool_id,
-            params,
-            search_id=discovered.search_id,
-        )
-        print(result.execution_id, result.success, result.billing)
-    finally:
-        await client.close()
-
-asyncio.run(main())
-```
-
-可选的模型驱动流程；仅此示例需要另外配置模型服务：
-
-- `OPENAI_API_KEY`（或你的 OpenAI 兼容服务商密钥）
-- `OPENAI_BASE_URL`（可选；用于 OpenAI 兼容服务商）
-
-最小流式示例：
-
-```python
-import asyncio
-from qveris import Agent, Message
-
-async def main():
-    agent = Agent()
-    messages = [Message(role="user", content="发现一个天气能力，查询纽约的实时天气。")]
-    async for event in agent.run(messages):
-        if event.type == "content" and event.content:
-            print(event.content, end="", flush=True)
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
+付费执行、候选比较和参数校验请参阅[实用配方](/docs/cookbook)。当前契约不完整时再 Inspect，需要最新报价时再 Probe；Call 前确认真实输入、权限与费用。模型驱动示例见 [Python SDK 指南](/docs/python-sdk)，仅选择该集成时才需要额外的模型供应商凭据。
 
 ---
 
@@ -301,52 +207,7 @@ const discovered = await qveris.discover("天气预报 API", { limit: 5 });
 console.log(discovered.search_id, discovered.results.map(tool => tool.tool_id));
 ```
 
-以下是可选 Call 示例；运行前请核对真实输入、权限与成本。
-
-```typescript
-import { Qveris } from '@qverisai/sdk';
-
-const qveris = Qveris.fromEnv(); // 读取 QVERIS_API_KEY、QVERIS_BASE_URL
-
-const discovered = await qveris.discover('weather forecast API', { limit: 5 });
-const parameters: Record<string, unknown> = { city: 'London' };
-const matchesType = (type: string, value: unknown) => {
-  if (type === 'string') return typeof value === 'string';
-  if (type === 'integer') return typeof value === 'number' && Number.isFinite(value) && Number.isInteger(value);
-  if (type === 'number') return typeof value === 'number' && Number.isFinite(value);
-  if (type === 'boolean') return typeof value === 'boolean';
-  if (type === 'array') return Array.isArray(value);
-  if (type === 'object') return value !== null && typeof value === 'object' && !Array.isArray(value);
-  return false;
-};
-const supportsRequest = (candidate: (typeof discovered.results)[number]) => {
-  if (!candidate.params) return false;
-  const definitions = new Map(candidate.params.map((parameter) => [parameter.name, parameter]));
-  if (definitions.size !== candidate.params.length) return false;
-  return Object.entries(parameters).every(([name, value]) => {
-    const parameter = definitions.get(name);
-    return Boolean(parameter && matchesType(parameter.type, value) &&
-      (!parameter.enum || parameter.enum.some((allowed) => Object.is(allowed, value))));
-  }) &&
-    candidate.params.every((parameter) =>
-      !parameter.required || Object.prototype.hasOwnProperty.call(parameters, parameter.name),
-    );
-};
-let tool = discovered.results.find(supportsRequest);
-if (!tool) {
-  const inspected = await qveris.inspect(
-    discovered.results.slice(0, 3).map((candidate) => candidate.tool_id),
-    { searchId: discovered.search_id },
-  );
-  tool = inspected.results.find(supportsRequest);
-}
-if (!tool) throw new Error('没有候选能力提供包含 city 字段的当前契约。');
-const result = await qveris.call(tool.tool_id, {
-  parameters,
-  searchId: discovered.search_id,
-});
-console.log(result.execution_id, result.success, result.billing);
-```
+执行与候选比较请参阅[实用配方](/docs/cookbook)。Call 前核对当前输入、权限与费用。
 
 ---
 

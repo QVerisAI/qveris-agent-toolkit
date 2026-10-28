@@ -1,5 +1,16 @@
 # QVeris Documentation
 
+## Your first result: no account or key
+
+In a credential-free terminal/profile, install the CLI and run one read-only discovery. No model-provider key, trial account or paid Call is needed. If you already have credentials, use the authenticated path below; public mode rejects supplied credentials rather than dropping them.
+
+```bash
+npm install -g @qverisai/cli
+qveris discover "weather forecast API" --public-read-only --limit 1 --json --base-url https://qveris.ai/api/v1
+```
+
+To try a supported tool in the browser, [start an anonymous trial](/discover?trial=1), check the allowance and expiry, then explicitly activate and confirm its quote. For a terminal trial, run `qveris auth trial` explicitly; see the [CLI guide](/docs/cli) for one-time credentials, secure storage and claim. Discovery never creates a trial automatically.
+
 ## What is QVeris
 
 **QVeris** is a **professional data and tool access platform**. It helps your agent:
@@ -34,7 +45,7 @@ Discover is free; the default CLI/SDK and authenticated MCP paths still require 
 | REST | Explicit public-readonly header; Discover/Inspect only, without credentials or cookies. | Authenticate; refresh the selected tool with Inspect, permissions and any necessary quote. |
 | Hosted MCP | Separate read-only endpoint from the [MCP guide](/docs/mcp-server); only discover/inspect, no session. | Use the default OAuth or valid-key connection explicitly. |
 | Local MCP 0.15.0 | Listing tool schemas without a key is not a successful Discover/Inspect request. | Configure a valid key as described in the [MCP guide](/docs/mcp-server). |
-| Published CLI 0.12.0 | Explicit `--public-read-only` Discover/Inspect in a separate credential-free profile; see the [CLI guide](/docs/cli). | Deliberately use OAuth or an API key, then refresh the selected tool with authenticated Inspect. |
+| CLI 0.12.1 | Explicit `--public-read-only` Discover/Inspect in a separate credential-free profile; see the [CLI guide](/docs/cli). | Deliberately use OAuth or an API key, then refresh the selected tool with authenticated Inspect. |
 | Published QVeris SDKs: TypeScript 0.10.0 / Python 0.9.0 | Separate `Qveris.publicReadOnly()` or `PublicDiscoveryClient`; see the [TypeScript guide](/docs/js-sdk) and [Python guide](/docs/python-sdk). | Construct a new authenticated client and refresh Inspect without the old public context. |
 
 A supplied invalid key never falls back to public access. Do not combine a public connection with credentials/cookies. On 401, authenticate for the intended operation; on 429, follow Retry-After and bounded retry guidance, without creating an identity or rotating credentials to evade limits. See the [REST guide](/docs/rest-api) for exact limits and errors.
@@ -153,122 +164,18 @@ pip install qveris
 
 For the full guide (client, agent, typed models, integration patterns), see [Python SDK](python-sdk.md).
 
-Set environment variables:
-
-- `QVERIS_API_KEY` (create one in [Dashboard / API Keys](/account?page=api-keys))
-
-Typed client workflow:
-
-Start with one Discover using only your QVeris credential:
+Use the separate public client for one Discover without credentials; keep existing credentials in their own profile.
 
 ```python
 import asyncio
-from qveris import QverisClient, QverisConfig
-
+from qveris import PublicDiscoveryClient, QverisConfig
 async def main():
-    client = QverisClient(QverisConfig(base_url="https://qveris.ai/api/v1"))
-    try:
-        discovered = await client.discover("weather forecast API", limit=5)
-        print(discovered.search_id)
-        for candidate in discovered.results:
-            print(candidate.tool_id)
-    finally:
-        await client.close()
-
+    async with PublicDiscoveryClient(QverisConfig(base_url="https://qveris.ai/api/v1")) as client:
+        print(await client.discover("weather forecast API", limit=1))
 asyncio.run(main())
 ```
 
-Optional Call example: review real inputs, permissions and cost before running it.
-
-```python
-import asyncio
-import math
-from qveris import QverisClient
-
-def matches_type(kind, value):
-    return {
-        "string": lambda: isinstance(value, str),
-        "integer": lambda: isinstance(value, int) and not isinstance(value, bool),
-        "number": lambda: isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value),
-        "boolean": lambda: isinstance(value, bool),
-        "array": lambda: isinstance(value, list),
-        "object": lambda: isinstance(value, dict),
-    }.get(kind, lambda: False)()
-
-def supports_request(candidate, params):
-    if candidate.params is None:
-        return False
-    definitions = {p.name: p for p in candidate.params}
-    if len(definitions) != len(candidate.params):
-        return False
-    return all(not p.required or p.name in params for p in candidate.params) and all(
-        (p := definitions.get(name)) is not None and matches_type(p.type, value)
-        and (p.enum is None or any(allowed == value and
-             isinstance(allowed, bool) == isinstance(value, bool) for allowed in p.enum))
-        for name, value in params.items()
-    )
-
-async def main():
-    client = QverisClient()
-    try:
-        discovered = await client.discover("weather forecast API", limit=5)
-        params = {"city": "London"}
-        selected = next(
-            (
-                candidate
-                for candidate in discovered.results
-                if supports_request(candidate, params)
-            ),
-            None,
-        )
-        if selected is None:
-            inspected = await client.inspect(
-                [candidate.tool_id for candidate in discovered.results[:3]],
-                search_id=discovered.search_id,
-            )
-            selected = next(
-                (
-                    candidate
-                    for candidate in inspected.results
-                    if supports_request(candidate, params)
-                ),
-                None,
-            )
-        if selected is None:
-            raise RuntimeError("No candidate exposed a compatible current parameter contract")
-        result = await client.call(
-            selected.tool_id,
-            params,
-            search_id=discovered.search_id,
-        )
-        print(result.execution_id, result.success, result.billing)
-    finally:
-        await client.close()
-
-asyncio.run(main())
-```
-
-Optional model-driven flow; configure the model provider only for this example:
-
-- `OPENAI_API_KEY` (or your OpenAI-compatible provider key)
-- `OPENAI_BASE_URL` (optional; for OpenAI-compatible providers)
-
-Minimal streaming example:
-
-```python
-import asyncio
-from qveris import Agent, Message
-
-async def main():
-    agent = Agent()
-    messages = [Message(role="user", content="Discover a weather capability and check New York weather.")]
-    async for event in agent.run(messages):
-        if event.type == "content" and event.content:
-            print(event.content, end="", flush=True)
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
+Optional execution, candidate comparison and parameter validation are covered by the [Cookbook recipes](/docs/cookbook). Inspect when the current contract is incomplete; Probe when a current quote is needed. Confirm real inputs, permissions and cost before Call. Model-driven examples belong to the [Python SDK guide](/docs/python-sdk) and require separate model-provider credentials only when you choose that integration.
 
 ---
 
@@ -292,52 +199,9 @@ const discovered = await qveris.discover("weather forecast API", { limit: 5 });
 console.log(discovered.search_id, discovered.results.map(tool => tool.tool_id));
 ```
 
-Optional Call example: review real inputs, permissions and cost before running it.
+For execution and candidate comparison, use the [Cookbook recipes](/docs/cookbook). Review current inputs, permissions and cost before Call.
 
-```typescript
-import { Qveris } from '@qverisai/sdk';
-
-const qveris = Qveris.fromEnv(); // reads QVERIS_API_KEY
-
-const discovered = await qveris.discover('weather forecast API', { limit: 5 });
-const parameters: Record<string, unknown> = { city: 'London' };
-const matchesType = (type: string, value: unknown) => {
-  if (type === 'string') return typeof value === 'string';
-  if (type === 'integer') return typeof value === 'number' && Number.isFinite(value) && Number.isInteger(value);
-  if (type === 'number') return typeof value === 'number' && Number.isFinite(value);
-  if (type === 'boolean') return typeof value === 'boolean';
-  if (type === 'array') return Array.isArray(value);
-  if (type === 'object') return value !== null && typeof value === 'object' && !Array.isArray(value);
-  return false;
-};
-const supportsRequest = (candidate: (typeof discovered.results)[number]) => {
-  if (!candidate.params) return false;
-  const definitions = new Map(candidate.params.map((parameter) => [parameter.name, parameter]));
-  if (definitions.size !== candidate.params.length) return false;
-  return Object.entries(parameters).every(([name, value]) => {
-    const parameter = definitions.get(name);
-    return Boolean(parameter && matchesType(parameter.type, value) &&
-      (!parameter.enum || parameter.enum.some((allowed) => Object.is(allowed, value))));
-  }) &&
-    candidate.params.every((parameter) =>
-      !parameter.required || Object.prototype.hasOwnProperty.call(parameters, parameter.name),
-    );
-};
-let tool = discovered.results.find(supportsRequest);
-if (!tool) {
-  const inspected = await qveris.inspect(
-    discovered.results.slice(0, 3).map((candidate) => candidate.tool_id),
-    { searchId: discovered.search_id },
-  );
-  tool = inspected.results.find(supportsRequest);
-}
-if (!tool) throw new Error('No candidate exposed a current contract with a city field.');
-const result = await qveris.call(tool.tool_id, {
-  parameters,
-  searchId: discovered.search_id,
-});
-console.log(result.execution_id, result.success, result.billing);
-```
+---
 
 ### Directly call the QVeris REST API
 
