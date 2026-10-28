@@ -46,3 +46,25 @@ test("the setup protocol never requests a key from the conversation", async () =
   assert.match(text, /qveris auth login/)
   assert.match(text, /user must configure the secret privately/)
 })
+
+test("Hosted MCP setup selects the intended deployment before authentication", async () => {
+  const text = await fs.readFile(new URL("agent/SETUP.md", root), "utf8")
+  const hosted = text.split("### Option B:")[1].split("### Option C:")[0]
+  assert.match(hosted, /guide on the intended deployment/)
+  assert.match(hosted, /copy that deployment’s endpoint/)
+  assert.match(hosted, /same deployment as the account you intend to authenticate/)
+  assert.doesNotMatch(hosted, /https:\/\/mcp\.qveris\.(?:ai|cn)\/mcp/)
+  assert.match(hosted, /browser OAuth/)
+  assert.match(hosted, /secret store using credentials from the same deployment/)
+})
+
+test("local MCP preparation writes placeholders before private completion and validation", async () => {
+  const text = await fs.readFile(new URL("agent/SETUP.md", root), "utf8")
+  const examples = text.split("### Configuration Examples")[1].split("#### A.")[0]
+  const blocks = [...examples.matchAll(/```bash\r?\n([\s\S]*?)```/g)].map(match => match[1])
+  assert.equal(blocks.length, 2)
+  assert.match(blocks[0], /qveris mcp configure --target cursor --write/)
+  assert.doesNotMatch(blocks[0], /--include-key|qveris mcp validate/)
+  assert.match(examples, /After the user privately replaces the placeholder/)
+  assert.match(blocks[1], /qveris mcp validate --target cursor/)
+})

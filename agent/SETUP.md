@@ -70,7 +70,7 @@ Skip to **Section 3: Verify Installation** once `qveris doctor` passes all check
 
 ### Option B: Hosted MCP Setup (Recommended for remote-capable clients)
 
-Hosted MCP avoids a local Node.js process and package install. Add `https://mcp.qveris.ai/mcp` as a **Streamable HTTP** server and complete browser OAuth when your client supports discovery. Otherwise, configure the following Bearer fallback privately in the client’s secret store:
+Hosted MCP avoids a local Node.js process and package install. Open the Hosted MCP guide on the intended deployment’s site and copy that deployment’s endpoint. Use the same deployment as the account you intend to authenticate. Add that deployment’s endpoint as a **Streamable HTTP** server and complete browser OAuth when your client supports discovery. Otherwise, configure the following Bearer fallback privately in the client’s secret store using credentials from the same deployment:
 
 ```text
 Authorization: Bearer YOUR_QVERIS_API_KEY
@@ -102,7 +102,12 @@ For Cursor, Claude Desktop, OpenCode, OpenClaw, and generic stdio clients, prefe
 qveris mcp configure --target cursor
 
 # Prepare the config; the user completes the secret privately
-qveris mcp configure --target cursor --write --include-key
+qveris mcp configure --target cursor --write
+```
+
+After the user privately replaces the placeholder in the prepared config, validate it:
+
+```bash
 qveris mcp validate --target cursor
 ```
 
