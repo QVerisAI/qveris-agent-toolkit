@@ -269,7 +269,8 @@ test("runPreflight: missing key fails before probing (no network)", async () => 
     assert.equal(probed, false); // never probes without a key
     const keyCheck = byName(checks).api_key;
     assert.equal(keyCheck.status, "fail");
-    assert.ok(keyCheck.hint);
+    assert.match(keyCheck.hint, /auth trial/);
+    assert.match(keyCheck.hint, /--public-read-only/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
     for (const [k, v] of [

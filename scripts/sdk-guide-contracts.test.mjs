@@ -65,13 +65,13 @@ test("all TypeScript SDK guides document Probe and strict paid calls", () => {
 });
 
 test("SDK quickstarts validate parameter types and enums before selecting a candidate", () => {
-  for (const path of [...JS_GUIDES, ...GETTING_STARTED_GUIDES]) {
+  for (const path of JS_GUIDES) {
     const guide = read(path);
     for (const marker of ["matchesType", "Number.isFinite", "parameter.enum", "Object.is"]) {
       assert.ok(guide.includes(marker), `${path} is missing ${marker}`);
     }
   }
-  for (const path of [...PYTHON_GUIDES, ...GETTING_STARTED_GUIDES]) {
+  for (const path of PYTHON_GUIDES) {
     const guide = read(path);
     for (const marker of ["matches_type", "math.isfinite", "p.enum", "isinstance(allowed, bool)"]) {
       assert.ok(guide.includes(marker), `${path} is missing ${marker}`);
@@ -135,12 +135,12 @@ test("China SDK guides keep the China endpoint boundary", () => {
   }
 });
 
-test("published onboarding starts with one authenticated Discover before optional Call examples", () => {
+test("onboarding starts with short explicit public discovery and keeps authenticated execution separate", () => {
   for (const path of GETTING_STARTED_GUIDES) {
     const guide = read(path).replaceAll("\r\n", "\n");
     const python = guide.match(/```python\n([\s\S]*?)```/)?.[1];
     const typescript = guide.match(/```typescript\n([\s\S]*?)```/)?.[1];
-    assert.ok(python?.includes("QverisConfig(base_url="), `${path}: use the released authenticated client`);
+    assert.ok(python?.includes("QverisConfig(base_url="), `${path}: use the released public client`);
     assert.ok(python?.includes("await client.discover("), `${path}: first Python request is Discover`);
     assert.doesNotMatch(python, /\.call\(|\bAgent\(|OPENAI_API_KEY/);
     assert.ok(typescript?.includes("Qveris.fromEnv("), `${path}: use the released credential path`);
@@ -158,7 +158,11 @@ test("published onboarding starts with one authenticated Discover before optiona
     assert.ok(versions.every(version => typeof version === "string" && guide.includes(version)));
     assert.ok(guide.includes("Qveris.publicReadOnly()") && guide.includes("PublicDiscoveryClient"));
     assert.ok(guide.includes("--public-read-only"));
-    assert.doesNotMatch(guide, /qveris auth trial|--public-readonly|--readonly|--read-only/);
+    assert.ok(guide.includes("qveris auth trial"));
+    assert.ok(python?.includes("PublicDiscoveryClient"));
+    assert.ok(python.trim().split("\n").length <= 6, `${path}: Python discovery stays short and closes resources`);
+    assert.doesNotMatch(guide, /def matches_type|function matchesType|--public-readonly|--readonly|--read-only/);
+    assert.ok(guide.includes("](/docs/cookbook)"));
     assert.ok(!guide.includes(path.includes("/cn/") ? "qveris.ai" : "qveris.cn"), `${path}: own site only`);
   }
 });

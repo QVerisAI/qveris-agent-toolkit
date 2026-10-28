@@ -56,7 +56,7 @@ export const ERROR_CODES = {
   },
   AUTH_MISSING_KEY: {
     message: "No API key or OAuth session configured",
-    hint: "Run 'qveris auth login' for OAuth Device Flow, 'qveris login' to paste an API key, or set QVERIS_API_KEY",
+    hint: "Use Discover/Inspect with '--public-read-only' in a credential-free profile; explicitly run 'qveris auth trial' to create a limited trial, 'qveris auth login' for OAuth Device Flow, or 'qveris login' to paste an API key (QVERIS_API_KEY is also supported)",
     exit: EX_CONFIG,
   },
   NODE_UNSUPPORTED: {

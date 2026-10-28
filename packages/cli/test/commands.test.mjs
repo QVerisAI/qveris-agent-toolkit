@@ -943,7 +943,8 @@ test("missing credentials recommend only delivered authentication commands", asy
       assert.equal(process.exitCode, 78);
       assert.match(error.hint, /auth login.*OAuth Device Flow/);
       assert.match(error.hint, /qveris login.*paste an API key/);
-      assert.doesNotMatch(error.hint, /auth trial/);
+      assert.match(error.hint, /auth trial/);
+      assert.match(error.hint, /--public-read-only/);
     } finally {
       process.exitCode = previousExit;
     }
