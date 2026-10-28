@@ -22,7 +22,7 @@ QVeris 支持多种集成方式。默认路径是发现 → 调用；仅当选�
 
 - **OAuth：**使用 `qveris auth login`，或在支持 OAuth 自动发现的客户端中添加托管 MCP 端点，按提示完成浏览器授权，无需复制 API 密钥。
 - **已有 API 密钥：**继续使用现有密钥。通过私密环境变量 `QVERIS_API_KEY` 为 REST、SDK、CLI 提供凭据，或运行 `qveris login` 进行掩码输入。该命令需要密钥，与 `qveris auth login` 不同。
-- **公开只读 REST：**在独立的无凭据 REST 客户端中显式设置 `X-Qveris-Access-Mode: public-readonly`，仅用于 Discover/Inspect，不创建试用或积分，也不能授权 Call。不得混用 Authorization 或 cookie；浏览器 HTTP 使用 `credentials: "omit"`。错误密钥不会降级为公开访问。限制、401/429 处理及认证升级见 [REST 指南](/docs/rest-api)。这不代表当前安装的 CLI／SDK 版本增加了新模式。
+- **公开只读 REST：**在独立的无凭据 REST 客户端中显式设置 `X-Qveris-Access-Mode: public-readonly`，仅用于 Discover/Inspect，不创建试用或积分，也不能授权 Call。不得混用 Authorization 或 cookie；浏览器 HTTP 使用 `credentials: "omit"`。错误密钥不会降级为公开访问。限制、401/429 处理及认证升级见 [REST 指南](/docs/rest-api)。CLI／SDK 公开读取请使用下方指南列出的支持版本。
 - **尚无凭据的 Agent：**显式调用已有 Agent API 注册匿名试用。注册会签发凭据，不代表 Discover 或 Call 可以免鉴权。一次性秘密、限制、期限与当前认领约束见[认证与试用生命周期](/auth.md)。
 
 Discover 免费；默认 CLI／SDK 和认证 MCP 接入仍需认证。不要把密钥或认领码放入提示词、URL、共享配置、日志或代码仓库。
@@ -34,8 +34,8 @@ Discover 免费；默认 CLI／SDK 和认证 MCP 接入仍需认证。不要把�
 | REST | 显式 public-readonly 请求头，仅 Discover/Inspect，不携带凭据或 cookie。 | 完成认证；Inspect 已选工具，重新核对权限与必要报价。 |
 | 托管 MCP | 使用 [MCP 指南](/docs/mcp-server)中的独立只读端点，仅 discover/inspect，不分配会话。 | 明确使用默认 OAuth 或有效密钥连接。 |
 | 本地 MCP 0.15.0 | 无密钥时可列出工具 schema，不代表 Discover/Inspect 请求成功。 | 按 [MCP 指南](/docs/mcp-server)配置有效密钥。 |
-| 已发布 CLI 0.11.3 | 使用下方认证示例；公开只读请求使用 REST 或托管 MCP。 | 已有 OAuth 或 API 密钥流程。 |
-| 已发布 QVeris SDK：TypeScript 0.9.0／Python 0.8.0 | 使用认证客户端示例；这些版本不代表提供了新的公开模式构造方式。 | 已有密钥或受支持的凭据提供器。 |
+| 已发布 CLI 0.12.0 | 在独立无凭据配置中显式使用 `--public-read-only` Discover/Inspect，见 [CLI 指南](/docs/cli)。 | 明确使用 OAuth 或 API 密钥，再认证 Inspect 已选工具。 |
+| 已发布 QVeris SDK：TypeScript 0.10.0／Python 0.9.0 | 独立使用 `Qveris.publicReadOnly()` 或 `PublicDiscoveryClient`，见 [TypeScript 指南](/docs/js-sdk)和 [Python 指南](/docs/python-sdk)。 | 创建新的认证客户端，Inspect 时不携带旧公开上下文。 |
 
 错误密钥不会降级为公开访问；公开连接不得混用凭据或 cookie。遇到 401，应为目标操作完成认证；遇到 429，遵循 Retry-After 与有界重试指引，不得创建身份或轮换凭据绕过限制。确切限制与错误见 [REST 指南](/docs/rest-api)。
 

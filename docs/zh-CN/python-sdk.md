@@ -1,6 +1,6 @@
 # QVeris Python SDK
 
-QVeris Python SDK v0.8.0 是最新测试版本。使用异步客户端，在你自己的智能体和应用中发现、检查、探测、调用并审计 丰富的 API 能力。
+QVeris Python SDK v0.9.0 是最新测试版本。使用异步客户端，在你自己的智能体和应用中发现、检查、探测、调用并审计 丰富的 API 能力。
 
 SDK 提供两种控制粒度：
 
@@ -132,6 +132,31 @@ asyncio.run(main())
 客户端在路由层面是无状态的，没有隐式语义路由、schema、费用或结果缓存。应在当前应用流程中保留真实 `search_id`。Host 如自行实现复用，必须按账户/API 地址/授权/会话隔离，根据当前请求重建业务值，并显式管理元数据失效。
 
 显式空参数列表表示工具确实无参数；缺少参数列表表示当前投影没有提供契约。仅在选择或构造合法请求所需详情缺失/过期，或需要比较候选时使用 `inspect`。仅在参数需要校验、预算决策需要当前报价、或明确要求预检时使用 `probe`。报价不等于锁价，也不能代替用户授权。
+
+## 显式公开只读发现
+
+需要 Python SDK **0.9.0 或更高版本**；使用前确认对应版本已在软件包仓库发布。认证操作继续使用上方客户端。公开读取使用独立的受限异步客户端：
+
+```python
+import asyncio
+from qveris import PublicDiscoveryClient, QverisConfig
+
+async def main():
+    config = QverisConfig(base_url="https://qveris.ai/api/v1")
+    async with PublicDiscoveryClient(config) as public_client:
+        found = await public_client.discover("网页搜索", limit=1)
+        if found.results:
+            inspected = await public_client.inspect(
+                [found.results[0].tool_id], search_id=found.search_id
+            )
+            print(inspected.results)
+
+asyncio.run(main())
+```
+
+示例环境不得配置 QVERIS_API_KEY：QverisConfig 会读取该环境变量，已有密钥会与公开模式冲突。不要为绕过错误密钥而悄悄清除已有身份。`PublicDiscoveryClient` 仅支持 Discover／Inspect 和异步清理，不提供 Call、Probe、账号／历史或 Agent 工具；它拥有独立的不保存 cookie 的客户端，不得借用认证 HTTP 客户端或附加会话证明。
+
+公开结果使用 `pub_` 上下文和受限契约，不含账号价格或余额，不创建账号、密钥、试用积分或执行授权。401 表示需要明确认证；429 遵循 Retry-After 并限制读取重试。后续执行时创建新的认证 QverisClient，Inspect 已选 ID，**不携带**旧公开 search_id；核对新权限与必要报价，再明确确认成本。不要求仅为认证升级而额外 Discover。限制与错误见 [REST 指南](/docs/rest-api)。
 
 ## Agent（智能体）
 

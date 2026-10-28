@@ -21,7 +21,8 @@ assertArrayEqual(expectedToolNames, requiredToolNames, "manifest public tool con
 const openclawPackagePath = path.join(packageRoot, "node_modules", "openclaw", "package.json");
 const openclawPackage = readJson(openclawPackagePath);
 const openclawBin = resolveOpenClawBin(openclawPackagePath, openclawPackage.bin);
-const stateDir = mkdtempSync(path.join(os.tmpdir(), "qveris-openclaw-runtime-"));
+// Windows runners may expose TEMP through an 8.3 alias; the host validates canonical copy paths.
+const stateDir = realpathSync.native(mkdtempSync(path.join(os.tmpdir(), "qveris-openclaw-runtime-")));
 const homeDir = path.join(stateDir, "home");
 const configPath = path.join(stateDir, "openclaw.json");
 const env = {
@@ -77,7 +78,11 @@ try {
   const errorDiagnostics = [...(inspection.diagnostics ?? [])].filter((diagnostic) => diagnostic.level === "error");
 
   assertEqual(inspection.plugin?.id, manifest.id, "runtime plugin id");
-  assertEqual(inspection.plugin?.status, "loaded", "runtime plugin status");
+  if (inspection.plugin?.status !== "loaded") {
+    fail(
+      `OpenClaw runtime registration failed:\n${JSON.stringify({ status: inspection.plugin?.status, error: inspection.plugin?.error, diagnostics: errorDiagnostics }, null, 2)}`,
+    );
+  }
   assertEqual(inspection.plugin?.version, packageJson.version, "runtime plugin version");
   assertArrayEqual(registeredToolNames, expected, "registered tool names");
   assertArrayEqual(registrationGroupNames, expected, "runtime registration-group names");

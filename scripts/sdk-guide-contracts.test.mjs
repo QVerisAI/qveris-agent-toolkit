@@ -150,7 +150,14 @@ test("published onboarding starts with one authenticated Discover before optiona
     assert.ok(hosted.mcpServers.qveris.url.endsWith("/mcp"), `${path}: default OAuth endpoint`);
     assert.equal(hosted.mcpServers.qveris.headers, undefined, `${path}: do not require pasted secrets for OAuth`);
     assert.ok(guide.includes("public-readonly"), `${path}: explicit public REST is separate`);
-    assert.ok(guide.includes("0.11.3") && guide.includes("0.9.0") && guide.includes("0.8.0"));
+    const versions = [
+      JSON.parse(read("packages/cli/package.json")).version,
+      JSON.parse(read("packages/js-sdk/package.json")).version,
+      read("packages/python-sdk/pyproject.toml").match(/^version\s*=\s*"([^"]+)"/m)?.[1],
+    ];
+    assert.ok(versions.every(version => typeof version === "string" && guide.includes(version)));
+    assert.ok(guide.includes("Qveris.publicReadOnly()") && guide.includes("PublicDiscoveryClient"));
+    assert.ok(guide.includes("--public-read-only"));
     assert.doesNotMatch(guide, /qveris auth trial|--public-readonly|--readonly|--read-only/);
     assert.ok(!guide.includes(path.includes("/cn/") ? "qveris.ai" : "qveris.cn"), `${path}: own site only`);
   }
@@ -166,5 +173,35 @@ test("canonical CLI quickstarts keep OAuth-first Discover separate from guided C
     assert.ok(shell?.includes("qveris auth login"));
     assert.ok(shell?.includes("qveris discover") && shell.includes("--json"));
     assert.doesNotMatch(shell, /qveris (?:call|init|auth trial)|--public-readonly|--readonly|--read-only/);
+  }
+});
+
+test("explicit public client guides preserve restricted identity and upgrade boundaries", () => {
+  for (const locale of ["en-US", "zh-CN", "cn/zh-CN"]) {
+    const en = locale === "en-US";
+    for (const family of ["cli", "js-sdk", "python-sdk"]) {
+      const path = `docs/${locale}/${family}.md`;
+      const guide = read(path).replaceAll("\r\n", "\n");
+      const title = en ? "## Explicit public read-only discovery" : "## 显式公开只读发现";
+      const start = guide.indexOf(title);
+      assert.ok(start > 0, `${path}: explicit mode is separate from default setup`);
+      const end = guide.indexOf("\n## ", start + title.length);
+      const section = guide.slice(start, end < 0 ? undefined : end);
+      assert.ok(section.includes("Retry-After") && section.includes("401") && section.includes("429"));
+      assert.ok(section.includes("pub_") && section.includes("/docs/rest-api"));
+      assert.ok(!section.includes(locale.startsWith("cn/") ? "qveris.ai" : "qveris.cn"));
+      assert.match(section, en ? /without.*old public search/i : /不携带.*旧公开 search/);
+      assert.doesNotMatch(section, /QVERIS_REGION|SITE_REGION|qveris auth trial/);
+      if (family === "cli") {
+        assert.ok(section.includes("0.12.0") && section.includes("--public-read-only"));
+        assert.match(section, en ? /OAuth session or trial credential/ : /OAuth 会话或试用凭据/);
+      } else if (family === "js-sdk") {
+        assert.ok(section.includes("0.10.0") && section.includes("Qveris.publicReadOnly("));
+        assert.ok(section.includes("if (found.results.length > 0)"));
+      } else {
+        assert.ok(section.includes("0.9.0") && section.includes("async with PublicDiscoveryClient(config)"));
+        assert.ok(section.includes("QVERIS_API_KEY") && section.includes("if found.results:"));
+      }
+    }
   }
 });

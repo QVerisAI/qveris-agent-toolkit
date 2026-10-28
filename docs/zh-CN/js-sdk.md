@@ -2,7 +2,7 @@
 
 类型化的 TypeScript/JavaScript SDK，让你在自己的智能体和应用中发现、检查、探测、调用并审计 丰富的 API 能力。
 
-`@qverisai/sdk` v0.9.0 是最新测试版本。它是对 QVeris REST API（`discover`、`inspect`、`probe`、`call`、`credits`、`usage`、`ledger`）的轻量类型化封装，**零运行时依赖**——使用平台原生 `fetch`（Node.js 18+）——并与 [Python SDK](python-sdk.md) 和 [MCP 服务器](mcp-server.md) 保持一致的通信语义。
+`@qverisai/sdk` v0.10.0 是最新测试版本。它是对 QVeris REST API（`discover`、`inspect`、`probe`、`call`、`credits`、`usage`、`ledger`）的轻量类型化封装，**零运行时依赖**——使用平台原生 `fetch`（Node.js 18+）——并与 [Python SDK](python-sdk.md) 和 [MCP 服务器](mcp-server.md) 保持一致的通信语义。
 
 ## 0.9.0 新功能
 
@@ -117,6 +117,27 @@ console.log(usage.total, ledger.total);
 无状态也意味着没有隐式语义路由、schema、费用或结果缓存。应在当前应用流程中保留真实 `search_id`。Host 如自行实现复用，必须按账户/API 地址/授权/会话隔离，根据当前请求重建业务值，并显式管理元数据失效。
 
 显式空参数列表表示工具确实无参数；缺少参数列表表示当前投影没有提供契约。仅在选择或构造合法请求所需详情缺失/过期，或需要比较候选时使用 `inspect`。仅在参数需要校验、预算决策需要当前报价、或明确要求预检时使用 `probe`。报价不等于锁价，也不能代替用户授权。
+
+## 显式公开只读发现
+
+需要 TypeScript SDK **0.10.0 或更高版本**；使用前确认对应版本已在软件包仓库发布。认证操作继续使用上方客户端。为公开读取创建独立的受限客户端：
+
+```typescript
+import { Qveris } from "@qverisai/sdk";
+
+const publicClient = Qveris.publicReadOnly({ baseUrl: "https://qveris.ai/api/v1" });
+const found = await publicClient.discover("网页搜索", { limit: 1 });
+if (found.results.length > 0) {
+  const inspected = await publicClient.inspect(found.results[0].tool_id, {
+    searchId: found.search_id,
+  });
+  console.log(inspected.results);
+}
+```
+
+该客户端只暴露 `discover` 和 `inspect`，不提供 Call、Probe、账号／历史或 Agent 工具。不要传入 apiKey 或 credentialProvider、复用认证传输，或附加 cookie／会话证明。公开模式不会在错误密钥后降级，也不会换身份重试；浏览器请求不携带 cookie。
+
+返回值使用 `pub_` 上下文和受限公开契约，不含账号价格或余额，不创建账号、密钥、试用积分或执行授权。401 表示需要明确认证；429 按 Retry-After 进行有界读取重试。后续执行时创建新的认证客户端，Inspect 已选 ID，**不携带**旧公开 searchId；核对新权限与必要报价，再明确确认成本。不要求仅为认证升级而额外 Discover。输入限制与错误见 [REST 指南](/docs/rest-api)。
 
 ## 配置参考
 

@@ -1,6 +1,6 @@
 # QVeris Python SDK
 
-QVeris Python SDK v0.8.0 is the latest tested release. Use its async client to discover, inspect, probe, call, and audit real-world API capabilities from your own agents and applications.
+QVeris Python SDK v0.9.0 is the latest tested release. Use its async client to discover, inspect, probe, call, and audit real-world API capabilities from your own agents and applications.
 
 The SDK gives you two levels of control:
 
@@ -137,6 +137,31 @@ An explicit empty parameter list means the tool takes no parameters; an omitted 
 inspected = await client.inspect([tool.tool_id], search_id=discovered.search_id)
 quote = await client.probe(tool.tool_id, params, checks=["schema", "quote"])
 ```
+
+## Explicit public read-only discovery
+
+Requires Python SDK **0.9.0 or later**; verify registry publication before using this API. Keep the authenticated client above for authenticated operations. Use a separate restricted async client:
+
+```python
+import asyncio
+from qveris import PublicDiscoveryClient, QverisConfig
+
+async def main():
+    config = QverisConfig(base_url="https://qveris.ai/api/v1")
+    async with PublicDiscoveryClient(config) as public_client:
+        found = await public_client.discover("web search", limit=1)
+        if found.results:
+            inspected = await public_client.inspect(
+                [found.results[0].tool_id], search_id=found.search_id
+            )
+            print(inspected.results)
+
+asyncio.run(main())
+```
+
+Run this example without configured QVERIS_API_KEY credentials: QverisConfig reads that environment variable, and a configured key conflicts with public mode. Do not silently clear an existing identity to recover from an invalid key. `PublicDiscoveryClient` supports only Discover/Inspect and async cleanup; it does not expose Call, Probe, account/history or Agent tools. It owns an independent cookie-free client; do not borrow an authenticated HTTP client or attach session proofs.
+
+Public results carry a `pub_` context and restricted contracts, without account-specific prices/balances. No account, key, trial credit or execution authority is issued. Treat 401 as an explicit authentication requirement; honor Retry-After on 429 with bounded read retries. To execute later, create a new authenticated QverisClient, Inspect the selected IDs **without** the old public search_id, review fresh permissions and any necessary quote, and obtain explicit cost consent. An authentication upgrade alone does not require another Discover. See the [REST guide](/docs/rest-api) for limits and errors.
 
 ## The Agent
 

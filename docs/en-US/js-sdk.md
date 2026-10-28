@@ -2,7 +2,7 @@
 
 Typed TypeScript/JavaScript SDK to discover, inspect, probe, call, and audit real-world API capabilities from your own agents and applications.
 
-`@qverisai/sdk` v0.9.0 is the latest tested release. It is a thin, typed wrapper over the QVeris REST API (`discover`, `inspect`, `probe`, `call`, `credits`, `usage`, `ledger`). It has **zero runtime dependencies** — it uses the platform `fetch` (Node.js 18+) — and mirrors the wire semantics of the [Python SDK](python-sdk.md) and the [MCP server](mcp-server.md).
+`@qverisai/sdk` v0.10.0 is the latest tested release. It is a thin, typed wrapper over the QVeris REST API (`discover`, `inspect`, `probe`, `call`, `credits`, `usage`, `ledger`). It has **zero runtime dependencies** — it uses the platform `fetch` (Node.js 18+) — and mirrors the wire semantics of the [Python SDK](python-sdk.md) and the [MCP server](mcp-server.md).
 
 ## What's new in 0.9.0
 
@@ -125,6 +125,27 @@ const quote = await qveris.probe(tool.tool_id, {
   checks: ['schema', 'quote'],
 });
 ```
+
+## Explicit public read-only discovery
+
+Requires TypeScript SDK **0.10.0 or later**; verify registry publication before using this API. Keep the authenticated client above for authenticated operations. Create a separate restricted client:
+
+```typescript
+import { Qveris } from "@qverisai/sdk";
+
+const publicClient = Qveris.publicReadOnly({ baseUrl: "https://qveris.ai/api/v1" });
+const found = await publicClient.discover("web search", { limit: 1 });
+if (found.results.length > 0) {
+  const inspected = await publicClient.inspect(found.results[0].tool_id, {
+    searchId: found.search_id,
+  });
+  console.log(inspected.results);
+}
+```
+
+This client exposes only `discover` and `inspect`; it has no Call, Probe, account/history or Agent tools. Do not supply an apiKey or credentialProvider, borrow an authenticated transport, or attach cookies/session proofs. Public mode never retries as another identity or falls back after a bad key. Browser requests omit cookies.
+
+Results contain a `pub_` context and restricted public contracts, without account-specific prices/balances. No account, key, trial credit or execution authority is issued. Treat 401 as an explicit authentication requirement and 429 according to Retry-After with bounded read retries. To execute later, construct a new authenticated client, Inspect the selected IDs **without** the old public searchId, review fresh permissions and any necessary quote, and obtain explicit cost consent. An authentication upgrade alone does not require another Discover. See the [REST guide](/docs/rest-api) for input bounds and errors.
 
 ## Configuration reference
 

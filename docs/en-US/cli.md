@@ -4,7 +4,7 @@ The official command-line tool for QVeris professional data and tool access. Dis
 
 For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
 
-`@qverisai/cli` v0.11.3 is the latest tested release. It includes OAuth Device Flow sessions, zero-cost parameter/quote probes, opt-in discovery and call projections, and Call model attribution while preserving API key compatibility.
+`@qverisai/cli` v0.12.0 is the latest tested release. It includes OAuth Device Flow sessions, zero-cost parameter/quote probes, opt-in discovery and call projections, and Call model attribution while preserving API key compatibility.
 
 **Why CLI?** CLI runs as a subprocess with structured output and on-demand discovery. It does not preload the full service catalog. Instructions, commands, and results still consume context tokens; QVeris MCP also exposes a compact tool surface.
 
@@ -51,6 +51,22 @@ This first example only discovers capabilities. `qveris login` remains the API-k
 Call is a separate cost decision: choose a current result, build real parameters from its contract, and review its billing rule. Inspect missing contract detail and Probe when validation or a current quote is needed. See [Getting started](getting-started.md) before submitting a paid Call. `qveris init` is an optional guided Call workflow.
 
 ---
+
+## Explicit public read-only discovery
+
+Requires CLI **0.12.0 or later**; verify that the version is available from the package registry before using these examples. The default OAuth/API-key commands above remain authenticated.
+
+Use a separate credential-free environment and CLI profile. `--public-read-only` rejects a configured key, OAuth session or trial credential instead of silently dropping it; an invalid key never falls back to public access.
+
+```bash
+qveris discover "web search" --public-read-only --limit 1 --json --base-url https://qveris.ai/api/v1
+# If Discover returned a result, inspect its first selection:
+qveris inspect 1 --public-read-only --json --base-url https://qveris.ai/api/v1
+```
+
+Only Discover and Inspect are allowed. Public reads create no account, key, trial credits or execution authority; results use a `pub_` context and exclude account-specific prices/balances. Do not combine this mode with identity/session proofs. On 401, report the authentication requirement; on 429, honor Retry-After and the bounded read retry policy. Never switch identities or register a trial to evade a limit.
+
+To continue with Call, deliberately authenticate, preserve the selected tool/input intent, and run authenticated Inspect without the old public search_id. The CLI refreshes a selected public-session index when inspecting after login. Review the fresh contract, permissions and any necessary quote, then explicitly approve cost before Call. No extra Discover is mandatory solely for authentication upgrade. The [REST guide](/docs/rest-api) defines public input limits and errors.
 
 ## Commands
 

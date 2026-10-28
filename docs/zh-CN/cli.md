@@ -4,7 +4,7 @@ QVeris 专业数据与工具访问的官方命令行工具。直接在终端或�
 
 进行 Provider 比较时，如果需要确认当前范围或完整契约，必须逐一 Inspect；Discover 摘要不等于确认。比较需要当前报价时，必须逐一 Probe。复用只能保留精确路由，不能保留业务参数或结果：参数必须来自当前请求；当前、最新、今天或其他时效性数据必须执行新的 Call。
 
-`@qverisai/cli` v0.11.3 是最新测试版本，包含 OAuth Device Flow 会话、零成本参数校验与报价、可选的发现和调用投影及 Call 模型归因，同时保持 API Key 兼容。
+`@qverisai/cli` v0.12.0 是最新测试版本，包含 OAuth Device Flow 会话、零成本参数校验与报价、可选的发现和调用投影及 Call 模型归因，同时保持 API Key 兼容。
 
 **为什么用 CLI？** CLI 通过子进程提供结构化输出和按需发现，无需预加载完整服务目录。使用说明、命令和结果仍会消耗上下文 token；QVeris MCP 同样提供紧凑的工具面。
 
@@ -51,6 +51,22 @@ qveris discover "天气预报 API" --json
 Call 是独立的成本决策：选择当前结果，按契约构造真实参数并阅读计费规则。契约缺失时 Inspect，需要参数校验或当前报价时 Probe。提交付费 Call 前请阅读[快速开始](getting-started.md)。`qveris init` 是可选的引导式 Call 流程。
 
 ---
+
+## 显式公开只读发现
+
+需要 CLI **0.12.0 或更高版本**；使用前确认对应版本已在软件包仓库发布。上方默认 OAuth／API 密钥命令仍用于认证操作。
+
+使用独立的无凭据环境与 CLI 配置。`--public-read-only` 会拒绝已配置的密钥、OAuth 会话或试用凭据，不会悄悄丢弃身份；错误密钥不会降级为公开访问。
+
+```bash
+qveris discover "网页搜索" --public-read-only --limit 1 --json --base-url https://qveris.ai/api/v1
+# Discover 返回结果后，检查其中第一个选择：
+qveris inspect 1 --public-read-only --json --base-url https://qveris.ai/api/v1
+```
+
+仅允许 Discover 和 Inspect。公开读取不创建账号、密钥、试用积分或执行授权，使用 `pub_` 上下文，不含账号价格或余额。不得混入身份／会话证明。遇到 401，应报告认证要求；遇到 429，遵循 Retry-After 与有界读取重试策略，不得轮换身份或注册试用绕过限制。
+
+继续 Call 时明确完成认证，保留已选工具与输入意图，执行认证 Inspect，不携带旧公开 search_id。登录后 Inspect 原公开会话中的结果序号时，CLI 会刷新该选择。核对新契约、权限及必要报价，明确确认成本后再 Call；不要求仅为认证升级而额外 Discover。公开输入限制与错误见 [REST 指南](/docs/rest-api)。
 
 ## 命令
 

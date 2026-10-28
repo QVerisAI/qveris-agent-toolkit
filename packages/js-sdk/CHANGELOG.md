@@ -6,11 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-27
+
 ### Added
 
 - Add explicit public read-only discovery with `Qveris.publicReadOnly()` and typed `publicReadOnly: true` construction. Reject mixed credentials, omit cookies, keep public contexts out of authenticated calls, and expose a catalog-only result and method surface.
-
-### Added
 
 - Expose typed zero-quote settlement review details and preserve the explicit zero-quote Call guard. Guarded SDK Calls require strict single-submit compatibility; no automatic preflight or retry is added.
 
@@ -120,7 +120,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - `0.1.x` under this npm name was an early MCP-focused SDK, superseded by `@qverisai/mcp`.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.9.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.10.0...HEAD
+[0.10.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.9.0...js-sdk-v0.10.0
 [0.9.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.4...js-sdk-v0.9.0
 [0.8.4]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.3...js-sdk-v0.8.4
 [0.8.3]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.2...js-sdk-v0.8.3
