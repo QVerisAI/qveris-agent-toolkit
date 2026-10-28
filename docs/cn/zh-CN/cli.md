@@ -74,6 +74,7 @@ qveris inspect 1 --public-read-only --json --base-url https://qveris.cn/api/v1
 需要用于终端调用的试用凭据时，明确执行：
 
 ```bash
+export QVERIS_BASE_URL="https://qveris.cn/api/v1"
 qveris auth trial
 qveris auth status
 ```

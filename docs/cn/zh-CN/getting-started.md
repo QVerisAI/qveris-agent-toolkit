@@ -9,7 +9,7 @@ npm install -g @qverisai/cli
 qveris discover "天气预报 API" --public-read-only --limit 1 --json --base-url https://qveris.cn/api/v1
 ```
 
-也可[在浏览器开始匿名试用](/discover?trial=1)：核对额度与期限后主动激活，再确认工具报价。终端试用需主动运行 `qveris auth trial`；一次性凭据、安全保存及认领见 [CLI 指南](/docs/cli)。发现操作不会自动创建试用。
+也可[在浏览器开始匿名试用](/discover?trial=1)：核对额度与期限后主动激活，再确认工具报价。终端试用需主动运行 `qveris auth trial --base-url https://qveris.cn/api/v1`；一次性凭据、安全保存及认领见 [CLI 指南](/docs/cli)。发现操作不会自动创建试用。
 
 ## 什么是 QVeris
 
