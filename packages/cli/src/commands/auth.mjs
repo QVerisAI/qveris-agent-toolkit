@@ -38,10 +38,11 @@ async function authLogin(flags) {
   const previousMetadata = getOAuthSessionMetadata();
   const previousSecret = await loadOAuthSessionSecret(previousMetadata);
   const { baseUrl } = resolveBaseUrl({ baseUrlFlag: flags.baseUrl });
-  const issuer = new URL(baseUrl).origin;
-  const metadata = await discoverAuthorizationServer(issuer);
+  const apiOrigin = new URL(baseUrl).origin;
+  const metadata = await discoverAuthorizationServer(flags.issuer || apiOrigin);
+  const issuer = metadata.issuer;
   const scope = validateOAuthScopes(metadata, flags.scope || DEFAULT_OAUTH_SCOPES).join(" ");
-  const resource = flags.resource || `${issuer}/tools`;
+  const resource = flags.resource || `${apiOrigin}/tools`;
   const authorization = await startDeviceAuthorization(metadata, { scope, resource });
 
   if (!flags.json) {

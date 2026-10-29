@@ -11,7 +11,7 @@ qveris discover "weather" --public-read-only --limit 1 --json --base-url https:/
 
 公开只读发现按已发布目录的关键词检索，建议从 `weather` 这样的短关键词开始；空结果表示没有匹配的公开候选，不是认证失败。
 
-人类用户请[注册开始](/playground)或[接入自己的 AI](/plugins)。Agent 可阅读[试用指引](/try)；仅在获得明确试用授权后，使用已发布 CLI 0.13.1+ 在支持的接口执行 `qveris auth trial --bounded`。实际条款、安全保存、报价准入和人类认领交接见 [CLI 指南](/docs/cli)。发现操作不会自动创建试用。
+人类用户请[注册开始](/playground)或[接入自己的 AI](/plugins)。Agent 可阅读[试用指引](/try)；仅在获得明确试用授权后，使用已发布 CLI 0.13.2+ 在支持的接口执行 `qveris auth trial --bounded`。实际条款、安全保存、报价准入和人类认领交接见 [CLI 指南](/docs/cli)。发现操作不会自动创建试用。
 
 ## 什么是 QVeris
 
@@ -45,7 +45,7 @@ Discover 免费；默认 CLI／SDK 和认证 MCP 接入仍需认证。不要把�
 | REST | 显式 public-readonly 请求头，仅 Discover/Inspect，不携带凭据或 cookie。 | 完成认证；Inspect 已选工具，重新核对权限与必要报价。 |
 | 托管 MCP | 使用 [MCP 指南](/docs/mcp-server)中的独立只读端点，仅 discover/inspect，不分配会话。 | 明确使用默认 OAuth 或有效密钥连接。 |
 | 本地 MCP 0.15.0 | 无密钥时可列出工具 schema，不代表 Discover/Inspect 请求成功。 | 按 [MCP 指南](/docs/mcp-server)配置有效密钥。 |
-| CLI 0.13.1 | 在独立无凭据配置中显式使用 `--public-read-only` Discover/Inspect，见 [CLI 指南](/docs/cli)。 | 明确使用 OAuth 或 API 密钥，再认证 Inspect 已选工具。 |
+| CLI 0.13.2 | 在独立无凭据配置中显式使用 `--public-read-only` Discover/Inspect，见 [CLI 指南](/docs/cli)。 | 明确使用 OAuth 或 API 密钥，再认证 Inspect 已选工具。 |
 | 已发布 QVeris SDK：TypeScript 0.10.0／Python 0.9.0 | 独立使用 `Qveris.publicReadOnly()` 或 `PublicDiscoveryClient`，见 [TypeScript 指南](/docs/js-sdk)和 [Python 指南](/docs/python-sdk)。 | 创建新的认证客户端，Inspect 时不携带旧公开上下文。 |
 
 错误密钥不会降级为公开访问；公开连接不得混用凭据或 cookie。遇到 401，应为目标操作完成认证；遇到 429，遵循 Retry-After 与有界重试指引，不得创建身份或轮换凭据绕过限制。确切限制与错误见 [REST 指南](/docs/rest-api)。

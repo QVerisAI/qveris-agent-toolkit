@@ -198,6 +198,7 @@ const VALUE_FLAGS = {
   "agent-name": "agentName",
   "api-key": "apiKey",
   "base-url": "baseUrl",
+  issuer: "issuer",
   timeout: "timeout",
   limit: "limit",
   view: "view",
@@ -367,6 +368,9 @@ function extractGlobalFlags(args) {
       case "--api-key":
         flags.apiKey = takeNext(args, i++, arg);
         break;
+      case "--issuer":
+        flags.issuer = takeNext(args, i++, arg);
+        break;
       case "--base-url":
         flags.baseUrl = takeNext(args, i++, arg);
         break;
@@ -530,6 +534,7 @@ function printUsage(flags = {}) {
     --api-key <key>        Override API key
     --public-read-only    Explicit credential-free Discover/Inspect only
     --base-url <url>       Override API base URL
+    --issuer <url>         Explicit OAuth authorization server for auth login
     --scope <scopes>       OAuth scopes for auth login (must include offline_access)
     --resource <url>       OAuth resource for auth login
     --allow-unencrypted-storage

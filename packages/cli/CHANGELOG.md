@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.13.2] - 2026-10-29
+
+### Fixed
+
+- Support an explicit OAuth issuer for custom API services while retaining issuer, resource and token endpoint validation.
+
 ## [0.13.1] - 2026-10-29
 
 ### Fixed
