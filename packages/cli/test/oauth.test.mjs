@@ -1469,8 +1469,13 @@ test("Auth status reports validation failures without throwing", async () => {
   }
 });
 
-for (const issuerArgs of [["--issuer", "https://unit.test"], ["--issuer=https://unit.test"]]) {
-  test(`Explicit OAuth issuer keeps the API resource and stored endpoint (${issuerArgs[0]})`, async () => {
+for (const issuerArgs of [
+  ["--issuer", "https://unit.test"],
+  ["--issuer=https://unit.test"],
+  ["--issuer", "https://unit.test", "--resource", "https://api.unit.test"],
+  ["--issuer", "https://unit.test", "--resource", "https://api.unit.test:443/tools"],
+]) {
+  test(`Explicit OAuth issuer keeps the API resource and stored endpoint (${issuerArgs.join(" ")})`, async () => {
     const previous = {
       home: process.env.XDG_CONFIG_HOME,
       keyring: process.env.QVERIS_DISABLE_KEYRING,
@@ -1487,12 +1492,15 @@ for (const issuerArgs of [["--issuer", "https://unit.test"], ["--issuer=https://
     console.log = () => {};
     console.error = () => {};
     const calls = [];
+    const resourceIndex = issuerArgs.indexOf("--resource");
+    const expectedResource = new URL(resourceIndex >= 0 ? issuerArgs[resourceIndex + 1] : "https://api.unit.test/tools")
+      .href;
     try {
       globalThis.fetch = async (url, options = {}) => {
         calls.push(url);
         if (url === "https://unit.test/.well-known/oauth-authorization-server") return response(discovery);
         if (url === discovery.device_authorization_endpoint) {
-          assert.equal(options.body.get("resource"), "https://api.unit.test/tools");
+          assert.equal(options.body.get("resource"), expectedResource);
           return response({
             device_code: "fixture-device",
             user_code: "TEST-CODE",
@@ -1531,7 +1539,7 @@ for (const issuerArgs of [["--issuer", "https://unit.test"], ["--issuer=https://
       const stored = getOAuthSessionMetadata();
       assert.equal(stored.issuer, "https://unit.test");
       assert.equal(stored.api_base_url, "https://api.unit.test/api/v1");
-      assert.equal(stored.resource, "https://api.unit.test/tools");
+      assert.equal(stored.resource, expectedResource);
       assert.equal(calls[0], "https://unit.test/.well-known/oauth-authorization-server");
       await main(["node", "qveris", "discover", "weather", "--json"]);
       assert.equal(calls.at(-1), "https://api.unit.test/api/v1/search");

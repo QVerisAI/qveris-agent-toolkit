@@ -68,12 +68,12 @@ async function authLogin(flags) {
   const newSecret = {
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token,
-    ...(apiOrigin !== issuer ? { api_base_url: baseUrl, resource } : {}),
   };
   let persisted;
   let session;
   try {
     const binding = validateOAuthTokenBinding(tokens, { resource, scope });
+    if (apiOrigin !== issuer) Object.assign(newSecret, { api_base_url: baseUrl, resource: binding.resource });
     session = {
       issuer,
       api_base_url: baseUrl,
