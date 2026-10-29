@@ -11,7 +11,7 @@ qveris discover "weather" --public-read-only --limit 1 --json --base-url https:/
 
 Public read-only discovery searches published catalog keywords. Start with a short keyword such as `weather`; an empty result means no matching published candidate, not an authentication failure.
 
-Humans should [get started](/playground) or [connect their AI](/plugins). Agents can read the [trial instructions](/try); only with explicit trial permission, use published CLI 0.13.0+ and `qveris auth trial --bounded` on a supporting endpoint. Actual terms, secure storage, bounded quote admission and human claim handoff are in the [CLI guide](/docs/cli). Discovery never creates a trial automatically.
+Humans should [get started](/playground) or [connect their AI](/plugins). Agents can read the [trial instructions](/try); only with explicit trial permission, use published CLI 0.13.1+ and `qveris auth trial --bounded` on a supporting endpoint. Actual terms, secure storage, bounded quote admission and human claim handoff are in the [CLI guide](/docs/cli). Discovery never creates a trial automatically.
 
 ## What is QVeris
 
@@ -47,7 +47,7 @@ Discover is free; the default CLI/SDK and authenticated MCP paths still require 
 | REST | Explicit public-readonly header; Discover/Inspect only, without credentials or cookies. | Authenticate; refresh the selected tool with Inspect, permissions and any necessary quote. |
 | Hosted MCP | Separate read-only endpoint from the [MCP guide](/docs/mcp-server); only discover/inspect, no session. | Use the default OAuth or valid-key connection explicitly. |
 | Local MCP 0.15.0 | Listing tool schemas without a key is not a successful Discover/Inspect request. | Configure a valid key as described in the [MCP guide](/docs/mcp-server). |
-| CLI 0.13.0 | Explicit `--public-read-only` Discover/Inspect in a separate credential-free profile; see the [CLI guide](/docs/cli). | Deliberately use OAuth or an API key, then refresh the selected tool with authenticated Inspect. |
+| CLI 0.13.1 | Explicit `--public-read-only` Discover/Inspect in a separate credential-free profile; see the [CLI guide](/docs/cli). | Deliberately use OAuth or an API key, then refresh the selected tool with authenticated Inspect. |
 | Published QVeris SDKs: TypeScript 0.10.0 / Python 0.9.0 | Separate `Qveris.publicReadOnly()` or `PublicDiscoveryClient`; see the [TypeScript guide](/docs/js-sdk) and [Python guide](/docs/python-sdk). | Construct a new authenticated client and refresh Inspect without the old public context. |
 
 A supplied invalid key never falls back to public access. Do not combine a public connection with credentials/cookies. On 401, authenticate for the intended operation; on 429, follow Retry-After and bounded retry guidance, without creating an identity or rotating credentials to evade limits. See the [REST guide](/docs/rest-api) for exact limits and errors.
