@@ -209,3 +209,16 @@ test("explicit public client guides preserve restricted identity and upgrade bou
     }
   }
 });
+
+
+test("role guides keep human signup, explicit bounded Agent trials and old browser recovery separate", () => {
+  for (const locale of ["en-US", "zh-CN", "cn/zh-CN"]) {
+    const guide = read(`docs/${locale}/getting-started.md`);
+    assert.ok(guide.includes("](/playground)") && guide.includes("](/plugins)") && guide.includes("](/try)"));
+    assert.ok(guide.includes("qveris auth trial --bounded"));
+    assert.ok(!guide.includes("/discover?trial=1"));
+    assert.match(guide, locale === "en-US" ? /recovers existing saved browser trials/ : /只恢复已有浏览器试用/);
+    assert.doesNotMatch(guide, /choose \*\*Try in browser\*\*|工作台点击\*\*浏览器试用/);
+    assert.match(guide, locale === "en-US" ? /Never collect a human password/ : /不得在 Agent 上下文收集人类密码/);
+  }
+});
