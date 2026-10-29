@@ -68,6 +68,7 @@ async function authLogin(flags) {
   const newSecret = {
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token,
+    ...(apiOrigin !== issuer ? { api_base_url: baseUrl, resource } : {}),
   };
   let persisted;
   let session;

@@ -1474,12 +1474,16 @@ for (const issuerArgs of [["--issuer", "https://unit.test"], ["--issuer=https://
     const previous = {
       home: process.env.XDG_CONFIG_HOME,
       keyring: process.env.QVERIS_DISABLE_KEYRING,
+      apiKey: process.env.QVERIS_API_KEY,
+      baseUrl: process.env.QVERIS_BASE_URL,
       fetch: globalThis.fetch,
       log: console.log,
       error: console.error,
     };
     process.env.XDG_CONFIG_HOME = `/tmp/qveris-explicit-issuer-${process.pid}-${Date.now()}`;
     process.env.QVERIS_DISABLE_KEYRING = "1";
+    delete process.env.QVERIS_API_KEY;
+    delete process.env.QVERIS_BASE_URL;
     console.log = () => {};
     console.error = () => {};
     const calls = [];
@@ -1504,6 +1508,10 @@ for (const issuerArgs of [["--issuer", "https://unit.test"], ["--issuer=https://
             token_type: "Bearer",
             expires_in: 3600,
           });
+        if (url === "https://api.unit.test/api/v1/search") {
+          assert.equal(options.headers.Authorization, "Bearer <fixture-access>");
+          return response({ search_id: "fixture-search", results: [] });
+        }
         throw new Error("Unexpected request outside the explicit issuer");
       };
       await main([
@@ -1525,11 +1533,40 @@ for (const issuerArgs of [["--issuer", "https://unit.test"], ["--issuer=https://
       assert.equal(stored.api_base_url, "https://api.unit.test/api/v1");
       assert.equal(stored.resource, "https://api.unit.test/tools");
       assert.equal(calls[0], "https://unit.test/.well-known/oauth-authorization-server");
+      await main(["node", "qveris", "discover", "weather", "--json"]);
+      assert.equal(calls.at(-1), "https://api.unit.test/api/v1/search");
+      const provider = createStoredOAuthCredentialProvider();
+      for (const resource of ["https://unit.test/api/v1", "https://evil.test/api/v1", "https://api.unit.test/api/v2"]) {
+        await assert.rejects(provider.getCredential({ resource, scopes: [] }), /selected API endpoint/);
+      }
+      stored.api_base_url = "https://evil.test/api/v1";
+      await assert.rejects(
+        provider.getCredential({ resource: stored.api_base_url, scopes: [] }),
+        /selected API endpoint/,
+      );
+      stored.api_base_url = "https://api.unit.test/api/v1";
+      const refreshes = await refreshOAuthSession(stored, await loadOAuthSessionSecret(), async () =>
+        response({
+          access_token: "<fixture-rotated-access>",
+          refresh_token: "<fixture-rotated-refresh>",
+          token_type: "Bearer",
+          expires_in: 3600,
+        }),
+      );
+      assert.equal(refreshes.secret.api_base_url, stored.api_base_url);
+      assert.equal(
+        await provider.getCredential({ resource: stored.api_base_url, scopes: [] }),
+        "<fixture-rotated-access>",
+      );
     } finally {
       globalThis.fetch = previous.fetch;
       console.log = previous.log;
       console.error = previous.error;
       await deleteOAuthSession();
+      if (previous.apiKey === undefined) delete process.env.QVERIS_API_KEY;
+      else process.env.QVERIS_API_KEY = previous.apiKey;
+      if (previous.baseUrl === undefined) delete process.env.QVERIS_BASE_URL;
+      else process.env.QVERIS_BASE_URL = previous.baseUrl;
       if (previous.home === undefined) delete process.env.XDG_CONFIG_HOME;
       else process.env.XDG_CONFIG_HOME = previous.home;
       if (previous.keyring === undefined) delete process.env.QVERIS_DISABLE_KEYRING;

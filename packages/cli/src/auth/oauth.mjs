@@ -357,7 +357,19 @@ export function validateOAuthTokenBinding(tokens, { resource, scope }) {
   };
 }
 
+function assertOAuthApiBinding(metadata, secret) {
+  const apiBase = validateEndpoint(metadata.api_base_url, "api_base_url").replace(/\/+$/, "");
+  if (
+    new URL(apiBase).origin !== metadata.issuer &&
+    (secret.api_base_url !== apiBase || secret.resource !== metadata.resource)
+  ) {
+    throw new CliError("API_ERROR", "OAuth session does not match the selected API endpoint");
+  }
+  return apiBase;
+}
+
 export async function refreshOAuthSession(metadata, secret, fetchImpl = fetch) {
+  if (metadata.api_base_url) assertOAuthApiBinding(metadata, secret);
   if (typeof secret.refresh_token !== "string" || !secret.refresh_token) {
     throw oauthError("invalid_grant", "OAuth session cannot be refreshed; run qveris auth login again");
   }
@@ -385,6 +397,7 @@ export async function refreshOAuthSession(metadata, secret, fetchImpl = fetch) {
   const replacement = {
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token,
+    ...(secret.api_base_url ? { api_base_url: secret.api_base_url, resource: secret.resource } : {}),
   };
   let binding;
   try {
@@ -500,7 +513,8 @@ export function createStoredOAuthCredentialProvider({ fetchImpl = fetch } = {}) 
         throw oauthError("invalid_grant", "OAuth session is unavailable; run qveris auth login again");
       }
       metadata = bindLegacyAuthorizationContext(metadata, secret);
-      if (new URL(context.resource).origin !== metadata.issuer) {
+      const apiBase = assertOAuthApiBinding(metadata, secret);
+      if (validateEndpoint(context.resource, "resource").replace(/\/+$/, "") !== apiBase) {
         throw new CliError("API_ERROR", "OAuth session does not match the selected API endpoint");
       }
       if (Date.now() >= Number(metadata.expires_at || 0) - 60000) {
