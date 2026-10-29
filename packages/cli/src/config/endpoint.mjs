@@ -11,9 +11,11 @@ import { CliError } from "../errors/handler.mjs";
 export function getSiteUrl(baseUrl) {
   try {
     const url = new URL(baseUrl);
-    const { hostname } = url;
-    if (hostname === "qveris.cn" || hostname.endsWith(".qveris.cn")) return "https://qveris.cn";
-    if (hostname === "qveris.ai" || hostname.endsWith(".qveris.ai")) return "https://qveris.ai";
+    const accountSites = {
+      "https://api.qveris.cn": "https://qveris.cn",
+      "https://api.qveris.ai": "https://qveris.ai",
+    };
+    if (Object.hasOwn(accountSites, url.origin)) return accountSites[url.origin];
     return url.origin;
   } catch {
     // resolveBaseUrl validates URLs before this helper is called.

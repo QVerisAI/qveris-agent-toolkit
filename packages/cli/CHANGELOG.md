@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-10-29
+
+### Fixed
+
+- Keep trial claim and recovery links on the selected custom API service instead of sending users to a different account site.
+
 ## [0.13.0] - 2026-10-29
 
 ### Added
@@ -168,7 +174,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial release: `discover` / `inspect` / `call` from the terminal against the QVeris API.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.13.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.13.1...HEAD
+[0.13.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.13.0...cli-v0.13.1
 [0.13.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.12.1...cli-v0.13.0
 [0.12.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.3...cli-v0.12.0
 [0.11.3]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.2...cli-v0.11.3

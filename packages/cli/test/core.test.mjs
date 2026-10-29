@@ -242,3 +242,18 @@ test("code generation covers curl, JavaScript, Python, and unsupported languages
     assert.match(generateSnippet("python", projectedInput), /"model": "router-model-v1"/);
   });
 });
+
+test("trial guidance keeps custom services, nonstandard ports and previews on their own origin", () => {
+  for (const origin of [
+    "https://test.qveris.cn",
+    "https://api.qveris.cloud",
+    "https://preview.qveris.ai",
+    "https://api-test.qveris.cn",
+    "https://api.qveris.cn:8443",
+    "http://api.qveris.ai",
+    "https://qveris.cn:8443",
+    "https://qveris.ai.evil.example",
+  ]) {
+    assert.equal(getSiteUrl(`${origin}/api/v1`), origin);
+  }
+});
