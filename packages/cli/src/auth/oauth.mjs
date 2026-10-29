@@ -359,9 +359,11 @@ export function validateOAuthTokenBinding(tokens, { resource, scope }) {
 
 function assertOAuthApiBinding(metadata, secret) {
   const apiBase = validateEndpoint(metadata.api_base_url, "api_base_url").replace(/\/+$/, "");
+  const bound = secret.api_base_url !== undefined || secret.resource !== undefined;
   if (
-    new URL(apiBase).origin !== metadata.issuer &&
-    (secret.api_base_url !== apiBase || secret.resource !== metadata.resource)
+    bound
+      ? secret.api_base_url !== apiBase || secret.resource !== metadata.resource
+      : new URL(apiBase).origin !== metadata.issuer
   ) {
     throw new CliError("API_ERROR", "OAuth session does not match the selected API endpoint");
   }

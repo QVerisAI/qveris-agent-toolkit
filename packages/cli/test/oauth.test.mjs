@@ -1539,11 +1539,10 @@ for (const issuerArgs of [["--issuer", "https://unit.test"], ["--issuer=https://
       for (const resource of ["https://unit.test/api/v1", "https://evil.test/api/v1", "https://api.unit.test/api/v2"]) {
         await assert.rejects(provider.getCredential({ resource, scopes: [] }), /selected API endpoint/);
       }
-      stored.api_base_url = "https://evil.test/api/v1";
-      await assert.rejects(
-        provider.getCredential({ resource: stored.api_base_url, scopes: [] }),
-        /selected API endpoint/,
-      );
+      for (const changedBase of ["https://evil.test/api/v1", "https://unit.test/api/v1"]) {
+        stored.api_base_url = changedBase;
+        await assert.rejects(provider.getCredential({ resource: changedBase, scopes: [] }), /selected API endpoint/);
+      }
       stored.api_base_url = "https://api.unit.test/api/v1";
       const refreshes = await refreshOAuthSession(stored, await loadOAuthSessionSecret(), async () =>
         response({
