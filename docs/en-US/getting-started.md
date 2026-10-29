@@ -31,12 +31,10 @@ For provider comparison, Inspect every candidate when current scope or a complet
 
 ## Choose how to authenticate
 
-- **Browser trial:** choose **Try in browser** in a tool page’s workbench; when the page displays trial controls, start explicitly and review the tool, inputs and quote before confirming one Call. No API key is returned to the browser. The [authentication and trial guide](/auth.md) explains recovery and claim.
-
 - **OAuth:** use `qveris auth login`, or add the Hosted MCP endpoint in a client that supports OAuth discovery. Complete browser authorization without copying an API key.
 - **Existing API key:** keep using it. Set `QVERIS_API_KEY` privately for REST/SDK/CLI, or use `qveris login` for masked key entry. This command requires a key; it is different from `qveris auth login`.
 - **Public read-only REST:** explicitly use `X-Qveris-Access-Mode: public-readonly` in a separate uncredentialed REST client for Discover/Inspect only. It creates no trial or credits and cannot authorize Call. Do not combine it with Authorization or cookies; browser HTTP uses `credentials: "omit"`. A bad key never falls back to public access. See the [REST guide](/docs/rest-api) for limits, 401/429 guidance and authenticated upgrade. For explicit public clients, use the supported releases in the CLI/SDK guides below.
-- **Agent without credentials:** explicitly register an anonymous trial using the existing Agent API. Registration issues credentials; it is not unauthenticated Discover or Call. See [Authentication and trial lifecycle](/auth.md) for one-time secrets, limits, expiry, and current claim restrictions.
+- **Agent without credentials:** begin with explicit public read-only Discover/Inspect. Only with execution trial permission, use the bounded Agent API or `qveris auth trial --bounded` from a published supporting CLI. Read [Authentication and trial lifecycle](/auth.md) for actual issued terms, private storage, quote admission, recovery and human account claim. Never collect a human password or email verification code in Agent context.
 
 Discover is free; the default CLI/SDK and authenticated MCP paths still require authentication. Never paste keys or claim codes into prompts, URLs, shared configuration, logs, or source control.
 
@@ -55,6 +53,8 @@ A supplied invalid key never falls back to public access. Do not combine a publi
 Public access creates no account, key, trial credits or provider execution. Preserve the selected tool/input intent when upgrading, but omit the public search_id from authenticated Inspect. Use the fresh authenticated result and any necessary quote before explicit cost approval. An already selected tool does not require another natural-language Discover solely to upgrade authentication.
 
 ## Browser result, recovery and claim
+
+This section recovers existing saved browser trials, using their original link or **Continue an existing browser trial** controls; when the page displays trial controls, verify the original session before continuing. It does not offer fresh browser signup. Humans should [get started](/playground), while Agents use the [trial instructions](/try). The browser does not export its cookie as an API key.
 
 A tool result may still be awaiting settlement. After a timeout or lost response, recover the original operation through the page; stopping the wait does not undo execution. Do not automatically replay a Call or create another trial. A quote is not a price lock, and any displayed tolerance is not extra granted credit.
 
