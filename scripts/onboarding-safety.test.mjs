@@ -73,9 +73,9 @@ test("local MCP preparation writes placeholders before private completion and va
 
 test("first-time terminal trial instructions stay on the Chinese site", async () => {
   const gettingStarted = await fs.readFile(new URL("docs/cn/zh-CN/getting-started.md", root), "utf8");
-  assert.match(gettingStarted, /qveris auth trial --base-url https:\/\/qveris\.cn\/api\/v1/);
+  assert.match(gettingStarted, /qveris auth trial --bounded --base-url https:\/\/qveris\.cn\/api\/v1/);
   const cli = await fs.readFile(new URL("docs/cn/zh-CN/cli.md", root), "utf8");
-  assert.match(cli, /export QVERIS_BASE_URL="https:\/\/qveris\.cn\/api\/v1"\nqveris auth trial\nqveris auth status/);
+  assert.match(cli, /export QVERIS_BASE_URL="https:\/\/qveris\.cn\/api\/v1"\nqveris auth trial --bounded\nqveris auth status/);
 });
 
 

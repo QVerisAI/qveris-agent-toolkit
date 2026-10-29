@@ -251,7 +251,7 @@ When a tool response exceeds `max_response_size`, the API returns:
 
 ## CLI Workflow
 
-When using the QVeris CLI (`@qverisai/cli` v0.12.1) instead of MCP, optimize for the same shortest safe path. Discover and Call are the default flow; Inspect and Probe are conditional checks, not required stages.
+When using the QVeris CLI (`@qverisai/cli` v0.13.0) instead of MCP, optimize for the same shortest safe path. Discover and Call are the default flow; Inspect and Probe are conditional checks, not required stages.
 
 ### Basic Agent Workflow
 

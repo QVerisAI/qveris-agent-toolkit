@@ -49,6 +49,21 @@ export const ERROR_CODES = {
     hint: "Preserve the registration journal. Rerun auth trial for local recovery or --export for a saved response; otherwise contact support with the operation ID",
     exit: EX_TEMPFAIL,
   },
+  TRIAL_BOUNDED_UNAVAILABLE: {
+    message: "This endpoint does not expose bounded Agent trials yet",
+    hint: "Use this site's current authentication guide. The saved proof is retained; do not create a replacement trial.",
+    exit: EX_TEMPFAIL,
+  },
+  TRIAL_KEY_RECOVERY_REQUIRED: {
+    message: "Trial activation is confirmed, but its one-time API key was not saved",
+    hint: "Use 'qveris auth trial --bounded --export' only in a private terminal to recover the possession proof for the bounded API or account claim. Never paste it into chat or logs.",
+    exit: EX_TEMPFAIL,
+  },
+  TRIAL_ALREADY_CLAIMED: {
+    message: "This trial has been claimed; continue with the receiving account",
+    hint: "Sign in with the formal account and configure its credentials. Do not register another trial.",
+    exit: EX_NOPERM,
+  },
   TRIAL_EXPIRED: {
     message: "The stored trial credential has expired",
     hint: "Use the claim guidance or log in with an existing account; no replacement account is created automatically",
@@ -56,7 +71,7 @@ export const ERROR_CODES = {
   },
   AUTH_MISSING_KEY: {
     message: "No API key or OAuth session configured",
-    hint: "Use Discover/Inspect with '--public-read-only' in a credential-free profile; explicitly run 'qveris auth trial' to create a limited trial, 'qveris auth login' for OAuth Device Flow, or 'qveris login' to paste an API key (QVERIS_API_KEY is also supported)",
+    hint: "Use Discover/Inspect with '--public-read-only' in a credential-free profile; explicitly run 'qveris auth trial --bounded' on a supporting endpoint to create a bounded trial, 'qveris auth login' for OAuth Device Flow, or 'qveris login' to paste an API key (QVERIS_API_KEY is also supported)",
     exit: EX_CONFIG,
   },
   NODE_UNSUPPORTED: {
