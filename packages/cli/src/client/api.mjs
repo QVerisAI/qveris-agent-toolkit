@@ -23,9 +23,7 @@ export function resolveApiBaseUrl({ baseUrlFlag, preferOAuth = false } = {}) {
     const session = getOAuthSessionMetadata();
     if (session?.api_base_url) {
       const { baseUrl } = resolveBaseUrl({ baseUrlFlag: session.api_base_url });
-      if (new URL(baseUrl).origin !== session.issuer) {
-        throw new CliError("API_ERROR", "Stored OAuth endpoint does not match its issuer");
-      }
+      // Credential delivery validates the saved API binding before dispatch.
       return { baseUrl, source: "oauth session" };
     }
     if (hasStoredTrialCredential()) return { baseUrl: getTrialRegistration().base_url, source: "trial registration" };

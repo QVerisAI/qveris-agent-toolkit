@@ -4,7 +4,7 @@ QVeris 能力路由网络的官方命令行工具。直接在终端或 Agent 框
 
 进行 Provider 比较时，如果需要确认当前范围或完整契约，必须逐一 Inspect；Discover 摘要不等于确认。比较需要当前报价时，必须逐一 Probe。复用只能保留精确路由，不能保留业务参数或结果：参数必须来自当前请求；当前、最新、今天或其他时效性数据必须执行新的 Call。
 
-`@qverisai/cli` v0.13.1 是最新测试版本（发布候选，安装前请核对仓库可用版本），包含 OAuth Device Flow 会话、零成本参数校验与报价、可选的发现和调用投影及 Call 模型归因，同时保持 API Key 兼容。
+`@qverisai/cli` v0.13.2 是最新测试版本（发布候选，安装前请核对仓库可用版本），包含 OAuth Device Flow 会话、零成本参数校验与报价、可选的发现和调用投影及 Call 模型归因，同时保持 API Key 兼容。
 
 **为什么用 CLI？** CLI 通过子进程提供结构化输出和按需发现，无需预加载整个能力目录。使用说明、命令和结果仍会消耗上下文 token；QVeris MCP 同样使用少量路由工具。
 
@@ -47,6 +47,8 @@ qveris auth login
 qveris discover "天气预报 API" --json
 ```
 
+自定义 API 服务的 OAuth 认证服务使用不同地址时，可在指定 `--base-url` 的同时，为 `qveris auth login` 显式设置 `--issuer`。请使用该服务公布的 issuer；API 地址与资源仍绑定所选 API 服务，issuer 和端点校验保持启用。需要 CLI 0.13.2 或更高版本。
+
 首个示例仅发现能力。`qveris login` 仍是 API 密钥路径，通过掩码输入接收密钥，与 OAuth 登录不同。没有凭据的 Agent 可显式调用已有匿名注册 API，见[认证与试用生命周期](/auth.md)。不要在诊断或发现过程中自动注册试用。
 
 Call 是独立的成本决策：选择当前结果，按契约构造真实参数并阅读计费规则。契约缺失时 Inspect，需要参数校验或当前报价时 Probe。提交付费 Call 前请阅读[快速开始](getting-started.md)。`qveris init` 是可选的引导式 Call 流程。
@@ -55,7 +57,7 @@ Call 是独立的成本决策：选择当前结果，按契约构造真实参数
 
 ## 显式公开只读发现
 
-需要 CLI **0.13.1 或更高版本**；使用前确认对应版本已在软件包仓库发布。上方默认 OAuth／API 密钥命令仍用于认证操作。
+需要 CLI **0.13.2 或更高版本**；使用前确认对应版本已在软件包仓库发布。上方默认 OAuth／API 密钥命令仍用于认证操作。
 
 使用独立的无凭据环境与 CLI 配置。`--public-read-only` 会拒绝已配置的密钥、OAuth 会话或试用凭据，不会悄悄丢弃身份；错误密钥不会降级为公开访问。
 
@@ -71,7 +73,7 @@ qveris inspect 1 --public-read-only --json --base-url https://qveris.cn/api/v1
 
 ## 主动创建匿名试用
 
-Agent 已获明确试用授权且没有已有凭据时，使用 CLI **0.13.1 或更高版本**；先确认版本已发布，目标接口已支持受限试用：
+Agent 已获明确试用授权且没有已有凭据时，使用 CLI **0.13.2 或更高版本**；先确认版本已发布，目标接口已支持受限试用：
 
 ```bash
 export QVERIS_BASE_URL="https://qveris.cn/api/v1"
