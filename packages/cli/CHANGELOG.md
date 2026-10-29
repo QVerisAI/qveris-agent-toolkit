@@ -6,6 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-10-29
+
+### Added
+
+- Add explicit `qveris auth trial --bounded` with secure possession storage before registration, actual issued terms, and read-first recovery of the original trial after uncertain responses.
+- Provide a private human claim handoff without putting credentials in links. The bounded policy enforces quote admission; it does not lock final supplier prices.
+
+### Fixed
+
+- Preserve configured credentials if sign-in changes during preparation, and keep claimed, revoked or expired trials from creating replacement identities during recovery.
+
 ## [0.12.1] - 2026-10-28
 
 ### Fixed
@@ -157,7 +168,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial release: `discover` / `inspect` / `call` from the terminal against the QVeris API.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.12.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.13.0...HEAD
+[0.13.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.12.1...cli-v0.13.0
 [0.12.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.3...cli-v0.12.0
 [0.11.3]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.2...cli-v0.11.3
 [0.11.2]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.1...cli-v0.11.2

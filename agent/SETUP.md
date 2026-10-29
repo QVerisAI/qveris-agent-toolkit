@@ -18,7 +18,7 @@ Prefer browser OAuth where supported. For local stdio or Bearer fallback, the us
 
 ## Choose access before authentication
 
-Without credentials, start with explicit public Discover/Inspect in a separate credential-free profile (`qveris discover "weather forecast API" --public-read-only --limit 1 --json`), or [try a supported tool in the browser](https://qveris.ai/discover?trial=1). Neither browsing nor public discovery registers an account. To create a terminal Agent trial, run `qveris auth trial` explicitly and follow its actual grant, expiry and secure-storage guidance; its policy is separate from the browser trial. Keep claim proofs out of chat. OAuth and existing-key instructions below are for authenticated operations; a failed doctor authentication check does not block public-only discovery.
+Without credentials, start with explicit public Discover/Inspect in a separate credential-free profile (`qveris discover "weather forecast API" --public-read-only --limit 1 --json`). To execute under explicit trial permission, use published CLI 0.13.0 or later with `qveris auth trial --bounded`; check the intended endpoint's support and actual issued terms. Its quote admission boundary is not a hard final supplier-price cap. Keep possession proofs private and follow the human claim handoff in the authoritative authentication guide. Humans should register/sign in on the website. Neither browsing nor public discovery creates a trial. OAuth and existing-key instructions below apply to authenticated operations; a failed doctor check does not block public-only discovery.
 
 ## 1. Prerequisites Check
 

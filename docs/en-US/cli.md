@@ -4,7 +4,7 @@ The official command-line tool for QVeris professional data and tool access. Dis
 
 For provider comparison, Inspect every candidate when current scope or a complete contract must be confirmed; a Discover summary is not confirmation. Probe every candidate when the comparison requires a current quote. Reuse may preserve an exact route, never business parameters or results: build parameters from the current request, and make a fresh Call for current, latest, today, or other time-sensitive data.
 
-`@qverisai/cli` v0.12.1 is the latest tested release. It includes OAuth Device Flow sessions, zero-cost parameter/quote probes, opt-in discovery and call projections, and Call model attribution while preserving API key compatibility.
+`@qverisai/cli` v0.13.0 is the latest tested release candidate; verify registry availability before installation. It includes OAuth Device Flow sessions, zero-cost parameter/quote probes, opt-in discovery and call projections, and Call model attribution while preserving API key compatibility.
 
 **Why CLI?** CLI runs as a subprocess with structured output and on-demand discovery. It does not preload the full service catalog. Instructions, commands, and results still consume context tokens; QVeris MCP also exposes a compact tool surface.
 
@@ -54,7 +54,7 @@ Call is a separate cost decision: choose a current result, build real parameters
 
 ## Explicit public read-only discovery
 
-Requires CLI **0.12.1 or later**; verify that the version is available from the package registry before using these examples. The default OAuth/API-key commands above remain authenticated.
+Requires CLI **0.13.0 or later**; verify that the version is available from the package registry before using these examples. The default OAuth/API-key commands above remain authenticated.
 
 Use a separate credential-free environment and CLI profile. `--public-read-only` rejects a configured key, OAuth session or trial credential instead of silently dropping it; an invalid key never falls back to public access.
 
@@ -70,16 +70,22 @@ To continue with Call, deliberately authenticate, preserve the selected tool/inp
 
 ## Explicit anonymous trial
 
-If you want a trial credential for terminal calls, create it deliberately:
+For an Agent that has explicit trial permission and no existing credentials, use CLI **0.13.0 or later**. Verify that the version is published and the intended endpoint supports bounded trials before using it:
 
 ```bash
-qveris auth trial
+qveris auth trial --bounded
 qveris auth status
 ```
 
-The command stores the one-time key and claim proof securely when supported, and reports the actual granted credits and expiry. It preserves an existing key/OAuth identity. On a trusted host without an OS credential store, explicitly choose `--allow-unencrypted-storage` only after reviewing its user-only-file storage warning. `--export` deliberately reveals stored secrets; never paste that output into a prompt, shared log or issue.
+The command privately saves a possession token **before** requesting a session, then explicitly activates one trial and securely stores its one-time API key. It reports the actual issued allowance and expiry; neither is a permanent promotional guarantee. It preserves configured API-key/OAuth credentials, including credentials added during preparation. Reading guides, Discover, doctor and installation never activate a trial.
 
-This is the existing Agent trial, separate from the browser trial and its budget/claim policy; it does not promise the browser's strict credit cap. See the [authentication and claim guide](/auth.md). A pending/unknown registration must be recovered from its stored state, not resubmitted as a fresh identity. Discover, doctor and public read-only mode never create a trial automatically. To try through the website instead, [start in the browser](/discover?trial=1).
+This trial uses bounded quote admission: with original allowance G, confirmed consumption D and fresh quote q, the server requires q≤G, D<G and D+q<2G, permits one unresolved execution, and rejects unsupported pricing. This is not a hard final supplier-cost cap. Review the selected tool, inputs and authorized cost before Call. The ordinary REST/MCP/SDK paths enforce the issued policy; the explicit trial quote/execute adapter additionally requires its signed quote confirmation. Anonymous trials exclude the model gateway.
+
+Rerun the same command to recover its saved original operation after a lost registration response. Never delete its journal or register a new identity to evade uncertainty, expiry or credit limits. If the server activated the trial but the one-time key was lost, recovery returns `TRIAL_KEY_RECOVERY_REQUIRED` rather than asking the server to reveal it again. Explicit `--export` in a private terminal can recover the saved key/proof, or the possession token alone when issuance is unknown. Never paste exported secrets into prompts, shared logs or issues. Without an OS credential store, `--allow-unencrypted-storage` is a deliberate opt-in for a trusted host's user-only file; it is never automatic.
+
+Use the [human claim page](/claim?mode=bounded) to enter the possession proof privately, then verify a new account or sign in to the intended existing account and confirm the claim. Never give the Agent a human password, email code or primary login token. Claim automatically repays confirmed debt from formal credits after transfer; insufficient credits leave debt outstanding without blocking claim. A receipt is not a login token; the old trial key is revoked and formal access must be configured explicitly. Unknown claim/execution outcomes require original-operation lookup, never replay.
+
+Bare `qveris auth trial` remains the legacy registration path for compatibility. It has separate budget and new-account-only claim semantics; it is not silently upgraded. A saved legacy trial cannot be replaced by adding `--bounded`. Unsupported endpoints fail explicitly without falling back. See the authoritative [authentication and claim guide](/auth.md). Humans using the website should [get started](/playground) or [connect their AI](/plugins).
 
 ## Commands
 

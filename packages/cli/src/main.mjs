@@ -355,6 +355,9 @@ function extractGlobalFlags(args) {
       case "--agent-name":
         flags.agentName = takeNext(args, i++, arg);
         break;
+      case "--bounded":
+        flags.bounded = true;
+        break;
       case "--allow-unencrypted-storage":
         flags.allowUnencryptedStorage = true;
         break;
@@ -531,6 +534,7 @@ function printUsage(flags = {}) {
     --resource <url>       OAuth resource for auth login
     --allow-unencrypted-storage
                            Persist credentials unencrypted in the user-only config file when no keyring is available
+    --bounded              Opt into recoverable, budget-controlled Agent trial (auth trial only)
     --agent-name <name>    Optional name for explicit auth trial registration
     --export               Explicitly output trial key and claim code (auth trial only)
     --timeout <seconds>    Request timeout

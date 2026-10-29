@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { readConfig, writeConfig } from "../config/store.mjs";
 import { normalizeBaseUrl } from "../config/endpoint.mjs";
 import { CliError } from "../errors/handler.mjs";
@@ -59,7 +59,9 @@ export function createTrialStorage({
       typeof value !== "object" ||
       typeof value.operation_id !== "string" ||
       !value.operation_id ||
-      !["pending", "unknown", "issued", "rejected", "logged_out"].includes(value.state) ||
+      !["pending", "unknown", "issued", "rejected", "logged_out", "claimed", "revoked", "expired"].includes(
+        value.state,
+      ) ||
       !["keyring", "config"].includes(value.storage)
     ) {
       throw new CliError("TRIAL_STORAGE_FAILED", "Stored trial registration is malformed; preserve it for recovery");
@@ -73,7 +75,12 @@ export function createTrialStorage({
     return registration?.state === "issued" && registration.active === true;
   }
 
-  async function beginTrialRegistration({ baseUrl, allowUnencryptedStorage, apiKeyFlag }) {
+  async function beginTrialRegistration({
+    baseUrl,
+    allowUnencryptedStorage,
+    apiKeyFlag,
+    policy = "legacy_agent_trial",
+  }) {
     baseUrl = normalizeBaseUrl(baseUrl);
     return lock(async () => {
       const config = read();
@@ -84,7 +91,14 @@ export function createTrialStorage({
       const operationId = randomUUID();
       let storage = "keyring";
       const entry = await entryFor(operationId);
-      const provisional = JSON.stringify({ operation_id: operationId, base_url: baseUrl, state: "prepared" });
+      const bounded = policy === "bounded_agent_trial_v1";
+      const provisionalRecord = {
+        operation_id: operationId,
+        base_url: baseUrl,
+        state: "prepared",
+        ...(bounded ? { possession_token: randomBytes(32).toString("base64url") } : {}),
+      };
+      const provisional = JSON.stringify(provisionalRecord);
       try {
         if (!entry) throw new Error("No keyring");
         entry.setPassword(provisional);
@@ -98,9 +112,19 @@ export function createTrialStorage({
         if (!allowUnencryptedStorage) throw new CliError("TRIAL_STORAGE_REQUIRED");
         storage = "config";
       }
-      const registration = { operation_id: operationId, state: "pending", base_url: baseUrl, storage };
+      const registration = {
+        operation_id: operationId,
+        state: "pending",
+        base_url: baseUrl,
+        storage,
+        ...(bounded ? { policy, strict_credit_budget: true } : {}),
+      };
       try {
-        write({ ...config, [JOURNAL]: registration });
+        write({
+          ...config,
+          [JOURNAL]: registration,
+          ...(bounded && storage === "config" ? { [SECRET_CONFIG_KEY]: provisionalRecord } : {}),
+        });
       } catch (error) {
         try {
           entry?.deletePassword();
@@ -125,6 +149,28 @@ export function createTrialStorage({
     });
   }
 
+  async function assertTrialActivationAllowed(registration, { apiKeyFlag } = {}) {
+    return lock(async () => {
+      const current = getTrialRegistration();
+      const config = read();
+      if (current?.operation_id !== registration.operation_id || !["pending", "unknown"].includes(current.state))
+        throw new CliError("TRIAL_STORAGE_FAILED");
+      if (apiKeyFlag !== undefined || process.env.QVERIS_API_KEY || config.api_key !== undefined || hasOAuth())
+        throw new CliError("TRIAL_CREDENTIAL_EXISTS");
+    });
+  }
+
+  async function recordTrialTerminal(registration, state) {
+    if (!["claimed", "revoked", "expired"].includes(state)) throw new CliError("TRIAL_STORAGE_FAILED");
+    return lock(async () => {
+      const config = read();
+      const current = getTrialRegistration();
+      if (current?.operation_id !== registration.operation_id || current.policy !== "bounded_agent_trial_v1")
+        throw new CliError("TRIAL_STORAGE_FAILED");
+      write({ ...config, [JOURNAL]: { ...current, state, active: false } });
+    });
+  }
+
   function issuedMetadata(registration, data, config) {
     return {
       ...registration,
@@ -133,8 +179,8 @@ export function createTrialStorage({
       agent_id: data.agent_id,
       trial_credits: data.trial_credits,
       expires_at: data.expires_at,
-      policy: "legacy_agent_trial",
-      strict_credit_budget: false,
+      policy: registration.policy ?? "legacy_agent_trial",
+      strict_credit_budget: registration.policy === "bounded_agent_trial_v1",
     };
   }
 
@@ -158,6 +204,26 @@ export function createTrialStorage({
     )
       throw new CliError("TRIAL_STORAGE_FAILED");
     return record;
+  }
+
+  async function getTrialPossession(registration = getTrialRegistration()) {
+    const current = getTrialRegistration();
+    if (registration?.policy !== "bounded_agent_trial_v1" || current?.operation_id !== registration.operation_id)
+      throw new CliError("TRIAL_STORAGE_FAILED");
+    let record;
+    try {
+      record =
+        registration.storage === "keyring"
+          ? JSON.parse((await entryFor(registration.operation_id))?.getPassword() || "null")
+          : read()[SECRET_CONFIG_KEY];
+    } catch {
+      throw new CliError("TRIAL_STORAGE_FAILED");
+    }
+    if (!record || record.operation_id !== registration.operation_id || record.base_url !== registration.base_url)
+      throw new CliError("TRIAL_STORAGE_FAILED");
+    const proof = record.state === "prepared" ? record.possession_token : record.data?.claim_code;
+    if (typeof proof !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(proof)) throw new CliError("TRIAL_STORAGE_FAILED");
+    return proof;
   }
 
   async function persistTrialCredential(registration, data) {
@@ -225,7 +291,15 @@ export function createTrialStorage({
     // remains unavailable. It never contacts the registration endpoint.
     const current = getTrialRegistration();
     const record = await readIssuedRecord(current);
-    if (!record) throw new CliError("TRIAL_ISSUANCE_UNKNOWN");
+    if (!record) {
+      if (current?.policy === "bounded_agent_trial_v1") {
+        return {
+          registration: { ...current, active: false, recovery_pending: true },
+          secret: { session_token: await getTrialPossession(current) },
+        };
+      }
+      throw new CliError("TRIAL_ISSUANCE_UNKNOWN");
+    }
     const metadata =
       current.state === "issued"
         ? current
@@ -278,6 +352,9 @@ export function createTrialStorage({
 
   return {
     getTrialRegistration,
+    getTrialPossession,
+    assertTrialActivationAllowed,
+    recordTrialTerminal,
     hasStoredTrialCredential,
     beginTrialRegistration,
     recordTrialFailure,
@@ -292,6 +369,9 @@ export function createTrialStorage({
 
 export const {
   getTrialRegistration,
+  getTrialPossession,
+  assertTrialActivationAllowed,
+  recordTrialTerminal,
   hasStoredTrialCredential,
   beginTrialRegistration,
   recordTrialFailure,
