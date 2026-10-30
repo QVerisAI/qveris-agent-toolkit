@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "QVeris Public REST API",
-    "version": "2026-10-26.1",
+    "version": "2026-10-29.1",
     "summary": "External REST API for enterprise integration.",
     "description": "OpenAPI 3.1 schema for the formally released public `/api/v1` REST API surface. It covers search, provider discovery, tool metadata lookup/execution, credits, and account audit endpoints. Unreleased API families are intentionally excluded from this customer-facing schema."
   },
@@ -65,7 +65,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -85,7 +85,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -121,7 +121,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             },
@@ -204,7 +204,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -224,7 +224,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -260,7 +260,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             },
@@ -343,7 +343,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -363,7 +363,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -399,7 +399,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             },
@@ -422,6 +422,1779 @@
         "x-qveris-visibility": "public",
         "x-qveris-release-stage": "published",
         "security": []
+      }
+    },
+    "/agent/trial/activate": {
+      "post": {
+        "tags": [
+          "Agent Lifecycle"
+        ],
+        "summary": "Activate",
+        "description": "Issue once under the existing actor cooldown and versioned budget policy.",
+        "operationId": "activate_api_v1_agent_trial_activate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentTrialIssueRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_AgentTrialActivationView_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request Entity Too Large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_AgentTrialActivationView_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AgentTrialPossession": []
+          }
+        ],
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published"
+      }
+    },
+    "/agent/trial/claim": {
+      "get": {
+        "tags": [
+          "Agent Lifecycle"
+        ],
+        "summary": "Claim State",
+        "operationId": "claim_state_api_v1_agent_trial_claim_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_Union_TrialClaimReceiptView__TrialClaimUnclaimedView__"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request Entity Too Large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AgentTrialPossession": []
+          }
+        ],
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published"
+      }
+    },
+    "/agent/trial/claim/existing": {
+      "post": {
+        "tags": [
+          "Agent Lifecycle"
+        ],
+        "summary": "Claim Existing",
+        "operationId": "claim_existing_api_v1_agent_trial_claim_existing_post",
+        "security": [
+          {
+            "AgentTrialPossession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Qveris-Claim-Account-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "X-Qveris-Claim-Account-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrialClaimExistingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_TrialClaimReceiptView_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "description": "Bad Request",
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "description": "Unauthorized",
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "description": "Request Entity Too Large",
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "description": "Unprocessable Entity",
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "description": "Too Many Requests",
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published"
+      }
+    },
+    "/agent/trial/claim/start": {
+      "post": {
+        "tags": [
+          "Agent Lifecycle"
+        ],
+        "summary": "Claim Start",
+        "operationId": "claim_start_api_v1_agent_trial_claim_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrialClaimEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_TrialClaimEmailView_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request Entity Too Large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AgentTrialPossession": []
+          }
+        ],
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published"
+      }
+    },
+    "/agent/trial/claim/verify": {
+      "post": {
+        "tags": [
+          "Agent Lifecycle"
+        ],
+        "summary": "Claim Verify",
+        "operationId": "claim_verify_api_v1_agent_trial_claim_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrialClaimVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_TrialClaimReceiptView_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request Entity Too Large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AgentTrialPossession": []
+          }
+        ],
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published"
+      }
+    },
+    "/agent/trial/execute": {
+      "post": {
+        "tags": [
+          "Agent Lifecycle"
+        ],
+        "summary": "Execute",
+        "operationId": "execute_api_v1_agent_trial_execute_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrialExecuteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request Entity Too Large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AgentTrialPossession": []
+          }
+        ],
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published"
+      }
+    },
+    "/agent/trial/execution-state": {
+      "get": {
+        "tags": [
+          "Agent Lifecycle"
+        ],
+        "summary": "Execution State",
+        "operationId": "execution_state_api_v1_agent_trial_execution_state_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_TrialExecutionState_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request Entity Too Large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AgentTrialPossession": []
+          }
+        ],
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published"
+      }
+    },
+    "/agent/trial/executions/{operation_id}": {
+      "get": {
+        "tags": [
+          "Agent Lifecycle"
+        ],
+        "summary": "Lookup",
+        "operationId": "lookup_api_v1_agent_trial_executions__operation_id__get",
+        "security": [
+          {
+            "AgentTrialPossession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "operation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Operation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "description": "Bad Request",
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "description": "Unauthorized",
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "description": "Request Entity Too Large",
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "description": "Unprocessable Entity",
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "description": "Too Many Requests",
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          }
+        },
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published"
+      }
+    },
+    "/agent/trial/prepare": {
+      "post": {
+        "tags": [
+          "Agent Lifecycle"
+        ],
+        "summary": "Prepare",
+        "description": "Prepare only; no account, API key, grant or provider call is created.",
+        "operationId": "prepare_api_v1_agent_trial_prepare_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialSessionView_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request Entity Too Large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialSessionView_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AgentTrialPossession": []
+          }
+        ],
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published"
+      }
+    },
+    "/agent/trial/quote": {
+      "post": {
+        "tags": [
+          "Agent Lifecycle"
+        ],
+        "summary": "Quote",
+        "operationId": "quote_api_v1_agent_trial_quote_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrialToolRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_TrialQuoteView_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request Entity Too Large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AgentTrialPossession": []
+          }
+        ],
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published"
+      }
+    },
+    "/agent/trial/session": {
+      "get": {
+        "tags": [
+          "Agent Lifecycle"
+        ],
+        "summary": "State",
+        "operationId": "state_api_v1_agent_trial_session_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialSessionView_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request Entity Too Large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AgentTrialPossession": []
+          }
+        ],
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published"
+      },
+      "delete": {
+        "tags": [
+          "Agent Lifecycle"
+        ],
+        "summary": "Revoke",
+        "operationId": "revoke_api_v1_agent_trial_session_delete",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request Entity Too Large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_BrowserTrialFailure_"
+                }
+              }
+            },
+            "headers": {
+              "X-Qveris-Api-Version": {
+                "description": "Version of the published QVeris REST API contract.",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "const": "2026-10-29.1"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AgentTrialPossession": []
+          }
+        ],
+        "x-qveris-visibility": "public",
+        "x-qveris-release-stage": "published"
       }
     },
     "/auth/account/settlement-history": {
@@ -535,7 +2308,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -555,7 +2328,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -589,7 +2362,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -602,7 +2375,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -881,7 +2654,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -901,7 +2674,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -927,7 +2700,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -1004,7 +2777,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -1024,7 +2797,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -1121,7 +2894,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -1171,7 +2944,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -1191,7 +2964,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -1304,7 +3077,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -1324,7 +3097,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -1824,7 +3597,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -1844,7 +3617,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -1870,7 +3643,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -2203,7 +3976,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -2567,7 +4340,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -2587,7 +4360,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -2638,7 +4411,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -2658,7 +4431,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -2692,7 +4465,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -2749,7 +4522,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -2773,7 +4546,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -2797,7 +4570,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -2821,7 +4594,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -2845,7 +4618,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -2869,7 +4642,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -2893,7 +4666,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -2917,7 +4690,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -2941,7 +4714,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3149,7 +4922,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3169,7 +4942,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3193,7 +4966,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3217,7 +4990,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3241,7 +5014,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3265,7 +5038,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3289,7 +5062,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3313,7 +5086,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3347,7 +5120,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3386,7 +5159,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3609,7 +5382,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3629,7 +5402,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3709,7 +5482,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3729,7 +5502,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3749,7 +5522,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3769,7 +5542,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3806,7 +5579,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             },
@@ -3833,7 +5606,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3917,7 +5690,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3937,7 +5710,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3957,7 +5730,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3977,7 +5750,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -3997,7 +5770,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -4097,7 +5870,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -4117,7 +5890,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -4137,7 +5910,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -4157,7 +5930,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -4177,7 +5950,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -4364,7 +6137,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -4384,7 +6157,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -4404,7 +6177,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -4424,7 +6197,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -4444,7 +6217,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -4893,7 +6666,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -4913,7 +6686,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -5035,7 +6808,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -5055,7 +6828,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -5087,7 +6860,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -5108,7 +6881,7 @@
           "Discovery"
         ],
         "summary": "Discover capabilities",
-        "description": "Find ranked capabilities from a natural-language query. Discover is free. Results include verification evidence and execution restrictions; clients must not treat any status other than `verified` as verified. Results may include `expected_cost` and `billing_rule` so clients can estimate a later Call.",
+        "description": "Find ranked capabilities from a natural-language query. Discover is free. Results include verification evidence and execution restrictions; clients must not treat any status other than `verified` as verified. Results may include `expected_cost` and `billing_rule` so clients can estimate a later Call. Explicit public-readonly mode accepts only the bounded PublicRead request schema, returns public catalog metadata without prices, balances or user activity, and uses a non-executable pub_ context. Public clients must omit cookies; unknown fields, deep pagination and mixed credentials are rejected. Authenticate and Inspect the selected tool again before a fresh quote and confirmed Call; no extra Discover is required for a known selected tool.",
         "operationId": "search_api_v1_search_post",
         "responses": {
           "200": {
@@ -5143,7 +6916,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             },
@@ -5327,7 +7100,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             },
@@ -5376,7 +7149,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             },
@@ -5428,7 +7201,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             },
@@ -5448,8 +7221,9 @@
         },
         "security": [
           {
-            "HTTPBearer": []
-          }
+            "bearerAuth": []
+          },
+          {}
         ],
         "x-qveris-visibility": "public",
         "x-qveris-release-stage": "published",
@@ -5458,7 +7232,14 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PublicSearchRequest"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/PublicSearchRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/PublicReadDiscoverRequest"
+                  }
+                ]
               },
               "example": {
                 "query": "openweathermap.weather.execute.v1",
@@ -5467,7 +7248,21 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-Qveris-Access-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "public-readonly"
+              ]
+            },
+            "description": "Explicit stateless public reads. Omit Authorization, Cookie and session proof headers; mixed identities are rejected."
+          }
+        ]
       }
     },
     "/tools/by-ids": {
@@ -5476,7 +7271,7 @@
           "Tool Execution"
         ],
         "summary": "Inspect capabilities by id",
-        "description": "Fetch full capability metadata for one or more tool ids. Inspect is free and returns the same capability shape as Discover, including parameter schema, verification evidence, provider access restrictions, examples, quality signals, and cost estimates. Clients must disclose restrictions before Call.",
+        "description": "Fetch full capability metadata for one or more tool ids. Inspect is free and returns the same capability shape as Discover, including parameter schema, verification evidence, provider access restrictions, examples, quality signals, and cost estimates. Clients must disclose restrictions before Call. Explicit public-readonly mode accepts only the bounded PublicRead request schema, returns public catalog metadata without prices, balances or user activity, and uses a non-executable pub_ context. Public clients must omit cookies; unknown fields, deep pagination and mixed credentials are rejected. Authenticate and Inspect the selected tool again before a fresh quote and confirmed Call; no extra Discover is required for a known selected tool.",
         "operationId": "get_tools_by_ids_api_v1_tools_by_ids_post",
         "responses": {
           "200": {
@@ -5511,7 +7306,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             },
@@ -5697,7 +7492,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             },
@@ -5746,7 +7541,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             },
@@ -5779,7 +7574,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -5787,8 +7582,9 @@
         },
         "security": [
           {
-            "HTTPBearer": []
-          }
+            "bearerAuth": []
+          },
+          {}
         ],
         "x-qveris-visibility": "public",
         "x-qveris-release-stage": "published",
@@ -5797,7 +7593,14 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PublicToolsByIdsRequest"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/PublicToolsByIdsRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/PublicReadInspectRequest"
+                  }
+                ]
               },
               "example": {
                 "tool_ids": [
@@ -5808,7 +7611,21 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-Qveris-Access-Mode",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "public-readonly"
+              ]
+            },
+            "description": "Explicit stateless public reads. Omit Authorization, Cookie and session proof headers; mixed identities are rejected."
+          }
+        ]
       }
     },
     "/tools/execute": {
@@ -5938,7 +7755,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -5975,7 +7792,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             },
@@ -6028,7 +7845,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             },
@@ -6082,7 +7899,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             },
@@ -6140,7 +7957,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -6170,7 +7987,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -6210,7 +8027,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -6240,7 +8057,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -6270,7 +8087,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -6365,7 +8182,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -6402,7 +8219,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -6439,7 +8256,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -6476,7 +8293,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             },
@@ -6505,7 +8322,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -6699,7 +8516,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -6736,7 +8553,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             },
@@ -6785,7 +8602,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             },
@@ -6818,7 +8635,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -6842,7 +8659,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -6867,7 +8684,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -6892,7 +8709,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -6912,7 +8729,7 @@
                 "required": true,
                 "schema": {
                   "type": "string",
-                  "const": "2026-10-26.1"
+                  "const": "2026-10-29.1"
                 }
               }
             }
@@ -7032,6 +8849,138 @@
           "message"
         ],
         "title": "APIResponse[AgentClaimVerifyResponse]"
+      },
+      "APIResponse_AgentTrialActivationView_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentTrialActivationView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[AgentTrialActivationView]"
+      },
+      "APIResponse_BrowserTrialFailure_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BrowserTrialFailure"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[BrowserTrialFailure]"
+      },
+      "APIResponse_BrowserTrialSessionView_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BrowserTrialSessionView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[BrowserTrialSessionView]"
       },
       "APIResponse_CreditsLedgerItem_": {
         "properties": {
@@ -7297,6 +9246,182 @@
         ],
         "title": "APIResponse[ToolExecutionReconciliationData]"
       },
+      "APIResponse_TrialClaimEmailView_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TrialClaimEmailView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[TrialClaimEmailView]"
+      },
+      "APIResponse_TrialClaimReceiptView_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TrialClaimReceiptView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[TrialClaimReceiptView]"
+      },
+      "APIResponse_TrialExecutionState_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TrialExecutionState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[TrialExecutionState]"
+      },
+      "APIResponse_TrialQuoteView_": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TrialQuoteView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[TrialQuoteView]"
+      },
       "APIResponse_Union_AgentClaimStartResponse__AgentClaimRiskBlockResponse__": {
         "properties": {
           "status": {
@@ -7344,6 +9469,54 @@
           "message"
         ],
         "title": "APIResponse[Union[AgentClaimStartResponse, AgentClaimRiskBlockResponse]]"
+      },
+      "APIResponse_Union_TrialClaimReceiptView__TrialClaimUnclaimedView__": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "default": 0
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TrialClaimReceiptView"
+              },
+              {
+                "$ref": "#/components/schemas/TrialClaimUnclaimedView"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "APIResponse[Union[TrialClaimReceiptView, TrialClaimUnclaimedView]]"
       },
       "APIResponse_UsageCreditsSpentResponse_": {
         "properties": {
@@ -7718,6 +9891,89 @@
         ],
         "title": "AgentClaimVerifyResponse"
       },
+      "AgentTrialActivationView": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "prepared",
+              "active"
+            ],
+            "title": "State"
+          },
+          "expiresAt": {
+            "type": "string",
+            "title": "Expiresat"
+          },
+          "balanceCredits": {
+            "type": "string",
+            "title": "Balancecredits"
+          },
+          "trialCredits": {
+            "type": "string",
+            "title": "Trialcredits"
+          },
+          "policyId": {
+            "type": "string",
+            "const": "browser_trial_v1",
+            "title": "Policyid",
+            "default": "browser_trial_v1"
+          },
+          "canExecute": {
+            "type": "boolean",
+            "const": false,
+            "title": "Canexecute",
+            "default": false
+          },
+          "agent_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Id"
+          },
+          "api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key",
+            "description": "Shown only on first activation. Keep it private; the saved possession token recovers the trial if this response is lost."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "state",
+          "expiresAt",
+          "balanceCredits",
+          "trialCredits"
+        ],
+        "title": "AgentTrialActivationView"
+      },
+      "AgentTrialIssueRequest": {
+        "properties": {
+          "agentName": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Agentname",
+            "default": "Agent trial"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AgentTrialIssueRequest"
+      },
       "AnonymousTrialMetadata": {
         "properties": {
           "available": {
@@ -7775,6 +10031,92 @@
         "type": "object",
         "title": "AnonymousTrialMetadata",
         "description": "Machine-readable discovery metadata for the anonymous agent trial."
+      },
+      "BrowserTrialErrorData": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "retryAfterSeconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retryafterseconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "BrowserTrialErrorData"
+      },
+      "BrowserTrialFailure": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/BrowserTrialErrorData"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "BrowserTrialFailure"
+      },
+      "BrowserTrialSessionView": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "prepared",
+              "active"
+            ],
+            "title": "State"
+          },
+          "expiresAt": {
+            "type": "string",
+            "title": "Expiresat"
+          },
+          "balanceCredits": {
+            "type": "string",
+            "title": "Balancecredits"
+          },
+          "trialCredits": {
+            "type": "string",
+            "title": "Trialcredits"
+          },
+          "policyId": {
+            "type": "string",
+            "const": "browser_trial_v1",
+            "title": "Policyid",
+            "default": "browser_trial_v1"
+          },
+          "canExecute": {
+            "type": "boolean",
+            "const": false,
+            "title": "Canexecute",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "state",
+          "expiresAt",
+          "balanceCredits",
+          "trialCredits"
+        ],
+        "title": "BrowserTrialSessionView"
       },
       "CreditsLedgerItem": {
         "properties": {
@@ -8730,7 +11072,7 @@
             "title": "Contract Version",
             "description": "Version of the published QVeris REST API contract.",
             "examples": [
-              "2026-10-26.1"
+              "2026-10-29.1"
             ]
           },
           "registration": {
@@ -9069,6 +11411,422 @@
         ],
         "title": "ToolExecutionReconciliationData",
         "description": "Durable state returned for one caller-scoped execution key."
+      },
+      "TrialClaimEmailRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 72,
+            "format": "email",
+            "title": "Email"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "TrialClaimEmailRequest"
+      },
+      "TrialClaimEmailView": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "const": "verification_sent",
+            "title": "State",
+            "default": "verification_sent"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 72,
+            "format": "email",
+            "title": "Email"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "TrialClaimEmailView"
+      },
+      "TrialClaimExistingRequest": {
+        "properties": {},
+        "additionalProperties": false,
+        "type": "object",
+        "title": "TrialClaimExistingRequest"
+      },
+      "TrialClaimReceiptView": {
+        "properties": {
+          "claimId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Claimid"
+          },
+          "trialId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Trialid"
+          },
+          "state": {
+            "type": "string",
+            "const": "claimed",
+            "title": "State",
+            "default": "claimed"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "new_account",
+              "existing_account"
+            ],
+            "title": "Mode"
+          },
+          "transferredCredits": {
+            "type": "string",
+            "title": "Transferredcredits"
+          },
+          "trialDebtCredits": {
+            "type": "string",
+            "title": "Trialdebtcredits"
+          },
+          "debtRepaidCredits": {
+            "type": "string",
+            "title": "Debtrepaidcredits"
+          },
+          "debtRemainingCredits": {
+            "type": "string",
+            "title": "Debtremainingcredits"
+          },
+          "loginRequired": {
+            "type": "boolean",
+            "const": true,
+            "title": "Loginrequired",
+            "default": true
+          },
+          "trialKeyRevoked": {
+            "type": "boolean",
+            "const": true,
+            "title": "Trialkeyrevoked",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "claimId",
+          "trialId",
+          "mode",
+          "transferredCredits",
+          "trialDebtCredits",
+          "debtRepaidCredits",
+          "debtRemainingCredits"
+        ],
+        "title": "TrialClaimReceiptView"
+      },
+      "TrialClaimUnclaimedView": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "const": "unclaimed",
+            "title": "State",
+            "default": "unclaimed"
+          },
+          "trialId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trialid"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "TrialClaimUnclaimedView"
+      },
+      "TrialClaimVerifyRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 72,
+            "format": "email",
+            "title": "Email"
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^\\d{6}$",
+            "title": "Code"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 6,
+            "format": "password",
+            "title": "Password",
+            "writeOnly": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email",
+          "code",
+          "password"
+        ],
+        "title": "TrialClaimVerifyRequest"
+      },
+      "TrialExecuteRequest": {
+        "properties": {
+          "toolId": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Toolid"
+          },
+          "parameters": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Parameters"
+          },
+          "providerId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Providerid"
+          },
+          "operationId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Operationid"
+          },
+          "quoteConfirmation": {
+            "type": "string",
+            "maxLength": 4096,
+            "minLength": 1,
+            "title": "Quoteconfirmation"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "toolId",
+          "parameters",
+          "operationId",
+          "quoteConfirmation"
+        ],
+        "title": "TrialExecuteRequest"
+      },
+      "TrialExecutionState": {
+        "properties": {
+          "canExecute": {
+            "type": "boolean",
+            "title": "Canexecute"
+          },
+          "owner": {
+            "type": "string",
+            "enum": [
+              "website",
+              "unsupported"
+            ],
+            "title": "Owner"
+          },
+          "issuedCredits": {
+            "type": "string",
+            "title": "Issuedcredits"
+          },
+          "usedCredits": {
+            "type": "string",
+            "title": "Usedcredits"
+          },
+          "toleranceCredits": {
+            "type": "string",
+            "title": "Tolerancecredits"
+          },
+          "pendingExecution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TrialPendingExecution"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "canExecute",
+          "owner",
+          "issuedCredits",
+          "usedCredits",
+          "toleranceCredits",
+          "pendingExecution"
+        ],
+        "title": "TrialExecutionState"
+      },
+      "TrialPendingExecution": {
+        "properties": {
+          "operationId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operationid"
+          },
+          "executionId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Executionid"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "lookupOnly": {
+            "type": "boolean",
+            "const": true,
+            "title": "Lookuponly",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "operationId",
+          "executionId",
+          "state"
+        ],
+        "title": "TrialPendingExecution"
+      },
+      "TrialQuoteView": {
+        "properties": {
+          "toolId": {
+            "type": "string",
+            "title": "Toolid"
+          },
+          "quoteCredits": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quotecredits"
+          },
+          "exact": {
+            "type": "boolean",
+            "title": "Exact"
+          },
+          "supported": {
+            "type": "boolean",
+            "title": "Supported"
+          },
+          "reasonCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reasoncode"
+          },
+          "quoteConfirmation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quoteconfirmation"
+          },
+          "confirmationExpiresAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmationexpiresat"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "toolId",
+          "quoteCredits",
+          "exact",
+          "supported",
+          "reasonCode",
+          "quoteConfirmation",
+          "confirmationExpiresAt"
+        ],
+        "title": "TrialQuoteView"
+      },
+      "TrialToolRequest": {
+        "properties": {
+          "toolId": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Toolid"
+          },
+          "parameters": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Parameters"
+          },
+          "providerId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Providerid"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "toolId",
+          "parameters"
+        ],
+        "title": "TrialToolRequest"
       },
       "UsageCreditsSpentResponse": {
         "properties": {
@@ -13205,6 +15963,73 @@
             }
           }
         }
+      },
+      "PublicReadDiscoverRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "query": {
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Query",
+            "type": "string"
+          },
+          "limit": {
+            "default": 10,
+            "maximum": 20,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "view": {
+            "default": "full",
+            "pattern": "^(full|routing)$",
+            "title": "View",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "PublicDiscoverRequest",
+        "type": "object"
+      },
+      "PublicReadInspectRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "tool_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Tool Ids",
+            "type": "array"
+          },
+          "search_id": {
+            "anyOf": [
+              {
+                "pattern": "^pub_[0-9a-f-]{36}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Search Id"
+          },
+          "view": {
+            "default": "full",
+            "pattern": "^(full|routing)$",
+            "title": "View",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tool_ids"
+        ],
+        "title": "PublicInspectRequest",
+        "type": "object"
       }
     },
     "securitySchemes": {
@@ -13219,6 +16044,11 @@
       },
       "HTTPBearer": {
         "type": "http",
+        "scheme": "bearer"
+      },
+      "AgentTrialPossession": {
+        "type": "http",
+        "description": "A privately persisted 32-byte base64url Agent trial possession token; not an API key, OAuth token or browser cookie.",
         "scheme": "bearer"
       },
       "OAuthClientBasic": {
@@ -13270,8 +16100,8 @@
       "description": "Anonymous agent trial registration and claim operations."
     }
   ],
-  "x-qveris-route-count": 32,
-  "x-qveris-public-operation-count": 32,
+  "x-qveris-route-count": 44,
+  "x-qveris-public-operation-count": 44,
   "x-qveris-private-operation-count": 0,
   "x-qveris-generation-source": "Filtered from qveris-internal-api.openapi.json"
 }

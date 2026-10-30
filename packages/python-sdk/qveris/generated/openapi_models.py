@@ -6,6 +6,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
+from uuid import UUID
 
 from pydantic import (
     AnyUrl,
@@ -16,6 +17,7 @@ from pydantic import (
     PositiveFloat,
     PositiveInt,
     RootModel,
+    SecretStr,
     confloat,
     conint,
     constr,
@@ -69,6 +71,38 @@ class AgentClaimVerifyResponse(BaseModel):
     user_id: str = Field(..., title='User Id')
 
 
+class State(Enum):
+    prepared = 'prepared'
+    active = 'active'
+
+
+class AgentTrialActivationView(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    state: State = Field(..., title='State')
+    expiresAt: str = Field(..., title='Expiresat')
+    balanceCredits: str = Field(..., title='Balancecredits')
+    trialCredits: str = Field(..., title='Trialcredits')
+    policyId: Literal['browser_trial_v1'] = Field('browser_trial_v1', title='Policyid')
+    canExecute: Literal[False] = Field(False, title='Canexecute')
+    agent_id: Optional[UUID] = Field(None, title='Agent Id')
+    api_key: Optional[str] = Field(
+        None,
+        description='Shown only on first activation. Keep it private; the saved possession token recovers the trial if this response is lost.',
+        title='Api Key',
+    )
+
+
+class AgentTrialIssueRequest(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    agentName: Optional[constr(min_length=1, max_length=80)] = Field(
+        'Agent trial', title='Agentname'
+    )
+
+
 class AnonymousTrialMetadata(BaseModel):
     """
     Machine-readable discovery metadata for the anonymous agent trial.
@@ -105,6 +139,28 @@ class AnonymousTrialMetadata(BaseModel):
         'If no human-verified API key is available, POST to register_path to obtain a one-time api_key and claim_code. Save both. Claim the trial later with claim_path and claim_verify_path.',
         title='Instructions',
     )
+
+
+class BrowserTrialErrorData(BaseModel):
+    code: str = Field(..., title='Code')
+    message: str = Field(..., title='Message')
+    retryAfterSeconds: Optional[int] = Field(None, title='Retryafterseconds')
+
+
+class BrowserTrialFailure(BaseModel):
+    error: BrowserTrialErrorData
+
+
+class BrowserTrialSessionView(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    state: State = Field(..., title='State')
+    expiresAt: str = Field(..., title='Expiresat')
+    balanceCredits: str = Field(..., title='Balancecredits')
+    trialCredits: str = Field(..., title='Trialcredits')
+    policyId: Literal['browser_trial_v1'] = Field('browser_trial_v1', title='Policyid')
+    canExecute: Literal[False] = Field(False, title='Canexecute')
 
 
 class CreditsLedgerItem(BaseModel):
@@ -331,7 +387,7 @@ class PublicApiMetadata(BaseModel):
     contract_version: str = Field(
         ...,
         description='Version of the published QVeris REST API contract.',
-        examples=['2026-10-26.1'],
+        examples=['2026-10-29.1'],
         title='Contract Version',
     )
     registration: Optional[AnonymousTrialMetadata] = None
@@ -400,6 +456,120 @@ class ToolExecutionReconciliationData(BaseModel):
     response_http_status: Optional[int] = Field(None, title='Response Http Status')
     result_unavailable_reason: Optional[str] = Field(
         None, title='Result Unavailable Reason'
+    )
+
+
+class TrialClaimEmailRequest(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    email: EmailStr = Field(..., title='Email')
+
+
+class TrialClaimEmailView(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    state: Literal['verification_sent'] = Field('verification_sent', title='State')
+    email: EmailStr = Field(..., title='Email')
+
+
+class TrialClaimExistingRequest(BaseModel):
+    pass
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+
+
+class Mode(Enum):
+    new_account = 'new_account'
+    existing_account = 'existing_account'
+
+
+class TrialClaimReceiptView(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    claimId: UUID = Field(..., title='Claimid')
+    trialId: UUID = Field(..., title='Trialid')
+    state: Literal['claimed'] = Field('claimed', title='State')
+    mode: Mode = Field(..., title='Mode')
+    transferredCredits: str = Field(..., title='Transferredcredits')
+    trialDebtCredits: str = Field(..., title='Trialdebtcredits')
+    debtRepaidCredits: str = Field(..., title='Debtrepaidcredits')
+    debtRemainingCredits: str = Field(..., title='Debtremainingcredits')
+    loginRequired: Literal[True] = Field(True, title='Loginrequired')
+    trialKeyRevoked: Literal[True] = Field(True, title='Trialkeyrevoked')
+
+
+class TrialClaimUnclaimedView(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    state: Literal['unclaimed'] = Field('unclaimed', title='State')
+    trialId: Optional[UUID] = Field(None, title='Trialid')
+
+
+class TrialClaimVerifyRequest(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    email: EmailStr = Field(..., title='Email')
+    code: constr(pattern=r'^\d{6}$') = Field(..., title='Code')
+    password: SecretStr = Field(..., title='Password')
+
+
+class TrialExecuteRequest(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    toolId: constr(min_length=1, max_length=255) = Field(..., title='Toolid')
+    parameters: Dict[str, Any] = Field(..., title='Parameters')
+    providerId: Optional[constr(min_length=1, max_length=255)] = Field(
+        None, title='Providerid'
+    )
+    operationId: UUID = Field(..., title='Operationid')
+    quoteConfirmation: constr(min_length=1, max_length=4096) = Field(
+        ..., title='Quoteconfirmation'
+    )
+
+
+class Owner(Enum):
+    website = 'website'
+    unsupported = 'unsupported'
+
+
+class TrialPendingExecution(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    operationId: Optional[str] = Field(..., title='Operationid')
+    executionId: Optional[str] = Field(..., title='Executionid')
+    state: str = Field(..., title='State')
+    lookupOnly: Literal[True] = Field(True, title='Lookuponly')
+
+
+class TrialQuoteView(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    toolId: str = Field(..., title='Toolid')
+    quoteCredits: Optional[str] = Field(..., title='Quotecredits')
+    exact: bool = Field(..., title='Exact')
+    supported: bool = Field(..., title='Supported')
+    reasonCode: Optional[str] = Field(..., title='Reasoncode')
+    quoteConfirmation: Optional[str] = Field(..., title='Quoteconfirmation')
+    confirmationExpiresAt: Optional[str] = Field(..., title='Confirmationexpiresat')
+
+
+class TrialToolRequest(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    toolId: constr(min_length=1, max_length=255) = Field(..., title='Toolid')
+    parameters: Dict[str, Any] = Field(..., title='Parameters')
+    providerId: Optional[constr(min_length=1, max_length=255)] = Field(
+        None, title='Providerid'
     )
 
 
@@ -1386,6 +1556,26 @@ class PublicExecuteToolResponse(BaseModel):
     )
 
 
+class PublicReadDiscoverRequest(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    query: constr(min_length=1, max_length=1024) = Field(..., title='Query')
+    limit: Optional[conint(ge=1, le=20)] = Field(10, title='Limit')
+    view: Optional[constr(pattern=r'^(full|routing)$')] = Field('full', title='View')
+
+
+class PublicReadInspectRequest(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    tool_ids: List[str] = Field(..., max_length=10, min_length=1, title='Tool Ids')
+    search_id: Optional[constr(pattern=r'^pub_[0-9a-f-]{36}$')] = Field(
+        None, title='Search Id'
+    )
+    view: Optional[constr(pattern=r'^(full|routing)$')] = Field('full', title='View')
+
+
 class APIResponseAgentAnonymousRegisterResponse(BaseModel):
     status: str = Field(..., title='Status')
     message: str = Field(..., title='Message')
@@ -1399,6 +1589,30 @@ class APIResponseAgentClaimVerifyResponse(BaseModel):
     message: str = Field(..., title='Message')
     status_code: Optional[int] = Field(0, title='Status Code')
     data: Optional[AgentClaimVerifyResponse] = None
+    message_key: Optional[str] = Field(None, title='Message Key')
+
+
+class APIResponseAgentTrialActivationView(BaseModel):
+    status: str = Field(..., title='Status')
+    message: str = Field(..., title='Message')
+    status_code: Optional[int] = Field(0, title='Status Code')
+    data: Optional[AgentTrialActivationView] = None
+    message_key: Optional[str] = Field(None, title='Message Key')
+
+
+class APIResponseBrowserTrialFailure(BaseModel):
+    status: str = Field(..., title='Status')
+    message: str = Field(..., title='Message')
+    status_code: Optional[int] = Field(0, title='Status Code')
+    data: Optional[BrowserTrialFailure] = None
+    message_key: Optional[str] = Field(None, title='Message Key')
+
+
+class APIResponseBrowserTrialSessionView(BaseModel):
+    status: str = Field(..., title='Status')
+    message: str = Field(..., title='Message')
+    status_code: Optional[int] = Field(0, title='Status Code')
+    data: Optional[BrowserTrialSessionView] = None
     message_key: Optional[str] = Field(None, title='Message Key')
 
 
@@ -1442,11 +1656,45 @@ class APIResponseToolExecutionReconciliationData(BaseModel):
     message_key: Optional[str] = Field(None, title='Message Key')
 
 
+class APIResponseTrialClaimEmailView(BaseModel):
+    status: str = Field(..., title='Status')
+    message: str = Field(..., title='Message')
+    status_code: Optional[int] = Field(0, title='Status Code')
+    data: Optional[TrialClaimEmailView] = None
+    message_key: Optional[str] = Field(None, title='Message Key')
+
+
+class APIResponseTrialClaimReceiptView(BaseModel):
+    status: str = Field(..., title='Status')
+    message: str = Field(..., title='Message')
+    status_code: Optional[int] = Field(0, title='Status Code')
+    data: Optional[TrialClaimReceiptView] = None
+    message_key: Optional[str] = Field(None, title='Message Key')
+
+
+class APIResponseTrialQuoteView(BaseModel):
+    status: str = Field(..., title='Status')
+    message: str = Field(..., title='Message')
+    status_code: Optional[int] = Field(0, title='Status Code')
+    data: Optional[TrialQuoteView] = None
+    message_key: Optional[str] = Field(None, title='Message Key')
+
+
 class APIResponseUnionAgentClaimStartResponseAgentClaimRiskBlockResponse(BaseModel):
     status: str = Field(..., title='Status')
     message: str = Field(..., title='Message')
     status_code: Optional[int] = Field(0, title='Status Code')
     data: Optional[Union[AgentClaimStartResponse, AgentClaimRiskBlockResponse]] = Field(
+        None, title='Data'
+    )
+    message_key: Optional[str] = Field(None, title='Message Key')
+
+
+class APIResponseUnionTrialClaimReceiptViewTrialClaimUnclaimedView(BaseModel):
+    status: str = Field(..., title='Status')
+    message: str = Field(..., title='Message')
+    status_code: Optional[int] = Field(0, title='Status Code')
+    data: Optional[Union[TrialClaimReceiptView, TrialClaimUnclaimedView]] = Field(
         None, title='Data'
     )
     message_key: Optional[str] = Field(None, title='Message Key')
@@ -1484,6 +1732,18 @@ class CreditsLedgerSummary(BaseModel):
 
 class HTTPValidationError(BaseModel):
     detail: Optional[List[ValidationError]] = Field(None, title='Detail')
+
+
+class TrialExecutionState(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    canExecute: bool = Field(..., title='Canexecute')
+    owner: Owner = Field(..., title='Owner')
+    issuedCredits: str = Field(..., title='Issuedcredits')
+    usedCredits: str = Field(..., title='Usedcredits')
+    toleranceCredits: str = Field(..., title='Tolerancecredits')
+    pendingExecution: Optional[TrialPendingExecution] = None
 
 
 class UsageEventItem(BaseModel):
@@ -1639,6 +1899,14 @@ class PublicToolProbeResponse(BaseModel):
         List[ExecutionConstraintsSupportedEnum]
     ] = None
     contract_features: Optional[List[str]] = None
+
+
+class APIResponseTrialExecutionState(BaseModel):
+    status: str = Field(..., title='Status')
+    message: str = Field(..., title='Message')
+    status_code: Optional[int] = Field(0, title='Status Code')
+    data: Optional[TrialExecutionState] = None
+    message_key: Optional[str] = Field(None, title='Message Key')
 
 
 class APIResponseUsageEventItem(BaseModel):
