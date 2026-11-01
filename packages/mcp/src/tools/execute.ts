@@ -102,8 +102,11 @@ export const executeToolSchema = {
     },
     model: {
       type: 'string',
+      minLength: 1,
       maxLength: 128,
-      description: 'Model that selected and parameterized this capability call.',
+      pattern: '^[^\\s\\x00-\\x1f\\x7f]+$',
+      description:
+        'Optional model identifier, at most 128 characters with no whitespace or control characters. Use an identifier, not a display name; omit when unknown.',
     },
     max_response_size: {
       anyOf: [{ const: -1 }, { type: 'integer', minimum: 1 }],
@@ -155,6 +158,15 @@ export async function executeExecuteTool(
     (!Number.isInteger(input.max_response_size) || input.max_response_size <= 0)
   ) {
     throw new Error('max_response_size must be -1 or a positive integer.');
+  }
+
+  if (
+    input.model !== undefined &&
+    (typeof input.model !== 'string' || input.model.length > 128 || !/^[^\s\x00-\x1f\x7f]+$/u.test(input.model))
+  ) {
+    throw new Error(
+      'model must be a non-empty identifier of at most 128 characters without whitespace or control characters; omit it when unknown.',
+    );
   }
 
   if (input.require_zero_quote === true) {
