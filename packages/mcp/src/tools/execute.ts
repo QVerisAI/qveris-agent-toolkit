@@ -132,6 +132,8 @@ export const executeToolSchema = {
   required: ['tool_id', 'search_id', 'params_to_tool'],
 };
 
+const modelIdentifierPattern = new RegExp(executeToolSchema.properties.model.pattern, 'u');
+
 /**
  * Executes the call operation.
  *
@@ -162,7 +164,9 @@ export async function executeExecuteTool(
 
   if (
     input.model !== undefined &&
-    (typeof input.model !== 'string' || input.model.length > 128 || !/^[^\s\x00-\x1f\x7f]+$/u.test(input.model))
+    (typeof input.model !== 'string' ||
+      input.model.length > executeToolSchema.properties.model.maxLength ||
+      !modelIdentifierPattern.test(input.model))
   ) {
     throw new Error(
       'model must be a non-empty identifier of at most 128 characters without whitespace or control characters; omit it when unknown.',
