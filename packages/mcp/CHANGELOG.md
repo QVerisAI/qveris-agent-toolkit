@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- Validate optional Call model identifiers before dispatch: use at most 128 characters without whitespace or control characters, or omit the field when the identifier is unknown.
+
 ## [0.15.0] - 2026-10-23
 
 ### Fixed

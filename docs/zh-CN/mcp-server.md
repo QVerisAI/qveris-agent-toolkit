@@ -432,7 +432,7 @@ API 密钥接入步骤：
 | `search_id` | string | 是 | 发现该工具的搜索 ID |
 | `params_to_tool` | object | 是 | 传递给工具的参数字典 |
 | `session_id` | string | 否 | 用于追踪的会话标识符 |
-| `model` | string | 否 | 选择能力并生成参数的模型（最多 128 个字符） |
+| `model` | string | 否 | 可选模型标识（1–128 个字符，不含空白或控制字符）；不确定时省略 |
 | `max_response_size` | number | 否 | 自动内联交付的 UTF-8 字节上限（默认 `20480`，`-1` 表示不限）；显式 `full` 优先于有限值 |
 | `respond_with` | string | 否 | 省略时采用兼容的自动交付；`full` 强制完整内联数据，也可用 `summary` 或 `fields:<JSONPath,...>` |
 | `require_zero_quote` | boolean | 否 | 先 Probe schema 和精确报价，再要求服务端仅接受零积分执行 |

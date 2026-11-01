@@ -160,7 +160,7 @@ Call a discovered tool with specific parameters.
 | `search_id` | string | ✓ | Search ID from the discover call that found this tool |
 | `params_to_tool` | object | ✓ | A dictionary of parameters to pass to the tool |
 | `session_id` | string | | Session identifier (auto-generated if omitted) |
-| `model` | string | | Model that selected and parameterized the call (maximum 128 characters) |
+| `model` | string | | Optional model identifier (1–128 characters, no whitespace or control characters); omit when unknown |
 | `max_response_size` | number | | Automatic inline limit in UTF-8 bytes (default: 20480; `-1` is unlimited); explicit `full` takes precedence over a finite value |
 | `respond_with` | string | | Omit for compatibility auto-delivery; use `full` to force complete inline data, `summary`, or `fields:<JSONPath,...>` |
 | `require_zero_quote` | boolean | | Probe schema and exact quote, then require server-side zero-credit admission |
