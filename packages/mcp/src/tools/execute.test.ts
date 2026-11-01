@@ -2,6 +2,7 @@
  * Unit tests for the call (execute_tool) MCP tool
  */
 
+import Ajv from 'ajv';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { executeExecuteTool, executeToolSchema } from './execute.js';
 import { QverisClient } from '../api/client.js';
@@ -9,6 +10,16 @@ import type { ExecuteResponse } from '../types.js';
 
 describe('call (execute_tool)', () => {
   describe('executeToolSchema', () => {
+    it('advertises the same model identifier constraints enforced at runtime', () => {
+      const validate = new Ajv({ strict: false }).compile(executeToolSchema);
+      const base = { tool_id: 'tool-1', search_id: 'search-1', params_to_tool: {} };
+      for (const model of ['gpt-5.6-sol', 'router/v1', 'x'.repeat(128)])
+        expect(validate({ ...base, model })).toBe(true);
+      for (const model of ['GPT-5.6 Sol', '', 'a\tb', 'a\nb', 'a\x7f', 'x'.repeat(129)])
+        expect(validate({ ...base, model })).toBe(false);
+      expect(validate(base)).toBe(true);
+    });
+
     it('should have tool_id, search_id, params_to_tool as required', () => {
       expect(executeToolSchema.required).toContain('tool_id');
       expect(executeToolSchema.required).toContain('search_id');
@@ -220,6 +231,26 @@ describe('call (execute_tool)', () => {
         respond_with: 'full',
       });
     });
+
+    it.each(['GPT-5.6 Sol', '', 'a\tb', 'a\nb', 'x\x7f', 'x'.repeat(129)])(
+      'rejects invalid model attribution before Probe or Call: %j',
+      async (model) => {
+        await expect(
+          executeExecuteTool(
+            mockClient,
+            {
+              tool_id: 'tool-1',
+              search_id: 'search-123',
+              params_to_tool: {},
+              model,
+              require_zero_quote: true,
+            },
+            'default-session',
+          ),
+        ).rejects.toThrow(/model must be a non-empty identifier/);
+        expect(executeToolMock).not.toHaveBeenCalled();
+      },
+    );
 
     it('should pass model attribution when provided', async () => {
       executeToolMock.mockResolvedValueOnce({ execution_id: 'exec-model', success: true });
