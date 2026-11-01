@@ -13,9 +13,9 @@ describe('call (execute_tool)', () => {
     it('advertises the same model identifier constraints enforced at runtime', () => {
       const validate = new Ajv({ strict: false }).compile(executeToolSchema);
       const base = { tool_id: 'tool-1', search_id: 'search-1', params_to_tool: {} };
-      for (const model of ['gpt-5.6-sol', 'router/v1', 'x'.repeat(128)])
+      for (const model of ['gpt-5.6-sol', 'router/v1', 'x'.repeat(128), '🚀'.repeat(128)])
         expect(validate({ ...base, model })).toBe(true);
-      for (const model of ['GPT-5.6 Sol', '', 'a\tb', 'a\nb', 'a\x7f', 'x'.repeat(129)])
+      for (const model of ['GPT-5.6 Sol', '', 'a\tb', 'a\nb', 'a\x7f', 'x'.repeat(129), '🚀'.repeat(129)])
         expect(validate({ ...base, model })).toBe(false);
       expect(validate(base)).toBe(true);
     });
@@ -232,7 +232,7 @@ describe('call (execute_tool)', () => {
       });
     });
 
-    it.each(['GPT-5.6 Sol', '', 'a\tb', 'a\nb', 'x\x7f', 'x'.repeat(129)])(
+    it.each(['GPT-5.6 Sol', '', 'a\tb', 'a\nb', 'x\x7f', 'x'.repeat(129), '🚀'.repeat(129)])(
       'rejects invalid model attribution before Probe or Call: %j',
       async (model) => {
         await expect(
@@ -251,6 +251,21 @@ describe('call (execute_tool)', () => {
         expect(executeToolMock).not.toHaveBeenCalled();
       },
     );
+
+    it('counts Unicode characters consistently with JSON Schema', async () => {
+      executeToolMock.mockResolvedValueOnce({ execution_id: 'exec-unicode', success: true });
+      await executeExecuteTool(
+        mockClient,
+        {
+          tool_id: 'tool-1',
+          search_id: 'search-123',
+          params_to_tool: {},
+          model: '🚀'.repeat(128),
+        },
+        'default-session',
+      );
+      expect(executeToolMock).toHaveBeenCalledOnce();
+    });
 
     it('should pass model attribution when provided', async () => {
       executeToolMock.mockResolvedValueOnce({ execution_id: 'exec-model', success: true });

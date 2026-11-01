@@ -165,7 +165,7 @@ export async function executeExecuteTool(
   if (
     input.model !== undefined &&
     (typeof input.model !== 'string' ||
-      input.model.length > executeToolSchema.properties.model.maxLength ||
+      Array.from(input.model).length > executeToolSchema.properties.model.maxLength ||
       !modelIdentifierPattern.test(input.model))
   ) {
     throw new Error(
