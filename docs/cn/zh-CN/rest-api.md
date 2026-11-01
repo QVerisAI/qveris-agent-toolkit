@@ -1,8 +1,8 @@
 # QVeris REST API 文档
 
-版本：2026-10-26.1
+版本：2026-10-29.1
 
-公开 REST API 暴露核心 Agent 路径：
+认证 REST API 提供以下核心 Agent 路径；下文的显式公开只读模式只提供受限的 Discover/Inspect 投影：
 
 | 协议动作 | Endpoint | 成本行为 |
 | --- | --- | --- |
@@ -25,16 +25,60 @@ https://qveris.cn/api/v1
 
 ## 身份认证
 
-在 `Authorization` 请求头中发送 API key：
+认证访问在 `Authorization` 请求头中发送 API key：
 
 ```text
 Authorization: Bearer YOUR_API_KEY
 ```
 
+## 显式公开只读访问
+
+仅在明确配置的无凭据 REST 请求中使用 `X-Qveris-Access-Mode: public-readonly`。此模式只支持 Discover（`POST /search`）和 Inspect（`POST /tools/by-ids`），不会创建账号、API 密钥或试用赠送，也不会执行供应商操作。不带该请求头时，仍使用原有认证 API。
+
+公开 Discover 按已发布目录的关键词检索。建议从 `weather` 这样的短关键词开始；没有匹配项时会返回空结果，不代表认证失败。
+
+此模式不能携带任何 `Authorization`、`Cookie` 或会话证明，包括空值、错误凭据及无关 cookie。服务器返回 `400 access_mode_conflict`，不会忽略这些凭据。请明确创建独立的无凭据客户端；不要为绕过认证错误而移除已配置的密钥。浏览器 HTTP 请求必须设置 `credentials: "omit"`，并避免共享拦截器附加 Authorization。
+
+以下独立 curl 请求不加载 curl 配置，并明确选择公开 Discover：
+
+```bash
+curl -q --fail-with-body --silent --show-error https://qveris.cn/api/v1/search \
+  -H 'Content-Type: application/json' \
+  -H 'X-Qveris-Access-Mode: public-readonly' \
+  -d '{"query":"weather","limit":5,"view":"routing"}'
+```
+
+Inspect 使用相同两个请求头且不带凭据，向 `https://qveris.cn/api/v1/tools/by-ids` 发送 `{"tool_ids":["TOOL_ID_FROM_DISCOVER"],"view":"routing"}`，将 ID 替换为 Discover 实际返回的值。可选 `search_id` 必须是该请求返回的公开上下文。
+
+| 公开请求 | 接受的输入 |
+| --- | --- |
+| Discover | 去除首尾空白后的 `query` 为 1–1024 字符；`limit` 为整数，默认 10、最多 20；可选 `view` 为 `full` 或 `routing`。 |
+| Inspect | `tool_ids` 为 1–10 个不重复 ID，每个为 1–255 个可打印字符；可选公开 `search_id` 和 `view`。 |
+| 两者 | JSON 正文最多 8192 字节；不接受未知字段、会话／用户／供应商／定价选择字段或 cursor/offset/page 字段，仅支持有界首页读取。 |
+
+成功响应保持原有扁平 Search/Inspect JSON 结构，不增加 API 信封；包含 `contract_features: ["public-readonly-v1", ...]`、`pub_` UUID 搜索上下文及响应头 `X-Qveris-Access-Mode: public-readonly`。响应不包含价格、余额、用户活动、所有者／私有元数据或原始示例。公开目录结果不是当前账号的报价或执行权限。面向客户端的响应（包括错误）均为 `no-store`。
+
+| HTTP 状态 | 处理方式 |
+| --- | --- |
+| `400` | 解决显式访问模式与凭据冲突，不得悄悄丢弃凭据。 |
+| `401` | 为普通 API 或所请求的认证操作完成认证。不带显式模式不会启用公开访问；错误密钥不会降级为公开访问。 |
+| `413` / `422` | 缩小正文，或修正模式、字段、数量限制与公开上下文。无效或重复的访问模式会被拒绝。 |
+| `429` | 遵循 `Retry-After`，使用有界的只读重试策略。Discover 与 Inspect 共享按服务实际观察到的客户端 IP 计算的每分钟 30 次预算；代理／共用出口后的客户端可能共享此桶，这不是个人额度；不要创建试用身份或轮换凭据绕过限制。 |
+| `502` / `504` | 报告目录不可用、数据格式错误或超时，不得当作成功的空结果或已执行证明。 |
+
+错误使用标准 APIResponse 错误信封。Probe、Call、历史和账本不属于公开只读模式。继续 Call 前，应明确认证为目标身份，仅保留已选工具与输入意图，刷新 Inspect、权限及必要报价，再确认成本。公开 `search_id` 只用于关联，不得作为 Probe 或 Call 的执行授权。已经选定工具时，不要求仅为升级认证而额外 Discover。
+
+本节只说明 REST。托管 MCP 仍保留默认认证方式；本地工具列表可见，不等于支持无凭据工具查询。CLI／SDK 示例必须匹配真实发布且支持该模式的版本，不要猜测开关或用空密钥替代。其他认证和试用流程见[认证与试用指南](/auth.md)。
+
 ## Agent 匿名试用注册（推荐 Agent 使用）
 
-需要立即获得 Key、又不想等待人工邮箱验证的 Agent，可以先走匿名试用。试用账号有效期 7
-天，赠送 50 积分，可调用 `search` / `execute`，但不能调用模型网关。
+需要可恢复签发、报价预算准入以及新账户或已有账户认领时，使用 [Agent 试用准备](/docs/api-reference/agent-trial-prepare)与[激活](/docs/api-reference/agent-trial-activate)操作。准备前先私密保存密码学安全随机生成的持有证明；响应丢失时使用原证明恢复。只有激活才发放积分，Call 前仍须核对实际执行资格与费用。人类在[认领页面](/claim?mode=bounded)完成账户验证和归属确认。
+
+实际额度和期限以已签发试用响应及当前 [API 元数据](/docs/api-reference/metadata)为准，不承诺固定优惠额度。匿名工具试用不包含模型网关；报价准入包络不代表供应商最终价格被锁定。
+
+### 兼容注册接口
+
+下方旧版接口直接返回 API Key 与认领码，保留其原有预算规则，仅支持新邮箱认领；不能据此认为它具备受限试用或已有账户转入合同。请保存实际返回的额度和绝对到期时间。
 
 ```bash
 curl -X POST https://qveris.cn/api/v1/agent/anonymous-register \
