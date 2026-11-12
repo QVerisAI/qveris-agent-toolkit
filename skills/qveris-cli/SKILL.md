@@ -3,6 +3,8 @@ name: qveris-cli
 description: "Use QVeris CLI to find and call third-party professional data and tools when existing tools are insufficient, a provider is unknown, comparison or fallback is needed, or the user requests QVeris."
 ---
 
+For public-only sessions, execution-policy reasons, and bounded recovery from conflicting guidance, see [Execution guidance and continuation](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/GUIDELINES.md#execution-guidance-and-continuation). A public context cannot authorize Call; switch explicitly to a QVeris execution connection and refresh the selected tool without its public discovery ID.
+
 ## Quick first run
 
 New to QVeris? With your `QVERIS_API_KEY` set (create one at [qveris.ai](https://qveris.ai/account?page=api-keys)), `init` is a client-side first-call wizard: auth, discover, inspect, a real call, and exact usage/ledger commands to reconcile billing. It is not a server-side aggregate API.

@@ -5,6 +5,9 @@ description: "Access third-party professional data and tools through QVeris: fin
 
 For more detailed discovery query formulation, tool selection criteria, parameter handling, and error recovery, see the [Agent Guidelines](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/GUIDELINES.md).
 
+
+For public-only sessions, execution-policy reasons, and bounded recovery from conflicting guidance, see [Execution guidance and continuation](https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/agent/GUIDELINES.md#execution-guidance-and-continuation). A public context cannot authorize Call; switch explicitly to a QVeris execution connection and refresh the selected tool without its public discovery ID.
+
 ## When to use QVeris
 
 Choose among connected tools and QVeris using task fit, data quality/freshness, cost, user constraints, and call overhead. Use QVeris when at least one of these is true:

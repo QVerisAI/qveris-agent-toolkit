@@ -2233,6 +2233,8 @@ Stable key used to recover this call if its response is lost.
 
 > **callable**: `boolean`
 
+Current catalog/session guidance; false alone is not an explicit provider prohibition.
+
 ##### commercial\_use
 
 > **commercial\_use**: `"unknown"` \| `"allowed"` \| `"conditional"` \| `"prohibited"`
@@ -2451,7 +2453,9 @@ Older Probe responses may omit alternative parameter groups.
 
 ##### next\_action
 
-> **next\_action**: `"execute"` \| `"inspect"` \| `"probe"` \| `"authorize"` \| `"confirm_budget"` \| `"switch_provider"` \| `"retry"`
+> **next\_action**: `string`
+
+Unknown actions are preserved for review and must not be executed automatically.
 
 ##### provider\_fallback
 
@@ -2527,7 +2531,9 @@ Server-advertised execute constraints supported by this endpoint.
 
 ##### reason?
 
-> `optional` **reason?**: `"tool_unavailable"` \| `"tool_disabled"` \| `"realtime_unavailable"` \| `"region_restricted"` \| `"insufficient_scope"` \| `"delegation_budget_not_supported"` \| `"oauth2_signin_required"`
+> `optional` **reason?**: `string`
+
+Runtime reason code. Check it before interpreting a generic recovery action.
 
 ##### recovery
 

@@ -157,6 +157,7 @@ class RegionRestrictions(QverisModel):
 
 
 class ExecutionRestrictions(QverisModel):
+    # Catalog/session guidance. False alone is not an explicit prohibition.
     callable: bool
     eligibility: Literal["unknown", "not_required", "required", "restricted"]
     license: Literal["unknown", "not_required", "required", "approved", "restricted"]
@@ -427,7 +428,8 @@ class ProbeRecoveryAdvice(QverisModel):
     missing_field_groups: List[List[str]] = Field(default_factory=list)
     safe_fixes: List[str]
     retryable: bool
-    next_action: Literal["execute", "inspect", "probe", "authorize", "confirm_budget", "switch_provider", "retry"]
+    # Preserve future server actions; callers must not execute an unknown action.
+    next_action: str
     provider_fallback: bool
 
 
@@ -439,17 +441,8 @@ class ToolProbeResponse(QverisModel):
     exists: Optional[bool] = None
     executable: Optional[bool] = None
     status: Optional[int] = None
-    reason: Optional[
-        Literal[
-            "tool_unavailable",
-            "tool_disabled",
-            "realtime_unavailable",
-            "region_restricted",
-            "insufficient_scope",
-            "delegation_budget_not_supported",
-            "oauth2_signin_required",
-        ]
-    ] = None
+    # Runtime reason code is independent of catalog verification and recovery hints.
+    reason: Optional[str] = None
     contract_features: Optional[List[str]] = None
     execution_constraints_supported: Optional[List[str]] = None
     schema_: Optional[ProbeSchemaResult] = Field(default=None, alias="schema")

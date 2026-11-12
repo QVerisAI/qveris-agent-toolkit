@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- Explain public discovery continuation and current preflight blocks without repeating Probe or dispatching uncertain Calls.
+
 ## [0.13.2] - 2026-10-29
 
 ### Fixed

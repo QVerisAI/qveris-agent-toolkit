@@ -371,7 +371,7 @@ It takes context as an argument since that's what pydantic-core passes when call
 
 <a id="qveris.ProbeRecoveryAdvice"></a>
 
-### *class* qveris.ProbeRecoveryAdvice(\*, missing_fields: ~typing.List[str], missing_field_groups: ~typing.List[~typing.List[str]] = <factory>, safe_fixes: ~typing.List[str], retryable: bool, next_action: ~typing.Literal['execute', 'inspect', 'probe', 'authorize', 'confirm_budget', 'switch_provider', 'retry'], provider_fallback: bool, \*\*extra_data: ~typing.Any)
+### *class* qveris.ProbeRecoveryAdvice(\*, missing_fields: ~typing.List[str], missing_field_groups: ~typing.List[~typing.List[str]] = <factory>, safe_fixes: ~typing.List[str], retryable: bool, next_action: str, provider_fallback: bool, \*\*extra_data: ~typing.Any)
 
 <a id="qveris.ProbeRecoveryAdvice.model_post_init"></a>
 
@@ -563,7 +563,7 @@ It takes context as an argument since that's what pydantic-core passes when call
 
 <a id="qveris.ToolProbeResponse"></a>
 
-### *class* qveris.ToolProbeResponse(\*, verification_status: ~typing.Literal['unverified', 'verifying', 'verified', 'stale', 'failed', 'restricted'] = 'unverified', verification: ~qveris.types.CatalogVerification = <factory>, execution_restrictions: ~qveris.types.ExecutionRestrictions = <factory>, recovery: ~qveris.types.ProbeRecoveryAdvice, exists: bool | None = None, executable: bool | None = None, status: int | None = None, reason: ~typing.Literal['tool_unavailable', 'tool_disabled', 'realtime_unavailable', 'region_restricted', 'insufficient_scope', 'delegation_budget_not_supported', 'oauth2_signin_required'] | None = None, contract_features: ~typing.List[str] | None = None, execution_constraints_supported: ~typing.List[str] | None = None, schema: ~qveris.types.ProbeSchemaResult | None = None, quote: ~qveris.types.ProbeQuoteResult | None = None, coverage: ~qveris.types.ProbeUnknownResult | None = None, sample: ~qveris.types.ProbeUnknownResult | None = None, \*\*extra_data: ~typing.Any)
+### *class* qveris.ToolProbeResponse(\*, verification_status: ~typing.Literal['unverified', 'verifying', 'verified', 'stale', 'failed', 'restricted'] = 'unverified', verification: ~qveris.types.CatalogVerification = <factory>, execution_restrictions: ~qveris.types.ExecutionRestrictions = <factory>, recovery: ~qveris.types.ProbeRecoveryAdvice, exists: bool | None = None, executable: bool | None = None, status: int | None = None, reason: str | None = None, contract_features: ~typing.List[str] | None = None, execution_constraints_supported: ~typing.List[str] | None = None, schema: ~qveris.types.ProbeSchemaResult | None = None, quote: ~qveris.types.ProbeQuoteResult | None = None, coverage: ~qveris.types.ProbeUnknownResult | None = None, sample: ~qveris.types.ProbeUnknownResult | None = None, \*\*extra_data: ~typing.Any)
 
 <a id="qveris.ToolProbeResponse.model_post_init"></a>
 

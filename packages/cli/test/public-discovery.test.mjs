@@ -272,3 +272,62 @@ test("login refreshes a public selection by authenticated Inspect, then validate
       (error) => error.code === "AUTH_PUBLIC_CONTEXT",
     );
   }));
+
+test("SEC public continuation performs one guarded execute, and refuses ambiguous or restricted preflight without dispatch", async () =>
+  fixture(async () => {
+    const requests = [];
+    const selected = {
+      tool_id: "sec.company.facts.v1",
+      execution_restrictions: { callable: false, next_action: "inspect" },
+    };
+    const parameters = { cik: "0000320193" };
+    let preflight = {
+      executable: true,
+      execution_restrictions: { callable: true, next_action: "execute", allowed_actions: ["execute"] },
+      schema: { valid: true },
+      quote: { currency: "credits", exact: true, estimate_credits: 0 },
+      execution_constraints_supported: ["require_zero_quote_v1"],
+    };
+    globalThis.fetch = async (url, options) => {
+      const path = new URL(url).pathname;
+      const body = JSON.parse(options.body);
+      requests.push({ path, body });
+      if (path.endsWith("/search")) return response({ ...publicResult(), results: [selected] });
+      if (path.endsWith("/tools/by-ids")) {
+        assert.notEqual(body.search_id, publicId);
+        return response({ search_id: "authenticated-sec", results: [selected] });
+      }
+      if (path.endsWith("/tools/probe")) {
+        assert.deepEqual(body.parameters, parameters);
+        assert.deepEqual(body.checks, ["schema", "quote"]);
+        return response(preflight);
+      }
+      if (path.endsWith("/tools/execute")) {
+        assert.equal(body.search_id, "authenticated-sec");
+        assert.equal(body.require_zero_quote, true);
+        assert.deepEqual(body.parameters, parameters);
+        return response({ execution_id: "synthetic-sec", success: true });
+      }
+      throw new Error("Unexpected request");
+    };
+    await runDiscover("SEC company facts API", flags);
+    await assert.rejects(runCall("1", flags), { code: "AUTH_PUBLIC_CONTEXT" });
+    await assert.rejects(runProbe("1", flags), { code: "AUTH_PUBLIC_CONTEXT" });
+    process.env.QVERIS_API_KEY = randomUUID();
+    const opts = { baseUrl, json: true, params: JSON.stringify(parameters), requireZeroQuote: true };
+    await assert.rejects(runCall("1", opts), { code: "AUTH_PUBLIC_CONTEXT" });
+    await runInspect([selected.tool_id], opts);
+    const ready = preflight;
+    preflight = { ...ready, executable: false, reason: "insufficient_scope" };
+    await assert.rejects(runCall("1", opts), { action: "request_qveris_execute_scope" });
+    preflight = { ...ready, execution_restrictions: { callable: false, next_action: "inspect" } };
+    await assert.rejects(runCall("1", opts), { action: "stop_and_review_preflight" });
+    assert.equal(requests.filter((r) => r.path.endsWith("/tools/execute")).length, 0);
+    preflight = ready;
+    const before = requests.length;
+    await runCall("1", opts);
+    assert.deepEqual(
+      requests.slice(before).map(({ path }) => path),
+      ["/api/v1/tools/by-ids", "/api/v1/tools/probe", "/api/v1/tools/execute"],
+    );
+  }));

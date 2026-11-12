@@ -10,6 +10,8 @@ export function formatDiscoverResult(result) {
   const remaining = normalizeCreditBalance(result.remaining_credits).value;
   const lines = [];
 
+  if (result.execution_guidance) lines.push(result.execution_guidance.message, "");
+
   if (tools.length === 0) {
     lines.push("No tools matched your query. Try a broader description.");
     return lines.join("\n");
@@ -68,6 +70,8 @@ export function formatDiscoverResult(result) {
       lines.push(`   ${dim("tags:")} ${dim(categories)}`);
     }
 
+    if (t.execution_guidance) lines.push(`   Execution: ${t.execution_guidance.message}`);
+
     // Line 6: recommendation reason (if present)
     const why = stringifyDesc(t.why_recommended);
     if (why) {
@@ -93,6 +97,8 @@ export function formatInspectResult(tools) {
   const remaining = normalizeCreditBalance(tools?.remaining_credits).value;
   const lines = [];
 
+  if (tools?.execution_guidance) lines.push(tools.execution_guidance.message, "");
+
   for (const t of list) {
     const name = t.name ?? t.tool_id ?? "N/A";
     const toolId = t.tool_id ?? "";
@@ -115,6 +121,8 @@ export function formatInspectResult(tools) {
     if (toolId && toolId !== name) lines.push(dim(toolId));
     if (desc) lines.push(desc);
     lines.push("");
+
+    if (t.execution_guidance) lines.push(`  Execution: ${t.execution_guidance.message}`);
 
     // Metadata table
     if (provider) {

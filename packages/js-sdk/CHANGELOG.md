@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep additive Probe action and reason codes visible to applications.
+
 ## [0.10.0] - 2026-10-27
 
 ### Added

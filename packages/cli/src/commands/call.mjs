@@ -25,6 +25,7 @@ import { CliError } from "../errors/handler.mjs";
 import { bold, dim, cyan } from "../output/colors.mjs";
 import { buildContextDiscoveryQuery, resolveInstallContext } from "../utils/install-context.mjs";
 import { analyzeParameterSchema, validateParameters } from "../utils/tool-contract.mjs";
+import { catalogExecutionProhibited, probeExecutionGuidance } from "../utils/execution-guidance.mjs";
 import { classifyPricing, validateQuote } from "../utils/pricing-policy.mjs";
 
 // Smart max_response_size defaults:
@@ -48,7 +49,21 @@ function resolveMaxSize(flags) {
 
 export async function runCall(idOrIndex, flags) {
   const installContext = flags.context ? resolveInstallContext(flags.context) : null;
-  const apiKey = resolveApiKey(flags.apiKey);
+  if (isPublicDiscoveryContext(flags.discoveryId)) throw new CliError("AUTH_PUBLIC_CONTEXT");
+  let apiKey;
+  try {
+    apiKey = resolveApiKey(flags.apiKey);
+  } catch (error) {
+    if (
+      !installContext &&
+      !flags.discoveryId &&
+      error?.code === "AUTH_MISSING_KEY" &&
+      readSession()?.authorizationContext === authorizationContextForPublicDiscovery()
+    ) {
+      throw new CliError("AUTH_PUBLIC_CONTEXT");
+    }
+    throw error;
+  }
   const timeoutMs = (parseInt(flags.timeout, 10) || 60) * 1000;
   const maxSize = resolveMaxSize(flags);
   const { baseUrl } = resolveApiBaseUrl({ baseUrlFlag: flags.baseUrl, preferOAuth: apiKey === undefined });
@@ -312,6 +327,11 @@ function assertContextBudgetSupported(value) {
 }
 
 function assertExecutionPolicy(tool, flags) {
+  if (catalogExecutionProhibited(tool)) {
+    throw contextError("CONTEXT_EXECUTION_BLOCKED", "Current catalog reports an explicit execution restriction", {
+      action: "select_allowed_provider",
+    });
+  }
   const warnings = [];
   const deniedRegions = String(flags.denyRegion ?? "")
     .split(",")
@@ -704,10 +724,9 @@ async function executeCall({
   }
   const spinner = flags.json ? { stop() {} } : createSpinner("Calling tool...");
 
+  let executeStarted = false;
   try {
     if (publicUpgrade) {
-      // The explicit Call command confirms the user's current tool/input intent.
-      // Re-read authorization/schema and quote; no public metadata authorizes it.
       const inspection = await inspectToolsByIds({
         apiKey,
         credentialProvider,
@@ -720,24 +739,9 @@ async function executeCall({
       if (!selected)
         throw new CliError("AUTH_PUBLIC_CONTEXT", "Authenticated Inspect did not confirm the selected tool");
       assertExecutionPolicy(selected, flags);
-      const preview = await probeTool({
-        apiKey,
-        credentialProvider,
-        baseUrl,
-        toolId,
-        parameters,
-        checks: ["schema", "quote"],
-        liveBudget: "none",
-        timeoutMs,
-      });
-      if (preview.executable !== true || preview.schema?.valid !== true || !validateQuote(preview.quote).valid) {
-        throw new CliError(
-          "CONTEXT_QUOTE_REQUIRED",
-          "Review a fresh executable schema and quote before calling an upgraded selection",
-        );
-      }
     }
-    if (flags.requireZeroQuote) {
+    if (publicUpgrade || flags.requireZeroQuote) {
+      // A single current Probe covers both upgrade and the optional exact-zero guard.
       const quote = await probeTool({
         apiKey,
         credentialProvider,
@@ -748,14 +752,20 @@ async function executeCall({
         liveBudget: "none",
         timeoutMs,
       });
+      const advice = probeExecutionGuidance(quote, { requireQuote: true });
+      if (advice.action !== "review_and_call" || quote.schema?.valid !== true) {
+        const action = advice.action === "review_and_call" ? "correct_parameters" : advice.action;
+        throw contextError(
+          advice.action === "confirm_budget" ? "CONTEXT_QUOTE_REQUIRED" : "CONTEXT_EXECUTION_BLOCKED",
+          advice.action === "review_and_call" ? "Current Probe did not validate the inputs" : advice.message,
+          { action, nextAction: buildNextAction(action, { requiresUser: true, reason: advice.reason }) },
+        );
+      }
       if (
-        quote?.executable !== true ||
-        !quote?.execution_constraints_supported?.includes("require_zero_quote_v1") ||
-        quote?.schema?.valid !== true ||
-        quote?.quote?.exact !== true ||
-        quote.quote.currency !== "credits" ||
-        typeof quote?.quote?.estimate_credits !== "number" ||
-        quote.quote.estimate_credits !== 0
+        flags.requireZeroQuote &&
+        (!quote.execution_constraints_supported?.includes("require_zero_quote_v1") ||
+          quote.quote?.exact !== true ||
+          quote.quote.estimate_credits !== 0)
       ) {
         throw new CliError(
           "API_ERROR",
@@ -763,6 +773,7 @@ async function executeCall({
         );
       }
     }
+    executeStarted = true;
     const result = await callTool({
       apiKey,
       credentialProvider,
@@ -815,6 +826,9 @@ async function executeCall({
     }
   } catch (err) {
     spinner.stop();
+    if (!executeStarted) {
+      throw decorateFailure(err, { action: boundaryActionFor(err?.code) ?? "review_preflight" });
+    }
     if (err?.idempotencyKey) {
       err.action = "lookup_execution";
       err.nextAction = buildNextAction("lookup_execution", {

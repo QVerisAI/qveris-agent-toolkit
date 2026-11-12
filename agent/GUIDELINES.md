@@ -356,3 +356,11 @@ Run `qveris doctor` to check setup: Node.js version, API key validity, endpoint 
 > **MCP backward compatibility:** Old tool names `search_tools`, `get_tools_by_ids`, `execute_tool` are still supported as deprecated aliases in MCP server v0.15.0. Use the canonical names (`discover`, `inspect`, `probe`, `call`, `usage_history`, `credits_ledger`, `lookup_execution`) going forward.
 
 Full API documentation: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/rest-api.md
+
+## Execution guidance and continuation
+
+A public read-only QVeris connection lists only Discover and Inspect. A `pub_` context or `public-readonly-v1` feature is a QVeris session boundary, not a provider login requirement. Use an authenticated QVeris execution connection for the same deployment. Keep the selected `tool_id` and intended parameters, omit the public `search_id`, and Inspect to obtain a new authenticated context. In the CLI, use `qveris auth login` or a privately configured key and run `qveris inspect <tool-id>` without `--public-read-only`. In Hosted MCP, switch to the authenticated endpoint from the same deployment's guide. If the current client cannot connect to an execution entry, report the handoff rather than trying tools absent from its tool list.
+
+Catalog `unverified` and a bare `callable: false` describe missing or insufficient execution evidence. An explicit policy denial still blocks Call. If needed, use current authenticated Inspect and one Probe for the exact inputs and budget; a current consistent Probe can resolve a weak directory hint. `executable` is runtime preflight evidence, not authorization to override a policy denial or user approval. After a contradictory or unrecognized Probe action, stop with the reason or select another capability instead of looping through authorization, Inspect, and Probe.
+
+Read runtime reason codes separately from `next_action`: `insufficient_scope` requires QVeris execution scope; `oauth2_signin_required` requires the provider connection flow; `delegation_budget_not_supported` requires a supported, authorized execution context or a different capability. Correct invalid inputs, resolve quote/budget requirements, and bound transient read-only retries. Unknown execution outcomes are recovered by querying the original idempotency key, never by resubmitting Call.

@@ -21,7 +21,8 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
+    # Keep the old interpreter matrix on a runner that still supplies it.
+    runs-on: ${{ matrix.os == 'ubuntu-latest' && contains(fromJSON('["3.8","3.9"]'), matrix.python-version) && 'ubuntu-24.04' || matrix.os }}
     defaults:
       run:
         working-directory: packages/python-sdk
@@ -126,7 +127,8 @@ jobs:
         include:
           - os: windows-latest
             python-version: "3.11"
-    runs-on: ${{ matrix.os }}
+    # Keep the old interpreter matrix on a runner that still supplies it.
+    runs-on: ${{ matrix.os == 'ubuntu-latest' && contains(fromJSON('["3.8","3.9"]'), matrix.python-version) && 'ubuntu-24.04' || matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
