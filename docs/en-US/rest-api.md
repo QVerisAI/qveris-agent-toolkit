@@ -1,8 +1,8 @@
 # QVeris REST API Documentation
 
-Version: 2026-10-26.1
+Version: 2026-10-29.1
 
-The public REST API exposes the core agent path:
+The authenticated REST API exposes the core agent path. Explicit public read-only access below exposes a restricted Discover/Inspect projection:
 
 | Protocol action | Endpoint | Cost behavior |
 | --- | --- | --- |
@@ -25,17 +25,60 @@ https://qveris.ai/api/v1
 
 ## Authentication
 
-Send your API key in the `Authorization` header:
+For authenticated access, send your API key in the `Authorization` header:
 
 ```text
 Authorization: Bearer YOUR_API_KEY
 ```
 
+## Explicit public read-only access
+
+Use `X-Qveris-Access-Mode: public-readonly` only in an explicitly uncredentialed REST request. This mode supports Discover (`POST /search`) and Inspect (`POST /tools/by-ids`) only. It creates no account, API key or trial grant and never executes a provider operation. The authenticated API remains the default when the header is absent.
+
+Public Discover searches published catalog keywords. Start with a short keyword such as `weather`; no matches is a valid empty result, not an authentication failure.
+
+Do not combine this mode with any `Authorization`, `Cookie` or session proof, including empty/invalid credentials or unrelated cookies. The server returns `400 access_mode_conflict` instead of discarding them. Configure a separate uncredentialed client deliberately; do not strip a configured key to recover from an authentication error. Browser HTTP requests must set `credentials: "omit"` and must not attach Authorization through a shared interceptor.
+
+The following standalone curl request opts into public Discover without loading curl configuration:
+
+```bash
+curl -q --fail-with-body --silent --show-error https://qveris.ai/api/v1/search \
+  -H 'Content-Type: application/json' \
+  -H 'X-Qveris-Access-Mode: public-readonly' \
+  -d '{"query":"weather","limit":5,"view":"routing"}'
+```
+
+For Inspect, send `{"tool_ids":["TOOL_ID_FROM_DISCOVER"],"view":"routing"}` to `https://qveris.ai/api/v1/tools/by-ids` with the same two headers and no credentials. Replace the ID with one returned by Discover. An optional `search_id` must be the public context returned by that request.
+
+| Public request | Accepted input |
+| --- | --- |
+| Discover | Trimmed `query`: 1–1024 characters; `limit`: integer, default 10, maximum 20; optional `view`: `full` or `routing`. |
+| Inspect | `tool_ids`: 1–10 unique IDs, each 1–255 printable characters; optional public `search_id` and `view`. |
+| Both | JSON body up to 8192 bytes; no unknown fields, session/user/provider/pricing selectors or cursor/offset/page fields. This mode supports bounded first-page reads. |
+
+Successful responses keep the existing flat Search/Inspect JSON shapes rather than adding an API envelope. They include `contract_features: ["public-readonly-v1", ...]`, a `pub_` UUID search context and the response header `X-Qveris-Access-Mode: public-readonly`. They omit prices, balance, user activity, owner/private metadata and raw examples. A public catalog result is not a current account-specific quote or execution permission. Client responses, including errors, are `no-store`.
+
+| HTTP status | What to do |
+| --- | --- |
+| `400` | Resolve the explicit access-mode/credential conflict. Do not silently drop the credential. |
+| `401` | Authenticate for the normal API or requested authenticated operation. Missing the explicit mode does not enable public access; an invalid supplied key never downgrades to public access. |
+| `413` / `422` | Reduce the oversized body or correct the mode, fields, limits or public context. Invalid/repeated access-mode values are rejected. |
+| `429` | Honor `Retry-After` and use a bounded read retry policy. Discover and Inspect share a 30-per-minute budget keyed by the observed client IP; proxy/common-egress clients may share this bucket, so it is not a personal allowance. Do not create trial identities or rotate credentials to evade limits. |
+| `502` / `504` | Report unavailable/malformed catalog data or a timeout; do not treat it as empty successful discovery or proof of execution. |
+
+Errors use the standard APIResponse error envelope. Probe, Call, history and ledger are outside public read-only access. To continue with Call, explicitly authenticate with the intended identity, retain only the selected tool/input intent, and refresh Inspect, permissions and any necessary quote before confirming cost. A public `search_id` is correlation only; never pass it as execution authority to Probe or Call. An already selected tool does not require an extra Discover solely to upgrade authentication.
+
+These instructions describe REST. Hosted MCP still uses its authenticated default, and local tool listing alone does not prove read-only invocation support. CLI/SDK examples must match an actually published supporting version; do not invent a flag or use an empty key as a substitute. See the [authentication and trial guide](/auth.md) for the separate authenticated and trial flows.
+
 ## Anonymous trial registration (recommended for agents)
 
-Agents that need a key without waiting on human email verification can start
-with an anonymous trial. The account is valid for 7 days, receives 50 trial
-credits, and can call `search`/`execute`, but cannot use the model gateway.
+For recoverable issuance, bounded quote admission and new- or existing-account claim, use the [Agent trial preparation](/docs/api-reference/agent-trial-prepare) and [activation](/docs/api-reference/agent-trial-activate) operations. Privately save a cryptographically random possession proof before preparation; use the same proof to recover a lost response. Only activation issues credits. Review actual execution eligibility and costs before Call. Humans complete account verification and confirmation on the [claim page](/claim?mode=bounded).
+
+The actual allowance and expiry come from the issued trial response and the current [API metadata](/docs/api-reference/metadata), not a fixed promotional amount. Anonymous tool trials do not include the model gateway. The bounded admission envelope is not a hard lock on the supplier's final price.
+
+### Compatibility registration API
+
+The following older API returns an API key and claim code immediately. It retains its original budget rules and supports new-email claim only; do not assume it provides the bounded trial or existing-account transfer contract. Save the actual returned allowance and absolute expiry.
 
 ```bash
 curl -X POST https://qveris.ai/api/v1/agent/anonymous-register \
