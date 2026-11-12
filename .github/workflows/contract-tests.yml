@@ -165,7 +165,8 @@ jobs:
       matrix:
         os: ${{ fromJSON(needs.plan.outputs.os_matrix) }}
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
-    runs-on: ${{ matrix.os }}
+    # Ubuntu 26.04 runner images do not offer Python 3.8 or 3.9.
+    runs-on: ${{ matrix.os == 'ubuntu-latest' && contains(fromJSON('["3.8","3.9"]'), matrix.python-version) && 'ubuntu-24.04' || matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
