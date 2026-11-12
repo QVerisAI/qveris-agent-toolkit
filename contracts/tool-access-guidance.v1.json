@@ -1,0 +1,27 @@
+{
+  "contract": "tool-access-guidance-v1",
+  "tool_id": "sec.company.facts.v1",
+  "parameters": {"cik": "0000320193"},
+  "public": {
+    "feature": "public-readonly-continuation-v1",
+    "verification_status": "unverified",
+    "authentication": "ready",
+    "callable": false,
+    "allowed_actions": ["discover", "inspect"],
+    "blocked_actions": ["execute"],
+    "next_action": "authorize",
+    "context": "public"
+  },
+  "probe_cases": [
+    {"name": "legacy fast path", "catalog": {}, "probe": null, "next_action": "execute", "callable": true},
+    {"name": "stale catalog without probe", "catalog": {"callable": false}, "probe": null, "next_action": "probe", "callable": false},
+    {"name": "stale catalog with current preflight", "catalog": {"callable": false}, "probe": "ready", "next_action": "execute", "callable": true},
+    {"name": "explicit ban", "catalog": {"callable": false, "commercial_use": "prohibited"}, "probe": "ready", "next_action": "switch_provider", "callable": false},
+    {"name": "missing execution scope", "catalog": {}, "probe": "insufficient_scope", "next_action": "authorize", "safe_fix": "use_qveris_credential_with_execute_scope", "callable": false},
+    {"name": "provider OAuth", "catalog": {}, "probe": "oauth2_signin_required", "next_action": "authorize", "safe_fix": "complete_provider_oauth", "callable": false},
+    {"name": "unsupported delegated budget", "catalog": {}, "probe": "delegation_budget_not_supported", "next_action": "change_execution_context", "safe_fix": "use_supported_execution_context_with_approval", "callable": false},
+    {"name": "invalid parameters", "catalog": {}, "probe": "invalid_schema", "next_action": "probe", "safe_fix": "correct_parameters", "callable": false},
+    {"name": "estimated quote", "catalog": {}, "probe": "unknown_quote", "next_action": "confirm_budget", "callable": false},
+    {"name": "unavailable", "catalog": {}, "probe": "tool_unavailable", "next_action": "switch_provider", "callable": false}
+  ]
+}

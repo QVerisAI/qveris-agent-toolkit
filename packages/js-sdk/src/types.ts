@@ -231,6 +231,7 @@ export interface RegionRestrictions {
 }
 
 export interface ExecutionRestrictions {
+  /** Current catalog/session guidance; false alone is not an explicit provider prohibition. */
   callable: boolean;
   eligibility: 'unknown' | 'not_required' | 'required' | 'restricted';
   license: 'unknown' | 'not_required' | 'required' | 'approved' | 'restricted';
@@ -735,7 +736,8 @@ export interface ProbeRecoveryAdvice {
   missing_field_groups?: string[][];
   safe_fixes: string[];
   retryable: boolean;
-  next_action: 'execute' | 'inspect' | 'probe' | 'authorize' | 'confirm_budget' | 'switch_provider' | 'retry';
+  /** Unknown actions are preserved for review and must not be executed automatically. */
+  next_action: string;
   provider_fallback: boolean;
 }
 
@@ -747,14 +749,8 @@ export interface ProbeResponse {
   exists?: boolean;
   executable?: boolean;
   status?: number;
-  reason?:
-    | 'tool_unavailable'
-    | 'tool_disabled'
-    | 'realtime_unavailable'
-    | 'region_restricted'
-    | 'insufficient_scope'
-    | 'delegation_budget_not_supported'
-    | 'oauth2_signin_required';
+  /** Runtime reason code. Check it before interpreting a generic recovery action. */
+  reason?: string;
   contract_features?: string[];
   /** Server-advertised execute constraints supported by this endpoint. */
   execution_constraints_supported?: string[];

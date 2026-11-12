@@ -8,8 +8,9 @@ export const EX_CONFIG = 78;
 
 export const ERROR_CODES = {
   AUTH_PUBLIC_CONTEXT: {
-    message: "A public discovery context cannot authorize this operation",
-    hint: "Log in, Inspect the selected tool without a public discovery ID, and review a fresh quote before Call",
+    action: "connect_qveris_execution",
+    message: "This QVeris public context supports only Discover and Inspect",
+    hint: "On the same endpoint, run qveris auth login or configure a key privately. Run qveris inspect <tool-id> without --public-read-only or a public discovery ID, then review any required quote before Call.",
     exit: EX_NOPERM,
   },
   PUBLIC_DISCOVERY_UNAVAILABLE: {
@@ -24,7 +25,8 @@ export const ERROR_CODES = {
   },
   AUTH_PUBLIC_OPERATION_DENIED: {
     message: "Public read-only mode only supports Discover and Inspect",
-    hint: "Log in and refresh discovery before probing or calling a capability",
+    action: "connect_qveris_execution",
+    hint: "Use qveris auth login or a privately configured key on the same endpoint, then run qveris inspect <tool-id> without --public-read-only or a public discovery ID.",
     exit: EX_NOPERM,
   },
   TRIAL_CREDENTIAL_EXISTS: {

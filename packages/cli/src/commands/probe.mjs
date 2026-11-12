@@ -1,10 +1,12 @@
+import { probeExecutionGuidance } from "../utils/execution-guidance.mjs";
+import { authorizationContextForPublicDiscovery } from "../auth/context.mjs";
 import {
   createAuthorizationContextCredentialProvider,
   resolveApiKey,
   resolveAuthorizationContextId,
 } from "../client/auth.mjs";
 import { probeTool, resolveApiBaseUrl } from "../client/api.mjs";
-import { readSessionForContext, resolveToolId } from "../session/session.mjs";
+import { readSession, readSessionForContext, resolveToolId } from "../session/session.mjs";
 import { resolveParams } from "../utils/params.mjs";
 import { outputJson } from "../output/json.mjs";
 import { createSpinner } from "../output/spinner.mjs";
@@ -28,7 +30,19 @@ export function resolveProbeChecks(value) {
 }
 
 export async function runProbe(idOrIndex, flags) {
-  const apiKey = resolveApiKey(flags.apiKey);
+  let apiKey;
+  try {
+    apiKey = resolveApiKey(flags.apiKey);
+  } catch (error) {
+    if (
+      /^\d+$/.test(idOrIndex) &&
+      error?.code === "AUTH_MISSING_KEY" &&
+      readSession()?.authorizationContext === authorizationContextForPublicDiscovery()
+    ) {
+      throw new CliError("AUTH_PUBLIC_CONTEXT");
+    }
+    throw error;
+  }
   const timeoutMs = (parseInt(flags.timeout, 10) || 30) * 1000;
   const { baseUrl } = resolveApiBaseUrl({ baseUrlFlag: flags.baseUrl, preferOAuth: apiKey === undefined });
   const numericIndex = /^\d+$/.test(idOrIndex);
@@ -39,6 +53,9 @@ export async function runProbe(idOrIndex, flags) {
     credentialProvider = createAuthorizationContextCredentialProvider({ apiKey, authorizationContext });
     const resolvedSession = readSessionForContext({ baseUrl, authorizationContext });
     if (resolvedSession.status === "context_mismatch") {
+      if (readSession()?.authorizationContext === authorizationContextForPublicDiscovery()) {
+        throw new CliError("AUTH_PUBLIC_CONTEXT");
+      }
       throw new CliError(
         "SESSION_EXPIRED",
         "Stored discovery belongs to another API endpoint or authorization context. Run 'qveris discover' again.",
@@ -72,8 +89,12 @@ export async function runProbe(idOrIndex, flags) {
       timeoutMs,
     });
     spinner.stop();
-    if (flags.json) outputJson(result);
-    else console.log(JSON.stringify(result, null, 2));
+    const presented = {
+      ...result,
+      execution_guidance: probeExecutionGuidance(result, { requireQuote: checks.includes("quote") }),
+    };
+    if (flags.json) outputJson(presented);
+    else console.log(JSON.stringify(presented, null, 2));
   } catch (error) {
     spinner.stop();
     throw error;

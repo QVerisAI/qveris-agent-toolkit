@@ -167,3 +167,26 @@ def test_tool_definitions_expose_canonical_names_and_legacy_aliases() -> None:
     assert SEARCH_TOOL_DEF is DISCOVER_TOOL_DEF
     assert GET_TOOLS_BY_IDS_TOOL_DEF is INSPECT_TOOL_DEF
     assert EXECUTE_TOOL_DEF is CALL_TOOL_DEF
+
+
+def test_probe_keeps_new_and_unknown_recovery_actions_and_reason_codes() -> None:
+    for action, reason in [
+        ("change_execution_context", "delegation_budget_not_supported"),
+        ("future_action", "future_reason"),
+    ]:
+        model = ToolProbeResponse.model_validate(
+            {
+                "executable": False,
+                "reason": reason,
+                "recovery": {
+                    "missing_fields": [],
+                    "safe_fixes": [],
+                    "retryable": False,
+                    "next_action": action,
+                    "provider_fallback": False,
+                },
+            }
+        )
+        assert model.executable is False
+        assert model.reason == reason
+        assert model.recovery.next_action == action

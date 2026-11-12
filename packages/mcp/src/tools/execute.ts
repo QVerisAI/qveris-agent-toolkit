@@ -10,6 +10,13 @@
 import type { QverisClient } from '../api/client.js';
 import { normalizeCreditBalanceResponse } from '../api/credit-balance.js';
 import type { ExecuteResponse } from '../types.js';
+import { probeGuidance } from '../execution-guidance.js';
+
+export class ExecutePreflightError extends Error {
+  constructor(readonly guidance: ReturnType<typeof probeGuidance>) {
+    super(guidance.message);
+  }
+}
 
 /**
  * Input parameters for the call tool.
@@ -180,6 +187,8 @@ export async function executeExecuteTool(
       checks: ['schema', 'quote'],
       live_budget: 'none',
     });
+    const advice = probeGuidance(probe, true);
+    if (advice.action !== 'review_and_call') throw new ExecutePreflightError(advice);
     if (
       probe.executable !== true ||
       !probe.execution_constraints_supported?.includes('require_zero_quote_v1') ||
@@ -189,9 +198,13 @@ export async function executeExecuteTool(
       typeof probe.quote.estimate_credits !== 'number' ||
       probe.quote.estimate_credits !== 0
     ) {
-      throw new Error(
-        'Zero-quote Call blocked: executable schema, require_zero_quote_v1 support, and exact zero-credit quote were not confirmed.',
-      );
+      throw new ExecutePreflightError({
+        action: 'stop_and_review_preflight',
+        reason: 'zero_quote_not_confirmed',
+        message:
+          'Zero-quote Call blocked: executable schema, require_zero_quote_v1 support, and exact zero-credit quote were not confirmed.',
+        automatic: false,
+      });
     }
   }
 

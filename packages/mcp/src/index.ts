@@ -45,13 +45,19 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { createClientFromEnv, QverisClient } from './api/client.js';
 import { searchToolsSchema, executeSearchTools, type SearchToolsInput } from './tools/search.js';
-import { executeToolSchema, executeExecuteTool, type ExecuteToolInput } from './tools/execute.js';
+import {
+  executeToolSchema,
+  executeExecuteTool,
+  ExecutePreflightError,
+  type ExecuteToolInput,
+} from './tools/execute.js';
 import { probeToolSchema, executeProbeTool, type ProbeToolInput } from './tools/probe.js';
 import { getToolsByIdsSchema, executeGetToolsByIds, type GetToolsByIdsInput } from './tools/get-by-ids.js';
 import { usageHistorySchema, executeUsageHistory, type UsageHistoryInput } from './tools/usage-history.js';
 import { creditsLedgerSchema, executeCreditsLedger, type CreditsLedgerInput } from './tools/credits-ledger.js';
 import { executeLookupExecution, lookupExecutionSchema, type LookupExecutionInput } from './tools/lookup-execution.js';
 import type { ApiError, NextAction } from './types.js';
+import { isPublicContext, probeGuidance, publicGuidance, withCatalogGuidance } from './execution-guidance.js';
 import { TOOL_OUTPUT_SCHEMAS } from './output-schemas.js';
 import { z } from 'zod/v4';
 
@@ -152,11 +158,11 @@ const DISCOVER_TOOL_DESCRIPTION =
 const INSPECT_TOOL_DESCRIPTION =
   'Optionally inspect tools by ID when selection or valid request construction depends on missing/stale contract details. Provider comparison: Inspect each candidate to confirm current scope/contracts; Probe each when current quotes are required. ' +
   'Returns parameters, success rate, latency, examples, and billing_rule when available. ' +
-  'Use tool_ids from a previous discover call.';
+  'For a public-to-authenticated continuation, retain the selected tool_id and omit the public search_id. Use the returned authenticated context for Call.';
 
 const CALL_TOOL_DESCRIPTION =
   'Call a specific remote tool with provided parameters. ' +
-  'The tool_id and search_id must come from a previous discover call. ' +
+  'Use a tool_id and current authenticated search_id from Discover or Inspect. A public search_id cannot be used for Call. ' +
   'Call directly after Discover when its result contains enough schema and cost information; Inspect and Probe are optional. ' +
   'Pass parameters to the tool through params_to_tool. Set require_zero_quote=true to require a current exact zero-credit quote before the server dispatches the Call. ' +
   'For uncertain outcomes, use the returned idempotency_key with lookup_execution; keys are issued by the host client and lookup never submits a new Call. ' +
@@ -381,7 +387,7 @@ export async function executeQverisMcpTool(
         };
       }
 
-      const result = await executeSearchTools(client, input, defaultSessionId);
+      const result = withCatalogGuidance(await executeSearchTools(client, input, defaultSessionId));
 
       return {
         content: [
@@ -414,7 +420,7 @@ export async function executeQverisMcpTool(
         };
       }
 
-      const result = await executeGetToolsByIds(client, input, defaultSessionId);
+      const result = withCatalogGuidance(await executeGetToolsByIds(client, input, defaultSessionId));
 
       return {
         content: [
@@ -450,6 +456,17 @@ export async function executeQverisMcpTool(
           ],
           isError: true,
         };
+      }
+
+      if (isPublicContext(input.search_id)) {
+        const advice = publicGuidance();
+        const result = {
+          error: advice.message,
+          code: 'AUTH_PUBLIC_CONTEXT',
+          execution_guidance: advice,
+          next_action: requiredAction(advice.action),
+        };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }], structuredContent: result, isError: true };
       }
 
       // Human-in-the-loop billing consent (MCP elicitation), when enabled and
@@ -538,7 +555,8 @@ export async function executeQverisMcpTool(
           isError: true,
         };
       }
-      const result = await executeProbeTool(client, input);
+      const wire = await executeProbeTool(client, input);
+      const result = { ...wire, execution_guidance: probeGuidance(wire, input.checks?.includes('quote') === true) };
       return {
         content: [{ type: 'text', text: JSON.stringify(result) }],
         structuredContent: result as unknown as Record<string, unknown>,
@@ -598,6 +616,15 @@ export async function executeQverisMcpTool(
       isError: true,
     };
   } catch (error) {
+    if (error instanceof ExecutePreflightError) {
+      const advice = error.guidance;
+      const result = {
+        error: advice.message,
+        execution_guidance: advice,
+        next_action: { ...requiredAction(advice.action), reason: advice.reason },
+      };
+      return { content: [{ type: 'text', text: JSON.stringify(result) }], structuredContent: result, isError: true };
+    }
     // Handle API errors.
     if (isApiError(error)) {
       return {

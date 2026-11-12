@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Explain public-to-authenticated continuation and distinguish Probe runtime restrictions from catalog evidence.
+
 - Count Unicode model identifier characters consistently with the advertised schema.
 
 - Validate optional Call model identifiers before dispatch: use at most 128 characters without whitespace or control characters, or omit the field when the identifier is unknown.

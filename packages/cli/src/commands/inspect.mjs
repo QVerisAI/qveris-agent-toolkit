@@ -1,3 +1,4 @@
+import { withCatalogExecutionGuidance } from "../utils/execution-guidance.mjs";
 import {
   createAuthorizationContextCredentialProvider,
   resolveAuthorizationContextId,
@@ -119,10 +120,11 @@ export async function runInspect(idsOrIndexes, flags) {
       });
     }
 
+    const presented = withCatalogExecutionGuidance(result, publicReadOnly);
     if (flags.json) {
-      outputJson(result);
+      outputJson(presented);
     } else {
-      console.log(formatInspectResult(result));
+      console.log(formatInspectResult(presented));
     }
   } catch (err) {
     spinner.stop();

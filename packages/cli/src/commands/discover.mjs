@@ -1,3 +1,4 @@
+import { withCatalogExecutionGuidance } from "../utils/execution-guidance.mjs";
 import {
   createAuthorizationContextCredentialProvider,
   resolveAuthorizationContextId,
@@ -60,10 +61,11 @@ export async function runDiscover(query, flags) {
       })),
     });
 
+    const presented = withCatalogExecutionGuidance(result, publicReadOnly);
     if (flags.json) {
-      outputJson(result);
+      outputJson(presented);
     } else {
-      console.log(formatDiscoverResult(result));
+      console.log(formatDiscoverResult(presented));
     }
   } catch (err) {
     spinner.stop();
