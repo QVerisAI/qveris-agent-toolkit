@@ -251,7 +251,7 @@ When a tool response exceeds `max_response_size`, the API returns:
 
 ## CLI Workflow
 
-When using the QVeris CLI (`@qverisai/cli` v0.13.2) instead of MCP, optimize for the same shortest safe path. Discover and Call are the default flow; Inspect and Probe are conditional checks, not required stages.
+When using the QVeris CLI (`@qverisai/cli` v0.13.3) instead of MCP, optimize for the same shortest safe path. Discover and Call are the default flow; Inspect and Probe are conditional checks, not required stages.
 
 ### Basic Agent Workflow
 
@@ -353,7 +353,7 @@ Run `qveris doctor` to check setup: Node.js version, API key validity, endpoint 
 | Probe | `{"parameters": {...}, "checks": ["schema", "quote"], "live_budget": "none"}` |
 | Call | `{"search_id": "...", "parameters": {...}, "model": "router-model-v1", "max_response_size": 20480}` |
 
-> **MCP backward compatibility:** Old tool names `search_tools`, `get_tools_by_ids`, `execute_tool` are still supported as deprecated aliases in MCP server v0.15.0. Use the canonical names (`discover`, `inspect`, `probe`, `call`, `usage_history`, `credits_ledger`, `lookup_execution`) going forward.
+> **MCP backward compatibility:** Old tool names `search_tools`, `get_tools_by_ids`, `execute_tool` are still supported as deprecated aliases in MCP server v0.15.1. Use the canonical names (`discover`, `inspect`, `probe`, `call`, `usage_history`, `credits_ledger`, `lookup_execution`) going forward.
 
 Full API documentation: https://github.com/QVerisAI/qveris-agent-toolkit/blob/main/docs/en-US/rest-api.md
 

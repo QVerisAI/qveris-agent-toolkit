@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.13.3] - 2026-11-12
+
 ### Fixed
 
 - Explain public discovery continuation and current preflight blocks without repeating Probe or dispatching uncertain Calls.
@@ -184,7 +186,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial release: `discover` / `inspect` / `call` from the terminal against the QVeris API.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.13.1...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.13.3...HEAD
 [0.13.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.13.0...cli-v0.13.1
 [0.13.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.12.1...cli-v0.13.0
 [0.12.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.11.3...cli-v0.12.0
@@ -231,3 +233,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#347]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/347
 [#362]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/362
 [#364]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/364
+[0.13.3]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/cli-v0.13.2...cli-v0.13.3

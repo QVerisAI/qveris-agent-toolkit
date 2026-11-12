@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-11-12
+
 ### Fixed
 
 - Preserve additive Probe action and reason strings instead of rejecting otherwise valid responses.
@@ -157,7 +159,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Generated OpenAPI contract models with drift CI. ([#48])
 - `Agent` runtime: LLM tool loop over the QVeris workflow with streaming events.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.9.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.9.1...HEAD
 [0.9.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.8.0...python-sdk-v0.9.0
 [0.8.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.3...python-sdk-v0.8.0
 [0.7.3]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.7.2...python-sdk-v0.7.3
@@ -199,3 +201,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#319]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/319
 [#347]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/347
 [#362]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/362
+[0.9.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/python-sdk-v0.9.0...python-sdk-v0.9.1
