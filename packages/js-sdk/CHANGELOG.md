@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-11-12
+
 ### Fixed
 
 - Keep additive Probe action and reason codes visible to applications.
@@ -124,7 +126,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - `0.1.x` under this npm name was an early MCP-focused SDK, superseded by `@qverisai/mcp`.
 
-[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.10.0...HEAD
+[Unreleased]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.10.1...HEAD
 [0.10.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.9.0...js-sdk-v0.10.0
 [0.9.0]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.4...js-sdk-v0.9.0
 [0.8.4]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.8.3...js-sdk-v0.8.4
@@ -152,3 +154,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [#341]: https://github.com/QVerisAI/qveris-agent-toolkit/issues/341
 [#347]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/347
 [#362]: https://github.com/QVerisAI/qveris-agent-toolkit/pull/362
+[0.10.1]: https://github.com/QVerisAI/qveris-agent-toolkit/compare/js-sdk-v0.10.0...js-sdk-v0.10.1
